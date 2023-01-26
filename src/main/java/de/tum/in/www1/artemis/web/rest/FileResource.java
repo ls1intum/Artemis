@@ -89,7 +89,7 @@ public class FileResource {
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
      * @deprecated Implement your own usage of {@link FileService#handleSaveFile(MultipartFile, boolean, boolean)} with a mixed multipart request instead. An example for this is
-     *             * {@link AttachmentUnitResource#updateAttachmentUnit(Long, Long, AttachmentUnit, Attachment, MultipartFile, boolean, String)}
+     *             {@link AttachmentUnitResource#updateAttachmentUnit(Long, Long, AttachmentUnit, Attachment, MultipartFile, boolean, String)}
      */
     @Deprecated
     @PostMapping("fileUpload")

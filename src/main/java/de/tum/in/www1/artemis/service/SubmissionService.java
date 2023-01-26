@@ -200,7 +200,7 @@ public class SubmissionService {
     /**
      * Returns the next submission without result and with individual due date,
      * in the ordering of their individual due dates.
-     * 
+     *
      * @param exercise        the exercise for which we want to retrieve a submission
      * @param examMode        flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @param correctionRound the correction round we want our submission to have results for
@@ -284,7 +284,7 @@ public class SubmissionService {
 
     /**
      * Creates a new Result object, assigns it to the given submission and stores the changes to the database.
-     * 
+     *
      * @param submission the submission for which a new result should be created
      * @return the newly created result
      */
@@ -300,7 +300,7 @@ public class SubmissionService {
 
     /**
      * Copy Feedbacks from one Result to another Result
-     * 
+     *
      * @param newResult new result to copy feedback to
      * @param oldResult old result to copy feedback from
      * @return the list of newly created feedbacks
@@ -313,7 +313,7 @@ public class SubmissionService {
 
     /**
      * Copy feedback from a feedback list to a Result
-     * 
+     *
      * @param result    the result to copy feedback to
      * @param feedbacks the feedbacks which are copied
      */
@@ -487,8 +487,7 @@ public class SubmissionService {
 
     /**
      * Soft locks the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e.
-     * the client will not allow
-     * tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
+     * the client will not allow tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
      *
      * @param submission the submission to lock
      */
@@ -516,7 +515,7 @@ public class SubmissionService {
 
     /**
      * Filters the submissions on each participation so that only the latest submission for each participation remains
-     * 
+     *
      * @param participations Participations for which to reduce the submissions
      * @param submittedOnly  Flag whether to only consider submitted submissions when finding the latest one
      */
@@ -537,7 +536,7 @@ public class SubmissionService {
     /**
      * Filters the submissions to contain only in-time submissions if there are any.
      * If not, the original list is returned.
-     * 
+     *
      * @param submissions The submissions to filter
      * @param <T>         Placeholder for subclass of {@link Submission} e.g. {@link TextSubmission}
      * @return The filtered list of submissions
@@ -554,7 +553,7 @@ public class SubmissionService {
 
     /**
      * Checks if the submission was created before the due date of the exercise.
-     * 
+     *
      * @param submission a student’s submission
      * @return true, if the submission date was before the due date or the exercise has no due date.
      */
@@ -684,7 +683,7 @@ public class SubmissionService {
 
     /**
      * Helper method to prepare the complaint for the client
-     * 
+     *
      * @param complaint the complaint which gets prepared
      */
     private void prepareComplaintAndSubmission(Complaint complaint, Submission submission) {

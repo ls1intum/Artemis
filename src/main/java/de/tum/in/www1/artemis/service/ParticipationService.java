@@ -258,8 +258,7 @@ public class ParticipationService {
 
     /**
      * This method is triggered when a student starts the practice mode of a programming exercise. It creates a Participation which connects the corresponding student and exercise.
-     * Additionally, it configures
-     * repository / build plan related stuff.
+     * Additionally, it configures repository / build plan related stuff.
      *
      * @param exercise                           the exercise which is started, a programming exercise needs to have the template and solution participation eagerly loaded
      * @param participant                        the user or team who starts the exercise

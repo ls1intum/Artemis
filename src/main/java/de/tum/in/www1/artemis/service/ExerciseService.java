@@ -154,8 +154,7 @@ public class ExerciseService {
 
     /**
      * Given an exercise exerciseId, it creates an object node with numberOfSubmissions, totalNumberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are
-     * used by both
-     * stats for assessment dashboard and for instructor dashboard
+     * used by both stats for assessment dashboard and for instructor dashboard
      * TODO: refactor and improve this method
      *
      * @param exercise - the exercise we are interested in
@@ -370,7 +369,7 @@ public class ExerciseService {
 
     /**
      * checks the example submissions of the exercise and removes unnecessary associations to other objects
-     * 
+     *
      * @param exercise the exercise for which example submissions should be checked
      */
     public void checkExampleSubmissions(Exercise exercise) {

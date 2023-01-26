@@ -337,8 +337,7 @@ public class ModelingExerciseResource {
      * <p>
      * Return the latest plagiarism result or null, if no plagiarism was detected for this exercise yet.
      *
-     * @param exerciseId ID of the modeling exercise for which the plagiarism result should be
-     *                       returned
+     * @param exerciseId ID of the modeling exercise for which the plagiarism result should be returned
      * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the
      *         parameters are invalid
      */
@@ -360,10 +359,8 @@ public class ModelingExerciseResource {
      *
      * @param exerciseId          for which all submission should be checked
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
-     * @param minimumScore        consider only submissions whose score is greater or equal to this
-     *                                value
-     * @param minimumSize         consider only submissions whose size is greater or equal to this
-     *                                value
+     * @param minimumScore        consider only submissions whose score is greater or equal to this value
+     * @param minimumSize         consider only submissions whose size is greater or equal to this value
      * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      */
     @GetMapping("modeling-exercises/{exerciseId}/check-plagiarism")

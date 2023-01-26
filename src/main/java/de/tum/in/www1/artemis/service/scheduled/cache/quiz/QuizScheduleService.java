@@ -148,8 +148,7 @@ public class QuizScheduleService {
      * @param quizExerciseId the quizExerciseId of the quiz the submission belongs to (first Key)
      * @param username       the username of the user, who submitted the submission (second Key)
      * @return the quizSubmission, with the given quizExerciseId and username -> return an empty QuizSubmission if there is no quizSubmission -> return null if the quizExerciseId
-     *         or if the
-     *         username is null
+     *         or if the username is null
      */
     public QuizSubmission getQuizSubmission(Long quizExerciseId, String username) {
         if (quizExerciseId == null || username == null) {
@@ -388,7 +387,7 @@ public class QuizScheduleService {
      * Clears all quiz data for one specific quiz exercise for quizzes
      * <p>
      * This will cause cached submissions, participations and results to be lost!
-     * 
+     *
      * @param quizExerciseId refers to one specific quiz exercise for which the data should be cleared
      */
     public void clearQuizData(Long quizExerciseId) {

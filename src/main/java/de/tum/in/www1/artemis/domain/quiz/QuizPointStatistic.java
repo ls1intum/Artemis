@@ -114,8 +114,7 @@ public class QuizPointStatistic extends QuizStatistic {
      *
      * @param score       whose PointCounter decreases
      * @param rated       specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of
-     *                        the
-     *                        quizExercise)
+     *                        the quizExercise)
      * @param countChange the int-value, which will be added to the Counter and participants
      */
     private void changeStatisticBasedOnResult(double score, Boolean rated, int countChange) {

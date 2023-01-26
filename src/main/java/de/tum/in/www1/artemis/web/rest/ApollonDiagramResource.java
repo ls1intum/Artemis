@@ -82,8 +82,7 @@ public class ApollonDiagramResource {
      * @param apollonDiagram the apollonDiagram to update
      * @param courseId       the id of the current course
      * @return the ResponseEntity with status 200 (OK) and with body the updated apollonDiagram, or with status 201 (CREATED) if the apollonDiagram has not been created before, or
-     *         with status
-     *         500 (Internal Server Error) if the apollonDiagram couldn't be updated
+     *         with status 500 (Internal Server Error) if the apollonDiagram couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/course/{courseId}/apollon-diagrams")

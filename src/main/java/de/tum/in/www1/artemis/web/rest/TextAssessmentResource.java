@@ -287,8 +287,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
     /**
      * POST participations/:participationId/submissions/:submissionId/cancel-assessment : Cancel an assessment of a given submission for the current user, i.e. delete the
-     * corresponding result / release the lock. Then the submission is available for assessment
-     * again.
+     * corresponding result / release the lock. Then the submission is available for assessment again.
      *
      * @param submissionId    the id of the submission for which the current assessment should be canceled
      * @param participationId the participationId of the participation for which the assessment should get canceled
@@ -561,7 +560,7 @@ public class TextAssessmentResource extends AssessmentResource {
     /**
      * Checks if the given textExercise is valid and if the requester have the
      * required permissions
-     * 
+     *
      * @param textExercise which needs to be checked
      * @throws BadRequestAlertException if no request was found
      */
@@ -575,7 +574,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
     /**
      * Save TextBlocks received from Client (if present). We need to reference them to the submission first.
-     * 
+     *
      * @param textBlocks     received from Client
      * @param textSubmission to associate blocks with
      */

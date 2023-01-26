@@ -80,8 +80,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * @param fileUploadSubmission the fileUploadSubmission to create
      * @param file                 The uploaded file belonging to the submission
      *
-     * @return the ResponseEntity with status 200 and with body the new fileUploadSubmission, or with status 400 (Bad Request) if the fileUploadSubmission has already an
-     *         ID
+     * @return the ResponseEntity with status 200 and with body the new fileUploadSubmission, or with status 400 (Bad Request) if the fileUploadSubmission has already an ID
      */
     @PostMapping("exercises/{exerciseId}/file-upload-submissions")
     @PreAuthorize("hasRole('USER')")
@@ -199,8 +198,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     /**
      * GET exercises/:exerciseId/file-upload-submissions : get all the fileUploadSubmissions for an exercise. It is possible to filter, to receive only the one that have been
-     * already submitted, or only the one
-     * assessed by the tutor who is doing the call.
+     * already submitted, or only the one assessed by the tutor who is doing the call.
      * In case of exam exercise, it filters out all test run submissions.
      *
      * @param exerciseId      the id of the exercise
@@ -270,8 +268,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     /**
      * GET participations/:participationId/file-upload-editor : Returns the data needed for the file upload editor, which includes the participation, fileUploadSubmission with
-     * answer if existing and the assessments if the submission
-     * was already submitted.
+     * answer if existing and the assessments if the submission was already submitted.
      *
      * @param participationId for which to find the data for the file upload editor
      * @return the ResponseEntity with the File Upload Submission as body
@@ -329,7 +326,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     /**
      * Throws IllegalArgumentException if the file length is over MAX_SUBMISSION_FILE_SIZE.
-     * 
+     *
      * @param file the file in the file upload submission
      */
     private void checkFileLength(MultipartFile file) {

@@ -62,9 +62,8 @@ public class TutorParticipationResource {
 
     /**
      * POST /exercises/:exerciseId/tutor-participations : start the "id" exercise for the current tutor. A tutor participation will be created and returned for the exercise given
-     * by
-     * the exercise id. The tutor participation status will be assigned based on which features are available for the exercise (e.g. grading instructions) The method is valid only
-     * for tutors, since it inits the tutor participation to the exercise, which is different from a standard participation
+     * by the exercise id. The tutor participation status will be assigned based on which features are available for the exercise (e.g. grading instructions) The method is valid
+     * only for tutors, since it inits the tutor participation to the exercise, which is different from a standard participation
      *
      * @param exerciseId the id of the exercise for which to init a tutorParticipations
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
@@ -121,7 +120,7 @@ public class TutorParticipationResource {
      * DELETE /guided-tour/exercises/:exerciseId/example-submission: delete the tutor participation for example submissions of the "exerciseId" exercise for guided tutorials (e.g.
      * when restarting a tutorial)
      * Please note: all tutors can delete their own tutor participation for example submissions when it belongs to a guided tutorial
-     * 
+     *
      * @param exerciseId the exercise id which has example submissions and tutor participations
      * @return the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN)
      */

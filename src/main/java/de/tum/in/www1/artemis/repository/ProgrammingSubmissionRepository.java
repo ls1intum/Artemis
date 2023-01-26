@@ -77,8 +77,7 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
 
     /**
      * Get the programming submission with the given id from the database. The submission is loaded together with exercise it belongs to, its result, the feedback of the result and
-     * the assessor of the
-     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
+     * the assessor of the result. Throws an EntityNotFoundException if no submission could be found for the given id.
      *
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the programming submission with the given id

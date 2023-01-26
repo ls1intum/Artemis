@@ -84,7 +84,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * Returns all programming exercises with its test cases
-     * 
+     *
      * @return all programming exercises
      */
     @Query("SELECT p FROM ProgrammingExercise p LEFT JOIN FETCH p.testCases")
@@ -92,7 +92,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * Returns all programming exercises with their hints and tasks
-     * 
+     *
      * @return all programming exercises
      */
     @Query("""
@@ -408,8 +408,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      *
      * @param examId the exam id we are interested in
      * @return the number of the latest submissions belonging to a participation belonging to the exam id, which have the submitted flag set to true and the submission date before
-     *         the exercise due date, or no exercise
-     *         due date at all (only exercises with manual or semi-automatic correction are considered)
+     *         the exercise due date, or no exercise due date at all (only exercises with manual or semi-automatic correction are considered)
      */
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
@@ -639,7 +638,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     /**
      * Retrieve the programming exercise from a programming exercise participation. In case the programming exercise is null or not initialized,
      * this method will load it properly from the database and connect it to the participation
-     * 
+     *
      * @param participation the programming exercise participation for which the programming exercise should be found
      * @return the programming exercise
      */
@@ -661,7 +660,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * Validate the programming exercise title.
      * 1. Check presence and length of exercise title
      * 2. Find forbidden patterns in exercise title
-     * 
+     *
      * @param programmingExercise Programming exercise to be validated
      * @param course              Course of the programming exercise
      */
@@ -691,7 +690,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * 2. Check presence and length of course short name
      * 3. Find forbidden patterns in exercise short name
      * 4. Check that the short name doesn't already exist withing course or exam exercises
-     * 
+     *
      * @param programmingExercise Programming exercise to be validated
      * @param course              Course of the programming exercise
      */
@@ -726,7 +725,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * Validate the general course settings.
      * 1. Validate the title
      * 2. Validate the course and programming exercise short name.
-     * 
+     *
      * @param programmingExercise Programming exercise to be validated
      * @param course              Course of the programming exercise
      */
