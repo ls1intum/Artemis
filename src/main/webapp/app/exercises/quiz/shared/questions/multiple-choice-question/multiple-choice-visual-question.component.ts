@@ -67,17 +67,7 @@ export class MultipleChoiceVisualQuestionComponent {
     }
 
     deleteAnswer(index: number) {
-        const newAnswers: AnswerOption[] = [];
-
-        this.question.answerOptions?.forEach((answerOption, i) => {
-            if (i === index) {
-                return;
-            }
-
-            newAnswers.push(answerOption);
-        });
-
-        this.question.answerOptions = newAnswers;
+        this.question.answerOptions?.splice(index, 1);
 
         this.questionChanged.emit();
     }
