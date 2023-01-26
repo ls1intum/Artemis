@@ -103,6 +103,7 @@
                 <div class="d-flex">
                     <div class="form-group flex-grow-1">
                         <jhi-date-time-picker
+                            id="field_startDate"
                             labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}"
                             formControlName="startDate"
                             [(ngModel)]="course.startDate"
@@ -112,6 +113,7 @@
                     </div>
                     <div class="form-group flex-grow-1 ms-3">
                         <jhi-date-time-picker
+                            id="field_endDate"
                             labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}"
                             formControlName="endDate"
                             [(ngModel)]="course.endDate"
