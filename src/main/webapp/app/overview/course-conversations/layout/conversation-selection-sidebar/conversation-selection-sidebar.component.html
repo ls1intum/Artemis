@@ -49,7 +49,11 @@
                         <hr class="m-0" />
                     </div>
                     <!-- Channels -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedChannelConversations?.length">
+                    <div
+                        [hidden]="searchTerm && searchTerm.length > 0 && !displayedChannelConversations?.length"
+                        *ngIf="course.courseCommunicationConfiguration!.channelMessagingEnabled"
+                        id="channel-section"
+                    >
                         <jhi-conversation-sidebar-section
                             [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.channels' | artemisTranslate"
                             [headerKey]="'channels'"
@@ -78,7 +82,11 @@
                         <hr class="m-0" />
                     </div>
                     <!-- Group Chats -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedGroupChats?.length">
+                    <div
+                        [hidden]="searchTerm && searchTerm.length > 0 && !displayedGroupChats?.length"
+                        *ngIf="course.courseCommunicationConfiguration!.groupMessagingEnabled"
+                        id="group-chat-section"
+                    >
                         <jhi-conversation-sidebar-section
                             [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.groupChats' | artemisTranslate"
                             [headerKey]="'groupChats'"
@@ -99,7 +107,11 @@
                         <hr class="m-0" />
                     </div>
                     <!-- Direct Messages -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedOneToOneChats?.length">
+                    <div
+                        [hidden]="searchTerm && searchTerm.length > 0 && !displayedOneToOneChats?.length"
+                        *ngIf="course.courseCommunicationConfiguration!.oneToOneMessagingEnabled"
+                        id="direct-messages-section"
+                    >
                         <jhi-conversation-sidebar-section
                             [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.oneToOneChats' | artemisTranslate"
                             [headerKey]="'directMessages'"

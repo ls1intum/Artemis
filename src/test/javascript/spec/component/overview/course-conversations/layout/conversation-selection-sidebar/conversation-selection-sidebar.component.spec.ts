@@ -31,6 +31,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { GroupChatIconComponent } from 'app/overview/course-conversations/other/group-chat-icon/group-chat-icon.component';
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
 import { NgbTooltipMocksModule } from '../../../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { Course } from 'app/entities/course.model';
 
 const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -39,7 +40,7 @@ examples.forEach((activeConversation) => {
         let component: ConversationSelectionSidebarComponent;
         let fixture: ComponentFixture<ConversationSelectionSidebarComponent>;
         let metisConversationService: MetisConversationService;
-        const course = { id: 1 } as any;
+        let course: Course;
         const canCreateChannel = jest.fn();
         let allConversations: ConversationDto[] = [];
 
@@ -97,6 +98,8 @@ examples.forEach((activeConversation) => {
 
             canCreateChannel.mockReturnValue(true);
             metisConversationService = TestBed.inject(MetisConversationService);
+            course = new Course();
+            course.id = 1;
             Object.defineProperty(metisConversationService, 'course', { get: () => course });
             Object.defineProperty(metisConversationService, 'activeConversation$', { get: () => new BehaviorSubject(activeConversation).asObservable() });
             Object.defineProperty(metisConversationService, 'conversationsOfUser$', {
@@ -114,6 +117,75 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
             tick(301);
             expect(component).toBeTruthy();
+        }));
+
+        it('should hide the channel section if not enabled in the course', fakeAsync(() => {
+            fixture.detectChanges();
+            tick(301);
+            expect(fixture.debugElement.query(By.css('#channel-section'))).toBeTruthy();
+
+            course.courseCommunicationConfiguration!.channelMessagingEnabled = false;
+            fixture.detectChanges();
+            tick(301);
+            expect(fixture.debugElement.query(By.css('#channel-section'))).toBeFalsy();
+        }));
+
+        it('should hide the group chat section if not enabled in the course', fakeAsync(() => {
+            fixture.detectChanges();
+            tick(301);
+            expect(fixture.debugElement.query(By.css('#group-chat-section'))).toBeTruthy();
+
+            course.courseCommunicationConfiguration!.groupMessagingEnabled = false;
+            fixture.detectChanges();
+            tick(301);
+            expect(fixture.debugElement.query(By.css('#group-chat-section'))).toBeFalsy();
+        }));
+
+        it('should hide the direct messaging section if not enabled in the course', fakeAsync(() => {
+            fixture.detectChanges();
+            tick(301);
+            expect(fixture.debugElement.query(By.css('#direct-messages-section'))).toBeTruthy();
+
+            course.courseCommunicationConfiguration!.oneToOneMessagingEnabled = false;
+            fixture.detectChanges();
+            tick(301);
+            expect(fixture.debugElement.query(By.css('#direct-messages-section'))).toBeFalsy();
+        }));
+
+        it('should not include channels in the starred section if not enabled in the course', fakeAsync(() => {
+            course.courseCommunicationConfiguration!.channelMessagingEnabled = false;
+            course.courseCommunicationConfiguration!.groupMessagingEnabled = true;
+            course.courseCommunicationConfiguration!.oneToOneMessagingEnabled = true;
+
+            fixture.detectChanges();
+            tick(301);
+            expect(component.starredConversations).toHaveLength(2);
+            expect(component.starredConversations).toContain(favoriteGroupChat);
+            expect(component.starredConversations).toContain(favoriteOneToOneChat);
+        }));
+
+        it('should not include group chats in the starred section if not enabled in the course', fakeAsync(() => {
+            course.courseCommunicationConfiguration!.channelMessagingEnabled = true;
+            course.courseCommunicationConfiguration!.groupMessagingEnabled = false;
+            course.courseCommunicationConfiguration!.oneToOneMessagingEnabled = true;
+
+            fixture.detectChanges();
+            tick(301);
+            expect(component.starredConversations).toHaveLength(2);
+            expect(component.starredConversations).toContain(favoriteChannel);
+            expect(component.starredConversations).toContain(favoriteOneToOneChat);
+        }));
+
+        it('should not include one to one chats in the starred section if not enabled in the course', fakeAsync(() => {
+            course.courseCommunicationConfiguration!.channelMessagingEnabled = true;
+            course.courseCommunicationConfiguration!.groupMessagingEnabled = true;
+            course.courseCommunicationConfiguration!.oneToOneMessagingEnabled = false;
+
+            fixture.detectChanges();
+            tick(301);
+            expect(component.starredConversations).toHaveLength(2);
+            expect(component.starredConversations).toContain(favoriteChannel);
+            expect(component.starredConversations).toContain(favoriteGroupChat);
         }));
 
         it('should set properties correctly', fakeAsync(() => {
