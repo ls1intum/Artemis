@@ -67,6 +67,7 @@ spotless {
         eclipse("4.19.0").configFile "artemis-spotless-style.xml"
 
         removeUnusedImports()
+        trimTrailingWhitespace()
     }
 }
 
