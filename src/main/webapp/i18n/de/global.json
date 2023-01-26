@@ -201,6 +201,7 @@
             "dashboard": "Dashboard",
             "units": "Einheiten",
             "edit": "Bearbeiten",
+            "connect": "Verknüpfen",
             "editSelected": "Ausgewählte bearbeiten",
             "editInEditor": "In Editor bearbeiten",
             "editInIntelliJ": "In IntelliJ bearbeiten",

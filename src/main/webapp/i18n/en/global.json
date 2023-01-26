@@ -202,6 +202,7 @@
             "confirm": "Confirm",
             "download": "Download",
             "edit": "Edit",
+            "connect": "Connect",
             "editSelected": "Edit selected",
             "editInEditor": "Edit in editor",
             "editInIntelliJ": "Edit in IntelliJ",
