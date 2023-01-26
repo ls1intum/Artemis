@@ -10,6 +10,7 @@ import dayjs from 'dayjs/esm';
 import { Attachment } from 'app/entities/attachment.model';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { CourseCommunicationConfiguration } from 'app/entities/course-communication-configuration.model';
 
 export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/Metis-Attachment.pdf' } as Attachment;
 
@@ -35,6 +36,13 @@ export const metisCourse = {
     exercises: [metisExercise, metisExercise2],
     lectures: [metisLecture, metisLecture2],
     postsEnabled: true,
+    courseCommunicationConfiguration: {
+        id: 1,
+        questionsAndAnswersEnabled: true,
+        channelMessagingEnabled: true,
+        groupMessagingEnabled: true,
+        oneToOneMessagingEnabled: true,
+    } as CourseCommunicationConfiguration,
     groups: ['metisTutors', 'metisStudents', 'metisInstructors'],
 } as Course;
 

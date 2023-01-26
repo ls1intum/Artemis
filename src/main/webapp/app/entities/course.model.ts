@@ -11,6 +11,7 @@ import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
+import { CourseCommunicationConfiguration } from 'app/entities/course-communication-configuration.model';
 
 export const enum Language {
     ENGLISH = 'ENGLISH',
@@ -67,6 +68,7 @@ export class Course implements BaseEntity {
     public organizations?: Organization[];
     public tutorialGroups?: TutorialGroup[];
     public onlineCourseConfiguration?: OnlineCourseConfiguration;
+    public courseCommunicationConfiguration?: CourseCommunicationConfiguration;
 
     // helper attributes
     public isAtLeastTutor?: boolean;

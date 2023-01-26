@@ -34,10 +34,28 @@
                     <div jhiOrionFilter [showInOrionWindow]="false" class="guided-tour tab-item statistics" routerLink="statistics" routerLinkActive="active">
                         <div jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</div>
                     </div>
-                    <div *ngIf="course.postsEnabled" jhiOrionFilter [showInOrionWindow]="false" class="tab-item discussion" routerLink="discussion" routerLinkActive="active">
+                    <div
+                        *ngIf="course.courseCommunicationConfiguration!.questionsAndAnswersEnabled"
+                        jhiOrionFilter
+                        [showInOrionWindow]="false"
+                        class="tab-item discussion"
+                        routerLink="discussion"
+                        routerLinkActive="active"
+                    >
                         <div jhiTranslate="artemisApp.courseOverview.menu.communication">Communication</div>
                     </div>
-                    <div *ngIf="course.postsEnabled" jhiOrionFilter [showInOrionWindow]="false" class="tab-item discussion" routerLink="messages" routerLinkActive="active">
+                    <div
+                        *ngIf="
+                            course.courseCommunicationConfiguration!.channelMessagingEnabled ||
+                            course.courseCommunicationConfiguration!.groupMessagingEnabled ||
+                            course.courseCommunicationConfiguration!.oneToOneMessagingEnabled
+                        "
+                        jhiOrionFilter
+                        [showInOrionWindow]="false"
+                        class="tab-item discussion"
+                        routerLink="messages"
+                        routerLinkActive="active"
+                    >
                         <div jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</div>
                     </div>
                     <div
