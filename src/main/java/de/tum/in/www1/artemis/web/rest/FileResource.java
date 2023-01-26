@@ -264,6 +264,13 @@ public class FileResource {
         return responseEntityForFilePath(FilePathService.getCourseIconFilePath(), filename);
     }
 
+    @GetMapping("files/user/signatures/{examUserId}/{filename:.+}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId, @PathVariable String filename) {
+        log.debug("REST request to get file : {}", filename);
+        return responseEntityForFilePath(FilePathService.getExamUserSignatureFilePath(), filename);
+    }
+
     /**
      * GET /files/attachments/lecture/:lectureId/:filename : Get the lecture attachment
      *

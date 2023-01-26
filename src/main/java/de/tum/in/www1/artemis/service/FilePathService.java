@@ -36,6 +36,10 @@ public class FilePathService {
         return Path.of(fileUploadPath, "images", "course", "icons").toString();
     }
 
+    public static String getExamUserSignatureFilePath() {
+        return Path.of(fileUploadPath, "images", "user", "signatures").toString();
+    }
+
     public static String getLectureAttachmentFilePath() {
         return Path.of(fileUploadPath, "attachments", "lecture").toString();
     }

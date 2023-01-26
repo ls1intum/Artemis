@@ -149,9 +149,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      */
     onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
         // If the user is not registered for this exam yet, perform the server call to add them
-        console.log(this.allRegisteredUsers);
-        console.log(this.allRegisteredUsers.map((u) => u.id).includes(user.id) && user.login);
-        if (this.allRegisteredUsers.length > 0 && !this.allRegisteredUsers.map((u) => u.id).includes(user.id) && user.login) {
+        if (!this.allRegisteredUsers.map((u) => u.id).includes(user.id) && user.login) {
             this.isTransitioning = true;
             this.examManagementService.addStudentToExam(this.courseId, this.exam.id!, user.login).subscribe({
                 next: (student) => {

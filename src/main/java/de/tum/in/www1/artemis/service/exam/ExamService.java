@@ -1332,7 +1332,7 @@ public class ExamService {
      */
     public Page<Exam> getAllExams(Pageable pageable, final User user) {
         final Page<Exam> examPage;
-        examPage = examRepository.findAllExamsWithUserLogin(user.getGroups(), pageable);
+        examPage = examRepository.findAllExamsInCoursesWhereInstructor(user.getGroups(), pageable);
         return examPage;
     }
 

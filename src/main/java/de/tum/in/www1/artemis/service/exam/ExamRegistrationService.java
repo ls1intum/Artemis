@@ -103,9 +103,7 @@ public class ExamRegistrationService {
             else {
                 ExamUser registeredExamUser = new ExamUser();
                 registeredExamUser.setUser(optionalStudent.get());
-                registeredExamUser.setExam(exam);
-                registeredExamUser = examUserRepository.save(registeredExamUser);
-                exam.addExamUser(registeredExamUser);
+                setExamUserObject(exam, registeredExamUser);
             }
         }
         examRepository.save(exam);
@@ -127,6 +125,22 @@ public class ExamRegistrationService {
         }
 
         return notFoundStudentsDTOs;
+    }
+
+    private void setExamUserObject(Exam exam, ExamUser registeredExamUser) {
+        registeredExamUser.setExam(exam);
+
+        registeredExamUser.setDidCheckRegistrationNumber(false);
+        registeredExamUser.setDidCheckName(false);
+        registeredExamUser.setDidCheckLogin(false);
+        registeredExamUser.setDidCheckImage(false);
+        registeredExamUser.setPlannedRoom("not set");
+        registeredExamUser.setPlannedSeat("not set");
+        registeredExamUser.setActualRoom("not set");
+        registeredExamUser.setActualSeat("not set");
+
+        registeredExamUser = examUserRepository.save(registeredExamUser);
+        exam.addExamUser(registeredExamUser);
     }
 
     /**
@@ -163,16 +177,13 @@ public class ExamRegistrationService {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
-        ExamUser registeredExamUser = new ExamUser();
-        registeredExamUser.setUser(student);
-        registeredExamUser.setExam(exam);
-
         if (!student.getGroups().contains(course.getStudentGroupName())) {
             userService.addUserToGroup(student, course.getStudentGroupName(), Role.STUDENT);
         }
 
-        registeredExamUser = examUserRepository.save(registeredExamUser);
-        exam.addExamUser(registeredExamUser);
+        ExamUser registeredExamUser = new ExamUser();
+        registeredExamUser.setUser(student);
+        setExamUserObject(exam, registeredExamUser);
         examRepository.save(exam);
 
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -294,9 +305,7 @@ public class ExamRegistrationService {
                     && !student.getGroups().contains(course.getInstructorGroupName())) {
                 ExamUser registeredExamUser = new ExamUser();
                 registeredExamUser.setUser(student);
-                registeredExamUser.setExam(exam);
-                registeredExamUser = examUserRepository.save(registeredExamUser);
-                exam.addExamUser(registeredExamUser);
+                setExamUserObject(exam, registeredExamUser);
                 userData.put("student " + i, student.toDatabaseString());
             }
         }

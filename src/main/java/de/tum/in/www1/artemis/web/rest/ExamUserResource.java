@@ -48,8 +48,7 @@ public class ExamUserResource {
      */
     @PostMapping("courses/{courseId}/exams/{examId}/exam-users")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<ExamUser> updateExamUser(@RequestParam(value = "file") MultipartFile file, @PathVariable Long courseId, @PathVariable Long examId,
-            @RequestBody ExamUserDTO examUserDTO) {
+    public ResponseEntity<ExamUser> updateExamUser(@RequestPart ExamUserDTO examUserDTO, @RequestPart MultipartFile file, @PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to update {} as exam user to exam : {}", examUserDTO.login(), examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
