@@ -109,6 +109,10 @@ public class Course extends DomainObject {
     @JoinColumn(name = "online_course_configuration_id")
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "course_communication_configuration_id")
+    private CourseCommunicationConfiguration courseCommunicationConfiguration;
+
     @Column(name = "max_complaints", nullable = false)
     @JsonView(QuizView.Before.class)
     private Integer maxComplaints = 3;  // default value
@@ -813,5 +817,13 @@ public class Course extends DomainObject {
 
     public void setTutorialGroupsConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
         this.tutorialGroupsConfiguration = tutorialGroupsConfiguration;
+    }
+
+    public CourseCommunicationConfiguration getCourseCommunicationConfiguration() {
+        return courseCommunicationConfiguration;
+    }
+
+    public void setCourseCommunicationConfiguration(CourseCommunicationConfiguration courseCommunicationConfiguration) {
+        this.courseCommunicationConfiguration = courseCommunicationConfiguration;
     }
 }
