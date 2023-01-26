@@ -23,15 +23,15 @@ Place the webpage that should be shown in case of Artemis being unreachable (in 
 
 .. code-block::
 
-   server {
-       location /service-down.html {
-           root /srv/http;
-           internal;
-       }
+    server {
+        location /service-down.html {
+            root /srv/http;
+            internal;
+        }
 
-       location / {
+        location / {
             # regular proxy configuration
-       }
+        }
 
-       error_page 501 502 503 /service_down.html;
-   }
+        error_page 501 502 503 /service_down.html;
+    }
