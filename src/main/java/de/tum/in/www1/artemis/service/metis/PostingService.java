@@ -16,6 +16,10 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Posting;
 import de.tum.in.www1.artemis.domain.metis.UserRole;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -141,14 +145,41 @@ public abstract class PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         // check if the course has posts enabled
-        if (!course.getPostsEnabled()) {
+        if (!course.getCourseCommunicationConfiguration().getQuestionsAndAnswersEnabled()) {
             throw new BadRequestAlertException("Postings are not enabled for this course", getEntityName(), "400", true);
+        }
+        return course;
+    }
+
+    Course preCheckUserAndCourseForConversation(User user, Conversation conversation, Long courseId) {
+        final Course course = courseRepository.findByIdElseThrow(courseId);
+        // user has to be at least student in the course
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        // check if the course has messaging enabled for the specific conversation type
+        boolean messagingEnabledForConversationType = false;
+        if (conversation instanceof Channel) {
+            messagingEnabledForConversationType = course.getCourseCommunicationConfiguration().getChannelMessagingEnabled();
+        }
+        else if (conversation instanceof GroupChat) {
+            messagingEnabledForConversationType = course.getCourseCommunicationConfiguration().getGroupMessagingEnabled();
+        }
+        else if (conversation instanceof OneToOneChat) {
+            messagingEnabledForConversationType = course.getCourseCommunicationConfiguration().getOneToOneMessagingEnabled();
+        }
+        else {
+            throw new IllegalArgumentException("Conversation type not supported");
+        }
+        if (!messagingEnabledForConversationType) {
+            var errorMessage = String.format("Messaging not enabled for this course and conversation type: %s", conversation.getClass().getSimpleName());
+            throw new BadRequestAlertException(errorMessage, getEntityName(), "400", true);
         }
         return course;
     }
 
     /**
      * helper method that fetches groups and authorities of all posting authors in a list of Posts
+     *
      * @param postsInCourse list of posts whose authors are populated with their groups, authorities, and authorRole
      */
     void setAuthorRoleOfPostings(List<Post> postsInCourse) {
