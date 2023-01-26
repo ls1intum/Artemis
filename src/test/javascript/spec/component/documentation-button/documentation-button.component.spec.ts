@@ -46,7 +46,7 @@ describe('DocumentationButtonComponent', () => {
         window.open = mockedOpen;
 
         comp.openDocumentation();
-        expect(mockedOpen).toHaveBeenCalledWith('https://docs.artemis.ase.in.tum.de/user/courses/customizable/', expect.anything());
+        expect(mockedOpen).toHaveBeenCalledWith('https://docs.artemis.cit.tum.de/user/courses/customizable/', expect.anything());
 
         window.open = originalOpen;
     });
