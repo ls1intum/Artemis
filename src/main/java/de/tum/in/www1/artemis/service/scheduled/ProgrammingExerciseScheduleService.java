@@ -143,6 +143,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     /**
      * Checks if scheduled tasks have to be started for the given exercise.
+     * 
      * @param exercise for which the check should be performed.
      * @return true, if the exercise needs to be scheduled.
      */
@@ -200,6 +201,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * - Due
      * - Build & Test after due date
      * - Assessment due date
+     * 
      * @param exerciseId the id of the exercise for which the tasks should be cancelled
      */
     public void cancelAllScheduledTasks(Long exerciseId) {
@@ -289,8 +291,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * Schedules all necessary tasks for participations with individual due dates.
      *
      * Also removes schedules for individual participations of their individual due date no longer exists.
+     * 
      * @param exercise the participations belong to.
-     * @param now the current time.
+     * @param now      the current time.
      */
     private void scheduleParticipationTasks(final ProgrammingExercise exercise, final ZonedDateTime now) {
         final boolean isScoreUpdateNeeded = isScoreUpdateAfterDueDateNeeded(exercise);
@@ -485,7 +488,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * Returns a runnable that, once executed, will (1) lock all student repositories and (2) stash all student changes in the online editor for manual assessments
      * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
      *
-     * @param exercise The exercise for which the repositories should be locked
+     * @param exercise  The exercise for which the repositories should be locked
      * @param condition a condition that determines whether the operation will be executed for a specific participation
      * @return a Runnable that will lock the repositories once it is executed
      */
@@ -538,6 +541,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     /**
      * Creates a runnable that will lock the Git repository of the given participation when run.
+     * 
      * @param participation of which the Git repository will be locked.
      * @return a runnable that will lock the Git repository of the participation when run.
      */
@@ -559,7 +563,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * Tasks to unlock will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
      * NOTE: this will not immediately unlock the repositories as only a Runnable is returned!
      *
-     * @param exercise The exercise for which the repositories should be unlocked
+     * @param exercise  The exercise for which the repositories should be unlocked
      * @param condition a condition that determines whether the operation will be executed for a specific participation
      * @return a Runnable that will unlock the repositories once it is executed
      */
@@ -620,7 +624,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     /**
      * this method schedules individual lock tasks for programming exercises (mostly in the context of exams)
-     * @param exercise the programming exercise for which the lock is executed
+     * 
+     * @param exercise           the programming exercise for which the lock is executed
      * @param individualDueDates these are the individual due dates for students taking individual workingTimes of student exams into account
      */
     private void scheduleIndividualRepositoryLockTasks(ProgrammingExercise exercise, Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates) {
@@ -660,9 +665,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * <p>
      *
      * @param programmingExerciseId the programming exercise whose participations should be processed
-     * @param operation the operation to perform
-     * @param condition the condition that tests whether to invoke the operation on a participation
-     * @param operationName the name of the operation, this is only used for logging
+     * @param operation             the operation to perform
+     * @param condition             the condition that tests whether to invoke the operation on a participation
+     * @param operationName         the name of the operation, this is only used for logging
      * @return a list containing all participations for which the operation has failed with an exception
      * @throws EntityNotFoundException if the programming exercise can't be found.
      */

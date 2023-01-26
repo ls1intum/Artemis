@@ -102,13 +102,15 @@ public class ProgrammingExerciseResource {
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
     /**
-     * Java package name Regex according to Java 14 JLS (<a href="https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1">https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1</a>),
+     * Java package name Regex according to Java 14 JLS
+     * (<a href="https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1">https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1</a>),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
      */
     private static final String packageNameRegex = "^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z]\\w*(?:\\.[A-Z_a-z]\\w*)*$";
 
     /**
-     * Swift package name Regex derived from (<a href="https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412">https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412</a>),
+     * Swift package name Regex derived from
+     * (<a href="https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412">https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412</a>),
      * with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
      */
     private static final String packageNameRegexForSwift = "^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][\\dA-Za-z]*$";
@@ -291,7 +293,7 @@ public class ProgrammingExerciseResource {
      * @param updatedProgrammingExercise the programmingExercise that has been updated on the client
      * @param notificationText           to notify the student group about the update on the programming exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the updated ProgrammingExercise
-     * is not valid, or with status 500 (Internal Server Error) if the updated ProgrammingExercise couldn't be saved to the database
+     *         is not valid, or with status 500 (Internal Server Error) if the updated ProgrammingExercise couldn't be saved to the database
      */
     @PutMapping(PROGRAMMING_EXERCISES)
     @PreAuthorize("hasRole('EDITOR')")
@@ -363,10 +365,11 @@ public class ProgrammingExerciseResource {
 
     /**
      * PUT /programming-exercises/timeline : Updates the timeline attributes of a given exercise
+     * 
      * @param updatedProgrammingExercise containing the changes that have to be saved
-     * @param notificationText an optional text to notify the student group about the update on the programming exercise
+     * @param notificationText           an optional text to notify the student group about the update on the programming exercise
      * @return the ResponseEntity with status 200 (OK) with the updated ProgrammingExercise, or with status 403 (Forbidden)
-     * if the user is not allowed to update the exercise or with 404 (Not Found) if the updated ProgrammingExercise couldn't be found in the database
+     *         if the user is not allowed to update the exercise or with 404 (Not Found) if the updated ProgrammingExercise couldn't be found in the database
      */
     @PutMapping(TIMELINE)
     @PreAuthorize("hasRole('EDITOR')")
@@ -389,7 +392,8 @@ public class ProgrammingExerciseResource {
      * @param exerciseId              The ID of the exercise for which to change the problem statement
      * @param updatedProblemStatement The new problemStatement
      * @param notificationText        to notify the student group about the updated problemStatement on the programming exercise
-     * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the user does not have permissions to access the programming exercise.
+     * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the
+     *         user does not have permissions to access the programming exercise.
      */
     @PatchMapping(PROBLEM)
     @PreAuthorize("hasRole('EDITOR')")
@@ -476,7 +480,7 @@ public class ProgrammingExerciseResource {
     /**
      * GET /programming-exercises/:exerciseId/with-template-and-solution-participation
      *
-     * @param exerciseId the id of the programmingExercise to retrieve
+     * @param exerciseId            the id of the programmingExercise to retrieve
      * @param withSubmissionResults get all submission results
      * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
      */
@@ -523,9 +527,9 @@ public class ProgrammingExerciseResource {
      *
      * @param exerciseId of the exercise
      * @return the ResponseEntity with status
-     * 200 (OK) if combine has been successfully executed
-     * 403 (Forbidden) if the user is not admin and course instructor or
-     * 500 (Internal Server Error)
+     *         200 (OK) if combine has been successfully executed
+     *         403 (Forbidden) if the user is not admin and course instructor or
+     *         500 (Internal Server Error)
      */
     @PutMapping(value = COMBINE_COMMITS, produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasRole('EDITOR')")
@@ -665,7 +669,7 @@ public class ProgrammingExerciseResource {
      *
      * @param exerciseId of the exercise
      * @return the ResponseEntity with status 200 (OK) and the list of auxiliary repositories for the
-     *          given programming exercise. 404 when the programming exercise was not found.
+     *         given programming exercise. 404 when the programming exercise was not found.
      */
     @GetMapping(AUXILIARY_REPOSITORY)
     @PreAuthorize("hasRole('TA')")
@@ -676,7 +680,8 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * Deletes BASE and SOLUTION build plan of a programming exercise and creates those again. This reuses the build plan creation logic of the programming exercise creation service.
+     * Deletes BASE and SOLUTION build plan of a programming exercise and creates those again. This reuses the build plan creation logic of the programming exercise creation
+     * service.
      *
      * @param exerciseId of the programming exercise
      * @return the ResponseEntity with status 200 (OK) if the recreation was successful.
@@ -694,13 +699,14 @@ public class ProgrammingExerciseResource {
     /**
      * PUT /programming-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing ProgrammingExercise.
      *
-     * @param exerciseId                                   of the exercise
-     * @param programmingExercise                          the ProgrammingExercise to re-evaluate and update
-     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
+     * @param exerciseId                                  of the exercise
+     * @param programmingExercise                         the ProgrammingExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
      *
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the ProgrammingExercise is not valid,
-     * or with status 409 (Conflict) if given exerciseId is not same as in the object of the request body, or with status 500 (Internal Server Error) if the ProgrammingExercise
-     * couldn't be updated
+     *         or with status 409 (Conflict) if given exerciseId is not same as in the object of the request body, or with status 500 (Internal Server Error) if the
+     *         ProgrammingExercise
+     *         couldn't be updated
      */
     @PutMapping(REEVALUATE_EXERCISE)
     @PreAuthorize("hasRole('EDITOR')")
@@ -725,9 +731,10 @@ public class ProgrammingExerciseResource {
      * DELETE programming-exercises/:exerciseId/tasks : Delete all tasks and solution entries for an existing ProgrammingExercise.
      * Note: This endpoint exists only for testing purposes and will be removed at a later stage of the development of HESTIA
      * (automatic generation of code hints for programming exercises in Java).
+     * 
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 204},
-     * or with status {@code 400 (Bad Request) if the exerciseId is not valid}.
+     *         or with status {@code 400 (Bad Request) if the exerciseId is not valid}.
      */
     @DeleteMapping(TASKS)
     @PreAuthorize("hasRole('EDITOR')")
@@ -747,6 +754,7 @@ public class ProgrammingExerciseResource {
      * Returns the solution repository files with content for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the solution participation id is not known for the client.
+     * 
      * @param exerciseId the exercise for which the solution repository files should be retrieved
      * @return a redirect to the endpoint returning the files with content
      */
@@ -769,6 +777,7 @@ public class ProgrammingExerciseResource {
      * Returns the template repository files with content for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the template participation id is not known for the client.
+     * 
      * @param exerciseId the exercise for which the template repository files should be retrieved
      * @return a redirect to the endpoint returning the files with content
      */
@@ -791,6 +800,7 @@ public class ProgrammingExerciseResource {
      * Returns the solution repository file names for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the solution participation id is not known for the client.
+     * 
      * @param exerciseId the exercise for which the solution repository files should be retrieved
      * @return a redirect to the endpoint returning the files with content
      */
@@ -811,6 +821,7 @@ public class ProgrammingExerciseResource {
      * GET programming-exercises/:exerciseId/build-log-statistics
      *
      * Returns the averaged build log statistics for a given programming exercise.
+     * 
      * @param exerciseId the exercise for which the build log statistics should be retrieved
      * @return a DTO containing the average build log statistics
      */

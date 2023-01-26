@@ -245,7 +245,7 @@ public class AtheneService {
     /**
      * Parse text clusters of type Athene-Protobuf-Cluster to TextCluster
      *
-     * @param clusters   the list of text clusters of type Athene-Protobuf-Cluster to parse
+     * @param clusters the list of text clusters of type Athene-Protobuf-Cluster to parse
      * @return list of TextClusters
      */
     public List<TextCluster> parseTextClusters(List<Cluster> clusters) {

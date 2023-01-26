@@ -97,8 +97,9 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     /**
      * Local helper function that given a userId and an expected status, adds an event and checks if the result is as expected
+     * 
      * @param expected the status expected from the Http response
-     * @param userId the id of the user to be tested in the event
+     * @param userId   the id of the user to be tested in the event
      */
     private void expectEventAddedWithResponse(HttpStatus expected, Long userId) throws Exception {
         TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), userId, exercise.getId(), studentParticipation.getId(), textSubmission.getId());

@@ -31,6 +31,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     /**
      * Load submission with eager Results
+     * 
      * @param submissionId the submissionId
      * @return optional submission
      */
@@ -42,6 +43,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     /**
      * Get all submissions of a participation
+     * 
      * @param participationId the id of the participation
      * @return a list of the participation's submissions
      */
@@ -104,7 +106,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * Get the number of currently locked submissions for a specific user in the given exam. These are all submissions for which the user started, but has not yet finished the
      * assessment.
      *
-     * @param userId   the id of the user
+     * @param userId the id of the user
      * @param examId the id of the exam
      * @return the number of currently locked submissions for a specific user in the given course
      */
@@ -190,7 +192,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * Count number of in-time submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
      *
      * @param exerciseIds the exercise ids of the course we are interested in
-     * @return the number of submissions belonging to the exercise ids, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
+     * @return the number of submissions belonging to the exercise ids, which have the submitted flag set to true and the submission date before the exercise due date, or no
+     *         exercise
      *         due date at all
      */
     @Query("""
@@ -206,7 +209,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     /**
      * Count the number of in-time submissions for an exam. Only submissions for Text, Modeling and File Upload exercises are included.
      *
-     * @param examId -  the exam id we are interested in
+     * @param examId - the exam id we are interested in
      * @return the number of submissions belonging to the exam id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
      *         due date at all
      */
@@ -271,6 +274,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     /**
      * Should be used for exam dashboard to ignore test run submissions
+     * 
      * @param exerciseId the exercise id we are interested in
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
      *         exercise due date at all
@@ -287,6 +291,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     /**
      * Should be used for exam dashboard to ignore test run submissions
+     * 
      * @param exerciseIds the exercise id we are interested in
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
      *         exercise due date at all
@@ -308,6 +313,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     /**
      * Calculate the number of submitted submissions for the given exercise. This query uses the participations to make sure that each student is only counted once
+     * 
      * @param exerciseId the exercise id we are interested in
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true
      */
@@ -321,7 +327,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     /**
      * Calculate the number of submissions for the given exercise by the given student.
-     * @param exerciseId the exercise id we are interested in
+     * 
+     * @param exerciseId   the exercise id we are interested in
      * @param studentLogin the login of the student we are interested in
      * @return the number of submissions belonging to the exercise and student id
      */
@@ -357,8 +364,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * your submission to have all its results set.
      *
      * @param exerciseId the exercise id we are interested in
-     * @param assessor the assessor we are interested in
-     * @param <T> the type of the submission
+     * @param assessor   the assessor we are interested in
+     * @param <T>        the type of the submission
      * @return the submissions belonging to the exercise id, which have been assessed by the given assessor
      */
     @Query("""
@@ -387,9 +394,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the
      * database.
      *
-     * @param participation   the participation for which the submission should be initialized
-     * @param exercise        the corresponding exercise, should be either a text, modeling or file upload exercise, otherwise it will instantly return and not do anything
-     * @param submissionType  type for the submission to be initialized
+     * @param participation  the participation for which the submission should be initialized
+     * @param exercise       the corresponding exercise, should be either a text, modeling or file upload exercise, otherwise it will instantly return and not do anything
+     * @param submissionType type for the submission to be initialized
      * @return a new submission for the given type connected to the given participation
      */
     default Submission initializeSubmission(Participation participation, Exercise exercise, SubmissionType submissionType) {
@@ -423,6 +430,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     /**
      * Count number of submissions for exercise.
+     * 
      * @param exerciseId the exercise id we are interested in
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true, separated into before and after the due date
      */

@@ -8,6 +8,7 @@ public interface LearningObject {
 
     /**
      * Whether the participant has completed the object
+     * 
      * @param user
      * @return True if completed, else false
      */
@@ -15,6 +16,7 @@ public interface LearningObject {
 
     /**
      * Get the date when the object has been completed by the participant
+     * 
      * @param user
      * @return The datetime when the object was first completed or null
      */

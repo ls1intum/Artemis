@@ -627,7 +627,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     /**
      * Sets the due date and build and test after due date for the {@code programmingExercise} to NOW + the delay.
      *
-     * @param dueDateDelayMillis amount of milliseconds from reference in which the due date should be.
+     * @param dueDateDelayMillis          amount of milliseconds from reference in which the due date should be.
      * @param buildAndTestDateDelayMillis amount of milliseconds from reference in which the build and test after due date should be.
      */
     private void setupProgrammingExerciseDates(final ZonedDateTime reference, Long dueDateDelayMillis, Long buildAndTestDateDelayMillis) {

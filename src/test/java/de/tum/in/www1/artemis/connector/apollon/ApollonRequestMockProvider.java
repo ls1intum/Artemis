@@ -83,7 +83,7 @@ public class ApollonRequestMockProvider {
     /**
      * Mocks /pdf api from Apollon used to convert model to pdf.
      *
-     * @param success Successful response or timeout.
+     * @param success  Successful response or timeout.
      * @param resource Resource that will be returned by the server
      */
     public void mockConvertModel(boolean success, Resource resource) {

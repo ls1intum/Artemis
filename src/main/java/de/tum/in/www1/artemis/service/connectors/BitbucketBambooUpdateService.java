@@ -97,10 +97,10 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
      * Update the build plan repository using the cli plugin. This is e.g. invoked, when a student starts a programming exercise.
      * Then the build plan (which was cloned before) needs to be updated to work with the student repository
      *
-     * @param bambooRepository the bamboo repository which was obtained before
+     * @param bambooRepository        the bamboo repository which was obtained before
      * @param bitbucketRepositoryName the name of the new bitbucket repository
-     * @param bitbucketProjectKey the key of the corresponding bitbucket project
-     * @param buildPlanKey the complete name of the plan
+     * @param bitbucketProjectKey     the key of the corresponding bitbucket project
+     * @param buildPlanKey            the complete name of the plan
      */
     private void updateBambooPlanRepository(@NotNull BambooRepositoryDTO bambooRepository, String bitbucketRepositoryName, String bitbucketProjectKey, String buildPlanKey,
             String branchName) {
@@ -174,9 +174,10 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
     /**
      * Fetches the list of repositories in the given build plan, then tries to find the repository in the bamboo build plan, first using the firstRepositoryName,
      * second using the secondRepositoryName
-     * @param firstRepositoryName the repository name that should be found first
+     * 
+     * @param firstRepositoryName  the repository name that should be found first
      * @param secondRepositoryName in case firstRepositoryName is not found, the repository name that should be found second
-     * @param buildPlanKey the bamboo build plan key in which the repository with the specified name should be found
+     * @param buildPlanKey         the bamboo build plan key in which the repository with the specified name should be found
      * @return the found bamboo repository in the build plan or null in case the repository with the specified name could not be found
      */
     private BambooRepositoryDTO findBambooRepository(String firstRepositoryName, @Nullable String secondRepositoryName, String buildPlanKey) {
@@ -252,7 +253,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
      *
      * This only affects imported exercises and might even not be necessary in case the old BASE build plan was created after December 2019 or was already adapted.
      *
-     * @param buildPlanKey the bamboo build plan key (this method is currently only used when importing the BASE build plans)
+     * @param buildPlanKey            the bamboo build plan key (this method is currently only used when importing the BASE build plans)
      * @param triggeredByRepositories a list of triggers (i.e. names of repositories) that should be used to trigger builds in the build plan
      */
     private void overwriteTriggers(String buildPlanKey, final List<String> triggeredByRepositories) {

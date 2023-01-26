@@ -102,8 +102,8 @@ public class TextAssessmentResource extends AssessmentResource {
      * PUT participations/:participationId/results/:resultId/text-assessment : Saves a given manual textAssessment
      *
      * @param participationId the participationId of the participation the result belongs to
-     * @param resultId the resultId the assessment belongs to
-     * @param textAssessment the assessments
+     * @param resultId        the resultId the assessment belongs to
+     * @param textAssessment  the assessments
      * @return 200 Ok if successful with the corresponding result as body, but sensitive information are filtered out
      */
     @PutMapping("participations/{participationId}/results/{resultId}/text-assessment")
@@ -134,9 +134,9 @@ public class TextAssessmentResource extends AssessmentResource {
     /**
      * PUT exercises/:exerciseId/example-submissions/:exampleSubmissionId/example-text-assessment : save manual example text assessment
      *
-     * @param exerciseId the id of the exercise the exampleSubmission belongs to
+     * @param exerciseId          the id of the exercise the exampleSubmission belongs to
      * @param exampleSubmissionId id of the submission
-     * @param textAssessment list of text assessments (consists of feedbacks and text blocks)
+     * @param textAssessment      list of text assessments (consists of feedbacks and text blocks)
      * @return result after saving example text assessment
      */
     @ResponseStatus(HttpStatus.OK)
@@ -170,7 +170,7 @@ public class TextAssessmentResource extends AssessmentResource {
     /**
      * DELETE exercises/:exerciseId/example-submissions/:exampleSubmissionId/example-assessment/feedback : delete feedback for example submission.
      *
-     * @param exerciseId the id of the exercise the exampleSubmission belongs to
+     * @param exerciseId          the id of the exercise the exampleSubmission belongs to
      * @param exampleSubmissionId id of the submission
      * @return 204 No Content
      */
@@ -286,10 +286,11 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * POST participations/:participationId/submissions/:submissionId/cancel-assessment : Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
+     * POST participations/:participationId/submissions/:submissionId/cancel-assessment : Cancel an assessment of a given submission for the current user, i.e. delete the
+     * corresponding result / release the lock. Then the submission is available for assessment
      * again.
      *
-     * @param submissionId the id of the submission for which the current assessment should be canceled
+     * @param submissionId    the id of the submission for which the current assessment should be canceled
      * @param participationId the participationId of the participation for which the assessment should get canceled
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
@@ -309,8 +310,8 @@ public class TextAssessmentResource extends AssessmentResource {
      * Delete an assessment of a given submission.
      *
      * @param participationId - the id of the participation to the submission
-     * @param submissionId - the id of the submission for which the current assessment should be deleted
-     * @param resultId     - the id of the result which should get deleted
+     * @param submissionId    - the id of the submission for which the current assessment should be deleted
+     * @param resultId        - the id of the result which should get deleted
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
     @DeleteMapping("participations/{participationId}/text-submissions/{submissionId}/results/{resultId}")
@@ -328,9 +329,9 @@ public class TextAssessmentResource extends AssessmentResource {
      * In case neither resultId nor correctionRound are set, the first correctionRound is used.
      *
      * @param participationId the id of the participation the submissions belongs to
-     * @param submissionId the id of the submission we want
+     * @param submissionId    the id of the submission we want
      * @param correctionRound correction round for which we want the submission
-     * @param resultId if result already exists, we want to get the submission for this specific result
+     * @param resultId        if result already exists, we want to get the submission for this specific result
      * @return a Participation of the tutor in the submission
      */
     @GetMapping("participations/{participationId}/submissions/{submissionId}/for-text-assessment")
@@ -472,12 +473,13 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * GET participations/:participationId/submissions/:submissionId/feedbacks/:feedbackId/feedback-conflicts : Retrieves all the text submissions that have conflicting feedback with the given feedback id.
+     * GET participations/:participationId/submissions/:submissionId/feedbacks/:feedbackId/feedback-conflicts : Retrieves all the text submissions that have conflicting feedback
+     * with the given feedback id.
      * User needs to be either assessor of the submission (with given feedback id) or an instructor for the exercise to check the conflicts.
      *
      * @param participationId - id of the participation to the submission
-     * @param submissionId - id of the submission with the feedback that has conflicts
-     * @param feedbackId - id of the feedback that has conflicts
+     * @param submissionId    - id of the submission with the feedback that has conflicts
+     * @param feedbackId      - id of the feedback that has conflicts
      * @return - Set of text submissions
      */
     @GetMapping("/participations/{participationId}/submissions/{submissionId}/feedbacks/{feedbackId}/feedback-conflicts")
@@ -518,7 +520,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * Checks; if the feedback conflict is present, if the user is the assessor of one of the feedback or
      * if the user is at least the instructor for the exercise.
      *
-     * @param exerciseId - exercise id to check access rights.
+     * @param exerciseId         - exercise id to check access rights.
      * @param feedbackConflictId - feedback conflict id to set the conflict as solved
      * @return - solved feedback conflict
      */
@@ -559,6 +561,7 @@ public class TextAssessmentResource extends AssessmentResource {
     /**
      * Checks if the given textExercise is valid and if the requester have the
      * required permissions
+     * 
      * @param textExercise which needs to be checked
      * @throws BadRequestAlertException if no request was found
      */
@@ -572,7 +575,8 @@ public class TextAssessmentResource extends AssessmentResource {
 
     /**
      * Save TextBlocks received from Client (if present). We need to reference them to the submission first.
-     * @param textBlocks received from Client
+     * 
+     * @param textBlocks     received from Client
      * @param textSubmission to associate blocks with
      */
     private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission, final TextExercise exercise, final List<Feedback> feedbacks) {

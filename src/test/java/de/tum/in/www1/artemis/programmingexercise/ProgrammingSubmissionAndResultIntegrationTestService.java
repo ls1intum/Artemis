@@ -58,8 +58,8 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
     /**
      * Verifies both Atlassian and Jenkins/Gitlab tests of the same name
      *
-     * @param firstCommitHash Hash of the first commit made (second to be received)
-     * @param firstCommitDate Date of the first commit made (second to be received)
+     * @param firstCommitHash  Hash of the first commit made (second to be received)
+     * @param firstCommitDate  Date of the first commit made (second to be received)
      * @param secondCommitHash Hash of the second commit made (first to be received)
      * @param secondCommitDate Date of the second commit made (first to be received)
      */
@@ -85,6 +85,7 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
 
     /**
      * This is the simulated request from the VCS to Artemis on a new commit.
+     * 
      * @return The submission that was created
      */
     public ProgrammingSubmission postSubmission(Long participationId, HttpStatus expectedStatus, String jsonRequest) throws Exception {

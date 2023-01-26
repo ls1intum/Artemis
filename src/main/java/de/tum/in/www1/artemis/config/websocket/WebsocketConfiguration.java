@@ -141,6 +141,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      * If the last broker goes down, the first one is retried.
      * Also see https://github.com/spring-projects/spring-framework/issues/17057 and
      * https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#websocket-stomp-handle-broker-relay-configure
+     * 
      * @return a TCP client with a round-robin use
      */
     private ReactorNettyTcpClient<byte[]> createTcpClient() {
@@ -261,7 +262,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         /**
          * Returns whether the subscription of the given principal to the given destination is permitted
          *
-         * @param principal User principal of the user who wants to subscribe
+         * @param principal   User principal of the user who wants to subscribe
          * @param destination Destination topic to which the user wants to subscribe
          * @return flag whether subscription is allowed
          */

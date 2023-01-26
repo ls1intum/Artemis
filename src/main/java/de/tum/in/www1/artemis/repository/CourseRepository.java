@@ -184,8 +184,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * Get active students in the timeframe from startDate to endDate for the exerciseIds
      *
      * @param exerciseIds exerciseIds from all exercises to get the statistics for
-     * @param startDate the starting date of the query
-     * @param endDate the end date for the query
+     * @param startDate   the starting date of the query
+     * @param endDate     the end date for the query
      * @return A list with a map for every submission containing date and the username
      */
     @Query("""
@@ -203,8 +203,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     /**
      * Fetches the courses to display for the management overview
      *
-     * @param now ZonedDateTime of the current time. If an end date is set only courses before this time are returned. May be null to return all
-     * @param isAdmin whether the user to fetch the courses for is an admin (which gets all courses)
+     * @param now        ZonedDateTime of the current time. If an end date is set only courses before this time are returned. May be null to return all
+     * @param isAdmin    whether the user to fetch the courses for is an admin (which gets all courses)
      * @param userGroups the user groups of the user to fetch the courses for (ignored if the user is an admin)
      * @return a list of courses for the overview
      */
@@ -287,7 +287,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     /**
      * Add organization to course, if not contained already
-     * @param courseId the id of the course to add to the organization
+     * 
+     * @param courseId     the id of the course to add to the organization
      * @param organization the organization to add to the course
      */
     default void addOrganizationToCourse(long courseId, Organization organization) {
@@ -300,7 +301,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     /**
      * Remove organization from course, if currently contained
-     * @param courseId the id of the course to remove from the organization
+     * 
+     * @param courseId     the id of the course to remove from the organization
      * @param organization the organization to remove from the course
      */
     default void removeOrganizationFromCourse(long courseId, Organization organization) {
@@ -343,7 +345,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     /**
      * Utility method used to check whether a user is member of at least one organization of a given course
-     * @param user the user to check
+     * 
+     * @param user   the user to check
      * @param course the course to check
      * @return true if the user is member of at least one organization of the course. false otherwise
      */

@@ -105,6 +105,7 @@ public class LearningGoalResource {
 
     /**
      * GET /courses/:courseId/learning-goals : gets all the learning goals of a course
+     * 
      * @param courseId the id of the course for which the learning goals should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the found learning goals
      */
@@ -124,7 +125,7 @@ public class LearningGoalResource {
      * GET /courses/:courseId/learning-goals/:learningGoalId : gets the learning goal with the specified id
      *
      * @param learningGoalId the id of the learning goal to retrieve
-     * @param courseId the id of the course to which the learning goal belongs
+     * @param courseId       the id of the course to which the learning goal belongs
      * @return the ResponseEntity with status 200 (OK) and with body the learning goal, or with status 404 (Not Found)
      */
     @GetMapping("/courses/{courseId}/learning-goals/{learningGoalId}")
@@ -151,7 +152,7 @@ public class LearningGoalResource {
     /**
      * PUT /courses/:courseId/learning-goals : Updates an existing learning goal.
      *
-     * @param courseId  the id of the course to which the learning goals belongs
+     * @param courseId     the id of the course to which the learning goals belongs
      * @param learningGoal the learningGoal to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated learningGoal
      */
@@ -186,7 +187,7 @@ public class LearningGoalResource {
     /**
      * POST /courses/:courseId/learning-goals : creates a new learning goal.
      *
-     * @param courseId      the id of the course to which the learning goal should be added
+     * @param courseId     the id of the course to which the learning goal should be added
      * @param learningGoal the learning goal that should be created
      * @return the ResponseEntity with status 201 (Created) and with body the new learning goal
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -217,7 +218,8 @@ public class LearningGoalResource {
 
     /**
      * DELETE /courses/:courseId/learning-goals/:learningGoalId
-     * @param courseId the id of the course to which the learning goal belongs
+     * 
+     * @param courseId       the id of the course to which the learning goal belongs
      * @param learningGoalId the id of the learning goal to remove
      * @return the ResponseEntity with status 200 (OK)
      */
@@ -252,11 +254,11 @@ public class LearningGoalResource {
     }
 
     /**
-     * GET /courses/:courseId/learning-goals/:learningGoalId/student-progress  gets the learning goal progress for a user
+     * GET /courses/:courseId/learning-goals/:learningGoalId/student-progress gets the learning goal progress for a user
      *
-     * @param courseId the id of the course to which the learning goal belongs
+     * @param courseId       the id of the course to which the learning goal belongs
      * @param learningGoalId the id of the learning goal for which to get the progress
-     * @param refresh whether to update the student progress or fetch it from the database (default)
+     * @param refresh        whether to update the student progress or fetch it from the database (default)
      * @return the ResponseEntity with status 200 (OK) and with the learning goal course performance in the body
      */
     @GetMapping("/courses/{courseId}/learning-goals/{learningGoalId}/student-progress")
@@ -281,10 +283,10 @@ public class LearningGoalResource {
     }
 
     /**
-     * GET /courses/:courseId/learning-goals/:learningGoalId/course-progress  gets the learning goal progress for the whole course
+     * GET /courses/:courseId/learning-goals/:learningGoalId/course-progress gets the learning goal progress for the whole course
      *
-     * @param courseId                 the id of the course to which the learning goal belongs
-     * @param learningGoalId           the id of the learning goal for which to get the progress
+     * @param courseId       the id of the course to which the learning goal belongs
+     * @param learningGoalId the id of the learning goal for which to get the progress
      * @return the ResponseEntity with status 200 (OK) and with the learning goal course performance in the body
      */
     @GetMapping("/courses/{courseId}/learning-goals/{learningGoalId}/course-progress")
@@ -305,10 +307,10 @@ public class LearningGoalResource {
     }
 
     /**
-     * GET /courses/:courseId/learning-goals/:learningGoalId/relations  get the relations for the learning goal
+     * GET /courses/:courseId/learning-goals/:learningGoalId/relations get the relations for the learning goal
      *
-     * @param courseId                 the id of the course to which the learning goal belongs
-     * @param learningGoalId           the id of the learning goal for which to fetch all relations
+     * @param courseId       the id of the course to which the learning goal belongs
+     * @param learningGoalId the id of the learning goal for which to fetch all relations
      * @return the ResponseEntity with status 200 (OK) and with a list of relations for the learning goal in the body
      */
     @GetMapping("/courses/{courseId}/learning-goals/{learningGoalId}/relations")
@@ -325,10 +327,11 @@ public class LearningGoalResource {
 
     /**
      * POST /courses/:courseId/learning-goals/:learningGoalId/relations
-     * @param courseId  the id of the course to which the learning goals belong
+     * 
+     * @param courseId           the id of the course to which the learning goals belong
      * @param tailLearningGoalId the id of the learning goal at the tail of the relation
      * @param headLearningGoalId the id of the learning goal at the head of the relation
-     * @param type the type of the relation as request parameter
+     * @param type               the type of the relation as request parameter
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("/courses/{courseId}/learning-goals/{tailLearningGoalId}/relations/{headLearningGoalId}")
@@ -360,8 +363,9 @@ public class LearningGoalResource {
 
     /**
      * DELETE /courses/:courseId/learning-goals/:learningGoalId/relations/:learningGoalRelationId
-     * @param courseId the id of the course
-     * @param learningGoalId the id of the learning goal to which the relation belongs
+     * 
+     * @param courseId               the id of the course
+     * @param learningGoalId         the id of the learning goal to which the relation belongs
      * @param learningGoalRelationId the id of the learning goal relation
      * @return the ResponseEntity with status 200 (OK)
      */
@@ -385,6 +389,7 @@ public class LearningGoalResource {
 
     /**
      * GET /courses/:courseId/prerequisites
+     * 
      * @param courseId the id of the course for which the learning goals should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the found learning goals
      */
@@ -407,7 +412,8 @@ public class LearningGoalResource {
 
     /**
      * POST /courses/:courseId/prerequisites/:learningGoalId
-     * @param courseId the id of the course for which the learning goal should be a prerequisite
+     * 
+     * @param courseId       the id of the course for which the learning goal should be a prerequisite
      * @param learningGoalId the id of the prerequisite (learning goal) to add
      * @return the ResponseEntity with status 200 (OK)
      */
@@ -431,7 +437,8 @@ public class LearningGoalResource {
 
     /**
      * DELETE /courses/:courseId/prerequisites/:learningGoalId
-     * @param courseId the id of the course for which the learning goal is a prerequisite
+     * 
+     * @param courseId       the id of the course for which the learning goal is a prerequisite
      * @param learningGoalId the id of the prerequisite (learning goal) to remove
      * @return the ResponseEntity with status 200 (OK)
      */
@@ -455,8 +462,9 @@ public class LearningGoalResource {
 
     /**
      * Link the learning goal to a set of lecture units (and exercises if it includes exercise units)
-     * @param learningGoal The learning goal to be linked
-     * @param lectureUnitsToAdd A set of lecture units to link to the specified learning goal
+     * 
+     * @param learningGoal         The learning goal to be linked
+     * @param lectureUnitsToAdd    A set of lecture units to link to the specified learning goal
      * @param lectureUnitsToRemove A set of lecture units to unlink from the specified learning goal
      */
     private void linkLectureUnitsToLearningGoal(LearningGoal learningGoal, Set<LectureUnit> lectureUnitsToAdd, Set<LectureUnit> lectureUnitsToRemove) {
@@ -486,8 +494,9 @@ public class LearningGoalResource {
 
     /**
      * Checks if the user has the necessary permissions and the learning goal matches the course.
-     * @param role The minimal role the user must have in the course
-     * @param course The course for which to check the authorization role for
+     * 
+     * @param role         The minimal role the user must have in the course
+     * @param course       The course for which to check the authorization role for
      * @param learningGoal The learning goal to be accessed by the user
      */
     private void checkAuthorizationForLearningGoal(Role role, @NotNull Course course, @NotNull LearningGoal learningGoal) {

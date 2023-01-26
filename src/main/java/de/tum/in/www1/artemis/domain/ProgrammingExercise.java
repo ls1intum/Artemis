@@ -448,9 +448,9 @@ public class ProgrammingExercise extends Exercise {
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     /**
-     * Gets a URL of the  templateRepositoryUrl if there is one
+     * Gets a URL of the templateRepositoryUrl if there is one
      *
-     * @return a URL object of the  templateRepositoryUrl or null if there is no templateRepositoryUrl
+     * @return a URL object of the templateRepositoryUrl or null if there is no templateRepositoryUrl
      */
     @JsonIgnore
     public VcsRepositoryUrl getVcsTemplateRepositoryUrl() {
@@ -639,6 +639,7 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * Get all results of a student participation which are rated or unrated
+     * 
      * @param participation The current participation
      * @return all results which are completed and are either automatic or manually assessed
      */
@@ -649,6 +650,7 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * Check if manual results are allowed for the exercise
+     * 
      * @return true if manual results are allowed, false otherwise
      */
     public boolean areManualResultsAllowed() {
@@ -669,6 +671,7 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * This checks if the current result is rated and has a completion date.
+     * 
      * @param result The current result
      * @return true if the result is manual and assessed, false otherwise
      */

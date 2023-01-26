@@ -374,7 +374,7 @@ public class QuizExerciseService {
 
     /**
      *
-     * @param quizExercise the changed quiz exercise from the client
+     * @param quizExercise         the changed quiz exercise from the client
      * @param originalQuizExercise the original quiz exercise (with statistics)
      * @return the updated quiz exercise with the changed statistics
      */
@@ -403,6 +403,7 @@ public class QuizExerciseService {
 
     /**
      * Reset a QuizExercise to its original state, delete statistics and cleanup the schedule service.
+     * 
      * @param exerciseId id of the exercise to reset
      */
     public void resetExercise(Long exerciseId) {
@@ -435,8 +436,9 @@ public class QuizExerciseService {
 
     /**
      * Update a QuizExercise so that it ends at a specific date and moves the start date of the batches as required. Does not save the quiz.
-     * @param quizExercise  The quiz to end
-     * @param endDate       When the quize should end
+     * 
+     * @param quizExercise The quiz to end
+     * @param endDate      When the quize should end
      */
     public void endQuiz(QuizExercise quizExercise, ZonedDateTime endDate) {
         quizExercise.setDueDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));

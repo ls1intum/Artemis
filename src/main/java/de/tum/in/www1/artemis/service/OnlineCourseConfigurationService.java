@@ -53,6 +53,7 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
 
     /**
      * Creates an initial configuration for online courses with default and random values
+     * 
      * @param course the online course we create a configuration for
      * @return the created online course configuration
      */
@@ -69,6 +70,7 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
 
     /**
      * Validates the online course configuration
+     * 
      * @param ocConfiguration the online course configuration being validated
      * @throws BadRequestAlertException 400 (Bad Request) if the online course configuration is invalid
      */

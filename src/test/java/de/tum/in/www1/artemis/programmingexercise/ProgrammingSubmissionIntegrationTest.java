@@ -729,6 +729,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     /**
      * Checks that submissions for a participation with an individual due date are not shown to tutors before this due date has passed.
+     * 
      * @param isIndividualDueDateInFuture if the due date is in the future, the submission should not be shown. Otherwise, it should be shown.
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

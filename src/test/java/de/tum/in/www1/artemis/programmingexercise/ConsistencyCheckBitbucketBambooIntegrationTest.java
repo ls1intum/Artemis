@@ -30,6 +30,7 @@ class ConsistencyCheckBitbucketBambooIntegrationTest extends AbstractSpringInteg
     /**
      * Test consistencyCheck feature with programming exercise without
      * inconsistencies
+     * 
      * @throws Exception if an error occurs
      */
     @Test

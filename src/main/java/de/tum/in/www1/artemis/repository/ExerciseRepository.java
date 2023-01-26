@@ -108,8 +108,9 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     /**
      * Select Exercise for Course ID WHERE there does exist an LtiOutcomeUrl for the current user (-> user has started exercise once using LTI)
+     * 
      * @param courseId the id of the course
-     * @param login the login of the corresponding user
+     * @param login    the login of the corresponding user
      * @return list of exercises
      */
     @Query("""
@@ -169,6 +170,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     /**
      * calculates the average score and the participation rate of students for each given individual course exercise
      * by using the last result (rated or not)
+     * 
      * @param exerciseIds - exercise ids to count the statistics for
      * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
      */
@@ -352,7 +354,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * Fetches the exercises for a course with an assessment due date (or due date if without assessment due date) in the future
      *
      * @param courseId the course to get the exercises for
-     * @param now the current date time
+     * @param now      the current date time
      * @return a set of exercises
      */
     @Query("""
@@ -368,7 +370,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * Fetches the exercises for a course with a passed assessment due date (or due date if without assessment due date)
      *
      * @param courseId the course to get the exercises for
-     * @param now the current date time
+     * @param now      the current date time
      * @return a set of exercises
      */
     @Query("""
@@ -384,7 +386,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * Finds all exercises that should be part of the summary email (e.g. weekly summary)
      * Exercises should have been released, not yet ended, and the release should be in the time frame [daysAgo,now]
      *
-     * @param now the current date time
+     * @param now     the current date time
      * @param daysAgo the current date time minus the wanted number of days (the used interval) (e.g. for weeklySummaries -> daysAgo = 7)
      * @return all exercises that should be part of the summary (email)
      */
@@ -530,8 +532,9 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     /**
      * Converts the row data from the exercise statistic query into the corresponding DTO
+     * 
      * @param exerciseIdToRawStatisticQueryData map from exerciseId to query data
-     * @param exercise exercise
+     * @param exercise                          exercise
      * @return converted DTO
      */
     private CourseExerciseStatisticsDTO convertRawStatisticQueryDataToDTO(Map<Long, Object[]> exerciseIdToRawStatisticQueryData, Exercise exercise) {
