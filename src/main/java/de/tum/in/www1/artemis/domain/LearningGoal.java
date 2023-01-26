@@ -30,7 +30,7 @@ public class LearningGoal extends DomainObject {
 
     /**
      * The type of learning goal according to Bloom's revised taxonomy.
-     * 
+     *
      * @see <a href="https://en.wikipedia.org/wiki/Bloom%27s_taxonomy">Wikipedia</a>
      */
     @Column(name = "taxonomy")
@@ -133,7 +133,7 @@ public class LearningGoal extends DomainObject {
     /**
      * Adds the lecture unit to the learning goal (bidirectional)
      * Note: ExerciseUnits are not accepted, should be set via the connected exercise (see {@link #addExercise(Exercise)})
-     * 
+     *
      * @param lectureUnit The lecture unit to add
      */
     public void addLectureUnit(LectureUnit lectureUnit) {
@@ -148,7 +148,7 @@ public class LearningGoal extends DomainObject {
     /**
      * Removes the lecture unit from the learning goal (bidirectional)
      * Note: ExerciseUnits are not accepted, should be set via the connected exercise (see {@link #removeExercise(Exercise)})
-     * 
+     *
      * @param lectureUnit The lecture unit to remove
      */
     public void removeLectureUnit(LectureUnit lectureUnit) {

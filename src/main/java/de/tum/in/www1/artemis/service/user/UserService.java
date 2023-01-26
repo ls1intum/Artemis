@@ -507,7 +507,7 @@ public class UserService {
 
     /**
      * Check the username and password for validity. Throws Exception if invalid.
-     * 
+     *
      * @param username The username to check
      * @param password The password to check
      */
@@ -530,7 +530,7 @@ public class UserService {
      * The password can be null, then a random one will be generated ({@code Create}) or it won't be changed ({@code Update}).
      * <p>
      * If the password is not null, its length has to be at least {@code PASSWORD_MIN_LENGTH}.
-     * 
+     *
      * @param password The password to check
      */
     private void checkNullablePasswordOrThrow(String password) {
@@ -695,7 +695,6 @@ public class UserService {
      * @param login              the login of the user
      * @param email              the email of the user
      * @return the found student, otherwise returns an empty optional
-     *
      */
     public Optional<User> findUserAndAddToCourse(String registrationNumber, String courseGroupName, Role courseGroupRole, String login, String email) {
         try {

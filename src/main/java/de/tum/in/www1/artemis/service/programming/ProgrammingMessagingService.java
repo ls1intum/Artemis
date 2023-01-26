@@ -63,7 +63,7 @@ public class ProgrammingMessagingService {
 
     /**
      * Notifies the user (or all users of the team) about a submission error
-     * 
+     *
      * @param participation the participation for which the submission error should be reported
      * @param error         the submission error wrapped in an object
      */

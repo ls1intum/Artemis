@@ -76,7 +76,7 @@ public class EmailSummaryService {
     /**
      * Prepares all needed information to create the summary email for one user
      * and calls the MailService
-     * 
+     *
      * @param user                                   for whom the summary email should be prepared
      * @param allPossiblyRelevantExercisesForSummary are used to find the relevant exercises for this concrete user
      */

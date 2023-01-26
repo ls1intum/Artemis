@@ -105,7 +105,7 @@ public class LearningGoalResource {
 
     /**
      * GET /courses/:courseId/learning-goals : gets all the learning goals of a course
-     * 
+     *
      * @param courseId the id of the course for which the learning goals should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the found learning goals
      */
@@ -218,7 +218,7 @@ public class LearningGoalResource {
 
     /**
      * DELETE /courses/:courseId/learning-goals/:learningGoalId
-     * 
+     *
      * @param courseId       the id of the course to which the learning goal belongs
      * @param learningGoalId the id of the learning goal to remove
      * @return the ResponseEntity with status 200 (OK)
@@ -327,7 +327,7 @@ public class LearningGoalResource {
 
     /**
      * POST /courses/:courseId/learning-goals/:learningGoalId/relations
-     * 
+     *
      * @param courseId           the id of the course to which the learning goals belong
      * @param tailLearningGoalId the id of the learning goal at the tail of the relation
      * @param headLearningGoalId the id of the learning goal at the head of the relation
@@ -363,7 +363,7 @@ public class LearningGoalResource {
 
     /**
      * DELETE /courses/:courseId/learning-goals/:learningGoalId/relations/:learningGoalRelationId
-     * 
+     *
      * @param courseId               the id of the course
      * @param learningGoalId         the id of the learning goal to which the relation belongs
      * @param learningGoalRelationId the id of the learning goal relation
@@ -389,7 +389,7 @@ public class LearningGoalResource {
 
     /**
      * GET /courses/:courseId/prerequisites
-     * 
+     *
      * @param courseId the id of the course for which the learning goals should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the found learning goals
      */
@@ -412,7 +412,7 @@ public class LearningGoalResource {
 
     /**
      * POST /courses/:courseId/prerequisites/:learningGoalId
-     * 
+     *
      * @param courseId       the id of the course for which the learning goal should be a prerequisite
      * @param learningGoalId the id of the prerequisite (learning goal) to add
      * @return the ResponseEntity with status 200 (OK)
@@ -437,7 +437,7 @@ public class LearningGoalResource {
 
     /**
      * DELETE /courses/:courseId/prerequisites/:learningGoalId
-     * 
+     *
      * @param courseId       the id of the course for which the learning goal is a prerequisite
      * @param learningGoalId the id of the prerequisite (learning goal) to remove
      * @return the ResponseEntity with status 200 (OK)
@@ -462,7 +462,7 @@ public class LearningGoalResource {
 
     /**
      * Link the learning goal to a set of lecture units (and exercises if it includes exercise units)
-     * 
+     *
      * @param learningGoal         The learning goal to be linked
      * @param lectureUnitsToAdd    A set of lecture units to link to the specified learning goal
      * @param lectureUnitsToRemove A set of lecture units to unlink from the specified learning goal
@@ -494,7 +494,7 @@ public class LearningGoalResource {
 
     /**
      * Checks if the user has the necessary permissions and the learning goal matches the course.
-     * 
+     *
      * @param role         The minimal role the user must have in the course
      * @param course       The course for which to check the authorization role for
      * @param learningGoal The learning goal to be accessed by the user

@@ -494,7 +494,7 @@ public class CourseExamExportService {
 
     /**
      * Writes the given lines in a file with the given name in the given output directory
-     * 
+     *
      * @param data      line to write
      * @param outputDir directory to create the file in
      * @param fileName  name of the file to write to

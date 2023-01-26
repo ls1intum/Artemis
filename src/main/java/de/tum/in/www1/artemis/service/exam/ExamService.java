@@ -280,7 +280,6 @@ public class ExamService {
      *
      * @param examId the id of the exam
      * @return return ExamScoresDTO with students, scores, exerciseGroups, bonus and related plagiarism verdicts for the exam
-     *
      */
     public ExamScoresDTO calculateExamScores(Long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
@@ -360,7 +359,7 @@ public class ExamService {
     /**
      * Calculates max points, max bonus points and achieved points per exercise if the given studentExam is assessed.
      * Includes the corresponding grade and grade type as well if a GradingScale is set for the relevant exam.
-     * 
+     *
      * @param studentExam             a StudentExam instance that will have its points and grades calculated if it is assessed
      * @param participationsOfStudent StudentParticipation list for the given studentExam
      * @return Student Exam results with exam grade calculated if applicable
@@ -596,7 +595,7 @@ public class ExamService {
      * We also attach the result if the results are already published for the exam.
      * If no suitable Result is found for StudentParticipation, an empty Result set is assigned to prevent LazyInitializationException on future reads.
      * See {@link StudentExam#areResultsPublishedYet}
-     * 
+     *
      * @param studentExam         the given studentExam
      * @param participation       the given participation of the student
      * @param isAtLeastInstructor flag for instructor access privileges
@@ -799,7 +798,7 @@ public class ExamService {
      * In the client, these are now displayed rounded as 1.1 points.
      * If the student adds up the displayed points, they get a total of 5.5 points.
      * In order to get the same total result as the student, we have to round before summing.
-     * 
+     *
      * @param exercise the relevant exercise
      * @param result   the result for the given exercise
      * @param course   course to specify number of decimal places to round

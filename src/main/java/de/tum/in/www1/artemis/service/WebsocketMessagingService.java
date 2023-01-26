@@ -42,7 +42,7 @@ public class WebsocketMessagingService {
 
     /**
      * Wrapper method to send a message over websocket to the given topic
-     * 
+     *
      * @param topic   the destination to which subscription the message should be sent
      * @param message any object that should be sent to the destination (topic), this will typically get transformed into json
      */
@@ -52,7 +52,7 @@ public class WebsocketMessagingService {
 
     /**
      * Wrapper method to send a message over websocket to the given topic to a specific user
-     * 
+     *
      * @param user        the user that should receive the message.
      * @param destination the destination to send the message to
      * @param payload     the payload to send

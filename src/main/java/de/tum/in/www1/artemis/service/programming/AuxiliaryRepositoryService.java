@@ -33,7 +33,7 @@ public class AuxiliaryRepositoryService {
 
     /**
      * Validates and adds all new Auxiliary Repositories that are added to the given exercise
-     * 
+     *
      * @param programmingExercise      The programming exercise where the auxiliary repositories are added
      * @param newAuxiliaryRepositories The newly added auxiliary repositories
      */
@@ -50,7 +50,7 @@ public class AuxiliaryRepositoryService {
 
     /**
      * Handles an update of a programming exercises where some of the auxiliary repositories are added, changed or deleted
-     * 
+     *
      * @param programmingExercise The programming exercise before the update
      * @param updatedExercise     The programming exercise after the update
      */

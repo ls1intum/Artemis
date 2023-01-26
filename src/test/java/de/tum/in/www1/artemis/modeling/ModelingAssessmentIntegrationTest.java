@@ -500,7 +500,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     /**
      * Tests that a submission without model (can happen for exam submissions) does not throw an exception and does
      * not create an automatic result.
-     * 
+     *
      * @throws Exception any exception in the test
      */
     @Test

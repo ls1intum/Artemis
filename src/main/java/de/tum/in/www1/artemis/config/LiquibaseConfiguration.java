@@ -168,7 +168,7 @@ public class LiquibaseConfiguration {
 
     /**
      * stores the current version in the database
-     * 
+     *
      * @param event used to retrieve the application context and the used profiles
      */
     @EventListener()

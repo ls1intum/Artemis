@@ -287,7 +287,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     /**
      * Add organization to course, if not contained already
-     * 
+     *
      * @param courseId     the id of the course to add to the organization
      * @param organization the organization to add to the course
      */
@@ -301,7 +301,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     /**
      * Remove organization from course, if currently contained
-     * 
+     *
      * @param courseId     the id of the course to remove from the organization
      * @param organization the organization to remove from the course
      */
@@ -345,7 +345,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     /**
      * Utility method used to check whether a user is member of at least one organization of a given course
-     * 
+     *
      * @param user   the user to check
      * @param course the course to check
      * @return true if the user is member of at least one organization of the course. false otherwise

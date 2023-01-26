@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 
 /**
  * This class is responsible to retrieve access tokens from an LTI 1.3 platform of a specific ClientRegistration.
- *
  */
 @Component
 public class Lti13TokenRetriever {

@@ -161,7 +161,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     /**
      * Similar to {@link ComplaintRepository#countComplaintsByExerciseIdAndComplaintType}
      * but ignores test run submissions
-     * 
+     *
      * @param exerciseId    - the id of the exercise we want to filter by
      * @param complaintType - complaint type we want to filter by
      * @return number of complaints associated to exercise exerciseId without test runs
@@ -176,7 +176,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
 
     /**
      * Delete all complaints that belong to the given result
-     * 
+     *
      * @param resultId the id of the result where the complaints should be deleted
      */
     @Transactional // ok because of delete

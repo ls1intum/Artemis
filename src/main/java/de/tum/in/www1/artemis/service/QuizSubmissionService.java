@@ -113,7 +113,6 @@ public class QuizSubmissionService {
      * @param quizSubmission the submission which should be saved
      * @param userLogin      the login of the user who has initiated the request
      * @param submitted      whether the user has pressed the submit button or not
-     *
      * @return the updated quiz submission object
      * @throws QuizSubmissionException handles errors, e.g. when the live quiz has already ended, or when the quiz was already submitted before
      */

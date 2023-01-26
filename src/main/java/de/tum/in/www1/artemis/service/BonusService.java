@@ -40,7 +40,6 @@ public class BonusService {
     /**
      * Applies bonus from sourceGradingScale to bonusToGradingScale so that the student's final grade in bonusToGradingScale is improved.
      *
-     *
      * @param bonusStrategy           bonus strategy (together with the weight) determines the formula for bonus calculation
      * @param bonusToGradingScale     the grading scale that the bonus will be applied to (e.g. a final exam)
      * @param achievedPointsOfBonusTo points received by the student from bonusTo exam before bonus calculations

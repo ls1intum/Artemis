@@ -141,7 +141,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      * If the last broker goes down, the first one is retried.
      * Also see https://github.com/spring-projects/spring-framework/issues/17057 and
      * https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#websocket-stomp-handle-broker-relay-configure
-     * 
+     *
      * @return a TCP client with a round-robin use
      */
     private ReactorNettyTcpClient<byte[]> createTcpClient() {

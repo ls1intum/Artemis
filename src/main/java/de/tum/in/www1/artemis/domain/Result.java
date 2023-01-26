@@ -219,7 +219,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      * - the submission date is before the due date OR
      * - no due date is set OR
      * - the submission type is INSTRUCTOR / TEST
-     * 
+     *
      * @param exerciseDueDate date after which no normal submission is considered rated.
      * @param submission      to which the result belongs.
      * @param participation   to wich the submission belongs
@@ -387,7 +387,7 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     /**
      * `hasComplaint` could be null in the database
-     * 
+     *
      * @return hasComplaint property value
      */
     public Optional<Boolean> getHasComplaint() {
@@ -471,7 +471,7 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     /**
      * Remove all feedbacks marked with visibility never.
-     * 
+     *
      * @param isBeforeDueDate if feedbacks marked with visibility 'after due date' should also be removed.
      */
     public void filterSensitiveFeedbacks(boolean isBeforeDueDate) {
@@ -514,7 +514,7 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     /**
      * Calculates the total score for programming exercises. Do not use it for other exercise types
-     * 
+     *
      * @return calculated totalScore
      */
     public Double calculateTotalPointsForProgrammingExercises() {
@@ -562,7 +562,7 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     /**
      * calculates the score for programming exercises
-     * 
+     *
      * @param exercise the exercise
      */
     public void calculateScoreForProgrammingExercise(ProgrammingExercise exercise) {
@@ -572,7 +572,7 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     /**
      * Copies the relevant counters for programming exercises i.e. amount of (passed) test cases and code issues into this result
-     * 
+     *
      * @param originalResult the source for the values
      */
     public void copyProgrammingExerciseCounters(Result originalResult) {

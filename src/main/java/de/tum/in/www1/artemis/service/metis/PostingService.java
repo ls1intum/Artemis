@@ -149,7 +149,7 @@ public abstract class PostingService {
 
     /**
      * helper method that fetches groups and authorities of all posting authors in a list of Posts
-     * 
+     *
      * @param postsInCourse list of posts whose authors are populated with their groups, authorities, and authorRole
      */
     void setAuthorRoleOfPostings(List<Post> postsInCourse) {
@@ -177,7 +177,7 @@ public abstract class PostingService {
 
     /**
      * helper method that assigns authorRoles of postings in accordance to user groups and authorities
-     * 
+     *
      * @param posting       posting to assign authorRole
      * @param postingCourse course that the post belongs to, must be explicitly fetched and provided to handle new post creation case
      */

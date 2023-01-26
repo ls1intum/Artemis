@@ -174,7 +174,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
     /**
      * Fetches the list of repositories in the given build plan, then tries to find the repository in the bamboo build plan, first using the firstRepositoryName,
      * second using the secondRepositoryName
-     * 
+     *
      * @param firstRepositoryName  the repository name that should be found first
      * @param secondRepositoryName in case firstRepositoryName is not found, the repository name that should be found second
      * @param buildPlanKey         the bamboo build plan key in which the repository with the specified name should be found

@@ -143,7 +143,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     /**
      * Checks if scheduled tasks have to be started for the given exercise.
-     * 
+     *
      * @param exercise for which the check should be performed.
      * @return true, if the exercise needs to be scheduled.
      */
@@ -201,7 +201,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * - Due
      * - Build & Test after due date
      * - Assessment due date
-     * 
+     *
      * @param exerciseId the id of the exercise for which the tasks should be cancelled
      */
     public void cancelAllScheduledTasks(Long exerciseId) {
@@ -291,7 +291,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * Schedules all necessary tasks for participations with individual due dates.
      *
      * Also removes schedules for individual participations of their individual due date no longer exists.
-     * 
+     *
      * @param exercise the participations belong to.
      * @param now      the current time.
      */
@@ -541,7 +541,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     /**
      * Creates a runnable that will lock the Git repository of the given participation when run.
-     * 
+     *
      * @param participation of which the Git repository will be locked.
      * @return a runnable that will lock the Git repository of the participation when run.
      */
@@ -624,7 +624,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     /**
      * this method schedules individual lock tasks for programming exercises (mostly in the context of exams)
-     * 
+     *
      * @param exercise           the programming exercise for which the lock is executed
      * @param individualDueDates these are the individual due dates for students taking individual workingTimes of student exams into account
      */

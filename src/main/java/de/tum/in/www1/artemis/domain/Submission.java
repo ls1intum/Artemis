@@ -187,9 +187,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     /**
      * Get the manual result by id of the submission
-     * 
-     * @param resultId id of result
      *
+     * @param resultId id of result
      * @return a {@link Result} or null
      */
     @Nullable
@@ -300,7 +299,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     /**
      * determine whether a submission is empty, i.e. the student did not work properly on the corresponding exercise
-     * 
+     *
      * @return whether the submission is empty (true) or not (false)
      */
     public abstract boolean isEmpty();
@@ -322,7 +321,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     /**
      * Returns the result of a submission which has a complaint
-     * 
+     *
      * @return the result which has a complaint or null if there is no result which has a complaint
      */
     @Nullable

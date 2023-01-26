@@ -535,7 +535,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     /**
      * Submitting the result means it is saved with a calculated score and a completion date.
-     * 
+     *
      * @param result   the result which should be set to submitted
      * @param exercise the exercises to which the result belongs, which is needed to get points and to determine if the result is rated or not
      * @param dueDate  before which the result is considered to be rated
@@ -569,7 +569,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     /**
      * make sure the points are between 0 and maxPoints
-     * 
+     *
      * @param calculatedPoints the points which have been calculated
      * @param maxPoints        the upper bound (potentially including bonus points)
      * @return a value between [0, maxPoints]

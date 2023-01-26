@@ -137,7 +137,7 @@ public class NotificationSettingsService {
 
     /**
      * Checks if a notification (i.e. its type based on title) is allowed by the respective notification settings of the provided user
-     * 
+     *
      * @param notification         which type (based on title) should be checked
      * @param user                 whose notification settings will be used for checking
      * @param communicationChannel which channel to use (e.g. email or webapp)
@@ -173,7 +173,7 @@ public class NotificationSettingsService {
 
     /**
      * Finds the deactivated NotificationTypes based on the user's NotificationSettings
-     * 
+     *
      * @param communicationChannel indicates if the status should be used/checked for the webapp or for email
      * @param notificationSettings which should be mapped to their respective NotificationTypes and filtered by activation status
      * @return a set of NotificationTypes which are deactivated by the current user's notification settings
@@ -192,7 +192,7 @@ public class NotificationSettingsService {
 
     /**
      * Converts the provided NotificationType Set to a String Set (representing the titles from NotificationTitleTypeConstants)
-     * 
+     *
      * @param types Set that should be converted to String
      * @return the converted String Set
      */
@@ -202,7 +202,7 @@ public class NotificationSettingsService {
 
     /**
      * Converts the provided NotificationSetting to a map of corresponding NotificationTypes and activation status.
-     * 
+     *
      * @param notificationSettings which will be mapped to their respective NotificationTypes with respect to their activation status
      * @param communicationChannel indicates if the map should look for the email or webapp activity
      * @return a map with key of NotificationType and value Boolean indicating which types are (de)activated by the user's notification settings
@@ -223,7 +223,7 @@ public class NotificationSettingsService {
     /**
      * Extracts the settingsIds of a notification settings set
      * E.g. used to compare two sets of notification settings based on setting id
-     * 
+     *
      * @param notificationSettings set which setting ids should be extracted
      * @return a set of settings ids
      */
@@ -235,7 +235,7 @@ public class NotificationSettingsService {
 
     /**
      * Compares two notification settings sets based on their notification setting ids
-     * 
+     *
      * @param notificationSettingsA is the first set
      * @param notificationSettingsB is the second set
      * @return true if the notification setting ids of both are the same else return false
@@ -250,7 +250,7 @@ public class NotificationSettingsService {
      * Checks the personal notificationSettings retrieved from the DB.
      * If the loaded set is empty substitute it with the default settings
      * If the loaded set has different notification setting ids than the default settings both sets have to be merged
-     * 
+     *
      * @param userNotificationSettings are the notification settings retrieved from the DB for the current user
      * @param user                     the user for which the settings should be loaded
      * @return the updated and correct notification settings
@@ -284,7 +284,7 @@ public class NotificationSettingsService {
 
     /**
      * Updates the notificationSettings by setting the current user
-     * 
+     *
      * @param notificationSettings which might be saved the very first time and have no user set yet
      * @param currentUser          who should be set
      */

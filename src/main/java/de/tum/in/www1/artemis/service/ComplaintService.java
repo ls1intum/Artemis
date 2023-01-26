@@ -238,7 +238,7 @@ public class ComplaintService {
 
     /**
      * Returns the maximum allowed number of complaints per participant in a course (differentiates between individual and team complaints)
-     * 
+     *
      * @param course      Course for which to evaluate
      * @param participant Participant for which to evaluate
      * @return max complaints

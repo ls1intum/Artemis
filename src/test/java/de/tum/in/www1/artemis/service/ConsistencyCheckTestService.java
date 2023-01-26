@@ -55,7 +55,7 @@ public class ConsistencyCheckTestService {
     /**
      * Test consistencyCheck feature with programming exercise without
      * inconsistencies
-     * 
+     *
      * @throws Exception if an error occurs
      */
     public void testCheckConsistencyOfProgrammingExercise_noErrors() throws Exception {
@@ -76,7 +76,7 @@ public class ConsistencyCheckTestService {
     /**
      * Test consistencyCheck feature with programming exercise
      * with missing VCS project
-     * 
+     *
      * @throws Exception if an error occurs
      */
     public void testCheckConsistencyOfProgrammingExercise_missingVCSProject() throws Exception {
@@ -95,7 +95,7 @@ public class ConsistencyCheckTestService {
     /**
      * Test consistencyCheck feature with programming exercise
      * with missing VCS repositories
-     * 
+     *
      * @throws Exception if an error occurs
      */
     public void testCheckConsistencyOfProgrammingExercise_missingVCSRepos() throws Exception {
@@ -121,7 +121,7 @@ public class ConsistencyCheckTestService {
     /**
      * Test consistencyCheck feature with programming exercise
      * with missing Build Plans
-     * 
+     *
      * @throws Exception if an error occurs
      */
     public void testCheckConsistencyOfProgrammingExercise_buildPlansMissing() throws Exception {
@@ -148,7 +148,7 @@ public class ConsistencyCheckTestService {
     /**
      * Test consistencyCheck feature with a local simulation
      * of a programming exercise
-     * 
+     *
      * @throws Exception if an error occurs
      */
     public void testCheckConsistencyOfProgrammingExercise_isLocalSimulation() throws Exception {

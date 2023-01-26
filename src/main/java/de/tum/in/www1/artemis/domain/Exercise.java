@@ -799,7 +799,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     /**
      * returns the number of correction rounds for an exercise. For course exercises this is 1, for exam exercises this must get fetched
-     * 
+     *
      * @return the number of correctionRounds
      */
     @JsonIgnore
@@ -817,7 +817,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Also fills {@code gradingInstructionCopyTracker}.
      *
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
-     *
      * @return A clone of the grading criteria list
      */
     public List<GradingCriterion> copyGradingCriteria(Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
@@ -904,7 +903,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Validates score settings
      * 1. The maxScore needs to be greater than 0
      * 2. If the specified amount of bonus points is valid depending on the IncludedInOverallScore value
-     *
      */
     public void validateScoreSettings() {
         // Check if max score is set

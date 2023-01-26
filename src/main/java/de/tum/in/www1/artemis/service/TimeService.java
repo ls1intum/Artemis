@@ -16,7 +16,7 @@ public class TimeService {
 
     /**
      * Converts the dateTime object to a human-readable date in the form of a string
-     * 
+     *
      * @param dateTime that should be converted to a human-readable string
      * @return the converted date string
      */

@@ -458,9 +458,8 @@ public class AuthorizationCheckService {
 
     /**
      * Checks if the passed user is an admin user
-     * 
-     * @param user the user with authorities. If the user is null, the currently logged-in user will be used.
      *
+     * @param user the user with authorities. If the user is null, the currently logged-in user will be used.
      * @return true, if user is admin, otherwise false
      */
     public boolean isAdmin(@Nullable User user) {
@@ -472,7 +471,7 @@ public class AuthorizationCheckService {
 
     /**
      * Checks if the passed user is an admin user. Throws an AccessForbiddenException in case the user is not an admin
-     * 
+     *
      * @param user the user with authorities. If the user is null, the currently logged-in user will be used.
      **/
     public void checkIsAdminElseThrow(@Nullable User user) {

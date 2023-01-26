@@ -167,7 +167,7 @@ public class MailService {
 
     /**
      * Sets the context and subject for the case that the notificationSubject is a Post
-     * 
+     *
      * @param context             that is modified
      * @param notificationSubject which has to be a Post
      * @param locale              used for translations
@@ -184,7 +184,7 @@ public class MailService {
 
     /**
      * Sends a notification based email to one user
-     * 
+     *
      * @param notification        which properties are used to create the email
      * @param user                who should be contacted
      * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)

@@ -48,7 +48,7 @@ public class ComplaintResponse extends AbstractAuditingEntity {
 
     /**
      * Calculates if the complaint response is still time locked or not
-     * 
+     *
      * @return true if complaint response is time locked, false otherwise
      */
     @JsonProperty("isCurrentlyLocked")
@@ -65,7 +65,7 @@ public class ComplaintResponse extends AbstractAuditingEntity {
 
     /**
      * Provides the client with information about the date when the lock is ending
-     * 
+     *
      * @return date of lock end in UTC
      */
     @JsonProperty("lockEndDate")

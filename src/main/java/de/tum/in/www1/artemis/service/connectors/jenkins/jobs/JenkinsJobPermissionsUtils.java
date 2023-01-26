@@ -102,7 +102,7 @@ public class JenkinsJobPermissionsUtils {
     /**
      * Retrieves the AuthorizationMatrixProperty element from the document if it exists or creates a new one
      * pre-configured with matrixauth.inheritance.InheritParentStrategy.
-     * 
+     *
      * @param document The xml document
      * @return AuthorizationMatrixProperty element
      */
@@ -124,7 +124,7 @@ public class JenkinsJobPermissionsUtils {
     /**
      * Adds all jenkinsJobPermissions specified for the specific Jenkins user into the authorizationMatrixElement.
      * The resulting output element has the following format:
-     * 
+     *
      * <pre>
      * {@code
      *      <com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
@@ -135,7 +135,7 @@ public class JenkinsJobPermissionsUtils {
      *      </com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
      * }
      * </pre>
-     * 
+     *
      * @param authorizationMatrixElement the com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty element
      * @param jenkinsJobPermissions      a list of Jenkins job permissions to be added for the specific user
      * @param userLogin                  the login name of the user

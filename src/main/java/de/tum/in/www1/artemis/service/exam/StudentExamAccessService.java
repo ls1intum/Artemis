@@ -122,7 +122,7 @@ public class StudentExamAccessService {
 
     /**
      * Checks if the user is allowed to access the course
-     * 
+     *
      * @param courseId    the corresponding courseId
      * @param currentUser the user for which the access should be checked
      */

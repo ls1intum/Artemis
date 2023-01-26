@@ -25,7 +25,7 @@ public class GroupNotificationScheduleService {
 
     /**
      * Auxiliary method that checks and creates appropriate notifications about exercise updates or updates the scheduled exercise-released notification
-     * 
+     *
      * @param exerciseBeforeUpdate is the initial exercise before it gets updated
      * @param exerciseAfterUpdate  is the updated exercise (needed to check potential difference in release date)
      * @param notificationText     holds the custom change message for the notification process

@@ -115,8 +115,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     /**
      * Updates the activation state of the Gitlab account based on the Artemis account.
-     * We
-     * 
+     *
      * @param user         The Artemis user
      * @param gitlabUserId the id of the GitLab user that is mapped to the Artemis user
      */
@@ -528,7 +527,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * It is needed if
      * 1. the config option is enabled, and
      * 2. the user does not yet have an access token
-     * 
+     *
      * @param gitlabUser the Gitlab user (for which the token will be created)
      * @param user       the Artemis user (where the token will be stored)
      */

@@ -30,7 +30,7 @@ public class TutorEffortService {
      * Takes in list of events and submissions per tutor and builds the resulting tutor effort list by relying on the rest
      * of the business logic. First assessments are grouped by user id, then the new tutor effort list is built
      * from the resulting grouping
-     * 
+     *
      * @param courseId   id of the course to calculate for
      * @param exerciseId id of the exercise to calculate for
      * @return a list of built tutor efforts
@@ -53,7 +53,7 @@ public class TutorEffortService {
 
     /**
      * Takes in parameters and sets respective properties on a new TutorEffort object
-     * 
+     *
      * @param userId      the id of the user to set
      * @param events      the events of the respective user
      * @param submissions the number of submissions the tutor assessed
@@ -72,7 +72,7 @@ public class TutorEffortService {
     /**
      * Traverses over tutorEvents (which contain timestamps). Calculates time spent between timestamps
      * assuming timestamps are not further than THRESHOLD_MINUTES away from each other.
-     * 
+     *
      * @param tutorEvents events to be analysed
      * @return the number of minutes spent
      */
@@ -95,7 +95,7 @@ public class TutorEffortService {
 
     /**
      * Takes in two dates and returns difference between them in seconds
-     * 
+     *
      * @param first  first date to compare
      * @param second second date to compare
      * @return difference in seconds

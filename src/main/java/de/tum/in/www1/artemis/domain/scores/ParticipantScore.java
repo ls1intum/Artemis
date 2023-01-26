@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
  * Normally, getting the last result means going through the chain Exercise -> Participation -> Submission -> Result.
  * This is inefficient for certain scenarios, e.g., when calculating the course average score for an exercise.
  * </p>
- * 
+ *
  * @see ParticipantScoreScheduleService
  */
 @Entity

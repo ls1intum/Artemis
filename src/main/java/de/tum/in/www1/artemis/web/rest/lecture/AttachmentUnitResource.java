@@ -196,7 +196,7 @@ public class AttachmentUnitResource {
 
     /**
      * Checks that the attachment unit belongs to the specified lecture.
-     * 
+     *
      * @param attachmentUnit The attachment unit to check
      * @param lectureId      The id of the lecture to check against
      */

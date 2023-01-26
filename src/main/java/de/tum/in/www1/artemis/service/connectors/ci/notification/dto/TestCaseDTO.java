@@ -51,7 +51,7 @@ public record TestCaseDTO(String name, String classname, double time, List<TestC
 
     /**
      * Extracts the most helpful message from the test case received from the continuous integration system.
-     * 
+     *
      * @return the most helpful message that can be added to an automatic {@link Feedback}.
      */
     private Optional<String> extractMessage() {

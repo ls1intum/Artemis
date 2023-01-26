@@ -159,7 +159,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
 
     /**
      * Checks if any StudentExam exists for the given user (student) id in the given course.
-     * 
+     *
      * @param courseId the id of the course which should have the exam.
      * @param examId   the id of the exam
      * @param userId   the id of the user (student) who may or may not have a StudentExam

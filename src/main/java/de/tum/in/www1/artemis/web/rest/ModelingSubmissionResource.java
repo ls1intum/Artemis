@@ -227,8 +227,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * GET /modeling-submission-without-assessment : get one modeling submission without assessment, for course exercises with first correction round and automatic
      * assessment enabled
      *
-     * @param exerciseId id of the exercise for which the modeling submission should be returned
-     * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
+     * @param exerciseId      id of the exercise for which the modeling submission should be returned
+     * @param lockSubmission  optional value to define if the submission should be locked and has the value of false if not set manually
      * @param correctionRound correctionRound for which submissions without a result should be returned
      * @return the ResponseEntity with status 200 (OK) and a modeling submission without assessment in body
      */

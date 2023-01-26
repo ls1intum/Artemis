@@ -249,7 +249,7 @@ public class ComplaintResource {
      * Get exercises/:exerciseId/more-feedback-for-assessment-dashboard
      * <p>
      * Get all the more feedback requests associated to an exercise, that are about the tutor who is doing the request.
-     * 
+     *
      * @param exerciseId the id of the exercise we are interested in
      * @param principal  that wants to get more feedback requests
      * @return the ResponseEntity with status 200 (OK) and a list of more feedback requests. The list can be empty
@@ -268,7 +268,7 @@ public class ComplaintResource {
      * Get complaints
      * <p>
      * Get all the complaints for tutor.
-     * 
+     *
      * @param complaintType the type of complaints we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
@@ -289,7 +289,7 @@ public class ComplaintResource {
      * Get courses/:courseId/complaints/:complaintType
      * <p>
      * Get all the complaints filtered by courseId, complaintType and optionally tutorId.
-     * 
+     *
      * @param tutorId               the id of the tutor by which we want to filter
      * @param courseId              the id of the course we are interested in
      * @param complaintType         the type of complaints we are interested in
@@ -334,7 +334,7 @@ public class ComplaintResource {
      * Get exercises/:exerciseId/complaints
      * <p>
      * Get all the complaints filtered by exerciseId, complaintType and optionally tutorId.
-     * 
+     *
      * @param tutorId       the id of the tutor by which we want to filter
      * @param exerciseId    the id of the exercise we are interested in
      * @param complaintType the type of complaints we are interested in
@@ -374,7 +374,7 @@ public class ComplaintResource {
      * Get courses/:courseId/exams/:examId/complaints
      * <p>
      * Get all the complaints filtered by courseId, complaintType and optionally tutorId.
-     * 
+     *
      * @param examId   the id of the tutor by which we want to filter
      * @param courseId the id of the course we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
@@ -429,7 +429,6 @@ public class ComplaintResource {
             else if (exerciseWithOnlyTitle instanceof FileUploadExercise) {
                 exerciseWithOnlyTitle = new FileUploadExercise();
             }
-
             else if (exerciseWithOnlyTitle instanceof ProgrammingExercise) {
                 exerciseWithOnlyTitle = new ProgrammingExercise();
             }

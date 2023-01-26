@@ -52,7 +52,6 @@ public class ProgrammingSubmission extends Submission {
      * @param submissionDate the date when the commit was pushed to the version control server
      * @param commitHash     the hash of the corresponding commit in the git repository in the version control system
      * @return the newly created programming submission
-     *
      */
     @NotNull
     public static ProgrammingSubmission createFallbackSubmission(ProgrammingExerciseParticipation participation, ZonedDateTime submissionDate, String commitHash) {

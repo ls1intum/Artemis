@@ -27,7 +27,7 @@ public class MigrationRegistry {
 
     /**
      * Hooks into the {@link ApplicationReadyEvent} and executes the registered events
-     * 
+     *
      * @param event Specifies when this method gets called and provides the event with all application data
      */
     @EventListener

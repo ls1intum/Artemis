@@ -221,7 +221,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
 
     /**
      * Checks for logical equality based on the name and the exercise
-     * 
+     *
      * @param testCase another test case which should be checked for being the same
      * @return whether this and the other test case are the same based on name and exercise
      */

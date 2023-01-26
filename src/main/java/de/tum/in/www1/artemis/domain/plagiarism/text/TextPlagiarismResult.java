@@ -17,7 +17,7 @@ public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement
 
     /**
      * converts the given JPlagResult into a TextPlagiarismResult, only uses the 500 most interesting comparisons based on the highest similarity
-     * 
+     *
      * @param result   the JPlagResult contains comparisons
      * @param exercise the exercise to which the result should belong, either Text or Programming
      */

@@ -196,7 +196,7 @@ public interface VersionControlService {
 
     /**
      * Get the default branch used in the participation or retrieves it from the VCS if not present in the database
-     * 
+     *
      * @param participation The participation to get the default branch from
      * @return The default branch used by this participation
      */
@@ -204,7 +204,7 @@ public interface VersionControlService {
 
     /**
      * Get the default branch used in the student participation or retrieves it from the VCS if not present in the database
-     * 
+     *
      * @param participation The student participation to get the default branch from
      * @return The default branch used by this student participation
      */
@@ -212,7 +212,7 @@ public interface VersionControlService {
 
     /**
      * Get the default branch used in the programmingExercise or retrieves it from the VCS if not present in the database
-     * 
+     *
      * @param programmingExercise The participation to get the default branch from
      * @return The default branch used by this programmingExercise
      */

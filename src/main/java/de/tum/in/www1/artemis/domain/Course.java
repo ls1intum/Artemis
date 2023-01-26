@@ -783,7 +783,7 @@ public class Course extends DomainObject {
 
     /**
      * Returns true if the start and end date of the course fulfill all requirements
-     * 
+     *
      * @return true if the dates are valid
      */
     public boolean isValidStartAndEndDate() {
@@ -795,7 +795,6 @@ public class Course extends DomainObject {
      * use this method to return the customized courseGroup name
      *
      * @param courseGroup the courseGroup we want to add the user to
-     *
      * @return the customized userGroupName
      */
     public String defineCourseGroupName(String courseGroup) {

@@ -68,7 +68,7 @@ public class ExampleSubmissionService {
 
     /**
      * Deletes a ExampleSubmission with the given ID, cleans up the tutor participations, removes the result and the submission
-     * 
+     *
      * @param exampleSubmissionId the ID of the ExampleSubmission which should be deleted
      */
     public void deleteById(long exampleSubmissionId) {

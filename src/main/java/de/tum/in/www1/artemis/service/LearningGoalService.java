@@ -29,7 +29,7 @@ public class LearningGoalService {
 
     /**
      * Get all learning goals for a course, including the progress for the user.
-     * 
+     *
      * @param course         The course for which the learning goals should be retrieved.
      * @param user           The user for whom to filter the visible lecture units attached to the learning goal.
      * @param updateProgress Whether the learning goal progress should be updated or taken from the database.
@@ -48,7 +48,7 @@ public class LearningGoalService {
 
     /**
      * Get all prerequisites for a course. Lecture units are removed if the student is not part of the course.
-     * 
+     *
      * @param course The course for which the prerequisites should be retrieved.
      * @param user   The user that is requesting the prerequisites.
      * @return A list of prerequisites (without lecture units if student is not part of course).
@@ -64,7 +64,7 @@ public class LearningGoalService {
 
     /**
      * Search for all learning goals fitting a {@link PageableSearchDTO search query}. The result is paged.
-     * 
+     *
      * @param search The search query defining the search term and the size of the returned page
      * @param user   The user for whom to fetch all available lectures
      * @return A wrapper object containing a list of all found learning goals and the total number of pages

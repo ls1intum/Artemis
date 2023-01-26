@@ -134,7 +134,7 @@ public class VideoUnitResource {
 
     /**
      * Checks that the video unit belongs to the specified lecture.
-     * 
+     *
      * @param videoUnit The video unit to check
      * @param lectureId The id of the lecture to check against
      */
@@ -149,7 +149,7 @@ public class VideoUnitResource {
 
     /**
      * Normalizes the provided video Url.
-     * 
+     *
      * @param videoUnit provided video unit
      */
     private void normalizeVideoUrl(VideoUnit videoUnit) {
@@ -161,7 +161,7 @@ public class VideoUnitResource {
 
     /**
      * Validates the provided video Url.
-     * 
+     *
      * @param videoUnit provided video unit
      */
     private void validateVideoUrl(VideoUnit videoUnit) {

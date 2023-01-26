@@ -48,7 +48,7 @@ public class PlagiarismWebsocketService {
 
     /**
      * Return the topic of the plagiarism check for the programming exercise
-     * 
+     *
      * @param programmingExerciseId the id of the exercise
      * @return the topic
      */
@@ -58,7 +58,7 @@ public class PlagiarismWebsocketService {
 
     /**
      * Return the topic of the plagiarism check for the text exercise
-     * 
+     *
      * @param textExerciseId the id of the exercise
      * @return the topic
      */
@@ -68,7 +68,7 @@ public class PlagiarismWebsocketService {
 
     /**
      * Return the topic of the plagiarism check for the modeling exercise
-     * 
+     *
      * @param modelingExerciseId the id of the exercise
      * @return the topic
      */

@@ -49,7 +49,7 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
     /**
      * Checks if the title / name property is marked as "dirty" (= changed somehow) by Hibernate.
      * If yes, evicts the title from the cache
-     * 
+     *
      * @param event the Hibernate update event
      */
     @Override
@@ -69,7 +69,7 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
 
     /**
      * Evict the title of the given entity
-     * 
+     *
      * @param entity the entity which title should be evicted
      */
     private void evictEntityTitle(Object entity) {
@@ -104,7 +104,7 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
 
     /**
      * Removes the given id from the given title cache
-     * 
+     *
      * @param cacheName the title cache to evict the entry from
      * @param entityId  the entry to evict from
      */

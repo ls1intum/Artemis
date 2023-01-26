@@ -47,7 +47,7 @@ public class NotificationTargetFactory {
 
     /**
      * Create the needed target for "ExerciseReleased" notifications
-     * 
+     *
      * @param exercise that was released
      * @return the final target property
      */
@@ -57,7 +57,7 @@ public class NotificationTargetFactory {
 
     /**
      * Create the needed target for "ExerciseUpdated" notifications
-     * 
+     *
      * @param exercise that was updated
      * @return the final target property
      */
@@ -131,7 +131,7 @@ public class NotificationTargetFactory {
 
     /**
      * Create the needed target for "AttachmentUpdated" notifications
-     * 
+     *
      * @param lecture where an attachment was updated
      * @return the final NotificationTarget
      */

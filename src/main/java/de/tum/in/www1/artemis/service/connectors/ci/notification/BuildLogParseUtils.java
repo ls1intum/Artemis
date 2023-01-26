@@ -36,7 +36,7 @@ public class BuildLogParseUtils {
      * [2021-05-10T15:19:49.741Z] [ERROR] BubbleSort.java:[15,9] not a statement
      * [2021-05-10T15:19:49.741Z] [ERROR] BubbleSort.java:[15,10] ';' expected
      * [Pipeline] }
-     * 
+     *
      * @param logLines The lines of the Jenkins log
      * @return a list of BuildLogEntries
      */

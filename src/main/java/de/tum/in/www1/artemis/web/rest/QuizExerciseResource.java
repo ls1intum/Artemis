@@ -37,7 +37,9 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
-/** REST controller for managing QuizExercise. */
+/**
+ * REST controller for managing QuizExercise.
+ */
 @RestController
 @RequestMapping("/api")
 public class QuizExerciseResource {

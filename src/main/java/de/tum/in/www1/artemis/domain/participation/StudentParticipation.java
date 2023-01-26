@@ -58,7 +58,7 @@ public class StudentParticipation extends Participation {
 
     /**
      * allows to set the participant independent whether it is a team or user
-     * 
+     *
      * @param participant either a team or user
      */
     public void setParticipant(Participant participant) {

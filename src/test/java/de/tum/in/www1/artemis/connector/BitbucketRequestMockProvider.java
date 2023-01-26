@@ -121,7 +121,7 @@ public class BitbucketRequestMockProvider {
 
     /**
      * Mocks the call to retrieve the push date of a certain commit
-     * 
+     *
      * @param projectKey Key of the affected project
      * @param commitHash The expected commit hash
      * @param pushDate   The expected push date for the commit

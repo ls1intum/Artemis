@@ -497,7 +497,7 @@ public class BambooRequestMockProvider {
 
     /**
      * Mocks the Rest calls for granting read access to the build plan
-     * 
+     *
      * @param buildPlanId the Bamboo build plan ID
      * @param projectKey  the Bamboo project key
      * @param user        the user that should get read access

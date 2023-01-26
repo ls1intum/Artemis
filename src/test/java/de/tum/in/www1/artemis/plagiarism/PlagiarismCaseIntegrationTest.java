@@ -74,7 +74,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     /***
      * Create a given amount of plagiarism cases
-     * 
+     *
      * @param numberOfPlagiarismCases The required number of cases
      * @return The list of generated plagiarism cases
      */

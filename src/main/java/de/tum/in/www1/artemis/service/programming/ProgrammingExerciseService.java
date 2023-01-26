@@ -1084,7 +1084,7 @@ public class ProgrammingExerciseService {
     /**
      * Locks or unlocks the repository if necessary due to the changes in the programming exercise.
      * Notice: isAllowOfflineIde() == null means that the offline IDE is allowed
-     * 
+     *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
      * @param updatedProgrammingExercise      the updated exercise with new values
      */
@@ -1114,7 +1114,7 @@ public class ProgrammingExerciseService {
 
     /**
      * Checks if the repos have to be locked/unlocked based on the new due date. Individual due dates are considered, so not all repositories might get locked/unlocked
-     * 
+     *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
      * @param updatedProgrammingExercise      the updated exercise with new values
      * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
@@ -1141,7 +1141,7 @@ public class ProgrammingExerciseService {
 
     /**
      * Checks if the repos have to be locked/unlocked based on the allowance of offline IDEs. The read access in the VCS is only necessary when working with an offline IDE
-     * 
+     *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
      * @param updatedProgrammingExercise      the updated exercise with new values
      * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise

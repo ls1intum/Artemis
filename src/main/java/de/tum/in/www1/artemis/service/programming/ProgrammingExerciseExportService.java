@@ -239,7 +239,7 @@ public class ProgrammingExerciseExportService {
      * solution, or tests repository.
      *
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
-     * 
+     *
      * @param exerciseId     The id of the programming exercise that has the repository
      * @param repositoryType the type of repository to export
      * @param exportErrors   List of failures that occurred during the export
@@ -254,7 +254,7 @@ public class ProgrammingExerciseExportService {
      * Exports a solution repository available for an instructor/tutor/student for a given programming exercise.
      *
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
-     * 
+     *
      * @param exerciseId   The id of the programming exercise that has the repository
      * @param includeTests flag that indicates whether the tests should also be exported
      * @param exportErrors List of failures that occurred during the export
@@ -269,7 +269,7 @@ public class ProgrammingExerciseExportService {
      * Exports an auxiliary repository available for an instructor/editor/tutor for a given programming exercise.
      *
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
-     * 
+     *
      * @param exerciseId          The id of the programming exercise that has the repository
      * @param auxiliaryRepository the auxiliary repository to export
      * @param exportErrors        List of failures that occurred during the export
@@ -618,7 +618,7 @@ public class ProgrammingExerciseExportService {
 
     /**
      * delete all files in the directory based on the given programming exercise and target path
-     * 
+     *
      * @param programmingExercise the programming exercise for which repos have been downloaded
      * @param targetPath          the path in which the repositories have been downloaded
      */

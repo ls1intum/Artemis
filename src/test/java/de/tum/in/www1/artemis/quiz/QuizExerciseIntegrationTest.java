@@ -1959,7 +1959,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Check if a QuizExercise contains the correct information for students.
-     * 
+     *
      * @param quizExercise QuizExercise to check
      */
     private void checkQuizExerciseForStudent(QuizExercise quizExercise) {

@@ -365,7 +365,7 @@ public class ProgrammingExerciseResource {
 
     /**
      * PUT /programming-exercises/timeline : Updates the timeline attributes of a given exercise
-     * 
+     *
      * @param updatedProgrammingExercise containing the changes that have to be saved
      * @param notificationText           an optional text to notify the student group about the update on the programming exercise
      * @return the ResponseEntity with status 200 (OK) with the updated ProgrammingExercise, or with status 403 (Forbidden)
@@ -702,7 +702,6 @@ public class ProgrammingExerciseResource {
      * @param exerciseId                                  of the exercise
      * @param programmingExercise                         the ProgrammingExercise to re-evaluate and update
      * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
-     *
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the ProgrammingExercise is not valid,
      *         or with status 409 (Conflict) if given exerciseId is not same as in the object of the request body, or with status 500 (Internal Server Error) if the
      *         ProgrammingExercise
@@ -731,7 +730,7 @@ public class ProgrammingExerciseResource {
      * DELETE programming-exercises/:exerciseId/tasks : Delete all tasks and solution entries for an existing ProgrammingExercise.
      * Note: This endpoint exists only for testing purposes and will be removed at a later stage of the development of HESTIA
      * (automatic generation of code hints for programming exercises in Java).
-     * 
+     *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 204},
      *         or with status {@code 400 (Bad Request) if the exerciseId is not valid}.
@@ -754,7 +753,7 @@ public class ProgrammingExerciseResource {
      * Returns the solution repository files with content for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the solution participation id is not known for the client.
-     * 
+     *
      * @param exerciseId the exercise for which the solution repository files should be retrieved
      * @return a redirect to the endpoint returning the files with content
      */
@@ -777,7 +776,7 @@ public class ProgrammingExerciseResource {
      * Returns the template repository files with content for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the template participation id is not known for the client.
-     * 
+     *
      * @param exerciseId the exercise for which the template repository files should be retrieved
      * @return a redirect to the endpoint returning the files with content
      */
@@ -800,7 +799,7 @@ public class ProgrammingExerciseResource {
      * Returns the solution repository file names for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the solution participation id is not known for the client.
-     * 
+     *
      * @param exerciseId the exercise for which the solution repository files should be retrieved
      * @return a redirect to the endpoint returning the files with content
      */
@@ -821,7 +820,7 @@ public class ProgrammingExerciseResource {
      * GET programming-exercises/:exerciseId/build-log-statistics
      *
      * Returns the averaged build log statistics for a given programming exercise.
-     * 
+     *
      * @param exerciseId the exercise for which the build log statistics should be retrieved
      * @return a DTO containing the average build log statistics
      */

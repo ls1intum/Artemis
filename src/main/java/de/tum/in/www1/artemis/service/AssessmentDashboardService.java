@@ -50,7 +50,7 @@ public class AssessmentDashboardService {
     /**
      * Prepares the exercises for the assessment dashboard by setting the tutor participations and statistics
      * This is very slow as each iteration takes about 2.5 s
-     * 
+     *
      * @param exercises           exercises to be prepared for the assessment dashboard
      * @param tutorParticipations participations of the tutors
      * @param examMode            flag should be set for exam dashboard
@@ -139,7 +139,7 @@ public class AssessmentDashboardService {
 
     /**
      * This method fetches and stores the number of submissions for each exercise.
-     * 
+     *
      * @param programmingExercises    - the programming-exercises, for which the number of submissions should be fetched
      * @param nonProgrammingExercises - the exercises, which are not programming-exercises, for which the number of submissions should be fetched
      * @param examMode                - if the exercises are part of an exam

@@ -65,7 +65,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
 
     /**
      * Returns all teams for an exercise (optionally filtered for a specific tutor who owns the teams)
-     * 
+     *
      * @param exercise    Exercise for which to return all teams
      * @param teamOwnerId Optional user id by which to filter teams on their owner
      * @return List of teams

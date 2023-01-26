@@ -29,7 +29,7 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
 
     /**
      * Load text submission with eager Results
-     * 
+     *
      * @param submissionId the submissionId
      * @return optional text submission
      */
@@ -48,7 +48,7 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
 
     /**
      * Gets all open (without a result) TextSubmissions which are submitted and loads all blocks, results, and participation
-     * 
+     *
      * @param exerciseId the Id of the exercise
      * @return List of Text Submissions
      */
@@ -60,7 +60,7 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
 
     /**
      * Gets all TextSubmissions which are submitted and loads all blocks
-     * 
+     *
      * @param exerciseId the Id of the exercise
      * @return List of Text Submissions
      */
@@ -69,7 +69,7 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
 
     /**
      * Gets all TextSubmissions which are submitted, with matching and loads all blocks
-     * 
+     *
      * @param exerciseId the Id of the exercise
      * @param language   language of the exercise
      * @return List of Text Submissions

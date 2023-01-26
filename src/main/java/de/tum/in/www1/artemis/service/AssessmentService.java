@@ -170,7 +170,7 @@ public class AssessmentService {
 
     /**
      * Returns whether a user is allowed to be the assessor of an existing result
-     * 
+     *
      * @param result   Result for which to check if the user can be the assessor
      * @param exercise Exercise to which the result belongs to
      * @param user     User for whom to check if they can be the assessor of the given result

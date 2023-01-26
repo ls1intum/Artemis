@@ -4472,7 +4472,7 @@ public class DatabaseUtilService {
 
     /**
      * Update the max complaint text limit of the course.
-     * 
+     *
      * @param course             course which is updated
      * @param complaintTextLimit new complaint text limit
      * @return updated course
@@ -4485,7 +4485,7 @@ public class DatabaseUtilService {
 
     /**
      * Update the max complaint response text limit of the course.
-     * 
+     *
      * @param course                     course which is updated
      * @param complaintResponseTextLimit new complaint response text limit
      * @return updated course

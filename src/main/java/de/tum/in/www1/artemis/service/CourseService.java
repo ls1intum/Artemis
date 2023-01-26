@@ -783,7 +783,7 @@ public class CourseService {
 
     /**
      * checks if the given group exists in the authentication provider, only on production systems
-     * 
+     *
      * @param group the group that should be available
      */
     public void checkIfGroupsExists(String group) {
@@ -799,7 +799,7 @@ public class CourseService {
     /**
      * If the corresponding group (student, tutor, editor, instructor) is not defined, this method will create the default group.
      * If the group is defined, it will check that the group exists
-     * 
+     *
      * @param course the course (typically created on the client and not yet existing) for which the groups should be validated
      */
     public void createOrValidateGroups(Course course) {
@@ -854,7 +854,7 @@ public class CourseService {
 
     /**
      * Special case for editors: checks if the default editor group needs to be created when old courses are edited
-     * 
+     *
      * @param course the course for which the default editor group will be created if it does not exist
      */
     public void checkIfEditorGroupsNeedsToBeCreated(Course course) {
@@ -885,7 +885,7 @@ public class CourseService {
     /**
      * Determines end date for the displayed time span of active student charts
      * If the course end date is passed, only information until this date are collected and sent
-     * 
+     *
      * @param course the corresponding course the active students should be collected
      * @return end date of the time span
      */
@@ -901,7 +901,7 @@ public class CourseService {
      * Determines the allowed time span for active student charts
      * The span time can be restricted if the temporal distance between the course start date
      * and the priorly determined end date is smaller than the intended time frame
-     * 
+     *
      * @param course      the corresponding course the time frame should be computed
      * @param endDate     the priorly determined end date of the time span
      * @param maximalSize the normal time span size
@@ -919,7 +919,7 @@ public class CourseService {
     /**
      * Auxiliary method that returns the number of weeks between two dates
      * Note: The calculation includes the week of the end date. This is needed for the active students line charts
-     * 
+     *
      * @param startDate the start date of the period to calculate
      * @param endDate   the end date of the period to calculate
      * @return the number of weeks the period contains + one week

@@ -51,7 +51,7 @@ public class CodeHintResource {
 
     /**
      * GET programming-exercises/{exerciseId}/code-hints: Retrieve all code hints for a programming exercise.
-     * 
+     *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the code hints for the exercise
      */

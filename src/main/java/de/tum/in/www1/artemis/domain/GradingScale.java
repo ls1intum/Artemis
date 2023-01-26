@@ -26,7 +26,9 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GradingScale extends DomainObject {
 
-    /** "U" stands for "Unterschleif" */
+    /**
+     * "U" stands for "Unterschleif"
+     */
     public static final String DEFAULT_PLAGIARISM_GRADE = "U";  // This should be the same as the corresponding constant in grading-scale.model.ts
 
     public static final String DEFAULT_NO_PARTICIPATION_GRADE = "X";  // This should be the same as the corresponding constant in grading-scale.model.ts
@@ -167,7 +169,7 @@ public class GradingScale extends DomainObject {
 
     /**
      * Returns the max grade from grade step set of the grading scale
-     * 
+     *
      * @return the max grade step
      */
     GradeStep maxGrade() {

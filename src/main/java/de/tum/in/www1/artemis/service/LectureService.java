@@ -64,7 +64,7 @@ public class LectureService {
 
     /**
      * Search for all lectures fitting a {@link PageableSearchDTO search query}. The result is paged.
-     * 
+     *
      * @param search The search query defining the search term and the size of the returned page
      * @param user   The user for whom to fetch all available lectures
      * @return A wrapper object containing a list of all found lectures and the total number of pages
@@ -84,7 +84,7 @@ public class LectureService {
 
     /**
      * Deletes the given lecture (with its lecture units).
-     * 
+     *
      * @param lecture the lecture to be deleted
      */
     public void delete(Lecture lecture) {

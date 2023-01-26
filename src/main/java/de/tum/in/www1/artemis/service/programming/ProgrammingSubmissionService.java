@@ -415,7 +415,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * If removeSubmissionSet = true, also the Set participation.submissions is removed. The number of submissions will be
      * stored in the attribute participation.submissionCount instead of being determined by the size of the set of all submissions.
      * This method is intended to reduce the amount of data transferred to the client.
-     * 
+     *
      * @param programmingSubmissionList - a List with all ProgrammingSubmissions to be modified
      * @param removeSubmissionSet       - option to also remove the SubmissionSet from the ProgrammingSubmission
      * @return a List with ProgrammingSubmissions and removed attributes

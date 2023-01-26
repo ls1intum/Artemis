@@ -28,7 +28,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
-/** REST controller for managing FileUploadExercise. */
+/**
+ * REST controller for managing FileUploadExercise.
+ */
 @RestController
 @RequestMapping(FileUploadExerciseResource.Endpoints.ROOT)
 public class FileUploadExerciseResource {
@@ -274,7 +276,6 @@ public class FileUploadExerciseResource {
      * @param exerciseId                                  of the exercise
      * @param fileUploadExercise                          the fileUploadExercise to re-evaluate and update
      * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
-     *
      * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or
      *         with status 400 (Bad Request) if the fileUploadExercise is not valid, or with status 409 (Conflict)
      *         if given exerciseId is not same as in the object of the request body, or with status 500 (Internal

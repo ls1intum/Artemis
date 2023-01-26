@@ -108,7 +108,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     /**
      * Select Exercise for Course ID WHERE there does exist an LtiOutcomeUrl for the current user (-> user has started exercise once using LTI)
-     * 
+     *
      * @param courseId the id of the course
      * @param login    the login of the corresponding user
      * @return list of exercises
@@ -157,7 +157,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
 
     /**
-     *
      * @param courseId - course id of the exercises we want to fetch
      * @return all exercise-ids which belong to the course
      */
@@ -170,7 +169,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     /**
      * calculates the average score and the participation rate of students for each given individual course exercise
      * by using the last result (rated or not)
-     * 
+     *
      * @param exerciseIds - exercise ids to count the statistics for
      * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
      */
@@ -532,7 +531,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     /**
      * Converts the row data from the exercise statistic query into the corresponding DTO
-     * 
+     *
      * @param exerciseIdToRawStatisticQueryData map from exerciseId to query data
      * @param exercise                          exercise
      * @return converted DTO

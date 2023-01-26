@@ -294,7 +294,7 @@ public class BambooBuildPlanService {
     /**
      * Modify the lists containing default tasks, final tasks and artifacts for executing a static code analysis for
      * Java and Kotlin exercises.
-     * 
+     *
      * @param isMavenProject whether the project is a Maven build (or implicitly a Gradle build)
      * @param finalTasks     the list containing the final tasks for the build plan to be created
      * @param artifacts      the list containing all artifacts for the build plan to be created
@@ -317,7 +317,7 @@ public class BambooBuildPlanService {
 
     /**
      * Modify the lists containing default and final tasks for executing a non-sequential test run
-     * 
+     *
      * @param isMavenProject         whether the project is a Maven project (or implicitly a Gradle project)
      * @param recordTestwiseCoverage whether the testwise coverage should be recorded
      * @param defaultTasks           the list containing the default tasks for the build plan to be created
@@ -358,7 +358,7 @@ public class BambooBuildPlanService {
 
     /**
      * Modify the lists containing default and final tasks for executing a sequential test run
-     * 
+     *
      * @param isMavenProject whether the project is a Maven project (or implicitly a Gradle project)
      * @param defaultTasks   the list containing the default tasks for the build plan to be created
      * @param finalTasks     the list containing the final tasks for the build plan to be created

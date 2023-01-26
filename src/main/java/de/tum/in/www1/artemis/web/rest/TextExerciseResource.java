@@ -490,7 +490,6 @@ public class TextExerciseResource {
      * @param exerciseId                                  of the exercise
      * @param textExercise                                the textExercise to re-evaluate and update
      * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
-     *
      * @return the ResponseEntity with status 200 (OK) and with body the updated textExercise, or
      *         with status 400 (Bad Request) if the textExercise is not valid, or with status 409 (Conflict)
      *         if given exerciseId is not same as in the object of the request body, or with status 500

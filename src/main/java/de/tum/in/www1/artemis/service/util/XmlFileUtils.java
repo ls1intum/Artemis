@@ -74,7 +74,7 @@ public class XmlFileUtils {
 
     /**
      * create a secure processing document builder factory
-     * 
+     *
      * @return a document builder factor with secure settings for parsing xml files
      * @throws ParserConfigurationException config exception
      */
@@ -92,7 +92,7 @@ public class XmlFileUtils {
 
     /**
      * Converts the xml document to a string.
-     * 
+     *
      * @param document the xml document
      * @return string representation of the xml document
      * @throws TransformerException in case of errors

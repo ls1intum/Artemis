@@ -134,7 +134,6 @@ public class LtiResource {
      * @param response HTTP response
      * @param exercise The exercise to redirect to
      * @throws IOException If an input or output exception occurs
-     *
      */
     private void sendRedirect(HttpServletRequest request, HttpServletResponse response, Exercise exercise) throws IOException {
 

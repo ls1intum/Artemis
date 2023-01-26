@@ -85,7 +85,7 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
 
     /**
      * This is the simulated request from the VCS to Artemis on a new commit.
-     * 
+     *
      * @return The submission that was created
      */
     public ProgrammingSubmission postSubmission(Long participationId, HttpStatus expectedStatus, String jsonRequest) throws Exception {

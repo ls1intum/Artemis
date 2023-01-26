@@ -437,7 +437,7 @@ public class ProgrammingExerciseGradingService {
      * Updates the latest results of all participations that do not have an individual due date. This includes the template and solution participation.
      * <p>
      * For details what will be updated for individual results, see {@link ProgrammingExerciseGradingService#updateAllResults}.
-     * 
+     *
      * @param exercise whose results should be updated.
      * @return the results of the exercise that have been updated.
      */
@@ -461,7 +461,7 @@ public class ProgrammingExerciseGradingService {
      * Updates the latest result scores of the given participation.
      * <p>
      * For details what will be updated, see {@link ProgrammingExerciseGradingService#updateAllResults}.
-     * 
+     *
      * @param participation for which the results should be updated.
      * @return a list of updated results (maximum two: latest automatic, and latest manual result).
      */
@@ -481,7 +481,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Updates the latest results for the given participations.
-     * 
+     *
      * @param exercise       the participations belong to.
      * @param allTestCases   of the programming exercise.
      * @param participations for which the latest results should be updated.
@@ -497,7 +497,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Updates the latest results for the template and solution participation.
-     * 
+     *
      * @param exercise  the template and solution belong to.
      * @param testCases of the exercise.
      * @return a stream of results that have been updated.
@@ -517,7 +517,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Updates the score for the latest result of the given participation.
-     * 
+     *
      * @param exercise               the participation belongs to.
      * @param participation          of a student in the exercise.
      * @param allTestCases           of this exercise.
@@ -543,7 +543,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Creates an audit event logging that a re-evaluation was triggered.
-     * 
+     *
      * @param user     who triggered the re-evaluation.
      * @param exercise for which the evaluation was triggered.
      * @param course   the exercise belongs to.
@@ -558,7 +558,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Filter all test cases from the score calculation that are never visible or ones with visibility "after due date" if the due date has not yet passed.
-     * 
+     *
      * @param testCases which should be filtered.
      * @return testCases, but the ones based on the described visibility criterion removed.
      */
@@ -569,7 +569,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Filters the test cases to only include the ones a student should be able to see.
-     * 
+     *
      * @param testCases       all test cases of an exercise.
      * @param isBeforeDueDate true, if the due date has not yet passed.
      * @return a set of test cases that are visible to the student.
@@ -580,7 +580,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Calculates the grading for a result and updates the feedbacks
-     * 
+     *
      * @param testCases               All test cases for the exercise
      * @param testCasesForCurrentDate Test cases for the exercise for the current date
      * @param result                  The result to be updated
@@ -654,7 +654,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Adds the appropriate feedback to the result in case the automatic tests were not executed.
-     * 
+     *
      * @param result                     to which the feedback should be added.
      * @param exercise                   to which the result belongs to.
      * @param staticCodeAnalysisFeedback that has been created for this result.
@@ -682,7 +682,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Sets the visibility on all feedbacks associated with a test case with the same name.
-     * 
+     *
      * @param result   of the build run.
      * @param allTests of the given programming exercise.
      */
@@ -695,7 +695,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Checks which tests were not executed and add a new Feedback for them to the exercise.
-     * 
+     *
      * @param result   of the build run.
      * @param allTests of the given programming exercise.
      */
@@ -741,7 +741,7 @@ public class ProgrammingExerciseGradingService {
      * Update the score given the positive tests score divided by all tests' score.
      * Takes weight, bonus multiplier and absolute bonus points into account.
      * All tests in this case do not include ones with visibility=never.
-     * 
+     *
      * @param result                     of the build run.
      * @param allTestCases               of a given programming exercise.
      * @param successfulTestCases        test cases with positive feedback.
@@ -768,7 +768,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Calculates the score of automatic test cases for the given result with possible penalties applied.
-     * 
+     *
      * @param programmingExercise        the result belongs to.
      * @param allTests                   that should be considered in the score calculation.
      * @param result                     for which a score should be calculated.
@@ -852,7 +852,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Updates the feedback corresponding to the test case with the given credits.
-     * 
+     *
      * @param result   which should be updated.
      * @param testCase the feedback that should be updated corresponds to.
      * @param credits  that should be set in the feedback.
@@ -865,7 +865,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Calculates the points that should be awarded for a successful test case.
-     * 
+     *
      * @param result              used to determine if the calculation is performed for the solution.
      * @param programmingExercise the result belongs to.
      * @param test                for which the points should be calculated.
@@ -924,7 +924,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Calculates the total penalty over all static code analysis issues
-     * 
+     *
      * @param staticCodeAnalysisFeedback The list of static code analysis feedback
      * @param programmingExercise        The current exercise
      * @return The sum of all penalties, capped at the maximum allowed penalty
@@ -973,7 +973,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Remove all test case feedback information from a result and treat it as if it has a score of 0.
-     * 
+     *
      * @param result                     Result containing all feedback
      * @param staticCodeAnalysisFeedback Static code analysis feedback to keep
      */
@@ -987,7 +987,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Check if the provided test was found in the result's feedbacks with positive = true.
-     * 
+     *
      * @param result of the build run.
      * @return true if there is a positive feedback for a given test.
      */
@@ -999,7 +999,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Check if the provided test was not found in the result's feedbacks.
-     * 
+     *
      * @param result of the build run.
      * @return true if there is no feedback for a given test.
      */
@@ -1011,7 +1011,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Calculates the statistics for the grading page.
-     * 
+     *
      * @param exerciseId The current exercise
      * @return The statistics object
      */
@@ -1051,7 +1051,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Merges the result map of a single student with the overall issues map
-     * 
+     *
      * @param issuesAllStudents   The overall issues map for all students
      * @param issuesSingleStudent The issues map for one student
      */
@@ -1071,7 +1071,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Analyses the feedback and updates the statistics maps
-     * 
+     *
      * @param categoryIssuesMap The issues map for sca statistics
      * @param testCaseStatsMap  The map for test case statistics
      * @param feedback          The given feedback object

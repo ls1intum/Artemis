@@ -191,7 +191,7 @@ public class OnlineUnitResource {
 
     /**
      * Validates the source url of an online unit.
-     * 
+     *
      * @param onlineUnit The online unit to check the source URL for.
      */
     private void validateUrl(OnlineUnit onlineUnit) {
@@ -205,7 +205,7 @@ public class OnlineUnitResource {
 
     /**
      * Checks that the online unit belongs to the specified lecture.
-     * 
+     *
      * @param onlineUnit The online unit to check
      * @param lectureId  The id of the lecture to check against
      */

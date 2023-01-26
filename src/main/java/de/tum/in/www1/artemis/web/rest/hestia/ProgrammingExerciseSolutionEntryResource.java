@@ -73,7 +73,7 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     /**
      * GET programming-exercises/:exerciseId/solution-entries/:solutionEntryId : Get the solution entry with test cases and programming exercise
-     * 
+     *
      * @param exerciseId      of the exercise
      * @param solutionEntryId of the solution entry
      * @return the {@link ResponseEntity} with status {@code 200} and with body the solution entries with test cases and exercise,
@@ -97,7 +97,7 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     /**
      * GET programming-exercises/{exerciseId}/solution-entries: Get all solution entries with test cases for a programming exercise
-     * 
+     *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200} and with body the solution entries with test cases.
      */
@@ -113,7 +113,7 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     /**
      * GET programming-exercises/:exerciseId/code-hints/:codeHintId/solution-entries : Get all solution entries for a given code hint
-     * 
+     *
      * @param exerciseId of the exercise
      * @param codeHintId of the code hint
      * @return the {@link ResponseEntity} with status {@code 200} and with body the solution entries,
@@ -138,7 +138,7 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     /**
      * GET programming-exercises/:exerciseId/test-cases/:testCaseId/solution-entries : Get all solution entries for a given test case
-     * 
+     *
      * @param exerciseId of the exercise
      * @param testCaseId of the test case
      * @return the {@link ResponseEntity} with status {@code 200} and with body the solution entries,
@@ -163,7 +163,7 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     /**
      * POST programming-exercises/:exerciseId/test-cases/:testCaseId/solution-entries : Create a solution entry for a test case
-     * 
+     *
      * @param exerciseId                       of the exercise
      * @param testCaseId                       of the test case
      * @param programmingExerciseSolutionEntry the solution entry to be created
@@ -188,7 +188,7 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     /**
      * PUT programming-exercises/:exerciseId/test-cases/:testCaseId/solution-entries/:solutionEntryId : Update a solution entry
-     * 
+     *
      * @param exerciseId      of the exercise
      * @param testCaseId      of the test case
      * @param solutionEntryId of the solution entry
@@ -220,7 +220,7 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     /**
      * DELETE programming-exercises/:exerciseId/test-cases/:testCaseId/solution-entries/:solutionEntryId : Delete a solution entry
-     * 
+     *
      * @param exerciseId      of the exercise
      * @param testCaseId      of the test case
      * @param solutionEntryId of the solution entry that is to be deleted
@@ -246,7 +246,7 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     /**
      * DELETE programming-exercises/:exerciseId/solution-entries: Delete all solution entries for a programming exercise
-     * 
+     *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 204},
      *         or with status {@code 404} if the exerciseId is not valid.

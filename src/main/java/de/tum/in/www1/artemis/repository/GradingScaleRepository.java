@@ -149,11 +149,10 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * Same as the linked method except instructor group check is skipped for ADMINs to allow them access to all eligible
      * grading scales.
      *
-     * @see #findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(String, Set, Pageable)
-     *
      * @param partialTitle course or exam title search term
      * @param pageable     Pageable
      * @return Page with search results
+     * @see #findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(String, Set, Pageable)
      */
     @Query("""
             SELECT gs
@@ -184,11 +183,10 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
     }
 
     /**
-     * @see #matchPercentageToGradeStep(double, Long)
-     *
      * @param percentage the grade percentage to be mapped
      * @param gradeSteps the grade steps of a grading scale
      * @return grade step corresponding to the given percentage
+     * @see #matchPercentageToGradeStep(double, Long)
      */
     private GradeStep matchPercentageToGradeStep(double percentage, Set<GradeStep> gradeSteps) {
         if (percentage < 0) {
@@ -210,11 +208,10 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * Maps a grade point to a valid grade step within the grading scale or throws an exception if no match was found.
      * The percentage is calculated by using the given points and the max points from the grading scale.
      *
-     * @see #matchPercentageToGradeStep(double, Long)
-     *
      * @param points       the grade points to be mapped
      * @param gradingScale the grading scale with the grade steps
      * @return grade step corresponding to the given points
+     * @see #matchPercentageToGradeStep(double, Long)
      */
     default GradeStep matchPointsToGradeStep(double points, GradingScale gradingScale) {
         int maxPoints = gradingScale.getMaxPoints();

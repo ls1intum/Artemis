@@ -304,7 +304,7 @@ public class TutorParticipationService {
 
     /**
      * This method removes the tutor participation for the example submission of an exercise
-     * 
+     *
      * @param exercise the exercise to which the example submission and tutor participation are linked to
      * @param user     the user for which the tutor participation should be removed
      */

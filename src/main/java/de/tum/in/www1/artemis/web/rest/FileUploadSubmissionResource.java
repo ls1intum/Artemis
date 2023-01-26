@@ -79,7 +79,6 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * @param exerciseId           of the file upload exercise a submission should be created for
      * @param fileUploadSubmission the fileUploadSubmission to create
      * @param file                 The uploaded file belonging to the submission
-     *
      * @return the ResponseEntity with status 200 and with body the new fileUploadSubmission, or with status 400 (Bad Request) if the fileUploadSubmission has already an ID
      */
     @PostMapping("exercises/{exerciseId}/file-upload-submissions")

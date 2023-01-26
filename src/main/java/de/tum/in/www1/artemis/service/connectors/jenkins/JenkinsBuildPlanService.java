@@ -89,7 +89,7 @@ public class JenkinsBuildPlanService {
 
     /**
      * Creates a build plan for the programming exercise
-     * 
+     *
      * @param exercise      the programming exercise
      * @param planKey       the name of the plan
      * @param repositoryURL the url of the vcs repository
@@ -248,7 +248,7 @@ public class JenkinsBuildPlanService {
 
     /**
      * Triggers the build for the plan
-     * 
+     *
      * @param projectKey the project key of the plan
      * @param planKey    the plan key
      */
@@ -264,7 +264,7 @@ public class JenkinsBuildPlanService {
 
     /**
      * Deletes the build plan
-     * 
+     *
      * @param projectKey the project key of the plan
      * @param planKey    the plan key
      */
@@ -290,7 +290,7 @@ public class JenkinsBuildPlanService {
 
     /**
      * Retrieves the build status of the plan
-     * 
+     *
      * @param projectKey the project key of the plan
      * @param planKey    the plan key
      * @return the build status
@@ -337,7 +337,7 @@ public class JenkinsBuildPlanService {
 
     /**
      * Returns true if the build plan exists.
-     * 
+     *
      * @param projectKey  the project key
      * @param buildPlanId the build plan id
      * @return whether the plan exists
@@ -380,7 +380,7 @@ public class JenkinsBuildPlanService {
 
     /**
      * Enables the build plan
-     * 
+     *
      * @param projectKey the project key of the plan
      * @param planKey    the plan key
      */

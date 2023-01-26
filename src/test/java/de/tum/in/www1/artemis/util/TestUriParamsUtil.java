@@ -11,7 +11,7 @@ public class TestUriParamsUtil {
 
     /**
      * Asserts if a list of URI parameters contains an entry pair with the given name and value
-     * 
+     *
      * @param uriParams the list of URI parameters
      * @param name      the name of the URI parameter
      * @param value     the value of the URI parameter
@@ -23,7 +23,7 @@ public class TestUriParamsUtil {
     /**
      * Asserts if a list of URI parameters contains an entry pair with the given name and value. If specified the
      * assert does not fail if the given value is a substring of the actual URI parameter value.
-     * 
+     *
      * @param uriParams           the list of URI parameters
      * @param name                the name of the URI parameter
      * @param value               the value of the URI parameter
@@ -49,7 +49,7 @@ public class TestUriParamsUtil {
 
     /**
      * Asserts if a list of URI parameters contains an entry pair with the given name regardless of its value
-     * 
+     *
      * @param uriParams the list of URI parameters
      * @param name      the name of the URI parameter
      */

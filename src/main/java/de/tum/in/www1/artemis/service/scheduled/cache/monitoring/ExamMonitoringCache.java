@@ -25,7 +25,7 @@ abstract class ExamMonitoringCache implements Cache {
 
     /**
      * Returns the exam id.
-     * 
+     *
      * @return the exam id (key)
      */
     public Long getExamId() {
@@ -39,7 +39,7 @@ abstract class ExamMonitoringCache implements Cache {
 
     /**
      * Updates a specific activity without locking the entire exam cache.
-     * 
+     *
      * @param activityId     activity to update
      * @param writeOperation performs the operation on the exam activity
      */

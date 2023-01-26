@@ -13,7 +13,9 @@ import de.tum.in.www1.artemis.service.ModelingExerciseService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
-/** REST controller for administrating ModelingExercise. */
+/**
+ * REST controller for administrating ModelingExercise.
+ */
 @RestController
 @RequestMapping("api/admin/")
 public class AdminModelingExerciseResource {

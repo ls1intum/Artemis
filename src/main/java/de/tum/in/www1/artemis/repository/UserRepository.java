@@ -595,7 +595,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     /**
      * Return true if the current users' login matches the provided login
-     * 
+     *
      * @param login user login
      * @return true if both logins match
      */

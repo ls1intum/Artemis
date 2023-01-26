@@ -5,7 +5,7 @@ package de.tum.in.www1.artemis.util;
  * You can use this if some external method sets up some mocks for you, but you want to verify the called methods on
  * the mocks (or spies), so you have to return callback method calls, that verify this behavior.
  * Example:
- * 
+ *
  * <pre>
  * {@code
  * &#64;Service
@@ -39,7 +39,7 @@ package de.tum.in.www1.artemis.util;
  * }
  * }
  * </pre>
- * 
+ *
  * @see org.mockito.Mockito#verify(Object)
  */
 @FunctionalInterface

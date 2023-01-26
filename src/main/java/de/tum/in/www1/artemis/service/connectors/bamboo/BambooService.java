@@ -127,7 +127,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     /**
      * Grants read access to the participants of the specified build plan
-     * 
+     *
      * @param buildPlanId the ID of the build plan
      * @param projectKey  the key for the project to which the build plan belongs to
      * @param participant the participants receiving access

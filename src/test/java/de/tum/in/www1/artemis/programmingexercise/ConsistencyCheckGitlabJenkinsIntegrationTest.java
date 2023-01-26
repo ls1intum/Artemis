@@ -30,7 +30,7 @@ class ConsistencyCheckGitlabJenkinsIntegrationTest extends AbstractSpringIntegra
     /**
      * Test consistencyCheck feature with programming exercise without
      * inconsistencies
-     * 
+     *
      * @throws Exception if an error occurs
      */
     @Test

@@ -585,7 +585,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
 
     /**
      * This method is normally invoked in a for each loop and adds a user based on the list element in case it does not yet exist in the users map
-     * 
+     *
      * @param users              the map of existing users
      * @param userStatisticEntry the statistic entry which contains a username and a potentially new user
      * @param index              the index of the map which should be considered, can be a date or an integer

@@ -24,7 +24,9 @@ import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-/** REST controller for managing ModelingAssessment. */
+/**
+ * REST controller for managing ModelingAssessment.
+ */
 @RestController
 @RequestMapping("/api")
 public class ModelingAssessmentResource extends AssessmentResource {

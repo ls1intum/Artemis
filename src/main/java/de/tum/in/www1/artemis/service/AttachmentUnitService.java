@@ -51,7 +51,7 @@ public class AttachmentUnitService {
 
     /**
      * Creates a new attachment unit for the given lecture.
-     * 
+     *
      * @param attachmentUnit The attachmentUnit to create
      * @param attachment     The attachment to create the attachmentUnit for
      * @param lecture        The lecture linked to the attachmentUnit
@@ -82,7 +82,7 @@ public class AttachmentUnitService {
 
     /**
      * Creates new attachment units for the given lecture.
-     * 
+     *
      * @param lectureUnitInformationDTO The split information which contains units as list, number of pages and removeBreakSlide flag
      * @param lecture                   The lecture linked to the attachmentUnits
      * @param file                      The file (lecture slide) to be split
@@ -121,7 +121,7 @@ public class AttachmentUnitService {
 
     /**
      * Updates the provided attachment unit with an optional file.
-     * 
+     *
      * @param existingAttachmentUnit The attachment unit to update.
      * @param updateUnit             The new attachment unit data.
      * @param updateAttachment       The new attachment data.
@@ -155,7 +155,7 @@ public class AttachmentUnitService {
 
     /**
      * Sets the required parameters for an attachment on update
-     * 
+     *
      * @param existingAttachment the existing attachment
      * @param updateAttachment   the new attachment containing updated information
      * @param attachmentUnit     the attachment unit to update
@@ -171,7 +171,7 @@ public class AttachmentUnitService {
 
     /**
      * Handles the file after upload if provided.
-     * 
+     *
      * @param file         Potential file to handle
      * @param attachment   Attachment linked to the file.
      * @param keepFilename Whether to keep the original filename or not.
@@ -186,7 +186,7 @@ public class AttachmentUnitService {
 
     /**
      * If a file was provided the cache for that file gets evicted.
-     * 
+     *
      * @param file           Potential file to evict the cache for.
      * @param attachmentUnit Attachment unit liked to the file.
      */
@@ -198,7 +198,7 @@ public class AttachmentUnitService {
 
     /**
      * Cleans the attachment unit before sending it to the client and sets the attachment relationship.
-     * 
+     *
      * @param attachmentUnit The attachment unit to clean.
      */
     private void prepareAttachmentUnitForClient(AttachmentUnit attachmentUnit, Attachment attachment) {

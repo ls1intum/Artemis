@@ -83,7 +83,7 @@ public class QuizBatchService {
      * join a student to a batch
      * does not check of the user is already part of a batch
      * does not apply to quizzes in SYNCHRONIZED mode
-     * 
+     *
      * @param quizExercise the quiz of the batch to join
      * @param user         the user to join
      * @param password     the password of the batch to join; unused for INDIVIDUAL mode
@@ -107,7 +107,7 @@ public class QuizBatchService {
 
     /**
      * create a password for a new batch that was not yet used by another batch
-     * 
+     *
      * @param quizExercise the quiz where the password should not already be in use
      * @return a new unused password
      */
@@ -125,7 +125,7 @@ public class QuizBatchService {
 
     /**
      * create and save a batch a batched run with a new random password
-     * 
+     *
      * @param quizExercise the quiz where a new batch should be created
      * @param user         the user that created the batch
      * @return the newly created batch
@@ -140,7 +140,7 @@ public class QuizBatchService {
 
     /**
      * create and save a batch an individual run
-     * 
+     *
      * @param quizExercise the quiz where a new batch should be created
      * @param user         the user that created the batch
      * @return the newly created batch
@@ -155,7 +155,7 @@ public class QuizBatchService {
 
     /**
      * Returns the start time for a batch, given some target start date, that ensures that the batch does not overrun the quiz due date.
-     * 
+     *
      * @param quizExercise the quiz exercise to which the batch belongs
      * @param targetTime   the time when the batch should start if possible
      * @return the minimum of targetTime and the last moment a batch can be started to not overrun the quiz due date; null iff targetTime is null
@@ -174,7 +174,7 @@ public class QuizBatchService {
     /**
      * Return the batch that a user the currently participating in for a given quiz exercise
      * Note: This method will definitely include a database read query
-     * 
+     *
      * @param quizExercise the quiz for that the batch should be look up for
      * @param login        the login of the user that the batch should be looked up for
      * @return the batch that the user currently takes part in or empty

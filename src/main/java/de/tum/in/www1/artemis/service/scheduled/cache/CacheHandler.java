@@ -49,7 +49,7 @@ public abstract class CacheHandler<K> {
 
     /**
      * Returns an empty cache.
-     * 
+     *
      * @return empty {@link Cache}
      */
     protected abstract Cache emptyCacheValue();
@@ -66,7 +66,7 @@ public abstract class CacheHandler<K> {
 
     /**
      * Creates a distributed cache.
-     * 
+     *
      * @param key identifier of the cache
      * @return created {@link Cache}
      */

@@ -28,7 +28,9 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-/** REST controller for managing ProgrammingAssessment. */
+/**
+ * REST controller for managing ProgrammingAssessment.
+ */
 @RestController
 @RequestMapping("/api")
 public class ProgrammingAssessmentResource extends AssessmentResource {

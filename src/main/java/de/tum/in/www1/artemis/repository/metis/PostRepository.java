@@ -32,7 +32,7 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
 
     /**
      * Generates SQL Query via specifications to filter and sort Posts
-     * 
+     *
      * @param postContextFilter filtering and sorting properties for Posts
      * @param userId            id of the user performing the call, needed on certain filters
      * @param pagingEnabled     whether a page of posts or all posts will be fetched

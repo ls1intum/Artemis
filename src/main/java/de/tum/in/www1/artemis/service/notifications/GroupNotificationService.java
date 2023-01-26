@@ -51,7 +51,7 @@ public class GroupNotificationService {
 
     /**
      * Checks if a notification has to be created for this exercise update and creates one if the situation is appropriate
-     * 
+     *
      * @param exercise         that is updated
      * @param notificationText that is used for the notification process
      */
@@ -331,7 +331,7 @@ public class GroupNotificationService {
 
     /**
      * Saves an exam notification by removing the problem statement message
-     * 
+     *
      * @param notification that should be saved (without the problem statement)
      */
     private void saveExamNotification(GroupNotification notification) {
@@ -345,7 +345,7 @@ public class GroupNotificationService {
 
     /**
      * Prepares sending an email based on a GroupNotification by finding the relevant users
-     * 
+     *
      * @param notification which information should also be propagated via email
      */
     private void prepareSendingGroupEmail(GroupNotification notification, Object notificationSubject) {
