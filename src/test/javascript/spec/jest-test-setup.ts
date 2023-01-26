@@ -42,7 +42,8 @@ Object.defineProperty(window, 'getComputedStyle', {
 
 Object.defineProperty(window, 'location', {
     value: {
-        noop,
+        hash: '',
+        href: 'https://artemis.fake/test',
     },
 });
 
