@@ -103,7 +103,7 @@
 
 .visual-question {
     border-radius: 4px;
-    border: 1px solid #d3d3d3;
+    border: 1px solid var(--quiz-visual-question-border-color);
     padding: 6px;
 }
 
@@ -125,7 +125,7 @@
 }
 
 .visual-answer-delete-container {
-    background: #eb3223;
+    background: var(--red);
     align-items: center;
     display: flex;
     justify-content: center;
@@ -136,7 +136,7 @@
 }
 
 .visual-answer-correct-container {
-    background: #53a351;
+    background: var(--quiz-visual-answer-correct-container-color);
     align-items: center;
     display: flex;
     justify-content: center;
@@ -147,7 +147,7 @@
 }
 
 .visual-answer-wrong-container {
-    background: #eb3223;
+    background: var(--red);
     align-items: center;
     display: flex;
     justify-content: center;
@@ -158,7 +158,7 @@
 }
 
 .visual-answer-add-container {
-    background: #508ac7;
+    background: var(--quiz-visual-answer-add-container-color);
     align-items: center;
     display: flex;
     justify-content: center;
@@ -166,15 +166,15 @@
     width: 2.5%;
     margin-left: 0.2rem;
     border-radius: 2px;
-    color: white;
+    color: var(--white);
 }
 
 .visual-answer-add-container:hover {
-    background: lighten(#508ac7, 20%);
+    background: lighten(var(--quiz-visual-answer-add-container-color), 20%);
 }
 
 .visual-answer-add-container-disabled {
-    background: lighten(#508ac7, 20%);
+    background: lighten(var(--quiz-visual-answer-add-container-color), 20%);
     align-items: center;
     display: flex;
     justify-content: center;
@@ -186,19 +186,19 @@
 }
 
 .visual-answer-delete-container:hover {
-    color: white;
+    color: var(--white);
 }
 
 .visual-answer-correct-container:hover {
-    background: #90c48e;
+    background: var(--quiz-visual-answer-correct-container-hover-color);
 }
 
 .visual-answer-wrong-container:hover {
-    background: #f3837a;
+    background: var(--quiz-visual-answer-wrong-container-hover-color);
 }
 
 .visual-answer {
-    color: white;
+    color: var(--white);
 }
 
 .visual-new-answer-title {
