@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EMPTY, Subject, from } from 'rxjs';
@@ -18,6 +18,8 @@ import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/
     selector: 'jhi-session-management',
     templateUrl: './tutorial-group-sessions-management.component.html',
     styleUrls: ['./tutorial-group-sessions-management.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    encapsulation: ViewEncapsulation.None,
 })
 export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     ngUnsubscribe = new Subject<void>();
@@ -36,7 +38,13 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
 
     isInitialized = false;
 
-    constructor(private tutorialGroupService: TutorialGroupsService, private alertService: AlertService, private modalService: NgbModal, private activeModal: NgbActiveModal) {}
+    constructor(
+        private tutorialGroupService: TutorialGroupsService,
+        private alertService: AlertService,
+        private modalService: NgbModal,
+        private activeModal: NgbActiveModal,
+        private cdr: ChangeDetectorRef,
+    ) {}
 
     initialize() {
         if (!this.tutorialGroupId || !this.course) {
@@ -72,12 +80,13 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+            })
+            .add(() => this.cdr.detectChanges());
     }
 
     openCreateSessionDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(CreateTutorialGroupSessionComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(CreateTutorialGroupSessionComponent, { size: 'xl', scrollable: false, backdrop: 'static', animation: false });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroup = this.tutorialGroup;
         modalRef.componentInstance.initialize();

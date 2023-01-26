@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -54,6 +55,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
@@ -347,7 +349,7 @@ public class CourseTestService {
     // Test
     public void testDeleteCourseWithPermission() throws Exception {
         // add to new list so that we can add another course with ARTEMIS_GROUP_DEFAULT_PREFIX so that delete group will be tested properly
-        List<Course> courses = new ArrayList<>(database.createCoursesWithExercisesAndLectures(userPrefix, true));
+        List<Course> courses = new ArrayList<>(database.createCoursesWithExercisesAndLectures(userPrefix, true, 5));
         Course course3 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(4), new HashSet<>(), null, null, null, null);
         course3.setStudentGroupName(course3.getDefaultStudentGroupName());
         course3.setTeachingAssistantGroupName(course3.getDefaultTeachingAssistantGroupName());
@@ -588,14 +590,14 @@ public class CourseTestService {
 
     // Test
     public void testGetCourse_tutorNotInCourse() throws Exception {
-        var courses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        var courses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         request.getList("/api/courses/" + courses.get(0).getId(), HttpStatus.FORBIDDEN, Course.class);
         request.get("/api/courses/" + courses.get(0).getId() + "/with-exercises", HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
     public void testGetCoursesWithPermission() throws Exception {
-        List<Course> coursesCreated = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> coursesCreated = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         List<Course> courses = request.getList("/api/courses", HttpStatus.OK, Course.class);
 
         for (Course course : coursesCreated) {
@@ -611,7 +613,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesWithQuizExercises() throws Exception {
-        List<Course> coursesCreated = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> coursesCreated = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         Course activeCourse = coursesCreated.get(0);
         Course inactiveCourse = coursesCreated.get(1);
 
@@ -631,7 +633,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForDashboard(boolean userRefresh) throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false);
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
         Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK, Course.class);
 
         // Test that the received course has five exercises
@@ -672,7 +674,7 @@ public class CourseTestService {
         String suffix = "getall";
         adjustUserGroupsToCustomGroups(suffix);
         // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
-        List<Course> coursesCreated = database.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, false);
+        List<Course> coursesCreated = database.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, false, numberOfTutors);
         for (var course : coursesCreated) {
             database.updateCourseGroups(userPrefix, course, suffix);
         }
@@ -776,7 +778,7 @@ public class CourseTestService {
     // Test
     public void testGetAllCoursesWithUserStats() throws Exception {
         adjustUserGroupsToCustomGroups();
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         Course course = testCourses.get(0);
         course.setStudentGroupName(userPrefix + "student");
         course.setTeachingAssistantGroupName(userPrefix + "tutor");
@@ -818,7 +820,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForAssessmentDashboardWithStats() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
             for (Exercise exercise : course.getExercises()) {
@@ -865,7 +867,7 @@ public class CourseTestService {
 
     // Tests that average rating and number of ratings are computed correctly in '/for-assessment-dashboard'
     public void testGetCourseForAssessmentDashboard_averageRatingComputedCorrectly() throws Exception {
-        var testCourse = database.createCoursesWithExercisesAndLectures(userPrefix, true).get(0);
+        var testCourse = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5).get(0);
         var exercise = database.getFirstExerciseWithType(testCourse, TextExercise.class);
 
         int[] ratings = { 3, 4, 5 };
@@ -886,13 +888,13 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForInstructorDashboardWithStats_instructorNotInCourse() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
     public void testGetCourseForAssessmentDashboardWithStats_tutorNotInCourse() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-assessment-dashboard", HttpStatus.FORBIDDEN, StatsForDashboardDTO.class);
     }
@@ -1096,7 +1098,7 @@ public class CourseTestService {
     // Test
     public void testGetCourse() throws Exception {
         adjustUserGroupsToCustomGroups();
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         for (Course testCourse : testCourses) {
             testCourse.setInstructorGroupName(userPrefix + "instructor");
             testCourse.setTeachingAssistantGroupName(userPrefix + "tutor");
@@ -1137,7 +1139,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCategoriesInCourse() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         Course course1 = testCourses.get(0);
         Course course2 = testCourses.get(1);
         List<String> categories1 = request.getList("/api/courses/" + course1.getId() + "/categories", HttpStatus.OK, String.class);
@@ -1148,7 +1150,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCategoriesInCourse_instructorNotInCourse() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/categories", HttpStatus.FORBIDDEN, Set.class);
     }
 
@@ -1524,6 +1526,131 @@ public class CourseTestService {
         assertThat(tutors).isEmpty();
     }
 
+    /**
+     * Test
+     */
+    public void searchUsersInCourse_searchForAllTutors_shouldReturnAllTutorsAndEditors() throws Exception {
+        Course course = createCourseForUserSearchTest();
+        // Test: search for all (no login or name) tutors (tutors includes also editors)
+        var result = searchUsersTest(course, List.of("tutors"), Optional.empty(), numberOfTutors + numberOfEditors, true);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).hasSize(numberOfEditors);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(numberOfTutors);
+    }
+
+    /**
+     * Test
+     */
+    public void searchUsersInCourse_searchForAllInstructor_shouldReturnAllInstructors() throws Exception {
+        var course = createCourseForUserSearchTest();
+        // Test: search for all (no login or name) instructors
+        var result = searchUsersTest(course, List.of("instructors"), Optional.empty(), numberOfInstructors, true);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).hasSize(numberOfInstructors);
+    }
+
+    /**
+     * Test
+     */
+    public void searchUsersInCourse_searchForAllStudents_shouldReturnBadRequest() throws Exception {
+        var course = createCourseForUserSearchTest();
+        // Test: Try to search for all students (should fail)
+        searchUsersTest(course, List.of("students"), Optional.empty(), 0, false);
+    }
+
+    /**
+     * Test
+     */
+    public void searchUsersInCourse_searchForStudentsAndTooShortSearchTerm_shouldReturnBadRequest() throws Exception {
+        var course = createCourseForUserSearchTest();
+        // Test: Try to search for all students with a too short search term (at least 3 as students are included) (should fail)
+        searchUsersTest(course, List.of("students"), Optional.of("st"), 0, false);
+    }
+
+    /**
+     * Test
+     */
+    public void searchUsersInCourse_searchForStudents_shouldReturnUsersMatchingSearchTerm() throws Exception {
+        var course = createCourseForUserSearchTest();
+        // Test: Try to search for students with a long enough search term (at least 3 as students are included)
+        // Note: -1 as student1 is the requesting user and will not be returned
+        var result = searchUsersTest(course, List.of("students"), Optional.of(userPrefix + "student"), numberOfStudents - 1, true);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsStudent)).hasSize(numberOfStudents - 1);
+    }
+
+    /**
+     * Test
+     */
+    public void searchUsersInCourse_searchForAllTutorsAndInstructors_shouldReturnAllTutorsEditorsAndInstructors() throws Exception {
+        var course = createCourseForUserSearchTest();
+        // Test: Try to search for all tutors (tutors includes also editors) and instructors
+        var result = searchUsersTest(course, List.of("tutors", "instructors"), Optional.empty(), numberOfTutors + numberOfEditors + numberOfInstructors, true);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).hasSize(numberOfEditors);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(numberOfTutors);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).hasSize(numberOfInstructors);
+    }
+
+    /**
+     * Test
+     */
+    public void searchUsersInCourse_searchForTutorsAndInstructors_shouldReturnUsersMatchingSearchTerm() throws Exception {
+        var course = createCourseForUserSearchTest();
+        // Test : Try to search for all tutors (tutors includes also editors) and instructors with search term
+        var result = searchUsersTest(course, List.of("tutors", "instructors"), Optional.of(userPrefix + "tutor"), numberOfTutors, true);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).isEmpty();
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(numberOfTutors);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).isEmpty();
+    }
+
+    /**
+     * Test
+     */
+    public void searchUsersInCourse_searchForStudentsTutorsAndInstructorsAndTooShortSearchTerm_shouldReturnBadRequest() throws Exception {
+        var course = createCourseForUserSearchTest();
+        // Test: Try to search or all students, tutors (tutors includes also editors) and instructors
+        // with a too short search term (at least 3 as students are included)
+        searchUsersTest(course, List.of("students", "tutors", "instructors"), Optional.of("tu"), 0, false);
+    }
+
+    /**
+     * Test
+     */
+    public void searchUsersInCourse_searchForStudentsTutorsEditorsAndInstructors_shouldReturnUsersMatchingSearchTerm() throws Exception {
+        var course = createCourseForUserSearchTest();
+
+        // Test: Try to search or all students, tutors (tutors includes also editors)
+        // and instructors with a long enough search term (at least 3 as students are included)
+        var result = searchUsersTest(course, List.of("students", "tutors", "instructors"), Optional.of(userPrefix + "tutor"), numberOfTutors, true);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).isEmpty();
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(numberOfTutors);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).isEmpty();
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsStudent)).isEmpty();
+    }
+
+    private Course createCourseForUserSearchTest() {
+        String suffix = "searchUserTest";
+        adjustUserGroupsToCustomGroups(suffix);
+        var course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix,
+                userPrefix + "instructor" + suffix);
+        course = courseRepo.save(course);
+        return course;
+    }
+
+    private List<UserPublicInfoDTO> searchUsersTest(Course course, List<String> roles, Optional<String> loginOrName, int expectedSize, boolean shouldPass) throws Exception {
+        MultiValueMap<String, String> queryParameter = new LinkedMultiValueMap<>();
+        queryParameter.add("loginOrName", loginOrName.orElse(""));
+        queryParameter.add("roles", String.join(",", roles));
+        var status = shouldPass ? HttpStatus.OK : HttpStatus.BAD_REQUEST;
+        var foundUsers = request.getList("/api/courses/" + course.getId() + "/users/search", status, UserPublicInfoDTO.class, queryParameter);
+        if (shouldPass) {
+            var foundUsersWithPrefix = foundUsers.stream().filter(user -> user.getLogin().startsWith(userPrefix)).toList();
+            assertThat(foundUsersWithPrefix).hasSize(expectedSize);
+            return foundUsersWithPrefix;
+        }
+        else {
+            assertThat(foundUsers).isNull();
+            return emptyList();
+        }
+    }
+
     // Test
     public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportModelingExercise() throws Exception {
         Course course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions(userPrefix);
@@ -1767,7 +1894,7 @@ public class CourseTestService {
     // Test
     public void testGetAllCoursesForManagementOverview() throws Exception {
         // Add two courses, containing one not belonging to the instructor
-        var testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        var testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         var instructorsCourse = testCourses.get(0);
         instructorsCourse.setInstructorGroupName("test-instructors");
         courseRepo.save(instructorsCourse);
@@ -1794,7 +1921,7 @@ public class CourseTestService {
     public void testGetExercisesForCourseOverview() throws Exception {
 
         // Add two courses, containing one not belonging to the instructor
-        var testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        var testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         var instructorsCourse = testCourses.get(0);
         instructorsCourse.setInstructorGroupName("test-instructors");
         courseRepo.save(instructorsCourse);
@@ -2055,7 +2182,7 @@ public class CourseTestService {
         adjustUserGroupsToCustomGroups();
         ZonedDateTime now = ZonedDateTime.now();
         // add courses with exercises
-        var courses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        var courses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         var course1 = courses.get(0);
         var course2 = courses.get(1);
         course1.setStartDate(now.minusWeeks(2));
@@ -2269,7 +2396,7 @@ public class CourseTestService {
 
     // Test
     public void testAddUsersToCourseGroup(String group, String registrationNumber1, String registrationNumber2, String email) throws Exception {
-        var course = database.createCoursesWithExercisesAndLectures(userPrefix, true).get(0);
+        var course = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5).get(0);
         StudentDTO dto1 = new StudentDTO().registrationNumber(registrationNumber1);
         dto1.setLogin("newstudent1");
         StudentDTO dto2 = new StudentDTO().registrationNumber(registrationNumber2);

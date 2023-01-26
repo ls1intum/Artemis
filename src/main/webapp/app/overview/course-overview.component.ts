@@ -7,7 +7,6 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
@@ -261,7 +260,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             if (exercise) {
                 exercise.studentAssignedTeamId = teamAssignment.teamId;
                 exercise.studentParticipations = teamAssignment.studentParticipations;
-                exercise.participationStatus = participationStatus(exercise);
             }
         });
     }

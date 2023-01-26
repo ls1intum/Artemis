@@ -15,12 +15,14 @@
 
         <addColumn tableName="programming_exercise_details">
             <column name="build_plan_access_secret" type="VARCHAR(36)"/>
+        </addColumn>
+        <addColumn tableName="exercise">
             <column name="build_plan_id" type="BIGINT">
                 <constraints nullable="true"/>
             </column>
         </addColumn>
 
-        <addForeignKeyConstraint baseColumnNames="build_plan_id" baseTableName="programming_exercise_details"
+        <addForeignKeyConstraint baseColumnNames="build_plan_id" baseTableName="exercise"
                                  constraintName="FK_EXERCISE_ON_BUILDPLAN"
                                  referencedColumnNames="id" referencedTableName="build_plan"/>
         <!-- TODO: Column can't be unique because it is too long (Specified key was too long; max key length is 3072 bytes)

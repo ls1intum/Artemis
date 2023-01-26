@@ -13,6 +13,7 @@
             placement="top"
             [disabled]="!cancellationReason"
             [ngbPopover]="cancellationReason ? cancellationReason : ''"
+            [animation]="false"
             [popoverTitle]="'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate"
         >
             <fa-icon *ngIf="overlapsWithFreePeriod" [icon]="faUmbrellaBeach"></fa-icon>
@@ -20,11 +21,40 @@
         </button>
     </td>
     <td [class.table-danger]="isCancelled">
-        <button type="button" class="btn btn-outline-info" placement="top" [ngbPopover]="session.location" [autoClose]="'outside'">
+        <button type="button" class="btn btn-outline-info" placement="top" [ngbPopover]="session.location" [animation]="false" [autoClose]="'outside'">
             <span class="d-inline-block text-truncate" style="max-width: 150px">
                 {{ session.location }}
             </span>
         </button>
+    </td>
+    <td [class.table-danger]="isCancelled" class="attendance-column">
+        <div class="input-group" *ngIf="!isReadOnly; else readOnlyAttendance">
+            <input
+                type="number"
+                class="form-control attendance-input"
+                [ngModel]="session.attendanceCount"
+                (ngModelChange)="onAttendanceInput($event)"
+                name="attendance"
+                #attendance="ngModel"
+                min="0"
+                max="3000"
+                [readOnly]="isUpdatingAttendance"
+                aria-labelledby="attendanceHeader"
+            />
+            <button
+                [style.visibility]="attendanceDiffersFromPersistedValue && attendance.valid ? 'visible' : 'hidden'"
+                class="btn btn-outline-secondary"
+                type="button"
+                (click)="saveAttendanceCount()"
+                [disabled]="isUpdatingAttendance"
+            >
+                <span class="spinner-border spinner-border-sm" *ngIf="isUpdatingAttendance"> </span>
+                {{ (isUpdatingAttendance ? 'entity.action.saving' : 'entity.action.save') | artemisTranslate }}
+            </button>
+        </div>
+        <ng-template #readOnlyAttendance>
+            {{ session.attendanceCount ?? '' }}
+        </ng-template>
     </td>
     <td *ngIf="tutorialGroup.tutorialGroupSchedule" [class.table-danger]="isCancelled">
         <div class="alert alert-info" role="alert" *ngIf="!hasSchedule">
