@@ -103,6 +103,7 @@ describe('TutorialGroupsManagementComponent', () => {
                 getOneOfCourseSpy = jest.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configuration })));
                 navigateSpy = jest.spyOn(router, 'navigate');
                 navigateSpy.mockClear();
+                fixture.detectChanges();
             });
     });
 
@@ -112,7 +113,6 @@ describe('TutorialGroupsManagementComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
         expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
         expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
@@ -121,7 +121,6 @@ describe('TutorialGroupsManagementComponent', () => {
     });
 
     it('should get all tutorial groups for course', () => {
-        fixture.detectChanges();
         expect(component.tutorialGroups).toEqual([tutorialGroupOne, tutorialGroupTwo]);
         expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
         expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
@@ -130,7 +129,6 @@ describe('TutorialGroupsManagementComponent', () => {
     });
 
     it('should get all tutorial groups for course if import is done', () => {
-        fixture.detectChanges();
         getAllOfCourseSpy.mockClear();
         getOneOfCourseSpy.mockClear();
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();

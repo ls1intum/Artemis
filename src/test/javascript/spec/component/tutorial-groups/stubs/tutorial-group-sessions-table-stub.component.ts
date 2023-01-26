@@ -11,7 +11,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
     `,
 })
 export class TutorialGroupSessionsTableStubComponent {
-    @ContentChild(TemplateRef) extraColumn: TemplateRef<any>;
+    @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;
 
     @Input()
     sessions: TutorialGroupSession[] = [];
@@ -24,6 +24,9 @@ export class TutorialGroupSessionsTableStubComponent {
 
     @Input()
     tutorialGroup: TutorialGroup;
+
+    @Input()
+    isReadOnly = false;
 }
 @Component({
     // eslint-disable-next-line @angular-eslint/component-selector
@@ -48,4 +51,7 @@ export class TutorialGroupSessionRowStubComponent {
     @Input() session: TutorialGroupSession;
     @Input() timeZone?: string = undefined;
     @Input() tutorialGroup: TutorialGroup;
+
+    @Input()
+    isReadOnly = false;
 }
