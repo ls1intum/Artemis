@@ -37,7 +37,12 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
 
     openSessionDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(TutorialGroupSessionsManagementComponent, { size: 'xl', scrollable: false, backdrop: 'static', animation: false });
+        const modalRef: NgbModalRef = this.modalService.open(TutorialGroupSessionsManagementComponent, {
+            scrollable: false,
+            backdrop: 'static',
+            animation: false,
+            windowClass: 'session-management-dialog',
+        });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroupId = this.tutorialGroup.id!;
         modalRef.componentInstance.initialize();
