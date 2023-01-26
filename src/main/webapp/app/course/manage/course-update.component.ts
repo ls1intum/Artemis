@@ -1,6 +1,6 @@
 import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
@@ -81,6 +81,7 @@ export class CourseUpdateComponent implements OnInit {
         private navigationUtilService: ArtemisNavigationUtilService,
         private router: Router,
         private featureToggleService: FeatureToggleService,
+        private fb: FormBuilder,
     ) {}
 
     ngOnInit() {
@@ -180,6 +181,12 @@ export class CourseUpdateComponent implements OnInit {
                     validators: [Validators.required, Validators.min(0)],
                 }),
                 postsEnabled: new FormControl(this.course.postsEnabled),
+                courseCommunicationConfiguration: this.fb.group({
+                    questionsAndAnswersEnabled: [this.course.courseCommunicationConfiguration!.questionsAndAnswersEnabled],
+                    channelMessagingEnabled: [this.course.courseCommunicationConfiguration!.channelMessagingEnabled],
+                    groupMessagingEnabled: [this.course.courseCommunicationConfiguration!.groupMessagingEnabled],
+                    oneToOneMessagingEnabled: [this.course.courseCommunicationConfiguration!.oneToOneMessagingEnabled],
+                }),
                 registrationEnabled: new FormControl(this.course.registrationEnabled),
                 registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
                     validators: [Validators.maxLength(2000)],
