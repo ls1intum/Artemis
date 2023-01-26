@@ -7,16 +7,16 @@
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="questions_and_answers_enabled" type="boolean" defaultValueBoolean="false">
+            <column name="questions_and_answers_enabled" type="boolean" defaultValueBoolean="true">
                 <constraints nullable="false"/>
             </column>
-            <column name="channel_messaging_enabled" type="boolean" defaultValueBoolean="false">
+            <column name="channel_messaging_enabled" type="boolean" defaultValueBoolean="true">
                 <constraints nullable="false"/>
             </column>
-            <column name="group_messaging_enabled" type="boolean" defaultValueBoolean="false">
+            <column name="group_messaging_enabled" type="boolean" defaultValueBoolean="true">
                 <constraints nullable="false"/>
             </column>
-            <column name="one_to_one_messaging_enabled" type="boolean" defaultValueBoolean="false">
+            <column name="one_to_one_messaging_enabled" type="boolean" defaultValueBoolean="true">
                 <constraints nullable="false"/>
             </column>
         </createTable>
