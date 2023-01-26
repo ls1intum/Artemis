@@ -106,3 +106,17 @@ The script assumes that you created a full database dump from your production My
     EOF
 
 You can then import the new database dump ``Artemis.pg.sql`` into a PostgreSQL database using ``psql -d Artemis < Artemis.pg.sql``.
+
+In your Artemis config the following values might need to be added/updated to connect to PostgreSQL instead of MySQL:
+
+.. code-block:: yaml
+
+    spring:
+        datasource:
+            url: "jdbc:postgresql://<IP/HOSTNAME of PostgreSQL database host>/Artemis?ssl=false"
+            username: <YOUR_DB_USER>
+            password: <YOUR_DB_PASSWORD>
+        jpa:
+            database-platform: org.hibernate.dialect.PostgreSQL10Dialect
+            database: POSTGRESQL
+
