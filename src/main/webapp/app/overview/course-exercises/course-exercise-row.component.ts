@@ -10,7 +10,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { getExerciseDueDate, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Component({
@@ -54,7 +54,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
             this.exerciseService.getExerciseDetails(this.exercise.id).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 if (exerciseResponse.body) {
                     this.exercise = exerciseResponse.body!;
-                    this.exercise.participationStatus = participationStatus(this.exercise);
                     if (this.exercise.studentParticipations?.length) {
                         this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations, false);
                     }
@@ -69,7 +68,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
                           return el.id === changedParticipation.id ? changedParticipation : el;
                       })
                     : [changedParticipation];
-                this.exercise.participationStatus = participationStatus(this.exercise);
                 this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations, false);
                 this.dueDate = getExerciseDueDate(this.exercise, this.gradedStudentParticipation);
             }
@@ -85,14 +83,13 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
             this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations, false);
         }
         this.dueDate = getExerciseDueDate(this.exercise, this.gradedStudentParticipation);
-        this.exercise.participationStatus = participationStatus(this.exercise, false);
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
         this.exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
-            quizExercise.isActiveQuiz = this.exerciseService.isActiveQuiz(this.exercise);
+            quizExercise.isActiveQuiz = this.exerciseService.isActiveQuiz(quizExercise);
             quizExercise.isPracticeModeAvailable = quizExercise.isOpenForPractice && quizExercise.quizEnded;
             this.exercise = quizExercise;
         }
