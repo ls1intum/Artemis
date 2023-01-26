@@ -159,6 +159,76 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updateAttendanceCount_asTutor_shouldUpdateAttendanceCount() throws Exception {
+        // given
+        var session = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
+        assertThat(session.getAttendanceCount()).isNull();
+
+        // when
+        var updatedSessionId = request
+                .patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count" + "?attendanceCount=" + 20, null,
+                        TutorialGroupSession.class, HttpStatus.OK)
+                .getId();
+
+        // then
+        var updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(updatedSessionId);
+        assertThat(updatedSession.getId()).isEqualTo(session.getId());
+        assertThat(updatedSession.getAttendanceCount()).isEqualTo(20);
+
+        // when
+        request.patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count", null, TutorialGroupSession.class,
+                HttpStatus.OK).getId();
+        updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(updatedSessionId);
+        assertThat(updatedSession.getAttendanceCount()).isNull();
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(session.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    void updateAttendanceCount_asNotTutorOfGroup_shouldReturnForbidden() throws Exception {
+        // given
+        var session = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
+        assertThat(session.getAttendanceCount()).isNull();
+        // when
+        request.patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count" + "?attendanceCount=" + 20, null,
+                TutorialGroupSession.class, HttpStatus.FORBIDDEN);
+        // then
+        session = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
+        assertThat(session.getAttendanceCount()).isNull();
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(session.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updateAttendanceCount_belowMinOrAboveMax_shouldReturnBadRequest() throws Exception {
+        // given
+        var session = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
+        assertThat(session.getAttendanceCount()).isNull();
+
+        // when
+        request.patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count" + "?attendanceCount=" + 3001, null,
+                TutorialGroupSession.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        // then
+        session = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
+        assertThat(session.getAttendanceCount()).isNull();
+
+        // when
+        request.patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count" + "?attendanceCount=" + -1, null,
+                TutorialGroupSession.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        // then
+        session = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
+        assertThat(session.getAttendanceCount()).isNull();
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(session.getId());
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateSession_nowOverlapsWithOtherSession_shouldReturnBadRequest() throws Exception {
         // given

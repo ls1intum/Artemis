@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
@@ -9,6 +9,7 @@ import dayjs from 'dayjs/esm';
     templateUrl: './tutorial-group-sessions-table.component.html',
     styleUrls: ['./tutorial-group-sessions-table.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    encapsulation: ViewEncapsulation.None,
 })
 export class TutorialGroupSessionsTableComponent implements OnChanges {
     @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;
@@ -27,11 +28,17 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
     @Input()
     showIdColumn = false;
 
+    @Input()
+    isReadOnly = false;
+
     upcomingSessions: TutorialGroupSession[] = [];
     pastSessions: TutorialGroupSession[] = [];
+
+    nextSession: TutorialGroupSession | undefined = undefined;
+
     isCollapsed = true;
     get numberOfColumns(): number {
-        let numberOfColumns = this.tutorialGroup.tutorialGroupSchedule ? 3 : 2;
+        let numberOfColumns = this.tutorialGroup.tutorialGroupSchedule ? 4 : 3;
         if (this.extraColumn) {
             numberOfColumns++;
         }
@@ -58,6 +65,13 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
                     case 'timeZone': {
                         if (change.currentValue) {
                             this.timeZoneUsedForDisplay = change.currentValue;
+                            this.changeDetectorRef.detectChanges();
+                        }
+                        break;
+                    }
+                    case 'tutorialGroup': {
+                        if (change.currentValue) {
+                            this.nextSession = change.currentValue.nextSession;
                             this.changeDetectorRef.detectChanges();
                         }
                         break;
@@ -90,5 +104,21 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
         this.upcomingSessions = upcoming;
         this.pastSessions = past;
         this.changeDetectorRef.detectChanges();
+    }
+
+    onAttendanceChanged(session: TutorialGroupSession) {
+        // Note: We synchronize the attendance of upcoming or past sessions with the next session and vice versa
+        if (session.id === this.nextSession?.id) {
+            this.nextSession = session;
+            const upcomingIndex = this.upcomingSessions.findIndex((s) => s.id === session.id);
+            if (upcomingIndex !== -1) {
+                this.upcomingSessions[upcomingIndex] = session;
+            }
+            const pastIndex = this.pastSessions.findIndex((s) => s.id === session.id);
+            if (pastIndex !== -1) {
+                this.pastSessions[pastIndex] = session;
+            }
+            this.changeDetectorRef.detectChanges();
+        }
     }
 }
