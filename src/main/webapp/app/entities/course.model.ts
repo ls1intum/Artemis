@@ -44,7 +44,6 @@ export class Course implements BaseEntity {
     public maxComplaintTextLimit?: number;
     public maxComplaintResponseTextLimit?: number;
     public complaintsEnabled?: boolean;
-    public postsEnabled?: boolean;
     public posts?: Post[];
     public requestMoreFeedbackEnabled?: boolean;
     public maxRequestMoreFeedbackTimeDays?: number;
@@ -94,7 +93,6 @@ export class Course implements BaseEntity {
         this.maxComplaintTextLimit = 2000; // default value
         this.maxComplaintResponseTextLimit = 2000; // default value
         this.complaintsEnabled = true; // default value
-        this.postsEnabled = true; // default value
         this.requestMoreFeedbackEnabled = true; // default value
         this.maxRequestMoreFeedbackTimeDays = 7; // default value
         this.accuracyOfScores = 1; // default value

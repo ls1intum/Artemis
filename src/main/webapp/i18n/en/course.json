@@ -41,10 +41,6 @@
                 "title": "Maximum number of characters per complaint response",
                 "description": "This value indicates the maximum number of characters that may be used for the response per complaint."
             },
-            "postsEnabled": {
-                "title": "Enable communication features",
-                "description": "Enable course communication overview and communication section on lecture and exercise pages."
-            },
             "complaintsEnabled": {
                 "title": "Enable complaints",
                 "description": "Enabling this allows students to complain about assessments."

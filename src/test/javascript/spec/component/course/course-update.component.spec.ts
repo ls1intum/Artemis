@@ -71,7 +71,6 @@ describe('Course Management Update Component', () => {
         course.maxComplaintTextLimit = 500;
         course.maxComplaintResponseTextLimit = 1000;
         course.maxRequestMoreFeedbackTimeDays = 15;
-        course.postsEnabled = true;
         course.courseCommunicationConfiguration!.oneToOneMessagingEnabled = true;
         course.courseCommunicationConfiguration!.groupMessagingEnabled = true;
         course.courseCommunicationConfiguration!.channelMessagingEnabled = true;
@@ -172,7 +171,6 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['maxComplaintTextLimit'])?.value).toBe(course.maxComplaintTextLimit);
             expect(comp.courseForm.get(['maxComplaintResponseTextLimit'])?.value).toBe(course.maxComplaintResponseTextLimit);
             expect(comp.courseForm.get(['maxRequestMoreFeedbackTimeDays'])?.value).toBe(course.maxRequestMoreFeedbackTimeDays);
-            expect(comp.courseForm.get(['postsEnabled'])?.value).toBe(course.postsEnabled);
             expect(comp.courseForm.get(['courseCommunicationConfiguration'])!.get(['questionsAndAnswersEnabled'])?.value).toBe(
                 course.courseCommunicationConfiguration!.questionsAndAnswersEnabled,
             );
@@ -213,7 +211,6 @@ describe('Course Management Update Component', () => {
                 maxComplaintTextLimit: new FormControl(entity.maxComplaintTextLimit),
                 maxComplaintResponseTextLimit: new FormControl(entity.maxComplaintResponseTextLimit),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
-                postsEnabled: new FormControl(entity.postsEnabled),
                 courseCommunicationConfiguration: new FormGroup({
                     questionsAndAnswersEnabled: new FormControl(entity.courseCommunicationConfiguration!.questionsAndAnswersEnabled),
                     channelMessagingEnabled: new FormControl(entity.courseCommunicationConfiguration!.channelMessagingEnabled),
@@ -252,7 +249,6 @@ describe('Course Management Update Component', () => {
                 maxComplaintTextLimit: new FormControl(entity.maxComplaintTextLimit),
                 maxComplaintResponseTextLimit: new FormControl(entity.maxComplaintResponseTextLimit),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
-                postsEnabled: new FormControl(entity.postsEnabled),
                 courseCommunicationConfiguration: new FormGroup({
                     questionsAndAnswersEnabled: new FormControl(entity.courseCommunicationConfiguration!.questionsAndAnswersEnabled),
                     channelMessagingEnabled: new FormControl(entity.courseCommunicationConfiguration!.channelMessagingEnabled),

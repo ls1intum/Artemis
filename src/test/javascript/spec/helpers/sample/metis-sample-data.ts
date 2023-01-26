@@ -35,7 +35,6 @@ export const metisCourse = {
     title: 'Metis Course',
     exercises: [metisExercise, metisExercise2],
     lectures: [metisLecture, metisLecture2],
-    postsEnabled: true,
     courseCommunicationConfiguration: {
         id: 1,
         questionsAndAnswersEnabled: true,

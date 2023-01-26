@@ -342,11 +342,6 @@
                         ></fa-icon>
                     </div>
                 </div>
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" name="postsEnabled" id="field_postsEnabled" formControlName="postsEnabled" />
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.postsEnabled.title" for="field_postsEnabled">Enable Questions and Answers</label>
-                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.postsEnabled.description' | artemisTranslate }}"></fa-icon>
-                </div>
                 <div class="form-check" *ngIf="!this.course.registrationEnabled">
                     <input
                         type="checkbox"

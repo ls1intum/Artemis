@@ -180,7 +180,6 @@ export class CourseUpdateComponent implements OnInit {
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                postsEnabled: new FormControl(this.course.postsEnabled),
                 courseCommunicationConfiguration: this.fb.group({
                     questionsAndAnswersEnabled: [this.course.courseCommunicationConfiguration!.questionsAndAnswersEnabled],
                     channelMessagingEnabled: [this.course.courseCommunicationConfiguration!.channelMessagingEnabled],
