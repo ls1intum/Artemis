@@ -174,8 +174,10 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     private void addBuildPlanToProgrammingExerciseIfUnset(ProgrammingExercise programmingExercise) {
-        if (programmingExercise.getBuildPlan() == null) {
-            programmingExerciseRepository.updateBuildPlan(programmingExercise, buildPlanService.getBuildPlan(programmingExercise), buildPlanRepository);
+        Optional<BuildPlan> optionalBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId());
+        if (optionalBuildPlan.isEmpty()) {
+            var defaultBuildPlan = buildPlanService.generateDefaultBuildPlan(programmingExercise);
+            buildPlanRepository.setBuildPlanForExercise(defaultBuildPlan, programmingExercise);
         }
     }
 
@@ -367,28 +369,22 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             return;
         }
 
-        ZonedDateTime jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry;
-        ZonedDateTime testsStarted;
-        ZonedDateTime testsFinished;
-        ZonedDateTime jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
-        Integer dependenciesDownloadedCount;
-
-        if (ProjectType.isMavenProject(projectType)) {
-            testsStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
-            testsFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
-            dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
-        }
-        else {
+        if (!ProjectType.isMavenProject(projectType)) {
             // A new, unsupported project type was used -> Log it but don't store it since it would only contain null-values
             log.warn("Received unsupported project type {} for GitLabCIService.extractAndPersistBuildLogStatistics, will not store any build log statistics.", projectType);
             return;
         }
+        ZonedDateTime jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry;
+        ZonedDateTime jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
+        ZonedDateTime testsStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
+        ZonedDateTime testsFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
+        Integer dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
 
         var testDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(testsStarted, testsFinished);
         var totalJobDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(jobStarted, jobFinished);
 
         // Set the duration to 0 for the durations, we cannot extract.
-        var time = ZonedDateTime.now();
+        var time = ZonedDateTime.now(); // TODO: this needs to be properly implemented
         var agentSetupDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time);
         var scaDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time);
 

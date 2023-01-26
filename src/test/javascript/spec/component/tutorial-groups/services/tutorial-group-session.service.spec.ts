@@ -63,6 +63,20 @@ describe('TutorialGroupSessionService', () => {
         tick();
     }));
 
+    it('updateAttendanceCount', fakeAsync(() => {
+        const returnedFromService = { ...elemDefault, attendanceCount: 5 };
+        const expected = { ...returnedFromService };
+
+        service
+            .updateAttendanceCount(1, 1, 1, 5)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+
+        const req = httpMock.expectOne({ method: 'PATCH' });
+        req.flush(returnedFromService);
+        tick();
+    }));
+
     it('cancel', fakeAsync(() => {
         const returnedFromService = { ...elemDefault };
         const expected = { ...returnedFromService };

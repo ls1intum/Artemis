@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize, takeUntil } from 'rxjs/operators';
@@ -12,6 +12,7 @@ import { Subject } from 'rxjs';
 @Component({
     selector: 'jhi-create-tutorial-group-session',
     templateUrl: './create-tutorial-group-session.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateTutorialGroupSessionComponent implements OnDestroy {
     ngUnsubscribe = new Subject<void>();
