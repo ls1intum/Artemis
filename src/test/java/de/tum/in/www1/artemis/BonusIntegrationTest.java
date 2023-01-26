@@ -147,6 +147,27 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveBonusForGradeScaleTypeError() throws Exception {
+        bonusRepository.delete(courseBonus);
+
+        courseGradingScale.setGradeType(GradeType.GRADE);
+        gradingScaleRepository.save(courseGradingScale);
+
+        Bonus newBonus = ModelFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, -1.0, courseGradingScale.getId(), bonusToExamGradingScale.getId());
+
+        // Source grading scale must have GradeType.BONUS.
+        request.postWithResponseBody("/api/courses/" + courseId + "/exams/" + examId + "/bonus", newBonus, Bonus.class, HttpStatus.BAD_REQUEST);
+
+        courseGradingScale.setGradeType(GradeType.BONUS);
+        bonusToExamGradingScale.setGradeType(GradeType.BONUS);
+        gradingScaleRepository.saveAll(List.of(courseGradingScale, bonusToExamGradingScale));
+
+        // BonusTo grading scale must have GradeType.GRADE.
+        request.postWithResponseBody("/api/courses/" + courseId + "/exams/" + examId + "/bonus", newBonus, Bonus.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
         request.postWithResponseBody("/api/courses/" + courseId + "/exams/" + examId + "/bonus", examBonus, Bonus.class, HttpStatus.FORBIDDEN);
@@ -422,6 +443,37 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
         calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
                 expectedExceedsMax, sourceGradingScale.getId());
+
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCalculateRawBonusWithPointsBonusStrategy_nonNumericGrades() throws Exception {
+        BonusStrategy bonusStrategy = BonusStrategy.POINTS;
+        double weight = 1;
+
+        Exam bonusToExam = bonusToExamGradingScale.getExam();
+        Course sourceCourse = courseGradingScale.getCourse();
+
+        bonusRepository.delete(courseBonus);
+        // Line below is needed to prevent EntityNotFoundException for the Bonus instance deleted above.
+        bonusToExamGradingScale = gradingScaleRepository.findWithEagerBonusFromByExamId(bonusToExam.getId()).orElseThrow();
+        gradingScaleRepository.deleteAll(List.of(bonusToExamGradingScale, courseGradingScale));
+
+        GradingScale sourceGradingScale = createSourceGradingScaleWithGradeStepsForPointsBonusStrategy(sourceCourse);
+        GradingScale bonusToGradingScale = createBonusToGradingScale(bonusToExam);
+
+        GradeStep matchedBonusSourceGradeStep = sourceGradingScale.getGradeSteps().stream().filter(gradeStep -> gradeStep.getGradeName().equals("10")).findFirst().orElseThrow();
+        matchedBonusSourceGradeStep.setGradeName("NonNumericBonusSourceGrade");
+
+        gradingScaleRepository.saveAll(List.of(bonusToGradingScale, sourceGradingScale));
+
+        double bonusToPoints = 120;
+        double sourcePoints = 75;
+
+        request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus/calculate-raw?bonusStrategy=" + bonusStrategy + "&calculationSign=" + weight
+                + "&sourceGradingScaleId=" + sourceGradingScale.getId() + "&bonusToPoints=" + bonusToPoints + "&sourcePoints=" + sourcePoints, HttpStatus.BAD_REQUEST,
+                BonusExampleDTO.class);
 
     }
 

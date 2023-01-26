@@ -381,7 +381,7 @@ describe('Exercise Service', () => {
         expect(entityTitleServiceSpy).toHaveBeenCalledOnce();
         expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.EXERCISE, [exerciseFromServer.id], exerciseFromServer.title);
 
-        expect(profileServiceSpy).not.toBeCalled();
+        expect(profileServiceSpy).not.toHaveBeenCalled();
     });
 
     it.each(['create', 'update'])('should send %s request for the exercise', (action: string) => {
