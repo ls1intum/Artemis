@@ -6,7 +6,7 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { EntityResponseType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import dayjs from 'dayjs/esm';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from '../helpers/mocks/mock-router';
@@ -18,6 +18,11 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { MockProvider } from 'ng-mocks';
 import { SafeHtml } from '@angular/platform-browser';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { Observable } from 'rxjs';
+import { AccountService } from 'app/core/auth/account.service';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 describe('Exercise Service', () => {
     let service: ExerciseService;
@@ -65,6 +70,9 @@ describe('Exercise Service', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ArtemisMarkdownService),
+                MockProvider(AccountService),
+                MockProvider(EntityTitleService),
+                MockProvider(ProfileService),
             ],
         });
         service = TestBed.inject(ExerciseService);
@@ -334,5 +342,153 @@ describe('Exercise Service', () => {
         [{ studentParticipations: [{ initializationState: InitializationState.INACTIVE }] } as QuizExercise, false],
     ])('should determine correctly if quiz is active', (quizExercise: QuizExercise, expected: boolean) => {
         expect(service.isActiveQuiz(quizExercise)).toEqual(expected);
+    });
+
+    it('should process exercise entity response', () => {
+        const accountService = TestBed.inject(AccountService);
+        const entityTitleService = TestBed.inject(EntityTitleService);
+        const profileService = TestBed.inject(ProfileService);
+
+        const accountServiceSpy = jest.spyOn(accountService, 'setAccessRightsForExerciseAndReferencedCourse');
+        const entityTitleServiceSpy = jest.spyOn(entityTitleService, 'setTitle');
+        const profileServiceSpy = jest.spyOn(profileService, 'getProfileInfo');
+
+        const category = {
+            color: '#6ae8ac',
+            category: 'category1',
+        } as ExerciseCategory;
+
+        const releaseDate = dayjs();
+
+        const exerciseFromServer: Exercise = Object.assign({}, textExercise, {
+            title: 'My Title',
+            categories: [JSON.stringify(category)],
+            releaseDate: releaseDate.toJSON(),
+        });
+
+        const processedExercise = service.processExerciseEntityResponse({ body: exerciseFromServer } as EntityResponseType).body!;
+
+        expect(processedExercise.id).toBe(exerciseFromServer.id);
+        expect(processedExercise.categories).toHaveLength(1);
+        expect(processedExercise.categories![0]).toEqual(category);
+
+        expect(processedExercise.releaseDate).toEqual(releaseDate);
+        expect(processedExercise.startDate).toBeUndefined();
+
+        expect(accountServiceSpy).toHaveBeenCalledOnce();
+        expect(accountServiceSpy).toHaveBeenCalledWith(expect.objectContaining({ id: exerciseFromServer.id }));
+
+        expect(entityTitleServiceSpy).toHaveBeenCalledOnce();
+        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.EXERCISE, [exerciseFromServer.id], exerciseFromServer.title);
+
+        expect(profileServiceSpy).not.toBeCalled();
+    });
+
+    it.each(['create', 'update'])('should send %s request for the exercise', (action: string) => {
+        const serviceSpy = jest.spyOn(service, 'processExerciseEntityResponse');
+
+        const category = {
+            color: '#6ae8ac',
+            category: 'category1',
+        } as ExerciseCategory;
+
+        const releaseDate = dayjs();
+
+        exercise = Object.assign({}, textExercise, {
+            categories: [category],
+            releaseDate,
+        });
+        const expectedReturnedExercise = { id: exercise.id } as Exercise;
+
+        const expectedUrl = `${SERVER_API_URL}api/exercises`;
+        let result$: Observable<EntityResponseType>;
+        let method: string;
+        if (action === 'create') {
+            result$ = service.create(exercise);
+            method = 'POST';
+        } else if (action === 'update') {
+            result$ = service.update(exercise);
+            method = 'PUT';
+        } else {
+            throw new Error(`Unexpected action: ${action}`);
+        }
+
+        let actualReturnedExercise = undefined;
+        result$.subscribe((exerciseResponse) => (actualReturnedExercise = exerciseResponse.body!));
+
+        const testRequest = httpMock.expectOne({
+            url: expectedUrl,
+            method,
+        });
+
+        testRequest.flush(expectedReturnedExercise);
+
+        const sentBody = testRequest.request.body;
+
+        expect(sentBody.categories).toHaveLength(1);
+        expect(sentBody.categories[0]).toBe(JSON.stringify(category));
+
+        expect(sentBody.releaseDate).toBe(releaseDate.toJSON());
+        expect(sentBody.startDate).toBeUndefined();
+
+        expect(serviceSpy).toHaveBeenCalledOnce();
+        expect(serviceSpy).toHaveBeenCalledWith(expect.objectContaining({ body: expectedReturnedExercise }));
+        expect(actualReturnedExercise).toEqual(expectedReturnedExercise);
+    });
+
+    it('should get exercise details', () => {
+        const serviceSpy = jest.spyOn(service, 'processExerciseEntityResponse');
+
+        const exerciseId = 123;
+
+        const expectedReturnedExercise = {
+            id: exerciseId,
+            posts: undefined,
+        } as Exercise;
+
+        const result = service.getExerciseDetails(exerciseId);
+
+        let actualReturnedExercise: Exercise | undefined = undefined;
+        result.subscribe((exerciseResponse) => (actualReturnedExercise = exerciseResponse.body!));
+
+        const testRequest = httpMock.expectOne({
+            url: `${SERVER_API_URL}api/exercises/${exerciseId}/details`,
+            method: 'GET',
+        });
+
+        testRequest.flush(expectedReturnedExercise);
+
+        expect(serviceSpy).toHaveBeenCalledOnce();
+        expect(serviceSpy).toHaveBeenCalledWith(expect.objectContaining({ body: expectedReturnedExercise }));
+        expect(actualReturnedExercise).toEqual(expectedReturnedExercise);
+        expect(actualReturnedExercise!.posts).toEqual([]);
+    });
+
+    it('should get exercise for example solution', () => {
+        const serviceSpy = jest.spyOn(service, 'processExerciseEntityResponse');
+
+        const exerciseId = 124;
+
+        const expectedReturnedExercise = {
+            id: exerciseId,
+            exampleSolutionPublished: true,
+            exampleSolution: 'Example solution',
+        } as TextExercise;
+
+        const result = service.getExerciseForExampleSolution(exerciseId);
+
+        let actualReturnedExercise = undefined;
+        result.subscribe((exerciseResponse) => (actualReturnedExercise = exerciseResponse.body!));
+
+        const testRequest = httpMock.expectOne({
+            url: `${SERVER_API_URL}api/exercises/${exerciseId}/example-solution`,
+            method: 'GET',
+        });
+
+        testRequest.flush(expectedReturnedExercise);
+
+        expect(serviceSpy).toHaveBeenCalledOnce();
+        expect(serviceSpy).toHaveBeenCalledWith(expect.objectContaining({ body: expectedReturnedExercise }));
+        expect(actualReturnedExercise).toEqual(expectedReturnedExercise);
     });
 });
