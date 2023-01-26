@@ -54,6 +54,11 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { NgbAlertsMocksModule } from '../../helpers/mocks/directive/ngbAlertsMocks.module';
 import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
+import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
+import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-difficulty.component';
+import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
+import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
+import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-problem.component';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -97,6 +102,11 @@ describe('ProgrammingExercise Management Update Component', () => {
                 MockComponent(GradingInstructionsDetailsComponent),
                 MockComponent(ButtonComponent),
                 MockComponent(LearningGoalSelectionComponent),
+                MockComponent(ProgrammingExerciseInformationComponent),
+                MockComponent(ProgrammingExerciseDifficultyComponent),
+                MockComponent(ProgrammingExerciseLanguageComponent),
+                MockComponent(ProgrammingExerciseGradingComponent),
+                MockComponent(ProgrammingExerciseProblemComponent),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(CustomMinDirective),

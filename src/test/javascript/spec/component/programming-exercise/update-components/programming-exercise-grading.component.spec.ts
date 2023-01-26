@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -11,6 +11,12 @@ import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CheckboxControlValueAccessor, DefaultValueAccessor, NgModel, NumberValueAccessor, SelectControlValueAccessor } from '@angular/forms';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
+import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
+import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('ProgrammingExerciseGradingComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseGradingComponent>;
@@ -27,6 +33,12 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 SelectControlValueAccessor,
                 NumberValueAccessor,
                 MockPipe(ArtemisTranslatePipe),
+                MockComponent(HelpIconComponent),
+                MockComponent(ProgrammingExerciseLifecycleComponent),
+                MockComponent(IncludedInOverallScorePickerComponent),
+                MockComponent(SubmissionPolicyUpdateComponent),
+                MockComponent(PresentationScoreComponent),
+                MockComponent(FaIconComponent),
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
