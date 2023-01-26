@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -12,6 +12,7 @@ import { DefaultValueAccessor, NgModel } from '@angular/forms';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
 
 describe('ProgrammingExerciseWizardGradingComponent', () => {
     let wizardComponentFixture: ComponentFixture<ProgrammingExerciseUpdateWizardGradingComponent>;
@@ -20,7 +21,14 @@ describe('ProgrammingExerciseWizardGradingComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [ProgrammingExerciseUpdateWizardGradingComponent, MockPipe(ArtemisTranslatePipe), DefaultValueAccessor, NgModel, MockPipe(RemoveKeysPipe)],
+            declarations: [
+                ProgrammingExerciseUpdateWizardGradingComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(ProgrammingExerciseGradingComponent),
+                DefaultValueAccessor,
+                NgModel,
+                MockPipe(RemoveKeysPipe),
+            ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 {

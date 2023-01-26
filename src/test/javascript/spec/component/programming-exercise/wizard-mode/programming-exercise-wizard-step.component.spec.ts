@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseUpdateWizardStepComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-step.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('ProgrammingExerciseWizardStepComponent', () => {
     let wizardComponentFixture: ComponentFixture<ProgrammingExerciseUpdateWizardStepComponent>;
@@ -12,7 +14,7 @@ describe('ProgrammingExerciseWizardStepComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [ProgrammingExerciseUpdateWizardStepComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [ProgrammingExerciseUpdateWizardStepComponent, MockComponent(FaIconComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 {
                     provide: ActivatedRoute,

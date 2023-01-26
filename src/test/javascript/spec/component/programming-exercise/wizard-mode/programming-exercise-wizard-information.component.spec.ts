@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -10,6 +10,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { DefaultValueAccessor, NgModel } from '@angular/forms';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
 
 describe('ProgrammingExerciseWizardInformationComponent', () => {
     let wizardComponentFixture: ComponentFixture<ProgrammingExerciseUpdateWizardInformationComponent>;
@@ -18,7 +19,14 @@ describe('ProgrammingExerciseWizardInformationComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [ProgrammingExerciseUpdateWizardInformationComponent, MockPipe(ArtemisTranslatePipe), DefaultValueAccessor, NgModel, MockPipe(RemoveKeysPipe)],
+            declarations: [
+                ProgrammingExerciseUpdateWizardInformationComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(ProgrammingExerciseInformationComponent),
+                DefaultValueAccessor,
+                NgModel,
+                MockPipe(RemoveKeysPipe),
+            ],
             providers: [
                 {
                     provide: ActivatedRoute,

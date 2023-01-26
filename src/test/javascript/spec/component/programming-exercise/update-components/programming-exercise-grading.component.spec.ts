@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -17,6 +17,10 @@ import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/incl
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
+import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
+import { NgbAlertsMocksModule } from '../../../helpers/mocks/directive/ngbAlertsMocks.module';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExerciseGradingComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseGradingComponent>;
@@ -24,7 +28,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            imports: [NgbAlertsMocksModule, MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
             declarations: [
                 ProgrammingExerciseGradingComponent,
                 NgModel,
@@ -32,6 +36,8 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 DefaultValueAccessor,
                 SelectControlValueAccessor,
                 NumberValueAccessor,
+                MockDirective(CustomMinDirective),
+                MockDirective(CustomMaxDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(HelpIconComponent),
                 MockComponent(ProgrammingExerciseLifecycleComponent),

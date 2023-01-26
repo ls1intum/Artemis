@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -9,6 +9,10 @@ import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/update/programming-exercise-plans-and-repositories-preview.component';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
 
 describe('ProgrammingExerciseInformationComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;
@@ -17,7 +21,17 @@ describe('ProgrammingExerciseInformationComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [ProgrammingExerciseInformationComponent, DefaultValueAccessor, NgModel, MockPipe(ArtemisTranslatePipe), MockPipe(RemoveKeysPipe)],
+            declarations: [
+                ProgrammingExerciseInformationComponent,
+                DefaultValueAccessor,
+                NgModel,
+                MockComponent(HelpIconComponent),
+                MockComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent),
+                MockComponent(CategorySelectorComponent),
+                MockComponent(AddAuxiliaryRepositoryButtonComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(RemoveKeysPipe),
+            ],
             providers: [
                 {
                     provide: ActivatedRoute,
