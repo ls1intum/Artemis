@@ -17,7 +17,7 @@
             </div>
             <!-- body -->
             <div class="card-body">
-                <div class="input-group p-1">
+                <div class="input-group p-1" [class.filter-active]="!!searchTerm">
                     <input (input)="onSearchQueryInput($event)" class="form-control" id="searchQuery" type="text" />
                     <span class="input-group-text">
                         <fa-icon [icon]="faFilter" size="xs"></fa-icon>

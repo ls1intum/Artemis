@@ -18,6 +18,13 @@ $conversation-section-card-min-width: 215px;
 }
 
 .selection-sidebar {
+    .filter-active {
+        fa-icon svg path {
+            fill: var(--primary);
+            stroke: var(--primary);
+        }
+    }
+
     .sidebar-button {
         border: 0;
         border-radius: var(--bs-btn-border-radius);
