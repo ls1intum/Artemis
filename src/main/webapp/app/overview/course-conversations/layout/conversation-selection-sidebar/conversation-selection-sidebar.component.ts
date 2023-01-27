@@ -60,6 +60,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     faFilter = faFilter;
     faExpand = faExpand;
     faCompress = faCompress;
+    numberOfConversationsPassingFilter = 0;
 
     canCreateChannel = canCreateChannel;
 
@@ -118,6 +119,12 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                     this.displayedGroupChats = this.groupChats.filter((conversation) => {
                         return this.conversationService.getConversationName(conversation).toLowerCase().includes(searchTerm);
                     });
+                    this.numberOfConversationsPassingFilter =
+                        this.displayedStarredConversations.length +
+                        this.displayedChannelConversations.length +
+                        this.displayedOneToOneChats.length +
+                        this.displayedGroupChats.length;
+
                     this.cdr.detectChanges();
                 },
             });

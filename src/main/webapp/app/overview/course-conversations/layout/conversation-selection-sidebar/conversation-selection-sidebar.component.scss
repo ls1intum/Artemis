@@ -19,6 +19,9 @@ $conversation-section-card-min-width: 215px;
 
 .selection-sidebar {
     .filter-active {
+        span {
+            color: var(--primary);
+        }
         fa-icon svg path {
             fill: var(--primary);
             stroke: var(--primary);
