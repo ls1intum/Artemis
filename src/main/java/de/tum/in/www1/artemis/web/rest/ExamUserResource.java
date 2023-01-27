@@ -56,19 +56,22 @@ public class ExamUserResource {
         var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(examUserDTO.login())
                 .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + examUserDTO.login() + "\" does not exist"));
 
-        ExamUser examUser = examUserRepository.findByExamIdAndUser(examId, student);
+        ExamUser examUser = examUserRepository.findByExamIdAndUserId(examId, student.getId());
 
         if (file != null) {
             String responsePath = fileService.handleSaveFile(file, true, false);
             examUser.setSigningImagePath(responsePath);
         }
-        examUser.setDidCheckImage(examUserDTO.didCheckImage());
-        examUser.setDidCheckLogin(examUserDTO.didCheckLogin());
-        examUser.setDidCheckName(examUserDTO.didCheckName());
-        examUser.setDidCheckRegistrationNumber(examUserDTO.didCheckRegistrationNumber());
-        examUser.setActualSeat(examUserDTO.seat());
-        examUser.setActualRoom(examUserDTO.room());
-        examUserRepository.save(examUser);
+        if (examUser != null) {
+            examUser.setDidCheckImage(examUserDTO.didCheckImage());
+            examUser.setDidCheckLogin(examUserDTO.didCheckLogin());
+            examUser.setDidCheckName(examUserDTO.didCheckName());
+            examUser.setDidCheckRegistrationNumber(examUserDTO.didCheckRegistrationNumber());
+            examUser.setActualSeat(examUserDTO.seat());
+            examUser.setActualRoom(examUserDTO.room());
+            examUserRepository.save(examUser);
+        }
+
         return ResponseEntity.ok().body(examUser);
     }
 }

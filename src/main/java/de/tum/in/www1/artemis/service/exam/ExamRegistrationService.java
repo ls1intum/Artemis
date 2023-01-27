@@ -101,7 +101,7 @@ public class ExamRegistrationService {
                 notFoundStudentsDTOs.add(examUserDto);
             }
             else {
-                ExamUser registeredExamUserCheck = examUserRepository.findByExamIdAndUser(exam.getId(), optionalStudent.get());
+                ExamUser registeredExamUserCheck = examUserRepository.findByExamIdAndUserId(exam.getId(), optionalStudent.get().getId());
                 if (!exam.getExamUsers().contains(registeredExamUserCheck) && !optionalStudent.get().getAuthorities().contains(ADMIN_AUTHORITY)
                         && !optionalStudent.get().getGroups().contains(course.getInstructorGroupName())) {
                     ExamUser registeredExamUser = new ExamUser();
@@ -247,7 +247,7 @@ public class ExamRegistrationService {
      * @param student                           the user object that should be unregistered
      */
     public void unregisterStudentFromExam(Exam exam, boolean deleteParticipationsAndSubmission, User student) {
-        ExamUser registeredExamUser = examUserRepository.findByExamIdAndUser(exam.getId(), student);
+        ExamUser registeredExamUser = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
         exam.removeExamUser(registeredExamUser);
 
         // Note: we intentionally do not remove the user from the course, because the student might just have "unregistered" from the exam, but should
@@ -319,7 +319,7 @@ public class ExamRegistrationService {
         userData.put("exam", exam.getTitle());
         for (int i = 0; i < students.size(); i++) {
             var student = students.get(i);
-            ExamUser registeredExamUserCheck = examUserRepository.findByExamIdAndUser(exam.getId(), student);
+            ExamUser registeredExamUserCheck = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
 
             if (!exam.getExamUsers().contains(registeredExamUserCheck) && !student.getAuthorities().contains(ADMIN_AUTHORITY)
                     && !student.getGroups().contains(course.getInstructorGroupName())) {
