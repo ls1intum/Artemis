@@ -1,5 +1,5 @@
 <div *ngIf="course" class="selection-sidebar">
-    <div *ngIf="!collapsed; else collapsedConversations" class="expanded-conversations">
+    <div [hidden]="collapsed" class="expanded-conversations">
         <div class="card">
             <!-- header -->
             <div
@@ -132,16 +132,15 @@
         </div>
     </div>
     <!-- collapsed conversations -->
-    <ng-template #collapsedConversations>
-        <div
-            class="collapsed-conversations bg-primary text-white"
-            (click)="collapsed = false"
-            [ngbTooltip]="'artemisApp.conversationsLayout.conversationSelectionSideBar.show' | artemisTranslate"
-        >
-            <fa-icon class="expand-conversations-icon" [icon]="faChevronRight"></fa-icon>
-            <span jhiTranslate="artemisApp.conversationsLayout.conversationSelectionSideBar.header">Conversation</span>
-            <fa-icon class="fa-rotate-270" [icon]="faConversation"></fa-icon>
-            <fa-icon class="expand-conversations-icon" [icon]="faChevronRight"></fa-icon>
-        </div>
-    </ng-template>
+    <div
+        [hidden]="!collapsed"
+        class="collapsed-conversations bg-primary text-white"
+        (click)="collapsed = false"
+        [ngbTooltip]="'artemisApp.conversationsLayout.conversationSelectionSideBar.show' | artemisTranslate"
+    >
+        <fa-icon class="expand-conversations-icon" [icon]="faChevronRight"></fa-icon>
+        <span jhiTranslate="artemisApp.conversationsLayout.conversationSelectionSideBar.header">Conversation</span>
+        <fa-icon class="fa-rotate-270" [icon]="faConversation"></fa-icon>
+        <fa-icon class="expand-conversations-icon" [icon]="faChevronRight"></fa-icon>
+    </div>
 </div>

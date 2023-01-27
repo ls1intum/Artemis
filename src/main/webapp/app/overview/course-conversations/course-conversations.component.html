@@ -1,7 +1,7 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
     <div class="row mt-2" *ngIf="isServiceSetUp">
         <ng-container>
-            <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
+            <div class="col d-flex flex-grow-1 justify-end px-0 me-1" style="max-width: min-content">
                 <jhi-conversation-selection-sidebar> </jhi-conversation-selection-sidebar>
             </div>
             <div class="col pe-0 flex-grow-1" [ngClass]="{ 'card-border': activeConversation }">
