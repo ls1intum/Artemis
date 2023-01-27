@@ -60,7 +60,7 @@ describe('Programming exercise assessment', () => {
         courseAssessment.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
         exerciseAssessment.clickStartNewAssessment();
-        onlineEditor.openFileWithName('BubbleSort.java');
+        onlineEditor.openFileWithName(exercise.id!, 'BubbleSort.java');
         programmingAssessment.provideFeedbackOnCodeLine(9, tutorCodeFeedbackPoints, tutorCodeFeedback);
         programmingAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
         programmingAssessment.submit().then((request: Interception) => {
@@ -83,7 +83,7 @@ describe('Programming exercise assessment', () => {
         programmingFeedback.shouldShowRepositoryLockedWarning();
         programmingFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
         programmingFeedback.shouldShowScore(percentage);
-        programmingFeedback.shouldShowCodeFeedback('BubbleSort.java', tutorCodeFeedback, '-2', onlineEditor);
+        programmingFeedback.shouldShowCodeFeedback(exercise.id!, 'BubbleSort.java', tutorCodeFeedback, '-2', onlineEditor);
     }
 
     function acceptComplaintAsInstructor() {
