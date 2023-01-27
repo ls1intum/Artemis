@@ -26,15 +26,8 @@ describe('Mode Picker Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                ModePickerComponent,
-                // MockDirective(NgModel),
-                // MockComponent(GradingSystemInfoModalComponent),
-                MockPipe(ArtemisTranslatePipe),
-            ],
-            providers: [
-                // { provide: ActivatedRoute, useValue: route },
-            ],
+            declarations: [ModePickerComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [],
         })
             .compileComponents()
             .then(() => {
