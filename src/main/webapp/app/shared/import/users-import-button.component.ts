@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { ExamUser } from 'app/entities/exam-user.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { UsersImportDialogComponent } from 'app/shared/import/users-import-dialog.component';
 import { CourseGroup } from 'app/entities/course.model';
@@ -24,6 +25,7 @@ export class UsersImportButtonComponent {
     ButtonSize = ButtonSize;
 
     @Input() tutorialGroup: TutorialGroup | undefined = undefined;
+    @Input() examUserMode: boolean;
     @Input() courseGroup: CourseGroup;
     @Input() courseId: number;
     @Input() buttonSize: ButtonSize = ButtonSize.MEDIUM;
@@ -47,6 +49,7 @@ export class UsersImportButtonComponent {
         modalRef.componentInstance.courseGroup = this.courseGroup;
         modalRef.componentInstance.exam = this.exam;
         modalRef.componentInstance.tutorialGroup = this.tutorialGroup;
+        modalRef.componentInstance.examUserMode = this.examUserMode;
         modalRef.result.then(
             () => this.finish.emit(),
             () => {},
