@@ -10,6 +10,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,6 +40,7 @@ import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerci
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.service.TimeService;
 import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
@@ -618,5 +620,38 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void verifyMocks() {
         bitbucketRequestMockProvider.verifyMocks();
         bambooRequestMockProvider.verifyMocks();
+    }
+
+    /**
+     *
+     * @param programmingExercise
+     * @throws Exception
+     */
+    public void mockDeleteProgrammingExercise(ProgrammingExerciseTestService programmingExerciseTestService, ProgrammingExercise programmingExercise, Set<User> registeredUsers)
+            throws Exception {
+        final String projectKey = programmingExercise.getProjectKey();
+        programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
+
+        List<String> studentLogins = new ArrayList<>();
+        for (final User user : registeredUsers) {
+            studentLogins.add(user.getLogin());
+        }
+        bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
+        List<String> planNames = new ArrayList<>(studentLogins);
+        planNames.add(TEMPLATE.getName());
+        planNames.add(SOLUTION.getName());
+        for (final String planName : planNames) {
+            bambooRequestMockProvider.mockDeleteBambooBuildPlan(projectKey + "-" + planName.toUpperCase(), false);
+        }
+        List<String> repoNames = new ArrayList<>(studentLogins);
+
+        for (final var repoType : RepositoryType.values()) {
+            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, programmingExercise.generateRepositoryName(repoType), false);
+        }
+
+        for (final var repoName : repoNames) {
+            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
+        }
+        bitbucketRequestMockProvider.mockDeleteProject(projectKey, false);
     }
 }
