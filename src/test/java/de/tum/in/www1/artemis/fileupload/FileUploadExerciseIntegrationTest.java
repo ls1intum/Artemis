@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -659,12 +660,15 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetAllExercisesOnPageAsEditorSuccess() throws Exception {
-        database.addUsers("custom", 0, 0, 1, 0);
-        database.addCourseWithFourFileUploadExercisesAndCustomUserGroups("tumuser", "tutor", "customeditor", "instructor");
-        database.changeUser("customeditor1");
-        var search = database.configureSearch("e");
-        SearchResultPageDTO<Exercise> result = request.get("/api/file-upload-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
-        assertThat(result.getResultsOnPage().size()).isEqualTo(4);
+        final Course course = database.addEmptyCourse();
+        final var now = ZonedDateTime.now();
+        FileUploadExercise exercise = ModelFactory.generateFileUploadExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", course);
+        String title = "LoremIpsum" + UUID.randomUUID();
+        exercise.setTitle(title);
+        exercise = fileUploadExerciseRepository.save(exercise);
+        final var searchTerm = database.configureSearch(exercise.getTitle());
+        SearchResultPageDTO<Exercise> result = request.get("/api/file-upload-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
+        assertThat(result.getResultsOnPage().size()).isEqualTo(1);
         assertThat(result.getNumberOfPages()).isEqualTo(1);
 
     }
