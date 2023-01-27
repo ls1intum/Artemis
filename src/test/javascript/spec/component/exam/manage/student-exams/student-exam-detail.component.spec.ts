@@ -1,5 +1,5 @@
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
