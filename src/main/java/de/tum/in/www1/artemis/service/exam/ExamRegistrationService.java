@@ -102,23 +102,28 @@ public class ExamRegistrationService {
             }
             else {
                 ExamUser registeredExamUserCheck = examUserRepository.findByExamIdAndUser(exam.getId(), optionalStudent.get());
-                if (!exam.getExamUsers().contains(registeredExamUserCheck) && !registeredExamUserCheck.getUser().getAuthorities().contains(ADMIN_AUTHORITY)
-                        && !registeredExamUserCheck.getUser().getGroups().contains(course.getInstructorGroupName())) {
+                if (!exam.getExamUsers().contains(registeredExamUserCheck) && !optionalStudent.get().getAuthorities().contains(ADMIN_AUTHORITY)
+                        && !optionalStudent.get().getGroups().contains(course.getInstructorGroupName())) {
                     ExamUser registeredExamUser = new ExamUser();
                     registeredExamUser.setUser(optionalStudent.get());
                     registeredExamUser.setExam(exam);
 
-                    registeredExamUser.setDidCheckRegistrationNumber(examUserDto.didCheckRegistrationNumber());
-                    registeredExamUser.setDidCheckName(examUserDto.didCheckName());
-                    registeredExamUser.setDidCheckLogin(examUserDto.didCheckLogin());
-                    registeredExamUser.setDidCheckImage(examUserDto.didCheckImage());
+                    registeredExamUser.setDidCheckRegistrationNumber(false);
+                    registeredExamUser.setDidCheckName(false);
+                    registeredExamUser.setDidCheckLogin(false);
+                    registeredExamUser.setDidCheckImage(false);
                     registeredExamUser.setPlannedRoom(examUserDto.room());
                     registeredExamUser.setPlannedSeat(examUserDto.seat());
-                    registeredExamUser.setActualRoom(examUserDto.room());
-                    registeredExamUser.setActualSeat(examUserDto.seat());
 
                     registeredExamUser = examUserRepository.save(registeredExamUser);
                     exam.addExamUser(registeredExamUser);
+                }
+
+                if (registeredExamUserCheck != null && exam.getExamUsers().contains(registeredExamUserCheck)) {
+                    registeredExamUserCheck.setPlannedRoom(examUserDto.room());
+                    registeredExamUserCheck.setPlannedSeat(examUserDto.seat());
+                    registeredExamUserCheck = examUserRepository.save(registeredExamUserCheck);
+                    exam.addExamUser(registeredExamUserCheck);
                 }
 
             }
@@ -153,8 +158,6 @@ public class ExamRegistrationService {
         registeredExamUser.setDidCheckImage(false);
         registeredExamUser.setPlannedRoom("not set");
         registeredExamUser.setPlannedSeat("not set");
-        registeredExamUser.setActualRoom("not set");
-        registeredExamUser.setActualSeat("not set");
 
         registeredExamUser = examUserRepository.save(registeredExamUser);
         exam.addExamUser(registeredExamUser);

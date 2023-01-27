@@ -66,7 +66,8 @@ public class ExamUserResource {
         examUser.setDidCheckLogin(examUserDTO.didCheckLogin());
         examUser.setDidCheckName(examUserDTO.didCheckName());
         examUser.setDidCheckRegistrationNumber(examUserDTO.didCheckRegistrationNumber());
-
+        examUser.setActualSeat(examUserDTO.seat());
+        examUser.setActualRoom(examUserDTO.room());
         examUserRepository.save(examUser);
         return ResponseEntity.ok().body(examUser);
     }
