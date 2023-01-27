@@ -18,10 +18,10 @@
             <!-- body -->
             <div class="card-body">
                 <div class="input-group p-1">
+                    <input (input)="onSearchQueryInput($event)" class="form-control" id="searchQuery" type="text" />
                     <span class="input-group-text">
                         <fa-icon [icon]="faFilter" size="xs"></fa-icon>
                     </span>
-                    <input (input)="onSearchQueryInput($event)" class="form-control" id="searchQuery" type="text" />
                 </div>
                 <div class="text-center my-1">
                     <button type="button" class="btn btn-sm btn-outline-secondary" (click)="expandAll()">
