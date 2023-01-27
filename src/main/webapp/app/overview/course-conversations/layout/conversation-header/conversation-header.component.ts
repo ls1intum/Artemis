@@ -33,7 +33,6 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
 
     faUserPlus = faUserPlus;
     faUserGroup = faUserGroup;
-    faChevronDown = faChevronDown;
 
     constructor(
         private modalService: NgbModal,
