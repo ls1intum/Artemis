@@ -1,12 +1,16 @@
 import { artemis } from '../support/ArtemisTesting';
 
-const user = artemis.users.getStudentOne();
+// Users
+const users = artemis.users;
+const studentOne = users.getStudentOne();
+
+// PageObjects
 const loginPage = artemis.pageobjects.login;
 
 describe('Login page tests', () => {
     it('Logs in via the UI', () => {
         cy.visit('/');
-        loginPage.login(user);
+        loginPage.login(studentOne);
         cy.url().should('include', '/courses');
         cy.getCookie('jwt').should('exist');
         cy.getCookie('jwt').should('have.property', 'value');
@@ -16,7 +20,7 @@ describe('Login page tests', () => {
     });
 
     it('Logs in programmatically and logs out via the UI', () => {
-        cy.login(user, '/courses');
+        cy.login(studentOne, '/courses');
         cy.url().should('include', '/courses');
         cy.get('#account-menu').click().get('#logout').click();
         cy.url().should('equal', Cypress.config().baseUrl + '/');

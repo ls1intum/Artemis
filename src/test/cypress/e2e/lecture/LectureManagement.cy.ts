@@ -5,14 +5,15 @@ import { generateUUID } from '../../support/utils';
 import dayjs from 'dayjs/esm';
 import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 
+// Users
+const users = artemis.users;
+const admin = users.getAdmin();
+const instructor = users.getInstructor();
+
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
 
-// User management
-const admin = artemis.users.getAdmin();
-const instructor = artemis.users.getInstructor();
-
-// Pageobjects
+// PageObjects
 const lectureManagement = artemis.pageobjects.lecture.management;
 const lectureCreation = artemis.pageobjects.lecture.creation;
 

@@ -3,23 +3,28 @@ import { Course } from '../../../main/webapp/app/entities/course.model';
 import { ModelingExercise } from '../../../main/webapp/app/entities/modeling-exercise.model';
 import { convertCourseAfterMultiPart } from '../support/requests/CourseManagementRequests';
 
-const courseRequests = artemis.requests.courseManagement;
+// Users
 const users = artemis.users;
+const admin = users.getAdmin();
+const studentOne = users.getStudentOne();
+
+// Requests
+const courseManagementRequests = artemis.requests.courseManagement;
+
+// PageObjects
 const courseOverview = artemis.pageobjects.course.overview;
 const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
 
 describe('Logout tests', () => {
     let course: Course;
     let modelingExercise: ModelingExercise;
-    const studentOne = users.getStudentOne();
-    const admin = users.getAdmin();
 
     before('Login as admin and create a course with a modeling exercise', () => {
         cy.login(admin);
 
-        courseRequests.createCourse(true).then((response) => {
+        courseManagementRequests.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseRequests.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
+            courseManagementRequests.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
                 modelingExercise = resp.body;
             });
         });
@@ -27,8 +32,8 @@ describe('Logout tests', () => {
 
     after(() => {
         if (course) {
-            cy.login(users.getAdmin());
-            courseRequests.deleteCourse(course.id!);
+            cy.login(admin);
+            courseManagementRequests.deleteCourse(course.id!);
         }
     });
 

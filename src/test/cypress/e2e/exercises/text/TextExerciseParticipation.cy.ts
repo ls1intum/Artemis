@@ -4,8 +4,10 @@ import { Course } from 'app/entities/course.model';
 import { artemis } from '../../../support/ArtemisTesting';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
-// The user management object
+// Users
 const users = artemis.users;
+const admin = users.getAdmin();
+const studentOne = users.getStudentOne();
 
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -19,10 +21,10 @@ describe('Text exercise participation', () => {
     let exercise: TextExercise;
 
     before(() => {
-        cy.login(users.getAdmin());
+        cy.login(admin);
         courseManagementRequests.createCourse().then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, users.getStudentOne());
+            courseManagementRequests.addStudentToCourse(course, studentOne);
             courseManagementRequests.createTextExercise({ course }).then((exerciseResponse: Cypress.Response<TextExercise>) => {
                 exercise = exerciseResponse.body;
             });
@@ -30,7 +32,7 @@ describe('Text exercise participation', () => {
     });
 
     it('Creates a text exercise in the UI', () => {
-        cy.login(users.getStudentOne(), `/courses/${course.id}/exercises`);
+        cy.login(studentOne, `/courses/${course.id}/exercises`);
         courseOverview.startExercise(exercise.id!);
         courseOverview.openRunningExercise(exercise.id!);
 
@@ -55,7 +57,7 @@ describe('Text exercise participation', () => {
 
     after(() => {
         if (course) {
-            cy.login(users.getAdmin());
+            cy.login(admin);
             courseManagementRequests.deleteCourse(course.id!);
         }
     });

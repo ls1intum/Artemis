@@ -4,20 +4,22 @@ import { artemis } from '../../../support/ArtemisTesting';
 import day from 'dayjs/esm';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
-// pageobjects
+// Users
+const users = artemis.users;
+const admin = users.getAdmin();
+const instructor = users.getInstructor();
+const tutor = users.getTutor();
+const studentOne = users.getStudentOne();
+
+// Requests
+const courseManagementRequests = artemis.requests.courseManagement;
+
+// PageObjects
 const assessmentEditor = artemis.pageobjects.assessment.modeling;
 const courseAssessmentDashboard = artemis.pageobjects.assessment.course;
 const exerciseAssessmentDashboard = artemis.pageobjects.assessment.exercise;
 const exerciseResult = artemis.pageobjects.exercise.result;
 const modelingFeedback = artemis.pageobjects.exercise.modeling.feedback;
-// requests
-const courseManagementRequests = artemis.requests.courseManagement;
-// Users
-const userManagement = artemis.users;
-const admin = userManagement.getAdmin();
-const student = userManagement.getStudentOne();
-const tutor = userManagement.getTutor();
-const instructor = userManagement.getInstructor();
 
 describe('Modeling Exercise Assessment Spec', () => {
     let course: Course;
@@ -62,11 +64,11 @@ describe('Modeling Exercise Assessment Spec', () => {
                 .then((exercise) => {
                     modelingExercise = exercise;
                 });
-            cy.login(student, `/courses/${course.id}/exercises/${modelingExercise.id}`);
+            cy.login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
         });
 
         it('Student can view the assessment and complain', () => {
-            cy.login(student, `/courses/${course.id}/exercises/${modelingExercise.id}`);
+            cy.login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
             exerciseResult.shouldShowExerciseTitle(modelingExercise.title!);
             exerciseResult.shouldShowScore(20);
             exerciseResult.clickViewSubmission();
@@ -87,7 +89,7 @@ describe('Modeling Exercise Assessment Spec', () => {
         cy.login(admin);
         return courseManagementRequests.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, student);
+            courseManagementRequests.addStudentToCourse(course, studentOne);
             courseManagementRequests.addTutorToCourse(course, tutor);
             courseManagementRequests.addInstructorToCourse(course, instructor);
             courseManagementRequests.createModelingExercise({ course }).then((modelingResponse) => {
@@ -97,7 +99,7 @@ describe('Modeling Exercise Assessment Spec', () => {
     }
 
     function makeModelingSubmissionAsStudent() {
-        cy.login(student);
+        cy.login(studentOne);
         courseManagementRequests.startExerciseParticipation(modelingExercise.id!).then((participation) => {
             courseManagementRequests.makeModelingExerciseSubmission(modelingExercise.id!, participation.body);
         });

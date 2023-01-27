@@ -5,10 +5,11 @@ import shortAnswerQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/sh
 import multipleChoiceQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
-// Accounts
-const admin = artemis.users.getAdmin();
-const tutor = artemis.users.getTutor();
-const student = artemis.users.getStudentOne();
+// Users
+const users = artemis.users;
+const admin = users.getAdmin();
+const tutor = users.getTutor();
+const studentOne = users.getStudentOne();
 
 // Requests
 const courseManagementRequest = artemis.requests.courseManagement;
@@ -24,7 +25,7 @@ describe('Quiz Exercise Assessment', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, student);
+            courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.addTutorToCourse(course, tutor);
         });
     });
@@ -44,7 +45,7 @@ describe('Quiz Exercise Assessment', () => {
         });
 
         it('Assesses a mc quiz submission automatically', () => {
-            cy.login(student);
+            cy.login(studentOne);
             courseManagementRequest.startExerciseParticipation(quizExercise.id!);
             courseManagementRequest.createMultipleChoiceSubmission(quizExercise, [0, 2]);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
@@ -59,7 +60,7 @@ describe('Quiz Exercise Assessment', () => {
         });
 
         it('Assesses a sa quiz submission automatically', () => {
-            cy.login(student);
+            cy.login(studentOne);
             courseManagementRequest.startExerciseParticipation(quizExercise.id!);
             courseManagementRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert']);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);

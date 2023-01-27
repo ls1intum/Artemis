@@ -3,15 +3,19 @@ import { Course } from 'app/entities/course.model';
 import { artemis } from '../../../support/ArtemisTesting';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
-// pageobjects
+// Users
+const users = artemis.users;
+const admin = users.getAdmin();
+const studentOne = users.getStudentOne();
+
+// Requests
+const courseManagementRequests = artemis.requests.courseManagement;
+
+// PageObjects
 const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
 const courseOverview = artemis.pageobjects.course.overview;
-// requests
-const courseManagementRequests = artemis.requests.courseManagement;
-// Users
-const userManagement = artemis.users;
-const admin = userManagement.getAdmin();
-const student = userManagement.getStudentOne();
+
+// Common primitives
 let course: Course;
 let modelingExercise: ModelingExercise;
 
@@ -20,7 +24,7 @@ describe('Modeling Exercise Participation Spec', () => {
         cy.login(admin);
         courseManagementRequests.createCourse().then((response: Cypress.Response<Course>) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, student);
+            courseManagementRequests.addStudentToCourse(course, studentOne);
             courseManagementRequests.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
                 modelingExercise = resp.body;
             });
@@ -33,7 +37,7 @@ describe('Modeling Exercise Participation Spec', () => {
     });
 
     it('Student can start and submit their model', () => {
-        cy.login(student, `/courses/${course.id}`);
+        cy.login(studentOne, `/courses/${course.id}`);
         cy.reloadUntilFound('#start-exercise-' + modelingExercise.id);
         courseOverview.startExercise(modelingExercise.id!);
         cy.get('#open-exercise-' + modelingExercise.id).click();

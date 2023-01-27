@@ -5,12 +5,12 @@ import { CypressAssessmentType, convertCourseAfterMultiPart } from '../../../sup
 import { artemis } from 'src/test/cypress/support/ArtemisTesting';
 import dayjs from 'dayjs/esm';
 
-// The user management object
+// Users
 const users = artemis.users;
-const student = users.getStudentOne();
-const tutor = users.getTutor();
 const admin = users.getAdmin();
 const instructor = users.getInstructor();
+const tutor = users.getTutor();
+const studentOne = users.getStudentOne();
 
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -49,7 +49,7 @@ describe('Programming exercise assessment', () => {
 
     after(() => {
         if (course) {
-            cy.login(users.getAdmin());
+            cy.login(admin);
             courseManagementRequests.deleteCourse(course.id!);
         }
     });
@@ -74,7 +74,7 @@ describe('Programming exercise assessment', () => {
     }
 
     function verifyAssessmentAsStudent() {
-        cy.login(student, `/courses/${course.id}/exercises/${exercise.id}`);
+        cy.login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
         const totalPoints = tutorFeedbackPoints + tutorCodeFeedbackPoints;
         const percentage = totalPoints * 10;
         exerciseResult.shouldShowExerciseTitle(exercise.title!);
@@ -97,7 +97,7 @@ describe('Programming exercise assessment', () => {
         cy.login(admin);
         return courseManagementRequests.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, student);
+            courseManagementRequests.addStudentToCourse(course, studentOne);
             courseManagementRequests.addTutorToCourse(course, tutor);
             courseManagementRequests.addInstructorToCourse(course, instructor);
             dueDate = dayjs().add(25, 'seconds');
@@ -111,7 +111,7 @@ describe('Programming exercise assessment', () => {
     }
 
     function makeProgrammingSubmissionAsStudent() {
-        cy.login(student);
+        cy.login(studentOne);
         courseManagementRequests
             .startExerciseParticipation(exercise.id!)
             .its('body.id')

@@ -4,12 +4,12 @@ import { Course } from 'app/entities/course.model';
 import { artemis } from 'src/test/cypress/support/ArtemisTesting';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
-// The user management object
+// Users
 const users = artemis.users;
-const student = users.getStudentOne();
-const tutor = users.getTutor();
 const admin = users.getAdmin();
 const instructor = users.getInstructor();
+const tutor = users.getTutor();
+const studentOne = users.getStudentOne();
 
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -39,7 +39,7 @@ describe('Text exercise assessment', () => {
 
     after(() => {
         if (course) {
-            cy.login(users.getAdmin());
+            cy.login(admin);
             courseManagementRequests.deleteCourse(course.id!);
         }
     });
@@ -66,7 +66,7 @@ describe('Text exercise assessment', () => {
 
     describe('Feedback', () => {
         it('Student sees feedback after assessment due date and complains', () => {
-            cy.login(student, `/courses/${course.id}/exercises/${exercise.id}`);
+            cy.login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
             const totalPoints = tutorFeedbackPoints + tutorTextFeedbackPoints;
             const percentage = totalPoints * 10;
             exerciseResult.shouldShowExerciseTitle(exercise.title!);
@@ -89,7 +89,7 @@ describe('Text exercise assessment', () => {
         cy.login(admin);
         return courseManagementRequests.createCourse().then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, student);
+            courseManagementRequests.addStudentToCourse(course, studentOne);
             courseManagementRequests.addTutorToCourse(course, tutor);
             courseManagementRequests.addInstructorToCourse(course, instructor);
             courseManagementRequests.createTextExercise({ course }).then((textResponse) => {
@@ -99,7 +99,7 @@ describe('Text exercise assessment', () => {
     }
 
     function makeTextSubmissionAsStudent() {
-        cy.login(student);
+        cy.login(studentOne);
         courseManagementRequests.startExerciseParticipation(exercise.id!);
         cy.fixture('loremIpsum.txt').then((submission) => {
             courseManagementRequests.makeTextExerciseSubmission(exercise.id!, submission);

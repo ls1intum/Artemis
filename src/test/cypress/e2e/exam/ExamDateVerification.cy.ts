@@ -6,10 +6,15 @@ import dayjs from 'dayjs/esm';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
 
+// Users
+const users = artemis.users;
+const admin = users.getAdmin();
+const studentOne = users.getStudentOne();
+
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
 
-// page objects
+// PageObjects
 const courseOverview = artemis.pageobjects.course.overview;
 const examNavigationBar = artemis.pageobjects.exam.navigationBar;
 const examStartEnd = artemis.pageobjects.exam.startEnd;
@@ -20,16 +25,16 @@ describe('Exam date verification', () => {
     let examTitle: string;
 
     before(() => {
-        cy.login(artemis.users.getAdmin());
+        cy.login(admin);
         courseManagementRequests.createCourse().then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, artemis.users.getStudentOne());
+            courseManagementRequests.addStudentToCourse(course, studentOne);
         });
     });
 
     beforeEach(() => {
         examTitle = 'exam' + generateUUID();
-        cy.login(artemis.users.getAdmin(), '/');
+        cy.login(admin, '/');
     });
 
     describe('Exam timing', () => {
@@ -44,7 +49,7 @@ describe('Exam date verification', () => {
             courseManagementRequests.createExam(examContent).then((response) => {
                 exam = response.body;
             });
-            cy.login(artemis.users.getStudentOne(), `/courses`);
+            cy.login(studentOne, `/courses`);
             cy.contains(examTitle).should('not.exist');
             cy.visit(`/courses/${course.id}`);
             cy.url().should('contain', `${course.id}`);
@@ -60,8 +65,8 @@ describe('Exam date verification', () => {
                 .build();
             courseManagementRequests.createExam(examContent).then((response) => {
                 exam = response.body;
-                courseManagementRequests.registerStudentForExam(exam, artemis.users.getStudentOne());
-                cy.login(artemis.users.getStudentOne(), `/courses/${course.id}`);
+                courseManagementRequests.registerStudentForExam(exam, studentOne);
+                cy.login(studentOne, `/courses/${course.id}`);
                 cy.url().should('contain', `${course.id}`);
                 courseOverview.openExamsTab();
                 courseOverview.openExam(exam.id!);
@@ -71,7 +76,7 @@ describe('Exam date verification', () => {
 
         it('Student can start after start Date', () => {
             let exerciseGroup: ExerciseGroup;
-            const student = artemis.users.getStudentOne();
+            const student = studentOne;
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
@@ -105,7 +110,7 @@ describe('Exam date verification', () => {
         it('Exam ends after end time', () => {
             let exerciseGroup: ExerciseGroup;
             const examEnd = dayjs().add(30, 'seconds');
-            const student = artemis.users.getStudentOne();
+            const student = studentOne;
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
@@ -141,14 +146,14 @@ describe('Exam date verification', () => {
         });
 
         afterEach(() => {
-            cy.login(artemis.users.getAdmin());
+            cy.login(admin);
             courseManagementRequests.deleteExam(exam);
         });
     });
 
     after(() => {
         if (course) {
-            cy.login(artemis.users.getAdmin());
+            cy.login(admin);
             courseManagementRequests.deleteCourse(course.id!);
         }
     });

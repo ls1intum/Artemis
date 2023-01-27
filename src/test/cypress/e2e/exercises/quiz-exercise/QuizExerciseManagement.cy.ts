@@ -7,8 +7,9 @@ import multipleChoiceTemplate from '../../../fixtures/quiz_exercise_fixtures/mul
 import { DELETE } from '../../../support/constants';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
-// Accounts
-const admin = artemis.users.getAdmin();
+// Users
+const users = artemis.users;
+const admin = users.getAdmin();
 
 // Requests
 const courseManagementRequest = artemis.requests.courseManagement;

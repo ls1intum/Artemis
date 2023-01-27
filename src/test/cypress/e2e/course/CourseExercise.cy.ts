@@ -4,11 +4,11 @@ import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/mu
 import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { generateUUID } from '../../support/utils';
 
-// Accounts
-const admin = artemis.users.getAdmin();
+// Users
+const users = artemis.users;
+const admin = users.getAdmin();
 
 // Requests
-const artemisRequests = artemis.requests;
 const courseManagementRequest = artemis.requests.courseManagement;
 
 // Page Objects
@@ -27,7 +27,7 @@ describe('Course Exercise', () => {
         const uid = generateUUID();
         courseName = 'Cypress course' + uid;
         courseShortName = 'cypress' + uid;
-        artemisRequests.courseManagement.createCourse(false, courseName, courseShortName).then((response) => {
+        courseManagementRequest.createCourse(false, courseName, courseShortName).then((response) => {
             course = convertCourseAfterMultiPart(response);
             courseId = course.id!;
         });
@@ -70,7 +70,7 @@ describe('Course Exercise', () => {
 
     after('Delete Course', () => {
         if (courseId) {
-            artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
+            courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
         }
     });
 });

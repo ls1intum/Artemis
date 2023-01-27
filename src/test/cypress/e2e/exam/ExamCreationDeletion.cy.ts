@@ -5,16 +5,21 @@ import dayjs from 'dayjs/esm';
 import { artemis } from '../../support/ArtemisTesting';
 import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
 
+// Users
+const users = artemis.users;
+const admin = users.getAdmin();
+
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
 
-// Pageobjects
+// PageObjects
 const navigationBar = artemis.pageobjects.navigationBar;
 const courseManagementPage = artemis.pageobjects.course.management;
 const examManagementPage = artemis.pageobjects.exam.management;
 const examCreationPage = artemis.pageobjects.exam.creation;
 const examDetailsPage = artemis.pageobjects.exam.details;
 
+// Common primitives
 const examData = {
     title: 'exam' + generateUUID(),
     visibleDate: dayjs(),
@@ -48,14 +53,14 @@ describe('Exam creation/deletion', () => {
     let examId: number;
 
     before(() => {
-        cy.login(artemis.users.getAdmin());
+        cy.login(admin);
         courseManagementRequests.createCourse().then((response) => {
             course = convertCourseAfterMultiPart(response);
         });
     });
 
     beforeEach(() => {
-        cy.login(artemis.users.getAdmin(), '/');
+        cy.login(admin, '/');
     });
 
     it('Creates an exam', () => {

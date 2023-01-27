@@ -6,13 +6,13 @@ import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import { Course } from 'app/entities/course.model';
 import day from 'dayjs/esm';
 
+// Users
+const users = artemis.users;
+const admin = users.getAdmin();
+const studentOne = users.getStudentOne();
+
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
-
-// User management
-const users = artemis.users;
-const student = users.getStudentOne();
-const admin = users.getAdmin();
 
 // PageObjects
 const courseManagementPage = artemis.pageobjects.course.management;
@@ -76,10 +76,10 @@ describe('Course management', () => {
         });
 
         it('Adds a student manually to the course', () => {
-            const username = student.username;
+            const username = studentOne.username;
             navigationBar.openCourseManagement();
             courseManagementPage.openCourse(courseData.shortName);
-            courseManagementPage.addStudentToCourse(student);
+            courseManagementPage.addStudentToCourse(studentOne);
             cy.get('#registered-students').contains(username).should('be.visible');
             navigationBar.openCourseManagement();
             courseManagementPage.openCourse(courseData.shortName);
@@ -87,8 +87,8 @@ describe('Course management', () => {
         });
 
         it('Removes a student manually from the course', () => {
-            const username = student.username;
-            courseManagementRequests.addStudentToCourse(course, student);
+            const username = studentOne.username;
+            courseManagementRequests.addStudentToCourse(course, studentOne);
             navigationBar.openCourseManagement();
             courseManagementPage.openStudentOverviewOfCourse(course.id!);
             cy.get('#registered-students').contains(username).should('be.visible');

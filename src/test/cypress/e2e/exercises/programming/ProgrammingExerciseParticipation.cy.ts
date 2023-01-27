@@ -11,8 +11,12 @@ import {
 } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
-// The user management object
+// Users
 const users = artemis.users;
+const admin = users.getAdmin();
+const studentOne = users.getStudentOne();
+const studentTwo = users.getStudentTwo();
+const studentThree = users.getStudentThree();
 
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -29,23 +33,23 @@ describe('Programming exercise participations', () => {
     });
 
     it('Makes a failing submission', () => {
-        startParticipationInProgrammingExercise(course.id!, exercise.id!, users.getStudentOne());
+        startParticipationInProgrammingExercise(course.id!, exercise.id!, studentOne);
         makeSubmission(exercise, buildError);
     });
 
     it('Makes a partially successful submission', () => {
-        startParticipationInProgrammingExercise(course.id!, exercise.id!, users.getStudentTwo());
+        startParticipationInProgrammingExercise(course.id!, exercise.id!, studentTwo);
         makeSubmission(exercise, partiallySuccessful);
     });
 
     it('Makes a successful submission', () => {
-        startParticipationInProgrammingExercise(course.id!, exercise.id!, users.getStudentThree());
+        startParticipationInProgrammingExercise(course.id!, exercise.id!, studentThree);
         makeSubmission(exercise, allSuccessful);
     });
 
     after(() => {
         if (course) {
-            cy.login(users.getAdmin());
+            cy.login(admin);
             courseManagementRequests.deleteCourse(course.id!);
         }
     });
@@ -54,12 +58,12 @@ describe('Programming exercise participations', () => {
      * Creates a course and a programming exercise inside that course.
      */
     function setupCourseAndProgrammingExercise() {
-        cy.login(users.getAdmin(), '/');
+        cy.login(admin, '/');
         courseManagementRequests.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, users.getStudentOne());
-            courseManagementRequests.addStudentToCourse(course, users.getStudentTwo());
-            courseManagementRequests.addStudentToCourse(course, users.getStudentThree());
+            courseManagementRequests.addStudentToCourse(course, studentOne);
+            courseManagementRequests.addStudentToCourse(course, studentTwo);
+            courseManagementRequests.addStudentToCourse(course, studentThree);
             courseManagementRequests.createProgrammingExercise({ course }).then((exerciseResponse) => {
                 exercise = exerciseResponse.body;
             });

@@ -5,8 +5,10 @@ import { artemis } from '../../../support/ArtemisTesting';
 import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
-// The user management object
+// Users
 const users = artemis.users;
+const admin = users.getAdmin();
+const studentOne = users.getStudentOne();
 
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -26,13 +28,13 @@ describe('Static code analysis tests', () => {
 
     it('Configures SCA grading and makes a successful submission with SCA errors', () => {
         configureStaticCodeAnalysisGrading();
-        startParticipationInProgrammingExercise(course.id!, exercise.id!, users.getStudentOne());
+        startParticipationInProgrammingExercise(course.id!, exercise.id!, studentOne);
         makeSuccessfulSubmissionWithScaErrors(exercise.id!);
     });
 
     after(() => {
         if (course) {
-            cy.login(users.getAdmin());
+            cy.login(admin);
             courseManagementRequests.deleteCourse(course.id!);
         }
     });
@@ -41,10 +43,10 @@ describe('Static code analysis tests', () => {
      * Creates a course and a programming exercise inside that course.
      */
     function setupCourseAndProgrammingExercise() {
-        cy.login(users.getAdmin());
+        cy.login(admin);
         courseManagementRequests.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, users.getStudentOne());
+            courseManagementRequests.addStudentToCourse(course, studentOne);
             courseManagementRequests.createProgrammingExercise({ course }, 50).then((dto) => {
                 exercise = dto.body;
             });
@@ -72,7 +74,7 @@ describe('Static code analysis tests', () => {
      * Configures every SCA category to affect the grading.
      */
     function configureStaticCodeAnalysisGrading() {
-        cy.login(users.getAdmin());
+        cy.login(admin);
         scaConfig.visit(course.id!, exercise.id!);
         scaConfig.makeEveryScaCategoryInfluenceGrading();
         scaConfig.saveChanges();

@@ -10,7 +10,8 @@ import { AdditionalData, Exercise } from 'src/test/cypress/support/pageobjects/e
 
 // User management
 const users = artemis.users;
-const student = users.getStudentOne();
+const admin = users.getAdmin();
+const studentOne = users.getStudentOne();
 
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -30,8 +31,8 @@ describe('Exam participation', () => {
     let exam: Exam;
 
     before(() => {
-        cy.login(users.getAdmin());
-        courseRequests.createCourse(true).then((response) => {
+        cy.login(admin);
+        courseManagementRequests.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
@@ -41,7 +42,7 @@ describe('Exam participation', () => {
                 .examMaxPoints(40)
                 .numberOfExercises(4)
                 .build();
-            courseRequests.createExam(examContent).then((examResponse) => {
+            courseManagementRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
                 addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture });
 
@@ -59,7 +60,7 @@ describe('Exam participation', () => {
     });
 
     it('Participates as a student in a registered exam', () => {
-        examParticipation.startParticipation(student, course, exam);
+        examParticipation.startParticipation(studentOne, course, exam);
         for (let j = 0; j < exerciseArray.length; j++) {
             const exercise = exerciseArray[j];
             examParticipation.openExercise(j);
@@ -78,8 +79,8 @@ describe('Exam participation', () => {
 
     after(() => {
         if (course) {
-            cy.login(users.getAdmin());
-            courseRequests.deleteCourse(course.id!);
+            cy.login(admin);
+            courseManagementRequests.deleteCourse(course.id!);
         }
     });
 });

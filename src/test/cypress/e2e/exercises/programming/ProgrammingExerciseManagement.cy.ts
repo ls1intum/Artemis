@@ -6,11 +6,12 @@ import { artemis } from '../../../support/ArtemisTesting';
 import { generateUUID } from '../../../support/utils';
 import { PROGRAMMING_EXERCISE_BASE, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
-//  Admin account
-const admin = artemis.users.getAdmin();
+// Users
+const users = artemis.users;
+const admin = users.getAdmin();
 
 // Requests
-const artemisRequests = artemis.requests;
+const courseManagementRequests = artemis.requests.courseManagement;
 
 // PageObjects
 const courseManagementPage = artemis.pageobjects.course.management;
@@ -23,7 +24,7 @@ describe('Programming Exercise Management', () => {
 
     before(() => {
         cy.login(admin);
-        artemisRequests.courseManagement.createCourse(true).then((response) => {
+        courseManagementRequests.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
             expect(course).property('id').to.be.a('number');
         });
@@ -33,7 +34,7 @@ describe('Programming Exercise Management', () => {
         let programmingExercise: ProgrammingExercise;
 
         beforeEach(() => {
-            artemisRequests.courseManagement
+            courseManagementRequests
                 .createProgrammingExercise({ course })
                 .its('body')
                 .then((exercise) => {
@@ -85,7 +86,7 @@ describe('Programming Exercise Management', () => {
 
     after(() => {
         if (course) {
-            artemisRequests.courseManagement.deleteCourse(course.id!);
+            courseManagementRequests.deleteCourse(course.id!);
         }
     });
 });

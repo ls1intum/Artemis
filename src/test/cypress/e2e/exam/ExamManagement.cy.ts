@@ -6,6 +6,11 @@ import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
+// Users
+const users = artemis.users;
+const admin = users.getAdmin();
+const studentOne = users.getStudentOne();
+
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
 
@@ -15,7 +20,7 @@ const admin = users.getAdmin();
 const instructor = users.getInstructor();
 const studentOne = users.getStudentOne();
 
-// Pageobjects
+// PageObjects
 const navigationBar = artemis.pageobjects.navigationBar;
 const courseManagement = artemis.pageobjects.course.management;
 const examManagement = artemis.pageobjects.exam.management;

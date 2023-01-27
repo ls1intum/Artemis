@@ -8,8 +8,9 @@ import { artemis } from '../../../support/ArtemisTesting';
 import dayjs from 'dayjs/esm';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
-// The user management object
+// Users
 const users = artemis.users;
+const admin = users.getAdmin();
 
 // Requests
 const courseManagement = artemis.requests.courseManagement;
@@ -26,7 +27,7 @@ describe('Text exercise management', () => {
     let course: Course;
 
     before(() => {
-        cy.login(users.getAdmin());
+        cy.login(admin);
         courseManagement.createCourse().then((response) => {
             course = convertCourseAfterMultiPart(response);
         });
@@ -78,7 +79,7 @@ describe('Text exercise management', () => {
         let exercise: TextExercise;
 
         beforeEach(() => {
-            cy.login(users.getAdmin(), '/');
+            cy.login(admin, '/');
             courseManagement.createTextExercise({ course }).then((response: Cypress.Response<TextExercise>) => {
                 exercise = response.body;
             });
@@ -98,7 +99,7 @@ describe('Text exercise management', () => {
 
     after(() => {
         if (course) {
-            cy.login(users.getAdmin());
+            cy.login(admin);
             courseManagement.deleteCourse(course.id!);
         }
     });

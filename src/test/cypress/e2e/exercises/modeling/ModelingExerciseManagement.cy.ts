@@ -1,28 +1,28 @@
+import dayjs from 'dayjs/esm';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { dayjsToString } from '../../../support/utils';
 import { artemis } from '../../../support/ArtemisTesting';
 import { MODELING_EDITOR_CANVAS } from '../../../support/pageobjects/exercises/modeling/ModelingEditor';
-
-// https://day.js.org/docs is a tool for date/time
-import dayjs from 'dayjs/esm';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
-// pageobjects
+// Users
+const users = artemis.users;
+const admin = users.getAdmin();
+const instructor = users.getInstructor();
+const studentOne = users.getStudentOne();
+
+// Requests
+const courseManagementRequests = artemis.requests.courseManagement;
+
+// PageObjects
 const createModelingExercise = artemis.pageobjects.exercise.modeling.creation;
 const modelingExerciseExampleSubmission = artemis.pageobjects.assessment.modeling;
 const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
-// requests
-const courseManagementRequests = artemis.requests.courseManagement;
-// Users
-const userManagement = artemis.users;
-const admin = userManagement.getAdmin();
-const student = userManagement.getStudentOne();
-const instructor = userManagement.getInstructor();
 
+// Common primitives
 let course: Course;
 let modelingExercise: ModelingExercise;
-
 const modelingExerciseTitle = 'Cypress modeling exercise';
 
 describe('Modeling Exercise Management Spec', () => {
@@ -31,7 +31,7 @@ describe('Modeling Exercise Management Spec', () => {
         courseManagementRequests.createCourse().then((response: Cypress.Response<Course>) => {
             course = convertCourseAfterMultiPart(response);
             courseManagementRequests.addInstructorToCourse(course, instructor);
-            courseManagementRequests.addStudentToCourse(course, student);
+            courseManagementRequests.addStudentToCourse(course, studentOne);
         });
     });
 
@@ -128,7 +128,7 @@ describe('Modeling Exercise Management Spec', () => {
             courseManagementRequests.createModelingExercise({ course }, modelingExerciseTitle, dayjs().add(1, 'hour')).then((resp) => {
                 modelingExercise = resp.body;
             });
-            cy.login(student, '/courses');
+            cy.login(studentOne, '/courses');
             cy.contains(course.title!).click({ force: true });
             cy.contains('No exercises available for the course.').should('be.visible');
         });
@@ -137,7 +137,7 @@ describe('Modeling Exercise Management Spec', () => {
             courseManagementRequests.createModelingExercise({ course }, modelingExerciseTitle, dayjs().subtract(1, 'hour')).then((resp) => {
                 modelingExercise = resp.body;
             });
-            cy.login(student, '/courses');
+            cy.login(studentOne, '/courses');
             cy.visit('/courses/' + course.id + '/exercises/' + modelingExercise.id);
         });
     });
