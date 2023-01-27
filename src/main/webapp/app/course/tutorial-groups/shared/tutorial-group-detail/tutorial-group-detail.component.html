@@ -137,7 +137,7 @@
         <dd>
             <ng-container *ngIf="sessions && sessions.length > 0; else sessionsNotFound">
                 <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3">
-                    <jhi-tutorial-group-sessions-table [timeZone]="timeZone" [sessions]="sessions" [tutorialGroup]="tutorialGroup" [showIdColumn]="false">
+                    <jhi-tutorial-group-sessions-table [timeZone]="timeZone" [sessions]="sessions" [tutorialGroup]="tutorialGroup" [showIdColumn]="false" [isReadOnly]="true">
                     </jhi-tutorial-group-sessions-table>
                 </div>
             </ng-container>

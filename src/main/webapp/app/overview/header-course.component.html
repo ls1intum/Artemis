@@ -1,9 +1,9 @@
 <div class="course-info-bar course-info-bar--header" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }" id="course-detail-info-bar">
     <div class="row">
         <div class="col general-info">
-            <h3 class="fw-medium" [class.mb-0]="!courseDescription">{{ course.title }}</h3>
+            <h3 id="course-header-title" class="fw-medium" [class.mb-0]="!courseDescription">{{ course.title }}</h3>
             <ng-container *ngIf="courseDescription">
-                <h5 class="fw-medium">{{ courseDescription }}</h5>
+                <h5 id="course-header-description" class="fw-medium">{{ courseDescription }}</h5>
                 <h6 class="fw-medium show-more" role="button" *ngIf="enableShowMore" (click)="toggleCourseDescription()">
                     {{ 'artemisApp.courseOverview.' + (longDescriptionShown ? 'showLess' : 'showMore') | artemisTranslate }}
                 </h6>

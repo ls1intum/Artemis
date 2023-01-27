@@ -74,6 +74,15 @@ describe('CodeEditorAceComponent', () => {
         expect(comp.editor.getEditor().getReadOnly()).toBeFalse();
     });
 
+    it('if actions are disabled, it should show the editor in a readonly state', () => {
+        comp.selectedFile = 'dummy';
+        comp.disableActions = true;
+        fixture.detectChanges();
+        const aceEditor = debugElement.query(By.css('#ace-code-editor'));
+        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeFalse();
+        expect(comp.editor.getEditor().getReadOnly()).toBeTrue();
+    });
+
     it('if a file is selected and the component is not loading a file from server, the editor should be usable', () => {
         comp.selectedFile = 'dummy';
         comp.isLoading = false;
