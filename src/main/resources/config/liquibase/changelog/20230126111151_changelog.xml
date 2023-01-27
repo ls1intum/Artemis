@@ -64,5 +64,10 @@
             WHERE TRUE;
         </sql>
 <!--        <dropColumn tableName="course" columnName="posts_enabled"/>-->
+        <addNotNullConstraint
+                              columnDataType="bigint"
+                              columnName="course_communication_configuration_id"
+                              tableName="course"/>
+
     </changeSet>
 </databaseChangeLog>
