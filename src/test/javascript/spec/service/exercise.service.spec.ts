@@ -491,4 +491,33 @@ describe('Exercise Service', () => {
         expect(serviceSpy).toHaveBeenCalledWith(expect.objectContaining({ body: expectedReturnedExercise }));
         expect(actualReturnedExercise).toEqual(expectedReturnedExercise);
     });
+
+    it('should send a reset request', () => {
+        const exerciseId = 125;
+
+        service.reset(exerciseId).subscribe();
+
+        httpMock.expectOne({
+            url: `${SERVER_API_URL}api/exercises/${exerciseId}/reset`,
+            method: 'DELETE',
+        });
+    });
+
+    it('should send a cleanup request', () => {
+        const exerciseId = 126;
+
+        service.cleanup(exerciseId, true).subscribe();
+
+        httpMock.expectOne({
+            url: `${SERVER_API_URL}api/exercises/${exerciseId}/cleanup?deleteRepositories=true`,
+            method: 'DELETE',
+        });
+
+        service.cleanup(exerciseId, false).subscribe();
+
+        httpMock.expectOne({
+            url: `${SERVER_API_URL}api/exercises/${exerciseId}/cleanup?deleteRepositories=false`,
+            method: 'DELETE',
+        });
+    });
 });
