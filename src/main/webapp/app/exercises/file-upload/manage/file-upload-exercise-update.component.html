@@ -8,7 +8,7 @@
         </h4>
         <h4 *ngIf="isImport" id="jhi-file-upload-exercise-heading-import" jhiTranslate="artemisApp.fileUploadExercise.home.importLabel">Import File Upload Exercise</h4>
     </div>
-    <div class="form-group" [hidden]="!fileUploadExercise.id">
+    <div class="form-group" [hidden]="!fileUploadExercise.id && isImport">
         <label for="id" jhiTranslate="global.field.id">ID</label>
         <input type="text" class="form-control" id="id" name="id" [(ngModel)]="fileUploadExercise.id" readonly />
     </div>
