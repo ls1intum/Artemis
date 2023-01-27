@@ -48,21 +48,25 @@ public class ExamUserResource {
      */
     @PostMapping("courses/{courseId}/exams/{examId}/exam-users")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<ExamUser> updateExamUser(@RequestPart ExamUserDTO examUserDTO, @RequestPart MultipartFile file, @PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<ExamUser> updateExamUser(@RequestPart ExamUserDTO examUserDTO, @RequestPart(value = "file", required = false) MultipartFile file,
+            @PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to update {} as exam user to exam : {}", examUserDTO.login(), examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(examUserDTO.login())
                 .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + examUserDTO.login() + "\" does not exist"));
 
-        String responsePath = fileService.handleSaveFile(file, true, false);
-
         ExamUser examUser = examUserRepository.findByExamIdAndUser(examId, student);
+
+        if (file != null) {
+            String responsePath = fileService.handleSaveFile(file, true, false);
+            examUser.setSigningImagePath(responsePath);
+        }
         examUser.setDidCheckImage(examUserDTO.didCheckImage());
         examUser.setDidCheckLogin(examUserDTO.didCheckLogin());
         examUser.setDidCheckName(examUserDTO.didCheckName());
         examUser.setDidCheckRegistrationNumber(examUserDTO.didCheckRegistrationNumber());
-        examUser.setSigningImagePath(responsePath);
+
         examUserRepository.save(examUser);
         return ResponseEntity.ok().body(examUser);
     }

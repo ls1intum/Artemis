@@ -73,7 +73,7 @@ describe('UsersImportButtonComponent', () => {
         component.hasImported = true;
 
         const event = { target: { files: [studentCsvColumns] } };
-        await component.onCSVFileSelect(event);
+        await component.onFileSelect(event);
 
         expect(component.usersToImport).toHaveLength(0);
         expect(component.notFoundUsers).toHaveLength(0);
@@ -81,7 +81,7 @@ describe('UsersImportButtonComponent', () => {
 
     it('should read no students from csv file', async () => {
         const event = { target: { files: [studentCsvColumns] } };
-        await component.onCSVFileSelect(event);
+        await component.onFileSelect(event);
 
         expect(component.usersToImport).toHaveLength(0);
         expect(component.notFoundUsers).toHaveLength(0);
@@ -91,7 +91,7 @@ describe('UsersImportButtonComponent', () => {
     it('should read students from csv file', async () => {
         const csv = `${studentCsvColumns}\n"1","Max","Mustermann"\n"2","John","Wick"`;
         const event = { target: { files: [csv] } };
-        await component.onCSVFileSelect(event);
+        await component.onFileSelect(event);
 
         expect(component.usersToImport).toHaveLength(2);
         expect(component.notFoundUsers).toHaveLength(0);
@@ -103,7 +103,7 @@ describe('UsersImportButtonComponent', () => {
         const invalidCsv = `"1","Max","Mustermann"\n"2","John","Wick"`;
 
         const event = { target: { files: [invalidCsv] } };
-        await component.onCSVFileSelect(event);
+        await component.onFileSelect(event);
 
         expect(component.validationError).toHaveLength(1);
     });
@@ -135,7 +135,7 @@ describe('UsersImportButtonComponent', () => {
             const pathToTestFile = path.join(testDir, testFileName);
             const csv = fs.readFileSync(pathToTestFile, 'utf-8');
             const event = { target: { files: [csv] } };
-            await component.onCSVFileSelect(event);
+            await component.onFileSelect(event);
 
             expect(component.usersToImport).toHaveLength(5);
 
@@ -169,7 +169,7 @@ describe('UsersImportButtonComponent', () => {
         const csv = fs.readFileSync(pathToTestFile, 'utf-8');
         const event = { target: { files: [csv] } };
 
-        await component.onCSVFileSelect(event);
+        await component.onFileSelect(event);
 
         expect(component.usersToImport).toHaveLength(5);
 

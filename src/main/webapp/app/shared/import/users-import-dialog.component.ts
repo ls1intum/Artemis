@@ -21,12 +21,11 @@ const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutz
 const POSSIBLE_EMAIL_HEADERS = ['email', 'e-mail', 'mail'];
 const POSSIBLE_FIRST_NAME_HEADERS = ['firstname', 'firstnameofstudent', 'givenname', 'forename', 'vorname'];
 const POSSIBLE_LAST_NAME_HEADERS = ['familyname', 'lastname', 'familynameofstudent', 'surname', 'nachname', 'familienname', 'name'];
-const POSSIBLE_ROOM_HEADERS = ['actualroom', 'actualRoom', 'raum'];
-const POSSIBLE_SEAT_HEADERS = ['actualseat', 'actualSeat', 'sitzplatz', 'sitz'];
-const POSSIBLE_PLANNED_ROOM_HEADERS = ['plannedroom', 'plannedRoom', 'geplanterraum'];
-const POSSIBLE_PLANNED_SEAT_HEADERS = ['plannedseat', 'plannedSeat', 'geplanterplatz', 'geplanterplatz'];
+const POSSIBLE_ROOM_HEADERS = ['actualroom', 'actualRoom', 'raum', 'room', 'Room'];
+const POSSIBLE_SEAT_HEADERS = ['actualseat', 'actualSeat', 'sitzplatz', 'sitz', 'seat', 'Seat'];
 
 type CsvUser = object;
+type PdfUser = object;
 
 @Component({
     selector: 'jhi-users-import-dialog',
@@ -85,24 +84,68 @@ export class UsersImportDialogComponent implements OnDestroy {
         this.hasImported = false;
     }
 
-    async onCSVFileSelect(event: any) {
+    async onFileSelect(event: any) {
         if (event.target.files.length > 0) {
+            const fileList = event.target.files;
             this.resetDialog();
             if (this.examUserMode) {
-                this.examUsersToImport = await this.readUsersFromCSVFile(event, event.target.files[0]);
+                this.examUsersToImport =
+                    fileList[0].type === 'application/pdf'
+                        ? await this.readUsersFromPDFFile(event, event.target.files[0])
+                        : await this.readUsersFromCSVFile(event, event.target.files[0]);
             } else {
                 this.usersToImport = await this.readUsersFromCSVFile(event, event.target.files[0]);
             }
         }
     }
 
+    // todo: refactor this method and write jsdoc
+    private async readUsersFromPDFFile(event: any, pdfFile: File): Promise<ExamUserDTO[]> {
+        const pdfUsers: PdfUser[] = [];
+        try {
+            this.isParsing = true;
+            this.validationError = undefined;
+            // todo 1: parse pdf file
+            // pdfUsers = await this.parseCSVFile(csvFile);
+        } catch (error) {
+            this.validationError = error.message;
+        } finally {
+            this.isParsing = false;
+        }
+        if (pdfUsers.length > 0) {
+            // todo 2: perform validations
+            // this.performExtraValidations(csvFile, csvUsers);
+        } else if (pdfUsers.length === 0) {
+            this.noUsersFoundError = true;
+        }
+        if (this.validationError || pdfUsers.length === 0) {
+            event.target.value = ''; // remove selected file so user can fix the file and select it again
+            return [];
+        }
+
+        console.log('examUserMode PDF');
+        // todo 3: return list of ExamUserDTOs
+        return pdfUsers.map(
+            (users) =>
+                ({
+                    registrationNumber: '',
+                    login: '',
+                    email: '',
+                    firstName: '',
+                    lastName: '',
+                    room: '',
+                    seat: '',
+                } as ExamUserDTO),
+        );
+    }
+
     /**
-     * Reads users from a csv file into a list of StudentDTOs
+     * Reads users from a csv file into a list of StudentDTOs or ExamUserDTO if examUserMode is true
      * The column "registrationNumber" is mandatory since the import requires it as an identifier
      * @param event File change event from the HTML input of type file
      * @param csvFile File that contains one user per row and has at least the columns specified in csvColumns
      */
-    private async readUsersFromCSVFile(event: any, csvFile: File): Promise<StudentDTO[]> {
+    private async readUsersFromCSVFile(event: any, csvFile: File): Promise<StudentDTO[] | ExamUserDTO[]> {
         let csvUsers: CsvUser[] = [];
         try {
             this.isParsing = true;
@@ -131,10 +174,8 @@ export class UsersImportDialogComponent implements OnDestroy {
         const firstNameHeader = usedHeaders.find((value) => POSSIBLE_FIRST_NAME_HEADERS.includes(value)) || '';
         const lastNameHeader = usedHeaders.find((value) => POSSIBLE_LAST_NAME_HEADERS.includes(value)) || '';
 
-        const actualRoomHeader = usedHeaders.find((value) => POSSIBLE_ROOM_HEADERS.includes(value)) || '';
-        const actualSeatHeader = usedHeaders.find((value) => POSSIBLE_SEAT_HEADERS.includes(value)) || '';
-        const plannedRoomHeader = usedHeaders.find((value) => POSSIBLE_PLANNED_ROOM_HEADERS.includes(value)) || '';
-        const plannedSeatHeader = usedHeaders.find((value) => POSSIBLE_PLANNED_SEAT_HEADERS.includes(value)) || '';
+        const roomHeader = usedHeaders.find((value) => POSSIBLE_ROOM_HEADERS.includes(value)) || '';
+        const seatHeader = usedHeaders.find((value) => POSSIBLE_SEAT_HEADERS.includes(value)) || '';
 
         if (this.examUserMode) {
             console.log('examUserMode');
@@ -146,10 +187,8 @@ export class UsersImportDialogComponent implements OnDestroy {
                         email: users[emailHeader]?.trim() || '',
                         firstName: users[firstNameHeader]?.trim() || '',
                         lastName: users[lastNameHeader]?.trim() || '',
-                        actualRoom: users[actualRoomHeader]?.trim() || '',
-                        actualSeat: users[actualSeatHeader]?.trim() || '',
-                        plannedRoom: users[plannedRoomHeader]?.trim() || '',
-                        plannedSeat: users[plannedSeatHeader]?.trim() || '',
+                        room: users[roomHeader]?.trim() || '',
+                        seat: users[seatHeader]?.trim() || '',
                     } as ExamUserDTO),
             );
         } else {
@@ -200,20 +239,25 @@ export class UsersImportDialogComponent implements OnDestroy {
             const hasLogin = this.checkIfEntryContainsKey(user, POSSIBLE_LOGIN_HEADERS);
             const hasRegistrationNumber = this.checkIfEntryContainsKey(user, POSSIBLE_REGISTRATION_NUMBER_HEADERS);
             const hasEmail = this.checkIfEntryContainsKey(user, POSSIBLE_EMAIL_HEADERS);
-            const hasActualRoom = this.checkIfEntryContainsKey(user, POSSIBLE_ROOM_HEADERS);
-            const hasActualSeat = this.checkIfEntryContainsKey(user, POSSIBLE_SEAT_HEADERS);
-            const hasPlannedRoom = this.checkIfEntryContainsKey(user, POSSIBLE_PLANNED_ROOM_HEADERS);
-            const hasPlannedSeat = this.checkIfEntryContainsKey(user, POSSIBLE_PLANNED_SEAT_HEADERS);
+            const hasRoom = this.checkIfEntryContainsKey(user, POSSIBLE_ROOM_HEADERS);
+            const hasSeat = this.checkIfEntryContainsKey(user, POSSIBLE_SEAT_HEADERS);
 
             if (!hasLogin && !hasRegistrationNumber && !hasEmail) {
                 // '+ 2' instead of '+ 1' due to the header column in the csv file
                 invalidList.push(i + 2);
             }
-            if (this.examUserMode && !hasActualRoom && !hasActualSeat && !hasPlannedRoom && !hasPlannedSeat) {
+            if (this.examUserMode && !hasRoom && !hasSeat) {
                 invalidList.push(i + 2);
             }
         }
         return invalidList.length === 0 ? undefined : invalidList.join(', ');
+    }
+
+    // todo: refactor this method to use the new PDFUser interface
+    private parsePDFFile(pdfFile: File): Promise<PdfUser[]> {
+        return new Promise((resolve, reject) => {
+            // todo 1*: use pdfjs to parse the pdf file
+        });
     }
 
     /**

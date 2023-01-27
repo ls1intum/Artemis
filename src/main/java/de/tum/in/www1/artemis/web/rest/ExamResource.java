@@ -895,12 +895,12 @@ public class ExamResource {
      */
     @PostMapping("courses/{courseId}/exams/{examId}/students")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<StudentDTO>> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<StudentDTO> studentDtos) {
+    public ResponseEntity<List<ExamUserDTO>> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExamUserDTO> studentDtos) {
         log.debug("REST request to add {} as students to exam {}", studentDtos, examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        List<StudentDTO> notFoundStudentsDtos = examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos);
+        List<ExamUserDTO> notFoundStudentsDtos = examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
     }
 

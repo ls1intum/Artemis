@@ -21,8 +21,8 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.user.UserService;
+import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -80,10 +80,10 @@ public class ExamRegistrationService {
      *
      * @param courseId    the id of the course
      * @param examId      the id of the exam
-     * @param studentDTOs the list of students (with at least registration number) who should get access to the exam
+     * @param examUserDTOs the list of students (with at least registration number) who should get access to the exam
      * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
-    public List<StudentDTO> registerStudentsForExam(Long courseId, Long examId, List<StudentDTO> studentDTOs) {
+    public List<ExamUserDTO> registerStudentsForExam(Long courseId, Long examId, List<ExamUserDTO> examUserDTOs) {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
@@ -91,19 +91,36 @@ public class ExamRegistrationService {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
-        List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
-        for (var studentDto : studentDTOs) {
-            var registrationNumber = studentDto.getRegistrationNumber();
-            var login = studentDto.getLogin();
-            var email = studentDto.getEmail();
+        List<ExamUserDTO> notFoundStudentsDTOs = new ArrayList<>();
+        for (var examUserDto : examUserDTOs) {
+            var registrationNumber = examUserDto.registrationNumber();
+            var login = examUserDto.login();
+            var email = examUserDto.email();
             Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, course.getStudentGroupName(), Role.STUDENT, login, email);
             if (optionalStudent.isEmpty()) {
-                notFoundStudentsDTOs.add(studentDto);
+                notFoundStudentsDTOs.add(examUserDto);
             }
             else {
-                ExamUser registeredExamUser = new ExamUser();
-                registeredExamUser.setUser(optionalStudent.get());
-                setExamUserObject(exam, registeredExamUser);
+                ExamUser registeredExamUserCheck = examUserRepository.findByExamIdAndUser(exam.getId(), optionalStudent.get());
+                if (!exam.getExamUsers().contains(registeredExamUserCheck) && !registeredExamUserCheck.getUser().getAuthorities().contains(ADMIN_AUTHORITY)
+                        && !registeredExamUserCheck.getUser().getGroups().contains(course.getInstructorGroupName())) {
+                    ExamUser registeredExamUser = new ExamUser();
+                    registeredExamUser.setUser(optionalStudent.get());
+                    registeredExamUser.setExam(exam);
+
+                    registeredExamUser.setDidCheckRegistrationNumber(examUserDto.didCheckRegistrationNumber());
+                    registeredExamUser.setDidCheckName(examUserDto.didCheckName());
+                    registeredExamUser.setDidCheckLogin(examUserDto.didCheckLogin());
+                    registeredExamUser.setDidCheckImage(examUserDto.didCheckImage());
+                    registeredExamUser.setPlannedRoom(examUserDto.room());
+                    registeredExamUser.setPlannedSeat(examUserDto.seat());
+                    registeredExamUser.setActualRoom(examUserDto.room());
+                    registeredExamUser.setActualSeat(examUserDto.seat());
+
+                    registeredExamUser = examUserRepository.save(registeredExamUser);
+                    exam.addExamUser(registeredExamUser);
+                }
+
             }
         }
         examRepository.save(exam);
@@ -112,13 +129,13 @@ public class ExamRegistrationService {
             User currentUser = userRepository.getUserWithGroupsAndAuthorities();
             Map<String, Object> userData = new HashMap<>();
             userData.put("exam", exam.getTitle());
-            for (var i = 0; i < studentDTOs.size(); i++) {
-                var studentDTO = studentDTOs.get(i);
-                userData.put("student" + i, studentDTO.toDatabaseString());
+            for (var i = 0; i < examUserDTOs.size(); i++) {
+                var studentDTO = examUserDTOs.get(i);
+                userData.put("student" + i, studentDTO.login() + " (" + studentDTO.registrationNumber() + ")");
             }
             AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, userData);
             auditEventRepository.add(auditEvent);
-            log.info("User {} has added multiple users {} to the exam {} with id {}", currentUser.getLogin(), studentDTOs, exam.getTitle(), exam.getId());
+            log.info("User {} has added multiple users {} to the exam {} with id {}", currentUser.getLogin(), examUserDTOs, exam.getTitle(), exam.getId());
         }
         catch (Exception ex) {
             log.warn("Could not add audit event to audit log", ex);
