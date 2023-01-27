@@ -1,4 +1,4 @@
-<div *ngIf="course">
+<div *ngIf="course" class="selection-sidebar">
     <div *ngIf="!collapsed; else collapsedConversations" class="expanded-conversations">
         <div class="card">
             <!-- header -->
@@ -24,11 +24,11 @@
                     </span>
                 </div>
                 <div class="text-center my-1">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="expandAll()">
+                    <button type="button" class="btn btn-sm btn-outline-secondary expand-button" (click)="expandAll()">
                         <fa-icon [icon]="faExpand"></fa-icon>
                         <span>{{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.expandAll' | artemisTranslate }}</span>
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="collapseAll()">
+                    <button type="button" class="btn btn-sm btn-outline-secondary expand-button" (click)="collapseAll()">
                         <fa-icon [icon]="faCompress"></fa-icon>
                         <span>{{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.collapseAll' | artemisTranslate }}</span>
                     </button>
@@ -61,8 +61,8 @@
                         >
                             <ng-template>
                                 <div ngbDropdown container="body" class="d-inline-block">
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" ngbDropdownToggle>
-                                        <fa-icon [icon]="faPlus" size="xs"></fa-icon>
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
+                                        <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                     </button>
                                     <div ngbDropdownMenu>
                                         <button id="channelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event)">
@@ -90,8 +90,8 @@
                         >
                             <ng-template>
                                 <div class="d-inline-block">
-                                    <button id="createGroupChat" class="btn btn-sm btn-outline-secondary" type="button" (click)="openCreateGroupChatDialog($event)">
-                                        <fa-icon [icon]="faPlus" size="xs"></fa-icon>
+                                    <button id="createGroupChat" class="btn btn-sm btn-outline-secondary sidebar-button" type="button" (click)="openCreateGroupChatDialog($event)">
+                                        <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                     </button>
                                 </div>
                             </ng-template>
@@ -111,8 +111,13 @@
                         >
                             <ng-template>
                                 <div class="d-inline-block">
-                                    <button id="createOneToOne" class="btn btn-sm btn-outline-secondary" type="button" (click)="openCreateOneToOneChatDialog($event)">
-                                        <fa-icon [icon]="faPlus" size="xs"></fa-icon>
+                                    <button
+                                        id="createOneToOne"
+                                        class="btn btn-sm btn-outline-secondary sidebar-button"
+                                        type="button"
+                                        (click)="openCreateOneToOneChatDialog($event)"
+                                    >
+                                        <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                     </button>
                                 </div>
                             </ng-template>

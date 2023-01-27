@@ -8,7 +8,7 @@
                 <fa-icon [icon]="faMessage" class="text-info"></fa-icon>
             </span>
         </div>
-        <div *ngIf="sectionButtons" class="interaction" (click)="$event.stopPropagation()">
+        <div *ngIf="sectionButtons" (click)="$event.stopPropagation()">
             <ng-template [ngTemplateOutlet]="sectionButtons" [ngTemplateOutletContext]="{}"></ng-template>
         </div>
     </div>

@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, QueryList, ViewChildren, ViewEncapsulation } from '@angular/core';
 import interact from 'interactjs';
 import { faChevronLeft, faChevronRight, faComments, faCompress, faExpand, faFilter, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 
@@ -30,6 +30,7 @@ interface SearchQuery {
     selector: 'jhi-conversation-selection-sidebar',
     styleUrls: ['./conversation-selection-sidebar.component.scss'],
     templateUrl: './conversation-selection-sidebar.component.html',
+    encapsulation: ViewEncapsulation.None,
 })
 export class ConversationSelectionSidebarComponent implements AfterViewInit, OnInit, OnDestroy {
     @ViewChildren(ConversationSidebarSectionComponent) sidebarSections: QueryList<ConversationSidebarSectionComponent>;

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
@@ -23,6 +23,7 @@ import { catchError } from 'rxjs/operators';
     selector: '[jhi-conversation-sidebar-entry]',
     templateUrl: './conversation-sidebar-entry.component.html',
     styleUrls: ['./conversation-sidebar-entry.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
