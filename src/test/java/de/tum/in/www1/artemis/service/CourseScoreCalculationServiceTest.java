@@ -118,6 +118,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         // Test with null score in result.
         Result result = studentParticipations.get(3).getResults().stream().findFirst().orElseThrow();
+        assertThat(result.getScore()).isEqualTo(0.0);
         result.score(null);
 
         var studentScoreResult = courseScoreCalculationService.calculateCourseScoreForStudent(student.getId(), studentParticipations, 25.0, 5.0,
