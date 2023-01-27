@@ -201,7 +201,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
 
     let navigateSpy: jest.SpyInstance;
-    let routingStub: jest.SpyInstance;
     const route = {
         snapshot: {
             paramMap: convertToParamMap({
@@ -319,8 +318,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
                 accountService = TestBed.inject(AccountService);
                 const navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
-
-                routingStub = jest.spyOn(navigationUtilService, 'routeInNewTab');
 
                 translateService = TestBed.inject(TranslateService);
             });
