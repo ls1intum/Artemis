@@ -5,5 +5,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LocalCIBuildPlan(String projectKey, String Key, String submissionRepositoryUrl, String testRepositoryUrl) {
+public record LocalCIBuildPlan(String key, String submissionRepositoryUrl, String testRepositoryUrl) {
 }
