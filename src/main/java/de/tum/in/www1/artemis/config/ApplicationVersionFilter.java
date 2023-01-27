@@ -1,9 +1,13 @@
-package de.tum.in.www1.artemis.web.filter;
+package de.tum.in.www1.artemis.config;
 
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
+
+import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,15 +15,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import jakarta.servlet.*;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 @Profile({ SPRING_PROFILE_PRODUCTION, SPRING_PROFILE_TEST })
 @Component
-public class ApiVersionFilter implements Filter {
+public class ApplicationVersionFilter implements Filter {
 
-    private static final Logger logger = LoggerFactory.getLogger(ApiVersionFilter.class);
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public static final String CONTENT_VERSION_HEADER = "Content-Version";
 
