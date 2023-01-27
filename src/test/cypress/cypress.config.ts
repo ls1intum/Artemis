@@ -15,6 +15,16 @@ export default defineConfig({
             ],
         },
         {
+            url: 'https://artemis.example',
+            ca: ['certs/rootCA.pem'],
+            certs: [
+                {
+                    cert: 'certs/artemis-nginx+4.pem',
+                    key: 'certs/artemis-nginx+4-key.pem',
+                },
+            ],
+        },
+        {
             url: 'https://localhost',
             ca: ['certs/rootCA.pem'],
             certs: [
