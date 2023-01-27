@@ -520,4 +520,15 @@ describe('Exercise Service', () => {
             method: 'DELETE',
         });
     });
+
+    it('should toggle second correction', () => {
+        const exerciseId = 127;
+
+        service.toggleSecondCorrection(exerciseId).subscribe();
+
+        httpMock.expectOne({
+            url: `${SERVER_API_URL}api/exercises/${exerciseId}/toggle-second-correction`,
+            method: 'PUT',
+        });
+    });
 });
