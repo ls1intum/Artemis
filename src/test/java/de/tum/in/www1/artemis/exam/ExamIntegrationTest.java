@@ -1869,7 +1869,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         List<StudentExam> studentExams = database.prepareStudentExamsForConduction(TEST_PREFIX, this, bitbucketRequestMockProvider, programmingExerciseTestService, request,
                 examVisibleDate, examStartDate, examEndDate, registeredStudents, studentRepos);
-        Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(studentExams.get(0).getExam().getId()); // TODO: Ata try reduce data
+        Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(studentExams.get(0).getExam().getId());
         Course course = exam.getCourse();
 
         Integer noGeneratedParticipations = registeredStudents.size() * exam.getExerciseGroups().size();
