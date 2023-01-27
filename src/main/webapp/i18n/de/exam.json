@@ -328,6 +328,7 @@
                 "configuration": "Klausurkonfiguration",
                 "conduction": "Klausurdurchführung",
                 "assessment": "Klausurbewertung und Klausureinsicht",
+                "assessmentEmptyDates": "Wenn du ein Datum leer lässt, wird dieser Schritt nicht stattfinden",
                 "exercises": "Klausuraufgaben",
                 "text": "Klausurtexte",
                 "examSolutions": "Klausurlösungen"

@@ -42,7 +42,7 @@ describe('Text exercise participation', () => {
         cy.fixture('loremIpsum.txt').then((submission) => {
             textEditor.shouldShowNumberOfWords(0);
             textEditor.shouldShowNumberOfCharacters(0);
-            textEditor.typeSubmission(submission);
+            textEditor.typeSubmission(exercise.id!, submission);
             textEditor.shouldShowNumberOfWords(100);
             textEditor.shouldShowNumberOfCharacters(591);
             textEditor.submit().then((request: Interception) => {
