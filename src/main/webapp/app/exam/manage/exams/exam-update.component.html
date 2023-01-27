@@ -155,16 +155,8 @@
             <div *ngIf="!exam.testExam">
                 <hr />
                 <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessment">Exam Assessment</h5>
+                <h6 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessmentEmptyDates">If you leave a date blank, this exam step will not take place</h6>
                 <div class="row mb-3" *ngIf="!exam.testExam">
-                    <div class="col-sm-6">
-                        <jhi-date-time-picker
-                            labelName="{{ 'artemisApp.examManagement.publishResultsDate' | artemisTranslate }}"
-                            [(ngModel)]="exam.publishResultsDate"
-                            [error]="!isValidPublishResultsDate"
-                            name="publishResultsDate"
-                            id="publishResultsDate"
-                        ></jhi-date-time-picker>
-                    </div>
                     <div class="col-sm-6">
                         <label class="form-check-label" for="numberOfCorrectionRoundsInExam" jhiTranslate="artemisApp.examManagement.numberOfCorrectionRoundsInExam">
                             Number of correction rounds in Exam
@@ -178,6 +170,15 @@
                             max="2"
                             [(ngModel)]="exam.numberOfCorrectionRoundsInExam"
                         />
+                    </div>
+                    <div class="col-sm-6">
+                        <jhi-date-time-picker
+                            labelName="{{ 'artemisApp.examManagement.publishResultsDate' | artemisTranslate }}"
+                            [(ngModel)]="exam.publishResultsDate"
+                            [error]="!isValidPublishResultsDate"
+                            name="publishResultsDate"
+                            id="publishResultsDate"
+                        ></jhi-date-time-picker>
                     </div>
                 </div>
                 <div class="row mb-3">
