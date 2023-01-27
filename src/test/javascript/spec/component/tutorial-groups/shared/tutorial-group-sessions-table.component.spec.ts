@@ -96,7 +96,7 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
     });
 
     it('should return the correct number of columns', () => {
-        expect(tableInstance.numberOfColumns).toBe(5);
+        expect(tableInstance.numberOfColumns).toBe(6);
     });
 });
 
@@ -132,6 +132,7 @@ describe('TutorialGroupSessionTableComponent', () => {
                     location: 'Room 1',
                 });
                 tutorialGroup = generateExampleTutorialGroup({});
+                tutorialGroup.nextSession = upcomingSession;
 
                 component.sessions = [upcomingSession, pastSession];
                 component.tutorialGroup = tutorialGroup;
@@ -149,17 +150,48 @@ describe('TutorialGroupSessionTableComponent', () => {
         expect(component).not.toBeNull();
     });
 
+    it('should sync next session and upcoming sessions when attendance changed', () => {
+        const changes = {} as SimpleChanges;
+        changes.sessions = new SimpleChange([], component.sessions, true);
+        changes.tutorialGroup = new SimpleChange(undefined, component.tutorialGroup, true);
+        component.ngOnChanges(changes);
+
+        const sessionWithAttendanceData = { ...upcomingSession, attendanceCount: 1 } as TutorialGroupSession;
+        component.onAttendanceChanged(sessionWithAttendanceData);
+        fixture.detectChanges();
+        expect(component.nextSession).toEqual(sessionWithAttendanceData);
+        expect(component.upcomingSessions[0]).toEqual(sessionWithAttendanceData);
+        expect(component.pastSessions[0]).toEqual(pastSession);
+    });
+
+    it('should sync next session and past sessions when attendance changed', () => {
+        const changes = {} as SimpleChanges;
+        changes.sessions = new SimpleChange([], component.sessions, true);
+        tutorialGroup.nextSession = pastSession;
+        changes.tutorialGroup = new SimpleChange(undefined, component.tutorialGroup, true);
+        component.ngOnChanges(changes);
+
+        const sessionWithAttendanceData = { ...pastSession, attendanceCount: 1 } as TutorialGroupSession;
+        component.onAttendanceChanged(sessionWithAttendanceData);
+        fixture.detectChanges();
+        expect(component.nextSession).toEqual(sessionWithAttendanceData);
+        expect(component.upcomingSessions[0]).toEqual(upcomingSession);
+        expect(component.pastSessions[0]).toEqual(sessionWithAttendanceData);
+    });
+
     it('should split sessions into upcoming and past', () => {
         const changes = {} as SimpleChanges;
         changes.sessions = new SimpleChange([], component.sessions, true);
+        changes.tutorialGroup = new SimpleChange(undefined, component.tutorialGroup, true);
         component.ngOnChanges(changes);
         expect(component.upcomingSessions).toHaveLength(1);
         expect(component.upcomingSessions).toEqual([upcomingSession]);
         expect(component.pastSessions).toHaveLength(1);
         expect(component.pastSessions).toEqual([pastSession]);
+        expect(component.nextSession).toEqual(upcomingSession);
     });
 
     it('should return the correct number of columns', () => {
-        expect(component.numberOfColumns).toBe(3);
+        expect(component.numberOfColumns).toBe(4);
     });
 });

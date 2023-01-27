@@ -1,7 +1,12 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostBinding, Input, OnChanges, TemplateRef, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, HostBinding, Input, OnChanges, Output, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
+import { onError } from 'app/shared/util/global.utils';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/core/util/alert.service';
+import { map } from 'rxjs';
 
 @Component({
     // eslint-disable-next-line @angular-eslint/component-selector
@@ -24,6 +29,15 @@ export class TutorialGroupSessionRowComponent implements OnChanges {
 
     @Input() timeZone?: string = undefined;
 
+    @Input() isReadOnly = false;
+
+    @Output() attendanceChanged = new EventEmitter<TutorialGroupSession>();
+
+    persistedAttendanceCount?: number = undefined;
+    attendanceDiffersFromPersistedValue = false;
+
+    isUpdatingAttendance = false;
+
     cancellationReason?: string;
     isCancelled = false;
 
@@ -33,7 +47,7 @@ export class TutorialGroupSessionRowComponent implements OnChanges {
 
     hasSchedule = false;
 
-    constructor(private changeDetectorRef: ChangeDetectorRef) {}
+    constructor(private changeDetectorRef: ChangeDetectorRef, private tutorialGroupSessionService: TutorialGroupSessionService, private alertService: AlertService) {}
 
     ngOnChanges() {
         if (this.session) {
@@ -47,7 +61,42 @@ export class TutorialGroupSessionRowComponent implements OnChanges {
                     this.cancellationReason = this.session.statusExplanation ? this.session.statusExplanation : undefined;
                 }
             }
+            this.persistedAttendanceCount = this.session.attendanceCount;
+            this.attendanceDiffersFromPersistedValue = false;
             this.changeDetectorRef.detectChanges();
         }
+    }
+
+    onAttendanceInput(newAttendanceCount: number | null) {
+        this.session.attendanceCount = newAttendanceCount === null ? undefined : newAttendanceCount;
+        this.attendanceDiffersFromPersistedValue = this.persistedAttendanceCount !== this.session.attendanceCount;
+    }
+
+    saveAttendanceCount() {
+        this.isUpdatingAttendance = true;
+        this.tutorialGroupSessionService
+            .updateAttendanceCount(this.tutorialGroup.course!.id!, this.tutorialGroup.id!, this.session.id!, this.session.attendanceCount!)
+            .pipe(
+                map((res: HttpResponse<TutorialGroupSession>) => {
+                    return res.body!;
+                }),
+            )
+            .subscribe({
+                next: (tutorialGroupSession: TutorialGroupSession) => {
+                    this.session = tutorialGroupSession;
+                    this.persistedAttendanceCount = this.session.attendanceCount;
+                    this.attendanceDiffersFromPersistedValue = false;
+                    this.attendanceChanged.emit(this.session);
+                },
+                error: (res: HttpErrorResponse) => {
+                    onError(this.alertService, res);
+                    this.session.attendanceCount = this.persistedAttendanceCount;
+                    this.attendanceDiffersFromPersistedValue = false;
+                },
+            })
+            .add(() => {
+                this.isUpdatingAttendance = false;
+                this.changeDetectorRef.detectChanges();
+            });
     }
 }
