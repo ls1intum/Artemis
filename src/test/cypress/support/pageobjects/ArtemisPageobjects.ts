@@ -38,7 +38,8 @@ import { ModelingExerciseFeedbackPage } from './exercises/modeling/ModelingExerc
 import { LectureManagementPage } from './lecture/LectureManagementPage';
 import { LectureCreationPage } from './lecture/LectureCreationPage';
 import { StudentExamManagementPage } from './exam/StudentExamManagementPage';
-import CourseExercisePage from './course/CourseExercisePage';
+import { CourseExercisePage } from './course/CourseExercisePage';
+import { CourseCreationPage } from './course/CourseCreationPage';
 
 /**
  * A class which encapsulates all pageobjects, which can be used to automate the Artemis UI.
@@ -47,6 +48,7 @@ export class ArtemisPageobjects {
     login = new LoginPage();
     navigationBar = new NavigationBar();
     course = {
+        creation: new CourseCreationPage(),
         management: new CourseManagementPage(),
         managementExercises: new CourseManagementExercisesPage(),
         list: new CoursesPage(),
