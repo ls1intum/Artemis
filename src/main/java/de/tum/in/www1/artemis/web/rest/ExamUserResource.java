@@ -58,18 +58,16 @@ public class ExamUserResource {
 
         ExamUser examUser = examUserRepository.findByExamIdAndUserId(examId, student.getId());
 
-        if (file != null) {
+        if (examUser != null && file != null) {
             String responsePath = fileService.handleSaveFile(file, true, false);
             examUser.setSigningImagePath(responsePath);
-        }
-        if (examUser != null) {
             examUser.setDidCheckImage(examUserDTO.didCheckImage());
             examUser.setDidCheckLogin(examUserDTO.didCheckLogin());
             examUser.setDidCheckName(examUserDTO.didCheckName());
             examUser.setDidCheckRegistrationNumber(examUserDTO.didCheckRegistrationNumber());
             examUser.setActualSeat(examUserDTO.seat());
             examUser.setActualRoom(examUserDTO.room());
-            examUserRepository.save(examUser);
+            examUser = examUserRepository.save(examUser);
         }
 
         return ResponseEntity.ok().body(examUser);

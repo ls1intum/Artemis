@@ -375,6 +375,9 @@ public class FileService implements DisposableBean {
         if (actualPath.contains(FilePathService.getCourseIconFilePath())) {
             return "/api/files/course/icons/" + id + "/" + filename;
         }
+        if (actualPath.contains(FilePathService.getExamUserSignatureFilePath())) {
+            return "/api/files/user/signatures/" + id + "/" + filename;
+        }
         if (actualPath.contains(FilePathService.getLectureAttachmentFilePath())) {
             return "/api/files/attachments/lecture/" + id + "/" + filename;
         }
@@ -418,6 +421,9 @@ public class FileService implements DisposableBean {
         }
         if (targetFolder.equals(FilePathService.getCourseIconFilePath())) {
             filenameBase = "CourseIcon_";
+        }
+        if (targetFolder.equals(FilePathService.getExamUserSignatureFilePath())) {
+            filenameBase = "ExamUserSignature_";
         }
         if (targetFolder.contains(FilePathService.getLectureAttachmentFilePath())) {
             filenameBase = "LectureAttachment_";
