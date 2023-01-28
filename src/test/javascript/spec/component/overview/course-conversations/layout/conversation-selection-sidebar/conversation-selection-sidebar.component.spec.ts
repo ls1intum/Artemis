@@ -234,6 +234,26 @@ examples.forEach((activeConversation) => {
             expect(refreshSpy).toHaveBeenCalledOnce();
         }));
 
+        it('should run conversations update when hidden status is changed', fakeAsync(() => {
+            fixture.detectChanges();
+            tick(301);
+            const onConversationsUpdateSpy = jest.spyOn(component, 'onConversationsUpdate');
+            component.onConversationHiddenStatusChange();
+            tick(301);
+            expect(onConversationsUpdateSpy).toHaveBeenCalledOnce();
+            expect(onConversationsUpdateSpy).toHaveBeenCalledWith(component.allConversations);
+        }));
+
+        it('should run conversations update when favorite status is changed', fakeAsync(() => {
+            fixture.detectChanges();
+            tick(301);
+            const onConversationsUpdateSpy = jest.spyOn(component, 'onConversationsUpdate');
+            component.onConversationFavoriteStatusChange();
+            tick(301);
+            expect(onConversationsUpdateSpy).toHaveBeenCalledOnce();
+            expect(onConversationsUpdateSpy).toHaveBeenCalledWith(component.allConversations);
+        }));
+
         it('should expand and collapse all sections', fakeAsync(() => {
             fixture.detectChanges();
             tick(301);

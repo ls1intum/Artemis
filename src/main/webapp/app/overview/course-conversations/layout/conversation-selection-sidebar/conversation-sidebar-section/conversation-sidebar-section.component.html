@@ -22,6 +22,8 @@
                 jhi-conversation-sidebar-entry
                 (click)="conversationSelected.emit(conversation)"
                 (settingsChanged)="settingsChanged.emit()"
+                (conversationFavoriteStatusChange)="conversationFavoriteStatusChange.emit()"
+                (conversationHiddenStatusChange)="conversationHiddenStatusChange.emit()"
             ></li>
             <ng-container *ngIf="hiddenConversations && hiddenConversations.length > 0">
                 <li (click)="showHiddenConversations = !showHiddenConversations" class="hidden-conversation-divider text-center">
@@ -44,6 +46,8 @@
                         jhi-conversation-sidebar-entry
                         (click)="conversationSelected.emit(conversation)"
                         (settingsChanged)="settingsChanged.emit()"
+                        (conversationFavoriteStatusChange)="conversationFavoriteStatusChange.emit()"
+                        (conversationHiddenStatusChange)="conversationHiddenStatusChange.emit()"
                     ></li>
                 </ng-container>
             </ng-container>
