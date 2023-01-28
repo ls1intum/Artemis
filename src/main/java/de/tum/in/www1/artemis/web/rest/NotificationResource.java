@@ -24,14 +24,13 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
  * REST controller for managing Notification.
  */
 @RestController
-@RequestMapping("api")
 public class NotificationResource {
 
     private final Logger log = LoggerFactory.getLogger(NotificationResource.class);
@@ -65,7 +64,7 @@ public class NotificationResource {
      */
     @GetMapping("notifications")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@Parameter Pageable pageable) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all Notifications for current user {} filtered by settings", user);
         var notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(user.getId());

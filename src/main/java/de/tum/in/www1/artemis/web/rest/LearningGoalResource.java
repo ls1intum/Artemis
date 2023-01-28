@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
-@RequestMapping("api")
 public class LearningGoalResource {
 
     @Value("${jhipster.clientApp.name}")

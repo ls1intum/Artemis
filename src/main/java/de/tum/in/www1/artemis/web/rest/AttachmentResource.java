@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing Attachment.
  */
 @RestController
-@RequestMapping("api")
 public class AttachmentResource {
 
     private final Logger log = LoggerFactory.getLogger(AttachmentResource.class);

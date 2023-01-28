@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
+import de.tum.in.www1.artemis.versioning.IgnoreGlobalMapping;
 import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
 
 /**
@@ -18,12 +19,14 @@ import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
 // is automatically secured and can only be invoked by Admins
 public class LogsResource {
 
+    @IgnoreGlobalMapping
     @GetMapping("/logs")
     public List<LoggerVM> getList() {
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
         return context.getLoggerList().stream().map(LoggerVM::new).toList();
     }
 
+    @IgnoreGlobalMapping
     @PutMapping("/logs")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void changeLevel(@RequestBody LoggerVM jsonLogger) {

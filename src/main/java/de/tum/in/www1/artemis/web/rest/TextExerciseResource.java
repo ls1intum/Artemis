@@ -41,7 +41,6 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
  * REST controller for managing TextExercise.
  */
 @RestController
-@RequestMapping("api")
 public class TextExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(TextExerciseResource.class);
@@ -311,7 +310,7 @@ public class TextExerciseResource {
         }
 
         // if no results, check if there are really no results or the relation to results was not updated yet
-        if (participation.getResults().size() == 0) {
+        if (participation.getResults().isEmpty()) {
             List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
             participation.setResults(new HashSet<>(results));
         }

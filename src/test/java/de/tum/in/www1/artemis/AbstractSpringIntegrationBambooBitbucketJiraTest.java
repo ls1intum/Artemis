@@ -15,15 +15,11 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.atlassian.bamboo.specs.api.exceptions.BambooSpecsPublishingException;
 import com.atlassian.bamboo.specs.util.BambooServer;
@@ -52,12 +48,7 @@ import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
-import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@ExtendWith(SpringExtension.class)
-@AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athene", "apollon" })
 public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends AbstractArtemisIntegrationTest {
@@ -258,9 +249,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
         // take the latest participationId because we assume that it increases in the database for the participations in the imported exercises
         var nextParticipationId = Math.max(sourceExercise.getSolutionParticipation().getId(), sourceExercise.getTemplateParticipation().getId()) + 1;
-        final var artemisTemplateHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
-        final var artemisSolutionHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId;
-        final var artemisTestsHookPath = artemisServerUrl + TEST_CASE_CHANGED_API_PATH + (sourceExercise.getId() + 1);
+        final var artemisTemplateHookPath = artemisServerUrl + "/api/programming-submissions/" + nextParticipationId++;
+        final var artemisSolutionHookPath = artemisServerUrl + "/api/programming-submissions/" + nextParticipationId;
+        final var artemisTestsHookPath = artemisServerUrl + "/api/programming-exercises/test-cases-changed/" + (sourceExercise.getId() + 1);
 
         bitbucketRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
         bitbucketRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);

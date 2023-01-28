@@ -15,7 +15,6 @@ import jakarta.validation.Valid;
  * REST controller for Reaction on Postings.
  */
 @RestController
-@RequestMapping("api")
 public class ReactionResource {
 
     private final ReactionService reactionService;

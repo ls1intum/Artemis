@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
  * REST controller for administrating TextExercise.
  */
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminTextExerciseResource {
 
     private final InstanceMessageSendService instanceMessageSendService;

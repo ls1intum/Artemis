@@ -58,7 +58,6 @@ import tech.jhipster.web.util.PaginationUtil;
  * REST controller for managing Course.
  */
 @RestController
-@RequestMapping("api")
 public class CourseResource {
 
     private final Logger log = LoggerFactory.getLogger(CourseResource.class);

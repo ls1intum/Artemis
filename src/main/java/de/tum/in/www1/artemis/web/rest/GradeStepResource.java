@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
  * REST controller for managing grade steps of a grading scale
  */
 @RestController
-@RequestMapping("api")
 public class GradeStepResource {
 
     private final Logger log = LoggerFactory.getLogger(GradeStepResource.class);

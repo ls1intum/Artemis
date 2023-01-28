@@ -16,7 +16,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -24,7 +24,6 @@ import tech.jhipster.web.util.PaginationUtil;
  * REST controller for managing Message Posts.
  */
 @RestController
-@RequestMapping("api")
 public class ConversationMessageResource {
 
     private final ConversationMessagingService conversationMessagingService;
@@ -59,7 +58,7 @@ public class ConversationMessageResource {
      */
     @GetMapping("courses/{courseId}/messages")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Post>> getMessages(@ApiParam Pageable pageable, PostContextFilter postContextFilter) {
+    public ResponseEntity<List<Post>> getMessages(@Parameter Pageable pageable, PostContextFilter postContextFilter) {
 
         Page<Post> coursePosts = conversationMessagingService.getMessages(pageable, postContextFilter);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);

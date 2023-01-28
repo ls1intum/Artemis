@@ -44,7 +44,6 @@ import jakarta.validation.constraints.NotNull;
  * REST controller for managing ExerciseGroup.
  */
 @RestController
-@RequestMapping("api")
 public class StudentExamResource {
 
     private final Logger log = LoggerFactory.getLogger(StudentExamResource.class);

@@ -39,7 +39,6 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /** REST controller for managing ModelingExercise. */
 @RestController
-@RequestMapping("api")
 public class ModelingExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(ModelingExerciseResource.class);
