@@ -74,8 +74,10 @@ describe('SubmissionResultStatusComponent', () => {
         it.each([
             [{ dueDate: dayjs().subtract(1, 'hour') } as Exercise, false],
             [{ dueDate: dayjs().subtract(1, 'hour'), studentParticipations: [{}] } as Exercise, false],
-            [{ dueDate: dayjs().add(1, 'hour') } as Exercise, true],
-            [{ dueDate: dayjs().add(1, 'hour'), studentParticipations: [{}] } as Exercise, false],
+            [{ dueDate: dayjs().subtract(1, 'hour'), studentParticipations: [{ submissions: [{}] }] } as Exercise, false],
+            [{ dueDate: dayjs().add(1, 'hour') } as Exercise, false],
+            [{ dueDate: dayjs().add(1, 'hour'), studentParticipations: [{}] } as Exercise, true],
+            [{ dueDate: dayjs().add(1, 'hour'), studentParticipations: [{ submissions: [{}] }] } as Exercise, false],
         ])('should determine if it is notSubmitted', (exercise: Exercise, expected: boolean) => {
             comp.exercise = exercise;
             comp.studentParticipation = exercise.studentParticipations?.[0];

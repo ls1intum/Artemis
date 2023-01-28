@@ -40,7 +40,6 @@ export class SubmissionResultStatusComponent implements OnChanges {
     ngOnChanges() {
         const afterDueDate = !!this.exercise.dueDate && this.exercise.dueDate.isBefore(dayjs());
         this.exerciseMissedDeadline = afterDueDate && !this.studentParticipation;
-        this.notSubmitted = !afterDueDate && !this.studentParticipation;
 
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
@@ -48,6 +47,7 @@ export class SubmissionResultStatusComponent implements OnChanges {
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         } else {
             this.uninitialized = !afterDueDate && !this.studentParticipation;
+            this.notSubmitted = !afterDueDate && !!this.studentParticipation && !this.studentParticipation.submissions?.length;
         }
     }
 }
