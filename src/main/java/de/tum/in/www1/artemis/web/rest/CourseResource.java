@@ -105,11 +105,13 @@ public class CourseResource {
 
     private final TutorialGroupsConfigurationService tutorialGroupsConfigurationService;
 
+    private final CourseScoreCalculationService courseScoreCalculationService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService) {
+            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -125,6 +127,7 @@ public class CourseResource {
         this.exerciseRepository = exerciseRepository;
         this.fileService = fileService;
         this.tutorialGroupsConfigurationService = tutorialGroupsConfigurationService;
+        this.courseScoreCalculationService = courseScoreCalculationService;
     }
 
     /**
@@ -409,36 +412,44 @@ public class CourseResource {
      *
      * @param courseId the courseId for which exercises, lectures, exams and learning goals should be fetched
      * @param refresh if true, this request was initiated by the user clicking on a refresh button
-     * @return a course with all exercises, lectures, exams, learning goals, etc. visible to the user
+     * @return a course with all exercises, lectures, exams, learning goals, etc. visible to the user. In addition, scores per exercise type for each exercise are sent back as an optimization.
      */
     // TODO: we should rename this into courses/{courseId}/details
     @GetMapping("courses/{courseId}/for-dashboard")
     @PreAuthorize("hasRole('USER')")
-    public Course getCourseForDashboard(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean refresh) {
+    public CourseForDashboardDTO getCourseForDashboard(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean refresh) {
         long timeNanoStart = System.nanoTime();
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, refresh);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user);
+        CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
         logDuration(List.of(course), user, timeNanoStart);
-        return course;
+        return courseForDashboardDTO;
     }
 
     /**
      * GET /courses/for-dashboard
      *
-     * @return the list of courses (the user has access to) including all exercises with participation, submission and result, etc. for the user
+     * @return the list of courses (the user has access to) including all exercises with participation, submission and result, etc. for the user. In addition, scores per exercise type for each exercise are sent back as an optimization.
      */
     @GetMapping("courses/for-dashboard")
     @PreAuthorize("hasRole('USER')")
-    public List<Course> getAllCoursesForDashboard() {
+    public List<CourseForDashboardDTO> getAllCoursesForDashboard() {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to get all courses the user {} has access to with exams, lectures, exercises, participations, submissions and results", user.getLogin());
+        log.debug(
+                "REST request to get all courses the user {} has access to with exams, lectures, exercises, participations, submissions and results + the calculated scores the user achieved in each of those courses",
+                user.getLogin());
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user);
+        List<CourseForDashboardDTO> coursesForDashboard = new ArrayList<>();
+        for (Course course : courses) {
+            CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
+            coursesForDashboard.add(courseForDashboard);
+        }
         logDuration(courses, user, timeNanoStart);
-        return courses;
+        return coursesForDashboard;
     }
 
     private void logDuration(List<Course> courses, User user, long timeNanoStart) {

@@ -12,8 +12,8 @@ import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Course } from 'app/entities/course.model';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { LearningGoalCardStubComponent } from './learning-goal-card-stub.component';
@@ -46,7 +46,7 @@ describe('CourseLearningGoals', () => {
             declarations: [CourseLearningGoalsComponent, LearningGoalCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(AlertService),
-                MockProvider(CourseScoreCalculationService),
+                MockProvider(CourseStorageService),
                 MockProvider(LearningGoalService),
                 MockProvider(AccountService),
                 {
@@ -79,7 +79,7 @@ describe('CourseLearningGoals', () => {
     });
 
     it('should load progress for each learning goal in a given course', () => {
-        const courseCalculationService = TestBed.inject(CourseScoreCalculationService);
+        const courseStorageService = TestBed.inject(CourseStorageService);
         const learningGoal = new LearningGoal();
         learningGoal.userProgress = [{ progress: 70, confidence: 45 } as LearningGoalProgress];
         const textUnit = new TextUnit();
@@ -92,8 +92,8 @@ describe('CourseLearningGoals', () => {
         course.id = 1;
         course.learningGoals = [learningGoal];
         course.prerequisites = [learningGoal];
-        courseCalculationService.setCourses([course]);
-        const getCourseSpy = jest.spyOn(courseCalculationService, 'getCourse').mockReturnValue(course);
+        courseStorageService.setCourses([course]);
+        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
 
         const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse');
 

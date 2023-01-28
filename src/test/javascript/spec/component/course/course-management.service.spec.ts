@@ -8,7 +8,7 @@ import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.mod
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { Course, CourseGroup } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, ExerciseTypeTOTAL } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { Organization } from 'app/entities/organization.model';
@@ -21,12 +21,19 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
+import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
+import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage-service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { Result } from 'app/entities/result.model';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
     let accountService: AccountService;
     let lectureService: LectureService;
     let httpMock: HttpTestingController;
+    let courseStorageService: CourseStorageService;
+    let scoresStorageService: ScoresStorageService;
     let isAtLeastTutorInCourseSpy: jest.SpyInstance;
     let isAtLeastEditorInCourseSpy: jest.SpyInstance;
     let isAtLeastInstructorInCourseSpy: jest.SpyInstance;
@@ -35,6 +42,10 @@ describe('Course Management Service', () => {
     let syncGroupsSpy: jest.SpyInstance;
     const resourceUrl = SERVER_API_URL + 'api/courses';
     let course: Course;
+    let courseForDashboard: CourseForDashboardDTO;
+    let courseScores: CourseScoresDTO;
+    let scoresPerExerciseType: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO>;
+    let participationResult: Result;
     let onlineCourseConfiguration: OnlineCourseConfiguration;
     let exercises: Exercise[];
     let returnedFromService: any;
@@ -54,6 +65,8 @@ describe('Course Management Service', () => {
         httpMock = TestBed.inject(HttpTestingController);
         accountService = TestBed.inject(AccountService);
         lectureService = TestBed.inject(LectureService);
+        courseStorageService = TestBed.inject(CourseStorageService);
+        scoresStorageService = TestBed.inject(ScoresStorageService);
 
         isAtLeastTutorInCourseSpy = jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
         isAtLeastEditorInCourseSpy = jest.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
@@ -70,6 +83,15 @@ describe('Course Management Service', () => {
         course.endDate = undefined;
         course.learningGoals = [];
         course.prerequisites = [];
+        courseForDashboard = new CourseForDashboardDTO();
+        courseForDashboard.course = course;
+        courseScores = { maxPoints: 0, reachablePoints: 0, studentScores: { absoluteScore: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 } };
+        scoresPerExerciseType = new Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO>();
+        scoresPerExerciseType.set(ExerciseTypeTOTAL.TOTAL, courseScores);
+        scoresPerExerciseType.set(ExerciseType.PROGRAMMING, courseScores);
+        courseForDashboard.scoresPerExerciseType = scoresPerExerciseType;
+        participationResult = new Result();
+        courseForDashboard.participationResults = [participationResult];
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.id = 234;
         onlineCourseConfiguration.ltiKey = 'key';
@@ -160,7 +182,7 @@ describe('Course Management Service', () => {
     }));
 
     it('should find all courses for dashboard', fakeAsync(() => {
-        returnedFromService = [{ ...course }];
+        returnedFromService = [{ ...courseForDashboard }];
         courseManagementService
             .findAllForDashboard()
             .pipe(take(1))
@@ -170,8 +192,8 @@ describe('Course Management Service', () => {
     }));
 
     it('should find one course for dashboard', fakeAsync(() => {
-        courseManagementService
-            .getCourseUpdates(course.id!)
+        courseStorageService
+            .subscribeToCourseUpdates(course.id!)
             .pipe(take(1))
             .subscribe((updatedCourse) => {
                 expect(updatedCourse).toEqual(course);
@@ -183,6 +205,16 @@ describe('Course Management Service', () => {
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/for-dashboard`, returnedFromService, course, true);
         tick();
     }));
+
+    it('should set the scoresPerExerciseType and participantScores in the scoresStorageService', () => {
+        courseManagementService
+            .findOneForDashboard(course.id!)
+            .pipe(take(1))
+            .subscribe(() => {
+                expect(scoresStorageService.getStoredScoresPerExerciseType(course.id!)).toEqual(courseForDashboard.scoresPerExerciseType);
+                expect(scoresStorageService.getStoredParticipationResult(participationResult.id!)).toEqual(courseForDashboard.participationResults[0]);
+            });
+    });
 
     it('should find participations for the course', fakeAsync(() => {
         returnedFromService = [...participations];

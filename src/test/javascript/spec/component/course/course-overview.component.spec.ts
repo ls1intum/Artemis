@@ -19,7 +19,6 @@ import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
 import { CourseCardComponent } from 'app/overview/course-card.component';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/entities/exercise.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
@@ -47,6 +46,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { generateExampleTutorialGroupsConfiguration } from '../tutorial-groups/helpers/tutorialGroupsConfigurationExampleModels';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -108,7 +108,7 @@ describe('CourseOverviewComponent', () => {
     let component: CourseOverviewComponent;
     let fixture: ComponentFixture<CourseOverviewComponent>;
     let courseService: CourseManagementService;
-    let courseScoreCalculationService: CourseScoreCalculationService;
+    let courseStorageService: CourseStorageService;
     let teamService: TeamService;
     let learningGoalService: LearningGoalService;
     let tutorialGroupsService: TutorialGroupsService;
@@ -154,7 +154,7 @@ describe('CourseOverviewComponent', () => {
                 fixture = TestBed.createComponent(CourseOverviewComponent);
                 component = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
-                courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
+                courseStorageService = TestBed.inject(CourseStorageService);
                 teamService = TestBed.inject(TeamService);
                 learningGoalService = TestBed.inject(LearningGoalService);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
@@ -171,7 +171,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should call all methods on init', async () => {
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
@@ -187,7 +187,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should call load Course methods on init', async () => {
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
@@ -203,7 +203,7 @@ describe('CourseOverviewComponent', () => {
 
     it('should have visible exams', () => {
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
         getCourseStub.mockReturnValue(course1);
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
 
@@ -216,7 +216,7 @@ describe('CourseOverviewComponent', () => {
 
     it('should not have visible exams', () => {
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
         getCourseStub.mockReturnValue(course2);
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
 
@@ -229,7 +229,7 @@ describe('CourseOverviewComponent', () => {
 
     it('should have learning goals and tutorial groups', () => {
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
 
         const learningGoalsResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
             body: [new LearningGoal()],
@@ -263,7 +263,7 @@ describe('CourseOverviewComponent', () => {
 
     it('should subscribeToTeamAssignmentUpdates', () => {
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
         const teamAssignmentUpdatesStub = jest.spyOn(teamService, 'teamAssignmentUpdates', 'get');
         getCourseStub.mockReturnValue(course2);
         teamAssignmentUpdatesStub.mockReturnValue(Promise.resolve(of({ exerciseId: 6, teamId: 1, studentParticipations: [] })));
@@ -276,7 +276,7 @@ describe('CourseOverviewComponent', () => {
 
     it('should subscribeForQuizChanges', () => {
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
         const jhiWebsocketServiceReceiveStub = jest.spyOn(jhiWebsocketService, 'receive');
         jhiWebsocketServiceReceiveStub.mockReturnValue(of(quizExercise));
         const jhiWebsocketServiceSubscribeStub = jest.spyOn(jhiWebsocketService, 'subscribe');
@@ -302,7 +302,7 @@ describe('CourseOverviewComponent', () => {
 
     it('should render controls if child has configuration', () => {
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
         getCourseStub.mockReturnValue(course2);
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
 

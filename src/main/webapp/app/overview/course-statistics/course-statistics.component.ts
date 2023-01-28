@@ -4,10 +4,8 @@ import { Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash-es';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import dayjs from 'dayjs/esm';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
+import { Exercise, ExerciseType, ExerciseTypeTOTAL, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { GradeType } from 'app/entities/grading-scale.model';
@@ -20,6 +18,12 @@ import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-data
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { ScoreType } from 'app/shared/constants/score-type.constants';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage-service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/entities/result.model';
+import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -184,8 +188,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     };
 
     constructor(
-        private courseService: CourseManagementService,
-        private courseCalculationService: CourseScoreCalculationService,
+        private courseStorageService: CourseStorageService,
+        private scoresStorageService: ScoresStorageService,
         private translateService: TranslateService,
         private route: ActivatedRoute,
         private gradingSystemService: GradingSystemService,
@@ -199,12 +203,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             this.courseId = parseInt(params['courseId'], 10);
         });
 
-        this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.course = this.courseStorageService.getCourse(this.courseId);
         this.onCourseLoad();
 
-        this.courseUpdatesSubscription = this.courseService.getCourseUpdates(this.courseId).subscribe((course: Course) => {
-            this.courseCalculationService.updateCourse(course);
-            this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
+            this.courseStorageService.updateCourse(course);
+            this.course = this.courseStorageService.getCourse(this.courseId);
             this.onCourseLoad();
         });
 
@@ -314,9 +318,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                     series[5].exerciseId = exercise.id;
                     this.pushToData(exercise, series);
                 } else {
-                    exercise.studentParticipations.forEach((participation) => {
+                    exercise.studentParticipations.forEach((participation: StudentParticipation) => {
                         if (participation.results?.length) {
-                            const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
+                            const participationResult: Result | undefined = this.scoresStorageService.getStoredParticipationResult(participation.id);
                             if (participationResult?.rated) {
                                 const roundedParticipationScore = roundValueSpecifiedByCourseSettings(participationResult.score!, this.course);
                                 const cappedParticipationScore = Math.min(roundedParticipationScore, 100);
@@ -404,7 +408,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         const modelingExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, ScoreType.ABSOLUTE_SCORE);
         const textExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, ScoreType.ABSOLUTE_SCORE);
         const fileUploadExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, ScoreType.ABSOLUTE_SCORE);
-        this.overallPoints = this.calculateTotalScoreForTheCourse(ScoreType.ABSOLUTE_SCORE);
+        this.overallPoints = this.calculateScoreTypeForExerciseType(ExerciseTypeTOTAL.TOTAL, ScoreType.ABSOLUTE_SCORE);
         let totalMissedPoints = this.reachablePoints - this.overallPoints;
         if (totalMissedPoints < 0) {
             totalMissedPoints = 0;
@@ -449,7 +453,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         overallMaxPoints[ExerciseType.TEXT] = textExerciseTotalMaxPoints;
         overallMaxPoints[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalMaxPoints;
         this.overallMaxPointsPerExercise = overallMaxPoints;
-        this.overallMaxPoints = this.calculateTotalScoreForTheCourse(ScoreType.MAX_POINTS);
+        this.overallMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseTypeTOTAL.TOTAL, ScoreType.MAX_POINTS);
     }
 
     /**
@@ -469,7 +473,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         relativeScores[ExerciseType.TEXT] = textExerciseRelativeScore;
         relativeScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseRelativeScore;
         this.relativeScoresPerExercise = relativeScores;
-        this.totalRelativeScore = this.calculateTotalScoreForTheCourse(ScoreType.RELATIVE_SCORE);
+        this.totalRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseTypeTOTAL.TOTAL, ScoreType.RELATIVE_SCORE);
     }
 
     /**
@@ -489,7 +493,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         reachablePoints[ExerciseType.TEXT] = textExercisesReachablePoints;
         reachablePoints[ExerciseType.FILE_UPLOAD] = fileUploadExercisesReachablePoints;
         this.reachablePointsPerExercise = reachablePoints;
-        this.reachablePoints = this.calculateTotalScoreForTheCourse(ScoreType.REACHABLE_POINTS);
+        this.reachablePoints = this.calculateScoreTypeForExerciseType(ExerciseTypeTOTAL.TOTAL, ScoreType.REACHABLE_POINTS);
     }
 
     /**
@@ -509,7 +513,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         currentRelativeScores[ExerciseType.TEXT] = textExerciseCurrentRelativeScore;
         currentRelativeScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseCurrentRelativeScore;
         this.currentRelativeScoresPerExercise = currentRelativeScores;
-        this.currentRelativeScore = this.calculateTotalScoreForTheCourse(ScoreType.CURRENT_RELATIVE_SCORE);
+        this.currentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseTypeTOTAL.TOTAL, ScoreType.CURRENT_RELATIVE_SCORE);
     }
 
     /**
@@ -529,49 +533,29 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         presentationScores[ExerciseType.TEXT] = textExercisePresentationScore;
         presentationScores[ExerciseType.FILE_UPLOAD] = fileUploadExercisePresentationScore;
         this.presentationScoresPerExercise = presentationScores;
-        this.overallPresentationScore = this.calculateTotalScoreForTheCourse(ScoreType.PRESENTATION_SCORE);
-    }
-
-    /**
-     * Calculates the total score for every exercise in the course satisfying the filter function
-     * @param filterFunction the filter the exercises have to satisfy
-     * @returns map containing score for every score type
-     * @private
-     */
-    private calculateScores(filterFunction: (courseExercise: Exercise) => boolean): Map<string, number> {
-        let courseExercises = this.courseExercises;
-        if (filterFunction) {
-            courseExercises = courseExercises.filter(filterFunction);
-        }
-        return this.courseCalculationService.calculateTotalScores(courseExercises, this.course!);
+        this.overallPresentationScore = this.calculateScoreTypeForExerciseType(ExerciseTypeTOTAL.TOTAL, ScoreType.PRESENTATION_SCORE);
     }
 
     /**
      * Calculates an arbitrary score type for an arbitrary exercise type
-     * @param exerciseType the exercise type for which the score should be calculated. Must be an element of {Programming, Modeling, Quiz, Text, File upload}
-     * @param scoreType the score type that should be calculated. Element of {Absolute score, Max points,Current relative score,Presentation score,Reachable points,Relative score}
+     * @param exerciseType the exercise type for which the score should be calculated. Must be an element of {Programming, Modeling, Quiz, Text, File upload} or the total score for all exercises.
+     * @param scoreType the score type that should be calculated. Element of {'absoluteScore', 'maxPoints', 'currentRelativeScore', 'presentationScore', 'reachablePoints', 'relativeScore'}
      * @returns requested score value
      * @private
      */
-    private calculateScoreTypeForExerciseType(exerciseType: ExerciseType, scoreType: ScoreType): number {
+    private calculateScoreTypeForExerciseType(exerciseType: ExerciseType | ExerciseTypeTOTAL, scoreType: ScoreType): number {
         if (exerciseType != undefined && scoreType != undefined) {
-            const filterFunction = (courseExercise: Exercise) => courseExercise.type === exerciseType;
-            const scores = this.calculateScores(filterFunction);
-            return scores.get(scoreType)!;
-        } else {
-            return NaN;
+            const scoresPerExerciseTypeForCourse: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO> | undefined = this.scoresStorageService.getStoredScoresPerExerciseType(
+                this.courseId,
+            );
+            if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse[exerciseType]) {
+                if ([ScoreType.ABSOLUTE_SCORE, ScoreType.RELATIVE_SCORE, ScoreType.PRESENTATION_SCORE, ScoreType.CURRENT_RELATIVE_SCORE].includes(scoreType)) {
+                    return scoresPerExerciseTypeForCourse[exerciseType].studentScores[scoreType];
+                }
+                return scoresPerExerciseTypeForCourse[exerciseType][scoreType];
+            }
         }
-    }
-
-    /**
-     * Calculates a score type for the whole course
-     * @param scoreType the score type that should be calculated. Element of {Absolute score, Max points,Current relative score,Presentation score,Reachable points,Relative score}
-     * @returns requested score type value
-     * @private
-     */
-    private calculateTotalScoreForTheCourse(scoreType: ScoreType): number {
-        const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises, this.course!);
-        return scores.get(scoreType)!;
+        return NaN;
     }
 
     calculateAndFilterNotIncludedInScore() {
@@ -649,7 +633,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                     type: types[index],
                     absoluteScore: this.overallPointsPerExercise[types[index]],
                     relativeScore: this.relativeScoresPerExercise[types[index]],
-                    reachableScore: this.reachablePointsPerExercise[types[index]],
+                    reachablePoints: this.reachablePointsPerExercise[types[index]],
                     currentRelativeScore: this.currentRelativeScoresPerExercise[types[index]],
                     overallMaxPoints: this.overallMaxPointsPerExercise[types[index]],
                     presentationScore: this.presentationScoresPerExercise[types[index]],

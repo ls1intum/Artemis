@@ -2,7 +2,6 @@ import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, O
 import { Subject, finalize } from 'rxjs';
 import { BarControlConfiguration } from 'app/overview/tab-bar/tab-bar';
 import { Course } from 'app/entities/course.model';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
@@ -12,6 +11,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 type filter = 'all' | 'registered';
 
@@ -38,7 +38,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
 
     constructor(
         private router: Router,
-        private courseCalculationService: CourseScoreCalculationService,
+        private courseStorageService: CourseStorageService,
         private courseManagementService: CourseManagementService,
         private tutorialGroupService: TutorialGroupsService,
         private activatedRoute: ActivatedRoute,
@@ -87,8 +87,8 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
     }
 
     subscribeToCourseUpdates() {
-        this.courseManagementService
-            .getCourseUpdates(this.courseId)
+        this.courseStorageService
+            .subscribeToCourseUpdates(this.courseId)
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe((course) => {
                 this.course = course;
@@ -121,7 +121,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
     }
 
     loadCourseFromCache() {
-        const cachedCourse = this.courseCalculationService.getCourse(this.courseId);
+        const cachedCourse = this.courseStorageService.getCourse(this.courseId);
         if (cachedCourse === undefined) {
             return false;
         } else {
@@ -132,7 +132,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
     }
 
     loadTutorialGroupsFromCache(): boolean {
-        const cachedTutorialGroups = this.courseCalculationService.getCourse(this.courseId)?.tutorialGroups;
+        const cachedTutorialGroups = this.courseStorageService.getCourse(this.courseId)?.tutorialGroups;
         if (cachedTutorialGroups === undefined) {
             return false;
         } else {
@@ -142,10 +142,10 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
     }
 
     updateCachedTutorialGroups() {
-        const course = this.courseCalculationService.getCourse(this.courseId);
+        const course = this.courseStorageService.getCourse(this.courseId);
         if (course) {
             course.tutorialGroups = this.tutorialGroups;
-            this.courseCalculationService.updateCourse(course);
+            this.courseStorageService.updateCourse(course);
         }
     }
 

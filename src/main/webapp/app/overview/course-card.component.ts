@@ -4,14 +4,16 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { Course } from 'app/entities/course.model';
-import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, ExerciseTypeTOTAL, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { GraphColors } from 'app/entities/statistics.model';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage-service';
+import { ScoreType } from 'app/shared/constants/score-type.constants';
+import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
 
 @Component({
     selector: 'jhi-overview-course-card',
@@ -49,12 +51,7 @@ export class CourseCardComponent implements OnChanges {
         domain: [GraphColors.GREEN, GraphColors.RED],
     } as Color;
 
-    constructor(
-        private router: Router,
-        private route: ActivatedRoute,
-        private courseScoreCalculationService: CourseScoreCalculationService,
-        private exerciseService: ExerciseService,
-    ) {}
+    constructor(private router: Router, private route: ActivatedRoute, private scoresStorageService: ScoresStorageService, private exerciseService: ExerciseService) {}
 
     ngOnChanges() {
         if (this.course.exercises && this.course.exercises.length > 0) {
@@ -71,10 +68,14 @@ export class CourseCardComponent implements OnChanges {
                 this.nextExerciseTooltip = getIconTooltip(this.nextRelevantExercise!.type);
             }
 
-            const scores = this.courseScoreCalculationService.calculateTotalScores(this.course.exercises, this.course);
-            this.totalRelativeScore = scores.get('currentRelativeScore')!;
-            this.totalAbsoluteScore = scores.get('absoluteScore')!;
-            this.totalReachableScore = scores.get('reachableScore')!;
+            const scoresPerExerciseTypeForCourse: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO> | undefined = this.scoresStorageService.getStoredScoresPerExerciseType(
+                this.course.id!,
+            );
+            if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL]) {
+                this.totalRelativeScore = scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL].studentScores[ScoreType.CURRENT_RELATIVE_SCORE];
+                this.totalAbsoluteScore = scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL].studentScores[ScoreType.ABSOLUTE_SCORE];
+                this.totalReachableScore = scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL].studentScores[ScoreType.REACHABLE_POINTS];
+            }
 
             // Adjust for bonus points, i.e. when the student has achieved more than is reachable
             const scoreNotReached = roundValueSpecifiedByCourseSettings(Math.max(0, this.totalReachableScore - this.totalAbsoluteScore), this.course);

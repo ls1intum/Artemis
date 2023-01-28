@@ -4,7 +4,7 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { LearningGoal, getIcon } from 'app/entities/learningGoal.model';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { ActivatedRoute } from '@angular/router';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
     selector: 'jhi-learning-goal-selection',
@@ -35,12 +35,12 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onChange = (value: any) => {};
 
-    constructor(private route: ActivatedRoute, private courseCalculationService: CourseScoreCalculationService, private learningGoalService: LearningGoalService) {}
+    constructor(private route: ActivatedRoute, private courseStorageService: CourseStorageService, private learningGoalService: LearningGoalService) {}
 
     ngOnInit(): void {
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         if (this.learningGoals == undefined && courseId) {
-            const course = this.courseCalculationService.getCourse(courseId);
+            const course = this.courseStorageService.getCourse(courseId);
             if (course?.learningGoals) {
                 this.setLearningGoals(course.learningGoals!);
             } else {

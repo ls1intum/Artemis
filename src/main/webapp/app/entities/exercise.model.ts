@@ -29,13 +29,19 @@ export enum ExerciseMode {
     TEAM = 'TEAM',
 }
 
-// IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
+// IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java and in ExerciseType.java -> getExerciseTypeAsString().
 export enum ExerciseType {
     PROGRAMMING = 'programming',
     MODELING = 'modeling',
     QUIZ = 'quiz',
     TEXT = 'text',
     FILE_UPLOAD = 'file-upload',
+}
+
+// Used when calculating the scores per exercise type.
+// Scores can be calculated over the exercises of each of the ExerciseTypes, e.g. "programming", "modeling" etc. and also over all exercises of a course ("total").
+export enum ExerciseTypeTOTAL {
+    TOTAL = 'total',
 }
 
 export interface ValidationReason {

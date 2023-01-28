@@ -9,8 +9,8 @@ import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Subject } from 'rxjs';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
     selector: 'jhi-create-tutorial-groups-configuration',
@@ -22,18 +22,18 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
 
     newTutorialGroupsConfiguration = new TutorialGroupsConfiguration();
     isLoading: boolean;
-    course: Course;
-
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
         private courseManagementService: CourseManagementService,
         private alertService: AlertService,
-        private courseCalculationService: CourseScoreCalculationService,
+        private courseStorageService: CourseStorageService,
 
         private cdr: ChangeDetectorRef,
     ) {}
+
+    course: Course;
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -73,8 +73,8 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
             .subscribe({
                 next: (resp) => {
                     this.course.tutorialGroupsConfiguration = resp.body!;
-                    this.courseManagementService.courseWasUpdated(this.course);
-                    this.courseCalculationService.updateCourse(this.course);
+                    this.courseStorageService.notifyCourseUpdatesSubscribers(this.course);
+                    this.courseStorageService.updateCourse(this.course);
                     this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups-checklist']);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
