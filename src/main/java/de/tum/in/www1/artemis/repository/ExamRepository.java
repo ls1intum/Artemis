@@ -40,6 +40,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") long courseId);
 
+    // Find all exams for a single course (id) that are already visible. In case the user is TA, Editor or Instructor, we the query returns all exams of the course
     @Query("""
             SELECT DISTINCT ex
             FROM Exam ex
@@ -52,6 +53,8 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     Set<Exam> findByCourseIdForUser(@Param("courseId") long courseId, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames, @Param("now") ZonedDateTime now);
 
+    // Find all exams for multiple courses (ids) that are already visible. In case the user is TA, Editor or Instructor for one specific course, the method returns all exams of the
+    // specific course
     @Query("""
             SELECT e
             FROM Exam e
@@ -62,7 +65,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                     OR e.course.editorGroupName IN :groupNames
                     OR e.course.instructorGroupName IN :groupNames)
             """)
-    Set<Exam> fingByCourseIdsForUser(@Param("courseIds") Set<Long> courseIds, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames,
+    Set<Exam> findByCourseIdsForUser(@Param("courseIds") Set<Long> courseIds, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames,
             @Param("now") ZonedDateTime now);
 
     @Query("""
