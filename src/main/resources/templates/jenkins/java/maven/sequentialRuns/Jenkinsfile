@@ -9,6 +9,7 @@ pipeline {
             docker {
                 image '#dockerImage'
                 label 'docker'
+                args '#dockerArgs'
             }
         }
         stages {
