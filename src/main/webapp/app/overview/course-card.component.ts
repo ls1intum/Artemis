@@ -74,7 +74,7 @@ export class CourseCardComponent implements OnChanges {
             if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL]) {
                 this.totalRelativeScore = scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL].studentScores[ScoreType.CURRENT_RELATIVE_SCORE];
                 this.totalAbsoluteScore = scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL].studentScores[ScoreType.ABSOLUTE_SCORE];
-                this.totalReachableScore = scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL].studentScores[ScoreType.REACHABLE_POINTS];
+                this.totalReachableScore = scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL][ScoreType.REACHABLE_POINTS];
             }
 
             // Adjust for bonus points, i.e. when the student has achieved more than is reachable
