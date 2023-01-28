@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.exam;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -98,8 +99,12 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         exerciseGroup.setExam(null);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CONFLICT);
         exerciseGroup = ModelFactory.generateExerciseGroup(true, exam2);
-        request.post("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CREATED);
+        exerciseGroup.setTitle("      ExerciseGroup 123       ");
+        URI exerciseGroupUri = request.post("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CREATED);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam2.getId());
+        ExerciseGroup savedExerciseGroup = request.get(String.valueOf(exerciseGroupUri), HttpStatus.OK, ExerciseGroup.class);
+        assertThat(savedExerciseGroup.getTitle()).isEqualTo("ExerciseGroup 123");
+
     }
 
     @Test

@@ -1884,6 +1884,28 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testReset() throws Exception {
+        Course course = database.addCourseWithOneQuizExercise();
+        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().get();
+        for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
+            quizQuestion.setInvalid(true);
+        }
+        quizExerciseRepository.save(quizExercise);
+
+        request.delete("/api/exercises/" + quizExercise.getId() + "/reset", HttpStatus.OK);
+
+        quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        assertThat(studentParticipationRepository.findByExerciseId(quizExercise.getId())).as("Student participations have been deleted").isEmpty();
+        assertThat(quizExercise.isIsOpenForPractice()).as("Quiz Question is open for practice has been set to false").isFalse();
+        assertThat(quizExercise.getDueDate()).as("Quiz Question due date has been set to null").isNull();
+        assertThat(quizExercise.getQuizBatches()).as("Quiz Question batches has been set to empty").isEmpty();
+        for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
+            assertThat(quizQuestion.isInvalid()).as("Quiz Question invalid flag has been set to false").isFalse();
+        }
+    }
+
     private QuizExercise createMultipleChoiceQuizExerciseDummy() {
         Course course = database.createCourse();
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");

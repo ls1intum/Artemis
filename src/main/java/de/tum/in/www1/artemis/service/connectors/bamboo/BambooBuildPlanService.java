@@ -526,7 +526,6 @@ public class BambooBuildPlanService {
      * @return An array of string containing all the configured docker run argument key-value pairs prefixed with two dashes
      */
     private String[] getDefaultDockerRunArguments() {
-        // Bamboo needs all docker run arguments in separate lines
-        return programmingLanguageConfiguration.getDefaultDockerFlags().entrySet().stream().map(entry -> "--" + entry.getKey() + "=" + entry.getValue()).toArray(String[]::new);
+        return programmingLanguageConfiguration.getDefaultDockerFlags().toArray(new String[0]);
     }
 }
