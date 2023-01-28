@@ -17,9 +17,9 @@
             </div>
             <!-- body -->
             <div class="card-body">
-                <div class="input-group p-1" [class.filter-active]="!!searchTerm">
-                    <input (input)="onSearchQueryInput($event)" class="form-control" id="searchQuery" type="text" />
-                    <span class="input-group-text">
+                <div class="input-group border-0" [class.filter-active]="!!searchTerm">
+                    <input (input)="onSearchQueryInput($event)" class="form-control border-start-0 border-end-0 border-top-0" id="searchQuery" type="text" />
+                    <span class="input-group-text border-start-0 border-end-0 border-top-0">
                         <span [hidden]="!searchTerm">({{ numberOfConversationsPassingFilter }})</span>
                         <fa-icon [icon]="faFilter" size="xs"></fa-icon>
                     </span>
