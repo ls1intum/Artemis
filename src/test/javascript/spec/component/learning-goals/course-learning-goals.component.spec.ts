@@ -39,6 +39,11 @@ describe('CourseLearningGoals', () => {
     let courseLearningGoalsComponentFixture: ComponentFixture<CourseLearningGoalsComponent>;
     let courseLearningGoalsComponent: CourseLearningGoalsComponent;
     let learningGoalService: LearningGoalService;
+    let mockCourseStorageService = {
+        getCourse: () => {},
+        setCourses: () => {},
+        subscribeToCourseUpdates: () => of(),
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -46,7 +51,7 @@ describe('CourseLearningGoals', () => {
             declarations: [CourseLearningGoalsComponent, LearningGoalCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(AlertService),
-                MockProvider(CourseStorageService),
+                { provide: CourseStorageService, useValue: mockCourseStorageService },
                 MockProvider(LearningGoalService),
                 MockProvider(AccountService),
                 {

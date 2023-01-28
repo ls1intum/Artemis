@@ -7,7 +7,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { Subscription, forkJoin } from 'rxjs';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
@@ -35,7 +34,6 @@ export class CourseLearningGoalsComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
         private courseStorageService: CourseStorageService,
-        private courseManagementService: CourseManagementService,
         private learningGoalService: LearningGoalService,
     ) {}
 

@@ -192,6 +192,7 @@ describe('Course Management Service', () => {
     }));
 
     it('should find one course for dashboard', fakeAsync(() => {
+        returnedFromService = { ...courseForDashboard };
         courseStorageService
             .subscribeToCourseUpdates(course.id!)
             .pipe(take(1))
@@ -206,15 +207,20 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should set the scoresPerExerciseType and participantScores in the scoresStorageService', () => {
+    it('should set the scoresPerExerciseType and participantScores in the scoresStorageService', fakeAsync(() => {
+        const setStoredScoresSpy = jest.spyOn(scoresStorageService, 'setStoredScoresPerExerciseType');
+        const setParticipationResultsSpy = jest.spyOn(scoresStorageService, 'setStoredParticipationResults');
         courseManagementService
             .findOneForDashboard(course.id!)
             .pipe(take(1))
             .subscribe(() => {
-                expect(scoresStorageService.getStoredScoresPerExerciseType(course.id!)).toEqual(courseForDashboard.scoresPerExerciseType);
-                expect(scoresStorageService.getStoredParticipationResult(participationResult.id!)).toEqual(courseForDashboard.participationResults[0]);
+                expect(setStoredScoresSpy).toHaveBeenCalledWith(course.id!, courseForDashboard.scoresPerExerciseType);
+                expect(setParticipationResultsSpy).toHaveBeenCalledWith(courseForDashboard.participationResults);
             });
-    });
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-dashboard` });
+        req.flush(courseForDashboard);
+        tick();
+    }));
 
     it('should find participations for the course', fakeAsync(() => {
         returnedFromService = [...participations];
