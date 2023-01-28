@@ -332,10 +332,10 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         GradingScale sourceGradingScale = createSourceGradingScaleWithGradeStepsForGradesBonusStrategy(sourceCourse);
         GradingScale bonusToGradingScale = createBonusToGradingScale(bonusToExam);
 
-        GradeStep matchedBonusSourceGradeStep = sourceGradingScale.getGradeSteps().stream().filter(gradeStep -> gradeStep.getGradeName().equals("0.1")).findFirst().orElseThrow();
+        GradeStep matchedBonusSourceGradeStep = sourceGradingScale.getGradeSteps().stream().filter(gradeStep -> "0.1".equals(gradeStep.getGradeName())).findFirst().orElseThrow();
         matchedBonusSourceGradeStep.setGradeName("NonNumericBonusSourceGrade");
 
-        GradeStep matchedBonusToGradeStep = bonusToGradingScale.getGradeSteps().stream().filter(gradeStep -> gradeStep.getGradeName().equals("4.0")).findFirst().orElseThrow();
+        GradeStep matchedBonusToGradeStep = bonusToGradingScale.getGradeSteps().stream().filter(gradeStep -> "4.0".equals(gradeStep.getGradeName())).findFirst().orElseThrow();
         matchedBonusToGradeStep.setGradeName("NonNumericBonusToGrade");
 
         gradingScaleRepository.saveAll(List.of(bonusToGradingScale, sourceGradingScale));
@@ -463,7 +463,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         GradingScale sourceGradingScale = createSourceGradingScaleWithGradeStepsForPointsBonusStrategy(sourceCourse);
         GradingScale bonusToGradingScale = createBonusToGradingScale(bonusToExam);
 
-        GradeStep matchedBonusSourceGradeStep = sourceGradingScale.getGradeSteps().stream().filter(gradeStep -> gradeStep.getGradeName().equals("10")).findFirst().orElseThrow();
+        GradeStep matchedBonusSourceGradeStep = sourceGradingScale.getGradeSteps().stream().filter(gradeStep -> "10".equals(gradeStep.getGradeName())).findFirst().orElseThrow();
         matchedBonusSourceGradeStep.setGradeName("NonNumericBonusSourceGrade");
 
         gradingScaleRepository.saveAll(List.of(bonusToGradingScale, sourceGradingScale));
