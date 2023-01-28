@@ -172,7 +172,7 @@ zonky:
                         enabled: true
             mysql:
                 docker:
-                    image: "mysql:8.0.31"
+                    image: "mysql:8.0.32"
                     tmpfs:
                         enabled: true
 
