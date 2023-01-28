@@ -4,7 +4,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -13,11 +12,12 @@ import { LearningGoal } from 'app/entities/learningGoal.model';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 describe('LearningGoalSelection', () => {
     let fixture: ComponentFixture<LearningGoalSelectionComponent>;
     let component: LearningGoalSelectionComponent;
-    let courseCalculation: CourseScoreCalculationService;
+    let courseStorageService: CourseStorageService;
     let learningGoalService: LearningGoalService;
 
     beforeEach(() => {
@@ -43,7 +43,7 @@ describe('LearningGoalSelection', () => {
             .then(() => {
                 fixture = TestBed.createComponent(LearningGoalSelectionComponent);
                 component = fixture.componentInstance;
-                courseCalculation = TestBed.inject(CourseScoreCalculationService);
+                courseStorageService = TestBed.inject(CourseStorageService);
                 learningGoalService = TestBed.inject(LearningGoalService);
             });
     });
@@ -53,7 +53,7 @@ describe('LearningGoalSelection', () => {
     });
 
     it('should get learning goals from cache', () => {
-        const getCourseSpy = jest.spyOn(courseCalculation, 'getCourse').mockReturnValue({ learningGoals: [new LearningGoal()] });
+        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ learningGoals: [new LearningGoal()] });
         const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse');
 
         fixture.detectChanges();
@@ -68,7 +68,7 @@ describe('LearningGoalSelection', () => {
     });
 
     it('should get learning goals from service', () => {
-        const getCourseSpy = jest.spyOn(courseCalculation, 'getCourse').mockReturnValue({ learningGoals: undefined });
+        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ learningGoals: undefined });
         const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [new LearningGoal()] })));
 
         fixture.detectChanges();
@@ -82,7 +82,7 @@ describe('LearningGoalSelection', () => {
     });
 
     it('should set disabled when error during loading', () => {
-        const getCourseSpy = jest.spyOn(courseCalculation, 'getCourse').mockReturnValue({ learningGoals: undefined });
+        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ learningGoals: undefined });
         const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError({ status: 500 }));
 
         fixture.detectChanges();
@@ -94,7 +94,7 @@ describe('LearningGoalSelection', () => {
     });
 
     it('should be hidden when no learning goals', () => {
-        const getCourseSpy = jest.spyOn(courseCalculation, 'getCourse').mockReturnValue({ learningGoals: [] });
+        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ learningGoals: [] });
 
         fixture.detectChanges();
 
@@ -106,7 +106,7 @@ describe('LearningGoalSelection', () => {
     });
 
     it('should select learning goals when value is written', () => {
-        jest.spyOn(courseCalculation, 'getCourse').mockReturnValue({ learningGoals: [{ id: 1, title: 'test' } as LearningGoal] });
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ learningGoals: [{ id: 1, title: 'test' } as LearningGoal] });
 
         fixture.detectChanges();
 

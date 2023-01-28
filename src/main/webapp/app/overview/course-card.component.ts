@@ -11,7 +11,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { GraphColors } from 'app/entities/statistics.model';
-import { ScoresStorageService } from 'app/course/course-scores/scores-storage-service';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
 import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
 

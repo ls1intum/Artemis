@@ -23,7 +23,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
-import { ScoresStorageService } from 'app/course/course-scores/scores-storage-service';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Result } from 'app/entities/result.model';
 

@@ -22,7 +22,7 @@ import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/s
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { ScoresStorageService } from 'app/course/course-scores/scores-storage-service';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 
 export type EntityResponseType = HttpResponse<Course>;

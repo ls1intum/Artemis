@@ -5,7 +5,6 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
@@ -26,11 +25,12 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
     let fixture: ComponentFixture<CourseStatisticsComponent>;
-    let courseScoreCalculationService: CourseScoreCalculationService;
+    let courseStorageService: CourseStorageService;
     let categoryFilter: ChartCategoryFilter;
 
     const testCategories = new Set(['test1', 'test2']);
@@ -338,7 +338,7 @@ describe('CourseStatisticsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseStatisticsComponent);
                 comp = fixture.componentInstance;
-                courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
+                courseStorageService = TestBed.inject(CourseStorageService);
                 categoryFilter = TestBed.inject(ChartCategoryFilter);
                 categoryFilter.exerciseCategories = testCategories;
             });
@@ -353,7 +353,7 @@ describe('CourseStatisticsComponent', () => {
     it('should group all exercises', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [programmingExercise, quizExercise, ...modelingExercises, fileUploadExercise];
-        jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(courseToAdd);
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
         fixture.detectChanges();
         comp.ngOnInit();
         // Include all exercises
@@ -391,7 +391,7 @@ describe('CourseStatisticsComponent', () => {
     it('should filter all exercises not included in score', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [...modelingExercises];
-        jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(courseToAdd);
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
         fixture.detectChanges();
         comp.ngOnInit();
 
@@ -422,7 +422,7 @@ describe('CourseStatisticsComponent', () => {
     it('should calculate scores correctly', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [...modelingExercises];
-        jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(courseToAdd);
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
         fixture.detectChanges();
         comp.ngOnInit();
         fixture.detectChanges();
@@ -528,7 +528,7 @@ describe('CourseStatisticsComponent', () => {
 
     it('should delegate the user correctly', () => {
         const clickEvent = { exerciseId: 42 };
-        jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(course);
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
         const routingService = TestBed.inject(ArtemisNavigationUtilService);
         const routingStub = jest.spyOn(routingService, 'routeInNewTab').mockImplementation();
         comp.ngOnInit();
@@ -590,7 +590,7 @@ describe('CourseStatisticsComponent', () => {
             const quizCategory = generateExerciseCategory(ExerciseType.QUIZ, 1);
             const quizWithCategory = { ...quizExercise, categories: [quizCategory] as ExerciseCategory[] };
             courseToAdd.exercises = [...modelingExercises, programmingWithCategory, quizWithCategory];
-            jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(courseToAdd);
+            jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
             comp.ngOnInit();
             // return all exercises that are included in score
             return [modelingExercises[0], modelingExercises[2], modelingExercises[3], modelingExercises[4], quizWithCategory];

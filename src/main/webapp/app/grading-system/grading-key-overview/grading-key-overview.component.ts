@@ -12,7 +12,7 @@ import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { ScoresStorageService } from 'app/course/course-scores/scores-storage-service';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { ExerciseTypeTOTAL } from 'app/entities/exercise.model';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
 

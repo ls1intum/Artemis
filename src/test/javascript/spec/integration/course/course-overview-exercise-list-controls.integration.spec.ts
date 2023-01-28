@@ -21,8 +21,8 @@ import { CourseOverviewComponent } from 'app/overview/course-overview.component'
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { NgModel } from '@angular/forms';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 describe('CourseOverviewExerciseListControls', () => {
     let parentFixture: ComponentFixture<CourseOverviewComponent>;
@@ -30,7 +30,7 @@ describe('CourseOverviewExerciseListControls', () => {
     let childFixture: ComponentFixture<CourseExercisesComponent>;
     let childComponent: CourseExercisesComponent;
 
-    let courseCalculation: CourseScoreCalculationService;
+    let courseStorageService: CourseStorageService;
 
     let course: Course;
 
@@ -67,7 +67,7 @@ describe('CourseOverviewExerciseListControls', () => {
                 childFixture = TestBed.createComponent(CourseExercisesComponent);
                 childComponent = childFixture.componentInstance;
 
-                courseCalculation = TestBed.inject(CourseScoreCalculationService);
+                courseStorageService = TestBed.inject(CourseStorageService);
 
                 course = new Course();
                 course.id = 123;
@@ -76,7 +76,7 @@ describe('CourseOverviewExerciseListControls', () => {
                 exercise.releaseDate = dayjs('2021-01-13T16:11:00+01:00').subtract(1, 'days');
                 course.exercises = [exercise];
 
-                jest.spyOn(courseCalculation, 'getCourse').mockReturnValue(course);
+                jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
             });
     });
 

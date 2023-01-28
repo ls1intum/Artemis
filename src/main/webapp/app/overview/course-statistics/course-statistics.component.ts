@@ -20,7 +20,7 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/ov
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
-import { ScoresStorageService } from 'app/course/course-scores/scores-storage-service';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
