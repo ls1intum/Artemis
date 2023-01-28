@@ -21,6 +21,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1851,9 +1852,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(booleans = { true, false })
+    @CsvSource({ "false, false", "true, false", "false, true", "true, true" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetExamScore(boolean withCourseBonus) throws Exception {
+    void testGetExamScore(boolean withCourseBonus, boolean withSecondCorrectionAndStarted) throws Exception {
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService, programmingExerciseStudentParticipationRepository);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.enableMockingOfRequests(true);
@@ -1915,6 +1916,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         }
         assertEquals(participationCounter, noGeneratedParticipations);
 
+        if (withSecondCorrectionAndStarted) {
+            exercisesInExam.forEach(exercise -> exercise.setSecondCorrectionEnabled(true));
+            exerciseRepo.saveAll(exercisesInExam);
+        }
+
         // Scores used for all exercise results
         Double correctionResultScore = 60D;
         Double resultScore = 75D;
@@ -1948,19 +1954,21 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 }
 
                 // Create results
-                var firstResult = new Result().score(correctionResultScore).rated(true).completionDate(now().minusMinutes(5));
-                firstResult.setParticipation(participation);
-                firstResult.setAssessor(instructor);
-                firstResult = resultRepository.save(firstResult);
-                firstResult.setSubmission(submission);
-                submission.addResult(firstResult);
+                if (withSecondCorrectionAndStarted) {
+                    var firstResult = new Result().score(correctionResultScore).rated(true).completionDate(now().minusMinutes(5));
+                    firstResult.setParticipation(participation);
+                    firstResult.setAssessor(instructor);
+                    firstResult = resultRepository.save(firstResult);
+                    firstResult.setSubmission(submission);
+                    submission.addResult(firstResult);
+                }
 
-                var correctionResult = new Result().score(resultScore).rated(true).completionDate(now().minusMinutes(5));
-                correctionResult.setParticipation(participation);
-                correctionResult.setAssessor(instructor);
-                correctionResult = resultRepository.save(correctionResult);
-                correctionResult.setSubmission(submission);
-                submission.addResult(correctionResult);
+                var finalResult = new Result().score(resultScore).rated(true).completionDate(now().minusMinutes(5));
+                finalResult.setParticipation(participation);
+                finalResult.setAssessor(instructor);
+                finalResult = resultRepository.save(finalResult);
+                finalResult.setSubmission(submission);
+                submission.addResult(finalResult);
 
                 submission.submitted(true);
                 submission.setSubmissionDate(now().minusMinutes(6));
@@ -1996,8 +2004,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // Compare generated results to data in ExamScoresDTO
         // Compare top-level DTO properties
         assertThat(examScores.maxPoints()).isEqualTo(exam.getExamMaxPoints());
-        // TODO: create another test case for which hasSecondCorrectionAndStarted is true
-        assertThat(examScores.hasSecondCorrectionAndStarted()).isFalse();
+
+        if (withSecondCorrectionAndStarted) {
+            assertThat(examScores.hasSecondCorrectionAndStarted()).isTrue();
+        }
+        else {
+            assertThat(examScores.hasSecondCorrectionAndStarted()).isFalse();
+        }
 
         // For calculation assume that all exercises within an exerciseGroups have the same max points
         double calculatedAverageScore = 0.0;
@@ -2069,7 +2082,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             var calculatedOverallPoints = calculateOverallPoints(resultScore, studentExamOfUser);
 
             assertEquals(studentResult.overallPointsAchieved(), calculatedOverallPoints, EPSILON);
-            assertEquals(studentResult.overallPointsAchievedInFirstCorrection(), calculateOverallPoints(correctionResultScore, studentExamOfUser), EPSILON);
+
+            double expectedPointsAchievedInFirstCorrection = withSecondCorrectionAndStarted ? calculateOverallPoints(correctionResultScore, studentExamOfUser) : 0.0;
+            assertEquals(studentResult.overallPointsAchievedInFirstCorrection(), expectedPointsAchievedInFirstCorrection, EPSILON);
 
             // Calculate overall score achieved
             var calculatedOverallScore = calculatedOverallPoints / examScores.maxPoints() * 100;
@@ -2138,6 +2153,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // change back to instructor user
         database.changeUser(TEST_PREFIX + "instructor1");
 
+        var expectedTotalExamAssessmentsFinishedByCorrectionRound = new Long[] { noGeneratedParticipations.longValue(), noGeneratedParticipations.longValue() };
+        if (!withSecondCorrectionAndStarted) {
+            // The second correction has not started in this case.
+            expectedTotalExamAssessmentsFinishedByCorrectionRound[1] = 0L;
+        }
+
         // check if stats are set correctly for the instructor
         examChecklistDTO = examService.getStatsForChecklist(exam, true);
         assertThat(examChecklistDTO).isNotNull();
@@ -2148,8 +2169,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isTrue();
         assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(size * 6L);
         assertThat(examChecklistDTO.getNumberOfTestRuns()).isZero();
-        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(noGeneratedParticipations.longValue(),
-                noGeneratedParticipations.longValue());
+        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(expectedTotalExamAssessmentsFinishedByCorrectionRound);
 
         // change to a tutor
         database.changeUser(TEST_PREFIX + "tutor1");
@@ -2164,8 +2184,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isFalse();
         assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(size * 6L);
         assertThat(examChecklistDTO.getNumberOfTestRuns()).isNull();
-        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(noGeneratedParticipations.longValue(),
-                noGeneratedParticipations.longValue());
+        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(expectedTotalExamAssessmentsFinishedByCorrectionRound);
 
         await().until(() -> participantScoreScheduleService.isIdle());
 
