@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
 import { TranslateService } from '@ngx-translate/core';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
@@ -85,6 +86,7 @@ describe('JhiCloneRepoButtonComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(SafeUrlPipe),
                 MockDirective(FeatureToggleDirective),
+                MockComponent(HelpIconComponent),
             ],
             providers: [
                 MockProvider(AlertService),
