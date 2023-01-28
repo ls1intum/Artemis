@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
+import org.hibernate.LazyInitializationException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -171,11 +172,24 @@ public class CourseScoreCalculationService {
      * @return the CourseForDashboardDTO containing all the mentioned items.
      */
     public CourseForDashboardDTO getScoresAndParticipationResults(Course course, long userId) {
+        List<StudentParticipation> studentParticipations = new ArrayList<>();
+        for (Exercise exercise : course.getExercises()) {
+            exercise.setCourse(course);
+            StudentParticipation exerciseParticipation;
+            try {
+                exerciseParticipation = exercise.getStudentParticipations().iterator().next();
+                exerciseParticipation.setExercise(exercise);
+                studentParticipations.add(exerciseParticipation);
+            }
+            catch (LazyInitializationException e) {
+                // ignore
+            }
+        }
+
         // Get scores per exercise type for the course (used in course-statistics.component i.a.).
-        Map<String, CourseScoresDTO> scoresPerExerciseType = calculateCourseScoresPerExerciseType(course, userId);
+        Map<String, CourseScoresDTO> scoresPerExerciseType = calculateCourseScoresPerExerciseType(course, studentParticipations, userId);
 
         // Get participation results (used in course-statistics.component).
-        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), userId);
         List<Result> participationResults = new ArrayList<>();
         for (StudentParticipation studentParticipation : studentParticipations) {
             participationResults.add(getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate()));
@@ -192,15 +206,13 @@ public class CourseScoreCalculationService {
      * @param userId the id of the user whose scores will be calculated
      * @return a map of the scores for the different exercise types (total, for programming exercises etc.). For each type, the map contains the max and reachable max points and the scores of the current user.
      */
-    private Map<String, CourseScoresDTO> calculateCourseScoresPerExerciseType(Course course, long userId) {
+    private Map<String, CourseScoresDTO> calculateCourseScoresPerExerciseType(Course course, List<StudentParticipation> studentParticipations, long userId) {
 
         Map<String, CourseScoresDTO> scoresPerExerciseType = new HashMap<>();
 
         long courseId = course.getId();
 
         // Retrieve required entities
-
-        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(courseId, userId);
 
         Set<Exercise> courseExercises = course.getExercises();
 
