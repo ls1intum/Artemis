@@ -31,10 +31,10 @@
             },
             "manageLearningGoals": {
                 "title": "Competency Management",
-                "create": "Create Competency"
+                "create": "Create competency"
             },
             "createLearningGoal": {
-                "title": "Create a new Competency",
+                "title": "Create a new competency",
                 "titlePlaceholder": "Give the competency a title",
                 "titleRequiredValidationError": "A competency needs to have a title",
                 "titleMaxLengthValidationError": "A competency title is limited to 255 characters",

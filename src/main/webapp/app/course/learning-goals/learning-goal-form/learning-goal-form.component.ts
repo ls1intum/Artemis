@@ -71,6 +71,8 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     @Input()
     isEditMode = false;
     @Input()
+    isInConnectMode = false;
+    @Input()
     isInSingleLectureMode = false;
     @Input()
     courseId: number;
