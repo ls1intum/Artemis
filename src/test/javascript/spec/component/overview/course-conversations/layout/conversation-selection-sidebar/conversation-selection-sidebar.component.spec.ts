@@ -254,25 +254,6 @@ examples.forEach((activeConversation) => {
             expect(onConversationsUpdateSpy).toHaveBeenCalledWith(component.allConversations);
         }));
 
-        it('should expand and collapse all sections', fakeAsync(() => {
-            fixture.detectChanges();
-            tick(301);
-            const conversationSideBarSections = component.sidebarSections;
-
-            expect(conversationSideBarSections).toHaveLength(4);
-            conversationSideBarSections.forEach((section) => {
-                expect(section.isCollapsed).toBeFalse();
-            });
-            component.collapseAll();
-            conversationSideBarSections.forEach((section) => {
-                expect(section.isCollapsed).toBeTrue();
-            });
-            component.expandAll();
-            conversationSideBarSections.forEach((section) => {
-                expect(section.isCollapsed).toBeFalse();
-            });
-        }));
-
         function createConversationDialogTest(modalReturnValue: any, dialog: Type<AbstractDialogComponent>, buttonId: string) {
             fixture.detectChanges();
             tick(301);

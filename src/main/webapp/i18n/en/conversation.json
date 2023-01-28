@@ -32,8 +32,6 @@
                 "channels": "Channels",
                 "createChannel": "Create channel",
                 "browseChannels": "Browse channels",
-                "expandAll": "Expand all",
-                "collapseAll": "Collapse all",
                 "groupChats": "Group Chats",
                 "oneToOneChats": "Direct Messages",
                 "sideBarSection": {

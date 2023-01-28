@@ -24,16 +24,6 @@
                         <fa-icon [icon]="faFilter" size="xs"></fa-icon>
                     </span>
                 </div>
-                <div class="text-center my-1">
-                    <button type="button" class="btn btn-sm btn-outline-secondary expand-button" (click)="expandAll()">
-                        <fa-icon [icon]="faExpand"></fa-icon>
-                        <span>{{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.expandAll' | artemisTranslate }}</span>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary expand-button" (click)="collapseAll()">
-                        <fa-icon [icon]="faCompress"></fa-icon>
-                        <span>{{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.collapseAll' | artemisTranslate }}</span>
-                    </button>
-                </div>
                 <div class="scrollbar wrapper-scroll-y">
                     <!-- Starred -->
                     <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedStarredConversations?.length" class="mb-2">
