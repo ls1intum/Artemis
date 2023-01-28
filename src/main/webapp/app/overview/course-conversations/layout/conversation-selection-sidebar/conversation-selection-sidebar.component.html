@@ -36,7 +36,7 @@
                 </div>
                 <div class="scrollbar wrapper-scroll-y">
                     <!-- Starred -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedStarredConversations?.length">
+                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedStarredConversations?.length" class="mb-2">
                         <jhi-conversation-sidebar-section
                             [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.favorites' | artemisTranslate"
                             [headerKey]="'favorites'"
@@ -49,10 +49,9 @@
                             (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
                         >
                         </jhi-conversation-sidebar-section>
-                        <hr class="m-0" />
                     </div>
                     <!-- Channels -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedChannelConversations?.length">
+                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedChannelConversations?.length" class="mb-2">
                         <jhi-conversation-sidebar-section
                             [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.channels' | artemisTranslate"
                             [headerKey]="'channels'"
@@ -80,10 +79,9 @@
                                 </div>
                             </ng-template>
                         </jhi-conversation-sidebar-section>
-                        <hr class="m-0" />
                     </div>
                     <!-- Group Chats -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedGroupChats?.length">
+                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedGroupChats?.length" class="mb-2">
                         <jhi-conversation-sidebar-section
                             [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.groupChats' | artemisTranslate"
                             [headerKey]="'groupChats'"
@@ -103,10 +101,9 @@
                                 </div>
                             </ng-template>
                         </jhi-conversation-sidebar-section>
-                        <hr class="m-0" />
                     </div>
                     <!-- Direct Messages -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedOneToOneChats?.length">
+                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedOneToOneChats?.length" class="mb-2">
                         <jhi-conversation-sidebar-section
                             [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.oneToOneChats' | artemisTranslate"
                             [headerKey]="'directMessages'"
