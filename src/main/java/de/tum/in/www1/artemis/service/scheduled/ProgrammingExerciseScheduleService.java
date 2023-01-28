@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationLifecycle;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -629,13 +630,34 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 .collect(Collectors.groupingBy(Tuple::x, Collectors.mapping(Tuple::y, Collectors.toSet())));
         // 2. Transform those groups into lock-repository tasks with times
         Set<Tuple<ZonedDateTime, Runnable>> tasks = participationsGroupedByDueDate.entrySet().stream().map(entry -> {
-            Predicate<ProgrammingExerciseStudentParticipation> lockingCondition = participation -> entry.getValue().contains(participation);
-            var groupDueDate = entry.getKey();
+            // Check that this participation is planed to be locked and has still the same due date
+            Predicate<ProgrammingExerciseStudentParticipation> lockingCondition = participation -> entry.getValue().contains(participation)
+                    && entry.getKey().equals(studentExamRepository.getIndividualDueDate(exercise, participation));
             var task = lockStudentRepositories(exercise, lockingCondition);
-            return new Tuple<>(groupDueDate, task);
+            return new Tuple<>(entry.getKey(), task);
         }).collect(Collectors.toSet());
         // 3. Schedule all tasks
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, tasks);
+    }
+
+    /**
+     * Reschedules all programming exercises in this student exam, since the working time was changed
+     * @param studentExamId the id of the student exam
+     */
+    public void rescheduleStudentExamDuringConduction(Long studentExamId) {
+        StudentExam studentExam = studentExamRepository.findWithExercisesParticipationsSubmissionsById(studentExamId, false).orElseThrow(NoSuchElementException::new);
+        List<ProgrammingExercise> programmingExercises = studentExam.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
+                .map(exercise -> (ProgrammingExercise) exercise).toList();
+
+        programmingExercises.forEach(programmingExercise -> {
+            Optional<StudentParticipation> participation = programmingExercise.getStudentParticipations().stream().findFirst();
+            if (participation.isEmpty() || !(participation.get() instanceof ProgrammingExerciseStudentParticipation programmingParticipation)) {
+                return;
+            }
+            ZonedDateTime dueDate = studentExamRepository.getIndividualDueDate(programmingExercise, programmingParticipation);
+
+            scheduleIndividualRepositoryLockTasks(programmingExercise, Set.of(new Tuple<>(dueDate, programmingParticipation)));
+        });
     }
 
     public static ZonedDateTime getExamProgrammingExerciseUnlockDate(ProgrammingExercise exercise) {
