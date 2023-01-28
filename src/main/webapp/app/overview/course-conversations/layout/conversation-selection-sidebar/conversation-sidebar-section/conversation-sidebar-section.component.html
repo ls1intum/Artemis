@@ -2,7 +2,7 @@
     <!-- Todo: Do not hide when popover is open-->
     <div class="section-header" (click)="toggleCollapsed()" [attr.aria-expanded]="!isCollapsed">
         <div>
-            <fa-icon [icon]="faChevronRight" [rotate]="!isCollapsed ? 90 : undefined"></fa-icon>
+            <fa-icon size="xs" [icon]="faChevronRight" [rotate]="!isCollapsed ? 90 : undefined"></fa-icon>
             <span>{{ label }}</span>
             <span [hidden]="!anyConversationUnread">
                 <fa-icon [icon]="faMessage" class="text-info"></fa-icon>
