@@ -647,6 +647,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     /**
      * Reschedules all programming exercises in this student exam, since the working time was changed
+     *
      * @param studentExamId the id of the student exam
      */
     public void rescheduleStudentExamDuringConduction(Long studentExamId) {
