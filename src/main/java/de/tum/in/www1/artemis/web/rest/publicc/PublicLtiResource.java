@@ -134,7 +134,7 @@ public class PublicLtiResource {
      * @param response HTTP response
      * @throws IOException If an input or output exception occurs
      */
-    @PostMapping("/lti13/auth-callback")
+    @PostMapping("lti13/auth-callback")
     @EnforceNothing
     public void lti13LaunchRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String state = request.getParameter("state");
