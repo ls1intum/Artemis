@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
 
@@ -117,7 +118,12 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         studentParticipations.get(2).setResults(Collections.emptySet());
 
         // Test with null score in result.
-        Result result = courseScoreCalculationService.getResultForParticipation(studentParticipations.get(3), dueDate);
+
+        // QuizExercise is selected because it has already a score of 0 in the initial test data and we have one participation for each exercise type.
+        // Besides that, exercise type is irrelevant for this test.
+        StudentParticipation studentParticipationWithZeroScore = studentParticipations.stream().filter(participation -> participation.getExercise() instanceof QuizExercise)
+                .findFirst().orElseThrow();
+        Result result = studentParticipationWithZeroScore.getResults().iterator().next();
         assertThat(result.getScore()).isEqualTo(0.0);
         result.score(null);
 
