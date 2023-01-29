@@ -276,7 +276,7 @@ describe('ExamActionService', () => {
     // open exam monitoring websocket subscription if not existing
     it.each(createActions())('should open exam monitoring websocket subscription if not existing', (action: ExamAction) => {
         const topic = EXAM_MONITORING_ACTION_TOPIC(exam.id!);
-        const subscribeSpy = jest.spyOn(websocketService, 'subscribe').mockImplementation(() => {});
+        const subscribeSpy = jest.spyOn(websocketService, 'subscribe').mockImplementation(() => websocketService);
         const receiveSpy = jest.spyOn(websocketService, 'receive').mockReturnValue(of(action));
         const updateCachedActionsSpy = jest.spyOn(examActionService, 'updateCachedActions');
 
@@ -297,7 +297,7 @@ describe('ExamActionService', () => {
     // open exam monitoring update websocket subscription if not existing
     it.each([true, false])('should open exam monitoring update websocket subscription if not existing', (status: boolean) => {
         const topic = EXAM_MONITORING_STATUS_TOPIC(exam.id!);
-        const subscribeSpy = jest.spyOn(websocketService, 'subscribe').mockImplementation(() => {});
+        const subscribeSpy = jest.spyOn(websocketService, 'subscribe').mockImplementation(() => websocketService);
         const receiveSpy = jest.spyOn(websocketService, 'receive').mockReturnValue(of(status));
         const notifyExamMonitoringUpdateSubscribersSpy = jest.spyOn(examActionService, 'notifyExamMonitoringUpdateSubscribers');
 

@@ -11,8 +11,10 @@ import { Course } from 'app/entities/course.model';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faBan, faHandshakeAngle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faHandshakeAngle, faPuzzlePiece, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -25,6 +27,8 @@ export class LectureUpdateComponent implements OnInit {
     EditorMode = EditorMode;
     lecture: Lecture;
     isSaving: boolean;
+    isProcessing: boolean;
+    processUnitMode: boolean;
     isShowingWizardMode: boolean;
 
     courses: Course[];
@@ -32,11 +36,21 @@ export class LectureUpdateComponent implements OnInit {
     endDate: string;
 
     domainCommandsDescription = [new KatexCommand()];
+    file: File;
+    fileName: string;
+    fileInputTouched = false;
 
     // Icons
+    faQuestionCircle = faQuestionCircle;
     faSave = faSave;
+    faPuzzleProcess = faPuzzlePiece;
     faBan = faBan;
     faHandShakeAngle = faHandshakeAngle;
+
+    // A human-readable list of allowed file extensions
+    readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
+    // The list of file extensions for the "accept" attribute of the file input field
+    readonly acceptedFileExtensionsFileBrowser = FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
 
     toggleModeFunction = () => this.toggleWizardMode();
     saveLectureFunction = () => this.save();
@@ -55,6 +69,8 @@ export class LectureUpdateComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
+        this.processUnitMode = false;
+        this.isProcessing = false;
         this.isShowingWizardMode = false;
         this.activatedRoute.parent!.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
@@ -89,6 +105,7 @@ export class LectureUpdateComponent implements OnInit {
      */
     save() {
         this.isSaving = true;
+        this.isProcessing = true;
         if (this.lecture.id !== undefined) {
             this.subscribeToSaveResponse(this.lectureService.update(this.lecture));
         } else {
@@ -102,6 +119,28 @@ export class LectureUpdateComponent implements OnInit {
      */
     toggleWizardMode() {
         this.isShowingWizardMode = !this.isShowingWizardMode;
+    }
+
+    proceedToUnitSplit() {
+        this.save();
+    }
+
+    /**
+     * Activate or deactivate the processUnitMode mode for automatic lecture units creation.
+     * This function is called by checking Automatic unit processing checkbox when creating a new lecture
+     */
+    onSelectProcessUnit() {
+        this.processUnitMode = !this.processUnitMode;
+    }
+
+    onFileChange(event: any): void {
+        if (event.target.files.length) {
+            const fileList = event.target.files;
+            this.file = fileList[0];
+            this.fileName = this.file.name;
+        } else {
+            this.fileName = '';
+        }
     }
 
     /**
@@ -127,6 +166,13 @@ export class LectureUpdateComponent implements OnInit {
                     this.alertService.success(`Lecture with title ${lecture.title} was successfully created.`);
                     this.wizardComponent.onLectureCreationSucceeded();
                 },
+            });
+        } else if (this.processUnitMode) {
+            this.isSaving = false;
+            this.isProcessing = false;
+            this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture.id !== undefined ? 'updated' : 'created'}.`);
+            this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {
+                state: { file: this.file, fileName: this.fileName },
             });
         } else {
             this.isSaving = false;
