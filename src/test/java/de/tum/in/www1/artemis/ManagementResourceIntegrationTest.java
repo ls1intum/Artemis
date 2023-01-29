@@ -99,7 +99,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
         var features = new HashMap<Feature, Boolean>();
         features.put(Feature.ProgrammingExercises, false);
-        request.put("/api/admin/management/feature-toggle", features, HttpStatus.OK);
+        request.put("/api/admin/feature-toggle", features, HttpStatus.OK);
         verify(this.websocketMessagingService).sendMessage("/topic/management/feature-toggles", featureToggleService.enabledFeatures());
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).as("Feature was disabled").isFalse();
 

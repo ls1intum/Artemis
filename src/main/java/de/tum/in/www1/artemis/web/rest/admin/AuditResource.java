@@ -55,7 +55,7 @@ public class AuditResource {
      * @param pageable the pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of AuditEvents in body
      */
-    @GetMapping(value = ("audits"), params = { "fromDate", "toDate" })
+    @GetMapping(value = "audits", params = { "fromDate", "toDate" })
     @EnforceAdmin
     public ResponseEntity<List<AuditEvent>> getByDates(@RequestParam(value = "fromDate") LocalDate fromDate, @RequestParam(value = "toDate") LocalDate toDate,
             @ApiParam Pageable pageable) {

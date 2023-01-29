@@ -10,12 +10,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
 
-class LogsResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LogResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void testGetList() throws Exception {
-        request.get("/api/admin/management/logs", HttpStatus.OK, List.class);
+        request.get("/api/admin/logs", HttpStatus.OK, List.class);
     }
 
     @Test
@@ -24,7 +24,7 @@ class LogsResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         LoggerVM logger = new LoggerVM();
         logger.setLevel("DEBUG");
         logger.setName("logger");
-        LoggerVM response = request.putWithResponseBody("/api/admin/management/logs", logger, LoggerVM.class, HttpStatus.OK);
+        LoggerVM response = request.putWithResponseBody("/api/admin/logs", logger, LoggerVM.class, HttpStatus.OK);
         assertThat(response).isEqualTo(logger);
     }
 }
