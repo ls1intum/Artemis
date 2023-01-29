@@ -9,7 +9,7 @@ import { convertCourseAfterMultiPart } from '../../../support/requests/CourseMan
 const users = artemis.users;
 
 // Requests
-const courseManagement = artemis.requests.courseManagement;
+const courseManagementRequests = artemis.requests.courseManagement;
 
 // PageObjects
 const editorPage = artemis.pageobjects.exercise.programming.editor;
@@ -33,7 +33,7 @@ describe('Static code analysis tests', () => {
     after(() => {
         if (course) {
             cy.login(users.getAdmin());
-            courseManagement.deleteCourse(course.id!);
+            courseManagementRequests.deleteCourse(course.id!);
         }
     });
 
@@ -42,10 +42,10 @@ describe('Static code analysis tests', () => {
      */
     function setupCourseAndProgrammingExercise() {
         cy.login(users.getAdmin());
-        courseManagement.createCourse(true).then((response) => {
+        courseManagementRequests.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagement.addStudentToCourse(course, users.getStudentOne());
-            courseManagement.createProgrammingExercise({ course }, 50).then((dto) => {
+            courseManagementRequests.addStudentToCourse(course, users.getStudentOne());
+            courseManagementRequests.createProgrammingExercise({ course }, 50).then((dto) => {
                 exercise = dto.body;
             });
         });

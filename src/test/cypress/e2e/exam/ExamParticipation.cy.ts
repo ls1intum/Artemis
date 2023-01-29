@@ -13,7 +13,7 @@ const users = artemis.users;
 const student = users.getStudentOne();
 
 // Requests
-const courseRequests = artemis.requests.courseManagement;
+const courseManagementRequests = artemis.requests.courseManagement;
 
 // PageObjects
 const examParticipation = artemis.pageobjects.exam.participation;
@@ -51,9 +51,9 @@ describe('Exam participation', () => {
 
                 addGroupWithExercise(exam, EXERCISE_TYPE.Modeling);
 
-                courseRequests.registerStudentForExam(exam, student);
-                courseRequests.generateMissingIndividualExams(exam);
-                courseRequests.prepareExerciseStartForExam(exam);
+                courseManagementRequests.registerStudentForExam(exam, studentOne);
+                courseManagementRequests.generateMissingIndividualExams(exam);
+                courseManagementRequests.prepareExerciseStartForExam(exam);
             });
         });
     });

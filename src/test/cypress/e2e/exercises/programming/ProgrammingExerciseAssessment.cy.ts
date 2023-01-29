@@ -13,7 +13,7 @@ const admin = users.getAdmin();
 const instructor = users.getInstructor();
 
 // Requests
-const courseManagement = artemis.requests.courseManagement;
+const courseManagementRequests = artemis.requests.courseManagement;
 
 // PageObjects
 const coursesPage = artemis.pageobjects.course.management;
@@ -50,7 +50,7 @@ describe('Programming exercise assessment', () => {
     after(() => {
         if (course) {
             cy.login(users.getAdmin());
-            courseManagement.deleteCourse(course.id!);
+            courseManagementRequests.deleteCourse(course.id!);
         }
     });
 
@@ -95,14 +95,14 @@ describe('Programming exercise assessment', () => {
 
     function createCourseWithProgrammingExercise() {
         cy.login(admin);
-        return courseManagement.createCourse(true).then((response) => {
+        return courseManagementRequests.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagement.addStudentToCourse(course, student);
-            courseManagement.addTutorToCourse(course, tutor);
-            courseManagement.addInstructorToCourse(course, instructor);
+            courseManagementRequests.addStudentToCourse(course, student);
+            courseManagementRequests.addTutorToCourse(course, tutor);
+            courseManagementRequests.addInstructorToCourse(course, instructor);
             dueDate = dayjs().add(25, 'seconds');
             assessmentDueDate = dueDate.add(30, 'seconds');
-            courseManagement
+            courseManagementRequests
                 .createProgrammingExercise({ course }, undefined, false, dayjs(), dueDate, undefined, undefined, undefined, assessmentDueDate, CypressAssessmentType.SEMI_AUTOMATIC)
                 .then((programmingResponse) => {
                     exercise = programmingResponse.body;
@@ -112,11 +112,11 @@ describe('Programming exercise assessment', () => {
 
     function makeProgrammingSubmissionAsStudent() {
         cy.login(student);
-        courseManagement
+        courseManagementRequests
             .startExerciseParticipation(exercise.id!)
             .its('body.id')
             .then((participationId) => {
-                courseManagement.makeProgrammingExerciseSubmission(participationId);
+                courseManagementRequests.makeProgrammingExerciseSubmission(participationId);
                 // Wait until the due date is in the past
                 const now = dayjs();
                 if (now.isBefore(dueDate)) {

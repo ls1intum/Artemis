@@ -8,7 +8,7 @@ import { convertCourseAfterMultiPart } from '../../../support/requests/CourseMan
 const users = artemis.users;
 
 // Requests
-const courseManagement = artemis.requests.courseManagement;
+const courseManagementRequests = artemis.requests.courseManagement;
 
 // PageObjects
 const textEditor = artemis.pageobjects.exercise.text.editor;
@@ -20,10 +20,10 @@ describe('Text exercise participation', () => {
 
     before(() => {
         cy.login(users.getAdmin());
-        courseManagement.createCourse().then((response) => {
+        courseManagementRequests.createCourse().then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagement.addStudentToCourse(course, users.getStudentOne());
-            courseManagement.createTextExercise({ course }).then((exerciseResponse: Cypress.Response<TextExercise>) => {
+            courseManagementRequests.addStudentToCourse(course, users.getStudentOne());
+            courseManagementRequests.createTextExercise({ course }).then((exerciseResponse: Cypress.Response<TextExercise>) => {
                 exercise = exerciseResponse.body;
             });
         });
@@ -56,7 +56,7 @@ describe('Text exercise participation', () => {
     after(() => {
         if (course) {
             cy.login(users.getAdmin());
-            courseManagement.deleteCourse(course.id!);
+            courseManagementRequests.deleteCourse(course.id!);
         }
     });
 });
