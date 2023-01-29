@@ -24,7 +24,7 @@ public class CustomLti13Configurer extends Lti13Configurer {
 
     private static final String LOGIN_INITIATION_PATH = "/initiate-login";
 
-    public static final String LTI13_BASE_PATH = "/api/lti13";
+    public static final String LTI13_BASE_PATH = "/api/public/lti13";
 
     public static final String LTI13_LOGIN_PATH = LTI13_BASE_PATH + LOGIN_PATH;
 

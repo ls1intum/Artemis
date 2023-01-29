@@ -127,7 +127,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course.getStudentGroupName()));
         jiraRequestMockProvider.mockGetOrCreateUserLti(username, "", username, email, firstName, groups);
 
-        request.postForm("/api/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
+        request.postForm("/api/public/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
         final var user = userRepository.findOneByLogin(username).orElseThrow();
         final var ltiUser = ltiUserIdRepository.findByUser(user).get();
         final var ltiOutcome = ltiOutcomeUrlRepository.findByUserAndExercise(user, programmingExercise).get();
