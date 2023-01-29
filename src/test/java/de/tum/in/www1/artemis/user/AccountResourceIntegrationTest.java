@@ -19,12 +19,14 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.AccountService;
 import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ConfigUtil;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.AccountResource;
+import de.tum.in.www1.artemis.web.rest.publicc.PublicAccountResource;
 import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
@@ -37,7 +39,10 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     public static final String AUTHENTICATEDUSER = "authenticateduser";
 
     @Autowired
-    private AccountResource accountResource;
+    private PublicAccountResource publicAccountResource;
+
+    @Autowired
+    private AccountService accountService;
 
     @Autowired
     private UserRepository userRepository;
@@ -56,7 +61,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     private void testWithRegistrationDisabled(Executable test) throws Throwable {
-        ConfigUtil.testWithChangedConfig(accountResource, "registrationEnabled", Optional.of(Boolean.FALSE), test);
+        ConfigUtil.testWithChangedConfig(accountService, "registrationEnabled", Optional.of(Boolean.FALSE), test);
     }
 
     private String getValidPassword() {
@@ -82,7 +87,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         bitbucketRequestMockProvider.mockAddUserToGroups();
 
         // make request
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
+        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.CREATED, null);
     }
 
     @Test
@@ -94,7 +99,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         userVM.setPassword("e".repeat(Constants.PASSWORD_MAX_LENGTH + 1));
 
         // make request
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -110,7 +115,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         userVM.setPassword("e".repeat(Constants.PASSWORD_MIN_LENGTH - 1));
 
         // make request
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -121,7 +126,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         userVM.setPassword("");
 
         // make request
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -133,27 +138,27 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
             userVM.setPassword(getValidPassword());
 
             // make request
-            request.postWithoutLocation("/api/register", userVM, HttpStatus.FORBIDDEN, null);
+            request.postWithoutLocation("/api/public/register", userVM, HttpStatus.FORBIDDEN, null);
         });
     }
 
     @Test
     void registerAccountRegistrationConfigEmpty() throws Throwable {
-        ConfigUtil.testWithChangedConfig(accountResource, "registrationEnabled", Optional.empty(), () -> {
+        ConfigUtil.testWithChangedConfig(accountService, "registrationEnabled", Optional.empty(), () -> {
             // setup user
             User user = ModelFactory.generateActivatedUser("ab123cdj");
             ManagedUserVM userVM = new ManagedUserVM(user);
             userVM.setPassword(getValidPassword());
 
             // make request
-            request.postWithoutLocation("/api/register", userVM, HttpStatus.FORBIDDEN, null);
+            request.postWithoutLocation("/api/public/register", userVM, HttpStatus.FORBIDDEN, null);
         });
     }
 
     @Test
     void registerAccountInvalidEmail() throws Throwable {
         // Inject email-pattern to be independent of the config
-        ConfigUtil.testWithChangedConfig(accountResource, "allowedEmailPattern", Optional.of(Pattern.compile("[a-zA-Z0-9_\\-.+]+@[a-zA-Z0-9_\\-.]+\\.[a-zA-Z]{2,5}")), () -> {
+        ConfigUtil.testWithChangedConfig(publicAccountResource, "allowedEmailPattern", Optional.of(Pattern.compile("[a-zA-Z0-9_\\-.+]+@[a-zA-Z0-9_\\-.]+\\.[a-zA-Z]{2,5}")), () -> {
             // setup user
             User user = ModelFactory.generateActivatedUser("ab123cdk");
             user.setEmail("-");
@@ -161,13 +166,13 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
             userVM.setPassword(getValidPassword());
 
             // make request
-            request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+            request.postWithoutLocation("/api/public/register", userVM, HttpStatus.BAD_REQUEST, null);
         });
     }
 
     @Test
     void registerAccountEmptyEmailPattern() throws Throwable {
-        ConfigUtil.testWithChangedConfig(accountResource, "allowedEmailPattern", Optional.empty(), () -> {
+        ConfigUtil.testWithChangedConfig(publicAccountResource, "allowedEmailPattern", Optional.empty(), () -> {
             // setup user
             User user = ModelFactory.generateActivatedUser("ab123cdl");
             user.setEmail("-");
@@ -175,7 +180,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
             userVM.setPassword(getValidPassword());
 
             // make request -> validation fails due to empty email is validated against min size
-            request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+            request.postWithoutLocation("/api/public/register", userVM, HttpStatus.BAD_REQUEST, null);
         });
     }
 
@@ -191,7 +196,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         // make request
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("key", testActivationKey);
-        request.get("/api/activate", HttpStatus.OK, String.class, params);
+        request.get("/api/public/activate", HttpStatus.OK, String.class, params);
 
         // check result
         Optional<User> updatedUser = userRepository.findById(user.getId());
@@ -209,7 +214,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
             // make request
             LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             params.add("key", testActivationKey);
-            request.get("/api/activate", HttpStatus.FORBIDDEN, String.class, params);
+            request.get("/api/public/activate", HttpStatus.FORBIDDEN, String.class, params);
         });
     }
 
@@ -217,19 +222,19 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void activateAccountNoUser() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("key", "");
-        request.get("/api/activate", HttpStatus.INTERNAL_SERVER_ERROR, String.class, params);
+        request.get("/api/public/activate", HttpStatus.INTERNAL_SERVER_ERROR, String.class, params);
     }
 
     @Test
     @WithMockUser("authenticatedUser")
     void isAuthenticated() throws Exception {
-        String userLogin = request.get("/api/authenticate", HttpStatus.OK, String.class);
+        String userLogin = request.get("/api/public/authenticate", HttpStatus.OK, String.class);
         assertThat(userLogin).isNotNull().isEqualTo("authenticatedUser");
     }
 
     @Test
     void isAuthenticatedWithoutLoggedInUser() throws Exception {
-        String user = request.get("/api/authenticate", HttpStatus.OK, String.class);
+        String user = request.get("/api/public/authenticate", HttpStatus.OK, String.class);
         assertThat(user).isEmpty();
     }
 
@@ -238,14 +243,14 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void getAccount() throws Exception {
         // create user in repo
         User user = database.createAndSaveUser(AUTHENTICATEDUSER);
-        UserDTO account = request.get("/api/account", HttpStatus.OK, UserDTO.class);
+        UserDTO account = request.get("/api/public/account", HttpStatus.OK, UserDTO.class);
         assertThat(account).isNotNull();
     }
 
     @Test
     @WithAnonymousUser
     void getAccountWithoutLoggedInUser() throws Exception {
-        UserDTO user = request.get("/api/account", HttpStatus.UNAUTHORIZED, UserDTO.class);
+        UserDTO user = request.get("/api/public/account", HttpStatus.NO_CONTENT, UserDTO.class);
         assertThat(user).isNull();
     }
 
@@ -375,7 +380,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         assertThat(storedUser.getLangKey()).isEqualTo("en");
 
         // make request
-        request.postStringWithoutLocation("/api/account/change-language", "de", HttpStatus.OK, null);
+        request.postStringWithoutLocation("/api/public/account/change-language", "de", HttpStatus.OK, null);
 
         // check result
         Optional<User> updatedUser = userRepository.findOneByLogin(AUTHENTICATEDUSER);
@@ -394,7 +399,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         assertThat(storedUser.getLangKey()).isEqualTo("en");
 
         // make request
-        request.postStringWithoutLocation("/api/account/change-language", "loremIpsum", HttpStatus.BAD_REQUEST, null);
+        request.postStringWithoutLocation("/api/public/account/change-language", "loremIpsum", HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -410,7 +415,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         assertThat(userBefore).isPresent();
         String resetKeyBefore = userBefore.get().getResetKey();
 
-        request.postStringWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
+        request.postStringWithoutLocation("/api/public/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
 
         verifyPasswordReset(createdUser, resetKeyBefore);
     }
@@ -428,7 +433,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         assertThat(userBefore).isPresent();
         String resetKeyBefore = userBefore.get().getResetKey();
 
-        request.postStringWithoutLocation("/api/account/reset-password/init", createdUser.getLogin(), HttpStatus.OK, null);
+        request.postStringWithoutLocation("/api/public/account/reset-password/init", createdUser.getLogin(), HttpStatus.OK, null);
         verifyPasswordReset(createdUser, resetKeyBefore);
     }
 
@@ -448,7 +453,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         finishResetData.setNewPassword(newPassword);
 
         // finish password reset
-        request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/public/account/reset-password/finish", finishResetData, HttpStatus.OK, null);
 
         // get updated user
         Optional<User> userPasswordResetFinished = userRepository.findOneByLogin(AUTHENTICATEDUSER);
@@ -467,7 +472,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         String resetKeyBefore = userBefore.get().getResetKey();
 
         // init password reset
-        request.postStringWithoutLocation("/api/account/reset-password/init", "invalidemail", HttpStatus.OK, null);
+        request.postStringWithoutLocation("/api/public/account/reset-password/init", "invalidemail", HttpStatus.OK, null);
 
         // check user data
         Optional<User> userPasswordResetInit = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
@@ -488,7 +493,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         user.setInternal(false);
         userRepository.saveAndFlush(user);
 
-        request.postStringWithoutLocation("/api/account/reset-password/init", email, HttpStatus.BAD_REQUEST, null);
+        request.postStringWithoutLocation("/api/public/account/reset-password/init", email, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -496,7 +501,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void passwordResetFinishInvalidPassword() throws Throwable {
         KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
         finishResetData.setNewPassword("");
-        request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/public/account/reset-password/finish", finishResetData, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -504,6 +509,6 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void passwordResetFinishInvalidKey() throws Throwable {
         KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
         finishResetData.setNewPassword(getValidPassword());
-        request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
+        request.postWithoutLocation("/api/public/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
     }
 }

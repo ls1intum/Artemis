@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -20,8 +22,9 @@ class LogsResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(roles = "ADMIN")
     void testChangeLevel() throws Exception {
         LoggerVM logger = new LoggerVM();
-        logger.setLevel("1");
+        logger.setLevel("DEBUG");
         logger.setName("logger");
-        request.put("/api/admin/management/logs", logger, HttpStatus.NO_CONTENT);
+        LoggerVM response = request.putWithResponseBody("/api/admin/management/logs", logger, LoggerVM.class, HttpStatus.OK);
+        assertThat(response).isEqualTo(logger);
     }
 }

@@ -14,6 +14,6 @@ export class RegisterService {
      * @param account The data object holding the information about the new user
      */
     save(account: User): Observable<void> {
-        return this.http.post<void>(SERVER_API_URL + 'api/register', account);
+        return this.http.post<void>(SERVER_API_URL + 'api/public/register', account);
     }
 }
