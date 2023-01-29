@@ -1,3 +1,5 @@
+import { POST } from '../../constants';
+import { COURSE_BASE } from '../../requests/CourseManagementRequests';
 import { CypressCredentials } from '../../users';
 
 /**
@@ -6,6 +8,10 @@ import { CypressCredentials } from '../../users';
 export class CourseManagementPage {
     openCourseCreation() {
         return cy.get('#create-course').click();
+    }
+
+    openCourseEdit() {
+        return cy.get('#edit-course').click();
     }
 
     /**
@@ -45,8 +51,10 @@ export class CourseManagementPage {
      * @param credentials the user that gets added to the student group of the course
      * */
     addStudentToCourse(credentials: CypressCredentials) {
+        cy.intercept(POST, COURSE_BASE + '*/students/' + credentials.username).as('addStudentQuery');
         cy.get('#add-students').click();
         this.confirmUserIntoGroup(credentials);
+        cy.wait('@addStudentQuery');
     }
 
     /**
@@ -54,8 +62,10 @@ export class CourseManagementPage {
      * @param credentials the user that gets added to the tutor group of the course
      * */
     addTutorToCourse(credentials: CypressCredentials) {
+        cy.intercept(POST, COURSE_BASE + '*/tutors/' + credentials.username).as('addTutorsQuery');
         cy.get('#add-tutors').click();
         this.confirmUserIntoGroup(credentials);
+        cy.wait('@addTutorsQuery');
     }
 
     /**
@@ -63,8 +73,10 @@ export class CourseManagementPage {
      * @param credentials the user that gets added to the editor group of the course
      * */
     addEditorToCourse(credentials: CypressCredentials) {
+        cy.intercept(POST, COURSE_BASE + '*/editors/' + credentials.username).as('addEditorsQuery');
         cy.get('#add-editors').click();
         this.confirmUserIntoGroup(credentials);
+        cy.wait('@addEditorsQuery');
     }
 
     /**
@@ -72,8 +84,10 @@ export class CourseManagementPage {
      * @param credentials the user that gets added to the instructor group of the course
      * */
     addInstructorToCourse(credentials: CypressCredentials) {
+        cy.intercept(POST, COURSE_BASE + '*/instructors/' + credentials.username).as('addInstructorQuery');
         cy.get('#add-instructors').click();
         this.confirmUserIntoGroup(credentials);
+        cy.wait('@addInstructorQuery');
     }
 
     /**
@@ -98,5 +112,88 @@ export class CourseManagementPage {
     openAssessmentDashboardOfCourse(courseShortName: string) {
         this.getCourseCard(courseShortName).find('#course-card-open-assessment-dashboard').click();
         cy.url().should('include', '/assessment-dashboard');
+    }
+
+    /**
+     * helper methods to get information about the course
+     * */
+    getCourseHeaderTitle() {
+        return cy.get('#course-header-title');
+    }
+
+    getCourseHeaderDescription() {
+        return cy.get('#course-header-description');
+    }
+
+    getCourseTitle() {
+        return cy.get('#course-title');
+    }
+
+    getCourseShortName() {
+        return cy.get('#course-short-name');
+    }
+
+    getCourseStudentGroupName() {
+        return cy.get('#course-student-group-name');
+    }
+
+    getCourseTutorGroupName() {
+        return cy.get('#course-tutor-group-name');
+    }
+
+    getCourseEditorGroupName() {
+        return cy.get('#course-editor-group-name');
+    }
+
+    getCourseInstructorGroupName() {
+        return cy.get('#course-instructor-group-name');
+    }
+
+    getCourseStartDate() {
+        return cy.get('#course-start-date');
+    }
+
+    getCourseEndDate() {
+        return cy.get('#course-end-date');
+    }
+
+    getCourseSemester() {
+        return cy.get('#course-semester');
+    }
+
+    getCourseProgrammingLanguage() {
+        return cy.get('#course-programming-language');
+    }
+
+    getCourseTestCourse() {
+        return cy.get('#course-test-course');
+    }
+
+    getCourseOnlineCourse() {
+        return cy.get('#course-online-course');
+    }
+
+    getCoursePresentationScoreEnabled() {
+        return cy.get('#course-presentation-score-enabled');
+    }
+
+    getCoursePresentationScore() {
+        return cy.get('#course-presentation-score');
+    }
+
+    getCourseMaxComplaints() {
+        return cy.get('#course-max-complaints');
+    }
+
+    getCourseMaxTeamComplaints() {
+        return cy.get('#course-max-team-complaints');
+    }
+
+    getMaxComplaintTimeDays() {
+        return cy.get('#course-max-time-days');
+    }
+
+    getMaxRequestMoreFeedbackTimeDays() {
+        return cy.get('#course-max-request-more-feedback-days');
     }
 }
