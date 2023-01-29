@@ -11,7 +11,7 @@
         "@heddendorp/coverage-git-compare": "1.5.4",
         "@heddendorp/cypress-plugin-multilanguage-coverage": "1.6.0",
         "@types/node": "18.11.18",
-        "cypress": "12.3.0",
+        "cypress": "12.4.1",
         "cypress-file-upload": "5.0.8",
         "cypress-wait-until": "1.7.2",
         "typescript": "4.9.4",
