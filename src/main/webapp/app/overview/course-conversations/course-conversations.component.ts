@@ -94,6 +94,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDto) => {
             this.activeConversation = conversation;
+            this.postInThread = undefined;
             this.updateQueryParameters();
         });
     }
