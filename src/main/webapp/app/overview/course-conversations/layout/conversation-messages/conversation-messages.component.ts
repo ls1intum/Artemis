@@ -128,7 +128,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 this.searchInput.nativeElement.value = '';
                 this.searchText = '';
             }
-            this.commandMetisToFetchPosts(true);
+            this.onSearch();
             this.createEmptyPost();
         }
     }
