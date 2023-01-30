@@ -175,6 +175,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.page += 1;
             this.commandMetisToFetchPosts();
         }
+        this.content.nativeElement.scrollTop = this.content.nativeElement.scrollTop + 50;
     }
 
     public commandMetisToFetchPosts(forceUpdate = false) {
