@@ -49,6 +49,7 @@ $conversation-section-card-min-width: 215px;
         &:hover {
             color: var(--metis-conversation-sidebar-active);
             background-color: var(--metis-conversation-sidebar-button-background-hover);
+
             @include active-icon;
         }
     }
