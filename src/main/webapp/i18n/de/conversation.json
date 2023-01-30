@@ -16,7 +16,12 @@
             "archived": "Archiviert",
             "sendMessage": "Senden",
             "conversationMessages": {
-                "searchBarPlaceholder": "Suche in der aktuellen Konversation nach einer Nachricht"
+                "searchLabel": "Nachrichten durchsuchen",
+                "clearSearch": "Suche löschen",
+                "searchBarPlaceholder": "Suche in der aktuellen Konversation nach Nachrichten",
+                "searchResultsMultiple": "{{ count }} Nachrichten gefunden ",
+                "searchResultsSingle": "1 Nachricht gefunden",
+                "searchResultsNone": "Keine Nachrichten gefunden"
             },
             "threadSideBar": {
                 "label": "Thread",

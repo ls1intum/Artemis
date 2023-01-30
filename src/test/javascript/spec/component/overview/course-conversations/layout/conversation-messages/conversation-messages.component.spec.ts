@@ -1,5 +1,5 @@
 import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
-import { ComponentFixture, TestBed, fakeAsync, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -15,6 +15,7 @@ import { BehaviorSubject } from 'rxjs';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
+import { By } from '@angular/platform-browser';
 
 const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -93,10 +94,21 @@ examples.forEach((activeConversation) => {
             component.posts = [examplePost];
         }));
 
-        it('should fetch posts on search', fakeAsync(() => {
+        it('should fetch posts on search input and clear search again on clear button press', fakeAsync(() => {
             const getFilteredPostSpy = jest.spyOn(metisService, 'getFilteredPosts');
-            component.searchText = 'loremIpsum';
-            component.onSearch();
+            const inputField = fixture.debugElement.query(By.css('#searchInput'));
+            inputField.nativeElement.value = 'test';
+            inputField.nativeElement.dispatchEvent(new Event('input'));
+            tick(301);
+            expect(component.searchText).toBe('test');
+            expect(getFilteredPostSpy).toHaveBeenCalledOnce();
+            fixture.detectChanges();
+
+            getFilteredPostSpy.mockClear();
+            const clearButton = fixture.debugElement.query(By.css('#clearSearchButton'));
+            clearButton.nativeElement.click();
+            tick(301);
+            expect(component.searchText).toBe('');
             expect(getFilteredPostSpy).toHaveBeenCalledOnce();
         }));
 

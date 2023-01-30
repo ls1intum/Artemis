@@ -1,7 +1,20 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectorRef,
+    Component,
+    ElementRef,
+    EventEmitter,
+    OnDestroy,
+    OnInit,
+    Output,
+    QueryList,
+    ViewChild,
+    ViewChildren,
+    ViewEncapsulation,
+} from '@angular/core';
 import { faCircleNotch, faEnvelope, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, map, takeUntil } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
@@ -12,11 +25,12 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { OneToOneChat, isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { canCreateNewMessageInConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
-
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 @Component({
     selector: 'jhi-conversation-messages',
     templateUrl: './conversation-messages.component.html',
     styleUrls: ['./conversation-messages.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
@@ -24,6 +38,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     readonly ButtonType = ButtonType;
 
     @Output() openThread = new EventEmitter<Post>();
+
+    @ViewChild('searchInput')
+    searchInput: ElementRef;
 
     @ViewChildren('postingThread')
     messages: QueryList<any>;
@@ -39,9 +56,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     // as set for the css class '.posting-infinite-scroll-container'
     messagesContainerHeight = 700;
     postDisplayedInThread: Post;
-
     currentPostContextFilter?: PostContextFilter;
-    searchText?: string;
+    private readonly search$ = new Subject<string>();
+    searchText = '';
     _activeConversation?: ConversationDto;
 
     newPost?: Post;
@@ -62,6 +79,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     ) {}
 
     ngOnInit(): void {
+        this.subscribeToSearch();
         this.course = this.metisConversationService.course!;
         this.cdr.detectChanges();
         this.setupMetis();
@@ -74,6 +92,25 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this._activeConversation = conversation;
             this.onActiveConversationChange();
         });
+    }
+
+    private subscribeToSearch() {
+        this.search$
+            .pipe(
+                debounceTime(300),
+                distinctUntilChanged(),
+                map((searchText: string | null | undefined) => {
+                    const cleanedSearchText = searchText !== null && searchText !== undefined ? searchText : '';
+                    return cleanedSearchText.trim().toLowerCase();
+                }),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe({
+                next: (searchText: string) => {
+                    this.searchText = searchText;
+                    this.onSearch();
+                },
+            });
     }
 
     ngAfterViewInit() {
@@ -187,5 +224,17 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     scrollToBottomOfMessages() {
         this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+    }
+
+    onSearchQueryInput($event: Event) {
+        const searchTerm = ($event.target as HTMLInputElement).value?.trim().toLowerCase() ?? '';
+        this.search$.next(searchTerm);
+    }
+
+    clearSearchInput() {
+        if (this.searchInput) {
+            this.searchInput.nativeElement.value = '';
+            this.searchInput.nativeElement.dispatchEvent(new Event('input'));
+        }
     }
 }
