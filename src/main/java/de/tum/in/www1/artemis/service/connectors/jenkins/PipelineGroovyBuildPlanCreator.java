@@ -85,10 +85,6 @@ public class PipelineGroovyBuildPlanCreator extends AbstractBuildPlanCreator {
         Map<String, String> replacements = new HashMap<>();
         // at the moment, only Java and Swift are supported
         replacements.put(REPLACE_STATIC_CODE_ANALYSIS_ENABLED, String.valueOf(isStaticCodeAnalysisEnabled));
-        if (isStaticCodeAnalysisEnabled) {
-            String staticCodeAnalysisScript = createStaticCodeAnalysisScript(programmingLanguage, projectType);
-            replacements.put(REPLACE_STATIC_CODE_ANALYSIS_SCRIPT, staticCodeAnalysisScript);
-        }
         // replace testwise coverage analysis placeholder
         String testwiseCoverageAnalysisMavenProfile = "";
         String testwiseCoverageAnalysisGradleTask = "";

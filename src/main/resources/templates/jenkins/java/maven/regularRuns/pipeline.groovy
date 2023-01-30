@@ -43,7 +43,13 @@ private void test() {
 private void staticCodeAnalysis() {
     stage("StaticCodeAnalysis") {
         sh """
-        #staticCodeAnalysisScript
+        rm -rf staticCodeAnalysisReports
+        mkdir staticCodeAnalysisReports
+        mvn spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd
+        cp target/spotbugsXml.xml staticCodeAnalysisReports || true
+        cp target/checkstyle-result.xml staticCodeAnalysisReports || true
+        cp target/pmd.xml staticCodeAnalysisReports || true
+        cp target/cpd.xml staticCodeAnalysisReports || true
         """
     }
 }
