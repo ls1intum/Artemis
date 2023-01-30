@@ -133,11 +133,11 @@
         <hr />
         <dl class="row-md jh-entity-details">
             <dt><span jhiTranslate="artemisApp.course.title">Title</span></dt>
-            <dd>
+            <dd id="course-title">
                 <span>{{ course.title }}</span>
             </dd>
             <dt><span jhiTranslate="artemisApp.course.shortName">Short Name</span></dt>
-            <dd>
+            <dd id="course-short-name">
                 <span>{{ course.shortName }}</span>
             </dd>
             <!--
@@ -146,21 +146,21 @@
             -->
             <div *ngIf="course.isAtLeastInstructor; else groupsWithoutLink">
                 <dt><span jhiTranslate="artemisApp.course.studentGroupName">Student Group Name</span></dt>
-                <dd>
+                <dd id="course-student-group-name">
                     <a [routerLink]="['/course-management', course.id, 'groups', 'students']" id="add-students"> {{ course.studentGroupName }} ({{ course.numberOfStudents }})</a>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></dt>
-                <dd>
+                <dd id="course-tutor-group-name">
                     <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']" id="add-tutors">
                         {{ course.teachingAssistantGroupName }} ({{ course.numberOfTeachingAssistants }})</a
                     >
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.editorGroupName">Editor Group Name</span></dt>
-                <dd>
+                <dd id="course-editor-group-name">
                     <a [routerLink]="['/course-management', course.id, 'groups', 'editors']" id="add-editors"> {{ course.editorGroupName }} ({{ course.numberOfEditors }})</a>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.instructorGroupName">Instructor Group Name</span></dt>
-                <dd>
+                <dd id="course-instructor-group-name">
                     <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" id="add-instructors">
                         {{ course.instructorGroupName }} ({{ course.numberOfInstructors }})</a
                     >
@@ -191,30 +191,30 @@
                 </div>
             </ng-template>
             <dt><span jhiTranslate="artemisApp.course.startDate">Start Date</span></dt>
-            <dd>
+            <dd id="course-start-date">
                 <span>{{ course.startDate | artemisDate }}</span>
             </dd>
             <dt><span jhiTranslate="artemisApp.course.endDate">End Date</span></dt>
-            <dd>
+            <dd id="course-end-date">
                 <span>{{ course.endDate | artemisDate }}</span>
             </dd>
             <dt><span jhiTranslate="artemisApp.course.semester">Semester</span></dt>
-            <dd>
+            <dd id="course-semester">
                 <span *ngIf="course.semester && course.semester !== ''">{{ course.semester }}</span>
                 <span *ngIf="!course.semester || course.semester === ''">{{ 'global.generic.unset' | artemisTranslate }}</span>
             </dd>
             <dt><span jhiTranslate="artemisApp.course.defaultProgrammingLanguage">Default Programming Language</span></dt>
-            <dd>
+            <dd id="course-programming-language">
                 <span *ngIf="course.defaultProgrammingLanguage">{{ course.defaultProgrammingLanguage }}</span>
                 <span *ngIf="!course.defaultProgrammingLanguage">{{ 'global.generic.unset' | artemisTranslate }}</span>
             </dd>
             <dt><span jhiTranslate="artemisApp.course.testCourse.title">Test Course</span></dt>
-            <dd>
+            <dd id="course-test-course">
                 <span *ngIf="course.testCourse">{{ 'global.generic.yes' | artemisTranslate }}</span>
                 <span *ngIf="!course.testCourse">{{ 'global.generic.no' | artemisTranslate }}</span>
             </dd>
             <dt><span jhiTranslate="artemisApp.course.onlineCourse.title">Online Course</span></dt>
-            <dd>
+            <dd id="course-online-course">
                 <span *ngIf="course.onlineCourse">{{ 'global.generic.yes' | artemisTranslate }}</span>
                 <span *ngIf="!course.onlineCourse">{{ 'global.generic.no' | artemisTranslate }}</span>
             </dd>
@@ -224,7 +224,7 @@
                 </dd>
             </ng-container>
             <dt><span jhiTranslate="artemisApp.course.presentationScoreEnabled.title">Presentation Score Enabled</span></dt>
-            <dd>
+            <dd id="course-presentation-score-enabled">
                 <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | artemisTranslate }}</span>
                 <span *ngIf="course.presentationScore === 0">{{ 'global.generic.no' | artemisTranslate }}</span>
             </dd>
@@ -243,31 +243,31 @@
             </ng-container>
             <ng-container *ngIf="course.presentationScore !== 0">
                 <dt><span jhiTranslate="artemisApp.course.presentationScore">Presentation Score</span></dt>
-                <dd>
+                <dd id="course-presentation-score">
                     <span>{{ course.presentationScore }}</span>
                 </dd>
             </ng-container>
             <ng-container *ngIf="course.maxComplaints !== 0">
                 <dt><span jhiTranslate="artemisApp.course.maxComplaints.title">Maximum amount of complaints per student</span></dt>
-                <dd>
+                <dd id="course-max-complaints">
                     <span>{{ course.maxComplaints }}</span>
                 </dd>
             </ng-container>
             <ng-container *ngIf="course.maxTeamComplaints !== 0">
                 <dt><span jhiTranslate="artemisApp.course.maxTeamComplaints.title">Maximum amount of complaints per team</span></dt>
-                <dd>
+                <dd id="course-max-team-complaints">
                     <span>{{ course.maxTeamComplaints }}</span>
                 </dd>
             </ng-container>
             <ng-container *ngIf="course.maxComplaintTimeDays !== 0">
                 <dt><span jhiTranslate="artemisApp.course.maxComplaintTimeDays.title">Deadline for complaints in days after result date</span></dt>
-                <dd>
+                <dd id="course-max-time-days">
                     <span>{{ course.maxComplaintTimeDays }}</span>
                 </dd>
             </ng-container>
             <ng-container *ngIf="course.maxRequestMoreFeedbackTimeDays !== 0">
                 <dt><span jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title">Deadline for more feedback requests in days after result date</span></dt>
-                <dd>
+                <dd id="course-max-request-more-feedback-days">
                     <span>{{ course.maxRequestMoreFeedbackTimeDays }}</span>
                 </dd>
             </ng-container>

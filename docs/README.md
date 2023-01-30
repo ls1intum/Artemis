@@ -28,7 +28,7 @@ For macOS, it is recommended to install it using homebrew:
 ```bash
 brew install sphinx-doc
 brew link sphinx-doc --force
-pip3 install -r requirements.txtclient-tests.rst
+pip3 install -r requirements.txt
 ```
 
 ## Running Sphinx Locally
