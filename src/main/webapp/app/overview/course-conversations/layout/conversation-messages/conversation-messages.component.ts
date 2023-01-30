@@ -124,7 +124,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private onActiveConversationChange() {
         if (this.course && this._activeConversation) {
-            this.searchText = '';
+            if (this.searchInput) {
+                this.searchInput.nativeElement.value = '';
+                this.searchText = '';
+            }
             this.commandMetisToFetchPosts(true);
             this.createEmptyPost();
         }
