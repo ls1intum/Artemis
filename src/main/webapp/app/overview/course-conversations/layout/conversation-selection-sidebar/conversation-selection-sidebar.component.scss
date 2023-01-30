@@ -22,6 +22,7 @@ $conversation-section-card-min-width: 215px;
         span {
             color: var(--primary);
         }
+
         fa-icon svg path {
             fill: var(--primary);
             stroke: var(--primary);
@@ -31,6 +32,7 @@ $conversation-section-card-min-width: 215px;
     .sidebar-button {
         border: 0;
         border-radius: var(--bs-btn-border-radius);
+
         @include icon;
 
         &:hover {
@@ -41,6 +43,7 @@ $conversation-section-card-min-width: 215px;
     .expand-button {
         color: var(--metis-conversation-sidebar);
         border-radius: var(--bs-btn-border-radius);
+
         @include icon;
 
         &:hover {
