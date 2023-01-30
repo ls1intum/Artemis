@@ -79,6 +79,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     }
 
     ngOnChanges() {
+        this.updateParticipations();
+    }
+
+    updateParticipations() {
         const studentParticipations = this.exercise.studentParticipations ?? [];
         this.gradedParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, false);
         this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);
@@ -139,7 +143,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      */
     resumeProgrammingExercise(testRun: boolean) {
         this.exercise.loading = true;
-        const participation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations!, testRun);
+        const participation = testRun ? this.practiceParticipation : this.gradedParticipation;
         this.courseExerciseService
             .resumeProgrammingExercise(this.exercise.id!, participation!.id!)
             .pipe(finalize(() => (this.exercise.loading = false)))
@@ -150,6 +154,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
                         resumedParticipation.results = participation ? participation.results : [];
                         const replacedIndex = this.exercise.studentParticipations!.indexOf(participation!);
                         this.exercise.studentParticipations![replacedIndex] = resumedParticipation;
+                        this.updateParticipations();
                         this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                     }
                 },
