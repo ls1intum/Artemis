@@ -16,6 +16,7 @@ import { ConversationDto } from 'app/entities/metis/conversation/conversation.mo
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { Course } from 'app/entities/course.model';
 
 const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -45,7 +46,7 @@ examples.forEach((activeConversation) => {
         let metisService: MetisService;
         let metisConversationService: MetisConversationService;
         let examplePost: Post;
-        const course = { id: 1 } as any;
+        const course = { id: 1 } as Course;
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
@@ -76,6 +77,7 @@ examples.forEach((activeConversation) => {
 
             fixture = TestBed.createComponent(ConversationMessagesComponent);
             component = fixture.componentInstance;
+            component.course = course;
             fixture.detectChanges();
         });
 

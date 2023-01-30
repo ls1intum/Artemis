@@ -4,6 +4,7 @@ import {
     Component,
     ElementRef,
     EventEmitter,
+    Input,
     OnDestroy,
     OnInit,
     Output,
@@ -46,6 +47,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     messages: QueryList<any>;
     @ViewChild('container')
     content: ElementRef;
+    @Input()
     course?: Course;
 
     getAsChannel = getAsChannelDto;
@@ -72,18 +74,16 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     faCircleNotch = faCircleNotch;
 
     constructor(
-        protected metisService: MetisService, // instance from course-messages.component
-        public metisConversationService: MetisConversationService, // instance from course-messages.component
+        public metisService: MetisService, // instance from course-conversations.component
+        public metisConversationService: MetisConversationService, // instance from course-conversations.component
         public cdr: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
         this.subscribeToSearch();
-        this.course = this.metisConversationService.course!;
-        this.cdr.detectChanges();
-        this.setupMetis();
         this.subscribeToMetis();
         this.subscribeToActiveConversation();
+        this.cdr.detectChanges();
     }
 
     private subscribeToActiveConversation() {
@@ -131,12 +131,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.createEmptyPost();
         }
     }
-
-    private setupMetis() {
-        this.metisService.setPageType(PageType.OVERVIEW);
-        this.metisService.setCourse(this.course!);
-    }
-
     private subscribeToMetis() {
         this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
             this.setPosts(posts);
@@ -161,7 +155,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     setPosts(posts: Post[]): void {
-        this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
+        if (this.content) {
+            this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
+        }
         this.posts = posts.slice().reverse();
     }
 
