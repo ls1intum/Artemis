@@ -39,10 +39,13 @@ public class LegacyResource {
     }
 
     /**
-     * POST lti/launch/:exerciseId : Launch the exercise app using request by an LTI consumer. Redirects the user to the exercise on success.
+     * POST lti/launch/:exerciseId : Launch the exercise app using request by an LTI consumer. Redirects the user to
+     * the exercise on success.
      *
      * @param launchRequest the LTI launch request (ExerciseLtiConfigurationDTO)
      * @param exerciseId    the id of the exercise the user wants to open
+     * @param request       the request
+     * @param response      the response
      * @deprecated use {@link PublicLtiResource#launch(LtiLaunchRequestDTO, Long, HttpServletRequest, HttpServletResponse)} instead
      */
     @PostMapping("lti/launch/{exerciseId}")
@@ -58,8 +61,9 @@ public class LegacyResource {
      * Receive a new push notification from the VCS server and save a submission in the database
      *
      * @param participationId the participationId of the participation the repository is linked to
-     * @param requestBody the body of the post request by the VCS.
-     * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the latest commit was already notified about
+     * @param requestBody     the body of the post request by the VCS.
+     * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the latest commit was
+     * already notified about
      * @deprecated use {@link PublicProgrammingSubmissionResource#processNewProgrammingSubmission(Long, Object)} instead
      */
     @PostMapping("programming-submissions/{participationId}")
@@ -71,9 +75,10 @@ public class LegacyResource {
     }
 
     /**
-     * Receive a new push notification for a test repository from the VCS server, save a submission in the database and trigger relevant build plans
+     * Receive a new push notification for a test repository from the VCS server, save a submission in the database
+     * and trigger relevant build plans
      *
-     * @param exerciseId the id of the programmingExercise where the test cases got changed
+     * @param exerciseId  the id of the programmingExercise where the test cases got changed
      * @param requestBody the body of the post request by the VCS.
      * @return the ResponseEntity with status 200 (OK)
      * @deprecated use {@link PublicProgrammingSubmissionResource#testCaseChanged(Long, Object)} instead
@@ -89,7 +94,7 @@ public class LegacyResource {
     /**
      * Receive a new result from the continuous integration server and save it in the database
      *
-     * @param token CI auth token
+     * @param token       CI auth token
      * @param requestBody build result of CI system
      * @return a ResponseEntity to the CI system
      * @deprecated use {@link PublicResultResource#processNewProgrammingExerciseResult(String, Object)} instead
