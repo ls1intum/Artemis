@@ -55,7 +55,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     previousScrollDistanceFromTop: number;
     // as set for the css class '.posting-infinite-scroll-container'
     messagesContainerHeight = 700;
-    postDisplayedInThread: Post;
     currentPostContextFilter?: PostContextFilter;
     private readonly search$ = new Subject<string>();
     searchText = '';
@@ -164,9 +163,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     setPosts(posts: Post[]): void {
         this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
         this.posts = posts.slice().reverse();
-        if (this.postDisplayedInThread) {
-            this.setPostForThread(posts.find((post) => post.id === this.postDisplayedInThread?.id)!);
-        }
     }
 
     fetchNextPage() {
@@ -217,7 +213,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     postsTrackByFn = (index: number, post: Post): number => post.id!;
 
     setPostForThread(post: Post) {
-        this.postDisplayedInThread = post;
         this.openThread.emit(post);
     }
     handleScrollOnNewMessage = () => {
