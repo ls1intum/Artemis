@@ -25,8 +25,8 @@
         </div>
     </div>
     <ng-container *ngIf="getAsChannel(activeConversation) as channel">
-        <div *ngIf="channel.topic && channel.topic.length > 0" class="text-muted d-flex justify-content-between">
-            <span class="d-inline-block">{{ channel.topic }}</span>
+        <div *ngIf="channel.topic && channel.topic.length > 0" class="text-muted d-flex justify-content-between px-2">
+            <span class="d-inline-block conversation-topic">{{ channel.topic }}</span>
         </div>
     </ng-container>
 </div>
