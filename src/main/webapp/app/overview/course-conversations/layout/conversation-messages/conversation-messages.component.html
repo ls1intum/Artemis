@@ -4,8 +4,8 @@
             <!-- search bar -->
             <div class="input-group ps-0" [class.search-active]="!!searchText">
                 <span class="input-group-text">
-                    <fa-icon [icon]="faSearch" size="sm" class="me-2"></fa-icon>
-                    <span id="inputLabel">{{ 'artemisApp.conversationsLayout.conversationMessages.searchLabel' | artemisTranslate }}</span>
+                    <fa-icon [icon]="faSearch" size="sm"></fa-icon>
+                    <span [hidden]="true" id="inputLabel">{{ 'artemisApp.conversationsLayout.conversationMessages.searchLabel' | artemisTranslate }}</span>
                 </span>
                 <input
                     id="searchInput"

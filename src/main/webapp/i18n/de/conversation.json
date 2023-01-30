@@ -39,6 +39,7 @@
                 "browseChannels": "Kanäle durchsuchen",
                 "groupChats": "Gruppen-Chats",
                 "oneToOneChats": "Direktnachrichten",
+                "filterConversationPlaceholder": "Konversationen filtern",
                 "sideBarSection": {
                     "shown": "gezeigt",
                     "hidden": "ausgeblendet",

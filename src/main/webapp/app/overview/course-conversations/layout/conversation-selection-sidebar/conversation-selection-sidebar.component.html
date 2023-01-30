@@ -18,7 +18,13 @@
             <!-- body -->
             <div class="card-body">
                 <div class="input-group border-0" [class.filter-active]="!!searchTerm">
-                    <input (input)="onSearchQueryInput($event)" class="form-control border-start-0 border-end-0 border-top-0" id="searchQuery" type="text" />
+                    <input
+                        (input)="onSearchQueryInput($event)"
+                        class="form-control border-start-0 border-end-0 border-top-0"
+                        id="searchQuery"
+                        type="text"
+                        [placeholder]="'artemisApp.conversationsLayout.conversationSelectionSideBar.filterConversationPlaceholder' | artemisTranslate"
+                    />
                     <span class="input-group-text border-start-0 border-end-0 border-top-0">
                         <span [hidden]="!searchTerm">({{ numberOfConversationsPassingFilter }})</span>
                         <fa-icon [icon]="faFilter" size="xs"></fa-icon>
@@ -26,7 +32,7 @@
                 </div>
                 <div class="scrollbar wrapper-scroll-y">
                     <!-- Starred -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedStarredConversations?.length" class="mb-2">
+                    <div [hidden]="!displayedStarredConversations?.length" class="mb-2">
                         <jhi-conversation-sidebar-section
                             [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.favorites' | artemisTranslate"
                             [headerKey]="'favorites'"

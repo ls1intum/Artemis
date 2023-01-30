@@ -3,7 +3,7 @@
     <div class="section-header" (click)="toggleCollapsed()" [attr.aria-expanded]="!isCollapsed">
         <div>
             <fa-icon size="xs" [icon]="faChevronRight" [rotate]="!isCollapsed ? 90 : undefined"></fa-icon>
-            <span>{{ label }}</span>
+            <span class="fw-bold">{{ label }}</span>
             <span [hidden]="!anyConversationUnread">
                 <fa-icon [icon]="faMessage" class="text-info"></fa-icon>
             </span>
