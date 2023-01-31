@@ -55,7 +55,8 @@
                 "start": "Start",
                 "end": "End",
                 "status": "Status",
-                "location": "Location"
+                "location": "Location",
+                "attendance": "# of Attendees"
             },
             "tutorialFreePeriod": {
                 "date": "Date",
