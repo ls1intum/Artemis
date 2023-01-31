@@ -123,8 +123,6 @@ describe('ExerciseUtils', () => {
         [{ dueDate: undefined } as Exercise, undefined, true],
         [{ dueDate: dayjs().add(1, 'hour') } as Exercise, undefined, true],
         [{ dueDate: dayjs().subtract(1, 'hour') } as Exercise, undefined, true],
-        [{ startDate: dayjs().add(1, 'hour'), dueDate: dayjs().add(2, 'hours') } as Exercise, undefined, false],
-        [{ startDate: dayjs().add(1, 'hour'), dueDate: dayjs().add(2, 'hours'), isAtLeastTutor: true } as Exercise, undefined, true],
         [{ dueDate: undefined, type: ExerciseType.PROGRAMMING } as Exercise, undefined, true],
         [{ dueDate: dayjs().add(1, 'hour'), type: ExerciseType.PROGRAMMING } as Exercise, undefined, true],
         [{ dueDate: dayjs().subtract(1, 'hour'), type: ExerciseType.PROGRAMMING } as Exercise, undefined, false],

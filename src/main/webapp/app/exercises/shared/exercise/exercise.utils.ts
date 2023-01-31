@@ -134,7 +134,6 @@ export const getExerciseDueDate = (exercise: Exercise, participation?: Participa
 
 /**
  * Determines if the exercise can be started, this is the case if:
- * - It is after the start date or the participant is at least a tutor
  * - In case of a programming exercise it is not before the due date
  * - There is no participation or in case of a programming exercise the setup is not yet finished
  * @param exercise the exercise that should be started
@@ -142,13 +141,12 @@ export const getExerciseDueDate = (exercise: Exercise, participation?: Participa
  */
 export const isStartExerciseAvailable = (exercise: Exercise, participation?: StudentParticipation): boolean => {
     const isProgrammingExercise = exercise.type === ExerciseType.PROGRAMMING;
-    const validStartDate = !exercise.startDate || dayjs().isAfter(exercise.startDate) || !!exercise.isAtLeastTutor;
     const validDueDate = !isProgrammingExercise || !exercise.dueDate || dayjs().isBefore(exercise.dueDate);
     const initializationState = participation?.initializationState;
     const programmingSetupNotFinished =
         !!initializationState && [InitializationState.BUILD_PLAN_CONFIGURED, InitializationState.REPO_CONFIGURED, InitializationState.REPO_COPIED].includes(initializationState);
 
-    return validStartDate && validDueDate && (!participation || (isProgrammingExercise && programmingSetupNotFinished));
+    return validDueDate && (!participation || (isProgrammingExercise && programmingSetupNotFinished));
 };
 
 /**
