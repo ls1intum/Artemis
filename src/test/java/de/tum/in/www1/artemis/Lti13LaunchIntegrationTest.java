@@ -39,15 +39,15 @@ import io.jsonwebtoken.SignatureAlgorithm;
  */
 class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
-    private final static Key SIGNING_KEY = new SecretKeySpec("a".repeat(100).getBytes(), SignatureAlgorithm.HS256.getJcaName());
+    private static final Key SIGNING_KEY = new SecretKeySpec("a".repeat(100).getBytes(), SignatureAlgorithm.HS256.getJcaName());
 
-    private final static String VALID_ID_TOKEN = Jwts.builder().setExpiration(Date.from(Instant.now().plusSeconds(60))).setIssuer("https://example.com").setAudience("client-id")
+    private static final String VALID_ID_TOKEN = Jwts.builder().setExpiration(Date.from(Instant.now().plusSeconds(60))).setIssuer("https://example.com").setAudience("client-id")
             .setId("1234").signWith(SIGNING_KEY).compact();
 
-    private final static String OUTDATED_TOKEN = Jwts.builder().setExpiration(Date.from(Instant.now().minusSeconds(60))).setIssuer("https://example.com").setAudience("client-id")
+    private static final String OUTDATED_TOKEN = Jwts.builder().setExpiration(Date.from(Instant.now().minusSeconds(60))).setIssuer("https://example.com").setAudience("client-id")
             .setId("1234").signWith(SIGNING_KEY).compact();
 
-    private final static String VALID_STATE = "validState";
+    private static final String VALID_STATE = "validState";
 
     @Test
     @WithAnonymousUser
