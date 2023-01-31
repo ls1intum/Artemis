@@ -189,6 +189,7 @@ Exercise Creation
       This date must be after the due date. The results created by this test run will be rated.
     - **Manual Review:** Instructors/Tutors have to manually review the latest student submissions after the automatic tests were executed.
     - **Assessment Due Date:** The deadline for the manual reviews. On this date, all manual assessments will be released to the students.
+    - **Example Solution Publication Date:** The date when the solution repository becomes available to download for students. If left blank, example solutions are never published.
 
     |
 
