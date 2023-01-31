@@ -39,11 +39,7 @@ public final class Constants {
 
     public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/public/programming-exercises/new-result";
 
-    public static final String TEST_CASE_CHANGED_API_PATH = "/api/programming-exercises/test-cases-changed/";
-
     public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api/programming-submissions/";
-
-    public static final String ATHENE_RESULT_API_PATH = "/api/athene-result/";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 

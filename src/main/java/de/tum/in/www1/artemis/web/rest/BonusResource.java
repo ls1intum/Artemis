@@ -104,8 +104,8 @@ public class BonusResource {
      * @return final grade and points with bonus
      */
     @GetMapping("courses/{courseId}/exams/{examId}/bonus/calculate-raw")
-    // TODO: Remove this once the @PreAuthorize is fixed
     @EnforceAdmin
+    // TODO: Remove the manual configuration once the endpoint gets it's final pre-authorization when the feature releases.
     @ManualConfig
     public ResponseEntity<BonusExampleDTO> calculateGradeWithBonus(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam BonusStrategy bonusStrategy,
             @RequestParam Double calculationSign, @RequestParam Double bonusToPoints, @RequestParam Long sourceGradingScaleId, @RequestParam Double sourcePoints) {

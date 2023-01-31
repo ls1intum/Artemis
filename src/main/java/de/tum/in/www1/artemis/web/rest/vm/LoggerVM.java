@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.vm;
 
-import org.springframework.util.ObjectUtils;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -43,9 +43,7 @@ public class LoggerVM {
 
     @Override
     public int hashCode() {
-        int result = getName() != null ? getName().hashCode() : 0;
-        result = 31 * result + (getLevel() != null ? getLevel().hashCode() : 0);
-        return result;
+        return Objects.hash(name, level);
     }
 
     @Override
@@ -58,13 +56,9 @@ public class LoggerVM {
         if (this == object) {
             return true;
         }
-        if (!(object instanceof LoggerVM loggerVM)) {
-            return false;
+        if (object instanceof LoggerVM loggerVM) {
+            return Objects.equals(name, loggerVM.name) && Objects.equals(level, loggerVM.level);
         }
-
-        if (!ObjectUtils.nullSafeEquals(getName(), loggerVM.getName())) {
-            return false;
-        }
-        return ObjectUtils.nullSafeEquals(getLevel(), loggerVM.getLevel());
+        return false;
     }
 }

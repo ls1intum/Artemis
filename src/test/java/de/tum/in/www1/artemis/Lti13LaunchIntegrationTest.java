@@ -39,33 +39,33 @@ import io.jsonwebtoken.SignatureAlgorithm;
  */
 class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
-    private final Key signingKey = new SecretKeySpec("a".repeat(100).getBytes(), SignatureAlgorithm.HS256.getJcaName());
+    private final static Key SIGNING_KEY = new SecretKeySpec("a".repeat(100).getBytes(), SignatureAlgorithm.HS256.getJcaName());
 
-    private final String validIdToken = Jwts.builder().setExpiration(Date.from(Instant.now().plusSeconds(60))).setIssuer("https://example.com").setAudience("client-id")
-            .setId("1234").signWith(signingKey).compact();
+    private final static String VALID_ID_TOKEN = Jwts.builder().setExpiration(Date.from(Instant.now().plusSeconds(60))).setIssuer("https://example.com").setAudience("client-id")
+            .setId("1234").signWith(SIGNING_KEY).compact();
 
-    private final String outdatedToken = Jwts.builder().setExpiration(Date.from(Instant.now().minusSeconds(60))).setIssuer("https://example.com").setAudience("client-id")
-            .setId("1234").signWith(signingKey).compact();
+    private final static String OUTDATED_TOKEN = Jwts.builder().setExpiration(Date.from(Instant.now().minusSeconds(60))).setIssuer("https://example.com").setAudience("client-id")
+            .setId("1234").signWith(SIGNING_KEY).compact();
 
-    private final String validState = "validState";
+    private final static String VALID_STATE = "validState";
 
     @Test
     @WithAnonymousUser
     void redirectProxy() throws Exception {
         Map<String, Object> body = new HashMap<>();
-        body.put("id_token", validIdToken);
-        body.put("state", validState);
+        body.put("id_token", VALID_ID_TOKEN);
+        body.put("state", VALID_STATE);
 
         URI header = request.postForm(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.FOUND);
 
-        validateRedirect(header, validIdToken);
+        validateRedirect(header, VALID_ID_TOKEN);
     }
 
     @Test
     @WithAnonymousUser
     void redirectProxyNoState() throws Exception {
         Map<String, Object> body = new HashMap<>();
-        body.put("id_token", validIdToken);
+        body.put("id_token", VALID_ID_TOKEN);
 
         request.postFormWithoutLocation(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.BAD_REQUEST);
     }
@@ -74,7 +74,7 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     @WithAnonymousUser
     void redirectProxyNoToken() throws Exception {
         Map<String, Object> body = new HashMap<>();
-        body.put("state", validState);
+        body.put("state", VALID_STATE);
 
         request.postFormWithoutLocation(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.BAD_REQUEST);
     }
@@ -83,7 +83,7 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     @WithAnonymousUser
     void redirectProxyInvalidToken() throws Exception {
         Map<String, Object> body = new HashMap<>();
-        body.put("state", validState);
+        body.put("state", VALID_STATE);
         body.put("id_token", "invalid-token");
 
         request.postFormWithoutLocation(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.BAD_REQUEST);
@@ -93,8 +93,8 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     @WithAnonymousUser
     void redirectProxyOutdatedToken() throws Exception {
         Map<String, Object> body = new HashMap<>();
-        body.put("state", validState);
-        body.put("id_token", outdatedToken);
+        body.put("state", VALID_STATE);
+        body.put("id_token", OUTDATED_TOKEN);
 
         request.postFormWithoutLocation(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.BAD_REQUEST);
     }
@@ -103,9 +103,9 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     @WithAnonymousUser
     void redirectProxyTokenInvalidSignature() throws Exception {
         // We can't validate the signature, hence we ignore it.
-        String invalidSignatureToken = validIdToken.substring(0, validIdToken.lastIndexOf(".")) + outdatedToken.substring(outdatedToken.lastIndexOf("."));
+        String invalidSignatureToken = VALID_ID_TOKEN.substring(0, VALID_ID_TOKEN.lastIndexOf(".")) + OUTDATED_TOKEN.substring(OUTDATED_TOKEN.lastIndexOf("."));
         Map<String, Object> body = new HashMap<>();
-        body.put("state", validState);
+        body.put("state", VALID_STATE);
         body.put("id_token", invalidSignatureToken);
 
         URI header = request.postForm(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.FOUND);
@@ -124,6 +124,6 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         List<NameValuePair> params = URLEncodedUtils.parse(locationHeader, StandardCharsets.UTF_8);
         assertUriParamsContain(params, "id_token", token);
-        assertUriParamsContain(params, "state", validState);
+        assertUriParamsContain(params, "state", VALID_STATE);
     }
 }
