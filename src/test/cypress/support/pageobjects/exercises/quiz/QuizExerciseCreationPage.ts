@@ -5,9 +5,10 @@ export class QuizExerciseCreationPage {
         cy.get('#quiz-title').type(title);
     }
 
-    addMultipleChoiceQuestion(title: string) {
+    addMultipleChoiceQuestion(title: string, points = 1) {
         cy.get('#quiz-add-mc-question').click();
         cy.get('#mc-question-title').type(title);
+        cy.get('#score').clear().type(points.toString());
         cy.fixture('quiz_exercise_fixtures/MultipleChoiceQuiz.txt').then((fileContent) => {
             cy.get('.ace_text-input').focus().clear().type(fileContent);
         });
