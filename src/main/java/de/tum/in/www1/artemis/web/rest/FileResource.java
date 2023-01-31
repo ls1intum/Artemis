@@ -268,7 +268,7 @@ public class FileResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        return responseEntityForFilePath(FilePathService.getExamUserSignatureFilePath(), filename);
+        return buildFileResponse(Path.of(FilePathService.getExamUserSignatureFilePath()).toString(), filename);
     }
 
     /**
