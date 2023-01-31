@@ -144,7 +144,10 @@ export const isStartExerciseAvailable = (exercise: Exercise, participation?: Stu
     const validDueDate = !isProgrammingExercise || !exercise.dueDate || dayjs().isBefore(exercise.dueDate);
     const initializationState = participation?.initializationState;
     const programmingSetupNotFinished =
-        !!initializationState && [InitializationState.BUILD_PLAN_CONFIGURED, InitializationState.REPO_CONFIGURED, InitializationState.REPO_COPIED].includes(initializationState);
+        !!initializationState &&
+        [InitializationState.UNINITIALIZED, InitializationState.BUILD_PLAN_CONFIGURED, InitializationState.REPO_CONFIGURED, InitializationState.REPO_COPIED].includes(
+            initializationState,
+        );
 
     return validDueDate && (!participation || (isProgrammingExercise && programmingSetupNotFinished));
 };
@@ -177,7 +180,9 @@ export const isStartPracticeAvailable = (exercise: Exercise, participation?: Stu
             const initializationState = participation?.initializationState;
             const setupNotFinished =
                 !!initializationState &&
-                [InitializationState.BUILD_PLAN_CONFIGURED, InitializationState.REPO_CONFIGURED, InitializationState.REPO_COPIED].includes(initializationState);
+                [InitializationState.UNINITIALIZED, InitializationState.BUILD_PLAN_CONFIGURED, InitializationState.REPO_CONFIGURED, InitializationState.REPO_COPIED].includes(
+                    initializationState,
+                );
             return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !exercise.teamMode && (!participation || setupNotFinished);
         default:
             return false;
