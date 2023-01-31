@@ -59,7 +59,7 @@ private void staticCodeAnalysis() {
  * Called by Jenkins.
  */
 void postBuildTasks() {
-    if (#staticCodeAnalysisEnabled) {
+    if (#isStaticCodeAnalysisEnabled) {
         catchError {
             staticCodeAnalysis()
         }

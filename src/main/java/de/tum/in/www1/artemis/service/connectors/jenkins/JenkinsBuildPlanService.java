@@ -104,7 +104,8 @@ public class JenkinsBuildPlanService {
 
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         final String buildPlanUrl = pipelineGroovyBuildPlanCreator.generateBuildPlanURL(exercise);
-        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, isSolutionPlan,
+        final boolean checkoutSolution = exercise.getCheckoutSolutionRepository();
+        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, checkoutSolution,
                 buildPlanUrl);
 
         String jobFolder = exercise.getProjectKey();

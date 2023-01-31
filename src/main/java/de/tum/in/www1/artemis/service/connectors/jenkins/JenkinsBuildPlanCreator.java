@@ -59,6 +59,10 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private static final String REPLACE_BUILD_PLAN_URL = "#buildPlanUrl";
 
+    private static final String REPLACE_IS_STATIC_CODE_ANALYSIS_ENABLED = "#isStaticCodeAnalysisEnabled";
+
+    private static final String REPLACE_IS_SOLUTION_BUILD = "#isSolutionBuild";
+
     private String artemisNotificationUrl;
 
     @Value("${artemis.continuous-integration.secret-push-token}")
@@ -90,14 +94,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         this.artemisNotificationUrl = ARTEMIS_SERVER_URL + Constants.NEW_RESULT_RESOURCE_API_PATH;
     }
 
-    /*
-     * public String getPipelineScript(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, InternalVcsRepositoryURLs internalVcsRepositoryURLs, boolean
-     * isStaticCodeAnalysisEnabled, boolean isSequentialRuns, boolean isTestwiseCoverageEnabled) { var pipelinePath = getResourcePath(programmingLanguage, projectType,
-     * isStaticCodeAnalysisEnabled, isSequentialRuns); var replacements = getReplacements(programmingLanguage, projectType, internalVcsRepositoryURLs); return
-     * replacePipelineScriptParameters(pipelinePath, replacements); }
-     */
-
-    private Map<String, String> getReplacements(InternalVcsRepositoryURLs internalVcsRepositoryURLs, boolean isSolutionPlan, String buildPlanUrl) {
+    private Map<String, String> getReplacements(InternalVcsRepositoryURLs internalVcsRepositoryURLs, boolean checkoutSolution, String buildPlanUrl) {
         Map<String, String> replacements = new HashMap<>();
         replacements.put(REPLACE_TEST_REPO, internalVcsRepositoryURLs.testRepositoryUrl().getURI().toString());
         replacements.put(REPLACE_ASSIGNMENT_REPO, internalVcsRepositoryURLs.assignmentRepositoryUrl().getURI().toString());
@@ -110,9 +107,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         replacements.put(REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
         replacements.put(REPLACE_JENKINS_TIMEOUT, buildTimeout);
         replacements.put(REPLACE_DEFAULT_BRANCH, defaultBranch);
-        // ToDo: checkout solution build plan is an exercise setting
-        replacements.put(REPLACE_CHECKOUT_SOLUTION, Boolean.toString(isSolutionPlan));
-        System.out.println(buildPlanUrl);
+        replacements.put(REPLACE_CHECKOUT_SOLUTION, Boolean.toString(checkoutSolution));
         replacements.put(REPLACE_BUILD_PLAN_URL, buildPlanUrl);
 
         return replacements;
@@ -120,7 +115,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     @Override
     public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, InternalVcsRepositoryURLs internalVcsRepositoryURLs,
-            boolean isSolutionPlan, String buildPlanUrl) {
+            boolean checkoutSolution, String buildPlanUrl) {
         final var resourcePath = Path.of("templates", "jenkins", "config.xml");
         Resource resource = resourceLoaderService.getResource("templates", "jenkins", "Jenkinsfile");
         String jenkinsFileScript;
@@ -130,7 +125,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         catch (IOException e) {
             throw new RuntimeException(e);
         }
-        var replacements = getReplacements(internalVcsRepositoryURLs, isSolutionPlan, buildPlanUrl);
+        var replacements = getReplacements(internalVcsRepositoryURLs, checkoutSolution, buildPlanUrl);
         jenkinsFileScript = jenkinsFileScript.replace("'", "&apos;");
         jenkinsFileScript = jenkinsFileScript.replace("<", "&lt;");
         jenkinsFileScript = jenkinsFileScript.replace(">", "&gt;");

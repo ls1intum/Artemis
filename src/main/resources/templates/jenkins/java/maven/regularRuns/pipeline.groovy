@@ -33,6 +33,16 @@ private void runTestSteps() {
 private void test() {
     stage('Test') {
         // ToDo: if (#testWiseCoverage && isSolutionBuild) { … } else { … }
+        if (#testWiseCoverage && isSolutionBuild) {
+            success {
+                sh '''
+                rm -rf testwiseCoverageReport
+                mkdir testwiseCoverageReport
+                mv target/tia/reports/*/*.json testwiseCoverageReport/
+                '''
+            }
+        }
+
         sh "mvn clean test -B"
     }
 }
@@ -60,7 +70,7 @@ private void staticCodeAnalysis() {
  * Called by Jenkins.
  */
 void postBuildTasks() {
-    if (#staticCodeAnalysisEnabled) {
+    if (#isStaticCodeAnalysisEnabled) {
         catchError() {
             staticCodeAnalysis()
         }

@@ -26,10 +26,6 @@ public class PipelineGroovyBuildPlanCreator extends AbstractBuildPlanCreator {
 
     private static final String STATIC_CODE_ANALYSIS_REPORT_DIR = "staticCodeAnalysisReports";
 
-    private static final String REPLACE_STATIC_CODE_ANALYSIS_SCRIPT = "#staticCodeAnalysisScript";
-
-    private static final String REPLACE_STATIC_CODE_ANALYSIS_ENABLED = "#staticCodeAnalysisEnabled";
-
     private static final String REPLACE_TESTWISE_COVERAGE_MAVEN_PROFILE = "#testwiseCoverageMavenProfile";
 
     private static final String REPLACE_TESTWISE_COVERAGE_GRADLE_TASK = "#testwiseCoverageGradleTask";
@@ -37,6 +33,8 @@ public class PipelineGroovyBuildPlanCreator extends AbstractBuildPlanCreator {
     private static final String REPLACE_TESTWISE_COVERAGE_SCRIPT = "#testwiseCoverageScript";
 
     private static final String REPLACE_DOCKER_IMAGE_NAME = "#dockerImage";
+
+    public static final String REPLACE_IS_STATIC_CODE_ANALYSIS_ENABLED = "#isStaticCodeAnalysisEnabled";
 
     private final ResourceLoaderService resourceLoaderService;
 
@@ -84,7 +82,7 @@ public class PipelineGroovyBuildPlanCreator extends AbstractBuildPlanCreator {
             boolean isTestwiseCoverageAnalysisEnabled) {
         Map<String, String> replacements = new HashMap<>();
         // at the moment, only Java and Swift are supported
-        replacements.put(REPLACE_STATIC_CODE_ANALYSIS_ENABLED, String.valueOf(isStaticCodeAnalysisEnabled));
+        replacements.put(REPLACE_IS_STATIC_CODE_ANALYSIS_ENABLED, String.valueOf(isStaticCodeAnalysisEnabled));
         // replace testwise coverage analysis placeholder
         String testwiseCoverageAnalysisMavenProfile = "";
         String testwiseCoverageAnalysisGradleTask = "";
