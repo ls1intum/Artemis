@@ -155,7 +155,8 @@ public class BuildLogEntryService {
     private static final Set<String> BUILD_TASK_LOGS = Set.of("Executing build", "Starting task", "Finished task", "Running pre-build action", "Failing task", "Running post build",
             "Running on server", "Finalising the build...", "Stopping timer.", "Finished building", "All post build plugins have finished", "Publishing an artifact",
             "Unable to publish artifact", "The artifact hasn't been successfully published", "Beginning to execute", "Substituting variable", "Pipeline Maven Plugin",
-            "Running in ");
+            "Running in ", "Build ", "Remote agent on ", "Parsing test results", "Successfully removed working directory", "Generating build results summary",
+            "Saving build results to disk", "Store variable context");
 
     private boolean isTaskLog(String log) {
         return BUILD_TASK_LOGS.stream().anyMatch(log::startsWith);
