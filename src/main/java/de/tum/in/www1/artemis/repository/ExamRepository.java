@@ -40,27 +40,28 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") long courseId);
 
-    // Find all exams for a single course (id) that are already visible. In case the user is TA, Editor or Instructor, we the query returns all exams of the course
+    // Find all exams for a single course (id) that are already visible and the user is registered or at least a tutor
     @Query("""
             SELECT DISTINCT ex
             FROM Exam ex
                 LEFT JOIN ex.registeredUsers registeredUsers
             WHERE ex.course.id = :courseId
-                AND (registeredUsers.id = :userId AND ex.visibleDate <= :now
+                AND ex.visibleDate <= :now
+                AND (registeredUsers.id = :userId
                     OR ex.course.teachingAssistantGroupName IN :groupNames
                     OR ex.course.editorGroupName IN :groupNames
                     OR ex.course.instructorGroupName IN :groupNames)
             """)
     Set<Exam> findByCourseIdForUser(@Param("courseId") long courseId, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames, @Param("now") ZonedDateTime now);
 
-    // Find all exams for multiple courses (ids) that are already visible. In case the user is TA, Editor or Instructor for one specific course, the method returns all exams of the
-    // specific course
+    // Find all exams for multiple courses (ids) that are already visible and the user is registered or at least a tutor
     @Query("""
             SELECT e
             FROM Exam e
                 LEFT JOIN e.registeredUsers registeredUsers
             WHERE e.course.id IN :courseIds
-                AND (registeredUsers.id = :userId AND e.visibleDate <= :now
+                AND e.visibleDate <= :now
+                AND (registeredUsers.id = :userId
                     OR e.course.teachingAssistantGroupName IN :groupNames
                     OR e.course.editorGroupName IN :groupNames
                     OR e.course.instructorGroupName IN :groupNames)
