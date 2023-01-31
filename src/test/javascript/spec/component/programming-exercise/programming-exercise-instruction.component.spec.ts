@@ -530,10 +530,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 exerciseType: ExerciseType.PROGRAMMING,
                 feedbackFilter: ['testBubbleSort'],
                 result,
-                showTestDetails: true,
                 taskName: 'Bubble Sort',
                 numberOfNotExecutedTests: 0,
-            },
+            } as FeedbackComponent,
         } as any);
 
         mergeSortStep.nativeElement.click();
