@@ -141,7 +141,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void calculateCourseScoreWithNoParticipations() {
 
         User student = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
@@ -161,7 +160,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getResultsForParticipationEdgeCases() {
 
         ZonedDateTime dueDate = ZonedDateTime.now();

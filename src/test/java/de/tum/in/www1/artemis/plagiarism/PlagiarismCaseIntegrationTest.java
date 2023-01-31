@@ -350,7 +350,6 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testPlagiarismCase_getStudents() throws Exception {
 
         var individualPlagiarismCase = new PlagiarismCase();
