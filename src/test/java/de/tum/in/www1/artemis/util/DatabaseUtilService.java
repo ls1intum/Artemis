@@ -3020,7 +3020,7 @@ public class DatabaseUtilService {
             int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
                 userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
-        var tutors = userRepo.getTutors(course);
+        var tutors = userRepo.getTutors(course).stream().sorted(Comparator.comparing(User::getId)).toList();
         for (int i = 0; i < numberOfExercises; i++) {
             var currentUser = tutors.get(i % 4);
 

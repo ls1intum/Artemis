@@ -419,6 +419,8 @@ public class QuizExerciseService {
         quizExercise.setDueDate(null);
         quizExercise.setQuizBatches(Set.of());
 
+        resetInvalidQuestions(quizExercise);
+
         quizExercise = save(quizExercise);
 
         // in case the quiz has not yet started or the quiz is currently running, we have to clean up
@@ -465,5 +467,16 @@ public class QuizExerciseService {
         Specification<QuizExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
         Page<QuizExercise> exercisePage = quizExerciseRepository.findAll(specification, pageable);
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
+    }
+
+    /**
+     * Reset the invalid status of questions of given quizExercise to false
+     *
+     * @param quizExercise The quiz exercise which questions to be reset
+     */
+    private void resetInvalidQuestions(QuizExercise quizExercise) {
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            question.setInvalid(false);
+        }
     }
 }
