@@ -100,7 +100,7 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
      */
     private static exportAsCsv(filename: string, keys: string[], rows: ExerciseScoresRow[], fieldSeparator = ';') {
         const options = {
-            fieldSeparator: fieldSeparator,
+            fieldSeparator,
             quoteStrings: '"',
             decimalSeparator: 'locale',
             showLabels: true,
