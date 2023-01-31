@@ -209,14 +209,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * - the participation is inactive (build plan cleaned up), but can not be resumed (e.g. because we're after the due date)
      */
     public shouldDisplayIDEButtons(): boolean {
-        return !!this.exercise.studentParticipations?.some((participation) => {
-            const startExerciseNotAvailable = !participation.testRun && !isStartExerciseAvailable(this.exercise);
-            const practiceOnlyAfterDueDate = !participation.testRun || (this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate));
-            return (
-                (participation.initializationState === InitializationState.INITIALIZED && practiceOnlyAfterDueDate) ||
-                (participation.initializationState === InitializationState.INACTIVE && startExerciseNotAvailable)
-            );
-        });
+        const activePracticeParticipation =
+            this.practiceParticipation?.initializationState === InitializationState.INITIALIZED && this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
+        const activeGradedParticipation = this.gradedParticipation?.initializationState === InitializationState.INITIALIZED;
+        const inactiveGradedParticipation =
+            this.gradedParticipation?.initializationState === InitializationState.INACTIVE && !isStartExerciseAvailable(this.exercise, this.gradedParticipation);
+
+        return activePracticeParticipation || activeGradedParticipation || inactiveGradedParticipation;
     }
 
     /**

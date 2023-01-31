@@ -227,7 +227,10 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="gradedParticipation?.initializationState === InitializationState.INACTIVE && isResumeExerciseAvailable()"
+                *ngIf="
+                    (gradedParticipation?.initializationState === InitializationState.INACTIVE || gradedParticipation?.initializationState === InitializationState.FINISHED) &&
+                    isResumeExerciseAvailable()
+                "
                 (click)="resumeProgrammingExercise(false)"
             ></button>
             <button
@@ -239,7 +242,11 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="practiceParticipation?.initializationState === InitializationState.INACTIVE && exercise.dueDate && dayjs().isAfter(exercise.dueDate)"
+                *ngIf="
+                    (practiceParticipation?.initializationState === InitializationState.INACTIVE || practiceParticipation?.initializationState === InitializationState.FINISHED) &&
+                    exercise.dueDate &&
+                    dayjs().isAfter(exercise.dueDate)
+                "
                 (click)="resumeProgrammingExercise(true)"
             ></button>
             <a

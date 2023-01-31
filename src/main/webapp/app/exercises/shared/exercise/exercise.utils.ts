@@ -158,10 +158,8 @@ export const isStartExerciseAvailable = (exercise: Exercise, participation?: Stu
  * @param studentParticipation the optional student participation with possibly an individual due date
  */
 export const isResumeExerciseAvailable = (exercise: Exercise, studentParticipation?: StudentParticipation): boolean => {
-    if (!studentParticipation?.individualDueDate) {
-        return isStartExerciseAvailable(exercise);
-    }
-    return dayjs().isBefore(studentParticipation.individualDueDate);
+    const dueDate = studentParticipation?.individualDueDate ?? exercise.dueDate;
+    return !dueDate || dayjs().isBefore(dueDate);
 };
 
 /**
