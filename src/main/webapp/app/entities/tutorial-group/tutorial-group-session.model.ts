@@ -19,4 +19,5 @@ export class TutorialGroupSession implements BaseEntity {
     public statusExplanation?: string;
     public location?: string;
     public tutorialGroupFreePeriod?: TutorialGroupFreePeriod;
+    public attendanceCount?: number;
 }
