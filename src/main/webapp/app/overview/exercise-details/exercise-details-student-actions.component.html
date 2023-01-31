@@ -188,7 +188,7 @@
                         [smallButtons]="smallButtons"
                         [participations]="exercise.studentParticipations!"
                         [courseAndExerciseNavigationUrlSegment]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor']"
-                        [exerciseId]="exercise.id!"
+                        [exercise]="exercise"
                         *ngIf="!examMode && programmingExercise?.allowOnlineEditor"
                     >
                     </jhi-open-code-editor-button>
@@ -197,6 +197,7 @@
                         [loading]="!!exercise.loading"
                         [smallButtons]="smallButtons"
                         [participations]="exercise.studentParticipations!"
+                        [exercise]="exercise"
                         *ngIf="programmingExercise?.allowOfflineIde"
                     >
                     </jhi-clone-repo-button>
@@ -238,7 +239,7 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="practiceParticipation?.initializationState === InitializationState.INACTIVE"
+                *ngIf="practiceParticipation?.initializationState === InitializationState.INACTIVE && exercise.dueDate && dayjs().isBefore(exercise.dueDate)"
                 (click)="resumeProgrammingExercise(true)"
             ></button>
             <a

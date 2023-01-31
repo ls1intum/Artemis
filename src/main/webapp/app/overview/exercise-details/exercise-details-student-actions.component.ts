@@ -206,11 +206,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      */
     public shouldDisplayIDEButtons(): boolean {
         return !!this.exercise.studentParticipations?.some((participation) => {
-            const startExerciseNotAvailable = !isStartExerciseAvailable(this.exercise) && !participation.testRun;
-            const startPracticeNotAvailable = !isStartPracticeAvailable(this.exercise) && participation.testRun;
+            const startExerciseNotAvailable = !participation.testRun && !isStartExerciseAvailable(this.exercise);
+            const practiceOnlyAfterDueDate = !participation.testRun || (this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate));
             return (
-                participation.initializationState === InitializationState.INITIALIZED ||
-                (participation.initializationState === InitializationState.INACTIVE && (startExerciseNotAvailable || startPracticeNotAvailable))
+                (participation.initializationState === InitializationState.INITIALIZED && practiceOnlyAfterDueDate) ||
+                (participation.initializationState === InitializationState.INACTIVE && startExerciseNotAvailable)
             );
         });
     }
