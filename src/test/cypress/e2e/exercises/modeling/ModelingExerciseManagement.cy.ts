@@ -64,16 +64,16 @@ describe('Modeling Exercise Management Spec', () => {
                     cy.contains(modelingExercise.title!).should('exist');
                     cy.log('Create Example Solution');
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
-                    modelingEditor.addComponentToModel(1);
+                    modelingEditor.addComponentToExampleSolutionModel(1);
                     createModelingExercise.save();
-                    cy.get(`${MODELING_EDITOR_CANVAS}`).children().eq(0).should('exist');
+                    cy.get(MODELING_EDITOR_CANVAS).children().eq(0).should('exist');
 
                     cy.log('Create Example Submission');
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
                     modelingEditor.clickCreateExampleSubmission();
-                    modelingEditor.addComponentToModel(1);
-                    modelingEditor.addComponentToModel(2);
-                    modelingEditor.addComponentToModel(3);
+                    modelingEditor.addComponentToExampleSolutionModel(1);
+                    modelingEditor.addComponentToExampleSolutionModel(2);
+                    modelingEditor.addComponentToExampleSolutionModel(3);
                     modelingEditor.clickCreateNewExampleSubmission();
                     modelingEditor.showExampleAssessment();
                     modelingExerciseExampleSubmission.openAssessmentForComponent(1);

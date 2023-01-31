@@ -5,7 +5,7 @@ import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
 import { onError } from 'app/shared/util/global.utils';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
-import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import { faLink, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -28,6 +28,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
     isLoadingLearningGoalForm: boolean;
     isLoadingLearningGoals: boolean;
     isEditingLearningGoal: boolean;
+    isConnectingLearningGoal: boolean;
 
     currentlyProcessedLearningGoal: LearningGoal;
     learningGoals: LearningGoal[] = [];
@@ -37,6 +38,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     faPencilAlt = faPencilAlt;
+    faLink = faLink;
 
     constructor(
         protected alertService: AlertService,
@@ -51,6 +53,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
 
     showCreateLearningGoal() {
         this.isLoadingLearningGoalForm = true;
+        this.isConnectingLearningGoal = false;
         this.isAddingLearningGoal = !this.isAddingLearningGoal;
         this.learningGoalFormData = {
             id: undefined,
@@ -178,6 +181,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
             .subscribe({
                 next: (response: HttpResponse<LearningGoal>) => {
                     this.isEditingLearningGoal = false;
+                    this.isConnectingLearningGoal = false;
 
                     // The rest api is returning lecture units and exercises separately after creating/editing but we
                     // need the unit to show it in the table as connected. Since it's only for showing it, as a
@@ -243,6 +247,12 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
         this.subscribeToLoadUnitResponse(this.lectureService.findWithDetails(this.lecture.id!));
     }
 
+    startConnectingLearningGoal(learningGoal: LearningGoal) {
+        this.isConnectingLearningGoal = true;
+
+        this.startEditLearningGoal(learningGoal);
+    }
+
     deleteLearningGoal(learningGoal: LearningGoal) {
         this.learningGoalService.delete(learningGoal.id!, this.lecture.course!.id!).subscribe({
             next: () => {
@@ -256,6 +266,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
     onLearningGoalFormCanceled() {
         this.isAddingLearningGoal = false;
         this.isEditingLearningGoal = false;
+        this.isConnectingLearningGoal = false;
         this.isLoadingLearningGoalForm = false;
 
         this.currentlyProcessedLearningGoal = new LearningGoal();
