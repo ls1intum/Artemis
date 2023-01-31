@@ -92,7 +92,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * Starting an exercise is not possible in the exam, otherwise see exercise.utils -> isStartExerciseAvailable
      */
     isStartExerciseAvailable(): boolean {
-        return !this.examMode && isStartExerciseAvailable(this.exercise);
+        return !this.examMode && isStartExerciseAvailable(this.exercise, this.gradedParticipation);
     }
 
     /**
@@ -106,7 +106,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * Practicing an exercise is not possible in the exam, otherwise see exercise.utils -> isStartPracticeAvailable
      */
     isStartPracticeAvailable(): boolean {
-        return !this.examMode && isStartPracticeAvailable(this.exercise);
+        return !this.examMode && isStartPracticeAvailable(this.exercise, this.practiceParticipation);
     }
 
     startExercise() {
@@ -125,15 +125,19 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
                         this.gradedParticipation = participation;
                     }
                     if (this.programmingExercise) {
-                        if (this.programmingExercise.allowOfflineIde) {
-                            this.alertService.success('artemisApp.exercise.personalRepositoryClone');
+                        if (participation.initializationState === InitializationState.INITIALIZED) {
+                            if (this.programmingExercise.allowOfflineIde) {
+                                this.alertService.success('artemisApp.exercise.personalRepositoryClone');
+                            } else {
+                                this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
+                            }
                         } else {
-                            this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
+                            this.alertService.error('artemisApp.exercise.startError');
                         }
                     }
                 },
                 error: () => {
-                    this.alertService.warning('artemisApp.exercise.startError');
+                    this.alertService.error('artemisApp.exercise.startError');
                 },
             });
     }

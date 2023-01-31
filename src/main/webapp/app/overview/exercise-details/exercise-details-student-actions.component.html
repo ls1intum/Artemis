@@ -167,7 +167,7 @@
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
                     [overwriteDisabled]="isBeforeStartDateAndStudent"
-                    *ngIf="!gradedParticipation && isStartExerciseAvailable() && (!exercise.teamMode || exercise.studentAssignedTeamId)"
+                    *ngIf="(!exercise.teamMode || exercise.studentAssignedTeamId) && isStartExerciseAvailable()"
                     (click)="startExercise()"
                 ></button>
             </span>
@@ -176,7 +176,7 @@
                 class="start-practice"
                 [smallButtons]="smallButtons"
                 [exercise]="exercise"
-                *ngIf="!practiceParticipation && isStartPracticeAvailable() && (!exercise.teamMode || exercise.studentAssignedTeamId)"
+                *ngIf="(!exercise.teamMode || exercise.studentAssignedTeamId) && isStartPracticeAvailable()"
             ></jhi-start-practice-mode-button>
 
             <!-- TODO: Exam mode reuses the whole component at the moment. We need the clone repo button but not the open

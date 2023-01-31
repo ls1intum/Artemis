@@ -8,6 +8,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { InitializationState } from 'app/entities/participation/participation.model';
 
 @Component({
     selector: 'jhi-start-practice-mode-button',
@@ -40,17 +41,21 @@ export class StartPracticeModeButtonComponent implements OnInit {
             .startPractice(this.exercise.id!, useGradedParticipation)
             .pipe(finalize(() => (this.startingPracticeMode = false)))
             .subscribe({
-                next: () => {
+                next: (participation) => {
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                        if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
-                            this.alertService.success('artemisApp.exercise.personalRepositoryClone');
+                        if (participation.initializationState === InitializationState.INITIALIZED) {
+                            if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
+                                this.alertService.success('artemisApp.exercise.personalRepositoryClone');
+                            } else {
+                                this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
+                            }
                         } else {
-                            this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
+                            this.alertService.error('artemisApp.exercise.startError');
                         }
                     }
                 },
                 error: () => {
-                    this.alertService.warning('artemisApp.exercise.startError');
+                    this.alertService.error('artemisApp.exercise.startError');
                 },
             });
     }
