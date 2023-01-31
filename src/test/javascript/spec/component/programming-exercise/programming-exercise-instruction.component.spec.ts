@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement } from '@angular/core';
 import dayjs from 'dayjs/esm';
@@ -11,7 +11,13 @@ import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { MockRepositoryFileService } from '../../helpers/mocks/service/mock-repository-file.service';
-import { problemStatement, problemStatementBubbleSortFailsHtml, problemStatementBubbleSortNotExecutedHtml } from '../../helpers/sample/problemStatement.json';
+import {
+    problemStatement,
+    problemStatementBubbleSortFailsHtml,
+    problemStatementBubbleSortNotExecutedHtml,
+    problemStatementEmptySecondTask,
+    problemStatementEmptySecondTaskNotExecutedHtml,
+} from '../../helpers/sample/problemStatement.json';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 // eslint-disable-next-line max-len
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
@@ -51,6 +57,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let getFileStub: jest.SpyInstance;
     let openModalStub: jest.SpyInstance;
     let getLatestResultWithFeedbacks: jest.SpyInstance;
+
+    const modalRef = { componentInstance: {} };
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -360,13 +368,10 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(bubbleSortStep).not.toBeNull();
         expect(mergeSortStep).not.toBeNull();
 
-        const modalRef = { componentInstance: {} };
         openModalStub.mockReturnValue(modalRef);
 
         bubbleSortStep.nativeElement.click();
-        expect(openModalStub).toHaveBeenCalledOnce();
-        expect(openModalStub).toHaveBeenCalledWith(FeedbackComponent, { keyboard: true, size: 'lg' });
-        expect(modalRef).toEqual({
+        verifyTask(1, {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
@@ -375,12 +380,10 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 taskName: 'Implement Bubble Sort',
                 numberOfNotExecutedTests: 1,
             } as FeedbackComponent,
-        });
+        } as any);
 
         mergeSortStep.nativeElement.click();
-        expect(openModalStub).toHaveBeenCalledTimes(2);
-        expect(openModalStub).toHaveBeenCalledWith(FeedbackComponent, { keyboard: true, size: 'lg' });
-        expect(modalRef).toEqual({
+        verifyTask(2, {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
@@ -389,7 +392,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 taskName: 'Implement Merge Sort',
                 numberOfNotExecutedTests: 0,
             } as FeedbackComponent,
-        });
+        } as any);
     }));
 
     it('should create the steps task icons for the tasks in problem statement markdown (legacy case)', fakeAsync(() => {
@@ -441,13 +444,10 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(bubbleSortStep).not.toBeNull();
         expect(mergeSortStep).not.toBeNull();
 
-        const modalRef = { componentInstance: {} };
         openModalStub.mockReturnValue(modalRef);
 
         bubbleSortStep.nativeElement.click();
-        expect(openModalStub).toHaveBeenCalledOnce();
-        expect(openModalStub).toHaveBeenCalledWith(FeedbackComponent, { keyboard: true, size: 'lg' });
-        expect(modalRef).toEqual({
+        verifyTask(1, {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
@@ -456,12 +456,10 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 taskName: 'Implement Bubble Sort',
                 numberOfNotExecutedTests: 0,
             } as FeedbackComponent,
-        });
+        } as any);
 
         mergeSortStep.nativeElement.click();
-        expect(openModalStub).toHaveBeenCalledTimes(2);
-        expect(openModalStub).toHaveBeenCalledWith(FeedbackComponent, { keyboard: true, size: 'lg' });
-        expect(modalRef).toEqual({
+        verifyTask(2, {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
@@ -470,6 +468,82 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 taskName: 'Implement Merge Sort',
                 numberOfNotExecutedTests: 0,
             } as FeedbackComponent,
-        });
+        } as any);
     }));
+
+    it('should create the steps task icons for the tasks in problem statement markdown with no inserted tests (non legacy case)', fakeAsync(() => {
+        const result: Result = {
+            id: 1,
+            completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
+            feedbacks: [{ text: 'testBubbleSort', detailText: 'lorem ipsum', positive: true }],
+        };
+        const exercise: ProgrammingExercise = {
+            id: 3,
+            course: { id: 4 },
+            problemStatement: problemStatementEmptySecondTask,
+            showTestNamesToStudents: true,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
+
+        comp.problemStatement = exercise.problemStatement!;
+        comp.exercise = exercise;
+        comp.latestResult = result;
+        // @ts-ignore
+        comp.setupMarkdownSubscriptions();
+
+        comp.updateMarkdown();
+
+        expect(comp.tasks).toHaveLength(2);
+        expect(comp.tasks[0]).toEqual({
+            id: 0,
+            completeString: '[task][Bubble Sort](testBubbleSort)',
+            taskName: 'Bubble Sort',
+            tests: ['testBubbleSort'],
+        });
+        expect(comp.tasks[1]).toEqual({
+            id: 1,
+            completeString: '[task][Merge Sort]()',
+            taskName: 'Merge Sort',
+            tests: [],
+        });
+        fixture.detectChanges();
+
+        expect(debugElement.query(By.css('.stepwizard'))).not.toBeNull();
+        expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
+        tick();
+        fixture.detectChanges();
+        expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(problemStatementEmptySecondTaskNotExecutedHtml);
+
+        const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--success'));
+        const mergeSortStep = debugElement.query(By.css('.stepwizard-step--not-executed'));
+        expect(bubbleSortStep).not.toBeNull();
+        expect(mergeSortStep).not.toBeNull();
+
+        openModalStub.mockReturnValue(modalRef);
+
+        bubbleSortStep.nativeElement.click();
+        verifyTask(1, {
+            componentInstance: {
+                exercise,
+                exerciseType: ExerciseType.PROGRAMMING,
+                feedbackFilter: ['testBubbleSort'],
+                result,
+                showTestDetails: true,
+                taskName: 'Bubble Sort',
+                numberOfNotExecutedTests: 0,
+            },
+        } as any);
+
+        mergeSortStep.nativeElement.click();
+        // Should not get called another time
+        expect(openModalStub).toHaveBeenCalledOnce();
+    }));
+
+    const verifyTask = (expectedInvocations: number, expected: NgbModalRef) => {
+        expect(openModalStub).toHaveBeenCalledTimes(expectedInvocations);
+        expect(openModalStub).toHaveBeenCalledWith(FeedbackComponent, { keyboard: true, size: 'lg' });
+        expect(modalRef).toEqual(expected);
+    };
 });

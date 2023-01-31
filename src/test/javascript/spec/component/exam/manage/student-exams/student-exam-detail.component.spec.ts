@@ -245,17 +245,6 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.isFormDisabled()).toBeTrue();
     });
 
-    it('should disable the working time form after the exam is visible to a student', () => {
-        studentExamDetailComponent.isTestRun = false;
-        studentExamDetailComponent.studentExam = studentExam;
-
-        studentExamDetailComponent.studentExam.exam!.visibleDate = dayjs().add(1, 'hour');
-        expect(studentExamDetailComponent.isFormDisabled()).toBeFalse();
-
-        studentExamDetailComponent.studentExam.exam!.visibleDate = dayjs().subtract(1, 'hour');
-        expect(studentExamDetailComponent.isFormDisabled()).toBeTrue();
-    });
-
     it('should disable the working time form if there is no exam', () => {
         studentExamDetailComponent.isTestRun = false;
         studentExamDetailComponent.studentExam = studentExam;

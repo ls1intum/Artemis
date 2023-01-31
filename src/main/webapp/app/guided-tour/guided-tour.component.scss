@@ -157,6 +157,11 @@ jhi-guided-tour {
                     @media (max-height: 600px) {
                         max-height: 75vh;
                     }
+
+                    iframe {
+                        aspect-ratio: 16/9;
+                        min-height: auto;
+                    }
                 }
             }
         }

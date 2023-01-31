@@ -10,8 +10,8 @@ export class ProgrammingExerciseFeedbackPage extends AbstractExerciseFeedback {
         cy.get(this.additionalFeedbackSelector).contains(`${points} Points: ${feedbackText}`).should('be.visible');
     }
 
-    shouldShowCodeFeedback(filename: string, feedback: string, points: string, editorPage: OnlineEditorPage) {
-        editorPage.openFileWithName(filename);
+    shouldShowCodeFeedback(exerciseID: number, filename: string, feedback: string, points: string, editorPage: OnlineEditorPage) {
+        editorPage.openFileWithName(exerciseID, filename);
         this.findVisibleInlineFeedback().contains(feedback).should('be.visible');
         this.findVisibleInlineFeedback().contains(`${points}P`).should('be.visible');
     }

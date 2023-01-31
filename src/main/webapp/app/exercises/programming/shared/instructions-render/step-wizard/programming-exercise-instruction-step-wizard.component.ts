@@ -48,7 +48,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
      * @param taskName - the name of the selected task
      */
     public showDetailsForTests(tests: string[], taskName: string) {
-        if (!this.latestResult) {
+        if (!this.latestResult || !tests.length) {
             return;
         }
         const {
