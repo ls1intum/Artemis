@@ -239,7 +239,7 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="practiceParticipation?.initializationState === InitializationState.INACTIVE && exercise.dueDate && dayjs().isBefore(exercise.dueDate)"
+                *ngIf="practiceParticipation?.initializationState === InitializationState.INACTIVE && exercise.dueDate && dayjs().isAfter(exercise.dueDate)"
                 (click)="resumeProgrammingExercise(true)"
             ></button>
             <a
