@@ -59,8 +59,8 @@
                 "plagiarismCase": "Plagiarism Case",
                 "resolvedPlagiarismCase": "Resolved Plagiarism Case",
                 "notification": {
-                    "title": "Plagiarism Case: {{ exercise }}",
-                    "body": "Dear {{ student }}, after a meticulous review of your final submission for the exercise “{{ exercise }}“ {{ inCourseOrExam }} “{{ courseOrExam }}“, we have concluded that you have committed plagiarism. This is a violation of the [Student Code of Conduct]({{ cocLink }}) of the faculty of computer science that you have agreed upon. The *[Allgemeine Studien- und Prüfungsordnung]({{ aspoLink }})* (General Examination and Study Regulations) regulates consequences for such cases in §22.1. **You have one week to provide a statement about this situation.**",
+                    "title": "{{ inCourseOrExam }} \"{{ courseOrExam }}\", \"{{ exercise }}\": Plagiarism Case",
+                    "body": "After a meticulous review of your final submission for the exercise \"{{ exercise }}\" {{ inCourseOrExam }} \"{{ courseOrExam }}\", we have concluded that you have committed plagiarism. This is a violation of the <a href=\"{{ cocLink }}\">Student Code of Conduct</a> of the faculty of computer science that you have agreed upon. The <a href=\"{{ aspoLink }}\">Allgemeine Studien- und Prüfungsordnung</a> (General Examination and Study Regulations) regulates consequences for such cases in §22.1. This means that the exam in question will be graded \"5.0 (U)\", which can have serious consequences for your further studies.<br><br><b>You have one week to provide a statement about this particular case directly in Artemis (not via E-Mail).</b><br><br>Best regards,<br>{{ instructor }}",
                     "inCourse": "in the course",
                     "inExam": "in the exam"
                 },
