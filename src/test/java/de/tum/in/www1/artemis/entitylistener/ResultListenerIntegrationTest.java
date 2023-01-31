@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
@@ -26,7 +27,7 @@ import de.tum.in.www1.artemis.domain.scores.TeamScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 
 class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -66,13 +67,13 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @AfterEach
     void cleanup() {
-        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
     }
 
     @BeforeEach
     void setupTestScenario() {
-        participantScoreSchedulerService.activate();
-        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
+        participantScoreScheduleService.activate();
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
         ZonedDateTime pastReleaseDate = ZonedDateTime.now().minusDays(5);
         ZonedDateTime pastDueDate = ZonedDateTime.now().minusDays(3);
         ZonedDateTime pastAssessmentDueDate = ZonedDateTime.now().minusDays(2);
@@ -287,7 +288,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         resultService.deleteResult(persistedResult, true);
 
         // Wait for the scheduler to execute its task
-        await().until(() -> participantScoreSchedulerService.isIdle());
+        await().until(() -> participantScoreScheduleService.isIdle());
 
         assertThat(studentScoreRepository.findById(originalParticipantScore.getId())).isEmpty();
         assertThat(resultRepository.findById(persistedResult.getId())).isEmpty();
@@ -303,7 +304,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         resultService.deleteResult(persistedResult, true);
 
         // Wait for the scheduler to execute its task
-        await().until(() -> participantScoreSchedulerService.isIdle());
+        await().until(() -> participantScoreScheduleService.isIdle());
 
         assertThat(studentScoreRepository.findById(originalParticipantScore.getId())).isEmpty();
         assertThat(resultRepository.findById(persistedResult.getId())).isEmpty();
@@ -400,8 +401,8 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result persistedResult = database.createParticipationSubmissionAndResult(idOfExercise, participant, 10.0, 10.0, 200, isRatedResult);
 
         // Wait for the scheduler to execute its task
-        participantScoreSchedulerService.executeScheduledTasks();
-        await().until(() -> participantScoreSchedulerService.isIdle());
+        participantScoreScheduleService.executeScheduledTasks();
+        await().atMost(Duration.ofSeconds(30)).until(() -> participantScoreScheduleService.isIdle());
 
         var savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScores).isNotEmpty();
@@ -435,8 +436,8 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         var exercise = exerciseRepository.findById(idOfExercise).get();
 
         // Wait for the scheduler to execute its task
-        participantScoreSchedulerService.executeScheduledTasks();
-        await().until(() -> participantScoreSchedulerService.isIdle());
+        participantScoreScheduleService.executeScheduledTasks();
+        await().until(() -> participantScoreScheduleService.isIdle());
 
         List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScore).isNotEmpty();

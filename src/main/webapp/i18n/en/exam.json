@@ -240,7 +240,9 @@
             "handInEarlyNotice": "You are about to hand in your submission before the end of the exam.\nAfter finishing the exam you cannot participate any longer.",
             "handInEarlyNoticeFirstSentence": "You are about to hand in your submission before the end of the exam.",
             "handInEarlyNoticeSecondSentence": "After finishing the exam you cannot participate any longer.",
-            "namePlaceholder": "Enter your full name here"
+            "namePlaceholder": "Enter your full name here",
+            "workingTimeIncreased": "The end of working time was extended until {{ date }}.",
+            "workingTimeDecreased": "The end of working time was shortened until {{ date }}."
         },
         "exerciseGroup": {
             "created": "New exercise group created",
@@ -331,6 +333,7 @@
                 "configuration": "Exam Configuration",
                 "conduction": "Exam Conduction",
                 "assessment": "Exam Assessment and Student Review",
+                "assessmentEmptyDates": "If you leave a date blank, this exam step will not take place",
                 "exercises": "Exam Exercises",
                 "text": "Exam Texts",
                 "examSolutions": "Exam Solutions"

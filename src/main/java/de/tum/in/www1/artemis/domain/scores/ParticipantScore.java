@@ -18,6 +18,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.participation.Participant;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 
 /**
  * Participant scores store the last (rated) result for each student/team and exercise combination.
@@ -25,7 +27,7 @@ import de.tum.in.www1.artemis.domain.Result;
  * <p><b>Background:</b>
  * Normally, getting the last result means going through the chain Exercise -> Participation -> Submission -> Result.
  * This is inefficient for certain scenarios, e.g., when calculating the course average score for an exercise.</p>
- * @see de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService
+ * @see ParticipantScoreScheduleService
  */
 @Entity
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -75,6 +77,8 @@ public abstract class ParticipantScore extends DomainObject {
     @Column(name = "last_modified_date")
     @JsonIgnore
     private Instant lastModifiedDate;
+
+    public abstract Participant getParticipant();
 
     public Exercise getExercise() {
         return exercise;

@@ -174,7 +174,7 @@ class QuizParticipationSimulation extends Simulation {
 
     val workOnQuiz: ChainBuilder = exec(
         ws("Connect WebSocket")
-            .connect("/websocket/tracker/websocket")).exitHereIfFailed
+            .connect("/websocket/websocket")).exitHereIfFailed
         .pause(5 seconds)
         .exec(ws("Connect STOMP")
             .sendText("CONNECT\nX-XSRF-TOKEN:${xsrf_token}\naccept-version:1.2\nheart-beat:10000,10000\n\n\u0000")

@@ -63,8 +63,8 @@ describe('Quiz Exercise Participation', () => {
             courseManagementRequest.startQuizNow(quizExercise.id!);
             cy.login(student, '/courses/' + course.id);
             courseOverview.startExercise(quizExercise.id!);
-            multipleChoiceQuiz.tickAnswerOption(0);
-            multipleChoiceQuiz.tickAnswerOption(2);
+            multipleChoiceQuiz.tickAnswerOption(quizExercise.id!, 0);
+            multipleChoiceQuiz.tickAnswerOption(quizExercise.id!, 2);
             multipleChoiceQuiz.submit();
         });
     });

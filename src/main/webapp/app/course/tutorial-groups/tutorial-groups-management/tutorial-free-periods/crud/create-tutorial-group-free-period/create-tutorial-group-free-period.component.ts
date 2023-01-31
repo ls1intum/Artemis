@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy } from '@angular/core';
 import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { TutorialGroupFreePeriodFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { finalize, takeUntil } from 'rxjs/operators';
@@ -12,6 +12,7 @@ import { Subject } from 'rxjs';
 @Component({
     selector: 'jhi-create-tutorial-group-free-day',
     templateUrl: './create-tutorial-group-free-period.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
     ngUnsubscribe = new Subject<void>();

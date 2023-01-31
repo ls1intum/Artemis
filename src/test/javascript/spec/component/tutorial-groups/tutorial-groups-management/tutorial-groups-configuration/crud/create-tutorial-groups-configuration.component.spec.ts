@@ -56,6 +56,7 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
                 });
 
                 getCourseSpy = jest.spyOn(courseManagementService, 'find').mockReturnValue(of(response));
+                fixture.detectChanges();
             });
     });
 
@@ -64,14 +65,12 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
         expect(getCourseSpy).toHaveBeenCalledWith(course.id!);
         expect(getCourseSpy).toHaveBeenCalledOnce();
     });
 
     it('should send POST request upon form submission and navigate', () => {
-        fixture.detectChanges();
         const exampleConfiguration = generateExampleTutorialGroupsConfiguration({});
         delete exampleConfiguration.id;
 

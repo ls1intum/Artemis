@@ -42,7 +42,7 @@ following dependencies/tools on your machine:
    There are multiple stacks available for the integration with Artemis:
 
    * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
-   * GitLab and GitLab CI (under development, not yet production ready)
+   * `GitLab and GitLab CI <#gitlab-ci-and-gitlab-setup>`__ (experimental, not yet production ready)
    * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__)
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -124,7 +124,6 @@ You can override the following configuration options in this file.
    artemis:
        repo-clone-path: ./repos/
        repo-download-clone-path: ./repos-download/
-       encryption-password: <encrypt-password>      # LEGACY: arbitrary password for encrypting database values
        bcrypt-salt-rounds: 11   # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
                                 # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
        user-management:
@@ -519,6 +518,11 @@ instead of the TUM defaults:
 .. include:: setup/jenkins-gitlab.rst
 
 ------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/gitlabci-gitlab.rst
+
+------------------------------------------------------------------------------------------------------------------------
+
 
 Athene Service
 --------------

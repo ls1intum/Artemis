@@ -132,8 +132,10 @@ export class ExamActionService {
         const topic = EXAM_MONITORING_ACTION_TOPIC(exam.id!);
         this.openExamMonitoringWebsocketSubscriptions.set(exam.id!, topic);
 
-        this.jhiWebsocketService.subscribe(topic);
-        this.jhiWebsocketService.receive(topic).subscribe((exmAction: ExamAction) => this.updateCachedActions(exam, [exmAction]));
+        this.jhiWebsocketService
+            .subscribe(topic)
+            .receive(topic)
+            .subscribe((exmAction: ExamAction) => this.updateCachedActions(exam, [exmAction]));
     }
 
     /**
@@ -187,8 +189,10 @@ export class ExamActionService {
         const topic = EXAM_MONITORING_STATUS_TOPIC(exam.id!);
         this.openExamMonitoringStatusWebsocketSubscriptions.set(exam.id!, topic);
 
-        this.jhiWebsocketService.subscribe(topic);
-        this.jhiWebsocketService.receive(topic).subscribe((status: boolean) => this.notifyExamMonitoringUpdateSubscribers(exam, status));
+        this.jhiWebsocketService
+            .subscribe(topic)
+            .receive(topic)
+            .subscribe((status: boolean) => this.notifyExamMonitoringUpdateSubscribers(exam, status));
     }
 
     /**

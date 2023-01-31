@@ -28,6 +28,7 @@ const examManagement = artemis.pageobjects.exam.management;
 
 // Common primitives
 const admin = artemis.users.getAdmin();
+const instructor = artemis.users.getInstructor();
 const student = artemis.users.getStudentOne();
 const tutor = artemis.users.getTutor();
 let exam: Exam;
@@ -71,6 +72,7 @@ describe('Exam assessment', () => {
         });
 
         beforeEach('Create exam, exercise and submission', () => {
+            cy.login(instructor);
             courseManagementRequests
                 .createProgrammingExercise(
                     { exerciseGroup },
@@ -91,7 +93,7 @@ describe('Exam assessment', () => {
                     cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                     examStartEnd.startExam();
                     examNavigation.openExerciseAtIndex(0);
-                    makeSubmissionAndVerifyResults(editorPage, programmingExercise.packageName!, partiallySuccessful, () => {
+                    makeSubmissionAndVerifyResults(programmingExercise.id!, editorPage, programmingExercise.packageName!, partiallySuccessful, () => {
                         examNavigation.handInEarly();
                         examStartEnd.finishExam();
                     });
@@ -117,15 +119,17 @@ describe('Exam assessment', () => {
 
         describe('Modeling exercise assessment', () => {
             beforeEach('Create exercise and submission', () => {
-                courseManagementRequests.createModelingExercise({ exerciseGroup }).then(() => {
+                cy.login(instructor);
+                courseManagementRequests.createModelingExercise({ exerciseGroup }).then((response) => {
+                    const exercise = response.body;
                     courseManagementRequests.generateMissingIndividualExams(exam);
                     courseManagementRequests.prepareExerciseStartForExam(exam);
                     cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                     examStartEnd.startExam();
                     examNavigation.openExerciseAtIndex(0);
-                    modelingEditor.addComponentToModel(1);
-                    modelingEditor.addComponentToModel(2);
-                    modelingEditor.addComponentToModel(3);
+                    modelingEditor.addComponentToModel(exercise.id!, 1);
+                    modelingEditor.addComponentToModel(exercise.id!, 2);
+                    modelingEditor.addComponentToModel(exercise.id!, 3);
                     examNavigation.handInEarly();
                     examStartEnd.finishExam();
                 });
@@ -151,19 +155,22 @@ describe('Exam assessment', () => {
 
         describe('Text exercise assessment', () => {
             beforeEach('Create exercise and submission', () => {
+                cy.login(instructor);
                 const exerciseTitle = 'Cypress Text Exercise';
-                courseManagementRequests.createTextExercise({ exerciseGroup }, exerciseTitle);
-                courseManagementRequests.generateMissingIndividualExams(exam);
-                courseManagementRequests.prepareExerciseStartForExam(exam);
-                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                examStartEnd.startExam();
-                examNavigation.openExerciseAtIndex(0);
-                textEditor.typeSubmission(textSubmission.text);
-                textEditor.saveAndContinue().then((submissionResponse) => {
-                    expect(submissionResponse.response?.statusCode).to.equal(200);
+                courseManagementRequests.createTextExercise({ exerciseGroup }, exerciseTitle).then((response) => {
+                    const exercise = response.body;
+                    courseManagementRequests.generateMissingIndividualExams(exam);
+                    courseManagementRequests.prepareExerciseStartForExam(exam);
+                    cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                    examStartEnd.startExam();
+                    examNavigation.openExerciseAtIndex(0);
+                    textEditor.typeSubmission(exercise.id, textSubmission.text);
+                    textEditor.saveAndContinue().then((submissionResponse) => {
+                        expect(submissionResponse.response?.statusCode).to.equal(200);
+                    });
+                    examNavigation.handInEarly();
+                    examStartEnd.finishExam();
                 });
-                examNavigation.handInEarly();
-                examStartEnd.finishExam();
             });
 
             it('Assess a text exercise submission', () => {
@@ -190,14 +197,16 @@ describe('Exam assessment', () => {
         });
 
         beforeEach('Create exercise and submission', () => {
+            cy.login(instructor);
             courseManagementRequests.createQuizExercise({ exerciseGroup }, [multipleChoiceQuizTemplate], 'Cypress Quiz').then((quizResponse) => {
+                const exercise = quizResponse.body;
                 courseManagementRequests.generateMissingIndividualExams(exam);
                 courseManagementRequests.prepareExerciseStartForExam(exam);
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                 examStartEnd.startExam();
                 examNavigation.openExerciseAtIndex(0);
-                multipleChoice.tickAnswerOption(0, quizResponse.body.quizQuestions[0].id);
-                multipleChoice.tickAnswerOption(2, quizResponse.body.quizQuestions[0].id);
+                multipleChoice.tickAnswerOption(exercise.id, 0, quizResponse.body.quizQuestions[0].id);
+                multipleChoice.tickAnswerOption(exercise.id, 2, quizResponse.body.quizQuestions[0].id);
                 examNavigation.handInEarly();
                 examStartEnd.finishExam();
             });

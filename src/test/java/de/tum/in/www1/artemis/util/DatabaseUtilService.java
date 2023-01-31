@@ -299,6 +299,9 @@ public class DatabaseUtilService {
     private RatingRepository ratingRepo;
 
     @Autowired
+    private BuildPlanRepository buildPlanRepository;
+
+    @Autowired
     private PasswordService passwordService;
 
     @Autowired
@@ -316,6 +319,9 @@ public class DatabaseUtilService {
     @Autowired
     private TutorialGroupSessionRepository tutorialGroupSessionRepository;
 
+    @Autowired
+    private LectureUnitRepository lectureUnitRepository;
+
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
 
@@ -327,6 +333,9 @@ public class DatabaseUtilService {
 
     @Value("${info.guided-tour.course-group-instructors:#{null}}")
     private Optional<String> tutorialGroupInstructors;
+
+    @Autowired
+    private BuildLogEntryRepository buildLogEntryRepository;
 
     // TODO: this should probably be moved into another service
     public void changeUser(String username) {
@@ -837,8 +846,9 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
-    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(String userPrefix, boolean withParticipations, boolean withFiles) throws Exception {
-        List<Course> courses = this.createCoursesWithExercisesAndLectures(userPrefix, withParticipations, withFiles);
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
+            throws Exception {
+        List<Course> courses = this.createCoursesWithExercisesAndLectures(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
             for (int i = 0; i < lectures.size(); i++) {
@@ -851,6 +861,25 @@ public class DatabaseUtilService {
             }
             course.setLectures(new HashSet<>(lectures));
         }).toList();
+    }
+
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(String userPrefix, boolean withParticipations, boolean withFiles,
+            int numberOfTutorParticipations) throws Exception {
+        List<Course> courses = this.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
+        return courses.stream().peek(course -> {
+            List<Lecture> lectures = new ArrayList<>(course.getLectures());
+            lectures.replaceAll(lecture -> addLearningGoalToLectureUnits(lecture, Set.of(createLearningGoal(course))));
+            course.setLectures(new HashSet<>(lectures));
+        }).toList();
+    }
+
+    public Lecture addLearningGoalToLectureUnits(Lecture lecture, Set<LearningGoal> learningGoals) {
+        Lecture l = lectureRepo.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture.getId());
+        l.getLectureUnits().forEach(lectureUnit -> {
+            lectureUnit.setLearningGoals(learningGoals);
+            lectureUnitRepository.save(lectureUnit);
+        });
+        return l;
     }
 
     public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
@@ -899,11 +928,11 @@ public class DatabaseUtilService {
         return onlineUnitRepository.save(onlineUnit);
     }
 
-    public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations) throws Exception {
-        return createCoursesWithExercisesAndLectures(prefix, withParticipations, false);
+    public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations, int numberOfTutorParticipations) throws Exception {
+        return createCoursesWithExercisesAndLectures(prefix, withParticipations, false, numberOfTutorParticipations);
     }
 
-    public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations, boolean withFiles) throws Exception {
+    public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations) throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -977,21 +1006,19 @@ public class DatabaseUtilService {
         if (withParticipations) {
 
             // create 5 tutor participations and 5 example submissions and connect all of them (to test the many-to-many relationship)
-            var tutorParticipations = new ArrayList<TutorParticipation>();
-            for (int i = 1; i < 6; i++) {
+            Set<TutorParticipation> tutorParticipations = new HashSet<>();
+            for (int i = 1; i < numberOfTutorParticipations + 1; i++) {
                 var tutorParticipation = new TutorParticipation().tutor(getUserByLogin(prefix + "tutor" + i)).status(TutorParticipationStatus.NOT_PARTICIPATED)
                         .assessedExercise(modelingExercise);
                 tutorParticipationRepo.save(tutorParticipation);
                 tutorParticipations.add(tutorParticipation);
             }
 
-            for (int i = 0; i < 5; i++) {
+            for (int i = 1; i < numberOfTutorParticipations + 1; i++) {
                 String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
                 var exampleSubmission = addExampleSubmission(generateExampleSubmission(validModel, modelingExercise, true));
                 exampleSubmission.assessmentExplanation("exp");
-                for (var tutorParticipation : tutorParticipations) {
-                    exampleSubmission.addTutorParticipations(tutorParticipation);
-                }
+                exampleSubmission.setTutorParticipations(tutorParticipations);
                 exampleSubmissionRepo.save(exampleSubmission);
             }
 
@@ -1202,14 +1229,15 @@ public class DatabaseUtilService {
         return answerPosts;
     }
 
-    public List<Course> createMultipleCoursesWithAllExercisesAndLectures(String userPrefix, int numberOfCoursesWithExercises, int numberOfCoursesWithLectures) throws Exception {
+    public List<Course> createMultipleCoursesWithAllExercisesAndLectures(String userPrefix, int numberOfCoursesWithExercises, int numberOfCoursesWithLectures,
+            int numberOfTutorParticipations) throws Exception {
         List<Course> courses = new ArrayList<>();
         for (int i = 0; i < numberOfCoursesWithExercises; i++) {
             var course = createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(userPrefix, true);
             courses.add(course);
         }
         for (int i = 0; i < numberOfCoursesWithLectures; i++) {
-            var coursesWithLectures = createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, true);
+            var coursesWithLectures = createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, true, numberOfTutorParticipations);
             courses.addAll(coursesWithLectures);
         }
         return courses;
@@ -2686,6 +2714,17 @@ public class DatabaseUtilService {
         assertThat(tests).as("test case is initialized").hasSize(3);
     }
 
+    public void addBuildPlanAndSecretToProgrammingExercise(ProgrammingExercise programmingExercise, String buildPlan) {
+        buildPlanRepository.setBuildPlanForExercise(buildPlan, programmingExercise);
+        programmingExercise.generateAndSetBuildPlanAccessSecret();
+        programmingExerciseRepository.save(programmingExercise);
+
+        var buildPlanOptional = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId());
+        assertThat(buildPlanOptional).isPresent();
+        assertThat(buildPlanOptional.get().getBuildPlan()).as("build plan is set").isNotNull();
+        assertThat(programmingExercise.getBuildPlanAccessSecret()).as("build plan access secret is set").isNotNull();
+    }
+
     public AuxiliaryRepository addAuxiliaryRepositoryToExercise(ProgrammingExercise programmingExercise) {
         AuxiliaryRepository repository = new AuxiliaryRepository();
         repository.setName("auxrepo");
@@ -2959,7 +2998,7 @@ public class DatabaseUtilService {
             int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
                 userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
-        var tutors = userRepo.getTutors(course);
+        var tutors = userRepo.getTutors(course).stream().sorted(Comparator.comparing(User::getId)).toList();
         for (int i = 0; i < numberOfExercises; i++) {
             var currentUser = tutors.get(i % 4);
 

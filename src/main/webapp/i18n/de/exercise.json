@@ -223,7 +223,7 @@
             "isTeamExercise": "Diese Aufgabe ist eine Teamaufgabe.",
             "update": {
                 "warning": {
-                    "warning": "Warnung: Diese Änderungen wird möglicherweise Probleme verursachen",
+                    "warning": "Warnung: Diese Änderungen können Probleme verursachen",
                     "saveExerciseWithoutReevaluation": "Speichern ohne Neubewertung",
                     "problems": "Um Inkonsistenzen zwischen bestehendem und zukünftigem Feedback, das mit der betroffenen Benotungshinweis verbunden ist, zu vermeiden, muss die Aufgabe neu bewertet werden. Dazu gehört auch die Neuberechnung der Ergebnisse.",
                     "instructionDeleted": "Benotungshinweise gelöscht",
