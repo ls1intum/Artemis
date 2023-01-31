@@ -186,21 +186,20 @@ public class StudentExamResource {
             throw new BadRequestException();
         }
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
-        if (!studentExam.isTestRun()) {
+        studentExam.setWorkingTime(workingTime);
+        var savedStudentExam = studentExamRepository.save(studentExam);
+
+        if (!savedStudentExam.isTestRun()) {
             Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
-            // when the exam is already visible, the working time cannot be changed, due to permission issues with unlock and lock operations for programming exercises
             if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
-                throw new BadRequestAlertException("Working time can not be changed after exam becomes visible", "StudentExam", "workingTimeError");
+                instanceMessageSendService.sendExamWorkingTimeChangeDuringConduction(studentExamId);
+                studentExamService.notifyStudentAboutWorkingTimeChangeDuringConduction(savedStudentExam);
             }
             if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDate(exam)) && exam.getStartDate() != null
                     && ZonedDateTime.now().isBefore(exam.getStartDate().plusSeconds(workingTime))) {
                 examService.scheduleModelingExercises(exam);
             }
-
         }
-
-        studentExam.setWorkingTime(workingTime);
-        var savedStudentExam = studentExamRepository.save(studentExam);
 
         instanceMessageSendService.sendExamMonitoringSchedule(examId);
 

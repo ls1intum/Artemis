@@ -8,6 +8,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -843,7 +844,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.CONFLICT);
         // Test examAccessService.
         Exam examE = ModelFactory.generateExam(course1);
-        request.post("/api/courses/" + course1.getId() + "/exams", examE, HttpStatus.CREATED);
+        examE.setTitle("          Exam 123              ");
+        URI examUri = request.post("/api/courses/" + course1.getId() + "/exams", examE, HttpStatus.CREATED);
+        Exam savedExam = request.get(String.valueOf(examUri), HttpStatus.OK, Exam.class);
+        assertThat(savedExam.getTitle()).isEqualTo("Exam 123");
         verify(examAccessService, times(1)).checkCourseAccessForInstructorElseThrow(course1.getId());
     }
 

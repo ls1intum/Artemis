@@ -692,11 +692,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         int newWorkingTime = 180 * 60;
         exam1.setVisibleDate(ZonedDateTime.now().minusMinutes(1));
         exam1 = examRepository.save(exam1);
-        request.patchWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime,
-                StudentExam.class, HttpStatus.BAD_REQUEST);
-        // working time did not change
-        var studentExamDB = studentExamRepository.findById(studentExam1.getId()).get();
-        assertThat(studentExamDB.getWorkingTime()).isEqualTo(studentExam1.getWorkingTime());
+        StudentExam result = request.patchWithResponseBody(
+                "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime, StudentExam.class,
+                HttpStatus.OK);
+        assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
+        assertThat(studentExamRepository.findById(studentExam1.getId()).get().getWorkingTime()).isEqualTo(newWorkingTime);
+        verify(messagingTemplate, times(1)).convertAndSend("/topic/studentExams/" + studentExam1.getId() + "/working-time-change-during-conduction", 10800);
     }
 
     @Test

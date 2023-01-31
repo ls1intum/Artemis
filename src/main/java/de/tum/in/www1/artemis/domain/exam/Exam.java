@@ -151,7 +151,7 @@ public class Exam extends DomainObject {
     }
 
     public void setTitle(String title) {
-        this.title = title;
+        this.title = title != null ? title.strip() : null;
     }
 
     public boolean isTestExam() {
