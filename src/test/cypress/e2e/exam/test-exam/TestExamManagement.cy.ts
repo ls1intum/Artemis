@@ -3,10 +3,12 @@ import { Course } from 'app/entities/course.model';
 import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { artemis } from '../../../support/ArtemisTesting';
 import { generateUUID } from '../../../support/utils';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 // Users
 const users = artemis.users;
 const admin = users.getAdmin();
+const instructor = users.getInstructor();
 const studentOne = users.getStudentOne();
 
 // Requests
@@ -27,6 +29,7 @@ const exerciseGroupCreation = artemis.pageobjects.exam.exerciseGroupCreation;
 const uid = generateUUID();
 const examTitle = 'test-exam' + uid;
 let groupCount = 0;
+let createdGroup: ExerciseGroup;
 
 describe('Test Exam management', () => {
     let course: Course;
@@ -44,103 +47,114 @@ describe('Test Exam management', () => {
         });
     });
 
-    beforeEach(() => {
-        cy.login(admin);
-    });
+    describe('Manage Group', () => {
+        let exerciseGroup: ExerciseGroup;
 
-    it('Create exercise group', () => {
-        cy.visit('/');
-        navigationBar.openCourseManagement();
-        courseManagement.openExamsOfCourse(course.shortName!);
-        examManagement.openExerciseGroups(exam.id!);
-        exerciseGroups.shouldShowNumberOfExerciseGroups(groupCount);
-        exerciseGroups.clickAddExerciseGroup();
-        const groupName = 'Group 1';
-        exerciseGroupCreation.typeTitle(groupName);
-        exerciseGroupCreation.isMandatoryBoxShouldBeChecked();
-        exerciseGroupCreation.clickSave();
-        groupCount++;
-        exerciseGroups.shouldHaveTitle(groupCount - 1, groupName);
-        exerciseGroups.shouldShowNumberOfExerciseGroups(groupCount);
-    });
+        before(() => {
+            cy.login(instructor);
+            courseManagementRequests.addExerciseGroupForExam(exam).then((response) => {
+                exerciseGroup = response.body;
+                groupCount++;
+            });
+        });
 
-    it('Adds a text exercise', () => {
-        cy.visit(`/course-management/${course.id}/exams`);
-        examManagement.openExerciseGroups(exam.id!);
-        exerciseGroups.clickAddTextExercise(0);
-        const textExerciseTitle = 'text' + uid;
-        textCreation.typeTitle(textExerciseTitle);
-        textCreation.typeMaxPoints(10);
-        textCreation.create().its('response.statusCode').should('eq', 201);
-        exerciseGroups.visitPageViaUrl(course.id!, exam.id!);
-        exerciseGroups.shouldContainExerciseWithTitle(textExerciseTitle);
-    });
+        beforeEach(() => {
+            cy.login(instructor);
+        });
 
-    it('Adds a quiz exercise', () => {
-        cy.visit(`/course-management/${course.id}/exams`);
-        examManagement.openExerciseGroups(exam.id!);
-        exerciseGroups.clickAddQuizExercise(0);
-        const quizExerciseTitle = 'quiz' + uid;
-        quizCreation.setTitle(quizExerciseTitle);
-        quizCreation.addMultipleChoiceQuestion(quizExerciseTitle, 10);
-        quizCreation.saveQuiz().its('response.statusCode').should('eq', 201);
-        exerciseGroups.visitPageViaUrl(course.id!, exam.id!);
-        exerciseGroups.shouldContainExerciseWithTitle(quizExerciseTitle);
-    });
+        it('Create exercise group', () => {
+            cy.visit('/');
+            navigationBar.openCourseManagement();
+            courseManagement.openExamsOfCourse(course.shortName!);
+            examManagement.openExerciseGroups(exam.id!);
+            exerciseGroups.shouldShowNumberOfExerciseGroups(groupCount);
+            exerciseGroups.clickAddExerciseGroup();
+            const groupName = 'Group 1';
+            exerciseGroupCreation.typeTitle(groupName);
+            exerciseGroupCreation.isMandatoryBoxShouldBeChecked();
+            exerciseGroupCreation.clickSave().then((interception) => {
+                const group = interception.response!.body;
+                groupCount++;
+                exerciseGroups.shouldHaveTitle(group.id, groupName);
+                exerciseGroups.shouldShowNumberOfExerciseGroups(groupCount);
+                createdGroup = group;
+            });
+        });
 
-    it('Adds a modeling exercise', () => {
-        cy.visit(`/course-management/${course.id}/exams`);
-        examManagement.openExerciseGroups(exam.id!);
-        exerciseGroups.clickAddModelingExercise(0);
-        const modelingExerciseTitle = 'modeling' + uid;
-        modelingCreation.setTitle(modelingExerciseTitle);
-        modelingCreation.setPoints(10);
-        modelingCreation.save().its('response.statusCode').should('eq', 201);
-        exerciseGroups.visitPageViaUrl(course.id!, exam.id!);
-        exerciseGroups.shouldContainExerciseWithTitle(modelingExerciseTitle);
-    });
+        it('Adds a text exercise', () => {
+            cy.visit(`/course-management/${course.id}/exams`);
+            examManagement.openExerciseGroups(exam.id!);
+            exerciseGroups.clickAddTextExercise(exerciseGroup.id!);
+            const textExerciseTitle = 'text' + uid;
+            textCreation.typeTitle(textExerciseTitle);
+            textCreation.typeMaxPoints(10);
+            textCreation.create().its('response.statusCode').should('eq', 201);
+            exerciseGroups.visitPageViaUrl(course.id!, exam.id!);
+            exerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, textExerciseTitle);
+        });
 
-    it('Adds a programming exercise', () => {
-        cy.visit(`/course-management/${course.id}/exams`);
-        examManagement.openExerciseGroups(exam.id!);
-        exerciseGroups.clickAddProgrammingExercise(0);
-        const programmingExerciseTitle = 'programming' + uid;
-        programmingCreation.setTitle(programmingExerciseTitle);
-        programmingCreation.setShortName(programmingExerciseTitle);
-        programmingCreation.setPackageName('de.test');
-        programmingCreation.setPoints(10);
-        programmingCreation.generate().its('response.statusCode').should('eq', 201);
-        exerciseGroups.visitPageViaUrl(course.id!, exam.id!);
-        exerciseGroups.shouldContainExerciseWithTitle(programmingExerciseTitle);
-    });
+        it('Adds a quiz exercise', () => {
+            cy.visit(`/course-management/${course.id}/exams`);
+            examManagement.openExerciseGroups(exam.id!);
+            exerciseGroups.clickAddQuizExercise(exerciseGroup.id!);
+            const quizExerciseTitle = 'quiz' + uid;
+            quizCreation.setTitle(quizExerciseTitle);
+            quizCreation.addMultipleChoiceQuestion(quizExerciseTitle, 10);
+            quizCreation.saveQuiz().its('response.statusCode').should('eq', 201);
+            exerciseGroups.visitPageViaUrl(course.id!, exam.id!);
+            exerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, quizExerciseTitle);
+        });
 
-    it('Edits an exercise group', () => {
-        cy.visit('/');
-        navigationBar.openCourseManagement();
-        courseManagement.openExamsOfCourse(course.shortName!);
-        examManagement.openExerciseGroups(exam.id!);
-        exerciseGroups.shouldShowNumberOfExerciseGroups(groupCount);
-        exerciseGroups.clickAddExerciseGroup();
-        const groupName = 'Group 2';
-        exerciseGroupCreation.typeTitle(groupName);
-        exerciseGroupCreation.isMandatoryBoxShouldBeChecked();
-        exerciseGroupCreation.clickSave();
-        groupCount++;
+        it('Adds a modeling exercise', () => {
+            cy.visit(`/course-management/${course.id}/exams`);
+            examManagement.openExerciseGroups(exam.id!);
+            exerciseGroups.clickAddModelingExercise(exerciseGroup.id!);
+            const modelingExerciseTitle = 'modeling' + uid;
+            modelingCreation.setTitle(modelingExerciseTitle);
+            modelingCreation.setPoints(10);
+            modelingCreation.save().its('response.statusCode').should('eq', 201);
+            exerciseGroups.visitPageViaUrl(course.id!, exam.id!);
+            exerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, modelingExerciseTitle);
+        });
 
-        exerciseGroups.shouldHaveTitle(groupCount - 1, groupName);
-        exerciseGroups.clickEditGroup(groupCount - 1);
-        const newGroupName = 'Group 3';
-        exerciseGroupCreation.typeTitle(newGroupName);
-        exerciseGroupCreation.update();
-        exerciseGroups.shouldHaveTitle(groupCount - 1, newGroupName);
-    });
+        it('Adds a programming exercise', () => {
+            cy.visit(`/course-management/${course.id}/exams`);
+            examManagement.openExerciseGroups(exam.id!);
+            exerciseGroups.clickAddProgrammingExercise(exerciseGroup.id!);
+            const programmingExerciseTitle = 'programming' + uid;
+            programmingCreation.setTitle(programmingExerciseTitle);
+            programmingCreation.setShortName(programmingExerciseTitle);
+            programmingCreation.setPackageName('de.test');
+            programmingCreation.setPoints(10);
+            programmingCreation.generate().its('response.statusCode').should('eq', 201);
+            exerciseGroups.visitPageViaUrl(course.id!, exam.id!);
+            exerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, programmingExerciseTitle);
+        });
 
-    it('Delete an exercise group', () => {
-        cy.visit('/');
-        navigationBar.openCourseManagement();
-        courseManagement.openExamsOfCourse(course.shortName!);
-        examManagement.openExerciseGroups(exam.id!);
-        exerciseGroups.clickDeleteGroup(groupCount - 1, 'Group 3');
+        it('Edits an exercise group', () => {
+            cy.visit(`/course-management/${course.id}/exams`);
+            examManagement.openExerciseGroups(exam.id!);
+            exerciseGroups.shouldHaveTitle(exerciseGroup.id!, exerciseGroup.title!);
+            exerciseGroups.clickEditGroup(exerciseGroup.id!);
+            const newGroupName = 'Group 3';
+            exerciseGroupCreation.typeTitle(newGroupName);
+            exerciseGroupCreation.update();
+            exerciseGroups.shouldHaveTitle(exerciseGroup.id!, newGroupName);
+            exerciseGroup.title = newGroupName;
+        });
+
+        it('Delete an exercise group', () => {
+            cy.visit('/');
+            navigationBar.openCourseManagement();
+            courseManagement.openExamsOfCourse(course.shortName!);
+            examManagement.openExerciseGroups(exam.id!);
+            // If the group in the "Create group test" was created successfully, we delete it so there is no group with no exercise
+            if (createdGroup) {
+                exerciseGroups.clickDeleteGroup(createdGroup.id!, createdGroup.title!);
+            } else {
+                exerciseGroups.clickDeleteGroup(exerciseGroup.id!, exerciseGroup.title!);
+            }
+        });
     });
 
     after(() => {

@@ -6,16 +6,16 @@ export class ExamExerciseGroupsPage {
         cy.get('#create-new-group').click();
     }
 
-    shouldHaveTitle(groupIndex: number, groupTitle: string) {
-        cy.get(`#group-${groupIndex} .group-title`).contains(groupTitle);
+    shouldHaveTitle(groupID: number, groupTitle: string) {
+        cy.get(`#group-${groupID} .group-title`).contains(groupTitle);
     }
 
-    clickEditGroup(groupIndex: number) {
-        cy.get(`#group-${groupIndex} .edit-group`).click();
+    clickEditGroup(groupID: number) {
+        cy.get(`#group-${groupID} .edit-group`).click();
     }
 
-    clickDeleteGroup(groupIndex: number, groupName: string) {
-        cy.get(`#group-${groupIndex} .delete-group`).click();
+    clickDeleteGroup(groupID: number, groupName: string) {
+        cy.get(`#group-${groupID} .delete-group`).click();
         cy.get('#delete').should('be.disabled');
         cy.get('#confirm-exercise-name').type(groupName);
         cy.get('#delete').should('not.be.disabled').click();
@@ -29,27 +29,27 @@ export class ExamExerciseGroupsPage {
         cy.get('#create-new-group').click();
     }
 
-    clickAddTextExercise(groupIndex = 0) {
-        cy.get('#add-text-exercise-group-' + groupIndex).click();
+    clickAddTextExercise(groupID: number) {
+        cy.get(`#group-${groupID}`).find('.add-text-exercise').click();
     }
 
-    clickAddModelingExercise(groupIndex = 0) {
-        cy.get('#add-modeling-exercise-group-' + groupIndex).click();
+    clickAddModelingExercise(groupID: number) {
+        cy.get(`#group-${groupID}`).find('.add-modeling-exercise').click();
     }
 
-    clickAddQuizExercise(groupIndex = 0) {
-        cy.get('#add-quiz-exercise-group-' + groupIndex).click();
+    clickAddQuizExercise(groupID: number) {
+        cy.get(`#group-${groupID}`).find('.add-quiz-exercise').click();
     }
 
-    clickAddProgrammingExercise(groupIndex = 0) {
-        cy.get('#add-programming-exercise-group-' + groupIndex).click();
+    clickAddProgrammingExercise(groupID: number) {
+        cy.get(`#group-${groupID}`).find('.add-programming-exercise').click();
     }
 
     visitPageViaUrl(courseId: number, examId: number) {
         cy.visit(`course-management/${courseId}/exams/${examId}/exercise-groups`);
     }
 
-    shouldContainExerciseWithTitle(exerciseTitle: string) {
-        cy.get('#exercises').contains(exerciseTitle).scrollIntoView().should('be.visible');
+    shouldContainExerciseWithTitle(groupID: number, exerciseTitle: string) {
+        cy.get(`#group-${groupID}`).find('#exercises').contains(exerciseTitle).scrollIntoView().should('be.visible');
     }
 }
