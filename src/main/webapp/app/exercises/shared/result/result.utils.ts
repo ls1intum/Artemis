@@ -305,7 +305,7 @@ export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingC
             return [];
         }
         result.result.feedbacks.map((f) => {
-            if (f.type && [FeedbackType.AUTOMATIC, FeedbackType.AUTOMATIC_ADAPTED].indexOf(f.type) >= 0) {
+            if (f.type && [FeedbackType.AUTOMATIC, FeedbackType.AUTOMATIC_ADAPTED].includes(f.type)) {
                 testCasesNames.add(f.text ?? 'Test ' + result.result.feedbacks?.indexOf(f) + 1);
             }
         });
@@ -327,7 +327,7 @@ export function getTestCaseResults(result: ResultWithPointsPerGradingCriterion, 
     testCaseNames.forEach((testName) => {
         const feedback = getFeedbackByTestCase(testName, result.result.feedbacks);
 
-        let resultText = 'Skipped';
+        let resultText;
         if (feedback?.positive) {
             resultText = 'Passed';
         } else if (!feedback?.positive) {

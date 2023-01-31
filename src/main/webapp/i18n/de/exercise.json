@@ -130,8 +130,8 @@
             "exportResults": {
                 "title": "Ergebnisse exportieren",
                 "withoutTestCases": "Ohne Testfälle",
-                "withTestCases": "Mit Testfälle",
-                "withTestCasesAndFeedback": "Mit Testfälle<br />und Feedback",
+                "withTestCases": "Mit Testfällen",
+                "withTestCasesAndFeedback": "Mit Testfällen<br />und Feedback",
                 "withTestCasesTooltip": "Damit werden zusätzliche Informationen über bestandene und nicht bestandene Testfälle, für jeden Eintrag, hinzugefügt.",
                 "withTestCasesAndFeedbackTooltip": "Damit werden Informationen über die Testfälle und ihre Feedbacks hinzugefügt.",
                 "emptyError": "{{ exercise }}: Keine Ergebnisse gefunden"

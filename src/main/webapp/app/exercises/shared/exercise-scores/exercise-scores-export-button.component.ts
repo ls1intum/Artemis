@@ -98,9 +98,9 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
      * @param fieldSeparator Optional parameter for exporting the CSV file using a custom separator symbol
      * @private
      */
-    private static exportAsCsv(filename: string, keys: string[], rows: ExerciseScoresRow[], fieldSeparator?: string) {
+    private static exportAsCsv(filename: string, keys: string[], rows: ExerciseScoresRow[], fieldSeparator = ';') {
         const options = {
-            fieldSeparator: fieldSeparator ?? ';',
+            fieldSeparator: fieldSeparator,
             quoteStrings: '"',
             decimalSeparator: 'locale',
             showLabels: true,
