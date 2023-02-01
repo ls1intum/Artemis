@@ -43,7 +43,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     faInfo = faInfo;
     faCheck = faCheck;
 
-    readonly pageType = PageType.PLAGIARISM_CASE;
+    readonly pageType = PageType.PLAGIARISM_CASE_INSTRUCTOR;
     private postsSubscription: Subscription;
     posts: Post[];
 

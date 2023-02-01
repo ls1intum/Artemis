@@ -44,6 +44,7 @@
             "resetFilter": "Reset filter",
             "loading": "Loading...",
             "fetchingResults": "Fetching plagiarism results...",
+            "replyToAccusation": "Reply to Accusation",
             "cleanUp": {
                 "confirmDialog": {
                     "title": "Clean up plagiarism comparisons",

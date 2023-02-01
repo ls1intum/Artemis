@@ -44,6 +44,7 @@
             "resetFilter": "Filter zurücksetzen",
             "loading": "Laden...",
             "fetchingResults": "Plagiate werden geladen...",
+            "replyToAccusation": "Antwort auf den Vorwurf",
             "cleanUp": {
                 "confirmDialog": {
                     "title": "Plagiatsvergleiche aufräumen",
