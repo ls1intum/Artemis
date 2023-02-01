@@ -414,7 +414,7 @@ public class QuizExerciseService {
         quizExercise.setIsOpenForPractice(Boolean.FALSE);
         if (!quizExercise.isExamExercise()) {
             // do not set the release date of exam exercises
-            quizExercise.setReleaseDate(ZonedDateTime.now().plusYears(1));
+            quizExercise.setReleaseDate(ZonedDateTime.now());
         }
         quizExercise.setDueDate(null);
         quizExercise.setQuizBatches(Set.of());

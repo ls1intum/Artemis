@@ -1899,6 +1899,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(studentParticipationRepository.findByExerciseId(quizExercise.getId())).as("Student participations have been deleted").isEmpty();
         assertThat(quizExercise.isIsOpenForPractice()).as("Quiz Question is open for practice has been set to false").isFalse();
+        assertThat(ZonedDateTime.now().isAfter(quizExercise.getReleaseDate())).as("Quiz Question is released").isTrue();
         assertThat(quizExercise.getDueDate()).as("Quiz Question due date has been set to null").isNull();
         assertThat(quizExercise.getQuizBatches()).as("Quiz Question batches has been set to empty").isEmpty();
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
