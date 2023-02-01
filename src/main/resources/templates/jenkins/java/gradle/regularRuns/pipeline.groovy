@@ -30,10 +30,12 @@ private void runTestSteps() {
  * Run unit tests
  */
 void test() {
-    if (#testWiseCoverage && isSolutionBuild) {
-        sh './gradlew clean test tiaTests --run-all-tests'
-    } else {
-        sh './gradlew clean test'
+    stage('Test') {
+        if (#testWiseCoverage && isSolutionBuild) {
+            sh './gradlew clean test tiaTests --run-all-tests'
+        } else {
+            sh './gradlew clean test'
+        }
     }
 }
 

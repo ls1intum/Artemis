@@ -32,11 +32,9 @@ private void runTestSteps() {
 private void test() {
     stage('Test') {
         if (#testWiseCoverage && isSolutionBuild) {
-            sh '''
-            mvn clean test -B -Pcoverage
-            '''
+            sh 'mvn clean test -B -Pcoverage'
         } else {
-            sh "mvn clean test -B"
+            sh 'mvn clean test -B'
         }
     }
 }

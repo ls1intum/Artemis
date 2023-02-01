@@ -30,7 +30,9 @@ private void runTestSteps() {
  * Run unit tests
  */
 void test() {
-    sh './gradlew clean structuralTest behaviorTest'
+    stage('Test') {
+        sh './gradlew clean structuralTest behaviorTest'
+    }
 }
 
 /**
