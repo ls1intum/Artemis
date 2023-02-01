@@ -12,7 +12,6 @@ dockerImage = "#dockerImage"
 dockerFlags = ""
 
 isSolutionBuild = "${env.JOB_NAME}" ==~ /.+-SOLUTION$/
-isTemplateBuild = "${env.JOB_NAME}" ==~ /.+-BASE$/
 
 /**
  * Main function called by Jenkins.
@@ -31,20 +30,10 @@ private void runTestSteps() {
  * Run unit tests
  */
 void test() {
-    if (#isTestwise && solution) {
+    if (#testWiseCoverage && isSolutionBuild) {
         sh './gradlew clean test tiaTests --run-all-tests'
     } else {
         sh './gradlew clean test'
-    }
-}
-
-void testWiseCoverage() {
-    success {
-        sh '''
-        rm -rf testwiseCoverageReport
-        mkdir testwiseCoverageReport
-        mv build/reports/testwise-coverage/tiaTests/tiaTests.json testwiseCoverageReport/
-        '''
     }
 }
 
@@ -53,7 +42,7 @@ void testWiseCoverage() {
  */
 private void staticCodeAnalysis() {
     stage("StaticCodeAnalysis") {
-        sh """
+        sh '''
         rm -rf staticCodeAnalysisReports
         mkdir staticCodeAnalysisReports
         ./gradlew check -x test
@@ -61,7 +50,17 @@ private void staticCodeAnalysis() {
         cp target/checkstyle-result.xml staticCodeAnalysisReports || true
         cp target/pmd.xml staticCodeAnalysisReports || true
         cp target/cpd.xml staticCodeAnalysisReports || true
-        """
+        '''
+    }
+}
+
+private void testwiseCoverage() {
+    success {
+        sh '''
+        rm -rf testwiseCoverageReport
+        mkdir testwiseCoverageReport
+        mv build/reports/testwise-coverage/tiaTests/tiaTests.json testwiseCoverageReport/
+        '''
     }
 }
 

@@ -28,7 +28,7 @@ private void runTestSteps() {
  * Run unit tests
  */
 private void test() {
-    stage('Build') {
+    stage('Check Setup') {
         sh '''
         cd $WORKSPACE
         echo "--------------------setup-------------------"
@@ -49,14 +49,18 @@ private void test() {
 
         exit 0
         '''
+    }
 
+    stage('Prepare Build') {
         sh '''
         rm -f assignment/GNUmakefile
         rm -f assignment/Makefile
 
         cp -f tests/Makefile assignment/Makefile || exit 2
         '''
+    }
 
+    stage('Compile and Test') {
         sh '''
         #!/bin/bash
 

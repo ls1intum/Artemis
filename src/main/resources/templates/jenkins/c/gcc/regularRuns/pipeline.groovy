@@ -28,7 +28,7 @@ private void runTestSteps() {
  * Run unit tests
  */
 private void test() {
-    stage('Build') {
+    stage('Setup') {
         sh '''
         cd $WORKSPACE
         # Updating assignment and test-reports ownership...
@@ -47,7 +47,9 @@ private void test() {
         fi
         exit 0
         '''
+    }
 
+    stage('Prepare Build') {
         sh '''
         #!/usr/bin/env bash
 
@@ -64,7 +66,9 @@ private void test() {
         cp -f tests/Makefile assignment/Makefile || exit 2
         sed -i "s~\\bINCLUDEDIRS\\s*=.*~${foundIncludeDirs}~; s~\\bSOURCE\\s*=.*~${foundSource}~" assignment/Makefile
         '''
+    }
 
+    stage('Compile and Test') {
         sh  '''
         #!/bin/bash
 

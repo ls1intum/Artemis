@@ -11,9 +11,6 @@
 dockerImage = "#dockerImage"
 dockerFlags = ""
 
-isSolutionBuild = "${env.JOB_NAME}" ==~ /.+-SOLUTION$/
-isTemplateBuild = "${env.JOB_NAME}" ==~ /.+-BASE$/
-
 /**
  * Main function called by Jenkins.
  */
@@ -49,7 +46,7 @@ private void testBehavior() {
  */
 private void staticCodeAnalysis() {
     stage("StaticCodeAnalysis") {
-        sh """
+        sh '''
         rm -rf staticCodeAnalysisReports
         mkdir staticCodeAnalysisReports
         mvn spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd
@@ -57,7 +54,7 @@ private void staticCodeAnalysis() {
         cp target/checkstyle-result.xml staticCodeAnalysisReports || true
         cp target/pmd.xml staticCodeAnalysisReports || true
         cp target/cpd.xml staticCodeAnalysisReports || true
-        """
+        '''
     }
 }
 
