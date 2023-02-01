@@ -2982,12 +2982,12 @@ public class DatabaseUtilService {
      * exercises in a cyclic manner.
      *
      * @param numberOfExercises             number of generated exercises. E.g. if you set it to 4, 2 modeling exercises, one text and one file-upload exercise will be generated.
-     *                                      (thats why there is the %3 check)
+     *                                          (thats why there is the %3 check)
      * @param numberOfSubmissionPerExercise for each exercise this number of submissions will be generated. E.g. if you have 2 exercises, and set this to 4, in total 8
-     *                                      submissions will be created.
+     *                                          submissions will be created.
      * @param numberOfAssessments           generates the assessments for a submission of an exercise. Example from abobe, 2 exrecises, 4 submissions each. If you set
-     *                                      numberOfAssessments to 2, for each exercise 2 assessmetns will be created. In total there will be 4 assessments then. (by two
-     *                                      different tutors, as each exercise is assessed by an individual tutor. There are 4 tutors that create assessments)
+     *                                          numberOfAssessments to 2, for each exercise 2 assessmetns will be created. In total there will be 4 assessments then. (by two
+     *                                          different tutors, as each exercise is assessed by an individual tutor. There are 4 tutors that create assessments)
      * @param numberOfComplaints            generates the complaints for assessments, in the same way as results are created.
      * @param typeComplaint                 true: complaintType==COMPLAINT | false: complaintType==MORE_FEEDBACK
      * @param numberComplaintResponses      generates responses for the complaint/feedback request (as above)
@@ -4472,7 +4472,8 @@ public class DatabaseUtilService {
 
     /**
      * Update the max complaint text limit of the course.
-     * @param course course which is updated
+     *
+     * @param course             course which is updated
      * @param complaintTextLimit new complaint text limit
      * @return updated course
      */
@@ -4484,7 +4485,8 @@ public class DatabaseUtilService {
 
     /**
      * Update the max complaint response text limit of the course.
-     * @param course course which is updated
+     *
+     * @param course                     course which is updated
      * @param complaintResponseTextLimit new complaint response text limit
      * @return updated course
      */

@@ -44,9 +44,9 @@ public class LtiDynamicRegistrationService {
     /**
      * Performs dynamic registration.
      *
-     * @param course the online course to register as an LTI1.3 tool
+     * @param course                 the online course to register as an LTI1.3 tool
      * @param openIdConfigurationUrl the url to get the configuration from
-     * @param registrationToken the token to be used to authenticate the POST request
+     * @param registrationToken      the token to be used to authenticate the POST request
      */
     public void performDynamicRegistration(Course course, String openIdConfigurationUrl, String registrationToken) {
         if (!course.isOnlineCourse() || course.getOnlineCourseConfiguration() == null) {

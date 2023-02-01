@@ -56,7 +56,7 @@ public class SubmissionVersionService {
      *
      * @param submission Submission for which to save a version
      * @param user       Author of the submission update
-     * @return           created/updated submission version
+     * @return created/updated submission version
      */
     public SubmissionVersion saveVersionForIndividual(Submission submission, User user) {
         SubmissionVersion version = new SubmissionVersion();

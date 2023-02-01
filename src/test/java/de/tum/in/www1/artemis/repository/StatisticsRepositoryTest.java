@@ -42,6 +42,7 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     /**
      * Tests that filterDuplicatedUsers() works as intended for logged in students with weekly and quarterly view.
+     *
      * @param spanType the different views (either weekly or quarterly)
      */
     @ParameterizedTest
@@ -90,6 +91,7 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     /**
      * Tests how getNumberOfEntriesPerTimeSlot() handles views that are not expected for on different graph types
+     *
      * @param graphType The graph type that is tested. Note that not all possible graph types are tested, as some cover every possible view in the code already
      */
     @ParameterizedTest
@@ -139,6 +141,7 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     /**
      * A helper method in order to prevent code duplication for comparison of StatisticEntries
+     *
      * @param entry1 the first entry to compare
      * @param entry2 the second entry to compare
      * @return true if both entries contain the same day and amount, false otherwise
@@ -149,6 +152,7 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     /**
      * Setup method in order to prevent code duplication for initialisation of entry list
+     *
      * @return entry list used as input for tests
      */
     private List<StatisticsEntry> setupStatisticsEntryList() {
@@ -164,8 +168,9 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     /**
      * Creates persistent event for tests
+     *
      * @param principal the student login that should be used
-     * @param date the timestamp the login should be simulated
+     * @param date      the timestamp the login should be simulated
      * @return PersistentAuditEvent representing the login of the given user for at the given point in time
      */
     private PersistentAuditEvent setupPersistentEvent(String principal, ZonedDateTime date) {

@@ -132,6 +132,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
      * Build a combination of valid programming languages and project types.
      * Programming languages without project type only have one template, set null to use this one.
      * Programming languages with project type should be executed once per project type.
+     *
      * @return valid combinations of programming languages and project types.
      */
     private Stream<Arguments> languageTypeBuilder() {

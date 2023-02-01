@@ -213,13 +213,14 @@ public class RequestUtilService {
 
     /**
      * Mocks sending a request and returns response content as string
-     * @param path the url to send request to
-     * @param body the body of the request
-     * @param expectedStatus the status that the request will return
-     * @param httpHeaders headers of request
+     *
+     * @param path                    the url to send request to
+     * @param body                    the body of the request
+     * @param expectedStatus          the status that the request will return
+     * @param httpHeaders             headers of request
      * @param expectedResponseHeaders headers of response
-     * @param params parameters for multi value
-     * @param <T> Request type
+     * @param params                  parameters for multi value
+     * @param <T>                     Request type
      * @return Request content as string
      * @throws Exception
      */
