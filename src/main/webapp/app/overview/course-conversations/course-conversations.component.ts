@@ -5,12 +5,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, take, takeUntil } from 'rxjs';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { MetisService } from 'app/shared/metis/metis.service';
 
 @Component({
     selector: 'jhi-course-conversations',
     templateUrl: './course-conversations.component.html',
     styleUrls: ['./course-conversations.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    providers: [MetisService],
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();

@@ -27,7 +27,7 @@ import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/s
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
     styleUrls: ['course-overview.scss', './tab-bar/tab-bar.scss'],
-    providers: [MetisConversationService, MetisService],
+    providers: [MetisConversationService],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     private courseId: number;
