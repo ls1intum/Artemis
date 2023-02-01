@@ -34,6 +34,8 @@ public class PipelineGroovyBuildPlanCreator extends AbstractBuildPlanCreator {
 
     private static final String REPLACE_DOCKER_IMAGE_NAME = "#dockerImage";
 
+    private static final String REPLACE_DOCKER_ARGS = "#dockerArgs";
+
     public static final String REPLACE_IS_STATIC_CODE_ANALYSIS_ENABLED = "#isStaticCodeAnalysisEnabled";
 
     public static final String REPLACE_TESTWISE_COVERAGE = "#testWiseCoverage";
@@ -100,6 +102,7 @@ public class PipelineGroovyBuildPlanCreator extends AbstractBuildPlanCreator {
         replacements.put(REPLACE_TESTWISE_COVERAGE_GRADLE_TASK, testwiseCoverageAnalysisGradleTask);
         replacements.put(REPLACE_TESTWISE_COVERAGE_SCRIPT, testwiseCoverageAnalysisScript);
         replacements.put(REPLACE_DOCKER_IMAGE_NAME, programmingLanguageConfiguration.getImage(programmingLanguage, projectType));
+        replacements.put(REPLACE_DOCKER_ARGS, String.join(" ", programmingLanguageConfiguration.getDefaultDockerFlags()));
 
         return replacements;
     }

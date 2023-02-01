@@ -29,8 +29,20 @@ export class ExamExerciseGroupsPage {
         cy.get('#create-new-group').click();
     }
 
-    clickAddTextExercise() {
-        cy.get('#add-text-exercise').click();
+    clickAddTextExercise(groupIndex = 0) {
+        cy.get('#add-text-exercise-group-' + groupIndex).click();
+    }
+
+    clickAddModelingExercise(groupIndex = 0) {
+        cy.get('#add-modeling-exercise-group-' + groupIndex).click();
+    }
+
+    clickAddQuizExercise(groupIndex = 0) {
+        cy.get('#add-quiz-exercise-group-' + groupIndex).click();
+    }
+
+    clickAddProgrammingExercise(groupIndex = 0) {
+        cy.get('#add-programming-exercise-group-' + groupIndex).click();
     }
 
     visitPageViaUrl(courseId: number, examId: number) {

@@ -9,7 +9,7 @@
  */
 
 dockerImage = "#dockerImage"
-dockerFlags = ""
+dockerFlags = "#dockerArgs"
 
 /**
  * Main function called by Jenkins.

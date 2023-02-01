@@ -9,7 +9,7 @@
  */
 
 dockerImage = "#dockerImage"
-dockerFlags = ""
+dockerFlags = "#dockerArgs"
 
 isSolutionBuild = "${env.JOB_NAME}" ==~ /.+-SOLUTION$/
 

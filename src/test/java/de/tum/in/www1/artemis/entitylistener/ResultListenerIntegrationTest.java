@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
@@ -401,7 +402,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         // Wait for the scheduler to execute its task
         participantScoreScheduleService.executeScheduledTasks();
-        await().until(() -> participantScoreScheduleService.isIdle());
+        await().atMost(Duration.ofSeconds(30)).until(() -> participantScoreScheduleService.isIdle());
 
         var savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScores).isNotEmpty();
