@@ -51,7 +51,10 @@ private void test() {
 private void staticCodeAnalysis() {
     stage('Static Code Analysis') {
         sh '''
-        #staticCodeAnalysisScript
+        rm -rf staticCodeAnalysisReports
+        mkdir staticCodeAnalysisReports
+        cp .swiftlint.yml assignment || true
+        swiftlint lint assignment > staticCodeAnalysisReports/swiftlint-result.xml
         '''
     }
 }
