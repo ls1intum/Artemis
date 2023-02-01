@@ -11,6 +11,9 @@
 dockerImage = "#dockerImage"
 dockerFlags = ""
 
+isSolutionBuild = "${env.JOB_NAME}" ==~ /.+-SOLUTION$/
+isTemplateBuild = "${env.JOB_NAME}" ==~ /.+-BASE$/
+
 /**
  * Main function called by Jenkins.
  */
@@ -28,9 +31,41 @@ private void runTestSteps() {
  * Run unit tests
  */
 private void test() {
-    stage('Build') {
+    stage('Test') {
+        // ToDo: if (#testWiseCoverage && isSolutionBuild) { … } else { … }
+        if (#testWiseCoverage && isSolutionBuild) {
+            sh '''
+            mvn clean test -B -Pcoverage
+            '''
+        } else {
+            sh "mvn clean test -B"
+        }
+    }
+}
+
+/**
+ * Runs the static code analysis
+ */
+private void staticCodeAnalysis() {
+    stage("StaticCodeAnalysis") {
+        sh """
+        rm -rf staticCodeAnalysisReports
+        mkdir staticCodeAnalysisReports
+        mvn spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd
+        cp target/spotbugsXml.xml staticCodeAnalysisReports || true
+        cp target/checkstyle-result.xml staticCodeAnalysisReports || true
+        cp target/pmd.xml staticCodeAnalysisReports || true
+        cp target/cpd.xml staticCodeAnalysisReports || true
+        """
+    }
+}
+
+private void testwiseCoverage() {
+    success {
         sh '''
-        mvn clean test -B #testwiseCoverageMavenProfile
+        rm -rf testwiseCoverageReport
+        mkdir testwiseCoverageReport
+        mv target/tia/reports/*/*.json testwiseCoverageReport/
         '''
     }
 }
@@ -41,11 +76,17 @@ private void test() {
  * Called by Jenkins.
  */
 void postBuildTasks() {
-    sh '''
-    rm -rf results
-    mkdir results
-    cp target/surefire-reports/*.xml $WORKSPACE/results/ || true
-    '''
+    if (#isStaticCodeAnalysisEnabled) {
+        catchError() {
+            staticCodeAnalysis()
+        }
+    }
+    if (#testWiseCoverage && isSolutionBuild) {
+        testwiseCoverage()
+    }
+    sh 'rm -rf results'
+    sh 'mkdir results'
+    sh 'cp build/test-results/test/*.xml $WORKSPACE/results/ || true'
 }
 
 // very important, do not remove

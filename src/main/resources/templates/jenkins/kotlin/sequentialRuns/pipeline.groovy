@@ -21,19 +21,20 @@ void testRunner() {
 }
 
 private void runTestSteps() {
-    test()
+    testStructure()
+    testBehavior()
 }
 
-/**
- * Run unit tests
- */
-private void test() {
+private void testStructure() {
     stage('Structural Tests') {
         dir("structural") {
             sh 'mvn clean test -B'
         }
     }
-    stage('Behaviour Tests') {
+}
+
+private void testBehavior() {
+    stage('Behavior Tests') {
         dir("behavior") {
             sh 'mvn clean test -B'
         }
