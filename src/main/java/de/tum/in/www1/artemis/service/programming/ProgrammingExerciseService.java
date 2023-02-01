@@ -21,6 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +40,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
@@ -78,8 +80,6 @@ public class ProgrammingExerciseService {
 
     private final UserRepository userRepository;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final GroupNotificationService groupNotificationService;
 
     private final GroupNotificationScheduleService groupNotificationScheduleService;
@@ -104,15 +104,18 @@ public class ProgrammingExerciseService {
 
     private final ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
 
+    private final ExerciseSpecificationService exerciseSpecificationService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
-            ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            ResourceLoaderService resourceLoaderService, GroupNotificationService groupNotificationService, GroupNotificationScheduleService groupNotificationScheduleService,
+            ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, ResourceLoaderService resourceLoaderService,
+            GroupNotificationService groupNotificationService, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository) {
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
+            ExerciseSpecificationService exerciseSpecificationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -124,7 +127,6 @@ public class ProgrammingExerciseService {
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.userRepository = userRepository;
-        this.authCheckService = authCheckService;
         this.resourceLoaderService = resourceLoaderService;
         this.groupNotificationService = groupNotificationService;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
@@ -134,6 +136,7 @@ public class ProgrammingExerciseService {
         this.programmingExerciseSolutionEntryRepository = programmingExerciseSolutionEntryRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
+        this.exerciseSpecificationService = exerciseSpecificationService;
     }
 
     /**
@@ -950,33 +953,41 @@ public class ProgrammingExerciseService {
      * @param user           The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
+    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final boolean isCourseFilter, final boolean isExamFilter,
             final User user) {
-        final var pageable = PageUtil.createExercisePageRequest(search);
-        final var searchTerm = search.getSearchTerm();
-        Page<ProgrammingExercise> exercisePage = Page.empty();
-        if (authCheckService.isAdmin(user)) {
-            if (isCourseFilter && isExamFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesAndExams(searchTerm, pageable);
-            }
-            else if (isCourseFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCourses(searchTerm, pageable);
-            }
-            else if (isExamFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllExams(searchTerm, pageable);
-            }
+        if (!isCourseFilter && !isExamFilter) {
+            return new SearchResultPageDTO<>(Collections.emptyList(), 0);
         }
-        else {
-            if (isCourseFilter && isExamFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
-            else if (isCourseFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
-            else if (isExamFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
+        String searchTerm = search.getSearchTerm();
+        PageRequest pageable = PageUtil.createExercisePageRequest(search);
+        Specification<ProgrammingExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
+        return getAllOnPageForSpecification(pageable, specification);
+    }
+
+    /**
+     * Search for all programming exercises with SCA enabled and with a specific programming language.
+     *
+     * @param search              The search query defining the search term and the size of the returned page
+     * @param isCourseFilter      Whether to search in the courses for exercises
+     * @param isExamFilter        Whether to search in the groups for exercises
+     * @param user                The user for whom to fetch all available exercises
+     * @param programmingLanguage The result will only include exercises in this language
+     * @return A wrapper object containing a list of all found exercises and the total number of pages
+     */
+    public SearchResultPageDTO<ProgrammingExercise> getAllWithSCAOnPageWithSize(PageableSearchDTO<String> search, boolean isCourseFilter, boolean isExamFilter,
+            ProgrammingLanguage programmingLanguage, User user) {
+        if (!isCourseFilter && !isExamFilter) {
+            return new SearchResultPageDTO<>(Collections.emptyList(), 0);
         }
+        String searchTerm = search.getSearchTerm();
+        PageRequest pageable = PageUtil.createExercisePageRequest(search);
+        Specification<ProgrammingExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
+        specification = specification.and(exerciseSpecificationService.createSCAFilter(programmingLanguage));
+        return getAllOnPageForSpecification(pageable, specification);
+    }
+
+    private SearchResultPageDTO<ProgrammingExercise> getAllOnPageForSpecification(PageRequest pageable, Specification<ProgrammingExercise> specification) {
+        Page<ProgrammingExercise> exercisePage = programmingExerciseRepository.findAll(specification, pageable);
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 

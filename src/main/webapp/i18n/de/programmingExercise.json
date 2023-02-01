@@ -175,7 +175,11 @@
                     "updated": "Die Kategorien wurden erfolgreich gespeichert.",
                     "couldNotBeUpdated": "Die folgenden Kategorien konnten nicht gespeichert werden: {{categories}}.",
                     "resetSuccessful": "Die Kategorien wurden erfolgreich zurückgesetzt.",
-                    "resetFailed": "Die Kategorien konnten nicht zurückgesetzt werden."
+                    "resetFailed": "Die Kategorien konnten nicht zurückgesetzt werden.",
+                    "import": "Konfiguration übernehmen",
+                    "importLabel": "Konfiguration einer Aufgabe übernehmen",
+                    "importSuccessful": "Die Kategorien von Aufgabe {{exercise}} wurden erfolgreich übernommen.",
+                    "importFailed": "Die Kategorien von Aufgabe {{exercise}} konnten nicht übernommen werden."
                 },
                 "charts": {
                     "title": "Diagramme",

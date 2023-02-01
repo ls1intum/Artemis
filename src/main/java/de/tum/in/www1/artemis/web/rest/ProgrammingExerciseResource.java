@@ -627,9 +627,28 @@ public class ProgrammingExerciseResource {
     @GetMapping(PROGRAMMING_EXERCISES)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search,
-            @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter) {
+            @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
+    }
+
+    /**
+     * Search for programming exercises by id, title and course title. Only exercises with SCA enabled and the given programming language will be included.
+     * The result is pageable since there might be hundreds of exercises in the DB.
+     *
+     * @param search              The pageable search containing the page size, page number and query string
+     * @param isCourseFilter      Whether to search in the courses for exercises
+     * @param isExamFilter        Whether to search in the groups for exercises
+     * @param programmingLanguage Filters for only exercises with this language
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping(PROGRAMMING_EXERCISES + "/with-sca")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesWithSCAOnPage(PageableSearchDTO<String> search,
+            @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter,
+            @RequestParam ProgrammingLanguage programmingLanguage) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(programmingExerciseService.getAllWithSCAOnPageWithSize(search, isCourseFilter, isExamFilter, programmingLanguage, user));
     }
 
     /**
