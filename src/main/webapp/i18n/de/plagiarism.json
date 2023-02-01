@@ -45,6 +45,7 @@
             "loading": "Laden...",
             "fetchingResults": "Plagiate werden geladen...",
             "replyToAccusation": "Antwort auf den Vorwurf",
+            "replyToAccusationDeadlineNotification": "Sie haben bis zum {{ deadline }} Zeit, sich zu dem Vorwurf zu äußern",
             "cleanUp": {
                 "confirmDialog": {
                     "title": "Plagiatsvergleiche aufräumen",
