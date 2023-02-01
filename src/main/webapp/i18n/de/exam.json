@@ -3,7 +3,7 @@
         "exam": {
             "overview": {
                 "start": "Beginn: {{start}}",
-                "duration": "Arbeitzeit:",
+                "duration": "Arbeitszeit:",
                 "maxPoints": "Erreichbare Punkte: {{points}}",
                 "upcoming": "Demnächst stattfindende Klausur",
                 "imminent": "Die Klausur beginnt in",
@@ -382,7 +382,7 @@
             "testExam": {
                 "realExam": "Klausur",
                 "testExam": "Testklausur",
-                "examMode": "Exammodus",
+                "examMode": "Modus",
                 "examModeTooltip": "Testklausuren können von Studierenden an einem frei wählbaren Zeitpunkt innerhalb des Bearbeitungsfensters begonnen werden, zur Durchführung steht die gewählte Arbeitszeit zur Verfügung. Nach dem Durchlauf erhalten die Studierenden automatisiertes Feedback. HINWEIS: Der Modus kann nach der Erstellung nicht mehr geändert werden!",
                 "startDate": "Beginn Bearbeitungsfenster",
                 "endDate": "Ende Bearbeitungsfenster",
