@@ -30,9 +30,21 @@ private void runTestSteps() {
 /**
  * Run unit tests
  */
-private void test() {
-    stage('Test') {
-        sh "./gradlew clean test"
+void test() {
+    if (#isTestwise && solution) {
+        sh './gradlew clean test tiaTests --run-all-tests'
+    } else {
+        sh './gradlew clean test'
+    }
+}
+
+void testWiseCoverage() {
+    success {
+        sh '''
+        rm -rf testwiseCoverageReport
+        mkdir testwiseCoverageReport
+        mv build/reports/testwise-coverage/tiaTests/tiaTests.json testwiseCoverageReport/
+        '''
     }
 }
 
@@ -63,6 +75,9 @@ void postBuildTasks() {
         catchError {
             staticCodeAnalysis()
         }
+    }
+    if (#testWiseCoverage && isSolutionBuild) {
+        testwiseCoverage()
     }
     sh 'rm -rf results'
     sh 'mkdir results'

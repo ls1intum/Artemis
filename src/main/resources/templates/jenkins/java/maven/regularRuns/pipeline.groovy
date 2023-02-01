@@ -34,16 +34,12 @@ private void test() {
     stage('Test') {
         // ToDo: if (#testWiseCoverage && isSolutionBuild) { … } else { … }
         if (#testWiseCoverage && isSolutionBuild) {
-            success {
-                sh '''
-                rm -rf testwiseCoverageReport
-                mkdir testwiseCoverageReport
-                mv target/tia/reports/*/*.json testwiseCoverageReport/
-                '''
-            }
+            sh '''
+            mvn clean test -B -Pcoverage
+            '''
+        } else {
+            sh "mvn clean test -B"
         }
-
-        sh "mvn clean test -B"
     }
 }
 
@@ -64,6 +60,16 @@ private void staticCodeAnalysis() {
     }
 }
 
+private void testwiseCoverage() {
+    success {
+        sh '''
+        rm -rf testwiseCoverageReport
+        mkdir testwiseCoverageReport
+        mv target/tia/reports/*/*.json testwiseCoverageReport/
+        '''
+    }
+}
+
 /**
  * Script of the post build tasks aggregating all JUnit files in $WORKSPACE/results.
  *
@@ -74,6 +80,9 @@ void postBuildTasks() {
         catchError() {
             staticCodeAnalysis()
         }
+    }
+    if (#testWiseCoverage && isSolutionBuild) {
+        testwiseCoverage()
     }
     sh 'rm -rf results'
     sh 'mkdir results'

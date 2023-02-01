@@ -59,10 +59,6 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private static final String REPLACE_BUILD_PLAN_URL = "#buildPlanUrl";
 
-    private static final String REPLACE_IS_STATIC_CODE_ANALYSIS_ENABLED = "#isStaticCodeAnalysisEnabled";
-
-    private static final String REPLACE_IS_SOLUTION_BUILD = "#isSolutionBuild";
-
     private String artemisNotificationUrl;
 
     @Value("${artemis.continuous-integration.secret-push-token}")
