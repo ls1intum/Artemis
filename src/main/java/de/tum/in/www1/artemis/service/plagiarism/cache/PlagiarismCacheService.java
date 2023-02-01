@@ -19,6 +19,7 @@ public class PlagiarismCacheService {
 
     /**
      * Returns the status of the course.
+     *
      * @param courseId courseId used to identify the table entry
      * @return true if there is an active plagiarism check
      */
@@ -28,6 +29,7 @@ public class PlagiarismCacheService {
 
     /**
      * There is an active plagiarism check in this course. The course id is added.
+     *
      * @param courseId current course
      */
     public void setActivePlagiarismCheck(Long courseId) {
@@ -36,6 +38,7 @@ public class PlagiarismCacheService {
 
     /**
      * There is no active plagiarism check anymore. The course id is removed.
+     *
      * @param courseId current course
      */
     public void setInactivePlagiarismCheck(Long courseId) {

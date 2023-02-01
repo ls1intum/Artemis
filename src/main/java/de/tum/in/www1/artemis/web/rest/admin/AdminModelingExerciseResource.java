@@ -13,7 +13,9 @@ import de.tum.in.www1.artemis.service.ModelingExerciseService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
-/** REST controller for administrating ModelingExercise. */
+/**
+ * REST controller for administrating ModelingExercise.
+ */
 @RestController
 @RequestMapping("api/admin/")
 public class AdminModelingExerciseResource {
@@ -76,8 +78,7 @@ public class AdminModelingExerciseResource {
      * (clustering task) for given exercise id As the clustering can be performed on a different
      * node, this will always return 200, despite an error could occur on the other node.
      *
-     * @param exerciseId id of the exercised that for which the automatic assessment should be
-     *                   triggered
+     * @param exerciseId id of the exercised that for which the automatic assessment should be triggered
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("modeling-exercises/{exerciseId}/trigger-automatic-assessment")

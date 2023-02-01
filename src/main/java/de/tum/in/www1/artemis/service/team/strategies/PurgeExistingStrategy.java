@@ -22,7 +22,7 @@ public class PurgeExistingStrategy extends TeamImportStrategy {
      *
      * Conflicts are prevented trivially by first deleting all teams of the destination exercise.
      *
-     * @param sourceExercise Exercise from which to take the teams for the import
+     * @param sourceExercise      Exercise from which to take the teams for the import
      * @param destinationExercise Exercise in which to import the teams into
      */
     @Override
@@ -39,7 +39,7 @@ public class PurgeExistingStrategy extends TeamImportStrategy {
      * Conflicts are prevented trivially by first deleting all teams of the destination exercise.
      *
      * @param exercise Exercise from which to take the teams for the import
-     * @param teams Teams which to add to the exercise
+     * @param teams    Teams which to add to the exercise
      */
     @Override
     public void importTeams(Exercise exercise, List<Team> teams) {
@@ -53,7 +53,7 @@ public class PurgeExistingStrategy extends TeamImportStrategy {
      * Conflicts are prevented trivially by first deleting all teams of the destination exercise.
      *
      * @param exercise Exercise from which to take the teams for the import
-     * @param teams Teams which to add to the exercise
+     * @param teams    Teams which to add to the exercise
      */
     private void deleteExistingTeamsAndAddNewTeams(Exercise exercise, List<Team> teams) {
         // Delete participations of existing teams in destination exercise (must happen before deleting teams themselves)

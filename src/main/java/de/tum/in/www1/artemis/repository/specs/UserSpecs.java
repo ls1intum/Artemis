@@ -66,7 +66,7 @@ public class UserSpecs {
      * This method returns the selected authority specification based on the provided list of authorities.
      *
      * @param authorities provided authorities
-     * @param courseIds a set of courseIds which the users need to match
+     * @param courseIds   a set of courseIds which the users need to match
      * @return specification used to chain database operations
      */
     public static Specification<User> getAuthoritySpecification(Set<String> authorities, Set<Long> courseIds) {
@@ -105,7 +105,7 @@ public class UserSpecs {
     /**
      * Creates the specification to look for the user without Registration Numbers.
      *
-     * @param noRegistrationNumber true if the account should not have a registration number
+     * @param noRegistrationNumber   true if the account should not have a registration number
      * @param withRegistrationNumber true if the account should have a registration number
      * @return specification used to chain database operations
      */
@@ -181,7 +181,7 @@ public class UserSpecs {
      * Helper method to update the course join. We join the users with the course via the groups of the users and the authority groups of the courses.
      *
      * @param criteriaBuilder to build the criteria
-     * @param courseRoot used to get course data
+     * @param courseRoot      used to get course data
      * @param userToGroupJoin users joined with their groups
      */
     private static void updateAllUsersMatchingCoursesJoin(CriteriaBuilder criteriaBuilder, Root<Course> courseRoot, Join<User, String> userToGroupJoin) {
@@ -195,7 +195,7 @@ public class UserSpecs {
     /**
      * Creates the specification to find users that are part of any of the given courses.
      *
-     * @param courseIds a set of courseIds which the users need to match at least one
+     * @param courseIds   a set of courseIds which the users need to match at least one
      * @param authorities provided authorities
      * @return specification used to chain database operations
      */
@@ -214,7 +214,7 @@ public class UserSpecs {
     /**
      * Creates the specification for authorities and courses. We need to combine adapt the group by statement.
      *
-     * @param courseIds a set of courseIds which the users need to match at least one
+     * @param courseIds   a set of courseIds which the users need to match at least one
      * @param authorities set of possible authorities
      * @return specification used to chain database operations
      */

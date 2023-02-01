@@ -21,8 +21,8 @@ public class SyntaxTreeParser {
      * Create a syntax tree from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates a
      * syntax tree containing these UML model elements.
      *
-     * @param modelElements the model elements as JSON array
-     * @param relationships the relationship elements as JSON array
+     * @param modelElements     the model elements as JSON array
+     * @param relationships     the relationship elements as JSON array
      * @param modelSubmissionId the ID of the corresponding modeling submission
      * @return a syntax tree containing the parsed model elements and relationships
      * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
@@ -89,7 +89,7 @@ public class SyntaxTreeParser {
     /**
      * Parses the given JSON representation of a UML relationship to a SyntaxTreeLink Java object.
      *
-     * @param relationshipJson the JSON object containing the relationship
+     * @param relationshipJson      the JSON object containing the relationship
      * @param allSyntaxTreeElements a map containing all objects of the corresponding syntax tree, necessary for assigning source and target element of the relationships
      * @return the SyntaxTreeLink object parsed from the JSON object
      * @throws IOException when no class could be found in the classMap for the source and target ID in the JSON object

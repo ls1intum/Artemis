@@ -185,8 +185,8 @@ public class CourseService {
     /**
      * Note: The number of courses should not change
      *
-     * @param courses           the courses for which the participations should be fetched
-     * @param user              the user for which the participations should be fetched
+     * @param courses the courses for which the participations should be fetched
+     * @param user    the user for which the participations should be fetched
      */
     public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user) {
         Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
@@ -247,7 +247,7 @@ public class CourseService {
     }
 
     /**
-     * Get all courses with exercises, lectures  and exams (filtered for given user)
+     * Get all courses with exercises, lectures and exams (filtered for given user)
      *
      * @param user the user entity
      * @return an unmodifiable list of all courses including exercises, lectures and exams for the user
@@ -305,14 +305,14 @@ public class CourseService {
     /**
      * Deletes all elements associated with the course including:
      * <ul>
-     *     <li>The Course</li>
-     *     <li>All Exercises including:
-     *      submissions, participations, results, repositories and build plans, see {@link ExerciseDeletionService#delete}</li>
-     *     <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
-     *     <li>All GroupNotifications of the course, see {@link GroupNotificationRepository#delete}</li>
-     *     <li>All default groups created by Artemis, see {@link UserService#deleteGroup}</li>
-     *     <li>All Exams, see {@link ExamService#delete}</li>
-     *     <li>The Grading Scale if such exists, see {@link GradingScaleRepository#delete}</li>
+     * <li>The Course</li>
+     * <li>All Exercises including:
+     * submissions, participations, results, repositories and build plans, see {@link ExerciseDeletionService#delete}</li>
+     * <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
+     * <li>All GroupNotifications of the course, see {@link GroupNotificationRepository#delete}</li>
+     * <li>All default groups created by Artemis, see {@link UserService#deleteGroup}</li>
+     * <li>All Exams, see {@link ExamService#delete}</li>
+     * <li>The Grading Scale if such exists, see {@link GradingScaleRepository#delete}</li>
      * </ul>
      *
      * @param course the course to be deleted
@@ -430,9 +430,9 @@ public class CourseService {
      * This method first tries to find the user in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
      *
-     * @param courseId      the id of the course
-     * @param studentDTOs   the list of students (with at least registration number)
-     * @param courseGroup   the group the students should be added to
+     * @param courseId    the id of the course
+     * @param studentDTOs the list of students (with at least registration number)
+     * @param courseGroup the group the students should be added to
      * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
     public List<StudentDTO> registerUsersForCourseGroup(Long courseId, List<StudentDTO> studentDTOs, String courseGroup) {
@@ -471,8 +471,8 @@ public class CourseService {
      *
      * @param exerciseIds the ids to get the active students for
      * @param periodIndex the deviation from the current time
-     * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 17 for the course detail view
-     * @param date the date for which the active students' calculation should end (e.g. now)
+     * @param length      the length of the chart which we want to fill. This can either be 4 for the course overview or 17 for the course detail view
+     * @param date        the date for which the active students' calculation should end (e.g. now)
      * @return An Integer list containing active students for each index. An index corresponds to a week
      */
     public List<Integer> getActiveStudents(Set<Long> exerciseIds, long periodIndex, int length, ZonedDateTime date) {
@@ -504,7 +504,7 @@ public class CourseService {
      * This method compares the values and returns a List<StatisticsEntry> without duplicated entries.
      *
      * @param activeUserRows a list of entries
-     * @param startDate the startDate of the period
+     * @param startDate      the startDate of the period
      * @return a List<StatisticsEntry> containing date and amount of active users in this period
      */
 
@@ -752,8 +752,8 @@ public class CourseService {
     /**
      * Search for users of all user groups by login or name in course
      *
-     * @param course        Course in which to search students
-     * @param nameOfUser    Login or name by which to search students
+     * @param course     Course in which to search students
+     * @param nameOfUser Login or name by which to search students
      * @return users whose login matched
      */
     public List<User> searchOtherUsersNameInCourse(Course course, String nameOfUser) {
@@ -783,6 +783,7 @@ public class CourseService {
 
     /**
      * checks if the given group exists in the authentication provider, only on production systems
+     *
      * @param group the group that should be available
      */
     public void checkIfGroupsExists(String group) {
@@ -798,6 +799,7 @@ public class CourseService {
     /**
      * If the corresponding group (student, tutor, editor, instructor) is not defined, this method will create the default group.
      * If the group is defined, it will check that the group exists
+     *
      * @param course the course (typically created on the client and not yet existing) for which the groups should be validated
      */
     public void createOrValidateGroups(Course course) {
@@ -852,6 +854,7 @@ public class CourseService {
 
     /**
      * Special case for editors: checks if the default editor group needs to be created when old courses are edited
+     *
      * @param course the course for which the default editor group will be created if it does not exist
      */
     public void checkIfEditorGroupsNeedsToBeCreated(Course course) {
@@ -882,6 +885,7 @@ public class CourseService {
     /**
      * Determines end date for the displayed time span of active student charts
      * If the course end date is passed, only information until this date are collected and sent
+     *
      * @param course the corresponding course the active students should be collected
      * @return end date of the time span
      */
@@ -897,8 +901,9 @@ public class CourseService {
      * Determines the allowed time span for active student charts
      * The span time can be restricted if the temporal distance between the course start date
      * and the priorly determined end date is smaller than the intended time frame
-     * @param course the corresponding course the time frame should be computed
-     * @param endDate the priorly determined end date of the time span
+     *
+     * @param course      the corresponding course the time frame should be computed
+     * @param endDate     the priorly determined end date of the time span
      * @param maximalSize the normal time span size
      * @return the allowed time span size
      */
@@ -914,8 +919,9 @@ public class CourseService {
     /**
      * Auxiliary method that returns the number of weeks between two dates
      * Note: The calculation includes the week of the end date. This is needed for the active students line charts
+     *
      * @param startDate the start date of the period to calculate
-     * @param endDate the end date of the period to calculate
+     * @param endDate   the end date of the period to calculate
      * @return the number of weeks the period contains + one week
      */
     public long calculateWeeksBetweenDates(ZonedDateTime startDate, ZonedDateTime endDate) {
@@ -927,7 +933,7 @@ public class CourseService {
     /**
      * Helper method which removes some values from the user entity which are not needed in the client
      *
-     * @param usersInGroup  user whose variables are removed
+     * @param usersInGroup user whose variables are removed
      */
     private void removeUserVariables(List<User> usersInGroup) {
         usersInGroup.forEach(user -> {

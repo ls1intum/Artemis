@@ -65,7 +65,7 @@ public class Lti10Service {
     /**
      * Checks if an LTI request is correctly signed via OAuth with the secret
      *
-     * @param request The request to check
+     * @param request                   The request to check
      * @param onlineCourseConfiguration The configuration containing the secret used to verify the request
      * @return null if the request is valid, otherwise an error message which indicates the reason why the verification failed
      */
@@ -99,8 +99,8 @@ public class Lti10Service {
      * Performs an LTI 1.0 exercise launch with the LTI parameters contained in launchRequest.
      * If the launch was successful the user is added to the target exercise group (e.g. the course).
      *
-     * @param launchRequest the launch request
-     * @param exercise the target exercise for the launch request
+     * @param launchRequest             the launch request
+     * @param exercise                  the target exercise for the launch request
      * @param onlineCourseConfiguration the online configuration for the course the exercise belongs to
      */
     public void performLaunch(LtiLaunchRequestDTO launchRequest, Exercise exercise, OnlineCourseConfiguration onlineCourseConfiguration) {
@@ -196,7 +196,7 @@ public class Lti10Service {
      * Build the response for the LTI launch.
      *
      * @param uriComponentsBuilder the uri builder to add the query params to
-     * @param response the response to add the JWT cookie to
+     * @param response             the response to add the JWT cookie to
      */
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         ltiService.buildLtiResponse(uriComponentsBuilder, response);

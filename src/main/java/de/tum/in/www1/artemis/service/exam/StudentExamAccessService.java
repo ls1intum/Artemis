@@ -56,11 +56,11 @@ public class StudentExamAccessService {
     /**
      * Checks if the current user is allowed to see the requested student exam.
      *
-     * @param courseId      the if of the course
-     * @param examId        the id of the exam
-     * @param studentExam   the student exam. NOTE: This must be fetched from the database and
-     *                      MUST NOT be taken from a client request as this could be a security issue
-     * @param currentUser   the current user
+     * @param courseId    the if of the course
+     * @param examId      the id of the exam
+     * @param studentExam the student exam. NOTE: This must be fetched from the database and
+     *                        MUST NOT be taken from a client request as this could be a security issue
+     * @param currentUser the current user
      */
     public void checkStudentExamAccessElseThrow(Long courseId, Long examId, StudentExam studentExam, User currentUser) {
         checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, studentExam.isTestRun(), false);
@@ -83,7 +83,8 @@ public class StudentExamAccessService {
      * @param examId          the id of the exam
      * @param currentUser     the user
      * @param isTestRun       flag to determine if this is a testRun
-     * @param checkRegistered if the method should check that the user is registered for the exam; can be set to false for example if it has been verified that a student exam exists
+     * @param checkRegistered if the method should check that the user is registered for the exam; can be set to false for example if it has been verified that a student exam
+     *                            exists
      */
     public void checkCourseAndExamAccessElseThrow(Long courseId, Long examId, User currentUser, boolean isTestRun, boolean checkRegistered) {
         // Check that the exam exists
@@ -121,7 +122,8 @@ public class StudentExamAccessService {
 
     /**
      * Checks if the user is allowed to access the course
-     * @param courseId the corresponding courseId
+     *
+     * @param courseId    the corresponding courseId
      * @param currentUser the user for which the access should be checked
      */
     public void checkCourseAccessForStudentElseThrow(Long courseId, User currentUser) {

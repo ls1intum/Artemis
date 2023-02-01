@@ -61,10 +61,10 @@ public class LtiService {
     /**
      * Signs in the LTI user into the exercise app. If necessary, it will create a user.
      *
-     * @param email the user's email
-     * @param username the user's username if we create a new user
-     * @param firstName the user's firstname if we create a new user
-     * @param lastName the user's lastname if we create a new user
+     * @param email               the user's email
+     * @param username            the user's username if we create a new user
+     * @param firstName           the user's firstname if we create a new user
+     * @param lastName            the user's lastname if we create a new user
      * @param requireExistingUser false if it's not allowed to create new users
      * @throws InternalAuthenticationServiceException if no email is provided, or if no user can be authenticated, this exception will be thrown
      */
@@ -128,7 +128,7 @@ public class LtiService {
     /**
      * Handler for successful LTI auth. Adds the groups to the user
      *
-     * @param user The user that is authenticated
+     * @param user     The user that is authenticated
      * @param exercise Exercise to launch
      */
     public void onSuccessfulLtiAuthentication(User user, Exercise exercise) {
@@ -164,7 +164,7 @@ public class LtiService {
      * Build the response for the LTI launch to include the necessary query params and the JWT cookie.
      *
      * @param uriComponentsBuilder the uri builder to add the query params to
-     * @param response the response to add the JWT cookie to
+     * @param response             the response to add the JWT cookie to
      */
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         User user = userRepository.getUser();
