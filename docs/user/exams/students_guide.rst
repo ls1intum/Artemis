@@ -343,7 +343,7 @@ Example Solutions
 
    Example Solutions
 
-- For programming exercises, clicking ``Download Repo`` button will download the solution repository.
+- For programming exercises, clicking ``Download Example Solution`` button will download the solution repository.
 
 .. figure:: student/exam_example_solution_programming.png
    :alt: Example Solution for a Programming Exercise
