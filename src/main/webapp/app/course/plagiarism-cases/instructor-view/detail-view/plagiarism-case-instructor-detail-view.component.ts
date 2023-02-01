@@ -14,9 +14,9 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faCheck, faInfo, faPrint, faUser } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { abbreviateString } from 'app/utils/text.utils';
-import { capitalize } from 'lodash-es';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
+import dayjs from 'dayjs';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -201,8 +201,6 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         this.createdPost = this.metisService.createEmptyPostForContext(undefined, undefined, undefined, this.plagiarismCase);
         // Note the limit of 1.000 characters for the post's content
         this.createdPost.title = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.title', {
-            inCourseOrExam: capitalize(this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.' + (belongsToExam ? 'inExam' : 'inCourse'))),
-            courseOrExam: courseOrExamTitle,
             exercise: exerciseTitle,
         });
         this.createdPost.content = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.body', {
@@ -212,7 +210,8 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             inCourseOrExam: this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.' + (belongsToExam ? 'inExam' : 'inCourse')),
             courseOrExam: courseOrExamTitle,
             cocLink: 'https://www.in.tum.de/fileadmin/w00bws/in/2.Fur_Studierende/Pruefungen_und_Formalitaeten/1.Gute_studentische_Praxis/englisch/leitfaden-en_2016Jun22.pdf',
-            aspoLink: 'https://nextcloud.in.tum.de/index.php/s/XKXSen5zBEobF3q',
+            aspoLink: 'https://portal.mytum.de/archiv/kompendium_rechtsangelegenheiten/apso/Lesb-F-APSO-vom-18-03-2011-mit-3-AeS-vom-27-04-18-ohne-Markierungen.pdf',
+            deadline: dayjs().add(7, 'day').format('DD.MM.YYYY'),
         });
     }
 
