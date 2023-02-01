@@ -7,8 +7,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
@@ -31,11 +34,21 @@ public class ExamUserResource {
 
     private final ExamAccessService examAccessService;
 
-    public ExamUserResource(UserRepository userRepository, FileService fileService, ExamAccessService examAccessService, ExamUserRepository examUserRepository) {
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final CourseRepository courseRepository;
+
+    private final ExamUserService examUserService;
+
+    public ExamUserResource(ExamUserService examUserService, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, FileService fileService,
+            ExamAccessService examAccessService, ExamUserRepository examUserRepository, CourseRepository courseRepository) {
         this.userRepository = userRepository;
         this.fileService = fileService;
         this.examUserRepository = examUserRepository;
         this.examAccessService = examAccessService;
+        this.authorizationCheckService = authorizationCheckService;
+        this.courseRepository = courseRepository;
+        this.examUserService = examUserService;
     }
 
     /**
@@ -71,5 +84,20 @@ public class ExamUserResource {
         }
 
         return ResponseEntity.ok().body(examUser);
+    }
+
+    /**
+     * POST courses/{courseId}/exams/{examId}/exam-users-parse-pdf : Parse pdf and get exam user data
+     * todo: write javadoc and return proper response
+     */
+    @PostMapping("courses/{courseId}/exams/{examId}/exam-users-parse-pdf")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public void getUsersDataFromPDF(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam("file") MultipartFile file) {
+        log.debug("REST request to parse pdf : {}", file.getOriginalFilename());
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
+        examUserService.parsePDF(file);
     }
 }
