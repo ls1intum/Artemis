@@ -171,6 +171,6 @@ describe('PostComponent', () => {
         fixture.detectChanges();
         const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent, 'openCreateAnswerPostModal');
         component.openCreateAnswerPostModal();
-        expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledTimes(1);
+        expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
     });
 });
