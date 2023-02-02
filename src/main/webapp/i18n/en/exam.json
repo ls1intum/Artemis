@@ -1,6 +1,18 @@
 {
     "artemisApp": {
         "exam": {
+            "examUsers": {
+                "uploadImage": "Upload images",
+                "uploadImageTooltip": "Upload images for the registered students",
+                "introText": "This dialog can be used to upload pdf file and extract images for registered students.",
+                "dialogText": "Each entry in the input file must contain a value for either matriculation number, login or email.\nValues for last and first name are optional.",
+                "pdfExampleText": "Example of a valid PDF file format:",
+                "pdfFile": {
+                    "label": "Select .pdf file",
+                    "tooltip": "Please select a .pdf file containing registered students image and matriculation number."
+                },
+                "dialogTitle": "Upload images"
+            },
             "overview": {
                 "start": "Start: {{start}}",
                 "duration": "Working Time:",

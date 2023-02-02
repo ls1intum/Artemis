@@ -4,7 +4,6 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
 import { ExamUserDTO } from 'app/entities/exam-user-dto.mode';
-import { ExamUser } from 'app/entities/exam-user.model';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -25,7 +24,6 @@ const POSSIBLE_ROOM_HEADERS = ['actualroom', 'actualRoom', 'raum', 'room', 'Room
 const POSSIBLE_SEAT_HEADERS = ['actualseat', 'actualSeat', 'sitzplatz', 'sitz', 'seat', 'Seat'];
 
 type CsvUser = object;
-type PdfUser = object;
 
 @Component({
     selector: 'jhi-users-import-dialog',
@@ -84,59 +82,15 @@ export class UsersImportDialogComponent implements OnDestroy {
         this.hasImported = false;
     }
 
-    async onFileSelect(event: any) {
+    async onCSVFileSelect(event: any) {
         if (event.target.files.length > 0) {
-            const fileList = event.target.files;
             this.resetDialog();
             if (this.examUserMode) {
-                this.examUsersToImport =
-                    fileList[0].type === 'application/pdf'
-                        ? await this.readUsersFromPDFFile(event, event.target.files[0])
-                        : await this.readUsersFromCSVFile(event, event.target.files[0]);
+                this.examUsersToImport = await this.readUsersFromCSVFile(event, event.target.files[0]);
             } else {
                 this.usersToImport = await this.readUsersFromCSVFile(event, event.target.files[0]);
             }
         }
-    }
-
-    // todo: refactor this method and write jsdoc
-    private async readUsersFromPDFFile(event: any, pdfFile: File): Promise<ExamUserDTO[]> {
-        const pdfUsers: PdfUser[] = [];
-        try {
-            this.isParsing = true;
-            this.validationError = undefined;
-            // todo 1: parse pdf file
-            // pdfUsers = await this.parseCSVFile(csvFile);
-        } catch (error) {
-            this.validationError = error.message;
-        } finally {
-            this.isParsing = false;
-        }
-        if (pdfUsers.length > 0) {
-            // todo 2: perform validations
-            // this.performExtraValidations(csvFile, csvUsers);
-        } else if (pdfUsers.length === 0) {
-            this.noUsersFoundError = true;
-        }
-        if (this.validationError || pdfUsers.length === 0) {
-            event.target.value = ''; // remove selected file so user can fix the file and select it again
-            return [];
-        }
-
-        console.log('examUserMode PDF');
-        // todo 3: return list of ExamUserDTOs
-        return pdfUsers.map(
-            (users) =>
-                ({
-                    registrationNumber: '',
-                    login: '',
-                    email: '',
-                    firstName: '',
-                    lastName: '',
-                    room: '',
-                    seat: '',
-                } as ExamUserDTO),
-        );
     }
 
     /**
@@ -178,7 +132,6 @@ export class UsersImportDialogComponent implements OnDestroy {
         const seatHeader = usedHeaders.find((value) => POSSIBLE_SEAT_HEADERS.includes(value)) || '';
 
         if (this.examUserMode) {
-            console.log('examUserMode');
             return csvUsers.map(
                 (users) =>
                     ({
@@ -253,13 +206,6 @@ export class UsersImportDialogComponent implements OnDestroy {
         return invalidList.length === 0 ? undefined : invalidList.join(', ');
     }
 
-    // todo: refactor this method to use the new PDFUser interface
-    private parsePDFFile(pdfFile: File): Promise<PdfUser[]> {
-        return new Promise((resolve, reject) => {
-            // todo 1*: use pdfjs to parse the pdf file
-        });
-    }
-
     /**
      * Parses a csv file and returns a promise with a list of rows
      * @param csvFile File that should be parsed
@@ -292,7 +238,6 @@ export class UsersImportDialogComponent implements OnDestroy {
                 error: () => this.onSaveError(),
             });
         } else if (!this.courseGroup && this.exam) {
-            console.log('examUserMode1111::::');
             this.examManagementService.addStudentsToExam(this.courseId, this.exam.id!, this.examUsersToImport).subscribe({
                 next: (res) => this.onSaveSuccess(res),
                 error: () => this.onSaveError(),

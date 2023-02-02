@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { onError } from 'app/shared/util/global.utils';
 import { Observable, Subject, Subscription, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { User } from 'app/core/user/user.model';
@@ -14,7 +15,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faInfoCircle, faPlus, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faPlus, faUpload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -36,6 +37,8 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
 
     courseId: number;
     exam: Exam;
+    file: File;
+    dataWithImages: any[] = [];
     isTestExam: boolean;
     allRegisteredUsers: any[] = [];
     filteredUsersSize = 0;
@@ -57,6 +60,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     faPlus = faPlus;
     faUserSlash = faUserSlash;
     faInfoCircle = faInfoCircle;
+    faUpload = faUpload;
 
     constructor(
         private router: Router,

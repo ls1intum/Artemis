@@ -117,7 +117,7 @@ public class ExamUserResource {
      *
      * @param courseId     the id of the course
      * @param examId       the id of the exam
-     * @return list of examUsersWithImage ResponseEntity with status 200 (OK)
+     * @return list of not found examUsersWithImage ResponseEntity with status 200 (OK)
      */
     @PostMapping("courses/{courseId}/exams/{examId}/exam-users-save-image")
     @PreAuthorize("hasRole('INSTRUCTOR')")

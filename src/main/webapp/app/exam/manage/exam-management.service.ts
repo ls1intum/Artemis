@@ -221,6 +221,28 @@ export class ExamManagementService {
     }
 
     /**
+     * Upload images for registered students
+     * @param courseId
+     * @param examId
+     * @param dataWithImages
+     * @return dataWithImages of students that were not found in the system
+     */
+    uploadImagesForRegisteredStudents(courseId: number, examId: number, dataWithImages: any[]): Observable<HttpResponse<any[]>> {
+        return this.http.post<any[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users-save-image`, dataWithImages, { observe: 'response' });
+    }
+
+    /**
+     * Parse pdf file with student images
+     * @param courseId
+     * @param examId
+     * @param formData
+     * @return dataWithImages of students that were not found in the system
+     */
+    parsePDFFile(courseId: number, examId: number, formData: FormData): Observable<HttpResponse<any[]>> {
+        return this.http.post<any[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users-parse-pdf`, formData, { observe: 'response' });
+    }
+
+    /**
      * Remove a student from the registered users for an exam
      * @param courseId The course id
      * @param examId The id of the exam from which to remove the student

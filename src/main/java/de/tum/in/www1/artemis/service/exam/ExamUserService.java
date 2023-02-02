@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserWithImageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ImageDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service Implementation for managing Exam Users.
@@ -96,16 +97,21 @@ public class ExamUserService {
 
         examUserWithImageDTOs.forEach(examUserWithImageDTO -> {
             Optional<User> user = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(examUserWithImageDTO.studentRegistrationNumber());
-            if (user.isEmpty()) {
-                notFoundExamUsersWithImageDTOs.add(examUserWithImageDTO);
+            if (user.isPresent()) {
+                ExamUser examUser = examUserRepository.findByExamIdAndUserId(examId, user.get().getId());
+                if (examUser == null) {
+                    notFoundExamUsersWithImageDTOs.add(examUserWithImageDTO);
+                }
+                else {
+                    MultipartFile file = fileService.convertByteArrayToMultipart(examUserWithImageDTO.studentRegistrationNumber() + "_student_image", ".png",
+                            examUserWithImageDTO.image().imageInBytes());
+                    String responsePath = fileService.handleSaveFile(file, false, false);
+                    examUser.setStudentImagePath(responsePath);
+                    examUserRepository.save(examUser);
+                }
             }
             else {
-                ExamUser examUser = examUserRepository.findByExamIdAndUserId(examId, user.get().getId());
-                MultipartFile file = fileService.convertByteArrayToMultipart(examUserWithImageDTO.studentRegistrationNumber() + "_student_image", ".png",
-                        examUserWithImageDTO.image().imageInBytes());
-                String responsePath = fileService.handleSaveFile(file, false, false);
-                examUser.setStudentImagePath(responsePath);
-                examUserRepository.save(examUser);
+                throw new EntityNotFoundException("User" + examUserWithImageDTO.studentRegistrationNumber() + " not found");
             }
         });
         return notFoundExamUsersWithImageDTOs;
