@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +27,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
@@ -50,14 +52,20 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
+    @Autowired
+    private CourseRepository courseRepository;
+
     private ProgrammingExercise programmingExerciseSCAEnabled;
 
     private ProgrammingExercise programmingExercise;
 
+    private Course course;
+
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         programmingExerciseSCAEnabled = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        course = courseRepository.findWithEagerExercisesById(programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember().getId());
         var tempProgrammingEx = ModelFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1),
                 programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember());
         programmingExercise = programmingExerciseRepository.save(tempProgrammingEx);
@@ -315,5 +323,87 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(result.getFeedbacks().iterator().next().getStaticCodeAnalysisCategory()).isEqualTo("Bad Practice");
         assertThat(new ObjectMapper().readValue(result.getFeedbacks().iterator().next().getDetailText(), StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue.class).getPenalty())
                 .isEqualTo(3.0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testImportCategories() throws Exception {
+        ProgrammingExercise sourceExercise = database.addProgrammingExerciseToCourse(course, true);
+        staticCodeAnalysisService.createDefaultCategories(sourceExercise);
+
+        var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(sourceExercise.getId());
+        for (var category : categories) {
+            category.setState(CategoryState.GRADED);
+            double rand1 = ThreadLocalRandom.current().nextDouble(10);
+            double rand2 = ThreadLocalRandom.current().nextDouble(10);
+            category.setMaxPenalty(Math.max(rand1, rand2));
+            category.setPenalty(Math.min(rand1, rand2));
+        }
+
+        staticCodeAnalysisCategoryRepository.saveAll(categories);
+
+        ProgrammingExercise exerciseWithSolutionParticipation = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseSCAEnabled.getId()).get();
+        bambooRequestMockProvider.mockTriggerBuild(exerciseWithSolutionParticipation.getSolutionParticipation());
+        bambooRequestMockProvider.mockTriggerBuild(exerciseWithSolutionParticipation.getTemplateParticipation());
+
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.IMPORT, programmingExerciseSCAEnabled);
+        var newCategories = request.patchWithResponseBodyList(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, StaticCodeAnalysisCategory.class, HttpStatus.OK);
+
+        assertThat(newCategories).hasSameSizeAs(categories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "id").containsAll(categories);
+        assertThat(newCategories).allSatisfy(category -> assertThat(category.getExercise().getId()).isEqualTo(programmingExerciseSCAEnabled.getId()));
+
+        var savedCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExerciseSCAEnabled.getId());
+        assertThat(savedCategories).hasSameSizeAs(newCategories).containsAll(newCategories);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testImportCategories_noSCASource() throws Exception {
+        ProgrammingExercise sourceExercise = database.addProgrammingExerciseToCourse(course, false);
+
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.IMPORT, programmingExerciseSCAEnabled);
+        request.patch(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testImportCategories_noSCATarget() throws Exception {
+        ProgrammingExercise sourceExercise = database.addProgrammingExerciseToCourse(course, true);
+        ProgrammingExercise targetExerciseNoSCA = database.addProgrammingExerciseToCourse(course, false);
+
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.IMPORT, targetExerciseNoSCA);
+        request.patch(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "EDITOR")
+    void testImportCategories_asTutor() throws Exception {
+        ProgrammingExercise sourceExercise = database.addProgrammingExerciseToCourse(course, false);
+
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.IMPORT, programmingExerciseSCAEnabled);
+        request.patch(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testImportCategories_differentLanguages() throws Exception {
+        ProgrammingExercise sourceExercise = database.addProgrammingExerciseToCourse(course, true, false, ProgrammingLanguage.SWIFT);
+
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.IMPORT, programmingExerciseSCAEnabled);
+        request.patch(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testImportCategories_asEditor_wrongCourse() throws Exception {
+        Course otherCourse = database.addCourseWithOneProgrammingExercise(true);
+        otherCourse.setEditorGroupName("otherEditorGroup");
+        otherCourse.setInstructorGroupName("otherInstructorGroup");
+        courseRepository.save(otherCourse);
+        Exercise sourceExercise = otherCourse.getExercises().iterator().next();
+
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.IMPORT, programmingExerciseSCAEnabled);
+        request.patch(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, HttpStatus.FORBIDDEN);
     }
 }

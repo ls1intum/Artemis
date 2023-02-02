@@ -160,7 +160,7 @@ public class SAML2Properties {
     /**
      * Sets the language key pattern.
      *
-     * @param langKeyPattern  The language key pattern
+     * @param langKeyPattern The language key pattern
      */
     public void setLangKeyPattern(String langKeyPattern) {
         this.langKeyPattern = langKeyPattern;

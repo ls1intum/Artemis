@@ -172,13 +172,10 @@ export class ExerciseGroupsComponent implements OnInit {
             backdrop: 'static',
         });
         importModalRef.componentInstance.exerciseType = exerciseType;
-        importModalRef.result.then(
-            (result: Exercise) => {
-                importBaseRoute.push(result.id);
-                this.router.navigate(importBaseRoute);
-            },
-            () => {},
-        );
+        importModalRef.result.then((result: Exercise) => {
+            importBaseRoute.push(result.id);
+            this.router.navigate(importBaseRoute);
+        });
     }
 
     /**

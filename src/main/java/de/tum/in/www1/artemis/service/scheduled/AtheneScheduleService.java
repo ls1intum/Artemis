@@ -68,6 +68,7 @@ public class AtheneScheduleService {
 
     /**
      * Schedule an Athene task for a text exercise with its due date if automatic assessments are enabled and its due date is in the future.
+     *
      * @param exercise exercise to schedule Athene for
      */
     public void scheduleExerciseForAtheneIfRequired(TextExercise exercise) {
@@ -96,6 +97,7 @@ public class AtheneScheduleService {
 
     /**
      * Schedule an Athene task for a text exercise to start immediately.
+     *
      * @param exercise exercise to schedule Athene for
      */
     public void scheduleExerciseForInstantAthene(TextExercise exercise) {
@@ -113,6 +115,7 @@ public class AtheneScheduleService {
 
     /**
      * Cancel possible schedules Athene tasks for a provided exercise.
+     *
      * @param exerciseId id of the exercise for which a potential Athene task is canceled
      */
     public void cancelScheduledAthene(Long exerciseId) {
@@ -125,6 +128,7 @@ public class AtheneScheduleService {
 
     /**
      * Checks if Athene is currently processing submissions of given exercise.
+     *
      * @param exercise Exercise to check state
      * @return currently computing Athene?
      */
