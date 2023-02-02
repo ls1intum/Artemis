@@ -48,6 +48,7 @@ public class TextClusterResource {
      * Get text-exercises/{exerciseId}/cluster-statistics/
      *
      * Get text cluster stats
+     *
      * @param exerciseId The id of the text exercise to fetch cluster statistics data from
      * @return The list of cluster ids adjacent to their respective sizes and automatically graded text blocks
      */
@@ -76,8 +77,8 @@ public class TextClusterResource {
      * Sets a text cluster's disabled boolean value
      *
      * @param exerciseId The id of the exercise the cluster belongs to
-     * @param clusterId The id of the cluster to be disabled/enabled
-     * @param disabled The predicate value defining the disabled state of the cluster
+     * @param clusterId  The id of the cluster to be disabled/enabled
+     * @param disabled   The predicate value defining the disabled state of the cluster
      * @return The status whether the boolean value was set successfully or the setting failed.
      */
     @PatchMapping("text-exercises/{exerciseId}/text-clusters/{clusterId}")

@@ -39,8 +39,8 @@ public class JWTFilter extends GenericFilterBean {
     /**
      * Checks if the cookie containing the jwt is valid
      *
-     * @param tokenProvider  the artemis token provider used to generate and validate jwt's
-     * @param jwtCookie the cookie containing the jwt
+     * @param tokenProvider the artemis token provider used to generate and validate jwt's
+     * @param jwtCookie     the cookie containing the jwt
      * @return true if the jwt is valid, false if missing or invalid
      */
     public static boolean isJwtCookieValid(TokenProvider tokenProvider, Cookie jwtCookie) {

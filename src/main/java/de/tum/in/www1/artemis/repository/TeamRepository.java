@@ -65,7 +65,8 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
 
     /**
      * Returns all teams for an exercise (optionally filtered for a specific tutor who owns the teams)
-     * @param exercise Exercise for which to return all teams
+     *
+     * @param exercise    Exercise for which to return all teams
      * @param teamOwnerId Optional user id by which to filter teams on their owner
      * @return List of teams
      */
@@ -82,7 +83,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
      * Saves a team to the database (and verifies before that none of the students is already assigned to another team)
      *
      * @param exercise Exercise which the team belongs to
-     * @param team Team to be saved
+     * @param team     Team to be saved
      * @return saved Team
      */
     default Team save(Exercise exercise, Team team) {
@@ -104,7 +105,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
      * Checks for each student in the given team whether they already belong to a different team
      *
      * @param exercise Exercise which the team belongs to
-     * @param team Team whose students should be checked for conflicts with other teams
+     * @param team     Team whose students should be checked for conflicts with other teams
      * @return list of conflict pairs <student, team> where team is a different team than in the argument
      */
     private List<Pair<User, Team>> findStudentTeamConflicts(Exercise exercise, Team team) {
