@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import org.hibernate.LazyInitializationException;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -176,13 +176,14 @@ public class CourseScoreCalculationService {
         for (Exercise exercise : course.getExercises()) {
             exercise.setCourse(course);
             StudentParticipation exerciseParticipation;
-            try {
+            // This method is used in the CourseResource where the course is first fetched with lazy participations, and participations are then fetched separately and added to the
+            // course if found.
+            // If no participations are found for the course, no value is set to the course's participations and trying to access them here would throw a
+            // LazyInitializationException.
+            if (Hibernate.isInitialized(exercise.getStudentParticipations())) {
                 exerciseParticipation = exercise.getStudentParticipations().iterator().next();
                 exerciseParticipation.setExercise(exercise);
                 studentParticipations.add(exerciseParticipation);
-            }
-            catch (LazyInitializationException e) {
-                // ignore
             }
         }
 
