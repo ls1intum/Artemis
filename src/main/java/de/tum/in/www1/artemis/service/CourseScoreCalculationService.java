@@ -199,12 +199,14 @@ public class CourseScoreCalculationService {
     }
 
     /**
-     * Prepares all entities required for calculateCourseScoresForStudent and calls it multiple times to retrieve the scores per exercise type for the specified student in the specified course.
+     * Prepares all entities required for calculateCourseScoresForStudent and calls it multiple times to retrieve the scores per exercise type for the specified student in the
+     * specified course.
      * In addition to the scores per exercise type, the total scores per course are calculated.
      *
      * @param course the course to calculate the scores for
      * @param userId the id of the user whose scores will be calculated
-     * @return a map of the scores for the different exercise types (total, for programming exercises etc.). For each type, the map contains the max and reachable max points and the scores of the current user.
+     * @return a map of the scores for the different exercise types (total, for programming exercises etc.). For each type, the map contains the max and reachable max points and
+     *         the scores of the current user.
      */
     private Map<String, CourseScoresDTO> calculateCourseScoresPerExerciseType(Course course, List<StudentParticipation> studentParticipations, long userId) {
 

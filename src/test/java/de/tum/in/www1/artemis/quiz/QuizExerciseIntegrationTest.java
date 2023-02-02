@@ -1323,7 +1323,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test non-instructors cant create quiz exercises
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateQuizExerciseAsTutorForbidden() throws Exception {
@@ -1339,7 +1339,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test non-instructors cant get all quiz exercises
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllQuizExercisesAsStudentForbidden() throws Exception {
@@ -1356,7 +1356,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test non-instructors can't perform start-now, set-visible or open-for-practice on quiz exercises
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testPerformPutActionAsTutorForbidden() throws Exception {
@@ -1375,7 +1375,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test non-instructors can't see the exercise if it is not set to visible
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testViewQuizExerciseAsStudentNotVisible() throws Exception {
@@ -1391,7 +1391,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test non-instructors cant delete an exercise
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteQuizExerciseAsNonInstructor() throws Exception {
@@ -1406,7 +1406,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test non tutors cant recalculate quiz exercise statistics
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRecalculateStatisticsAsNonInstructor() throws Exception {
@@ -1421,7 +1421,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test students not in course can't get quiz exercises
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetQuizExerciseForStudentNotInCourseForbiden() throws Exception {
@@ -1436,7 +1436,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test non-instructors in this course cant re-evaluate quiz exercises
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateQuizAsNonInstructorForbidden() throws Exception {
@@ -1460,7 +1460,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test unfinished exam cannot be re-evaluated
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUnfinishedExamReEvaluateBadRequest() throws Exception {
@@ -1475,7 +1475,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test non editor cant update quiz exercise
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizExerciseAsNonEditorForbidden() throws Exception {
@@ -1500,7 +1500,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test quiz exercise cant be edited to be invalid
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizExerciseInvalidBadRequest() throws Exception {
@@ -1522,7 +1522,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test update quiz exercise with notificationText
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizExerciseWithNotificationText() throws Exception {
@@ -1551,7 +1551,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test import quiz exercise to same course and check if fields are correctly set for import
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importQuizExerciseToSameCourse() throws Exception {
@@ -1576,7 +1576,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test import quiz exercise to a different course
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importQuizExerciseFromCourseToCourseT() throws Exception {
@@ -1594,7 +1594,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test import quiz exercise from a course to an exam
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importQuizExerciseFromCourseToExam() throws Exception {
@@ -1617,7 +1617,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test import quiz exercise to exam with invalid roles
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "TA")
     void importQuizExerciseFromCourseToExam_forbidden() throws Exception {
@@ -1634,7 +1634,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test import quiz exercise from exam to course
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importQuizExerciseFromExamToCourse() throws Exception {
@@ -1650,7 +1650,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test import quiz exercise from exam to course with invalid roles
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "TA")
     void importQuizExerciseFromExamToCourse_forbidden() throws Exception {
@@ -1666,7 +1666,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test import quiz exercise from one exam to a different exam
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importQuizExerciseFromExamToExam() throws Exception {
@@ -1683,7 +1683,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test import quiz exercise with a bad request (no course or exam)
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importTextExerciseFromCourseToCourse_badRequest() throws Exception {
@@ -1698,7 +1698,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test import quiz exercise with changed team mode
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportQuizExercise_team_modeChange() throws Exception {
@@ -1737,7 +1737,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test import quiz exercise with changed team mode
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportQuizExercise_individual_modeChange() throws Exception {
@@ -1779,7 +1779,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test import quiz exercise with changed quiz mode
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportQuizExerciseChangeQuizMode() throws Exception {
@@ -1801,7 +1801,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * test redundant actions performed on quiz exercises will result in bad request
-     * */
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRedundantActionsBadRequest() throws Exception {
@@ -1959,6 +1959,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Check if a QuizExercise contains the correct information for students.
+     *
      * @param quizExercise QuizExercise to check
      */
     private void checkQuizExerciseForStudent(QuizExercise quizExercise) {
