@@ -36,9 +36,8 @@ public class JenkinsJobService {
 
     /**
      * Retrieves the job inside a folder job or null if it doesn't exist.
-     *
      * @param folderJobName the name of the folder job
-     * @param jobName       the name of the job
+     * @param jobName the name of the job
      * @return the job with details
      */
     public JobWithDetails getJobInFolder(String folderJobName, String jobName) {
@@ -64,7 +63,6 @@ public class JenkinsJobService {
 
     /**
      * Gets the folder job or null if it doesn't exist
-     *
      * @param folderName the name of the folder job
      * @return the folder job
      */
@@ -89,9 +87,8 @@ public class JenkinsJobService {
 
     /**
      * Gets the xml config of the job that is inside a folder and replaces the old reference to the master and main branch by a reference to the default branch
-     *
      * @param folderName the name of the folder
-     * @param jobName    the name of the job
+     * @param jobName the name of the job
      * @return the xml document
      */
     public Document getJobConfigForJobInFolder(String folderName, String jobName) {
@@ -116,7 +113,6 @@ public class JenkinsJobService {
 
     /**
      * Gets the xml config of the folder job.
-     *
      * @param folderName the name of the folder
      * @return the xml document or null if the folder doesn't exist
      * @throws IOException in case of errors
@@ -132,10 +128,9 @@ public class JenkinsJobService {
 
     /**
      * Creates a job inside a folder
-     *
-     * @param jobConfig  the config of the job to create
+     * @param jobConfig the config of the job to create
      * @param folderName the name of the folder
-     * @param jobName    the name of the job
+     * @param jobName the name of the job
      */
     public void createJobInFolder(Document jobConfig, String folderName, String jobName) {
         try {
@@ -161,9 +156,8 @@ public class JenkinsJobService {
 
     /**
      * Gets the job config of a job that is inside a folder
-     *
      * @param folderName the name of the folder
-     * @param jobName    the name of the job
+     * @param jobName the name of the job
      * @return the job config as xml document or null if the job doesn't exist
      * @throws IOException in case of errors
      */
@@ -181,10 +175,9 @@ public class JenkinsJobService {
 
     /**
      * Updates a job.
-     *
      * @param folderName optional folder name where the job resides
-     * @param jobName    the name of the job
-     * @param jobConfig  the updated job config
+     * @param jobName the name of the job
+     * @param jobConfig the updated job config
      * @throws IOException in case of errors
      */
     public void updateJob(String folderName, String jobName, Document jobConfig) throws IOException {
@@ -208,7 +201,7 @@ public class JenkinsJobService {
     /**
      * Updates the xml description of the folder job.
      *
-     * @param folderName   the name of the folder
+     * @param folderName the name of the folder
      * @param folderConfig the xml document of the folder
      * @throws IOException in case of errors
      */

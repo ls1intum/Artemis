@@ -47,7 +47,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsD
  * <p>
  * This <b>abstract</b> test class two nested subclasses that run all tests for different exercise setups:
  * <ul>
- * <li>{@link CourseProgrammingExerciseGradingServiceTest} - for exercises in courses.</li>
+ * <li> {@link CourseProgrammingExerciseGradingServiceTest} - for exercises in courses.</li>
  * <li>{@link ExamProgrammingExerciseGradingServiceTest} - for exercises in an exam setting.</li>
  * </ul>
  */
@@ -110,8 +110,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     abstract ProgrammingExercise generateDefaultProgrammingExercise();
 
     /**
-     * Generates a new programming exercise with SCA enabled and 42.0 points, no bonus points, no test cases and a SCA penalty of 40%. The SCA categories must be saved in the
-     * database.
+     * Generates a new programming exercise with SCA enabled and 42.0 points, no bonus points, no test cases and a SCA penalty of 40%. The SCA categories must be saved in the database.
      */
     abstract ProgrammingExercise generateScaProgrammingExercise();
 

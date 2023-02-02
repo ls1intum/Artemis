@@ -95,8 +95,7 @@ public class ProgrammingExerciseParticipationResource {
      *
      * @param participationId for which to retrieve the programming exercise participation with latest result and feedbacks.
      * @param withSubmission  flag determining whether the corresponding submission should also be returned
-     * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body, 404 if the participation can't be found or 403 if the user is not allowed
-     *         to access the participation.
+     * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body, 404 if the participation can't be found or 403 if the user is not allowed to access the participation.
      */
     @GetMapping(value = "/programming-exercise-participations/{participationId}/latest-result-with-feedbacks")
     @PreAuthorize("hasRole('USER')")
@@ -153,8 +152,7 @@ public class ProgrammingExerciseParticipationResource {
      *
      * @param participationId the id of the participation get the latest submission for
      * @param lastGraded      if true will not try to find the latest pending submission, but the latest GRADED pending submission.
-     * @return the ResponseEntity with the last pending submission if it exists or null with status Ok (200). Will return notFound (404) if there is no participation for the given
-     *         id and forbidden (403) if the user is not allowed to access the participation.
+     * @return the ResponseEntity with the last pending submission if it exists or null with status Ok (200). Will return notFound (404) if there is no participation for the given id and forbidden (403) if the user is not allowed to access the participation.
      */
     @GetMapping("/programming-exercise-participations/{participationId}/latest-pending-submission")
     @PreAuthorize("hasRole('USER')")
@@ -175,8 +173,7 @@ public class ProgrammingExerciseParticipationResource {
      * For every student participation of a programming exercise, try to find a pending submission.
      *
      * @param exerciseId for which to search pending submissions.
-     * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a
-     *         pending submission exists or null if not.
+     * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a pending submission exists or null if not.
      */
     @GetMapping("/programming-exercises/{exerciseId}/latest-pending-submissions")
     @PreAuthorize("hasRole('TA')")
@@ -201,7 +198,7 @@ public class ProgrammingExerciseParticipationResource {
     /**
      * Resets the specified repository to either the exercise template or graded participation
      *
-     * @param participationId       the id of the programming participation that should be resetted
+     * @param participationId the id of the programming participation that should be resetted
      * @param gradedParticipationId optional parameter that specifies that the repository should be set to the graded participation instead of the exercise template
      * @return the ResponseEntity with status 200 (OK)
      */

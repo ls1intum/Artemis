@@ -30,7 +30,6 @@ public class GuidedTourSettingsResource {
 
     /**
      * PUT /guided-tour-settings: update all guided tour settings of the current user
-     *
      * @param guidedTourSettings updated guided tour object
      * @return the guided tour settings
      */
@@ -44,7 +43,6 @@ public class GuidedTourSettingsResource {
 
     /**
      * DELETE /guided-tour-settings/:settingsKey : delete guided tour setting of the current user
-     *
      * @param settingsKey the guided tour settings key that of the setting that should be deleted
      * @return the guided tour settings
      */

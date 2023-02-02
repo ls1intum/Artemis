@@ -42,7 +42,6 @@ public class ConsistencyCheckResource {
 
     /**
      * GET programming-exercises/{programmingExerciseId}/consistency-check : request consistency check for a programming exercise
-     *
      * @param programmingExerciseId id of the exercise to check
      * @return List containing the resulting errors, if any.
      */

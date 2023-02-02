@@ -291,8 +291,7 @@ public class StudentExamService {
      *
      * @param exam                the exam
      * @param assessor            the assessor should be the instructor making the call
-     * @param excludeStudentExams studentExams which should be excluded. This is used to exclude unsubmitted student exams because they are already assessed, see
-     *                                {@link StudentExamService#assessUnsubmittedStudentExams}
+     * @param excludeStudentExams studentExams which should be excluded. This is used to exclude unsubmitted student exams because they are already assessed, see {@link StudentExamService#assessUnsubmittedStudentExams}
      * @return returns the set of StudentExams of which the empty submissions were assessed
      */
     public Set<StudentExam> assessEmptySubmissionsOfStudentExams(final Exam exam, final User assessor, final Set<StudentExam> excludeStudentExams) {
@@ -626,7 +625,7 @@ public class StudentExamService {
     /**
      * Generates a new test exam for the student and stores it in the database
      *
-     * @param exam    the exam with loaded exercie groups and exercise for which the StudentExam should be created
+     * @param exam  the exam with loaded exercie groups and exercise for which the StudentExam should be  created
      * @param student the corresponding student
      * @return a StudentExam for the student and exam
      */

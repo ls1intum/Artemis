@@ -30,7 +30,7 @@ public class BuildLogEntryService {
      * Saves the build log entries in the database. The association to the programming submission is first removed and
      * after the saving restored as the relation submission->result uses an order column.
      *
-     * @param buildLogs             build logs to save
+     * @param buildLogs build logs to save
      * @param programmingSubmission submission of the build logs
      * @return the saved build logs
      */
@@ -146,7 +146,7 @@ public class BuildLogEntryService {
     /**
      * Filters out unnecessary build logs that a student should not see.
      *
-     * @param buildLogEntries     the build logs
+     * @param buildLogEntries the build logs
      * @param programmingLanguage the programming language
      * @return filtered build logs
      */

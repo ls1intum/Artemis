@@ -83,7 +83,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
      * reference. The method updates the project object models (pom) in the target repository with the pom of the latest
      * Artemis template.
      *
-     * @param exercise       The exercise for the template files should be updated
+     * @param exercise The exercise for the template files should be updated
      * @param repositoryType The type of repository to be updated
      */
     private void upgradeTemplateFiles(ProgrammingExercise exercise, RepositoryType repositoryType) {
@@ -204,7 +204,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
      * Updates dependencies in the target model with dependency versions found in the templateModel. This operation
      * does not introduce new dependencies to the target model.
      *
-     * @param targetModel   Project object model which dependencies should be updated
+     * @param targetModel Project object model which dependencies should be updated
      * @param templateModel Template project object model which might contain the latest dependency versions
      */
     private void updateDependencies(Model targetModel, Model templateModel) {

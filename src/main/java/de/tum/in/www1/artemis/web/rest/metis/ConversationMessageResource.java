@@ -40,7 +40,7 @@ public class ConversationMessageResource {
      * @param courseId id of the course the message post belongs to
      * @param post     message post to create
      * @return ResponseEntity with status 201 (Created) containing the created message post in the response body,
-     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     * or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PostMapping("courses/{courseId}/messages")
     @PreAuthorize("hasRole('USER')")
@@ -53,10 +53,10 @@ public class ConversationMessageResource {
     /**
      * GET /courses/{courseId}/posts : Get all message posts for a conversation by its id
      *
-     * @param pageable          pagination settings to fetch posts in smaller batches
-     * @param postContextFilter request param for filtering posts
+     * @param pageable                  pagination settings to fetch posts in smaller batches
+     * @param postContextFilter         request param for filtering posts
      * @return ResponseEntity with status 200 (OK) and with body all posts for course, that match the specified context
-     *         or 400 (Bad Request) if the checks on user, course or post validity fail
+     * or 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @GetMapping("courses/{courseId}/messages")
     @PreAuthorize("hasRole('USER')")
@@ -71,11 +71,11 @@ public class ConversationMessageResource {
     /**
      * PUT /courses/{courseId}/messages/{messageId} : Update an existing message post with given id
      *
-     * @param courseId    id of the course the message post belongs to
-     * @param messageId   id of the message post to update
-     * @param messagePost message post to update
+     * @param courseId  id of the course the message post belongs to
+     * @param messageId id of the message post to update
+     * @param messagePost      message post to update
      * @return ResponseEntity with status 200 (OK) containing the updated message post in the response body,
-     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     * or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PutMapping("courses/{courseId}/messages/{messageId}")
     @PreAuthorize("hasRole('USER')")
@@ -90,7 +90,7 @@ public class ConversationMessageResource {
      * @param courseId  id of the course the message post belongs to
      * @param messageId id of the message post to delete
      * @return ResponseEntity with status 200 (OK),
-     *         or 400 (Bad Request) if the checks on user, course or post validity fail
+     * or 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @DeleteMapping("courses/{courseId}/messages/{messageId}")
     @PreAuthorize("hasRole('USER')")

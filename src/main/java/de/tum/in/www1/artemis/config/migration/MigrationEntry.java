@@ -13,7 +13,6 @@ public abstract class MigrationEntry implements Serializable {
 
     /**
      * Format YYYYMMDD_HHmmss
-     *
      * @return Current time in given format
      */
     public abstract String date();

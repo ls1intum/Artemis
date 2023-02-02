@@ -43,7 +43,6 @@ public interface PlagiarismResultRepository extends JpaRepository<PlagiarismResu
 
     /**
      * prepare the result for sending it as JSON to the client by removing unnecessary values
-     *
      * @param plagiarismResult the result for which a couple of related objects should be set to null
      */
     default void prepareResultForClient(PlagiarismResult<?> plagiarismResult) {
@@ -59,7 +58,6 @@ public interface PlagiarismResultRepository extends JpaRepository<PlagiarismResu
 
     /**
      * Deletes all plagiarism results associated to the given exercise id
-     *
      * @param exerciseId ID of exercise with plagiarism results that will be deleted.
      */
     @Modifying
@@ -68,9 +66,8 @@ public interface PlagiarismResultRepository extends JpaRepository<PlagiarismResu
 
     /**
      * Deletes all plagiarism results associated to the given exercise id except the one with the given plagiarism result id
-     *
      * @param plagiarismResultId ID of the plagiarism result that won't be deleted.
-     * @param exerciseId         ID of exercise with plagiarism results that will be deleted.
+     * @param exerciseId ID of exercise with plagiarism results that will be deleted.
      */
     @Modifying
     @Transactional // ok because of modifying query

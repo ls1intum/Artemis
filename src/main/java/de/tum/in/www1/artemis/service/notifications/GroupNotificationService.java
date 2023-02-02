@@ -51,8 +51,7 @@ public class GroupNotificationService {
 
     /**
      * Checks if a notification has to be created for this exercise update and creates one if the situation is appropriate
-     *
-     * @param exercise         that is updated
+     * @param exercise that is updated
      * @param notificationText that is used for the notification process
      */
     public void notifyAboutExerciseUpdate(Exercise exercise, String notificationText) {
@@ -70,11 +69,11 @@ public class GroupNotificationService {
     /**
      * Auxiliary method to call the correct factory method and start the process to save & sent the notification
      *
-     * @param groups                  is an array of GroupNotificationTypes that should be notified (e.g. STUDENTS, INSTRUCTORS)
-     * @param notificationType        is the discriminator for the factory
-     * @param notificationSubject     is the subject of the notification (e.g. exercise, attachment)
+     * @param groups is an array of GroupNotificationTypes that should be notified (e.g. STUDENTS, INSTRUCTORS)
+     * @param notificationType is the discriminator for the factory
+     * @param notificationSubject is the subject of the notification (e.g. exercise, attachment)
      * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, ARCHIVE -> List<String> archiveErrors)
-     * @param author                  is the user who initiated the process of the notifications. Can be null if not specified
+     * @param author is the user who initiated the process of the notifications. Can be null if not specified
      */
     private void notifyGroupsWithNotificationType(GroupNotificationType[] groups, NotificationType notificationType, Object notificationSubject, Object typeSpecificInformation,
             User author) {
@@ -187,7 +186,7 @@ public class GroupNotificationService {
     /**
      * Notify all groups about a new post in an exercise.
      *
-     * @param post   that has been posted
+     * @param post that has been posted
      * @param course that the post belongs to
      */
     public void notifyAllGroupsAboutNewPostForExercise(Post post, Course course) {
@@ -218,7 +217,7 @@ public class GroupNotificationService {
     /**
      * Notify all groups about a new post in a lecture.
      *
-     * @param post   that has been posted
+     * @param post that has been posted
      * @param course that the post belongs to
      */
     public void notifyAllGroupsAboutNewPostForLecture(Post post, Course course) {
@@ -228,7 +227,7 @@ public class GroupNotificationService {
     /**
      * Notify all groups about a new course-wide post.
      *
-     * @param post   that has been posted
+     * @param post that has been posted
      * @param course that the post belongs to
      */
     public void notifyAllGroupsAboutNewCoursePost(Post post, Course course) {
@@ -238,9 +237,9 @@ public class GroupNotificationService {
     /**
      * Notify tutor, editor and instructor groups about a new reply post for an exercise.
      *
-     * @param post       that has been answered
+     * @param post that has been answered
      * @param answerPost that has been created
-     * @param course     that the post belongs to
+     * @param course that the post belongs to
      */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewReplyForCoursePost(Post post, AnswerPost answerPost, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_REPLY_FOR_COURSE_POST, post, course, answerPost.getAuthor());
@@ -249,9 +248,9 @@ public class GroupNotificationService {
     /**
      * Notify tutor, editor and instructor groups about a new reply post for an exercise.
      *
-     * @param post       that has been answered
+     * @param post that has been answered
      * @param answerPost that has been created
-     * @param course     that the post belongs to
+     * @param course that the post belongs to
      */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewReplyForExercise(Post post, AnswerPost answerPost, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_REPLY_FOR_EXERCISE_POST, post, course, answerPost.getAuthor());
@@ -264,7 +263,7 @@ public class GroupNotificationService {
     /**
      * Notify all groups about a new announcement in the course.
      *
-     * @param post   that has been created as announcement
+     * @param post that has been created as announcement
      * @param course that the post belongs to
      */
     public void notifyAllGroupsAboutNewAnnouncement(Post post, Course course) {
@@ -274,9 +273,9 @@ public class GroupNotificationService {
     /**
      * Notify tutor, editor and instructor groups about a new answer post for a lecture.
      *
-     * @param post       that has been answered
+     * @param post that has been answered
      * @param answerPost that has been created
-     * @param course     that the post belongs to
+     * @param course that the post belongs to
      */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(Post post, AnswerPost answerPost, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_REPLY_FOR_LECTURE_POST, post, course, answerPost.getAuthor());
@@ -308,7 +307,7 @@ public class GroupNotificationService {
      * Saves the given notification in database and sends it to the client via websocket.
      * Also starts the process of sending the information contained in the notification via email.
      *
-     * @param notification        that should be saved and sent
+     * @param notification that should be saved and sent
      * @param notificationSubject which information will be extracted to create the email
      */
     private void saveAndSend(GroupNotification notification, Object notificationSubject) {
@@ -331,7 +330,6 @@ public class GroupNotificationService {
 
     /**
      * Saves an exam notification by removing the problem statement message
-     *
      * @param notification that should be saved (without the problem statement)
      */
     private void saveExamNotification(GroupNotification notification) {
@@ -345,7 +343,6 @@ public class GroupNotificationService {
 
     /**
      * Prepares sending an email based on a GroupNotification by finding the relevant users
-     *
      * @param notification which information should also be propagated via email
      */
     private void prepareSendingGroupEmail(GroupNotification notification, Object notificationSubject) {
@@ -368,8 +365,8 @@ public class GroupNotificationService {
      * If the checks are successful creates and sends a corresponding email
      * If the notification type indicates an urgent (critical) email it will be sent to all users (regardless of settings)
      *
-     * @param notification        that should be checked
-     * @param users               which will be filtered based on their notification (email) settings
+     * @param notification that should be checked
+     * @param users which will be filtered based on their notification (email) settings
      * @param notificationSubject is used to add additional information to the email (e.g. for exercise : due date, points, etc.)
      */
     public void prepareGroupNotificationEmail(GroupNotification notification, List<User> users, Object notificationSubject) {

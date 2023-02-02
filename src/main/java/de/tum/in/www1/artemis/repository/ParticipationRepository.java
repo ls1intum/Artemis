@@ -101,8 +101,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
      * Removes all individual due dates of participations for which the individual due date is before the updated due date of the exercise.
      *
      * Only considers regular course exercises when the due date actually changed.
-     *
-     * @param exercise   for which the participations should be updated.
+     * @param exercise for which the participations should be updated.
      * @param oldDueDate the regular due date of the exercise before the update.
      */
     default void removeIndividualDueDatesIfBeforeDueDate(final Exercise exercise, final ZonedDateTime oldDueDate) {
@@ -113,7 +112,6 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
 
     /**
      * Removes all individual due dates of participations for which the individual due date is before the exercise due date.
-     *
      * @param exercise for which the participations should be updated.
      */
     private void removeIndividualDueDatesIfBeforeDueDate(Exercise exercise) {

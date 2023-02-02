@@ -43,12 +43,12 @@ public class AutomaticTextAssessmentConflictService {
     }
 
     /**
-     * This function asynchronously calls remote Athene service to check feedback consistency for the assessed submission.
-     * The call is made if the automatic assessments are enabled and the passed text blocks belong to any cluster.
+     *  This function asynchronously calls remote Athene service to check feedback consistency for the assessed submission.
+     *  The call is made if the automatic assessments are enabled and the passed text blocks belong to any cluster.
      *
-     * @param textBlocks   - all text blocks in the text assessment
+     * @param textBlocks - all text blocks in the text assessment
      * @param feedbackList - all feedback in the text assessment
-     * @param exerciseId   - exercise id of the assessed text exercise
+     * @param exerciseId - exercise id of the assessed text exercise
      */
     @Async
     public void asyncCheckFeedbackConsistency(Set<TextBlock> textBlocks, List<Feedback> feedbackList, long exerciseId) {
@@ -166,7 +166,7 @@ public class AutomaticTextAssessmentConflictService {
      * If the stored conflicts are not returned from Athene after the consistency check, it means that they are solved and set as solved.
      *
      * @param textFeedbackConflictRequestDTOS the list sent to Athene for check
-     * @param feedbackConflictResponseDTOS    returned list with found conflicts.
+     * @param feedbackConflictResponseDTOS returned list with found conflicts.
      * @return solved conflicts
      */
     private List<FeedbackConflict> findSolvedConflictsInResponse(List<TextFeedbackConflictRequestDTO> textFeedbackConflictRequestDTOS,

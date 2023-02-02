@@ -29,8 +29,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
- * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice, drag and drop or short answer. Artemis supports live quizzes with a start and end time
- * which are
+ * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice, drag and drop or short answer. Artemis supports live quizzes with a start and end time which are
  * rated. Within this time, students can participate in the quiz and select their answers to the given quizQuestions. After the end time, the quiz is automatically evaluated
  * Instructors can choose to open the quiz for practice so that students can participate arbitrarily often with an unrated result
  */
@@ -651,8 +650,8 @@ public class QuizExercise extends Exercise {
     /**
      * add Result to all Statistics of the given QuizExercise
      *
-     * @param result         the result which will be added
-     * @param quizSubmission the quiz submission which corresponds to the result and includes the submitted answers (loaded eagerly)
+     * @param result            the result which will be added
+     * @param quizSubmission    the quiz submission which corresponds to the result and includes the submitted answers (loaded eagerly)
      */
     public void addResultToAllStatistics(Result result, QuizSubmission quizSubmission) {
 
@@ -671,7 +670,7 @@ public class QuizExercise extends Exercise {
     /**
      * remove Result from all Statistics of the given QuizExercise
      *
-     * @param result the result which will be removed (NOTE: add the submission to the result previously (this would improve the performance)
+     * @param result       the result which will be removed (NOTE: add the submission to the result previously (this would improve the performance)
      */
     public void removeResultFromAllStatistics(Result result) {
         // update QuizPointStatistic with the result

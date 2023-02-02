@@ -21,7 +21,7 @@ public abstract class TeamImportStrategy {
     /**
      * Clones the given original teams via copy constructor, assigns them to the given destination exercise and persists them
      *
-     * @param originalTeams       Team that should be cloned
+     * @param originalTeams Team that should be cloned
      * @param destinationExercise Exercise in which the cloned teams should be saved
      */
     protected void cloneTeamsIntoDestinationExercise(List<Team> originalTeams, Exercise destinationExercise) {

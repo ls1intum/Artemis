@@ -783,7 +783,6 @@ public class Course extends DomainObject {
 
     /**
      * Returns true if the start and end date of the course fulfill all requirements
-     *
      * @return true if the dates are valid
      */
     public boolean isValidStartAndEndDate() {

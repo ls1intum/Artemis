@@ -82,7 +82,7 @@ public class GradeStepResource {
      * GET /courses/{courseId}/exams/{examId}/grading-scale/grade-steps : Find all grade steps for the grading scale of an exam
      *
      * @param courseId the course to which the exam belongs
-     * @param examId   the exam to which the grading scale belongs
+     * @param examId the exam to which the grading scale belongs
      * @return ResponseEntity with status 200 (Ok) with body a list of grade steps if the grading scale exists and 404 (Not found) otherwise
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale/grade-steps")
@@ -114,7 +114,7 @@ public class GradeStepResource {
     /**
      * GET /courses/{courseId}/grading-scale/grade-steps/{gradeStepId} : Find a grade step for the grading scale of a course by ID
      *
-     * @param courseId    the course to which the grading scale belongs
+     * @param courseId the course to which the grading scale belongs
      * @param gradeStepId the grade step within the grading scale
      * @return ResponseEntity with status 200 (Ok) with body the grade steps if the grading scale and grade step exist and 404 (Not found) otherwise
      */
@@ -132,8 +132,8 @@ public class GradeStepResource {
     /**
      * GET /courses/{courseId}/grading-scale/exams/{examId}/grade-steps/{gradeStepId} : Find a grade step for the grading scale of a course
      *
-     * @param courseId    the course to which the exam belongs
-     * @param examId      the exam to which the grading scale belongs
+     * @param courseId the course to which the exam belongs
+     * @param examId the exam to which the grading scale belongs
      * @param gradeStepId the grade step within the grading scale
      * @return ResponseEntity with status 200 (Ok) with body the grade steps if the grading scale and grade step exist and 404 (Not found) otherwise
      */
@@ -151,7 +151,7 @@ public class GradeStepResource {
     /**
      * GET /courses/{courseId}/grading-scale/grade-steps/match-grade-step : Find a grade step for the grading scale of a course by grade percentage
      *
-     * @param courseId        the course to which the grading scale belongs
+     * @param courseId the course to which the grading scale belongs
      * @param gradePercentage the grade percentage the has to be mapped to a grade step
      * @return ResponseEntity with status 200 (Ok) with body the grade if the grading scale and grade step exist and 404 (Not found) otherwise
      */
@@ -187,8 +187,8 @@ public class GradeStepResource {
     /**
      * GET /courses/{courseId}/exams/{examId}/grading-scale/grade-steps/match-grade-step : Find a grade step for the grading scale of a course by grade percentage
      *
-     * @param courseId        the course to which the exam belongs
-     * @param examId          the exam to which the grading scale belongs
+     * @param courseId the course to which the exam belongs
+     * @param examId the exam to which the grading scale belongs
      * @param gradePercentage the grade percentage the has to be mapped to a grade step
      * @return ResponseEntity with status 200 (Ok) with body the grade if the grading scale and grade step exist and 404 (Not found) otherwise
      */

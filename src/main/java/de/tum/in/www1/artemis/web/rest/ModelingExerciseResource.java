@@ -311,7 +311,7 @@ public class ModelingExerciseResource {
     /**
      * POST modeling-exercises/:exerciseId/export-submissions : sends exercise submissions as zip
      *
-     * @param exerciseId              the id of the exercise to get the repos from
+     * @param exerciseId the id of the exercise to get the repos from
      * @param submissionExportOptions the options that should be used for the export
      * @return ResponseEntity with status
      */
@@ -338,9 +338,9 @@ public class ModelingExerciseResource {
      * Return the latest plagiarism result or null, if no plagiarism was detected for this exercise yet.
      *
      * @param exerciseId ID of the modeling exercise for which the plagiarism result should be
-     *                       returned
+     *                   returned
      * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the
-     *         parameters are invalid
+     * parameters are invalid
      */
     @GetMapping("modeling-exercises/{exerciseId}/plagiarism-result")
     @PreAuthorize("hasRole('EDITOR')")
@@ -361,9 +361,9 @@ public class ModelingExerciseResource {
      * @param exerciseId          for which all submission should be checked
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore        consider only submissions whose score is greater or equal to this
-     *                                value
+     *                            value
      * @param minimumSize         consider only submissions whose size is greater or equal to this
-     *                                value
+     *                            value
      * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      */
     @GetMapping("modeling-exercises/{exerciseId}/check-plagiarism")
@@ -391,14 +391,14 @@ public class ModelingExerciseResource {
     /**
      * PUT modeling-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing modelingExercise.
      *
-     * @param exerciseId                                  of the exercise
-     * @param modelingExercise                            the modelingExercise to re-evaluate and update
-     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
+     * @param exerciseId                                   of the exercise
+     * @param modelingExercise                             the modelingExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
      *
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise, or
-     *         with status 400 (Bad Request) if the modelingExercise is not valid, or with status 409 (Conflict)
-     *         if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
-     *         Server Error) if the modelingExercise couldn't be updated
+     * with status 400 (Bad Request) if the modelingExercise is not valid, or with status 409 (Conflict)
+     * if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
+     * Server Error) if the modelingExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("modeling-exercises/{exerciseId}/re-evaluate")

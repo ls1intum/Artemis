@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 
 /**
  * Listener for updates on {@link Result} entities to update the {@link de.tum.in.www1.artemis.domain.scores.ParticipantScore}.
- *
  * @see ParticipantScoreScheduleService
  */
 @Component
@@ -35,7 +34,6 @@ public class ResultListener {
     /**
      * This callback method is called after a result is created or updated.
      * It will forward the event to the messaging service to process it for the participant scores.
-     *
      * @param result the result that was modified
      */
     @PostPersist
@@ -49,7 +47,6 @@ public class ResultListener {
     /**
      * This callback method is called before a result is deleted.
      * It will forward the event to the messaging service to process it for the participant scores.
-     *
      * @param result the result that is about to be deleted
      */
     @PreRemove

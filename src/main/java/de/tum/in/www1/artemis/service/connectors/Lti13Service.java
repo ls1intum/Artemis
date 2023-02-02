@@ -77,7 +77,7 @@ public class Lti13Service {
      * Performs an LTI 1.3 exercise launch with the LTI parameters contained in launchRequest.
      * If the launch was successful the user is added to the target exercise group (e.g. the course).
      *
-     * @param ltiIdToken           the id token for the user launching the request
+     * @param ltiIdToken the id token for the user launching the request
      * @param clientRegistrationId the clientRegistrationId of the source LMS
      */
     public void performLaunch(OidcIdToken ltiIdToken, String clientRegistrationId) {
@@ -112,7 +112,7 @@ public class Lti13Service {
     /**
      * Gets the username for the LTI user prefixed with the configured user prefix
      *
-     * @param ltiIdToken                the token holding the launch information
+     * @param ltiIdToken             the token holding the launch information
      * @param onlineCourseConfiguration the configuration for the online course
      * @return the username for the LTI user
      */
@@ -288,7 +288,7 @@ public class Lti13Service {
      * Build the response for the LTI launch.
      *
      * @param uriComponentsBuilder the uri builder to add the query params to
-     * @param response             the response to add the JWT cookie to
+     * @param response the response to add the JWT cookie to
      */
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         ltiService.buildLtiResponse(uriComponentsBuilder, response);

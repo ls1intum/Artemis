@@ -198,7 +198,7 @@ public class ModelingPlagiarismDetectionService {
      * Reduce a ModelingExercise Object to a list of latest modeling submissions.
      *
      * @param exerciseWithParticipationsAndSubmissions ModelingExercise with fetched participations
-     *                                                     and submissions
+     *                                                 and submissions
      * @return List containing the latest modeling submission for every participation
      */
     public List<ModelingSubmission> modelingSubmissionsForComparison(ModelingExercise exerciseWithParticipationsAndSubmissions) {

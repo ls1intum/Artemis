@@ -49,7 +49,6 @@ public abstract class CacheHandler<K> {
 
     /**
      * Returns an empty cache.
-     *
      * @return empty {@link Cache}
      */
     protected abstract Cache emptyCacheValue();
@@ -66,7 +65,6 @@ public abstract class CacheHandler<K> {
 
     /**
      * Creates a distributed cache.
-     *
      * @param key identifier of the cache
      * @return created {@link Cache}
      */
@@ -115,8 +113,8 @@ public abstract class CacheHandler<K> {
      * <p>
      * Creates new QuizExerciseCache if required.
      *
-     * @param key            the id of the cache, must not be null
-     * @param writeOperation gets non-null and has to return non-null.
+     * @param key the id of the cache, must not be null
+     * @param writeOperation gets non-null and has  to return non-null.
      * @implNote This operation locks the cache for the given <code>quizExerciseId</code> while the operation is executed. This prevents simultaneous writes.
      */
     public void performCacheWrite(K key, UnaryOperator<Cache> writeOperation) {
@@ -137,8 +135,8 @@ public abstract class CacheHandler<K> {
      * <p>
      * Will not execute the <code>writeOperation</code> if no QuizExerciseCache exists for the given id.
      *
-     * @param key            the id of the cache, must not be null
-     * @param writeOperation gets non-null and has to return non-null.
+     * @param key the id of the cache, must not be null
+     * @param writeOperation gets non-null and has  to return non-null.
      * @implNote This operation locks the cache for the given <code>quizExerciseId</code> while the operation is executed. This prevents simultaneous writes.
      */
     public void performCacheWriteIfPresent(K key, UnaryOperator<Cache> writeOperation) {

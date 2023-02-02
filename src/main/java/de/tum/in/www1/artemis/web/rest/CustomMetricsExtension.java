@@ -29,7 +29,6 @@ public class CustomMetricsExtension {
 
     /**
      * Expands the jhimetrics call with number of active users.
-     *
      * @return extended jhimetrics
      */
     @ReadOperation

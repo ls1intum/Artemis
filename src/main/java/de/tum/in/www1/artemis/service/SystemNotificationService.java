@@ -27,7 +27,6 @@ public class SystemNotificationService {
 
     /**
      * Finds all system notifications that have an expiry date in the future or no expiry date.
-     *
      * @return the list of notifications
      */
     public List<SystemNotification> findAllActiveAndFutureSystemNotifications() {
@@ -46,7 +45,6 @@ public class SystemNotificationService {
 
     /**
      * Validates the dates of a system notification and throws an exception if the dates are invalid.
-     *
      * @param systemNotification the system notification to validate
      */
     public void validateDatesElseThrow(SystemNotification systemNotification) {

@@ -23,7 +23,6 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
 
     /**
      * Delete all ratings that belong to the given result
-     *
      * @param resultId the id of the result where the rating should be deleted
      */
     @Transactional // ok because of delete
@@ -47,7 +46,6 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
 
     /**
      * Count all ratings given to submissions for the given course.
-     *
      * @param courseId the id of the course for which the ratings are counted
      * @return number of total ratings given for the course
      */
@@ -55,7 +53,6 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
 
     /**
      * Count all ratings given to assessments for the given exercise.
-     *
      * @param exerciseId the id of the exercise for which the ratings are counted
      * @return number of total ratings given for the exercise
      */

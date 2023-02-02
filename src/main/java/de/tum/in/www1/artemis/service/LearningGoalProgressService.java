@@ -58,9 +58,8 @@ public class LearningGoalProgressService {
 
     /**
      * Asynchronously update the progress for learning goals linked to the given learning object (for the specified participant)
-     *
      * @param learningObject The learning object for which to fetch the learning goals
-     * @param participant    The participant (user or team) for which to update the progress
+     * @param participant The participant (user or team) for which to update the progress
      */
     @Async
     public void updateProgressByLearningObjectAsync(LearningObject learningObject, @NotNull Participant participant) {
@@ -70,7 +69,6 @@ public class LearningGoalProgressService {
 
     /**
      * Asynchronously update the progress for the learning goals linked to the given learning object (for all students in the course)
-     *
      * @param learningObject The learning object for which to fetch the learning goals
      */
     @Async
@@ -91,7 +89,6 @@ public class LearningGoalProgressService {
 
     /**
      * Asynchronously update the existing progress for a specific learning goal
-     *
      * @param learningGoal The learning goal for which to update all existing student progress
      */
     @Async
@@ -104,8 +101,7 @@ public class LearningGoalProgressService {
 
     /**
      * Update the existing progress for a specific user in a course
-     *
-     * @param user   The user for whom to update the existing learning goal progress
+     * @param user The user for whom to update the existing learning goal progress
      * @param course The course for which to fetch the learning goals from
      * @return All learning goals of the course with the updated progress for the user
      */
@@ -122,9 +118,8 @@ public class LearningGoalProgressService {
 
     /**
      * Update the progress for all learning goals linked to the given learning object
-     *
      * @param learningObject The learning object for which to fetch the learning goals
-     * @param users          A list of users for which to update the progress
+     * @param users A list of users for which to update the progress
      */
     public void updateProgressByLearningObject(LearningObject learningObject, @NotNull Set<User> users) {
         logger.debug("Updating learning goal progress for {} users.", users.size());
@@ -159,9 +154,8 @@ public class LearningGoalProgressService {
 
     /**
      * Updates the progress value (and confidence score) of the given learning goal and user, then returns it
-     *
      * @param learningGoalId The id of the learning goal to update the progress for
-     * @param user           The user for which the progress should be updated
+     * @param user The user for which the progress should be updated
      * @return The updated learning goal progress, which is also persisted to the database
      */
     public LearningGoalProgress updateLearningGoalProgress(Long learningGoalId, User user) {
@@ -221,9 +215,8 @@ public class LearningGoalProgressService {
 
     /**
      * Calculate the progress value for the given user in a learning goal.
-     *
      * @param learningObjects A list of all learning objects linked to a specific learning goal
-     * @param user            The user for which the progress should be calculated
+     * @param user The user for which the progress should be calculated
      * @return The percentage of completed learning objects by the user
      */
     private double calculateProgress(@NotNull List<LearningObject> learningObjects, @NotNull User user) {
@@ -233,9 +226,8 @@ public class LearningGoalProgressService {
 
     /**
      * Calculate the confidence score for the given user in a learning goal.
-     *
      * @param exercises A list of all exercises linked to a specific learning goal
-     * @param user      The user for which the confidence score should be calculated
+     * @param user The user for which the confidence score should be calculated
      * @return The average score of the user in all exercises linked to the learning goal
      */
     private double calculateConfidence(@NotNull List<Exercise> exercises, @NotNull User user) {
@@ -246,8 +238,7 @@ public class LearningGoalProgressService {
 
     /**
      * Checks if the user has completed the learning object.
-     *
-     * @param user           The user for which to check the completion status
+     * @param user The user for which to check the completion status
      * @param learningObject The lecture unit or exercise
      * @return True if the user completed the lecture unit or has at least one result for the exercise, false otherwise
      */

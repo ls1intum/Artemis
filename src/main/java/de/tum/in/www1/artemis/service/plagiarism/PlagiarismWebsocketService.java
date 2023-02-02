@@ -28,9 +28,9 @@ public class PlagiarismWebsocketService {
     /***
      * Sends a message notifying the user about the current state of the plagiarism check
      *
-     * @param topic                The topic to send the notification to
+     * @param topic The topic to send the notification to
      * @param plagiarismCheckState The plagiarism check state
-     * @param messages             optional messages to send
+     * @param messages  optional messages to send
      */
     public void notifyInstructorAboutPlagiarismState(String topic, PlagiarismCheckState plagiarismCheckState, List<String> messages) {
         Map<String, String> payload = new HashMap<>();
@@ -48,7 +48,6 @@ public class PlagiarismWebsocketService {
 
     /**
      * Return the topic of the plagiarism check for the programming exercise
-     *
      * @param programmingExerciseId the id of the exercise
      * @return the topic
      */
@@ -58,7 +57,6 @@ public class PlagiarismWebsocketService {
 
     /**
      * Return the topic of the plagiarism check for the text exercise
-     *
      * @param textExerciseId the id of the exercise
      * @return the topic
      */
@@ -68,7 +66,6 @@ public class PlagiarismWebsocketService {
 
     /**
      * Return the topic of the plagiarism check for the modeling exercise
-     *
      * @param modelingExerciseId the id of the exercise
      * @return the topic
      */

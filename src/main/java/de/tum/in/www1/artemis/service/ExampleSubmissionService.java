@@ -68,7 +68,6 @@ public class ExampleSubmissionService {
 
     /**
      * Deletes a ExampleSubmission with the given ID, cleans up the tutor participations, removes the result and the submission
-     *
      * @param exampleSubmissionId the ID of the ExampleSubmission which should be deleted
      */
     public void deleteById(long exampleSubmissionId) {
@@ -99,7 +98,7 @@ public class ExampleSubmissionService {
      * calls copySubmission of required service depending on type of exercise
      *
      * @param submissionId The original student submission id to be copied
-     * @param exercise     The exercise to which the example submission belongs
+     * @param exercise   The exercise to which the example submission belongs
      * @return the exampleSubmission entity
      */
     public ExampleSubmission importStudentSubmissionAsExampleSubmission(Long submissionId, Exercise exercise) {
@@ -133,8 +132,8 @@ public class ExampleSubmissionService {
     /**
      * Checks the original exercise id is matched with the exercise id in the submission participation
      *
-     * @param originalExerciseId     given exercise id in the request
-     * @param exerciseIdInSubmission exercise id in submission participation
+     * @param originalExerciseId        given exercise id in the request
+     * @param exerciseIdInSubmission    exercise id in submission participation
      */
     public void checkGivenExerciseIdSameForSubmissionParticipation(long originalExerciseId, long exerciseIdInSubmission) {
         if (!Objects.equals(originalExerciseId, exerciseIdInSubmission)) {

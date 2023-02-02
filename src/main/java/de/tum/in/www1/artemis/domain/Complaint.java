@@ -143,7 +143,6 @@ public class Complaint extends DomainObject {
 
     /**
      * allows to set the participant independent whether it is a team or user
-     *
      * @param participant either a team or user
      */
     public void setParticipant(Participant participant) {
@@ -173,7 +172,6 @@ public class Complaint extends DomainObject {
 
     /**
      * Filters out the reviewer, if the user was not the reviewer
-     *
      * @param user - the user for which the reviewer should not be deleted
      */
     public void filterForeignReviewer(User user) {

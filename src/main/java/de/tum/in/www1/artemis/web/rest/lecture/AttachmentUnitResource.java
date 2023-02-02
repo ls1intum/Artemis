@@ -151,9 +151,9 @@ public class AttachmentUnitResource {
     /**
      * POST lectures/:lectureId/attachment-units/split : creates new attachment units.
      *
-     * @param lectureId                 the id of the lecture to which the attachment units should be added
+     * @param lectureId            the id of the lecture to which the attachment units should be added
      * @param lectureUnitInformationDTO the units that should be created
-     * @param file                      the file to be splitted
+     * @param file                 the file to be splitted
      * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment units
      */
     @PostMapping("lectures/{lectureId}/attachment-units/split")
@@ -175,8 +175,8 @@ public class AttachmentUnitResource {
     /**
      * POST lectures/:lectureId/process-units : Prepare attachment units information
      *
-     * @param file      the file to get the units data
-     * @param lectureId the id of the lecture to which the file is going to be splitted
+     * @param file       the file to get the units data
+     * @param lectureId  the id of the lecture to which the file is going to be splitted
      * @return the ResponseEntity with status 200 (ok) and with body attachmentUnitsData
      */
     @PostMapping("lectures/{lectureId}/process-units")
@@ -196,9 +196,8 @@ public class AttachmentUnitResource {
 
     /**
      * Checks that the attachment unit belongs to the specified lecture.
-     *
      * @param attachmentUnit The attachment unit to check
-     * @param lectureId      The id of the lecture to check against
+     * @param lectureId The id of the lecture to check against
      */
     private void checkAttachmentUnitCourseAndLecture(AttachmentUnit attachmentUnit, Long lectureId) {
         if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null) {

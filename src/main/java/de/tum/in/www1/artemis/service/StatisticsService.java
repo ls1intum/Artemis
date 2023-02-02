@@ -51,8 +51,7 @@ public class StatisticsService {
     }
 
     /**
-     * Forwards the request to the repository, which returns a List<Map<String, Object>>. For week, month or year the map from the Repository contains a String with the column
-     * name,
+     * Forwards the request to the repository, which returns a List<Map<String, Object>>. For week, month or year the map from the Repository contains a String with the column name,
      * "day" and "amount" and an Object being the value, either the date in the format "YYYY-MM-DD" or the amount of the findings. For day, the column names are "day" and "amount",
      * which then contains the date in the ZonedDateFormat as Integer and the amount as Long
      * It then collects the amounts in an array, depending on the span value, and returns it

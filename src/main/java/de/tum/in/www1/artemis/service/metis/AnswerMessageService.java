@@ -56,7 +56,7 @@ public class AnswerMessageService extends PostingService {
      * determines the associated post, the answer message's author,
      * persists the answer message
      *
-     * @param courseId      id of the course the answer post belongs to
+     * @param courseId   id of the course the answer post belongs to
      * @param answerMessage answer message to create
      * @return created answer message that was persisted
      */
@@ -94,9 +94,9 @@ public class AnswerMessageService extends PostingService {
      * updates non-restricted field of the answer message, persists the answer message,
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId        id of the course the answer message belongs to
-     * @param answerMessageId id of the answer message to update
-     * @param answerMessage   answer message to update
+     * @param courseId          id of the course the answer message belongs to
+     * @param answerMessageId   id of the answer message to update
+     * @param answerMessage     answer message to update
      * @return updated answer message that was persisted
      */
     public AnswerPost updateAnswerMessage(Long courseId, Long answerMessageId, AnswerPost answerMessage) {
@@ -136,8 +136,8 @@ public class AnswerMessageService extends PostingService {
      * Checks course and user validity,
      * determines authority to delete answer message and deletes the answer message
      *
-     * @param courseId        id of the course the answer message belongs to
-     * @param answerMessageId id of the answer message to delete
+     * @param courseId          id of the course the answer message belongs to
+     * @param answerMessageId   id of the answer message to delete
      */
     public void deleteAnswerMessageById(Long courseId, Long answerMessageId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();

@@ -49,7 +49,6 @@ public enum IncludedInOverallScore {
     /**
      * Checks if the specified amount of bonus points is a valid exercises configuration
      * for the selected IncludedInOverallScore value.
-     *
      * @param bonusPoints the bonus points for the exercise
      * @return true if the amount of bonus points is a valid, false otherwise
      */

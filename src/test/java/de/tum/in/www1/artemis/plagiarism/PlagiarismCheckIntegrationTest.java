@@ -52,7 +52,6 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     /***
      * Create the plagiarism result response based on the provided path
-     *
      * @param path The provided path to the rest endpoint
      */
     private void createAndTestPlagiarismResult(String path) throws Exception {

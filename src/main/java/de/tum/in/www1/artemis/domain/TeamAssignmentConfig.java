@@ -64,8 +64,7 @@ public class TeamAssignmentConfig extends DomainObject {
         return "TeamAssignmentConfig{" + "id=" + getId() + ", minTeamSize='" + getMinTeamSize() + "'" + ", maxTeamSize='" + getMaxTeamSize() + "'" + "}";
     }
 
-    /**
-     * Helper method which does a hard copy of the Team Assignment Configurations.
+    /** Helper method which does a hard copy of the Team Assignment Configurations.
      *
      * @return The cloned configuration
      */

@@ -25,10 +25,9 @@ public class GroupNotificationScheduleService {
 
     /**
      * Auxiliary method that checks and creates appropriate notifications about exercise updates or updates the scheduled exercise-released notification
-     *
      * @param exerciseBeforeUpdate is the initial exercise before it gets updated
-     * @param exerciseAfterUpdate  is the updated exercise (needed to check potential difference in release date)
-     * @param notificationText     holds the custom change message for the notification process
+     * @param exerciseAfterUpdate is the updated exercise (needed to check potential difference in release date)
+     * @param notificationText holds the custom change message for the notification process
      */
     public void checkAndCreateAppropriateNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate, String notificationText) {
 
@@ -46,7 +45,7 @@ public class GroupNotificationScheduleService {
      * Auxiliary method that checks and creates exercise-released notifications when updating an exercise
      *
      * @param exerciseBeforeUpdate is the initial exercise before it gets updated
-     * @param exerciseAfterUpdate  is the updated exercise (needed to check potential difference in release date)
+     * @param exerciseAfterUpdate is the updated exercise (needed to check potential difference in release date)
      */
     private void checkAndCreateExerciseReleasedNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate) {
         final ZonedDateTime initialReleaseDate = exerciseBeforeUpdate.getReleaseDate();
@@ -108,7 +107,7 @@ public class GroupNotificationScheduleService {
      * Auxiliary method that checks and creates exercise-released notifications when updating an exercise
      *
      * @param exerciseBeforeUpdate is the initial exercise before it gets updated
-     * @param exerciseAfterUpdate  is the updated exercise (needed to check potential difference in release date)
+     * @param exerciseAfterUpdate is the updated exercise (needed to check potential difference in release date)
      */
     private void checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate) {
         final ZonedDateTime initialAssessmentDueDate = exerciseBeforeUpdate.getAssessmentDueDate();

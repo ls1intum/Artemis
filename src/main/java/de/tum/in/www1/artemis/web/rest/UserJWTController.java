@@ -52,10 +52,9 @@ public class UserJWTController {
 
     /**
      * Authorizes a User
-     *
-     * @param loginVM   user credentials View Mode
-     * @param userAgent User Agent
-     * @param response  HTTP response
+     * @param loginVM       user credentials View Mode
+     * @param userAgent     User Agent
+     * @param response      HTTP response
      * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (Captcha required)
      */
     @PostMapping("/authenticate")
@@ -123,9 +122,8 @@ public class UserJWTController {
 
     /**
      * Removes the cookie containing the jwt
-     *
-     * @param request  HTTP request
-     * @param response HTTP response
+     * @param request HTTP request
+     * @param response  HTTP response
      */
     @PostMapping("/logout")
     public void logout(HttpServletRequest request, HttpServletResponse response) throws ServletException {

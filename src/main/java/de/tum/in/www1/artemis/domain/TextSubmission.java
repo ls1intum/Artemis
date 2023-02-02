@@ -57,7 +57,6 @@ public class TextSubmission extends Submission {
 
     /**
      * Excerpt of Text, used for toString() so log messages do not get too long.
-     *
      * @return excerpt of text, maximum String length of 104 characters
      */
     @JsonIgnore()
@@ -107,7 +106,6 @@ public class TextSubmission extends Submission {
 
     /**
      * counts the number of words in the text of the text submission in case
-     *
      * @return the number of words
      */
     public int countWords() {

@@ -139,26 +139,26 @@ public class ProgrammingExerciseService {
     /**
      * Setups the context of a new programming exercise. This includes:
      * <ul>
-     * <li>The VCS project</li>
-     * <li>All repositories (test, exercise, solution)</li>
-     * <li>The template and solution participation</li>
-     * <li>VCS webhooks</li>
-     * <li>Bamboo build plans</li>
+     *     <li>The VCS project</li>
+     *     <li>All repositories (test, exercise, solution)</li>
+     *     <li>The template and solution participation</li>
+     *     <li>VCS webhooks</li>
+     *     <li>Bamboo build plans</li>
      * </ul>
      *
      * The exercise gets set up in the following order:
      * <ol>
-     * <li>Create all repositories for the new exercise</li>
-     * <li>Setup template and push it to the repositories</li>
-     * <li>Setup new build plans for exercise</li>
-     * <li>Add all webhooks</li>
-     * <li>Init scheduled jobs for exercise maintenance</li>
+     *     <li>Create all repositories for the new exercise</li>
+     *     <li>Setup template and push it to the repositories</li>
+     *     <li>Setup new build plans for exercise</li>
+     *     <li>Add all webhooks</li>
+     *     <li>Init scheduled jobs for exercise maintenance</li>
      * </ol>
      *
      * @param programmingExercise The programmingExercise that should be setup
      * @return The new setup exercise
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
-     * @throws IOException     If the template files couldn't be read
+     * @throws IOException If the template files couldn't be read
      */
     @Transactional // TODO: apply the transaction on a smaller scope
     // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
@@ -211,7 +211,7 @@ public class ProgrammingExerciseService {
      * 3. Configure CI permissions
      *
      * @param programmingExercise Programming exercise for the build plans should be generated. The programming
-     *                                exercise should contain a fully initialized template and solution participation.
+     *                            exercise should contain a fully initialized template and solution participation.
      */
     public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
@@ -285,8 +285,7 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Set up the exercise template by determining the files needed for the template and copying them. Commit and push the changes to all repositories for this programming
-     * exercise.
+     * Set up the exercise template by determining the files needed for the template and copying them. Commit and push the changes to all repositories for this programming exercise.
      *
      * @param programmingExercise the programming exercise that should be set up
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
@@ -413,8 +412,8 @@ public class ProgrammingExerciseService {
 
     /**
      * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
-     * @param updatedProgrammingExercise      the changed programming exercise with its new values
-     * @param notificationText                optional text about the changes for a notification
+     * @param updatedProgrammingExercise the changed programming exercise with its new values
+     * @param notificationText    optional text about the changes for a notification
      * @return the updates programming exercise from the database
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise,
@@ -782,7 +781,7 @@ public class ProgrammingExerciseService {
      * @param testsPath       The path to the tests' folder, e.g. the path inside the repository where the structure oracle file will be saved in.
      * @param user            The user who has initiated the action
      * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
-     * @throws IOException     If the URLs cannot be converted to actual {@link Path paths}
+     * @throws IOException If the URLs cannot be converted to actual {@link Path paths}
      * @throws GitAPIException If the checkout fails
      */
     public boolean generateStructureOracleFile(VcsRepositoryUrl solutionRepoURL, VcsRepositoryUrl exerciseRepoURL, VcsRepositoryUrl testRepoURL, String testsPath, User user)
@@ -1050,7 +1049,7 @@ public class ProgrammingExerciseService {
      * The check is done based on a generated project key (course short name + exercise short name) and the project name (course short name + exercise title).
      *
      * @param programmingExercise a typically new programming exercise for which the corresponding VCS and CIS projects should not yet exist.
-     * @param courseShortName     the shortName of the course the programming exercise should be imported in
+     * @param courseShortName the shortName of the course the programming exercise should be imported in
      * @return TRUE if a project with the same ProjectKey or ProjectName already exists, otherwise false
      */
     public boolean preCheckProjectExistsOnVCSOrCI(ProgrammingExercise programmingExercise, String courseShortName) {
@@ -1084,9 +1083,8 @@ public class ProgrammingExerciseService {
     /**
      * Locks or unlocks the repository if necessary due to the changes in the programming exercise.
      * Notice: isAllowOfflineIde() == null means that the offline IDE is allowed
-     *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
-     * @param updatedProgrammingExercise      the updated exercise with new values
+     * @param updatedProgrammingExercise the updated exercise with new values
      */
     public void handleRepoAccessRightChanges(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
         if (!programmingExerciseBeforeUpdate.isReleased()) {
@@ -1114,9 +1112,8 @@ public class ProgrammingExerciseService {
 
     /**
      * Checks if the repos have to be locked/unlocked based on the new due date. Individual due dates are considered, so not all repositories might get locked/unlocked
-     *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
-     * @param updatedProgrammingExercise      the updated exercise with new values
+     * @param updatedProgrammingExercise the updated exercise with new values
      * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
      */
     private boolean handleRepoAccessRightChangesDueDates(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
@@ -1141,9 +1138,8 @@ public class ProgrammingExerciseService {
 
     /**
      * Checks if the repos have to be locked/unlocked based on the allowance of offline IDEs. The read access in the VCS is only necessary when working with an offline IDE
-     *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
-     * @param updatedProgrammingExercise      the updated exercise with new values
+     * @param updatedProgrammingExercise the updated exercise with new values
      * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
      */
     private boolean handleRepoAccessRightChangesChangesOfflineIDE(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {

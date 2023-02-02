@@ -444,7 +444,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     /**
      * Test if a grade step is contained in a grade step set
      *
-     * @param gradeSteps      the grade step set
+     * @param gradeSteps the grade step set
      * @param gradeStepToTest the grade step
      * @return true if it is contained and false otherwise
      */

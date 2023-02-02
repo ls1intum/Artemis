@@ -94,9 +94,9 @@ public class AnswerPostService extends PostingService {
      * updates non-restricted field of the post, persists the post,
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId     id of the course the answer post belongs to
-     * @param answerPostId id of the answer post to update
-     * @param answerPost   answer post to update
+     * @param courseId      id of the course the answer post belongs to
+     * @param answerPostId  id of the answer post to update
+     * @param answerPost    answer post to update
      * @return updated answer post that was persisted
      */
     public AnswerPost updateAnswerPost(Long courseId, Long answerPostId, AnswerPost answerPost) {
@@ -183,7 +183,7 @@ public class AnswerPostService extends PostingService {
     /**
      * Sends notification to affected groups
      *
-     * @param post       which is answered
+     * @param post which is answered
      * @param answerPost which is created
      */
     void sendNotification(Post post, AnswerPost answerPost, Course course) {
@@ -240,8 +240,8 @@ public class AnswerPostService extends PostingService {
      * Checks if the requesting user is authorized in the course context,
      * i.e. user has to be author of original post associated with the answer post or at least teaching assistant
      *
-     * @param answerPost answer post that should be marked as resolving
-     * @param user       requesting user
+     * @param answerPost    answer post that should be marked as resolving
+     * @param user          requesting user
      */
     void mayMarkAnswerPostAsResolvingElseThrow(AnswerPost answerPost, User user, Course course) {
         if (!answerPost.getPost().getAuthor().equals(user)) {

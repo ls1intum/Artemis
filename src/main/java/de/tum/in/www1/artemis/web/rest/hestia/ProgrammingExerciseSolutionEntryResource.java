@@ -73,11 +73,10 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     /**
      * GET programming-exercises/:exerciseId/solution-entries/:solutionEntryId : Get the solution entry with test cases and programming exercise
-     *
-     * @param exerciseId      of the exercise
+     * @param exerciseId of the exercise
      * @param solutionEntryId of the solution entry
      * @return the {@link ResponseEntity} with status {@code 200} and with body the solution entries with test cases and exercise,
-     *         or with status {@code 409 (Conflict)} if the exerciseId or solutionEntryId are not valid.
+     * or with status {@code 409 (Conflict)} if the exerciseId or solutionEntryId are not valid.
      */
     @GetMapping("programming-exercises/{exerciseId}/solution-entries/{solutionEntryId}")
     @PreAuthorize("hasRole('TA')")
@@ -97,7 +96,6 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     /**
      * GET programming-exercises/{exerciseId}/solution-entries: Get all solution entries with test cases for a programming exercise
-     *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200} and with body the solution entries with test cases.
      */
@@ -113,11 +111,10 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     /**
      * GET programming-exercises/:exerciseId/code-hints/:codeHintId/solution-entries : Get all solution entries for a given code hint
-     *
      * @param exerciseId of the exercise
      * @param codeHintId of the code hint
      * @return the {@link ResponseEntity} with status {@code 200} and with body the solution entries,
-     *         or with status {@code 409 (Conflict)} if the exerciseId or codeHintId are not valid.
+     * or with status {@code 409 (Conflict)} if the exerciseId or codeHintId are not valid.
      */
     @GetMapping("programming-exercises/{exerciseId}/code-hints/{codeHintId}/solution-entries")
     @PreAuthorize("hasRole('USER')")
@@ -138,11 +135,10 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     /**
      * GET programming-exercises/:exerciseId/test-cases/:testCaseId/solution-entries : Get all solution entries for a given test case
-     *
      * @param exerciseId of the exercise
      * @param testCaseId of the test case
      * @return the {@link ResponseEntity} with status {@code 200} and with body the solution entries,
-     *         or with status {@code 409 (Conflict)} if the exerciseId or testCaseId are not valid.
+     * or with status {@code 409 (Conflict)} if the exerciseId or testCaseId are not valid.
      */
     @GetMapping("programming-exercises/{exerciseId}/test-cases/{testCaseId}/solution-entries")
     @PreAuthorize("hasRole('USER')")
@@ -163,12 +159,11 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     /**
      * POST programming-exercises/:exerciseId/test-cases/:testCaseId/solution-entries : Create a solution entry for a test case
-     *
-     * @param exerciseId                       of the exercise
-     * @param testCaseId                       of the test case
+     * @param exerciseId of the exercise
+     * @param testCaseId of the test case
      * @param programmingExerciseSolutionEntry the solution entry to be created
      * @return the {@link ResponseEntity} with status {@code 201} and with body the created solution entry,
-     *         or with status {@code 409 (Conflict)} if the exerciseId, testcaseId, or solution entry are not valid.
+     * or with status {@code 409 (Conflict)} if the exerciseId, testcaseId, or solution entry are not valid.
      */
     @PostMapping("programming-exercises/{exerciseId}/test-cases/{testCaseId}/solution-entries")
     @PreAuthorize("hasRole('EDITOR')")
@@ -188,13 +183,12 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     /**
      * PUT programming-exercises/:exerciseId/test-cases/:testCaseId/solution-entries/:solutionEntryId : Update a solution entry
-     *
-     * @param exerciseId      of the exercise
-     * @param testCaseId      of the test case
+     * @param exerciseId of the exercise
+     * @param testCaseId of the test case
      * @param solutionEntryId of the solution entry
-     * @param solutionEntry   the updated solution entry
+     * @param solutionEntry the updated solution entry
      * @return the {@link ResponseEntity} with status {@code 200} and with body the updated solution entry,
-     *         or with status {@code 409 (Conflict)} if the exerciseId, testcaseId, solutionEntryId, or solution entry are not valid.
+     * or with status {@code 409 (Conflict)} if the exerciseId, testcaseId, solutionEntryId, or solution entry are not valid.
      */
     @PutMapping("programming-exercises/{exerciseId}/test-cases/{testCaseId}/solution-entries/{solutionEntryId}")
     @PreAuthorize("hasRole('EDITOR')")
@@ -220,12 +214,11 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     /**
      * DELETE programming-exercises/:exerciseId/test-cases/:testCaseId/solution-entries/:solutionEntryId : Delete a solution entry
-     *
-     * @param exerciseId      of the exercise
-     * @param testCaseId      of the test case
+     * @param exerciseId of the exercise
+     * @param testCaseId of the test case
      * @param solutionEntryId of the solution entry that is to be deleted
      * @return the {@link ResponseEntity} with status {@code 204},
-     *         or with status {@code 409 (Conflict)} if the exerciseId, testcaseId, or solutionEntryId are not valid.
+     * or with status {@code 409 (Conflict)} if the exerciseId, testcaseId, or solutionEntryId are not valid.
      */
     @DeleteMapping("programming-exercises/{exerciseId}/test-cases/{testCaseId}/solution-entries/{solutionEntryId}")
     @PreAuthorize("hasRole('EDITOR')")
@@ -246,10 +239,9 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     /**
      * DELETE programming-exercises/:exerciseId/solution-entries: Delete all solution entries for a programming exercise
-     *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 204},
-     *         or with status {@code 404} if the exerciseId is not valid.
+     * or with status {@code 404} if the exerciseId is not valid.
      */
     @DeleteMapping("programming-exercises/{exerciseId}/solution-entries")
     @PreAuthorize("hasRole('EDITOR')")

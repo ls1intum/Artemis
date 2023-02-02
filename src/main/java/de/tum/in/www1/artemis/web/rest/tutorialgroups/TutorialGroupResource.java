@@ -391,8 +391,7 @@ public class TutorialGroupResource {
      * @param courseId        the id of the course to which the tutorial group belongs to
      * @param tutorialGroupId the id of the tutorial group to which the users should be registered to
      * @param studentDtos     the list of students who should be registered to the tutorial group
-     * @return the list of students who could not be registered for the tutorial group, because they could NOT be found in the Artemis database as students of the tutorial group
-     *         course
+     * @return the list of students who could not be registered for the tutorial group, because they could NOT be found in the Artemis database as students of the tutorial group course
      */
     @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple")
     @PreAuthorize("hasRole('INSTRUCTOR')")

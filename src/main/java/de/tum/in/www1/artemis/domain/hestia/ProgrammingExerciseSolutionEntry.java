@@ -26,11 +26,11 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
  * Example:
  * A print statement gets changed:
  * SolutionEntry{
- * filePath = "<...>"
- * previousLine = 12
- * previousCode = System.out.println("Tset");
- * line = 12
- * code = System.out.println("Test");
+ *         filePath = "<...>"
+ *     previousLine = 12
+ *     previousCode = System.out.println("Tset");
+ *             line = 12
+ *             code = System.out.println("Test");
  * }
  */
 @Entity

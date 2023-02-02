@@ -30,7 +30,6 @@ public class JenkinsInternalUrlService {
     /**
      * Replaces the url of the vcs repository url to the internal url if it's
      * defined.
-     *
      * @param vcsRepositoryUrl the vcs repository url
      * @return the vcs repository url with the internal url
      */
@@ -53,7 +52,6 @@ public class JenkinsInternalUrlService {
     /**
      * Replaces the url of the vcs repository url to the internal url if it's
      * defined.
-     *
      * @param vcsRepositoryUrl the vcs repository url
      * @return the vcs repository url with the internal url
      */
@@ -73,7 +71,6 @@ public class JenkinsInternalUrlService {
     /**
      * Replaces the url of the ci url to the internal url if it's
      * defined.
-     *
      * @param ciUrl the ci url
      * @return the ci url with the internal url
      */
@@ -89,9 +86,8 @@ public class JenkinsInternalUrlService {
     /**
      * Replaces the host and port of the url with the ones defined
      * in internalUrl
-     *
      * @param urlToReplace the url that will be manipulated
-     * @param internalUrl  the internal url
+     * @param internalUrl the internal url
      * @return the manipulated url
      */
     @Nullable

@@ -48,8 +48,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         return quizExerciseService.save(newExercise);
     }
 
-    /**
-     * This helper method copies all attributes of the {@code importedExercise} into a new exercise.
+    /** This helper method copies all attributes of the {@code importedExercise} into a new exercise.
      * Here we ignore all external entities as well as the start-, end-, and asseessment due date.
      *
      * @param importedExercise The exercise from which to copy the basis
@@ -70,11 +69,10 @@ public class QuizExerciseImportService extends ExerciseImportService {
         return newExercise;
     }
 
-    /**
-     * This helper method copies all questions of the {@code importedExercise} into a new exercise.
+    /** This helper method copies all questions of the {@code importedExercise} into a new exercise.
      *
      * @param importedExercise The exercise from which to copy the questions
-     * @param newExercise      The exercise to which the questions are copied
+     * @param newExercise The exercise to which the questions are copied
      */
     private void copyQuizQuestions(QuizExercise importedExercise, QuizExercise newExercise) {
         log.debug("Copying the QuizQuestions to new QuizExercise: {}", newExercise);
@@ -141,11 +139,10 @@ public class QuizExerciseImportService extends ExerciseImportService {
         newExercise.setQuizQuestions(importedExercise.getQuizQuestions());
     }
 
-    /**
-     * This helper method copies all batches of the {@code importedExercise} into a new exercise.
+    /** This helper method copies all batches of the {@code importedExercise} into a new exercise.
      *
      * @param importedExercise The exercise from which to copy the batches
-     * @param newExercise      The exercise to which the batches are copied
+     * @param newExercise The exercise to which the batches are copied
      */
     private void copyQuizBatches(QuizExercise importedExercise, QuizExercise newExercise) {
         log.debug("Copying the QuizBatches to new QuizExercise: {}", newExercise);

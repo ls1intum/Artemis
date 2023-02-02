@@ -78,7 +78,7 @@ public class CompassService {
      * Returns null if no feedback can be selected or the submission has already a manual feedback
      *
      * @param modelingSubmission the submission to select feedbacks for
-     * @param modelingExercise   the modeling exercise to which the submission belongs
+     * @param modelingExercise the modeling exercise to which the submission belongs
      * @return the semi-automatic result that has the feedbacks inside
      */
     public Result getSuggestionResult(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {

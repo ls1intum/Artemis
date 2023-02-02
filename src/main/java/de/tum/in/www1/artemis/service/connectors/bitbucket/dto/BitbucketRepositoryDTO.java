@@ -23,7 +23,6 @@ public record BitbucketRepositoryDTO(String id, String name, String slug, Bitbuc
 
     /**
      * helper method
-     *
      * @return the clone url stored in the link based on ssh href
      */
     public String getCloneSshUrl() {

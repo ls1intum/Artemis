@@ -133,12 +133,11 @@ class GroupNotificationFactoryTest {
 
     /**
      * Shared collection of assertions that check if the created notification is correct
-     *
-     * @param createdNotification     is the notification that should be checked for correctness.
-     * @param expectedTitle           is the expected title that the notification should have.
-     * @param expectedText            is the expected text that the notification should have.
+     * @param createdNotification is the notification that should be checked for correctness.
+     * @param expectedTitle is the expected title that the notification should have.
+     * @param expectedText is the expected text that the notification should have.
      * @param expectedTransientTarget is the expected target that the notification should have.
-     * @param expectedPriority        is the expected priority that the notification should have.
+     * @param expectedPriority is the expected priority that the notification should have.
      */
     private void checkCreatedNotification(GroupNotification createdNotification, String expectedTitle, String expectedText, NotificationTarget expectedTransientTarget,
             NotificationPriority expectedPriority) {
@@ -166,7 +165,6 @@ class GroupNotificationFactoryTest {
     /**
      * Calls the real createNotification method of the groupNotificationFactory and tests if the result is correct.
      * Two notifications are created for those cases that might use a manually set notification text
-     *
      * @param base is the first input parameter used in the respective factory method to create the group notification.
      */
     private void createAndCheckNotification(Base base) {

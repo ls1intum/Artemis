@@ -52,7 +52,7 @@ public class Lti13TokenRetriever {
      * LTI 1.3 platform of that client. The queried access token (if there is any) will be valid for the requested scopes.
      *
      * @param clientRegistration to query a token for
-     * @param scopes             to ask access for
+     * @param scopes to ask access for
      * @return the access token to be used to authenticate requests to the client's LTI 1.3 platform.
      */
     public String getToken(ClientRegistration clientRegistration, String... scopes) {

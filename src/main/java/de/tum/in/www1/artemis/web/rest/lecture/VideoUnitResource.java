@@ -54,7 +54,7 @@ public class VideoUnitResource {
      * GET lectures/:lectureId/video-units/:videoUnitId: gets the video unit with the specified id
      *
      * @param videoUnitId the id of the videoUnit to retrieve
-     * @param lectureId   the id of the lecture to which the unit belongs
+     * @param lectureId the id of the lecture to which the unit belongs
      * @return the ResponseEntity with status 200 (OK) and with body the video unit, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/video-units/{videoUnitId}")
@@ -70,7 +70,7 @@ public class VideoUnitResource {
     /**
      * PUT /lectures/:lectureId/video-units : Updates an existing video unit .
      *
-     * @param lectureId the id of the lecture to which the video unit belongs to update
+     * @param lectureId      the id of the lecture to which the video unit belongs to update
      * @param videoUnit the video unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated videoUnit
      */
@@ -97,7 +97,7 @@ public class VideoUnitResource {
     /**
      * POST /lectures/:lectureId/video-units : creates a new video unit.
      *
-     * @param lectureId the id of the lecture to which the video unit should be added
+     * @param lectureId      the id of the lecture to which the video unit should be added
      * @param videoUnit the video unit that should be created
      * @return the ResponseEntity with status 201 (Created) and with body the new video unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -134,7 +134,6 @@ public class VideoUnitResource {
 
     /**
      * Checks that the video unit belongs to the specified lecture.
-     *
      * @param videoUnit The video unit to check
      * @param lectureId The id of the lecture to check against
      */
@@ -149,7 +148,6 @@ public class VideoUnitResource {
 
     /**
      * Normalizes the provided video Url.
-     *
      * @param videoUnit provided video unit
      */
     private void normalizeVideoUrl(VideoUnit videoUnit) {
@@ -161,7 +159,6 @@ public class VideoUnitResource {
 
     /**
      * Validates the provided video Url.
-     *
      * @param videoUnit provided video unit
      */
     private void validateVideoUrl(VideoUnit videoUnit) {

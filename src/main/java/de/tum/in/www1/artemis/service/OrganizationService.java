@@ -33,7 +33,6 @@ public class OrganizationService {
      * Performs indexing over all users using the email pattern of the provided organization.
      * Users matching the pattern will be added to the organization.
      * Users not matching the pattern will be removed from the organization (if contained).
-     *
      * @param organization the organization used to perform the indexing
      */
     public void index(final Organization organization) {
@@ -58,7 +57,6 @@ public class OrganizationService {
 
     /**
      * Add a new organization and execute indexing based on its emailPattern
-     *
      * @param organization the organization to add
      * @return the persisted organization entity
      */
@@ -73,7 +71,6 @@ public class OrganizationService {
      * Update an organization
      * To avoid removing the currently mapped users and courses of the organization,
      * these are loaded eagerly and the edited values changed within the loaded entity.
-     *
      * @param organization the organization to update
      * @return the updated organization
      */
@@ -98,7 +95,6 @@ public class OrganizationService {
 
     /**
      * Delete an organization
-     *
      * @param organizationId the id of the organization to delete
      */
     public void deleteOrganization(Long organizationId) {

@@ -56,7 +56,7 @@ public class OnlineUnitResource {
      * GET lectures/:lectureId/online-units/:onlineUnitId: gets the online unit with the specified id
      *
      * @param onlineUnitId the id of the onlineUnit to retrieve
-     * @param lectureId    the id of the lecture to which the unit belongs
+     * @param lectureId the id of the lecture to which the unit belongs
      * @return the ResponseEntity with status 200 (OK) and with body the online unit, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/online-units/{onlineUnitId}")
@@ -72,7 +72,7 @@ public class OnlineUnitResource {
     /**
      * PUT /lectures/:lectureId/online-units : Updates an existing online unit .
      *
-     * @param lectureId  the id of the lecture to which the online unit belongs to update
+     * @param lectureId      the id of the lecture to which the online unit belongs to update
      * @param onlineUnit the online unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated onlineUnit
      */
@@ -97,7 +97,7 @@ public class OnlineUnitResource {
     /**
      * POST /lectures/:lectureId/online-units : creates a new online unit.
      *
-     * @param lectureId  the id of the lecture to which the online unit should be added
+     * @param lectureId      the id of the lecture to which the online unit should be added
      * @param onlineUnit the online unit that should be created
      * @return the ResponseEntity with status 201 (Created) and with body the new online unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -174,7 +174,7 @@ public class OnlineUnitResource {
      * Inspired by <a href="https://www.javachinna.com/generate-rich-link-preview-for-a-given-url-based-on-the-meta-tags-present-in-the-web-page-in-spring-boot/">...</a>
      *
      * @param document The Jsoup document to query
-     * @param tag      The meta tag from which to fetch the content
+     * @param tag The meta tag from which to fetch the content
      * @return The value of the content attribute of the specified tag
      */
     private String getMetaTagContent(Document document, String tag) {
@@ -191,7 +191,6 @@ public class OnlineUnitResource {
 
     /**
      * Validates the source url of an online unit.
-     *
      * @param onlineUnit The online unit to check the source URL for.
      */
     private void validateUrl(OnlineUnit onlineUnit) {
@@ -205,9 +204,8 @@ public class OnlineUnitResource {
 
     /**
      * Checks that the online unit belongs to the specified lecture.
-     *
      * @param onlineUnit The online unit to check
-     * @param lectureId  The id of the lecture to check against
+     * @param lectureId The id of the lecture to check against
      */
     private void checkOnlineUnitCourseAndLecture(OnlineUnit onlineUnit, Long lectureId) {
         if (onlineUnit.getLecture() == null || onlineUnit.getLecture().getCourse() == null) {

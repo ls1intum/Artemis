@@ -54,8 +54,7 @@ public class TutorialGroupFreePeriodResource {
     }
 
     /**
-     * GET /courses/:courseId/tutorial-groups-configuration/:tutorialGroupsConfigurationId/tutorial-free-periods/:tutorialGroupFreePeriodId : gets the tutorial group free period
-     * with the specified id.
+     * GET /courses/:courseId/tutorial-groups-configuration/:tutorialGroupsConfigurationId/tutorial-free-periods/:tutorialGroupFreePeriodId : gets the tutorial group free period with the specified id.
      *
      * @param courseId                      the id of the course to which the tutorial groups configuration belongs
      * @param tutorialGroupsConfigurationId the id of the tutorial groups configuration to which the tutorial group free period belongs
@@ -76,8 +75,7 @@ public class TutorialGroupFreePeriodResource {
     }
 
     /**
-     * PUT courses/:courseId/tutorial-groups-configuration/:tutorialGroupsConfigurationId/tutorial-free-periods/:tutorialGroupFreePeriodId : Updates an existing tutorial free
-     * period
+     * PUT courses/:courseId/tutorial-groups-configuration/:tutorialGroupsConfigurationId/tutorial-free-periods/:tutorialGroupFreePeriodId : Updates an existing tutorial free period
      *
      * @param courseId                      the id of the course to which the tutorial groups configuration belongs
      * @param tutorialGroupsConfigurationId the id of the tutorial groups configuration to which the tutorial group free period should be added

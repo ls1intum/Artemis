@@ -51,7 +51,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     /**
      * Test if getting courses a user can register to works with multi organization and
      * filters out basing on user's organizations
-     *
      * @throws Exception exception
      */
     @Test
@@ -137,7 +136,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test adding a course to a given organization
-     *
      * @throws Exception exception
      */
     @Test
@@ -159,7 +157,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test removing a course from a given organization
-     *
      * @throws Exception exception
      */
     @Test
@@ -184,7 +181,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test adding user to a given organization
-     *
      * @throws Exception exception
      */
     @Test
@@ -203,7 +199,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test removing user from a given organization
-     *
      * @throws Exception exception
      */
     @Test
@@ -227,7 +222,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test adding a new organization
-     *
      * @throws Exception exception
      */
     @Test
@@ -248,7 +242,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test updating an existing organization
-     *
      * @throws Exception exception
      */
     @Test
@@ -265,7 +258,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test updating an existing organization when the Id in the RequestBody is null
-     *
      * @throws Exception exception
      */
     @Test
@@ -285,7 +277,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test updating an existing organization when the Id in the path doesn't match the one in the Body
-     *
      * @throws Exception exception
      */
     @Test
@@ -306,7 +297,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test delete an organization
-     *
      * @throws Exception exception
      */
     @Test
@@ -326,7 +316,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test get all organizations
-     *
      * @throws Exception exception
      */
     @Test
@@ -343,7 +332,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test get number of users and courses of all organizations
-     *
      * @throws Exception exception
      */
     @Test
@@ -370,7 +358,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test get number of users and courses of a given organization
-     *
      * @throws Exception exception
      */
     @Test
@@ -395,7 +382,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test retrieving an organization by its id
-     *
      * @throws Exception exception
      */
     @Test
@@ -430,7 +416,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test retriving all organizations containing a given course
-     *
      * @throws Exception exception
      */
     @Test
@@ -452,7 +437,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test retrieve all organization containing a given user
-     *
      * @throws Exception exception
      */
     @Test
@@ -473,7 +457,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test indexing of organization over all users
-     *
      * @throws Exception exception
      */
     @Test

@@ -190,9 +190,9 @@ public class PostService extends PostingService {
     /**
      * Invokes the updatePost method to persist the change of displayPriority
      *
-     * @param courseId        id of the course the post belongs to
-     * @param postId          id of the post to change the pin state for
-     * @param displayPriority new displayPriority
+     * @param courseId          id of the course the post belongs to
+     * @param postId            id of the post to change the pin state for
+     * @param displayPriority   new displayPriority
      * @return updated post that was persisted
      */
     public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
@@ -550,9 +550,9 @@ public class PostService extends PostingService {
      * Checks if the requesting user is authorized in the course context,
      * i.e., if the user is allowed to interact with a certain post
      *
-     * @param post   post to interact with, i.e., create, update or delete
-     * @param user   requesting user
-     * @param course course the posting belongs to
+     * @param post      post to interact with, i.e., create, update or delete
+     * @param user      requesting user
+     * @param course    course the posting belongs to
      */
     private void mayInteractWithPostElseThrow(Post post, User user, Course course) {
         if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT || post.getPlagiarismCase() != null) {

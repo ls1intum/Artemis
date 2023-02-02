@@ -121,10 +121,9 @@ public class BitbucketRequestMockProvider {
 
     /**
      * Mocks the call to retrieve the push date of a certain commit
-     *
      * @param projectKey Key of the affected project
      * @param commitHash The expected commit hash
-     * @param pushDate   The expected push date for the commit
+     * @param pushDate The expected push date for the commit
      */
     public void mockGetPushDate(String projectKey, String commitHash, ZonedDateTime pushDate) throws JsonProcessingException {
         final var refChangeDTO = new BitbucketChangeActivitiesDTO.RefChangeDTO("7".repeat(40), commitHash, "refs/heads/main");

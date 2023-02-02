@@ -72,7 +72,6 @@ public class AnswerPost extends Posting {
 
     /**
      * Helper method to extract the course an AnswerPost belongs to, which is found in different locations based on the parent Post's context
-     *
      * @return the course AnswerPost belongs to
      */
     @Override

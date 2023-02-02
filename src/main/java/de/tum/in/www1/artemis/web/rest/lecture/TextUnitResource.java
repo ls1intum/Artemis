@@ -53,7 +53,7 @@ public class TextUnitResource {
      * GET lectures/:lectureId/text-units/:textUnitId : gets the text unit with the specified id
      *
      * @param textUnitId the id of the textUnit to retrieve
-     * @param lectureId  the id of the lecture to which the unit belongs
+     * @param lectureId the id of the lecture to which the unit belongs
      * @return the ResponseEntity with status 200 (OK) and with body the text unit, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/text-units/{textUnitId}")
@@ -75,7 +75,7 @@ public class TextUnitResource {
     /**
      * PUT /lectures/:lectureId/text-units : Updates an existing text unit
      *
-     * @param lectureId    the id of the lecture to which the text unit belongs to update
+     * @param lectureId      the id of the lecture to which the text unit belongs to update
      * @param textUnitForm the text unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated textUnit
      */
@@ -106,8 +106,8 @@ public class TextUnitResource {
     /**
      * POST /lectures/:lectureId/text-units : creates a new text unit.
      *
-     * @param lectureId the id of the lecture to which the text unit should be added
-     * @param textUnit  the text unit that should be created
+     * @param lectureId      the id of the lecture to which the text unit should be added
+     * @param textUnit the text unit that should be created
      * @return the ResponseEntity with status 201 (Created) and with body the new text unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */

@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.service.util.RoundingUtil;
  * Using a listener on the {@link Result} entity, changes are detected and forwarded (via the broker if not on the main instance) to this service.
  * This method is fast, but not 100% reliable. Therefore, a cron job regularly checks for invalid participant scores and updates them.
  * In all cases, using asynchronous scheduled tasks speeds up all requests that modify results.
- *
  * @see de.tum.in.www1.artemis.service.listeners.ResultListener
  */
 @Service
@@ -97,7 +96,6 @@ public class ParticipantScoreScheduleService {
 
     /**
      * Check if the scheduler has tasks to be executed or is idle.
-     *
      * @return true if the scheduler is idle, false otherwise
      */
     public boolean isIdle() {
@@ -178,9 +176,8 @@ public class ParticipantScoreScheduleService {
 
     /**
      * Schedule a task to update the participant score for the given combination of exercise and participant.
-     *
-     * @param exerciseId          the id of the exercise
-     * @param participantId       the id of the participant (user or team, determined by the exercise)
+     * @param exerciseId the id of the exercise
+     * @param participantId the id of the participant (user or team, determined by the exercise)
      * @param resultIdToBeDeleted the id of the result that is about to be deleted (or null, if result is created/updated)
      */
     public void scheduleTask(@NotNull Long exerciseId, @NotNull Long participantId, Long resultIdToBeDeleted) {
@@ -193,10 +190,9 @@ public class ParticipantScoreScheduleService {
 
     /**
      * Schedule a task to update the participant score for the given combination of exercise and participant.
-     *
-     * @param exerciseId          the id of the exercise
-     * @param participantId       the id of the participant (user or team, determined by the exercise)
-     * @param resultLastModified  the last modified date of the result that triggered the update
+     * @param exerciseId the id of the exercise
+     * @param participantId the id of the participant (user or team, determined by the exercise)
+     * @param resultLastModified the last modified date of the result that triggered the update
      * @param resultIdToBeDeleted the id of the result that is about to be deleted (or null, if result is created/updated)
      */
     private void scheduleTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted) {
@@ -216,10 +212,9 @@ public class ParticipantScoreScheduleService {
 
     /**
      * Execute the task to update the participant score for the given combination of exercise and participant.
-     *
-     * @param exerciseId          the id of the exercise
-     * @param participantId       the id of the participant (user or team, determined by the exercise)
-     * @param resultLastModified  the last modified date of the result that triggered the update
+     * @param exerciseId the id of the exercise
+     * @param participantId the id of the participant (user or team, determined by the exercise)
+     * @param resultLastModified the last modified date of the result that triggered the update
      * @param resultIdToBeDeleted the id of the result that is about to be deleted (optional)
      */
     private void executeTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted) {
@@ -324,8 +319,7 @@ public class ParticipantScoreScheduleService {
     /**
      * Updates the given participant score by fetching the last (rated) results from the database.
      * If both no result and no rated result is found, the participant score is deleted.
-     *
-     * @param participantScore  The participant score to update (with the exercise eager loaded)
+     * @param participantScore The participant score to update (with the exercise eager loaded)
      * @param resultIdsToIgnore A list of result ids to ignore when calculating the score
      */
     private void updateParticipantScore(ParticipantScore participantScore, Long... resultIdsToIgnore) {
@@ -353,7 +347,7 @@ public class ParticipantScoreScheduleService {
      * Get the result that can replace the currently set last result for a participant score
      *
      * @author Stefan Waldhauser
-     * @param participantScore  the participant score to update (user/team and exercise must be set)
+     * @param participantScore the participant score to update (user/team and exercise must be set)
      * @param resultIdsToIgnore a list of ids to ignore when fetching the last result
      * @return optional of new result
      */
@@ -380,7 +374,7 @@ public class ParticipantScoreScheduleService {
      * Get the result that can replace the currently set last rated result for a participant score
      *
      * @author Stefan Waldhauser
-     * @param participantScore  the participant score to update (user/team and exercise must be set)
+     * @param participantScore the participant score to update (user/team and exercise must be set)
      * @param resultIdsToIgnore a list of ids to ignore when fetching the last rated result
      * @return optional of new result
      */
@@ -437,8 +431,7 @@ public class ParticipantScoreScheduleService {
 
     /**
      * Each participant score can be uniquely identified by the combination of exercise id and participant id.
-     *
-     * @param exerciseId    the id of the exercise
+     * @param exerciseId the id of the exercise
      * @param participantId the id of the participant (user or team, depending on the exercise's setting)
      */
     public record ParticipantScoreId(Long exerciseId, Long participantId) {

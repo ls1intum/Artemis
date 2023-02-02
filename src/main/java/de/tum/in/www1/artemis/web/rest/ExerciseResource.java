@@ -148,7 +148,7 @@ public class ExerciseResource {
      *
      * @param exerciseId the exerciseId of the exercise with the example solution
      * @return the ResponseEntity with status 200 (OK) and with the body of the exercise with its example solution after filtering sensitive data, or with
-     *         status 404 (Not Found) if the exercise is not found, or with status 403 (Forbidden) if the current user does not have access to the example solution.
+     * status 404 (Not Found) if the exercise is not found, or with status 403 (Forbidden) if the current user does not have access to the example solution.
      */
     @GetMapping("/exercises/{exerciseId}/example-solution")
     @PreAuthorize("hasRole('USER')")
@@ -243,8 +243,7 @@ public class ExerciseResource {
     }
 
     /**
-     * Reset the exercise by deleting all its participations /exercises/:exerciseId/reset This can be used by all exercise types, however they can also provide custom
-     * implementations
+     * Reset the exercise by deleting all its participations /exercises/:exerciseId/reset This can be used by all exercise types, however they can also provide custom implementations
      *
      * @param exerciseId exercise to delete
      * @return the ResponseEntity with status 200 (OK)

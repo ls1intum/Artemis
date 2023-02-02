@@ -34,9 +34,9 @@ public class JenkinsJobPermissionsUtils {
      * elements must be children of the AuthorizationMatrixProperty element. Doesn't do anything
      * if AuthorizationMatrixProperty is missing.
      *
-     * @param document            The xml document
-     * @param permissionsToRemove a list of permissions to remove from the user
-     * @param userLogins          the logins of the users to remove the permissions from
+     * @param document The xml document
+     * @param permissionsToRemove  a list of permissions to remove from the user
+     * @param userLogins  the logins of the users to remove the permissions from
      */
     private static void removePermissionsFromElement(String elementTagName, Document document, Set<JenkinsJobPermission> permissionsToRemove, Set<String> userLogins)
             throws DOMException {
@@ -56,7 +56,7 @@ public class JenkinsJobPermissionsUtils {
      * Removes the permission element from the authorization matrix.
      *
      * @param authorizationMatrix The authorization matrix node
-     * @param permission          the permission to remove
+     * @param permission the permission to remove
      */
     private static void removePermission(Node authorizationMatrix, String permission) throws DOMException {
         final NodeList permissionNodes = authorizationMatrix.getChildNodes();
@@ -88,9 +88,9 @@ public class JenkinsJobPermissionsUtils {
     /**
      * Adds all jenkinsJobPermissions for all specific Jenkins users into the xml document.
      *
-     * @param document              the xml document
+     * @param document the xml document
      * @param jenkinsJobPermissions a list of Jenkins job permissions to be added for the specific user
-     * @param userLogins            the login names of the users
+     * @param userLogins the login names of the users
      */
     private static void addPermissionsToDocument(String elementTagName, Document document, Set<JenkinsJobPermission> jenkinsJobPermissions, Set<String> userLogins)
             throws DOMException {
@@ -102,7 +102,6 @@ public class JenkinsJobPermissionsUtils {
     /**
      * Retrieves the AuthorizationMatrixProperty element from the document if it exists or creates a new one
      * pre-configured with matrixauth.inheritance.InheritParentStrategy.
-     *
      * @param document The xml document
      * @return AuthorizationMatrixProperty element
      */
@@ -124,7 +123,6 @@ public class JenkinsJobPermissionsUtils {
     /**
      * Adds all jenkinsJobPermissions specified for the specific Jenkins user into the authorizationMatrixElement.
      * The resulting output element has the following format:
-     *
      * <pre>
      * {@code
      *      <com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
@@ -135,7 +133,6 @@ public class JenkinsJobPermissionsUtils {
      *      </com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
      * }
      * </pre>
-     *
      * @param authorizationMatrixElement the com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty element
      * @param jenkinsJobPermissions      a list of Jenkins job permissions to be added for the specific user
      * @param userLogin                  the login name of the user
@@ -163,7 +160,7 @@ public class JenkinsJobPermissionsUtils {
      * content of the node.
      *
      * @param permissionList The node list containing permission elements
-     * @param permission     the permission
+     * @param permission the permission
      * @return if the list contains permissions
      */
     private static boolean permissionExistInPermissionList(NodeList permissionList, String permission) throws DOMException {

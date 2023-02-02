@@ -196,7 +196,7 @@ public class ProgrammingLanguageConfiguration {
      * <p>
      * E.g., the CLI option {@code --cpus 2} is represented as flag {@code --cpus} and value {@code 2}.
      *
-     * @param flag  The option name.
+     * @param flag The option name.
      * @param value The option value.
      */
     public record DockerFlag(String flag, String value) {

@@ -201,9 +201,7 @@ public abstract class BaseExercise extends DomainObject {
     public abstract boolean isExamExercise();
 
     /**
-     * This method is used to validate the assessmentDueDate of an exercise. An assessmentDueDate is valid if it is after the releaseDate and dueDate. A given assessmentDueDate is
-     * invalid without an according dueDate
-     *
+     * This method is used to validate the assessmentDueDate of an exercise. An assessmentDueDate is valid if it is after the releaseDate and dueDate. A given assessmentDueDate is invalid without an according dueDate
      * @return true if there is no assessmentDueDateError
      */
     protected static boolean isValidAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
@@ -221,7 +219,6 @@ public abstract class BaseExercise extends DomainObject {
      * This method is used to validate the exampleSolutionPublicationDate of an exercise. An exampleSolutionPublicationDate is valid if it is after the releaseDate and dueDate.
      * Any given exampleSolutionPublicationDate is valid if releaseDate and dueDate are not set.
      * exampleSolutionPublicationDate is valid if it is not set.
-     *
      * @return true if there is no exampleSolutionPublicationDateError
      */
     protected static boolean isValidExampleSolutionPublicationDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime exampleSolutionPublicationDate,
@@ -236,7 +233,6 @@ public abstract class BaseExercise extends DomainObject {
 
     /**
      * This method is used to validate if the previousDate is before the laterDate.
-     *
      * @return true if the previousDate is valid
      */
     protected static boolean isNotAfterAndNotNull(ZonedDateTime previousDate, ZonedDateTime laterDate) {

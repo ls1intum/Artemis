@@ -79,7 +79,7 @@ public class StaticCodeAnalysisService {
     /**
      * Updates the static code analysis categories of a programming exercise.
      *
-     * @param exerciseId        of a programming exercise
+     * @param exerciseId of a programming exercise
      * @param updatedCategories updates for categories
      * @return updated categories
      */
@@ -144,7 +144,6 @@ public class StaticCodeAnalysisService {
 
     /**
      * Links the categories of an exercise with the default category mappings.
-     *
      * @param programmingExercise The programming exercise
      * @return A list of pairs of categories and their mappings.
      */
@@ -172,9 +171,9 @@ public class StaticCodeAnalysisService {
      * invisible feedback every time it is requested. The drawback is that the re-evaluate functionality can't take
      * the removed feedback into account.
      *
-     * @param result                     of the build run
+     * @param result of the build run
      * @param staticCodeAnalysisFeedback List of static code analysis feedback objects
-     * @param programmingExercise        The current exercise
+     * @param programmingExercise The current exercise
      * @return The filtered list of feedback objects
      */
     public List<Feedback> categorizeScaFeedback(Result result, List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {

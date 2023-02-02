@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 public class ConversationDTO {
 
     /**
-     * Determines the type of the conversation, either "channel" , "groupChat" or "oneToOneChat" depending on the subclass
+     * Determines the type of the conversation, either "channel" , "groupChat" or "oneToOneChat"  depending on the subclass
      */
     private String type;
 

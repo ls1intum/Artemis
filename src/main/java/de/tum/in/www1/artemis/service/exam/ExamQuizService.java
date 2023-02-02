@@ -61,7 +61,6 @@ public class ExamQuizService {
     /**
      * Evaluate the given quiz exercise by evaluate the submission for each participation (there is only one for each participation in exams)
      * and update the statistics with the generated results.
-     *
      * @param quizExerciseId the id of the QuizExercise that should be evaluated
      */
     public void evaluateQuizAndUpdateStatistics(@NotNull Long quizExerciseId) {
@@ -79,7 +78,6 @@ public class ExamQuizService {
     /**
      * This method is intended to be called after a user submits a test run. We calculate the achieved score in the quiz exercises immediately and attach a result.
      * Note: We do not insert the result of this test run quiz participation into the quiz statistics.
-     *
      * @param studentExam The test run or test exam containing the users participations in all exam exercises
      */
     public void evaluateQuizParticipationsForTestRunAndTestExam(StudentExam studentExam) {

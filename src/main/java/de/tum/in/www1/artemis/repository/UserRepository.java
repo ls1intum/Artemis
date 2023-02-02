@@ -120,8 +120,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     /**
      * Searches for users in groups by their full name.
      *
-     * @param groupNames List of names of groups in which to search for users
-     * @param nameOfUser Name (e.g. Max Mustermann) by which to search
+     * @param groupNames   List of names of groups in which to search for users
+     * @param nameOfUser        Name (e.g. Max Mustermann) by which to search
      * @return list of found users that match the search criteria
      */
     @Query("""
@@ -256,7 +256,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      *
      * @param page        Pageable related info (e.g. for page size)
      * @param loginOrName Either a login (e.g. ga12abc) or name (e.g. Max Mustermann) by which to search
-     * @return list of found users that match the search criteria
+     * @return            list of found users that match the search criteria
      */
     @Query("select user from User user where user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%")
     Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
@@ -282,7 +282,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      *
      * @param userId                of the user
      * @param hideNotificationUntil indicates a time that is used to filter all notifications that are prior to it
-     *                                  (if null -> show all notifications)
+     *                              (if null -> show all notifications)
      */
     @Modifying
     @Transactional // ok because of modifying query
@@ -595,7 +595,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     /**
      * Return true if the current users' login matches the provided login
-     *
      * @param login user login
      * @return true if both logins match
      */

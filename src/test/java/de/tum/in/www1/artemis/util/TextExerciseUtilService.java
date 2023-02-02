@@ -36,7 +36,6 @@ public class TextExerciseUtilService {
 
     /**
      * Generate a set of specified size containing TextBlocks with dummy Text
-     *
      * @param count expected size of TextBlock set
      * @return Set of dummy TextBlocks
      */
@@ -53,7 +52,6 @@ public class TextExerciseUtilService {
 
     /**
      * Generate a set of specified size containing TextBlocks with the same text
-     *
      * @param count expected size of TextBlock set
      * @return Set of TextBlocks with identical texts
      */
@@ -75,8 +73,7 @@ public class TextExerciseUtilService {
 
     /**
      * Create n TextClusters and randomly assign TextBlocks to new clusters.
-     *
-     * @param textBlocks   TextBlocks to fake cluster
+     * @param textBlocks TextBlocks to fake cluster
      * @param clusterSizes Number of new clusters
      * @param textExercise TextExercise
      * @return List of TextClusters with assigned TextBlocks
