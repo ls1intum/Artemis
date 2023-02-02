@@ -9,6 +9,7 @@ export class ExamUser implements BaseEntity {
     public plannedRoom?: string;
     public plannedSeat?: string;
     public signingImagePath?: string;
+    public studentImagePath?: string;
     public didCheckImage?: boolean;
     public didCheckName?: boolean;
     public didCheckLogin?: boolean;

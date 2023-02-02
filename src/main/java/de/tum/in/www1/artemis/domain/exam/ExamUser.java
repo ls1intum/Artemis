@@ -171,12 +171,19 @@ public class ExamUser extends AbstractAuditingEntity {
             signingImagePath = signingImagePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
         }
         prevSigningImagePath = signingImagePath; // save current path as old path (needed to know old path in onUpdate() and onDelete())
+
+        // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
+        if (studentImagePath != null && studentImagePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
+            studentImagePath = studentImagePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
+        }
+        prevStudentImagePath = studentImagePath; // save current path as old path (needed to know old path in onUpdate() and onDelete())
     }
 
     @PrePersist
     public void beforeCreate() {
         // move file if necessary (id at this point will be null, so placeholder will be inserted)
         signingImagePath = fileService.manageFilesForUpdatedFilePath(prevSigningImagePath, signingImagePath, FilePathService.getExamUserSignatureFilePath(), getId());
+        studentImagePath = fileService.manageFilesForUpdatedFilePath(prevStudentImagePath, studentImagePath, FilePathService.getStudentImageFilePath(), getId());
     }
 
     @PostPersist
@@ -185,17 +192,23 @@ public class ExamUser extends AbstractAuditingEntity {
         if (signingImagePath != null && signingImagePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
             signingImagePath = signingImagePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
         }
+
+        if (studentImagePath != null && studentImagePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
+            studentImagePath = studentImagePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
+        }
     }
 
     @PreUpdate
     public void onUpdate() {
         // move file and delete old file if necessary
         signingImagePath = fileService.manageFilesForUpdatedFilePath(prevSigningImagePath, signingImagePath, FilePathService.getExamUserSignatureFilePath(), getId());
+        studentImagePath = fileService.manageFilesForUpdatedFilePath(prevStudentImagePath, studentImagePath, FilePathService.getStudentImageFilePath(), getId());
     }
 
     @PostRemove
     public void onDelete() {
         // delete old file if necessary
         fileService.manageFilesForUpdatedFilePath(prevSigningImagePath, null, FilePathService.getExamUserSignatureFilePath(), getId());
+        fileService.manageFilesForUpdatedFilePath(prevStudentImagePath, null, FilePathService.getStudentImageFilePath(), getId());
     }
 }

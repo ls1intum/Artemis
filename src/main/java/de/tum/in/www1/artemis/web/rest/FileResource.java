@@ -264,11 +264,32 @@ public class FileResource {
         return responseEntityForFilePath(FilePathService.getCourseIconFilePath(), filename);
     }
 
+    /**
+     * GET /files/user/signatures/:examUserId/:filename : Get the exam user signature
+     *
+     * @param examUserId ID of the exam user, the image belongs to
+     * @param filename the filename of the file
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
     @GetMapping("files/user/signatures/{examUserId}/{filename:.+}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         return buildFileResponse(Path.of(FilePathService.getExamUserSignatureFilePath()).toString(), filename);
+    }
+
+    /**
+     * GET /files/exam-user/:examUserId/:filename : Get the image of exam user
+     *
+     * @param examUserId ID of the exam user, the image belongs to
+     * @param filename the filename of the file
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/exam-user/{examUserId}/{filename:.+}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<byte[]> getExamUserImage(@PathVariable Long examUserId, @PathVariable String filename) {
+        log.debug("REST request to get file : {}", filename);
+        return buildFileResponse(Path.of(FilePathService.getStudentImageFilePath()).toString(), filename);
     }
 
     /**

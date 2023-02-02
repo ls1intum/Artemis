@@ -103,7 +103,7 @@ public class ExamUserService {
                 ExamUser examUser = examUserRepository.findByExamIdAndUserId(examId, user.get().getId());
                 MultipartFile file = fileService.convertByteArrayToMultipart(examUserWithImageDTO.studentRegistrationNumber() + "_student_image", ".png",
                         examUserWithImageDTO.image().imageInBytes());
-                String responsePath = fileService.handleSaveFile(file, true, false);
+                String responsePath = fileService.handleSaveFile(file, false, false);
                 examUser.setStudentImagePath(responsePath);
                 examUserRepository.save(examUser);
             }

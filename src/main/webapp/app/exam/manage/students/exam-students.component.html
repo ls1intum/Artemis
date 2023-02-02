@@ -54,7 +54,7 @@
         [searchFailed]="searchFailed"
         [searchNoResults]="searchNoResults"
         [isTransitioning]="isTransitioning"
-        entityType="user"
+        entityType="examStudents"
         [allEntities]="allRegisteredUsers"
         entitiesPerPageTranslation="artemisApp.examManagement.examStudents.usersPerPage"
         showAllEntitiesTranslation="artemisApp.examManagement.examStudents.showAllUsers"
@@ -140,6 +140,58 @@
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('visibleRegistrationNumber')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.registrationNumber"> Email </span>
                             <fa-icon [icon]="controls.iconForSortPropField('visibleRegistrationNumber')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="plannedRoom" [minWidth]="150" [width]="250">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('plannedRoom')">
+                            <!--                            todo: translate-->
+                            <span class="datatable-header-cell-label bold sortable"> Planned Room </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('plannedRoom')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="plannedSeat" [minWidth]="150" [width]="250">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('plannedSeat')">
+                            <!--                            todo: translate-->
+                            <span class="datatable-header-cell-label bold sortable"> Planned Seat </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('plannedSeat')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="actualRoom" [minWidth]="150" [width]="250">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('actualRoom')">
+                            <!--                            todo: translate-->
+                            <span class="datatable-header-cell-label bold sortable"> Actual Room </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('actualRoom')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="actualSeat" [minWidth]="150" [width]="250">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('actualSeat')">
+                            <!--                            todo: translate-->
+                            <span class="datatable-header-cell-label bold sortable"> Actual Seat </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('actualSeat')"></fa-icon>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">

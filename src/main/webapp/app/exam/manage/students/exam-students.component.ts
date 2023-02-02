@@ -37,7 +37,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     courseId: number;
     exam: Exam;
     isTestExam: boolean;
-    allRegisteredUsers: User[] = [];
+    allRegisteredUsers: any[] = [];
     filteredUsersSize = 0;
     paramSub: Subscription;
 
@@ -74,7 +74,15 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.isAdmin = this.accountService.isAdmin();
         this.route.data.subscribe(({ exam }: { exam: Exam }) => {
             this.exam = exam;
-            this.allRegisteredUsers = (exam.examUsers && exam.examUsers.map((examUser) => examUser.user!)) || [];
+            this.allRegisteredUsers =
+                (exam.examUsers &&
+                    exam.examUsers.map((examUser) => {
+                        return {
+                            ...examUser.user!,
+                            ...examUser,
+                        };
+                    })) ||
+                [];
             this.isTestExam = this.exam.testExam!;
             this.isLoading = false;
         });
@@ -84,7 +92,15 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.isLoading = true;
         this.examManagementService.find(this.courseId, this.exam.id!, true).subscribe((examResponse: HttpResponse<Exam>) => {
             this.exam = examResponse.body!;
-            this.allRegisteredUsers = (this.exam.examUsers && this.exam.examUsers.map((examUser) => examUser.user!)) || [];
+            this.allRegisteredUsers =
+                (this.exam.examUsers &&
+                    this.exam.examUsers.map((examUser) => {
+                        return {
+                            ...examUser.user!,
+                            ...examUser,
+                        };
+                    })) ||
+                [];
             this.isLoading = false;
         });
     }
