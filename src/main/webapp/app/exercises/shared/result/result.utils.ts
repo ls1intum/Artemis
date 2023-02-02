@@ -305,7 +305,7 @@ export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingC
             return [];
         }
         result.result.feedbacks.map((f) => {
-            if (f.type && [FeedbackType.AUTOMATIC, FeedbackType.AUTOMATIC_ADAPTED].includes(f.type)) {
+            if (Feedback.isTestCaseFeedback(f)) {
                 testCasesNames.add(f.text ?? 'Test ' + result.result.feedbacks?.indexOf(f) + 1);
             }
         });
@@ -330,7 +330,7 @@ export function getTestCaseResults(result: ResultWithPointsPerGradingCriterion, 
         let resultText;
         if (feedback?.positive) {
             resultText = 'Passed';
-        } else if (!feedback?.positive) {
+        } else {
             resultText = !!withFeedback && feedback?.detailText ? `Failed: "${feedback.detailText}"` : 'Failed';
         }
         testCaseResults.push({ testName, testResult: resultText } as TestCaseResult);
