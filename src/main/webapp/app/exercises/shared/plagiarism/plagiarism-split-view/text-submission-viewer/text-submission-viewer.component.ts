@@ -201,14 +201,6 @@ export class TextSubmissionViewerComponent implements OnChanges {
         return this.matches.has(file);
     }
 
-    insertToken(text: string, token: string, position: number) {
-        // prevent negative values because slice does not handle them as we would wish
-        if (position < 0) {
-            position = 0;
-        }
-        return escape(text.slice(0, position)) + token + escape(text.slice(position));
-    }
-
     insertMatchTokens(fileContent: string): string {
         const matches = this.getMatchesForCurrentFile().sort((m1, m2) => {
             if (!m1.from || !m1.to || !m2.from || !m2.to) {
