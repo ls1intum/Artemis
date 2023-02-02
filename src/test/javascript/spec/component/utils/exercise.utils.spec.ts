@@ -133,43 +133,14 @@ describe('ExerciseUtils', () => {
         expect(isStartExerciseAvailable(exercise, participation)).toBe(expected);
     });
 
-    it('should allow students to resume the exercise if there is no due date', () => {
-        const exercise = exerciseWithDueDate(undefined);
-        expect(isResumeExerciseAvailable(exercise, undefined)).toBeTrue();
-    });
-
-    it('should allow students to resume the exercise if the exercise due date is in the future', () => {
-        const exercise = exerciseWithDueDate(dayjs().add(1, 'hour'));
-        const participation = participationWithDueDate(undefined);
-
-        expect(isResumeExerciseAvailable(exercise, participation)).toBeTrue();
-    });
-
-    it('should not allow students to resume the exercise if the exercise due date is in the past', () => {
-        const exercise = exerciseWithDueDate(dayjs().subtract(1, 'hour'));
-        const participation = participationWithDueDate(undefined);
-
-        expect(isResumeExerciseAvailable(exercise, participation)).toBeFalse();
-    });
-
-    it('should allow students to resume the exercise if the individual due date is in the future', () => {
-        const exercise = exerciseWithDueDate(undefined);
-        const participation = participationWithDueDate(dayjs().add(1, 'hour'));
-
-        expect(isResumeExerciseAvailable(exercise, participation)).toBeTrue();
-    });
-
-    it('should allow students to resume the exercise between regular and individual due date', () => {
-        const exercise = exerciseWithDueDate(dayjs().subtract(1, 'hour'));
-        const participation = participationWithDueDate(dayjs().add(1, 'hour'));
-
-        expect(isResumeExerciseAvailable(exercise, participation)).toBeTrue();
-    });
-
-    it('should not allow students to resume the exercise if the individual due date is in the past', () => {
-        const exercise = exerciseWithDueDate(dayjs().add(1, 'hour'));
-        const participation = participationWithDueDate(dayjs().subtract(1, 'hour'));
-
-        expect(isResumeExerciseAvailable(exercise, participation)).toBeFalse();
+    it.each([
+        [{ dueDate: undefined } as Exercise, {}, true],
+        [{ dueDate: dayjs().add(1, 'hour') } as Exercise, {}, true],
+        [{ dueDate: dayjs().subtract(1, 'hour') } as Exercise, {}, false],
+        [{ dueDate: undefined } as Exercise, { testRun: true }, false],
+        [{ dueDate: dayjs().add(1, 'hour') } as Exercise, { testRun: true }, false],
+        [{ dueDate: dayjs().subtract(1, 'hour') } as Exercise, { testRun: true }, true],
+    ])('should correctly determine if resuming an exercise is available', (exercise: Exercise, participation: StudentParticipation | undefined, expected: boolean) => {
+        expect(isResumeExerciseAvailable(exercise, participation)).toBe(expected);
     });
 });

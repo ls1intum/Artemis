@@ -142,24 +142,19 @@ export const getExerciseDueDate = (exercise: Exercise, participation?: Participa
 export const isStartExerciseAvailable = (exercise: Exercise, participation?: StudentParticipation): boolean => {
     const isProgrammingExercise = exercise.type === ExerciseType.PROGRAMMING;
     const validDueDate = !isProgrammingExercise || !exercise.dueDate || dayjs().isBefore(exercise.dueDate);
-    const initializationState = participation?.initializationState;
-    const programmingSetupNotFinished =
-        !!initializationState &&
-        [InitializationState.UNINITIALIZED, InitializationState.BUILD_PLAN_CONFIGURED, InitializationState.REPO_CONFIGURED, InitializationState.REPO_COPIED].includes(
-            initializationState,
-        );
 
-    return validDueDate && (!participation || (isProgrammingExercise && programmingSetupNotFinished));
+    return validDueDate && (!participation || (isProgrammingExercise && programmingSetupNotFinished(participation)));
 };
 
 /**
- * Determines if the student can resume
+ * Determines if the student can resume a participation
  * @param exercise the exercise that should be started
- * @param studentParticipation the optional student participation with possibly an individual due date
+ * @param participation the optional student participation with possibly an individual due date
  */
-export const isResumeExerciseAvailable = (exercise: Exercise, studentParticipation?: StudentParticipation): boolean => {
-    const dueDate = studentParticipation?.individualDueDate ?? exercise.dueDate;
-    return !dueDate || dayjs().isBefore(dueDate);
+export const isResumeExerciseAvailable = (exercise: Exercise, participation?: StudentParticipation): boolean => {
+    const dueDate = participation?.individualDueDate ?? exercise.dueDate;
+    // A normal participation may only be resumed before the due date, a testrun only afterwards
+    return (!dueDate || dayjs().isBefore(dueDate)) === !participation?.testRun;
 };
 
 /**
@@ -175,13 +170,7 @@ export const isStartPracticeAvailable = (exercise: Exercise, participation?: Stu
             const quizExercise = exercise as QuizExercise;
             return !!(quizExercise.isOpenForPractice && quizExercise.quizEnded);
         case ExerciseType.PROGRAMMING:
-            const initializationState = participation?.initializationState;
-            const setupNotFinished =
-                !!initializationState &&
-                [InitializationState.UNINITIALIZED, InitializationState.BUILD_PLAN_CONFIGURED, InitializationState.REPO_CONFIGURED, InitializationState.REPO_COPIED].includes(
-                    initializationState,
-                );
-            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !exercise.teamMode && (!participation || setupNotFinished);
+            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !exercise.teamMode && (!participation || programmingSetupNotFinished(participation));
         default:
             return false;
     }
@@ -225,4 +214,13 @@ export const getPositiveAndCappedTotalScore = (totalScore: number, maxPoints: nu
     }
 
     return +totalScore.toFixed(2);
+};
+
+const programmingSetupNotFinished = (participation: StudentParticipation): boolean => {
+    return (
+        !!participation.initializationState &&
+        [InitializationState.UNINITIALIZED, InitializationState.BUILD_PLAN_CONFIGURED, InitializationState.REPO_CONFIGURED, InitializationState.REPO_COPIED].includes(
+            participation.initializationState,
+        )
+    );
 };

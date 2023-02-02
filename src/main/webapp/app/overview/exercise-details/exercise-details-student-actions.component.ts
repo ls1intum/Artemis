@@ -98,8 +98,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     /**
      * Resuming an exercise is not possible in the exam, otherwise see exercise.utils -> isResumeExerciseAvailable
      */
-    isResumeExerciseAvailable(): boolean {
-        return !this.examMode && isResumeExerciseAvailable(this.exercise, this.gradedParticipation);
+    isResumeExerciseAvailable(participation?: StudentParticipation): boolean {
+        return !this.examMode && isResumeExerciseAvailable(this.exercise, participation);
     }
 
     /**

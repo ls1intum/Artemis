@@ -229,7 +229,7 @@
                 [hideLabelMobile]="false"
                 *ngIf="
                     (gradedParticipation?.initializationState === InitializationState.INACTIVE || gradedParticipation?.initializationState === InitializationState.FINISHED) &&
-                    isResumeExerciseAvailable()
+                    isResumeExerciseAvailable(gradedParticipation)
                 "
                 (click)="resumeProgrammingExercise(false)"
             ></button>
@@ -244,8 +244,7 @@
                 [hideLabelMobile]="false"
                 *ngIf="
                     (practiceParticipation?.initializationState === InitializationState.INACTIVE || practiceParticipation?.initializationState === InitializationState.FINISHED) &&
-                    exercise.dueDate &&
-                    dayjs().isAfter(exercise.dueDate)
+                    isResumeExerciseAvailable(practiceParticipation)
                 "
                 (click)="resumeProgrammingExercise(true)"
             ></button>
