@@ -10,6 +10,10 @@ export class ExamExerciseGroupsPage {
         cy.get(`#group-${groupID} .group-title`).contains(groupTitle);
     }
 
+    shouldNotExist(groupID: number) {
+        cy.get(`#group-${groupID}`).should('not.exist');
+    }
+
     clickEditGroup(groupID: number) {
         cy.get(`#group-${groupID} .edit-group`).click();
     }

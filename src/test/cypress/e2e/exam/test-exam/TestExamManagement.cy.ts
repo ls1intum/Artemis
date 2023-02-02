@@ -149,11 +149,12 @@ describe('Test Exam management', () => {
             courseManagement.openExamsOfCourse(course.shortName!);
             examManagement.openExerciseGroups(exam.id!);
             // If the group in the "Create group test" was created successfully, we delete it so there is no group with no exercise
+            let group = exerciseGroup;
             if (createdGroup) {
-                exerciseGroups.clickDeleteGroup(createdGroup.id!, createdGroup.title!);
-            } else {
-                exerciseGroups.clickDeleteGroup(exerciseGroup.id!, exerciseGroup.title!);
+                group = createdGroup;
             }
+            exerciseGroups.clickDeleteGroup(group.id!, group.title!);
+            exerciseGroups.shouldNotExist(group.id!);
         });
     });
 
