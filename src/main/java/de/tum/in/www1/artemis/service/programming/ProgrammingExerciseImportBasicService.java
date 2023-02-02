@@ -94,7 +94,7 @@ public class ProgrammingExerciseImportBasicService {
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         // Set values we don't want to copy to null
         setupExerciseForImport(newExercise);
-        newExercise.setBranch(versionControlService.get().getDefaultBranchOfArtemis());
+        newExercise.setBranch(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
 
         // Note: same order as when creating an exercise
         programmingExerciseParticipationService.setupInitialTemplateParticipation(newExercise);
@@ -104,40 +104,40 @@ public class ProgrammingExerciseImportBasicService {
 
         // Hints, tasks, test cases and static code analysis categories
         Map<Long, Long> newHintIdByOldId = exerciseHintService.copyExerciseHints(templateExercise, newExercise);
-        programmingExerciseRepository.save(newExercise);
-        Map<Long, Long> newTestCaseIdByOldId = importTestCases(templateExercise, newExercise);
-        Map<Long, Long> newTaskIdByOldId = importTasks(templateExercise, newExercise, newTestCaseIdByOldId);
-        updateTaskExerciseHintReferences(templateExercise, newExercise, newTaskIdByOldId, newHintIdByOldId);
-        importSolutionEntries(templateExercise, newExercise, newTestCaseIdByOldId, newHintIdByOldId);
+
+        final ProgrammingExercise importedExercise = programmingExerciseRepository.save(newExercise);
+
+        Map<Long, Long> newTestCaseIdByOldId = importTestCases(templateExercise, importedExercise);
+        Map<Long, Long> newTaskIdByOldId = importTasks(templateExercise, importedExercise, newTestCaseIdByOldId);
+        updateTaskExerciseHintReferences(templateExercise, importedExercise, newTaskIdByOldId, newHintIdByOldId);
+        importSolutionEntries(templateExercise, importedExercise, newTestCaseIdByOldId, newHintIdByOldId);
 
         // Copy or create SCA categories
-        if (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled() && Boolean.TRUE.equals(templateExercise.isStaticCodeAnalysisEnabled()))) {
-            importStaticCodeAnalysisCategories(templateExercise, newExercise);
+        if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled() && Boolean.TRUE.equals(templateExercise.isStaticCodeAnalysisEnabled()))) {
+            importStaticCodeAnalysisCategories(templateExercise, importedExercise);
         }
-        else if (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled()) && !Boolean.TRUE.equals(templateExercise.isStaticCodeAnalysisEnabled())) {
-            staticCodeAnalysisService.createDefaultCategories(newExercise);
+        else if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled()) && !Boolean.TRUE.equals(templateExercise.isStaticCodeAnalysisEnabled())) {
+            staticCodeAnalysisService.createDefaultCategories(importedExercise);
         }
 
         // An exam exercise can only be in individual mode
-        if (newExercise.isExamExercise()) {
-            newExercise.setMode(ExerciseMode.INDIVIDUAL);
-            newExercise.setTeamAssignmentConfig(null);
+        if (importedExercise.isExamExercise()) {
+            importedExercise.setMode(ExerciseMode.INDIVIDUAL);
+            importedExercise.setTeamAssignmentConfig(null);
         }
 
-        importSubmissionPolicy(newExercise);
+        importSubmissionPolicy(importedExercise);
 
         // Re-adding auxiliary repositories
         List<AuxiliaryRepository> auxiliaryRepositoriesToBeImported = templateExercise.getAuxiliaryRepositories();
 
         for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositoriesToBeImported) {
             AuxiliaryRepository newAuxiliaryRepository = auxiliaryRepository.cloneObjectForNewExercise();
-            auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
-            newExercise.addAuxiliaryRepository(newAuxiliaryRepository);
+            newAuxiliaryRepository = auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
+            importedExercise.addAuxiliaryRepository(newAuxiliaryRepository);
         }
 
-        programmingExerciseRepository.save(newExercise);
-
-        return newExercise;
+        return programmingExerciseRepository.save(importedExercise);
     }
 
     /**
@@ -148,7 +148,7 @@ public class ProgrammingExerciseImportBasicService {
      */
     private void setupTestRepository(ProgrammingExercise newExercise) {
         final var testRepoName = newExercise.generateRepositoryName(RepositoryType.TESTS);
-        newExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(newExercise.getProjectKey(), testRepoName).toString());
+        newExercise.setTestRepositoryUrl(versionControlService.orElseThrow().getCloneRepositoryUrl(newExercise.getProjectKey(), testRepoName).toString());
     }
 
     /**
@@ -234,7 +234,11 @@ public class ProgrammingExerciseImportBasicService {
      * @param targetExercise   for which static code analysis categories will be copied
      */
     private void importStaticCodeAnalysisCategories(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
-        targetExercise.setStaticCodeAnalysisCategories(templateExercise.getStaticCodeAnalysisCategories().stream().map(originalCategory -> {
+        if (targetExercise.getStaticCodeAnalysisCategories() == null) {
+            targetExercise.setStaticCodeAnalysisCategories(new HashSet<>());
+        }
+
+        templateExercise.getStaticCodeAnalysisCategories().forEach(originalCategory -> {
             var categoryCopy = new StaticCodeAnalysisCategory();
             categoryCopy.setName(originalCategory.getName());
             categoryCopy.setPenalty(originalCategory.getPenalty());
@@ -242,9 +246,9 @@ public class ProgrammingExerciseImportBasicService {
             categoryCopy.setState(originalCategory.getState());
             categoryCopy.setProgrammingExercise(targetExercise);
 
-            staticCodeAnalysisCategoryRepository.save(categoryCopy);
-            return categoryCopy;
-        }).collect(Collectors.toSet()));
+            categoryCopy = staticCodeAnalysisCategoryRepository.save(categoryCopy);
+            targetExercise.getStaticCodeAnalysisCategories().add(categoryCopy);
+        });
     }
 
     /**
@@ -259,20 +263,15 @@ public class ProgrammingExerciseImportBasicService {
         newExercise.setExampleSolutionPublicationDate(null);
         newExercise.setTemplateParticipation(null);
         newExercise.setSolutionParticipation(null);
-        newExercise.setExerciseHints(null);
-        newExercise.setTestCases(null);
-        newExercise.setStaticCodeAnalysisCategories(null);
-        newExercise.setAttachments(null);
-        newExercise.setPlagiarismCases(null);
         newExercise.setNumberOfMoreFeedbackRequests(null);
         newExercise.setNumberOfComplaints(null);
         newExercise.setTotalNumberOfAssessments(null);
-        newExercise.setTutorParticipations(null);
-        newExercise.setExampleSubmissions(null);
-        newExercise.setPosts(null);
-        newExercise.setStudentParticipations(null);
+
+        disconnectRelatedEntities(newExercise);
+
         // copy the grading instructions to avoid issues with references to the original exercise
         newExercise.setGradingCriteria(newExercise.copyGradingCriteria(new HashMap<>()));
+
         // only copy the config for team programming exercise in courses
         if (newExercise.getMode() == ExerciseMode.TEAM && newExercise.isCourseExercise()) {
             newExercise.setTeamAssignmentConfig(newExercise.getTeamAssignmentConfig().copyTeamAssignmentConfig());
@@ -282,6 +281,43 @@ public class ProgrammingExerciseImportBasicService {
 
         if (newExercise.isTeamMode()) {
             newExercise.getTeamAssignmentConfig().setId(null);
+        }
+    }
+
+    /**
+     * Disconnect child entities from the exercise.
+     * <p>
+     * Just setting the collections to {@code null} breaks the automatic orphan removal in the database.
+     *
+     * @param newExercise The new exercise that should be created during import.
+     */
+    private void disconnectRelatedEntities(final ProgrammingExercise newExercise) {
+        if (newExercise.getExerciseHints() != null) {
+            newExercise.getExerciseHints().clear();
+        }
+        if (newExercise.getTestCases() != null) {
+            newExercise.getTestCases().clear();
+        }
+        if (newExercise.getStaticCodeAnalysisCategories() != null) {
+            newExercise.getStaticCodeAnalysisCategories().clear();
+        }
+        if (newExercise.getAttachments() != null) {
+            newExercise.getAttachments().clear();
+        }
+        if (newExercise.getPlagiarismCases() != null) {
+            newExercise.getPlagiarismCases().clear();
+        }
+        if (newExercise.getTutorParticipations() != null) {
+            newExercise.getTutorParticipations().clear();
+        }
+        if (newExercise.getExampleSubmissions() != null) {
+            newExercise.getExampleSubmissions().clear();
+        }
+        if (newExercise.getPosts() != null) {
+            newExercise.getPosts().clear();
+        }
+        if (newExercise.getStudentParticipations() != null) {
+            newExercise.getStudentParticipations().clear();
         }
     }
 
