@@ -211,10 +211,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @AfterEach
     void tearDown() throws Exception {
         bitbucketRequestMockProvider.reset();
+        bambooRequestMockProvider.reset();
         if (programmingExerciseTestService.exerciseRepo != null) {
             programmingExerciseTestService.tearDown();
         }
-        bambooRequestMockProvider.reset();
 
         for (var repo : studentRepos) {
             repo.resetLocalRepo();
@@ -2009,12 +2009,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // Compare top-level DTO properties
         assertThat(examScores.maxPoints()).isEqualTo(exam.getExamMaxPoints());
 
-        if (withSecondCorrectionAndStarted) {
-            assertThat(examScores.hasSecondCorrectionAndStarted()).isTrue();
-        }
-        else {
-            assertThat(examScores.hasSecondCorrectionAndStarted()).isFalse();
-        }
+        assertThat(examScores.hasSecondCorrectionAndStarted()).isEqual(withSecondCorrectionAndStarted);
 
         // For calculation assume that all exercises within an exerciseGroups have the same max points
         double calculatedAverageScore = 0.0;
