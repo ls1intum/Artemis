@@ -234,6 +234,43 @@ describe('Text Submission Viewer Component', () => {
         expect(updatedFileContent).toEqual(expectedFileContent);
     });
 
+    it('should insert tokens for multiple matches in one line', () => {
+        const mockMatches = [
+            {
+                from: {
+                    column: 20,
+                    line: 1,
+                    length: 10,
+                } as TextSubmissionElement,
+                to: {
+                    column: 30,
+                    line: 1,
+                    length: 5,
+                } as TextSubmissionElement,
+            },
+            {
+                from: {
+                    column: 1,
+                    line: 1,
+                    length: 5,
+                } as TextSubmissionElement,
+                to: {
+                    column: 5,
+                    line: 1,
+                    length: 5,
+                } as TextSubmissionElement,
+            },
+        ];
+        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+        const fileContent = 'Lorem ipsum <fake-token>dolor sit amet.';
+        // TODO double check that, this result seems wrong
+        const expectedFileContent = '<span class="plagiarism-match">Lorem ips</span>um &lt;fake-t<span class="plagiarism-match">oken&gt;dolor sit </span>amet.';
+
+        const updatedFileContent = comp.insertMatchTokens(fileContent);
+
+        expect(updatedFileContent).toEqual(expectedFileContent);
+    });
+
     it('should return a non-empty string even if matches have undefined "from" and "to" values', () => {
         const mockMatches = [
             {
