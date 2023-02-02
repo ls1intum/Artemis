@@ -1,8 +1,12 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.imageio.ImageIO;
 
 import org.apache.pdfbox.contentstream.PDFStreamEngine;
 import org.apache.pdfbox.contentstream.operator.DrawObject;
@@ -17,16 +21,17 @@ import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.util.Matrix;
 
-import de.tum.in.www1.artemis.web.rest.dto.ExamUserImageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ImageDTO;
 
 /**
  * Processor to extract images from a PDF and get information.
+ * ref: <a href="https://github.com/apache/pdfbox/blob/trunk/examples/src/main/java/org/apache/pdfbox/examples/util/PrintImageLocations.java">...</a>
  */
 public class ImageExtractor extends PDFStreamEngine {
 
     private final PDDocument pdfDocument;
 
-    private final List<ExamUserImageDTO> images;
+    private final List<ImageDTO> images;
 
     private static final String INVOKE_OPERATOR = "Do";
 
@@ -75,33 +80,10 @@ public class ImageExtractor extends PDFStreamEngine {
             if (xobject instanceof PDImageXObject) {
 
                 PDImageXObject image = (PDImageXObject) xobject;
-
-                int imageWidth = image.getWidth();
-                int imageHeight = image.getHeight();
-
-                System.out.println("\nImage [" + objectName.getName() + "]");
-
                 Matrix ctmNew = getGraphicsState().getCurrentTransformationMatrix();
-                float imageXScale = ctmNew.getScalingFactorX();
-                float imageYScale = ctmNew.getScalingFactorY();
-
-                // position of image in the pdf in terms of user space units
-                System.out.println("position in PDF = " + ctmNew.getTranslateX() + ", " + ctmNew.getTranslateY() + " in user space units");
-                // raw size in pixels
-                System.out.println("raw image size  = " + imageWidth + ", " + imageHeight + " in pixels");
-                // displayed size in user space units
-                System.out.println("displayed size  = " + imageXScale + ", " + imageYScale + " in user space units");
-
-                ExamUserImageDTO im = new ExamUserImageDTO();
-                im.setImage(image.getImage());
-                im.setPage(currentPage);
-                im.setXPosition(ctmNew.getTranslateX());
-                im.setYPosition(ctmNew.getTranslateY());
-                im.setOriginalHeight(image.getHeight());
-                im.setOriginalWidth(image.getWidth());
-                im.setRenderedWidth(Math.round(ctmNew.getScaleX()));
-                im.setRenderedHeight(Math.round(ctmNew.getScaleY()));
-                images.add(im);
+                ImageDTO imageDTO = new ImageDTO(currentPage, ctmNew.getTranslateX(), ctmNew.getTranslateY(), image.getHeight(), image.getWidth(), Math.round(ctmNew.getScaleX()),
+                        Math.round(ctmNew.getScaleY()), toByteArray(image.getImage(), "png"));
+                images.add(imageDTO);
 
             }
             else if (xobject instanceof PDFormXObject) {
@@ -117,8 +99,16 @@ public class ImageExtractor extends PDFStreamEngine {
     /**
      * Returns the images found after invoking {@link #process()}  method.
      */
-    public List<ExamUserImageDTO> getImages() {
+    public List<ImageDTO> getImages() {
         return images;
     }
 
+    // convert BufferedImage to byte[]
+    private byte[] toByteArray(BufferedImage bi, String format) throws IOException {
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(bi, format, baos);
+        byte[] bytes = baos.toByteArray();
+        return bytes;
+    }
 }

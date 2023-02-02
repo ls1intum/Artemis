@@ -22,6 +22,9 @@ public class ExamUser extends AbstractAuditingEntity {
     @Transient
     private String prevSigningImagePath;
 
+    @Transient
+    private String prevStudentImagePath;
+
     @Column(name = "actual_room")
     private String actualRoom;
 
@@ -49,6 +52,10 @@ public class ExamUser extends AbstractAuditingEntity {
     @Size(max = 100)
     @Column(name = "signing_image_path", length = 100)
     private String signingImagePath;
+
+    @Size(max = 100)
+    @Column(name = "student_image_path", length = 100)
+    private String studentImagePath;
 
     @ManyToOne
     @JoinColumn(name = "exam_id")
@@ -144,6 +151,14 @@ public class ExamUser extends AbstractAuditingEntity {
 
     public void setSigningImagePath(String signingImagePath) {
         this.signingImagePath = signingImagePath;
+    }
+
+    public String getStudentImagePath() {
+        return studentImagePath;
+    }
+
+    public void setStudentImagePath(String studentImagePath) {
+        this.studentImagePath = studentImagePath;
     }
 
     /**

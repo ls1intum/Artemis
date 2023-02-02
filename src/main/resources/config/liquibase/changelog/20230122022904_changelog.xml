@@ -44,6 +44,9 @@
             <column name="signing_image_path" type="varchar(100)"/>
         </addColumn>
         <addColumn tableName="exam_user">
+            <column name="student_image_path" type="varchar(100)"/>
+        </addColumn>
+        <addColumn tableName="exam_user">
             <column name="actual_room" type="varchar(100)"/>
         </addColumn>
         <addColumn tableName="exam_user">

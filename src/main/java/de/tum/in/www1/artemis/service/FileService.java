@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
@@ -26,6 +28,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -35,6 +38,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.icu.text.CharsetDetector;
@@ -1054,6 +1058,31 @@ public class FileService implements DisposableBean {
             catch (Exception ex) {
                 log.warn("Could not delete file {}. Error message: {}", filePath, ex.getMessage());
             }
+        }
+    }
+
+    /**
+     * Convert byte[] to MultipartFile by using CommonsMultipartFile
+     * @param fileName         file name to set file name
+     * @param streamByteArray  byte array to save to the temp file
+     * @return multipartFile
+     */
+    public MultipartFile convertByteArrayToMultipart(String fileName, String extension, byte[] streamByteArray) {
+        try {
+            Path tempPath = Path.of(FilePathService.getTempFilePath(), fileName + extension);
+            Files.write(tempPath, streamByteArray);
+            File outputFile = Path.of(tempPath.toString()).toFile();
+            FileItem fileItem = new DiskFileItem("mainFile", Files.probeContentType(outputFile.toPath()), false, outputFile.getName(), (int) outputFile.length(),
+                    outputFile.getParentFile());
+
+            try (InputStream input = new FileInputStream(outputFile); OutputStream fileItemOutputStream = fileItem.getOutputStream()) {
+                IOUtils.copy(input, fileItemOutputStream);
+            }
+            return new CommonsMultipartFile(fileItem);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 }
