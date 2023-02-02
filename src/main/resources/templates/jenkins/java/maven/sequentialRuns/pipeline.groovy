@@ -21,8 +21,12 @@ void testRunner() {
 }
 
 private void runTestSteps() {
-    testStructure()
-    testBehavior()
+    try {
+        testStructure()
+        testBehavior()
+    } finally {
+        staticCodeAnalysis()
+    }
 }
 
 private void testStructure() {
@@ -45,6 +49,10 @@ private void testBehavior() {
  * Runs the static code analysis
  */
 private void staticCodeAnalysis() {
+    if (!#isStaticCodeAnalysisEnabled) {
+        return
+    }
+
     stage("StaticCodeAnalysis") {
         sh '''
         rm -rf staticCodeAnalysisReports
@@ -64,11 +72,6 @@ private void staticCodeAnalysis() {
  * Called by Jenkins.
  */
 void postBuildTasks() {
-    if (#isStaticCodeAnalysisEnabled) {
-        catchError() {
-            staticCodeAnalysis()
-        }
-    }
     sh 'rm -rf results'
     sh 'mkdir results'
     sh 'cp build/test-results/test/*.xml $WORKSPACE/results/ || true'

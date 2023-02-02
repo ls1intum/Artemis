@@ -23,7 +23,11 @@ void testRunner() {
 }
 
 private void runTestSteps() {
-    test()
+    try {
+        test()
+    } finally {
+        staticCodeAnalysis()
+    }
 }
 
 /**
@@ -43,6 +47,10 @@ void test() {
  * Runs the static code analysis
  */
 private void staticCodeAnalysis() {
+    if (!#isStaticCodeAnalysisEnabled) {
+        return
+    }
+
     stage("StaticCodeAnalysis") {
         sh '''
         rm -rf staticCodeAnalysisReports
@@ -56,7 +64,7 @@ private void staticCodeAnalysis() {
     }
 }
 
-private void testwiseCoverage() {
+private void collectTestwiseCoverageReport() {
     success {
         sh '''
         rm -rf testwiseCoverageReport
@@ -72,13 +80,8 @@ private void testwiseCoverage() {
  * Called by Jenkins.
  */
 void postBuildTasks() {
-    if (#isStaticCodeAnalysisEnabled) {
-        catchError {
-            staticCodeAnalysis()
-        }
-    }
     if (#testWiseCoverage && isSolutionBuild) {
-        testwiseCoverage()
+        collectTestwiseCoverageReport()
     }
     sh 'rm -rf results'
     sh 'mkdir results'

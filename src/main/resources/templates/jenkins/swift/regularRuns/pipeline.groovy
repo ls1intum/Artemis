@@ -21,7 +21,11 @@ void testRunner() {
 }
 
 private void runTestSteps() {
-    test()
+    try {
+        test()
+    } finally {
+        staticCodeAnalysis()
+    }
 }
 
 /**
@@ -49,6 +53,10 @@ private void test() {
 }
 
 private void staticCodeAnalysis() {
+    if (!#staticCodeAnalysisEnabled) {
+        return
+    }
+
     stage('Static Code Analysis') {
         sh '''
         rm -rf staticCodeAnalysisReports
@@ -65,12 +73,6 @@ private void staticCodeAnalysis() {
  * Called by Jenkins.
  */
 void postBuildTasks() {
-    if (#staticCodeAnalysisEnabled) {
-        catchError {
-            staticCodeAnalysis()
-        }
-    }
-
     sh '''
     rm -rf results
     mkdir results
