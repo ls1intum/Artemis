@@ -56,7 +56,7 @@ public class AdminOrganizationResource {
      * POST organizations/:organizationId/courses/:courseId :
      * Add a course to an organization
      *
-     * @param courseId the id of the course to add
+     * @param courseId       the id of the course to add
      * @param organizationId the id of the organization where the course should be added
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
@@ -74,7 +74,7 @@ public class AdminOrganizationResource {
      * DELETE organizations/:organizationId/courses/:courseId :
      * Remove a course from an organization
      *
-     * @param courseId the id of the course to remove
+     * @param courseId       the id of the course to remove
      * @param organizationId the id of the organization from with the course should be removed
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
@@ -91,7 +91,7 @@ public class AdminOrganizationResource {
      * POST organizations/:organizationId/users/:userLogin :
      * Add a user to an organization
      *
-     * @param userLogin the login of the user to add
+     * @param userLogin      the login of the user to add
      * @param organizationId the id of the organization where the user should be added
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
@@ -112,7 +112,7 @@ public class AdminOrganizationResource {
      * Keep in mind that removing a user from an organization does not remove it
      * from the Access Groups of a course if already added.
      *
-     * @param userLogin the login of the user to remove
+     * @param userLogin      the login of the user to remove
      * @param organizationId the id of the organization from with the user should be removed
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
@@ -146,7 +146,7 @@ public class AdminOrganizationResource {
      * PUT organizations/:organizationId : Update an existing organization
      *
      * @param organizationId id of the organization in the body
-     * @param organization the updated organization entity
+     * @param organization   the updated organization entity
      * @return the ResponseEntity containing the updated organization with status 200 (OK), or 404 (Not Found) otherwise
      */
     @PutMapping("organizations/{organizationId}")
@@ -213,7 +213,7 @@ public class AdminOrganizationResource {
      * GET organizations/count-all : Get the number of users and courses currently mapped to each organization
      *
      * @return ResponseEntity containing a map containing the organizations' id as key and an inner map
-     * containing their relative numbers of users and courses
+     *         containing their relative numbers of users and courses
      */
     @GetMapping("organizations/count-all")
     @EnforceAdmin
@@ -236,7 +236,7 @@ public class AdminOrganizationResource {
      *
      * @param organizationId the id of the organization to get
      * @return ResponseEntity containing the organization with status 200 (OK)
-     * if exists, else with status 404 (Not Found)
+     *         if exists, else with status 404 (Not Found)
      */
     @GetMapping("organizations/{organizationId}")
     @EnforceAdmin
@@ -251,7 +251,7 @@ public class AdminOrganizationResource {
      *
      * @param organizationId the id of the organization to get
      * @return ResponseEntity containing the organization with eagerly loaded users and courses, with status 200 (OK)
-     * if exists, else with status 404 (Not Found)
+     *         if exists, else with status 404 (Not Found)
      */
     @GetMapping("organizations/{organizationId}/full")
     @EnforceAdmin

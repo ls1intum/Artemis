@@ -60,9 +60,9 @@ public class ScheduleService {
     /**
      * Schedule a task for the given Exercise for the provided ExerciseLifecycle.
      *
-     * @param exercise Exercise
+     * @param exercise  Exercise
      * @param lifecycle ExerciseLifecycle
-     * @param task Runnable task to be executed on the lifecycle hook
+     * @param task      Runnable task to be executed on the lifecycle hook
      */
     public void scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
         // check if already scheduled for exercise. if so, cancel.
@@ -75,9 +75,9 @@ public class ScheduleService {
     /**
      * Schedule a set of tasks for the given Exercise for the provided ExerciseLifecycle at the given times.
      *
-     * @param exercise Exercise
+     * @param exercise  Exercise
      * @param lifecycle ExerciseLifecycle
-     * @param tasks Runnable tasks to be executed at the associated ZonedDateTimes
+     * @param tasks     Runnable tasks to be executed at the associated ZonedDateTimes
      */
     public void scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Set<Tuple<ZonedDateTime, Runnable>> tasks) {
         // check if already scheduled for exercise. if so, cancel.
@@ -91,8 +91,8 @@ public class ScheduleService {
      * Schedule a task for the given participation for the provided lifecycle.
      *
      * @param participation for which a scheduled action should be created.
-     * @param lifecycle at which the task should be scheduled.
-     * @param task Runnable task to be executed on the lifecycle hook
+     * @param lifecycle     at which the task should be scheduled.
+     * @param task          Runnable task to be executed on the lifecycle hook
      */
     public void scheduleParticipationTask(Participation participation, ParticipationLifecycle lifecycle, Runnable task) {
         cancelScheduledTaskForParticipationLifecycle(participation.getExercise().getId(), participation.getId(), lifecycle);
@@ -105,7 +105,7 @@ public class ScheduleService {
      * Additionally, cancels the tasks for participations of that exercise for the corresponding {@link ParticipationLifecycle}.
      *
      * @param exerciseId id of the exercise for which a potentially scheduled task is canceled
-     * @param lifecycle the lifecycle (e.g. release, due date) for which the schedule should be canceled
+     * @param lifecycle  the lifecycle (e.g. release, due date) for which the schedule should be canceled
      */
     public void cancelScheduledTaskForLifecycle(Long exerciseId, ExerciseLifecycle lifecycle) {
         Tuple<Long, ExerciseLifecycle> taskId = new Tuple<>(exerciseId, lifecycle);
@@ -135,9 +135,9 @@ public class ScheduleService {
     /**
      * Cancel possible schedules tasks for a provided participation.
      *
-     * @param exerciseId id of the exercise for which a potentially scheduled task is canceled
+     * @param exerciseId      id of the exercise for which a potentially scheduled task is canceled
      * @param participationId of the participation for which a potential scheduled task is cancelled.
-     * @param lifecycle the lifecycle (e.g. release, due date) for which the schedule should be canceled
+     * @param lifecycle       the lifecycle (e.g. release, due date) for which the schedule should be canceled
      */
     public void cancelScheduledTaskForParticipationLifecycle(Long exerciseId, Long participationId, ParticipationLifecycle lifecycle) {
         Triple<Long, Long, ParticipationLifecycle> taskId = Triple.of(exerciseId, participationId, lifecycle);
@@ -152,7 +152,7 @@ public class ScheduleService {
     /**
      * Cancels all scheduled tasks for all {@link ParticipationLifecycle ParticipationLifecycles} for the given participation.
      *
-     * @param exerciseId of the exercise the participation belongs to.
+     * @param exerciseId      of the exercise the participation belongs to.
      * @param participationId of the participation itself.
      */
     void cancelAllScheduledParticipationTasks(Long exerciseId, Long participationId) {

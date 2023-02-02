@@ -126,7 +126,7 @@ public abstract class UMLElement implements Similarity<UMLElement>, Serializable
      * the given list.
      *
      * @param referenceElement the reference element that should be compared to the model elements of the list
-     * @param elementList the list of model elements
+     * @param elementList      the list of model elements
      * @return the maximum similarity score of the reference element and the list of model elements
      */
     protected double similarScore(UMLElement referenceElement, List<? extends UMLElement> elementList) {

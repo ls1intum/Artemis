@@ -8,7 +8,7 @@ public class ConfigUtil {
     /**
      * Runs a test but changes the specified property beforehand and resets it to the previous property afterwards
      *
-     * @param resource the resource with the config attributes that should be changed temporarily
+     * @param resource    the resource with the config attributes that should be changed temporarily
      * @param configName  the name of the attribute
      * @param configValue the value it should be changed to
      * @param test        the test to execute
