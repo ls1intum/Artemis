@@ -71,10 +71,10 @@ export class CourseCardComponent implements OnChanges {
             const scoresPerExerciseTypeForCourse: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO> | undefined = this.scoresStorageService.getStoredScoresPerExerciseType(
                 this.course.id!,
             );
-            if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL]) {
-                this.totalRelativeScore = scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL].studentScores[ScoreType.CURRENT_RELATIVE_SCORE];
-                this.totalAbsoluteScore = scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL].studentScores[ScoreType.ABSOLUTE_SCORE];
-                this.totalReachableScore = scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL][ScoreType.REACHABLE_POINTS];
+            if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse.get(ExerciseTypeTOTAL.TOTAL)) {
+                this.totalRelativeScore = scoresPerExerciseTypeForCourse.get(ExerciseTypeTOTAL.TOTAL)!.studentScores[ScoreType.CURRENT_RELATIVE_SCORE];
+                this.totalAbsoluteScore = scoresPerExerciseTypeForCourse.get(ExerciseTypeTOTAL.TOTAL)!.studentScores[ScoreType.ABSOLUTE_SCORE];
+                this.totalReachableScore = scoresPerExerciseTypeForCourse.get(ExerciseTypeTOTAL.TOTAL)![ScoreType.REACHABLE_POINTS];
             }
 
             // Adjust for bonus points, i.e. when the student has achieved more than is reachable

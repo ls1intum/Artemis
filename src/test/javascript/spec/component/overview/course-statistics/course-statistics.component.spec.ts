@@ -10,7 +10,7 @@ import { CourseStatisticsComponent } from 'app/overview/course-statistics/course
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, ExerciseTypeTOTAL, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -26,11 +26,14 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
     let fixture: ComponentFixture<CourseStatisticsComponent>;
     let courseStorageService: CourseStorageService;
+    let scoresStorageService: ScoresStorageService;
     let categoryFilter: ChartCategoryFilter;
 
     const testCategories = new Set(['test1', 'test2']);
@@ -339,6 +342,7 @@ describe('CourseStatisticsComponent', () => {
                 fixture = TestBed.createComponent(CourseStatisticsComponent);
                 comp = fixture.componentInstance;
                 courseStorageService = TestBed.inject(CourseStorageService);
+                scoresStorageService = TestBed.inject(ScoresStorageService);
                 categoryFilter = TestBed.inject(ChartCategoryFilter);
                 categoryFilter.exerciseCategories = testCategories;
             });
@@ -419,17 +423,25 @@ describe('CourseStatisticsComponent', () => {
         expect(exercises[3].name).toBe('test 18.06. 1');
     });
 
-    it('should calculate scores correctly', () => {
+    it('should set the scores correctly after retrieving them from the store', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [...modelingExercises];
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
+        const mockScores: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO> = new Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO>();
+        const mockCourseScoresDTO: CourseScoresDTO = {
+            maxPoints: 36,
+            reachablePoints: 36,
+            studentScores: { absoluteScore: 20, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 },
+        };
+        mockScores.set(ExerciseType.MODELING, mockCourseScoresDTO);
+        jest.spyOn(scoresStorageService, 'getStoredScoresPerExerciseType').mockReturnValue(mockScores);
         fixture.detectChanges();
         comp.ngOnInit();
         fixture.detectChanges();
         expect(comp.ngxExerciseGroups).toHaveLength(1);
         let exercise: any = comp.ngxExerciseGroups[0][0];
         expect(exercise.absoluteScore).toBe(20);
-        expect(exercise.reachableScore).toBe(36);
+        expect(exercise.reachablePoints).toBe(36);
         expect(exercise.overallMaxPoints).toBe(36);
 
         const newExercise = [
@@ -509,7 +521,7 @@ describe('CourseStatisticsComponent', () => {
         // check that exerciseGroup scores are untouched
         exercise = comp.ngxExerciseGroups[0][0];
         expect(exercise.absoluteScore).toBe(20);
-        expect(exercise.reachableScore).toBe(36);
+        expect(exercise.reachablePoints).toBe(36);
         expect(exercise.overallMaxPoints).toBe(36);
 
         // check that overall course score is adapted accordingly -> one exercise after assessment, one before

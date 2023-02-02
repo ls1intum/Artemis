@@ -74,8 +74,8 @@ export class GradingKeyOverviewComponent implements OnInit {
                     if (!this.isExam) {
                         let maxPoints = 0;
                         const scoresPerExerciseTypeForCourse = this.scoresStorageService.getStoredScoresPerExerciseType(this.courseId!);
-                        if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL]) {
-                            maxPoints = scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL][ScoreType.REACHABLE_POINTS];
+                        if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse.get(ExerciseTypeTOTAL.TOTAL)) {
+                            maxPoints = scoresPerExerciseTypeForCourse.get(ExerciseTypeTOTAL.TOTAL)![ScoreType.REACHABLE_POINTS];
                         }
                         this.gradingSystemService.setGradePoints(this.gradeSteps, maxPoints);
                     } else {

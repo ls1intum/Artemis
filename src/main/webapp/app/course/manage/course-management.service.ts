@@ -24,6 +24,8 @@ import { OnlineCourseConfiguration } from 'app/entities/online-course-configurat
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
+import { ExerciseType, ExerciseTypeTOTAL } from 'app/entities/exercise.model';
+import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -144,12 +146,10 @@ export class CourseManagementService {
                 if (res.body) {
                     const courses: Course[] = [];
                     res.body.forEach((courseForDashboardDTO) => {
-                        // Save the scoresPerExerciseType and the participationResults in the scores-storage.service.
-                        this.scoresStorageService.setStoredScoresPerExerciseType(courseForDashboardDTO.course.id!, courseForDashboardDTO.scoresPerExerciseType);
-                        this.scoresStorageService.setStoredParticipationResults(courseForDashboardDTO.participationResults);
                         courses.push(courseForDashboardDTO.course);
+                        this.saveScoresInStorage(courseForDashboardDTO);
                     });
-                    // Replace the CourseForDashboardDTOs in the response body with the normal Courses.
+                    // Replace the CourseForDashboardDTOs in the response body with the normal courses to enable further processing.
                     return res.clone({ body: courses });
                 }
                 return res;
@@ -172,12 +172,10 @@ export class CourseManagementService {
         return this.http.get<CourseForDashboardDTO>(`${this.resourceUrl}/${courseId}/for-dashboard`, { params, observe: 'response' }).pipe(
             map((res: HttpResponse<CourseForDashboardDTO>) => {
                 if (res.body) {
-                    const courseForDashboardDTO = res.body;
-                    // Save the scoresPerExerciseType and the participationResults in the scores-storage.service.
-                    this.scoresStorageService.setStoredScoresPerExerciseType(courseForDashboardDTO.course.id!, courseForDashboardDTO.scoresPerExerciseType);
-                    this.scoresStorageService.setStoredParticipationResults(courseForDashboardDTO.participationResults);
+                    const courseForDashboardDTO: CourseForDashboardDTO = res.body;
+                    this.saveScoresInStorage(courseForDashboardDTO);
 
-                    // Replace the CourseForDashboardDTO in the response body with the normal Course.
+                    // Replace the CourseForDashboardDTO in the response body with the normal course to enable further processing.
                     return res.clone({ body: courseForDashboardDTO.course });
                 }
                 return res;
@@ -185,6 +183,26 @@ export class CourseManagementService {
             map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
             tap((res: EntityResponseType) => this.courseStorageService.notifyCourseUpdatesSubscribers(res.body)),
         );
+    }
+
+    saveScoresInStorage(courseForDashboardDTO: CourseForDashboardDTO) {
+        // Convert the received object to a Map.
+        const scoresPerExerciseType: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO> = new Map();
+        Object.entries(courseForDashboardDTO.scoresPerExerciseType).forEach(([exerciseType, courseScores]) => {
+            let exerciseTypeTyped: ExerciseType | ExerciseTypeTOTAL;
+            if (exerciseType === ExerciseTypeTOTAL.TOTAL) {
+                exerciseTypeTyped = ExerciseTypeTOTAL.TOTAL;
+            } else {
+                exerciseTypeTyped = <ExerciseType>exerciseType;
+            }
+
+            if (exerciseTypeTyped !== undefined) {
+                scoresPerExerciseType.set(exerciseTypeTyped, courseScores);
+            }
+        });
+        // Save the scoresPerExerciseType and the participationResults in the scores-storage.service.
+        this.scoresStorageService.setStoredScoresPerExerciseType(courseForDashboardDTO.course.id!, scoresPerExerciseType);
+        this.scoresStorageService.setStoredParticipationResults(courseForDashboardDTO.participationResults);
     }
 
     /**
