@@ -35,6 +35,7 @@ public class ApollonConversionResource {
 
     /**
      * Converts given model to pdf
+     *
      * @param request the model for conversion
      * @return input stream for conversion
      */

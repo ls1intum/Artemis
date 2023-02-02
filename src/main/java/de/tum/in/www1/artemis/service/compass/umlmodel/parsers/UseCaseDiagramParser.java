@@ -21,8 +21,8 @@ public class UseCaseDiagramParser {
      * Create a UML use case diagram from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates a
      * use case diagram containing these UML model elements.
      *
-     * @param modelElements the model elements as JSON array
-     * @param relationships the relationship elements as JSON array
+     * @param modelElements     the model elements as JSON array
+     * @param relationships     the relationship elements as JSON array
      * @param modelSubmissionId the ID of the corresponding modeling submission
      * @return a UML use case diagram containing the parsed model elements and relationships
      * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
@@ -87,7 +87,7 @@ public class UseCaseDiagramParser {
     /**
      * Parses the given JSON representation of a UML relationship to a UMLUseCaseAssociation Java object.
      *
-     * @param relationshipJson the JSON object containing the relationship
+     * @param relationshipJson  the JSON object containing the relationship
      * @param allUmlElementsMap a map containing all objects of the corresponding use case diagram, necessary for assigning source and target element of the relationships
      * @return the UMLUseCaseAssociation object parsed from the JSON object
      * @throws IOException when no object could be found in the allUmlElementsMap for the source and target ID in the JSON object
