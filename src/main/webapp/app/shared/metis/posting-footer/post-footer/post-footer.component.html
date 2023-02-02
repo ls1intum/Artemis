@@ -1,6 +1,6 @@
 <div class="me-0 mt-2 row justify-content-between" [ngClass]="previewMode ? 'mb-2' : ''">
     <!-- Post reactions -->
-    <div *ngIf="!previewMode && showButton" class="col-auto ps-3 pe-0">
+    <div *ngIf="!previewMode" class="col-auto ps-3 pe-0">
         <jhi-post-reactions-bar
             [lastReadDate]="lastReadDate"
             [readOnlyMode]="readOnlyMode"

@@ -53,7 +53,7 @@
         </div>
         <jhi-posting-content
             *ngIf="!displayInlineInput"
-            [previewMode]="previewMode"
+            [previewMode]="previewMode && pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT"
             [content]="posting.content"
             [isAnnouncement]="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
         ></jhi-posting-content>
@@ -64,10 +64,9 @@
     #postFooter
     [readOnlyMode]="readOnlyMode"
     [modalRef]="modalRef"
-    [previewMode]="previewMode"
+    [previewMode]="previewMode && pageType !== PageType.PLAGIARISM_CASE_STUDENT"
     [posting]="posting"
     [showAnswers]="showAnswers"
-    [showButton]="pageType !== PageType.PLAGIARISM_CASE_STUDENT"
     [isCourseMessagesPage]="isCourseMessagesPage"
     [isThreadSidebar]="isThreadSidebar"
     (openThread)="openThread.emit()"

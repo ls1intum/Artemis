@@ -25,7 +25,6 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
 
     @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
     @Input() showAnswers: boolean;
-    @Input() showButton = true;
     @Input() isCourseMessagesPage: boolean;
     @Output() openThread = new EventEmitter<void>();
 
