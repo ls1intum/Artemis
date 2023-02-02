@@ -8,8 +8,8 @@
  * !!!
  */
 
-dockerImage = "#dockerImage"
-dockerFlags = "#dockerArgs"
+dockerImage = '#dockerImage'
+dockerFlags = '#dockerArgs'
 
 isStaticCodeAnalysisEnabled = #isStaticCodeAnalysisEnabled
 

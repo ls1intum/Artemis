@@ -8,8 +8,8 @@
  * !!!
  */
 
-dockerImage = "#dockerImage"
-dockerFlags = "#dockerArgs"
+dockerImage = '#dockerImage'
+dockerFlags = '#dockerArgs'
 
 isSolutionBuild = "${env.JOB_NAME}" ==~ /.+-SOLUTION$/
 isTestWiseCoverageEnabled = #testWiseCoverage && isSolutionBuild

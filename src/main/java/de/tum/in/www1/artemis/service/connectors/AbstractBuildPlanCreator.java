@@ -38,4 +38,15 @@ public abstract class AbstractBuildPlanCreator {
         programmingExerciseRepository.generateBuildPlanAccessSecretIfNotExists(exercise);
         return String.format("%s/api/programming-exercises/%s/build-plan?secret=%s", artemisServerUrl, exercise.getId(), exercise.getBuildPlanAccessSecret());
     }
+
+    public void createBuildPlanForExercise(ProgrammingExercise exercise) {
+        Optional<BuildPlan> optionalBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(exercise.getId());
+        if (optionalBuildPlan.isPresent()) {
+            BuildPlan oldBuildPlan = optionalBuildPlan.get();
+            oldBuildPlan.disconnectFromExercise(exercise);
+            buildPlanRepository.save(oldBuildPlan);
+        }
+        var defaultBuildPlan = generateDefaultBuildPlan(exercise);
+        buildPlanRepository.setBuildPlanForExercise(defaultBuildPlan, exercise);
+    }
 }

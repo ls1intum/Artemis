@@ -114,7 +114,7 @@ public class JenkinsBuildPlanService {
         jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
         givePlanPermissions(exercise, planKey);
 
-        pipelineGroovyBuildPlanCreator.addBuildPlanToProgrammingExerciseIfUnset(exercise);
+        pipelineGroovyBuildPlanCreator.createBuildPlanForExercise(exercise);
 
         triggerBuild(jobFolder, job);
     }
