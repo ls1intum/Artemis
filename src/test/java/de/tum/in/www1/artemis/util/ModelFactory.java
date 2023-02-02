@@ -757,10 +757,10 @@ public class ModelFactory {
         return criterion;
     }
 
-    public static List<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions, int usageCount) {
-        var instructions = new ArrayList<GradingInstruction>();
+    public static List<StructuredGradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions, int usageCount) {
+        var instructions = new ArrayList<StructuredGradingInstruction>();
         while (numberOfTestInstructions > 0) {
-            var exampleInstruction1 = new GradingInstruction();
+            var exampleInstruction1 = new StructuredGradingInstruction();
             exampleInstruction1.setGradingCriterion(criterion);
             exampleInstruction1.setCredits(1);
             exampleInstruction1.setGradingScale("good test");

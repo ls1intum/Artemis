@@ -225,7 +225,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
 
         var currentInstructionsSize = modelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size();
-        var newInstruction = new GradingInstruction();
+        var newInstruction = new StructuredGradingInstruction();
         newInstruction.setInstructionDescription("New Instruction");
 
         modelingExercise.getGradingCriteria().get(1).addStructuredGradingInstruction(newInstruction);
@@ -942,8 +942,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         modelingExercise = modelingExerciseRepository.save(modelingExercise);
         List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
-        GradingInstruction gradingInstruction = gradingCriteria.get(0).getStructuredGradingInstructions().get(0);
-        assertThat(gradingInstruction.getFeedback()).as("Test feedback should have student readable feedback").isNotEmpty();
+        StructuredGradingInstruction structuredGradingInstruction = gradingCriteria.get(0).getStructuredGradingInstructions().get(0);
+        assertThat(structuredGradingInstruction.getFeedback()).as("Test feedback should have student readable feedback").isNotEmpty();
 
         // Create example submission
         var exampleSubmission = database.generateExampleSubmission("model", modelingExercise, true);
@@ -952,7 +952,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var submission = submissionRepository.findWithEagerResultAndFeedbackById(exampleSubmission.getSubmission().getId()).get();
 
         Feedback feedback = ModelFactory.generateFeedback().get(0);
-        feedback.setGradingInstruction(gradingInstruction);
+        feedback.setGradingInstruction(structuredGradingInstruction);
         database.addFeedbackToResult(feedback, Objects.requireNonNull(submission.getLatestResult()));
 
         modelingExercise.setCourse(course2);
@@ -962,23 +962,23 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         assertThat(modelingExerciseRepository.findById(importedModelingExercise.getId())).isPresent();
 
         var importedExampleSubmission = importedModelingExercise.getExampleSubmissions().stream().findFirst().get();
-        GradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().get(0).getGradingInstruction();
+        StructuredGradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().get(0).getGradingInstruction();
         assertThat(importedFeedbackGradingInstruction).isNotNull();
 
         // Copy and original should have the same data but not the same ids.
-        assertThat(importedFeedbackGradingInstruction.getId()).isNotEqualTo(gradingInstruction.getId());
+        assertThat(importedFeedbackGradingInstruction.getId()).isNotEqualTo(structuredGradingInstruction.getId());
         assertThat(importedFeedbackGradingInstruction.getGradingCriterion()).isNull();  // To avoid infinite recursion when serializing to JSON.
-        assertThat(importedFeedbackGradingInstruction.getFeedback()).isEqualTo(gradingInstruction.getFeedback());
-        assertThat(importedFeedbackGradingInstruction.getGradingScale()).isEqualTo(gradingInstruction.getGradingScale());
-        assertThat(importedFeedbackGradingInstruction.getInstructionDescription()).isEqualTo(gradingInstruction.getInstructionDescription());
-        assertThat(importedFeedbackGradingInstruction.getCredits()).isEqualTo(gradingInstruction.getCredits());
-        assertThat(importedFeedbackGradingInstruction.getUsageCount()).isEqualTo(gradingInstruction.getUsageCount());
+        assertThat(importedFeedbackGradingInstruction.getFeedback()).isEqualTo(structuredGradingInstruction.getFeedback());
+        assertThat(importedFeedbackGradingInstruction.getGradingScale()).isEqualTo(structuredGradingInstruction.getGradingScale());
+        assertThat(importedFeedbackGradingInstruction.getInstructionDescription()).isEqualTo(structuredGradingInstruction.getInstructionDescription());
+        assertThat(importedFeedbackGradingInstruction.getCredits()).isEqualTo(structuredGradingInstruction.getCredits());
+        assertThat(importedFeedbackGradingInstruction.getUsageCount()).isEqualTo(structuredGradingInstruction.getUsageCount());
 
         var importedModelingExerciseFromDb = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResults(importedModelingExercise.getId()).get();
         var importedFeedbackGradingInstructionFromDb = importedModelingExerciseFromDb.getExampleSubmissions().stream().findFirst().get().getSubmission().getLatestResult()
                 .getFeedbacks().get(0).getGradingInstruction();
 
-        assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(gradingInstruction.getGradingCriterion().getId());
+        assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(structuredGradingInstruction.getGradingCriterion().getId());
 
     }
 }

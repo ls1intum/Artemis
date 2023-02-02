@@ -819,7 +819,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return A clone of the grading criteria list
      */
-    public List<GradingCriterion> copyGradingCriteria(Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    public List<GradingCriterion> copyGradingCriteria(Map<Long, StructuredGradingInstruction> gradingInstructionCopyTracker) {
         List<GradingCriterion> newGradingCriteria = new ArrayList<>();
         for (GradingCriterion originalGradingCriterion : getGradingCriteria()) {
             GradingCriterion newGradingCriterion = new GradingCriterion();
@@ -840,11 +840,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return A clone of the grading instruction list of the grading criterion
      */
-    private List<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion,
-            Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
-        List<GradingInstruction> newGradingInstructions = new ArrayList<>();
-        for (GradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
-            GradingInstruction newGradingInstruction = new GradingInstruction();
+    private List<StructuredGradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion,
+            Map<Long, StructuredGradingInstruction> gradingInstructionCopyTracker) {
+        List<StructuredGradingInstruction> newGradingInstructions = new ArrayList<>();
+        for (StructuredGradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
+            StructuredGradingInstruction newGradingInstruction = new StructuredGradingInstruction();
             newGradingInstruction.setCredits(originalGradingInstruction.getCredits());
             newGradingInstruction.setFeedback(originalGradingInstruction.getFeedback());
             newGradingInstruction.setGradingScale(originalGradingInstruction.getGradingScale());

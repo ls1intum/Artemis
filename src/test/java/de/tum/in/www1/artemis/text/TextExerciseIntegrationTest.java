@@ -300,7 +300,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         GradingCriterion criterion = new GradingCriterion();
         criterion.setTitle("Test");
 
-        GradingInstruction gradingInstruction = new GradingInstruction();
+        StructuredGradingInstruction gradingInstruction = new StructuredGradingInstruction();
         gradingInstruction.setCredits(2);
         gradingInstruction.setGradingScale("Good");
         gradingInstruction.setInstructionDescription("Use this Feedback to test functionality");
@@ -1271,8 +1271,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise = textExerciseRepository.save(textExercise);
         List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
-        GradingInstruction gradingInstruction = gradingCriteria.get(0).getStructuredGradingInstructions().get(0);
-        assertThat(gradingInstruction.getFeedback()).as("Test feedback should have student readable feedback").isNotEmpty();
+        StructuredGradingInstruction structuredGradingInstruction = gradingCriteria.get(0).getStructuredGradingInstructions().get(0);
+        assertThat(structuredGradingInstruction.getFeedback()).as("Test feedback should have student readable feedback").isNotEmpty();
 
         // Create example submission
         var exampleSubmission = database.generateExampleSubmission("text", textExercise, true);
@@ -1281,7 +1281,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var submission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(exampleSubmission.getSubmission().getId());
 
         Feedback feedback = ModelFactory.generateFeedback().get(0);
-        feedback.setGradingInstruction(gradingInstruction);
+        feedback.setGradingInstruction(structuredGradingInstruction);
         database.addFeedbackToResult(feedback, Objects.requireNonNull(submission.getLatestResult()));
 
         textExercise.setCourse(course2);
@@ -1290,23 +1290,24 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(textExerciseRepository.findById(importedTextExercise.getId())).isPresent();
 
         var importedExampleSubmission = importedTextExercise.getExampleSubmissions().stream().findFirst().get();
-        GradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().get(0).getGradingInstruction();
-        assertThat(importedFeedbackGradingInstruction).isNotNull();
+        StructuredGradingInstruction importedFeedbackStructuredGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().get(0)
+                .getGradingInstruction();
+        assertThat(importedFeedbackStructuredGradingInstruction).isNotNull();
 
         // Copy and original should have the same data but not the same ids.
-        assertThat(importedFeedbackGradingInstruction.getId()).isNotEqualTo(gradingInstruction.getId());
-        assertThat(importedFeedbackGradingInstruction.getGradingCriterion()).isNull();  // To avoid infinite recursion when serializing to JSON.
-        assertThat(importedFeedbackGradingInstruction.getFeedback()).isEqualTo(gradingInstruction.getFeedback());
-        assertThat(importedFeedbackGradingInstruction.getGradingScale()).isEqualTo(gradingInstruction.getGradingScale());
-        assertThat(importedFeedbackGradingInstruction.getInstructionDescription()).isEqualTo(gradingInstruction.getInstructionDescription());
-        assertThat(importedFeedbackGradingInstruction.getCredits()).isEqualTo(gradingInstruction.getCredits());
-        assertThat(importedFeedbackGradingInstruction.getUsageCount()).isEqualTo(gradingInstruction.getUsageCount());
+        assertThat(importedFeedbackStructuredGradingInstruction.getId()).isNotEqualTo(structuredGradingInstruction.getId());
+        assertThat(importedFeedbackStructuredGradingInstruction.getGradingCriterion()).isNull();  // To avoid infinite recursion when serializing to JSON.
+        assertThat(importedFeedbackStructuredGradingInstruction.getFeedback()).isEqualTo(structuredGradingInstruction.getFeedback());
+        assertThat(importedFeedbackStructuredGradingInstruction.getGradingScale()).isEqualTo(structuredGradingInstruction.getGradingScale());
+        assertThat(importedFeedbackStructuredGradingInstruction.getInstructionDescription()).isEqualTo(structuredGradingInstruction.getInstructionDescription());
+        assertThat(importedFeedbackStructuredGradingInstruction.getCredits()).isEqualTo(structuredGradingInstruction.getCredits());
+        assertThat(importedFeedbackStructuredGradingInstruction.getUsageCount()).isEqualTo(structuredGradingInstruction.getUsageCount());
 
         var importedTextExerciseFromDB = textExerciseRepository.findByIdWithExampleSubmissionsAndResults(importedTextExercise.getId()).get();
         var importedFeedbackGradingInstructionFromDb = importedTextExerciseFromDB.getExampleSubmissions().stream().findFirst().get().getSubmission().getLatestResult()
                 .getFeedbacks().get(0).getGradingInstruction();
 
-        assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(gradingInstruction.getGradingCriterion().getId());
+        assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(structuredGradingInstruction.getGradingCriterion().getId());
 
     }
 

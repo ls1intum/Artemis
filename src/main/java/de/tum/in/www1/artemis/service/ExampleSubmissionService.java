@@ -107,7 +107,7 @@ public class ExampleSubmissionService {
         newExampleSubmission.setExercise(exercise);
 
         var gradingCriteria = this.gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
-        Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
+        Map<Long, StructuredGradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream()).forEach(gradingInstruction -> {
             gradingInstructionCopyTracker.put(gradingInstruction.getId(), gradingInstruction);
         });

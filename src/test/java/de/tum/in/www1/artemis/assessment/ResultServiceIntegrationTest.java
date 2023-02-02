@@ -455,9 +455,9 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         final GradingCriterion criterion1 = getGradingCriterionByTitle(fileUploadExercise, "test title");
         final GradingCriterion criterion2 = getGradingCriterionByTitle(fileUploadExercise, "test title2");
 
-        final GradingInstruction instruction1a = criterion1.getStructuredGradingInstructions().get(0);
-        final GradingInstruction instruction1b = criterion1.getStructuredGradingInstructions().get(1);
-        final GradingInstruction instruction2 = criterion2.getStructuredGradingInstructions().get(0);
+        final StructuredGradingInstruction instruction1a = criterion1.getStructuredGradingInstructions().get(0);
+        final StructuredGradingInstruction instruction1b = criterion1.getStructuredGradingInstructions().get(1);
+        final StructuredGradingInstruction instruction2 = criterion2.getStructuredGradingInstructions().get(0);
 
         for (final var participation : fileUploadExercise.getStudentParticipations()) {
             for (final var result : participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).toList()) {

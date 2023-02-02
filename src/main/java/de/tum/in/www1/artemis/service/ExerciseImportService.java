@@ -25,7 +25,7 @@ public abstract class ExerciseImportService {
         this.resultRepository = resultRepository;
     }
 
-    void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise, final Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise, final Map<Long, StructuredGradingInstruction> gradingInstructionCopyTracker) {
         if (importedExercise.isCourseExercise()) {
             newExercise.setCourse(importedExercise.getCourseViaExerciseGroupOrCourseMember());
         }
@@ -69,7 +69,7 @@ public abstract class ExerciseImportService {
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned result
      */
-    Result copyExampleResult(Result originalResult, Submission newSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    Result copyExampleResult(Result originalResult, Submission newSubmission, Map<Long, StructuredGradingInstruction> gradingInstructionCopyTracker) {
         Result newResult = new Result();
         newResult.setAssessmentType(originalResult.getAssessmentType());
         newResult.setAssessor(originalResult.getAssessor());
@@ -98,7 +98,7 @@ public abstract class ExerciseImportService {
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned list of feedback
      */
-    private List<Feedback> copyFeedback(List<Feedback> originalFeedbacks, Result newResult, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    private List<Feedback> copyFeedback(List<Feedback> originalFeedbacks, Result newResult, Map<Long, StructuredGradingInstruction> gradingInstructionCopyTracker) {
         List<Feedback> newFeedbacks = new ArrayList<>();
         for (final var originalFeedback : originalFeedbacks) {
             Feedback newFeedback = new Feedback();
@@ -111,9 +111,9 @@ public abstract class ExerciseImportService {
             newFeedback.setResult(newResult);
 
             // Original GradingInstructions should be replaced with copied GradingInstructions before save.
-            GradingInstruction originalGradingInstruction = originalFeedback.getGradingInstruction();
+            StructuredGradingInstruction originalGradingInstruction = originalFeedback.getGradingInstruction();
             if (originalGradingInstruction != null) {
-                GradingInstruction newGradingInstruction = gradingInstructionCopyTracker.get(originalGradingInstruction.getId());
+                StructuredGradingInstruction newGradingInstruction = gradingInstructionCopyTracker.get(originalGradingInstruction.getId());
                 if (newGradingInstruction == null) {
                     log.warn("New Grading Instruction is not found for original Grading Instruction with id {}", originalGradingInstruction.getId());
                 }

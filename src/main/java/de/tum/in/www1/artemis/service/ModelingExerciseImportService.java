@@ -32,7 +32,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
     /**
      * Imports a modeling exercise creating a new entity, copying all basic values and saving it in the database.
      * All basic include everything except Student-, Tutor participations, and student questions. <br>
-     * This method calls {@link #copyModelingExerciseBasis(Exercise, Map<Long, GradingInstruction>)} to set up the basis of the exercise
+     * This method calls {@link #copyModelingExerciseBasis(Exercise, Map<Long, StructuredGradingInstruction >)} to set up the basis of the exercise
      * {@link #copyExampleSubmission(Exercise, Exercise)} for a hard copy of the example submissions.
      *
      * @param templateExercise The template exercise which should get imported
@@ -42,7 +42,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
     @NotNull
     public ModelingExercise importModelingExercise(ModelingExercise templateExercise, ModelingExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise.getId());
-        Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
+        Map<Long, StructuredGradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         ModelingExercise newExercise = copyModelingExerciseBasis(importedExercise, gradingInstructionCopyTracker);
         newExercise.setKnowledge(templateExercise.getKnowledge());
         modelingExerciseRepository.save(newExercise);
@@ -60,7 +60,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
      * @return the cloned TextExercise basis
      */
     @NotNull
-    private ModelingExercise copyModelingExerciseBasis(Exercise importedExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    private ModelingExercise copyModelingExerciseBasis(Exercise importedExercise, Map<Long, StructuredGradingInstruction> gradingInstructionCopyTracker) {
         log.debug("Copying the exercise basis from {}", importedExercise);
         ModelingExercise newExercise = new ModelingExercise();
         super.copyExerciseBasis(newExercise, importedExercise, gradingInstructionCopyTracker);
@@ -92,7 +92,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned set of example submissions
      */
-    Set<ExampleSubmission> copyExampleSubmission(Exercise templateExercise, Exercise newExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    Set<ExampleSubmission> copyExampleSubmission(Exercise templateExercise, Exercise newExercise, Map<Long, StructuredGradingInstruction> gradingInstructionCopyTracker) {
         log.debug("Copying the ExampleSubmissions to new Exercise: {}", newExercise);
         Set<ExampleSubmission> newExampleSubmissions = new HashSet<>();
         for (ExampleSubmission originalExampleSubmission : templateExercise.getExampleSubmissions()) {
@@ -118,7 +118,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned submission
      */
-    Submission copySubmission(Submission originalSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    Submission copySubmission(Submission originalSubmission, Map<Long, StructuredGradingInstruction> gradingInstructionCopyTracker) {
         ModelingSubmission newSubmission = new ModelingSubmission();
         if (originalSubmission != null) {
             log.debug("Copying the Submission to new ExampleSubmission: {}", newSubmission);

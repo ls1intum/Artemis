@@ -23,8 +23,8 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
-import de.tum.in.www1.artemis.repository.GradingInstructionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StructuredGradingInstructionRepository;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.TutorParticipationService;
@@ -51,7 +51,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
     private TutorParticipationService tutorParticipationService;
 
     @Autowired
-    private GradingInstructionRepository gradingInstructionRepository;
+    private StructuredGradingInstructionRepository structuredGradingInstructionRepository;
 
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
@@ -209,7 +209,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
             gradingCriterionRepository.save(gradingCriterion);
 
             var instructions = ModelFactory.generateGradingInstructions(gradingCriterion, 1, 1);
-            gradingInstructionRepository.saveAll(instructions);
+            structuredGradingInstructionRepository.saveAll(instructions);
             instructions.forEach(feedback::setGradingInstruction);
             result.addFeedback(feedback);
             resultRepository.save(result);

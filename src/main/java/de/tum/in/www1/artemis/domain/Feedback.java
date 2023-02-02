@@ -71,7 +71,8 @@ public class Feedback extends DomainObject {
     private Result result;
 
     @ManyToOne
-    private GradingInstruction gradingInstruction;
+    // TODO change to new supertype
+    private StructuredGradingInstruction gradingInstruction;
 
     /**
      * Represents the reference of the previously assessed block, whose feedback we are reusing
@@ -248,11 +249,11 @@ public class Feedback extends DomainObject {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-    public GradingInstruction getGradingInstruction() {
+    public StructuredGradingInstruction getGradingInstruction() {
         return gradingInstruction;
     }
 
-    public void setGradingInstruction(GradingInstruction gradingInstruction) {
+    public void setGradingInstruction(StructuredGradingInstruction gradingInstruction) {
         this.gradingInstruction = gradingInstruction;
     }
 

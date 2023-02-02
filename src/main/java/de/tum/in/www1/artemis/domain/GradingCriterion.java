@@ -24,7 +24,7 @@ public class GradingCriterion extends DomainObject {
     @JsonIgnoreProperties(value = "gradingCriterion", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     // TODO: this should actually be a set and not a list, because the relationship is not ordered
-    private List<GradingInstruction> structuredGradingInstructions = new ArrayList<>();
+    private List<StructuredGradingInstruction> structuredGradingInstructions = new ArrayList<>();
 
     @ManyToOne
     private Exercise exercise;
@@ -40,11 +40,11 @@ public class GradingCriterion extends DomainObject {
         this.title = title;
     }
 
-    public List<GradingInstruction> getStructuredGradingInstructions() {
+    public List<StructuredGradingInstruction> getStructuredGradingInstructions() {
         return structuredGradingInstructions;
     }
 
-    public void addStructuredGradingInstruction(GradingInstruction structuredGradingInstruction) {
+    public void addStructuredGradingInstruction(StructuredGradingInstruction structuredGradingInstruction) {
         this.structuredGradingInstructions.add(structuredGradingInstruction);
         structuredGradingInstruction.setGradingCriterion(this);
     }
@@ -52,7 +52,7 @@ public class GradingCriterion extends DomainObject {
     /**
      * @param structuredGradingInstructions the list of structured grading instructions which belong to the grading criterion
      */
-    public void setStructuredGradingInstructions(List<GradingInstruction> structuredGradingInstructions) {
+    public void setStructuredGradingInstructions(List<StructuredGradingInstruction> structuredGradingInstructions) {
         this.structuredGradingInstructions = structuredGradingInstructions;
         if (structuredGradingInstructions != null) {
             this.structuredGradingInstructions.forEach(structuredGradingInstruction -> structuredGradingInstruction.setGradingCriterion(this));

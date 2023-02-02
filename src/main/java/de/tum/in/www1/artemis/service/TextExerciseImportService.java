@@ -49,7 +49,7 @@ public class TextExerciseImportService extends ExerciseImportService {
     @NotNull
     public TextExercise importTextExercise(final TextExercise templateExercise, TextExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
-        Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
+        Map<Long, StructuredGradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         TextExercise newExercise = copyTextExerciseBasis(importedExercise, gradingInstructionCopyTracker);
         newExercise.setKnowledge(templateExercise.getKnowledge());
         textExerciseRepository.save(newExercise);
@@ -66,7 +66,7 @@ public class TextExerciseImportService extends ExerciseImportService {
      * @return the cloned TextExercise basis
      */
     @NotNull
-    private TextExercise copyTextExerciseBasis(TextExercise importedExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    private TextExercise copyTextExerciseBasis(TextExercise importedExercise, Map<Long, StructuredGradingInstruction> gradingInstructionCopyTracker) {
         log.debug("Copying the exercise basis from {}", importedExercise);
         TextExercise newExercise = new TextExercise();
 
@@ -117,7 +117,7 @@ public class TextExerciseImportService extends ExerciseImportService {
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned set of example submissions
      */
-    Set<ExampleSubmission> copyExampleSubmission(Exercise templateExercise, Exercise newExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    Set<ExampleSubmission> copyExampleSubmission(Exercise templateExercise, Exercise newExercise, Map<Long, StructuredGradingInstruction> gradingInstructionCopyTracker) {
         log.debug("Copying the ExampleSubmissions to new Exercise: {}", newExercise);
         Set<ExampleSubmission> newExampleSubmissions = new HashSet<>();
         for (ExampleSubmission originalExampleSubmission : templateExercise.getExampleSubmissions()) {
@@ -144,7 +144,7 @@ public class TextExerciseImportService extends ExerciseImportService {
      * @param originalSubmission            The original submission to be copied.
      * @return The cloned submission
      */
-    TextSubmission copySubmission(final Submission originalSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    TextSubmission copySubmission(final Submission originalSubmission, Map<Long, StructuredGradingInstruction> gradingInstructionCopyTracker) {
         TextSubmission newSubmission = new TextSubmission();
         if (originalSubmission != null) {
             log.debug("Copying the Submission to new ExampleSubmission: {}", newSubmission);

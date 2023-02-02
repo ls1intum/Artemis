@@ -15,10 +15,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * A Structured Grading Instruction.
  */
 @Entity
-@Table(name = "grading_instruction")
+@Table(name = "structured_grading_instruction")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class GradingInstruction extends DomainObject {
+public class StructuredGradingInstruction extends DomainObject {
 
     // the score students get if this grading instruction is applicable
     @Column(name = "credits")

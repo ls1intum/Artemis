@@ -2066,18 +2066,18 @@ public class DatabaseUtilService {
 
     public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
         GradingCriterion emptyCriterion = ModelFactory.generateGradingCriterion(null);
-        List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriterion, 1, 0);
+        List<StructuredGradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriterion, 1, 0);
         instructionWithNoCriteria.get(0).setCredits(1);
         instructionWithNoCriteria.get(0).setUsageCount(0);
         emptyCriterion.setExercise(exercise);
         emptyCriterion.setStructuredGradingInstructions(instructionWithNoCriteria);
 
         GradingCriterion testCriterion = ModelFactory.generateGradingCriterion("test title");
-        List<GradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriterion, 3, 1);
+        List<StructuredGradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriterion, 3, 1);
         testCriterion.setStructuredGradingInstructions(instructions);
 
         GradingCriterion testCriterion2 = ModelFactory.generateGradingCriterion("test title2");
-        List<GradingInstruction> instructionsWithBigLimit = ModelFactory.generateGradingInstructions(testCriterion2, 1, 4);
+        List<StructuredGradingInstruction> instructionsWithBigLimit = ModelFactory.generateGradingInstructions(testCriterion2, 1, 4);
         testCriterion2.setStructuredGradingInstructions(instructionsWithBigLimit);
 
         testCriterion.setExercise(exercise);
