@@ -9,7 +9,7 @@ const admin = users.getAdmin();
 const studentOne = users.getStudentOne();
 
 // Requests
-const courseManagementRequests = artemis.requests.courseManagement;
+const courseManagementRequest = artemis.requests.courseManagement;
 
 // PageObjects
 const courseOverview = artemis.pageobjects.course.overview;
@@ -22,9 +22,9 @@ describe('Logout tests', () => {
     before('Login as admin and create a course with a modeling exercise', () => {
         cy.login(admin);
 
-        courseManagementRequests.createCourse(true).then((response) => {
+        courseManagementRequest.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
+            courseManagementRequest.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
                 modelingExercise = resp.body;
             });
         });
@@ -33,7 +33,7 @@ describe('Logout tests', () => {
     after(() => {
         if (course) {
             cy.login(admin);
-            courseManagementRequests.deleteCourse(course.id!);
+            courseManagementRequest.deleteCourse(course.id!);
         }
     });
 

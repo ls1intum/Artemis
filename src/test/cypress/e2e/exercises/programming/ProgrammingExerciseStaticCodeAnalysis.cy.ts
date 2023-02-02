@@ -11,7 +11,7 @@ const admin = users.getAdmin();
 const studentOne = users.getStudentOne();
 
 // Requests
-const courseManagementRequests = artemis.requests.courseManagement;
+const courseManagementRequest = artemis.requests.courseManagement;
 
 // PageObjects
 const editorPage = artemis.pageobjects.exercise.programming.editor;
@@ -35,7 +35,7 @@ describe('Static code analysis tests', () => {
     after(() => {
         if (course) {
             cy.login(admin);
-            courseManagementRequests.deleteCourse(course.id!);
+            courseManagementRequest.deleteCourse(course.id!);
         }
     });
 
@@ -44,10 +44,10 @@ describe('Static code analysis tests', () => {
      */
     function setupCourseAndProgrammingExercise() {
         cy.login(admin);
-        courseManagementRequests.createCourse(true).then((response) => {
+        courseManagementRequest.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, studentOne);
-            courseManagementRequests.createProgrammingExercise({ course }, 50).then((dto) => {
+            courseManagementRequest.addStudentToCourse(course, studentOne);
+            courseManagementRequest.createProgrammingExercise({ course }, 50).then((dto) => {
                 exercise = dto.body;
             });
         });

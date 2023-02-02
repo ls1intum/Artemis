@@ -12,7 +12,7 @@ const tutor = users.getTutor();
 const studentOne = users.getStudentOne();
 
 // Requests
-const courseManagementRequests = artemis.requests.courseManagement;
+const courseManagementRequest = artemis.requests.courseManagement;
 
 // PageObjects
 const assessmentEditor = artemis.pageobjects.assessment.modeling;
@@ -34,7 +34,7 @@ describe('Modeling Exercise Assessment Spec', () => {
 
     after('Delete test course', () => {
         cy.login(admin);
-        courseManagementRequests.deleteCourse(course.id!);
+        courseManagementRequest.deleteCourse(course.id!);
     });
 
     it('Tutor can assess a submission', () => {
@@ -58,7 +58,7 @@ describe('Modeling Exercise Assessment Spec', () => {
     describe('Handling complaints', () => {
         before(() => {
             cy.login(admin);
-            courseManagementRequests
+            courseManagementRequest
                 .updateModelingExerciseAssessmentDueDate(modelingExercise, day())
                 .its('body')
                 .then((exercise) => {
@@ -87,12 +87,12 @@ describe('Modeling Exercise Assessment Spec', () => {
 
     function createCourseWithModelingExercise() {
         cy.login(admin);
-        return courseManagementRequests.createCourse(true).then((response) => {
+        return courseManagementRequest.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, studentOne);
-            courseManagementRequests.addTutorToCourse(course, tutor);
-            courseManagementRequests.addInstructorToCourse(course, instructor);
-            courseManagementRequests.createModelingExercise({ course }).then((modelingResponse) => {
+            courseManagementRequest.addStudentToCourse(course, studentOne);
+            courseManagementRequest.addTutorToCourse(course, tutor);
+            courseManagementRequest.addInstructorToCourse(course, instructor);
+            courseManagementRequest.createModelingExercise({ course }).then((modelingResponse) => {
                 modelingExercise = modelingResponse.body;
             });
         });
@@ -100,13 +100,13 @@ describe('Modeling Exercise Assessment Spec', () => {
 
     function makeModelingSubmissionAsStudent() {
         cy.login(studentOne);
-        courseManagementRequests.startExerciseParticipation(modelingExercise.id!).then((participation) => {
-            courseManagementRequests.makeModelingExerciseSubmission(modelingExercise.id!, participation.body);
+        courseManagementRequest.startExerciseParticipation(modelingExercise.id!).then((participation) => {
+            courseManagementRequest.makeModelingExerciseSubmission(modelingExercise.id!, participation.body);
         });
     }
 
     function updateExerciseDueDate() {
         cy.login(admin);
-        courseManagementRequests.updateModelingExerciseDueDate(modelingExercise, day().add(5, 'seconds'));
+        courseManagementRequest.updateModelingExerciseDueDate(modelingExercise, day().add(5, 'seconds'));
     }
 });

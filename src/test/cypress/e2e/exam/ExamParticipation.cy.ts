@@ -14,7 +14,7 @@ const admin = users.getAdmin();
 const studentOne = users.getStudentOne();
 
 // Requests
-const courseManagementRequests = artemis.requests.courseManagement;
+const courseManagementRequest = artemis.requests.courseManagement;
 
 // PageObjects
 const examParticipation = artemis.pageobjects.exam.participation;
@@ -32,7 +32,7 @@ describe('Exam participation', () => {
 
     before(() => {
         cy.login(admin);
-        courseManagementRequests.createCourse(true).then((response) => {
+        courseManagementRequest.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
@@ -42,7 +42,7 @@ describe('Exam participation', () => {
                 .examMaxPoints(40)
                 .numberOfExercises(4)
                 .build();
-            courseManagementRequests.createExam(examContent).then((examResponse) => {
+            courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
                 addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture });
 
@@ -52,9 +52,9 @@ describe('Exam participation', () => {
 
                 addGroupWithExercise(exam, EXERCISE_TYPE.Modeling);
 
-                courseManagementRequests.registerStudentForExam(exam, studentOne);
-                courseManagementRequests.generateMissingIndividualExams(exam);
-                courseManagementRequests.prepareExerciseStartForExam(exam);
+                courseManagementRequest.registerStudentForExam(exam, studentOne);
+                courseManagementRequest.generateMissingIndividualExams(exam);
+                courseManagementRequest.prepareExerciseStartForExam(exam);
             });
         });
     });
@@ -80,7 +80,7 @@ describe('Exam participation', () => {
     after(() => {
         if (course) {
             cy.login(admin);
-            courseManagementRequests.deleteCourse(course.id!);
+            courseManagementRequest.deleteCourse(course.id!);
         }
     });
 });

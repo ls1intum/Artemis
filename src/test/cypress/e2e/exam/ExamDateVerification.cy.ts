@@ -12,7 +12,7 @@ const admin = users.getAdmin();
 const studentOne = users.getStudentOne();
 
 // Requests
-const courseManagementRequests = artemis.requests.courseManagement;
+const courseManagementRequest = artemis.requests.courseManagement;
 
 // PageObjects
 const courseOverview = artemis.pageobjects.course.overview;
@@ -26,9 +26,9 @@ describe('Exam date verification', () => {
 
     before(() => {
         cy.login(admin);
-        courseManagementRequests.createCourse().then((response) => {
+        courseManagementRequest.createCourse().then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, studentOne);
+            courseManagementRequest.addStudentToCourse(course, studentOne);
         });
     });
 
@@ -46,7 +46,7 @@ describe('Exam date verification', () => {
                 .startDate(dayjs().add(2, 'days'))
                 .endDate(dayjs().add(3, 'days'))
                 .build();
-            courseManagementRequests.createExam(examContent).then((response) => {
+            courseManagementRequest.createExam(examContent).then((response) => {
                 exam = response.body;
             });
             cy.login(studentOne, `/courses`);
@@ -63,9 +63,9 @@ describe('Exam date verification', () => {
                 .startDate(dayjs().add(2, 'days'))
                 .endDate(dayjs().add(3, 'days'))
                 .build();
-            courseManagementRequests.createExam(examContent).then((response) => {
+            courseManagementRequest.createExam(examContent).then((response) => {
                 exam = response.body;
-                courseManagementRequests.registerStudentForExam(exam, studentOne);
+                courseManagementRequest.registerStudentForExam(exam, studentOne);
                 cy.login(studentOne, `/courses/${course.id}`);
                 cy.url().should('contain', `${course.id}`);
                 courseOverview.openExamsTab();
@@ -83,15 +83,15 @@ describe('Exam date verification', () => {
                 .startDate(dayjs().subtract(2, 'days'))
                 .endDate(dayjs().add(3, 'days'))
                 .build();
-            courseManagementRequests.createExam(examContent).then((examResponse) => {
+            courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                courseManagementRequests.registerStudentForExam(exam, student);
-                courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
+                courseManagementRequest.registerStudentForExam(exam, student);
+                courseManagementRequest.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.createTextExercise({ exerciseGroup }).then((exerciseResponse) => {
+                    courseManagementRequest.createTextExercise({ exerciseGroup }).then((exerciseResponse) => {
                         const exercise = exerciseResponse.body;
-                        courseManagementRequests.generateMissingIndividualExams(exam);
-                        courseManagementRequests.prepareExerciseStartForExam(exam);
+                        courseManagementRequest.generateMissingIndividualExams(exam);
+                        courseManagementRequest.prepareExerciseStartForExam(exam);
                         cy.login(student, `/courses/${course.id}/exams`);
                         courseOverview.openExam(exam.id!);
                         cy.url().should('contain', `/exams/${exam.id}`);
@@ -117,15 +117,15 @@ describe('Exam date verification', () => {
                 .startDate(dayjs().subtract(2, 'days'))
                 .endDate(examEnd)
                 .build();
-            courseManagementRequests.createExam(examContent).then((examResponse) => {
+            courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                courseManagementRequests.registerStudentForExam(exam, student);
-                courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
+                courseManagementRequest.registerStudentForExam(exam, student);
+                courseManagementRequest.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.createTextExercise({ exerciseGroup }).then((exerciseResponse) => {
+                    courseManagementRequest.createTextExercise({ exerciseGroup }).then((exerciseResponse) => {
                         const exercise = exerciseResponse.body;
-                        courseManagementRequests.generateMissingIndividualExams(exam);
-                        courseManagementRequests.prepareExerciseStartForExam(exam);
+                        courseManagementRequest.generateMissingIndividualExams(exam);
+                        courseManagementRequest.prepareExerciseStartForExam(exam);
                         cy.login(student, `/courses/${course.id}/exams`);
                         courseOverview.openExam(exam.id!);
                         cy.contains(exam.title!).should('be.visible');
@@ -147,14 +147,14 @@ describe('Exam date verification', () => {
 
         afterEach(() => {
             cy.login(admin);
-            courseManagementRequests.deleteExam(exam);
+            courseManagementRequest.deleteExam(exam);
         });
     });
 
     after(() => {
         if (course) {
             cy.login(admin);
-            courseManagementRequests.deleteCourse(course.id!);
+            courseManagementRequest.deleteCourse(course.id!);
         }
     });
 });

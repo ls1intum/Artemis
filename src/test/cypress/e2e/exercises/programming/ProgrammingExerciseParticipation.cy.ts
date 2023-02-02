@@ -19,7 +19,7 @@ const studentTwo = users.getStudentTwo();
 const studentThree = users.getStudentThree();
 
 // Requests
-const courseManagementRequests = artemis.requests.courseManagement;
+const courseManagementRequest = artemis.requests.courseManagement;
 
 // PageObjects
 const editorPage = artemis.pageobjects.exercise.programming.editor;
@@ -50,7 +50,7 @@ describe('Programming exercise participations', () => {
     after(() => {
         if (course) {
             cy.login(admin);
-            courseManagementRequests.deleteCourse(course.id!);
+            courseManagementRequest.deleteCourse(course.id!);
         }
     });
 
@@ -59,12 +59,12 @@ describe('Programming exercise participations', () => {
      */
     function setupCourseAndProgrammingExercise() {
         cy.login(admin, '/');
-        courseManagementRequests.createCourse(true).then((response) => {
+        courseManagementRequest.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, studentOne);
-            courseManagementRequests.addStudentToCourse(course, studentTwo);
-            courseManagementRequests.addStudentToCourse(course, studentThree);
-            courseManagementRequests.createProgrammingExercise({ course }).then((exerciseResponse) => {
+            courseManagementRequest.addStudentToCourse(course, studentOne);
+            courseManagementRequest.addStudentToCourse(course, studentTwo);
+            courseManagementRequest.addStudentToCourse(course, studentThree);
+            courseManagementRequest.createProgrammingExercise({ course }).then((exerciseResponse) => {
                 exercise = exerciseResponse.body;
             });
         });

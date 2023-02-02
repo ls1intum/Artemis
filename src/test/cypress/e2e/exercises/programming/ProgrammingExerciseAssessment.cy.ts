@@ -13,7 +13,7 @@ const tutor = users.getTutor();
 const studentOne = users.getStudentOne();
 
 // Requests
-const courseManagementRequests = artemis.requests.courseManagement;
+const courseManagementRequest = artemis.requests.courseManagement;
 
 // PageObjects
 const coursesPage = artemis.pageobjects.course.management;
@@ -50,7 +50,7 @@ describe('Programming exercise assessment', () => {
     after(() => {
         if (course) {
             cy.login(admin);
-            courseManagementRequests.deleteCourse(course.id!);
+            courseManagementRequest.deleteCourse(course.id!);
         }
     });
 
@@ -95,14 +95,14 @@ describe('Programming exercise assessment', () => {
 
     function createCourseWithProgrammingExercise() {
         cy.login(admin);
-        return courseManagementRequests.createCourse(true).then((response) => {
+        return courseManagementRequest.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, studentOne);
-            courseManagementRequests.addTutorToCourse(course, tutor);
-            courseManagementRequests.addInstructorToCourse(course, instructor);
+            courseManagementRequest.addStudentToCourse(course, studentOne);
+            courseManagementRequest.addTutorToCourse(course, tutor);
+            courseManagementRequest.addInstructorToCourse(course, instructor);
             dueDate = dayjs().add(25, 'seconds');
             assessmentDueDate = dueDate.add(30, 'seconds');
-            courseManagementRequests
+            courseManagementRequest
                 .createProgrammingExercise({ course }, undefined, false, dayjs(), dueDate, undefined, undefined, undefined, assessmentDueDate, CypressAssessmentType.SEMI_AUTOMATIC)
                 .then((programmingResponse) => {
                     exercise = programmingResponse.body;
@@ -112,11 +112,11 @@ describe('Programming exercise assessment', () => {
 
     function makeProgrammingSubmissionAsStudent() {
         cy.login(studentOne);
-        courseManagementRequests
+        courseManagementRequest
             .startExerciseParticipation(exercise.id!)
             .its('body.id')
             .then((participationId) => {
-                courseManagementRequests.makeProgrammingExerciseSubmission(participationId);
+                courseManagementRequest.makeProgrammingExerciseSubmission(participationId);
                 // Wait until the due date is in the past
                 const now = dayjs();
                 if (now.isBefore(dueDate)) {

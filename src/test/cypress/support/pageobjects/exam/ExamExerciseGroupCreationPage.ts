@@ -29,26 +29,26 @@ export class ExamExerciseGroupCreationPage {
     }
 
     addGroupWithExercise(exam: Exam, title: string, exerciseType: EXERCISE_TYPE, processResponse: (data: any) => void) {
-        const courseManagementRequests = artemis.requests.courseManagement;
-        courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
+        const courseManagementRequest = artemis.requests.courseManagement;
+        courseManagementRequest.addExerciseGroupForExam(exam).then((groupResponse) => {
             switch (exerciseType) {
                 case EXERCISE_TYPE.Text:
-                    courseManagementRequests.createTextExercise({ exerciseGroup: groupResponse.body }, title).then((response) => {
+                    courseManagementRequest.createTextExercise({ exerciseGroup: groupResponse.body }, title).then((response) => {
                         processResponse(response);
                     });
                     break;
                 case EXERCISE_TYPE.Modeling:
-                    courseManagementRequests.createModelingExercise({ exerciseGroup: groupResponse.body }, title).then((response) => {
+                    courseManagementRequest.createModelingExercise({ exerciseGroup: groupResponse.body }, title).then((response) => {
                         processResponse(response);
                     });
                     break;
                 case EXERCISE_TYPE.Quiz:
-                    courseManagementRequests.createQuizExercise({ exerciseGroup: groupResponse.body }, [multipleChoiceTemplate], title).then((response) => {
+                    courseManagementRequest.createQuizExercise({ exerciseGroup: groupResponse.body }, [multipleChoiceTemplate], title).then((response) => {
                         processResponse(response);
                     });
                     break;
                 case EXERCISE_TYPE.Programming:
-                    courseManagementRequests
+                    courseManagementRequest
                         .createProgrammingExercise({ exerciseGroup: groupResponse.body }, undefined, false, undefined, undefined, title, undefined, 'de.test')
                         .then((response) => {
                             processResponse(response);

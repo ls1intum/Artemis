@@ -18,7 +18,7 @@ const studentOne = users.getStudentOne();
 const tutor = users.getTutor();
 
 // Requests
-const courseManagementRequests = artemis.requests.courseManagement;
+const courseManagementRequest = artemis.requests.courseManagement;
 
 // PageObjects
 const assessmentDashboard = artemis.pageobjects.assessment.course;
@@ -48,21 +48,21 @@ describe('Exam assessment', () => {
 
     before('Create a course', () => {
         cy.login(admin);
-        courseManagementRequests.createCourse(true).then((response) => {
+        courseManagementRequest.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, studentOne);
-            courseManagementRequests.addTutorToCourse(course, tutor);
+            courseManagementRequest.addStudentToCourse(course, studentOne);
+            courseManagementRequest.addTutorToCourse(course, tutor);
         });
     });
 
     afterEach('Delete exam', () => {
         cy.login(admin);
-        courseManagementRequests.deleteExam(exam);
+        courseManagementRequest.deleteExam(exam);
     });
 
     after('Delete course', () => {
         cy.login(admin);
-        courseManagementRequests.deleteCourse(course.id!);
+        courseManagementRequest.deleteCourse(course.id!);
     });
 
     // For some reason the typing of cypress gets slower the longer the test runs, so we test the programming exercise first
@@ -76,7 +76,7 @@ describe('Exam assessment', () => {
 
         beforeEach('Create exam, exercise and submission', () => {
             cy.login(instructor);
-            courseManagementRequests
+            courseManagementRequest
                 .createProgrammingExercise(
                     { exerciseGroup },
                     undefined,
@@ -91,8 +91,8 @@ describe('Exam assessment', () => {
                 )
                 .then((progRespone) => {
                     const programmingExercise = progRespone.body;
-                    courseManagementRequests.generateMissingIndividualExams(exam);
-                    courseManagementRequests.prepareExerciseStartForExam(exam);
+                    courseManagementRequest.generateMissingIndividualExams(exam);
+                    courseManagementRequest.prepareExerciseStartForExam(exam);
                     cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
                     examStartEnd.startExam();
                     examNavigation.openExerciseAtIndex(0);
@@ -123,10 +123,10 @@ describe('Exam assessment', () => {
         describe('Modeling exercise assessment', () => {
             beforeEach('Create exercise and submission', () => {
                 cy.login(instructor);
-                courseManagementRequests.createModelingExercise({ exerciseGroup }).then((response) => {
+                courseManagementRequest.createModelingExercise({ exerciseGroup }).then((response) => {
                     const exercise = response.body;
-                    courseManagementRequests.generateMissingIndividualExams(exam);
-                    courseManagementRequests.prepareExerciseStartForExam(exam);
+                    courseManagementRequest.generateMissingIndividualExams(exam);
+                    courseManagementRequest.prepareExerciseStartForExam(exam);
                     cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
                     examStartEnd.startExam();
                     examNavigation.openExerciseAtIndex(0);
@@ -160,10 +160,10 @@ describe('Exam assessment', () => {
             beforeEach('Create exercise and submission', () => {
                 cy.login(instructor);
                 const exerciseTitle = 'Cypress Text Exercise';
-                courseManagementRequests.createTextExercise({ exerciseGroup }, exerciseTitle).then((response) => {
+                courseManagementRequest.createTextExercise({ exerciseGroup }, exerciseTitle).then((response) => {
                     const exercise = response.body;
-                    courseManagementRequests.generateMissingIndividualExams(exam);
-                    courseManagementRequests.prepareExerciseStartForExam(exam);
+                    courseManagementRequest.generateMissingIndividualExams(exam);
+                    courseManagementRequest.prepareExerciseStartForExam(exam);
                     cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
                     examStartEnd.startExam();
                     examNavigation.openExerciseAtIndex(0);
@@ -201,10 +201,10 @@ describe('Exam assessment', () => {
 
         beforeEach('Create exercise and submission', () => {
             cy.login(instructor);
-            courseManagementRequests.createQuizExercise({ exerciseGroup }, [multipleChoiceQuizTemplate], 'Cypress Quiz').then((quizResponse) => {
+            courseManagementRequest.createQuizExercise({ exerciseGroup }, [multipleChoiceQuizTemplate], 'Cypress Quiz').then((quizResponse) => {
                 const exercise = quizResponse.body;
-                courseManagementRequests.generateMissingIndividualExams(exam);
-                courseManagementRequests.prepareExerciseStartForExam(exam);
+                courseManagementRequest.generateMissingIndividualExams(exam);
+                courseManagementRequest.prepareExerciseStartForExam(exam);
                 cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
                 examStartEnd.startExam();
                 examNavigation.openExerciseAtIndex(0);
@@ -248,10 +248,10 @@ describe('Exam assessment', () => {
             .publishResultsDate(resultDate)
             .gracePeriod(0)
             .build();
-        courseManagementRequests.createExam(examContent).then((examResponse) => {
+        courseManagementRequest.createExam(examContent).then((examResponse) => {
             exam = examResponse.body;
-            courseManagementRequests.registerStudentForExam(exam, studentOne);
-            courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
+            courseManagementRequest.registerStudentForExam(exam, studentOne);
+            courseManagementRequest.addExerciseGroupForExam(exam).then((groupResponse) => {
                 exerciseGroup = groupResponse.body;
             });
         });

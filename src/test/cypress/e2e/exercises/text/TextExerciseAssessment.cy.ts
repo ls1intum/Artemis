@@ -12,7 +12,7 @@ const tutor = users.getTutor();
 const studentOne = users.getStudentOne();
 
 // Requests
-const courseManagementRequests = artemis.requests.courseManagement;
+const courseManagementRequest = artemis.requests.courseManagement;
 
 // PageObjects
 const coursesPage = artemis.pageobjects.course.management;
@@ -40,7 +40,7 @@ describe('Text exercise assessment', () => {
     after(() => {
         if (course) {
             cy.login(admin);
-            courseManagementRequests.deleteCourse(course.id!);
+            courseManagementRequest.deleteCourse(course.id!);
         }
     });
 
@@ -87,12 +87,12 @@ describe('Text exercise assessment', () => {
 
     function createCourseWithTextExercise() {
         cy.login(admin);
-        return courseManagementRequests.createCourse().then((response) => {
+        return courseManagementRequest.createCourse().then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, studentOne);
-            courseManagementRequests.addTutorToCourse(course, tutor);
-            courseManagementRequests.addInstructorToCourse(course, instructor);
-            courseManagementRequests.createTextExercise({ course }).then((textResponse) => {
+            courseManagementRequest.addStudentToCourse(course, studentOne);
+            courseManagementRequest.addTutorToCourse(course, tutor);
+            courseManagementRequest.addInstructorToCourse(course, instructor);
+            courseManagementRequest.createTextExercise({ course }).then((textResponse) => {
                 exercise = textResponse.body;
             });
         });
@@ -100,9 +100,9 @@ describe('Text exercise assessment', () => {
 
     function makeTextSubmissionAsStudent() {
         cy.login(studentOne);
-        courseManagementRequests.startExerciseParticipation(exercise.id!);
+        courseManagementRequest.startExerciseParticipation(exercise.id!);
         cy.fixture('loremIpsum.txt').then((submission) => {
-            courseManagementRequests.makeTextExerciseSubmission(exercise.id!, submission);
+            courseManagementRequest.makeTextExerciseSubmission(exercise.id!, submission);
         });
     }
 });

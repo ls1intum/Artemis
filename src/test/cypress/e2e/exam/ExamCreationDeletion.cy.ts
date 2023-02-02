@@ -10,7 +10,7 @@ const users = artemis.users;
 const admin = users.getAdmin();
 
 // Requests
-const courseManagementRequests = artemis.requests.courseManagement;
+const courseManagementRequest = artemis.requests.courseManagement;
 
 // PageObjects
 const navigationBar = artemis.pageobjects.navigationBar;
@@ -54,7 +54,7 @@ describe('Exam creation/deletion', () => {
 
     before(() => {
         cy.login(admin);
-        courseManagementRequests.createCourse().then((response) => {
+        courseManagementRequest.createCourse().then((response) => {
             course = convertCourseAfterMultiPart(response);
         });
     });
@@ -112,7 +112,7 @@ describe('Exam creation/deletion', () => {
         beforeEach(() => {
             examData.title = 'exam' + generateUUID();
             const exam = new CypressExamBuilder(course).title(examData.title).build();
-            courseManagementRequests.createExam(exam).then((examResponse) => {
+            courseManagementRequest.createExam(exam).then((examResponse) => {
                 examId = examResponse.body.id;
             });
         });
@@ -130,7 +130,7 @@ describe('Exam creation/deletion', () => {
         beforeEach(() => {
             examData.title = 'exam' + generateUUID();
             const exam = new CypressExamBuilder(course).title(examData.title).build();
-            courseManagementRequests.createExam(exam).then((examResponse) => {
+            courseManagementRequest.createExam(exam).then((examResponse) => {
                 examId = examResponse.body.id;
             });
         });
@@ -185,7 +185,7 @@ describe('Exam creation/deletion', () => {
 
     after(() => {
         if (course) {
-            courseManagementRequests.deleteCourse(course.id!);
+            courseManagementRequest.deleteCourse(course.id!);
         }
     });
 });

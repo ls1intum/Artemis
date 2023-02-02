@@ -12,7 +12,7 @@ const admin = users.getAdmin();
 const studentOne = users.getStudentOne();
 
 // Requests
-const courseManagementRequests = artemis.requests.courseManagement;
+const courseManagementRequest = artemis.requests.courseManagement;
 
 // User management
 const users = artemis.users;
@@ -44,11 +44,11 @@ describe('Exam management', () => {
 
     before(() => {
         cy.login(admin);
-        courseManagementRequests.createCourse(true).then((response) => {
+        courseManagementRequest.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, studentOne);
+            courseManagementRequest.addStudentToCourse(course, studentOne);
             const examConfig = new CypressExamBuilder(course).title(examTitle).build();
-            courseManagementRequests.createExam(examConfig).then((examResponse) => {
+            courseManagementRequest.createExam(examConfig).then((examResponse) => {
                 exam = examResponse.body;
             });
         });
@@ -191,7 +191,7 @@ describe('Exam management', () => {
     after(() => {
         if (course) {
             cy.login(admin);
-            courseManagementRequests.deleteCourse(course.id!);
+            courseManagementRequest.deleteCourse(course.id!);
         }
     });
 });

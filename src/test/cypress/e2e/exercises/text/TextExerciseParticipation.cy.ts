@@ -10,7 +10,7 @@ const admin = users.getAdmin();
 const studentOne = users.getStudentOne();
 
 // Requests
-const courseManagementRequests = artemis.requests.courseManagement;
+const courseManagementRequest = artemis.requests.courseManagement;
 
 // PageObjects
 const textEditor = artemis.pageobjects.exercise.text.editor;
@@ -22,10 +22,10 @@ describe('Text exercise participation', () => {
 
     before(() => {
         cy.login(admin);
-        courseManagementRequests.createCourse().then((response) => {
+        courseManagementRequest.createCourse().then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, studentOne);
-            courseManagementRequests.createTextExercise({ course }).then((exerciseResponse: Cypress.Response<TextExercise>) => {
+            courseManagementRequest.addStudentToCourse(course, studentOne);
+            courseManagementRequest.createTextExercise({ course }).then((exerciseResponse: Cypress.Response<TextExercise>) => {
                 exercise = exerciseResponse.body;
             });
         });
@@ -58,7 +58,7 @@ describe('Text exercise participation', () => {
     after(() => {
         if (course) {
             cy.login(admin);
-            courseManagementRequests.deleteCourse(course.id!);
+            courseManagementRequest.deleteCourse(course.id!);
         }
     });
 });

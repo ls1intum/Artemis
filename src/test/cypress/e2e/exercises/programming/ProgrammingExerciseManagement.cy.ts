@@ -11,7 +11,7 @@ const users = artemis.users;
 const admin = users.getAdmin();
 
 // Requests
-const courseManagementRequests = artemis.requests.courseManagement;
+const courseManagementRequest = artemis.requests.courseManagement;
 
 // PageObjects
 const courseManagementPage = artemis.pageobjects.course.management;
@@ -24,7 +24,7 @@ describe('Programming Exercise Management', () => {
 
     before(() => {
         cy.login(admin);
-        courseManagementRequests.createCourse(true).then((response) => {
+        courseManagementRequest.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
             expect(course).property('id').to.be.a('number');
         });
@@ -34,7 +34,7 @@ describe('Programming Exercise Management', () => {
         let programmingExercise: ProgrammingExercise;
 
         beforeEach(() => {
-            courseManagementRequests
+            courseManagementRequest
                 .createProgrammingExercise({ course })
                 .its('body')
                 .then((exercise) => {
@@ -86,7 +86,7 @@ describe('Programming Exercise Management', () => {
 
     after(() => {
         if (course) {
-            courseManagementRequests.deleteCourse(course.id!);
+            courseManagementRequest.deleteCourse(course.id!);
         }
     });
 });

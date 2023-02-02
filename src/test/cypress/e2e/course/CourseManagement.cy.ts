@@ -12,7 +12,7 @@ const admin = users.getAdmin();
 const studentOne = users.getStudentOne();
 
 // Requests
-const courseManagementRequests = artemis.requests.courseManagement;
+const courseManagementRequest = artemis.requests.courseManagement;
 
 // PageObjects
 const courseManagementPage = artemis.pageobjects.course.management;
@@ -70,7 +70,7 @@ describe('Course management', () => {
         let course: Course;
 
         beforeEach(() => {
-            courseManagementRequests.createCourse(false, courseData.title, courseData.shortName).then((response) => {
+            courseManagementRequest.createCourse(false, courseData.title, courseData.shortName).then((response) => {
                 course = convertCourseAfterMultiPart(response);
             });
         });
@@ -88,7 +88,7 @@ describe('Course management', () => {
 
         it('Removes a student manually from the course', () => {
             const username = studentOne.username;
-            courseManagementRequests.addStudentToCourse(course, studentOne);
+            courseManagementRequest.addStudentToCourse(course, studentOne);
             navigationBar.openCourseManagement();
             courseManagementPage.openStudentOverviewOfCourse(course.id!);
             cy.get('#registered-students').contains(username).should('be.visible');
@@ -102,7 +102,7 @@ describe('Course management', () => {
 
         after(() => {
             if (course) {
-                courseManagementRequests.deleteCourse(course.id!).its('status').should('eq', 200);
+                courseManagementRequest.deleteCourse(course.id!).its('status').should('eq', 200);
             }
         });
     });
@@ -222,10 +222,10 @@ describe('Course management', () => {
 
         after(() => {
             if (courseId) {
-                courseManagementRequests.deleteCourse(courseId).its('status').should('eq', 200);
+                courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
             }
             if (courseId2) {
-                courseManagementRequests.deleteCourse(courseId2).its('status').should('eq', 200);
+                courseManagementRequest.deleteCourse(courseId2).its('status').should('eq', 200);
             }
         });
     });
@@ -237,7 +237,7 @@ describe('Course management', () => {
         editedCourseData.shortName = 'cypress' + uid;
 
         beforeEach(() => {
-            courseManagementRequests.createCourse(false, courseData.title, courseData.shortName).its('status').should('eq', 201);
+            courseManagementRequest.createCourse(false, courseData.title, courseData.shortName).its('status').should('eq', 201);
         });
 
         it('Edits a existing course', () => {
@@ -263,14 +263,14 @@ describe('Course management', () => {
 
         after(() => {
             if (courseId) {
-                courseManagementRequests.deleteCourse(courseId).its('status').should('eq', 200);
+                courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
             }
         });
     });
 
     describe('Course deletion', () => {
         beforeEach(() => {
-            courseManagementRequests.createCourse(false, courseData.title, courseData.shortName).its('status').should('eq', 201);
+            courseManagementRequest.createCourse(false, courseData.title, courseData.shortName).its('status').should('eq', 201);
         });
 
         it('Deletes an existing course', () => {
@@ -292,7 +292,7 @@ describe('Course management', () => {
             cy.fixture('course/icon.png', 'base64')
                 .then(Cypress.Blob.base64StringToBlob)
                 .then((blob) => {
-                    courseManagementRequests
+                    courseManagementRequest
                         .createCourse(false, courseData.title, courseData.shortName, day().subtract(2, 'hours'), day().add(2, 'hours'), 'icon.png', blob)
                         .then((response) => {
                             course = convertCourseAfterMultiPart(response);
@@ -315,7 +315,7 @@ describe('Course management', () => {
         });
 
         it('Deletes not existing course icon', () => {
-            courseManagementRequests.createCourse(false, courseData.title, courseData.shortName, day().subtract(2, 'hours'), day().add(2, 'hours')).then((response) => {
+            courseManagementRequest.createCourse(false, courseData.title, courseData.shortName, day().subtract(2, 'hours'), day().add(2, 'hours')).then((response) => {
                 course = convertCourseAfterMultiPart(response);
                 courseId = course.id!;
             });
@@ -328,7 +328,7 @@ describe('Course management', () => {
 
         afterEach(() => {
             if (courseId) {
-                courseManagementRequests.deleteCourse(courseId).its('status').should('eq', 200);
+                courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
             }
         });
     });
