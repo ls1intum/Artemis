@@ -626,8 +626,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
      * Configures the mock requests needed to delete a programming exercise in an exam.
      *
      * @param programmingExerciseTestService required dependency to setup repo mocks
-     * @param programmingExercise the programming exercise to delete
-     * @param registeredUsers the users registered to the exam (users with repos)
+     * @param programmingExercise            the programming exercise to delete
+     * @param registeredUsers                the users registered to the exam (users with repos)
      * @throws Exception exception
      */
     public void mockDeleteProgrammingExercise(ProgrammingExerciseTestService programmingExerciseTestService, ProgrammingExercise programmingExercise, Set<User> registeredUsers)
