@@ -35,6 +35,7 @@ public class ApollonConversionService {
 
     /**
      * Calls the remote Apollon conversion service to convert given model to pdf
+     *
      * @param model the model to convert to pdf
      * @return an input stream that is coming from apollon conversion server
      */

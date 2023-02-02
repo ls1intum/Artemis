@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * A  Grading Criterion that consists of structured grading instructions.
+ * A Grading Criterion that consists of structured grading instructions.
  */
 @Entity
 @Table(name = "grading_criterion")

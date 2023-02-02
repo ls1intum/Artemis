@@ -126,7 +126,7 @@ public class ProgrammingExercisePlagiarismResource {
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore        consider only submissions whose score is greater or equal to this value
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
-     * @throws IOException   is thrown for file handling errors
+     * @throws IOException is thrown for file handling errors
      */
     @GetMapping(value = CHECK_PLAGIARISM_JPLAG_REPORT)
     @PreAuthorize("hasRole('EDITOR')")

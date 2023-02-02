@@ -23,6 +23,7 @@ public interface SubmittedAnswerRepository extends JpaRepository<SubmittedAnswer
     /**
      * Loads submitted answers from the database in case there is a QuizSubmission in one of the passed student participation
      * Assumes that submissions are loaded eagerly in case they exist
+     *
      * @param participations the student participations for which the submitted answers in quiz submissions should be loaded
      */
     default void loadQuizSubmissionsSubmittedAnswers(Collection<StudentParticipation> participations) {

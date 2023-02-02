@@ -303,11 +303,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
     openImportModal() {
         const modalRef = this.modalService.open(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseType = ExerciseType.QUIZ;
-        modalRef.result.then(
-            (result: QuizExercise) => {
-                this.router.navigate(['course-management', this.courseId, 'quiz-exercises', result.id, 'import']);
-            },
-            () => {},
-        );
+        modalRef.result.then((result: QuizExercise) => {
+            this.router.navigate(['course-management', this.courseId, 'quiz-exercises', result.id, 'import']);
+        });
     }
 }
