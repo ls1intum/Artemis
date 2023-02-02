@@ -20,11 +20,11 @@ public class JenkinsJobPermissionsService {
     /**
      * Assigns teaching assistant and instructor permissions to users for the specified Jenkins job.
      *
-     * @param taLogins logins of the teaching assistants
-     * @param editorLogins logins of the editors
+     * @param taLogins         logins of the teaching assistants
+     * @param editorLogins     logins of the editors
      * @param instructorLogins logins of the instructors
-     * @param folderName the name of the Jenkins folder
-     * @param jobName the name of the Jenkins job
+     * @param folderName       the name of the Jenkins folder
+     * @param jobName          the name of the Jenkins job
      * @throws IOException exception thrown when retrieving/updating the Jenkins folder failed
      */
     public void addInstructorAndEditorAndTAPermissionsToUsersForJob(Set<String> taLogins, Set<String> editorLogins, Set<String> instructorLogins, String folderName, String jobName)
@@ -58,10 +58,10 @@ public class JenkinsJobPermissionsService {
     /**
      * Assigns teaching assistant and instructor permissions to users for the specified Jenkins folder.
      *
-     * @param taLogins logins of the teaching assistants
-     * @param editorLogins logins of the editors
+     * @param taLogins         logins of the teaching assistants
+     * @param editorLogins     logins of the editors
      * @param instructorLogins logins of the instructors
-     * @param folderName the name of the Jenkins folder
+     * @param folderName       the name of the Jenkins folder
      * @throws IOException exception thrown when retrieving/updating the Jenkins folder failed
      */
     public void addInstructorAndEditorAndTAPermissionsToUsersForFolder(Set<String> taLogins, Set<String> editorLogins, Set<String> instructorLogins, String folderName)
@@ -94,7 +94,7 @@ public class JenkinsJobPermissionsService {
      * Assigns teaching assistant permissions to the user. Teaching assistants only have write access to
      * build plans.
      *
-     * @param userLogin the login of the user that will have the permissions
+     * @param userLogin  the login of the user that will have the permissions
      * @param folderName the name of the Jenkins folder
      * @throws IOException exception thrown when retrieving/updating the Jenkins folder failed
      */
@@ -124,8 +124,8 @@ public class JenkinsJobPermissionsService {
      * Adds all Jenkins folder permissions for the specific Jenkins user to the folder.
      * This function does not overwrite permissions that have already been given.
      *
-     * @param userLogin the login of the user that will have the permissions
-     * @param folderName the name of the Jenkins folder
+     * @param userLogin   the login of the user that will have the permissions
+     * @param folderName  the name of the Jenkins folder
      * @param permissions a list of permissions to give to the user
      * @throws IOException thrown when retrieving/updating the Jenkins folder failed
      */
@@ -137,8 +137,8 @@ public class JenkinsJobPermissionsService {
      * Adds all Jenkins folder permissions for the specific Jenkins users to the folder.
      * This function does not overwrite permissions that have already been given.
      *
-     * @param userLogins the logins of the users that will have the permissions
-     * @param folderName the name of the Jenkins folder
+     * @param userLogins  the logins of the users that will have the permissions
+     * @param folderName  the name of the Jenkins folder
      * @param permissions a list of permissions to give to the users
      * @throws IOException thrown when retrieving/updating the Jenkins folder failed
      */
@@ -161,8 +161,8 @@ public class JenkinsJobPermissionsService {
     /**
      * Removes the permissions from the user for the specific Jenkins folder.
      *
-     * @param userLogin the login of the user to remove the permissions
-     * @param folderName the name of the Jenkins folder
+     * @param userLogin           the login of the user to remove the permissions
+     * @param folderName          the name of the Jenkins folder
      * @param permissionsToRemove a list of permissions to remove from the user
      * @throws IOException thrown when retrieving/updating the Jenkins folder failed
      */
@@ -173,8 +173,8 @@ public class JenkinsJobPermissionsService {
     /**
      * Removes the permissions from the users for the specific Jenkins folder.
      *
-     * @param userLogins the logins of the users to remove the permissions
-     * @param folderName the name of the Jenkins folder
+     * @param userLogins          the logins of the users to remove the permissions
+     * @param folderName          the name of the Jenkins folder
      * @param permissionsToRemove a list of permissions to remove from the users
      * @throws IOException thrown when retrieving/updating the Jenkins folder failed
      */

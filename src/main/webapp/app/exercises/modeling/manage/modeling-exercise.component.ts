@@ -118,11 +118,8 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     openImportModal() {
         const modalRef = this.modalService.open(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseType = ExerciseType.MODELING;
-        modalRef.result.then(
-            (result: ModelingExercise) => {
-                this.router.navigate(['course-management', this.courseId, 'modeling-exercises', result.id, 'import']);
-            },
-            () => {},
-        );
+        modalRef.result.then((result: ModelingExercise) => {
+            this.router.navigate(['course-management', this.courseId, 'modeling-exercises', result.id, 'import']);
+        });
     }
 }
