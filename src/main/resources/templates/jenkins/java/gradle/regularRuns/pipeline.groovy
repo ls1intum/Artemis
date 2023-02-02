@@ -12,6 +12,8 @@ dockerImage = "#dockerImage"
 dockerFlags = "#dockerArgs"
 
 isSolutionBuild = "${env.JOB_NAME}" ==~ /.+-SOLUTION$/
+isTestWiseCoverageEnabled = #testWiseCoverage && isSolutionBuild
+isStaticCodeAnalysisEnabled = #isStaticCodeAnalysisEnabled
 
 /**
  * Main function called by Jenkins.
@@ -35,7 +37,7 @@ private void runTestSteps() {
  */
 void test() {
     stage('Test') {
-        if (#testWiseCoverage && isSolutionBuild) {
+        if (isTestWiseCoverageEnabled) {
             sh './gradlew clean test tiaTests --run-all-tests'
         } else {
             sh './gradlew clean test'
@@ -47,7 +49,7 @@ void test() {
  * Runs the static code analysis
  */
 private void staticCodeAnalysis() {
-    if (!#isStaticCodeAnalysisEnabled) {
+    if (!isStaticCodeAnalysisEnabled) {
         return
     }
 
@@ -80,7 +82,7 @@ private void collectTestwiseCoverageReport() {
  * Called by Jenkins.
  */
 void postBuildTasks() {
-    if (#testWiseCoverage && isSolutionBuild) {
+    if (isTestWiseCoverageEnabled) {
         collectTestwiseCoverageReport()
     }
     sh 'rm -rf results'

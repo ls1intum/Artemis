@@ -11,6 +11,8 @@
 dockerImage = "#dockerImage"
 dockerFlags = "#dockerArgs"
 
+isStaticCodeAnalysisEnabled = #isStaticCodeAnalysisEnabled
+
 /**
  * Main function called by Jenkins.
  */
@@ -53,7 +55,7 @@ private void test() {
 }
 
 private void staticCodeAnalysis() {
-    if (!#staticCodeAnalysisEnabled) {
+    if (!staticCodeAnalysisEnabled) {
         return
     }
 
