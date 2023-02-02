@@ -33,7 +33,7 @@ public class FeatureToggleAspect {
      * Aspect around all methods for which a feature toggle has been activated. Will check all specified features and only
      * execute the underlying method if all features are enabled. Will otherwise return forbidden (as response entity)
      *
-     * @param joinPoint Proceeding join point of the aspect
+     * @param joinPoint     Proceeding join point of the aspect
      * @param featureToggle The feature toggle annotation containing all features that should get checked
      * @return The original return value of the called method, if all features are enabled, a forbidden response entity otherwise
      * @throws Throwable If there was any error during method execution (both the aspect or the actual called method)

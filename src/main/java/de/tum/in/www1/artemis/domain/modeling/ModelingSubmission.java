@@ -81,7 +81,6 @@ public class ModelingSubmission extends Submission {
      * A modeling submission is empty if the model is null, blank (no actual characters) or if the elements in the json description are empty.
      *
      * @param jacksonObjectMapper a predefined jackson object mapper
-     *
      * @return true if the submission is empty, false otherwise
      */
     public boolean isEmpty(ObjectMapper jacksonObjectMapper) {

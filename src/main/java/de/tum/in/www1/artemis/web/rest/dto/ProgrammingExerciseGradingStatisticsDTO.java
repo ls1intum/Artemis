@@ -69,6 +69,7 @@ public class ProgrammingExerciseGradingStatisticsDTO {
 
         /**
          * Updates the statistics accordingly for a positive or negative feedback.
+         *
          * @param feedback that should be considered in the statistics.
          */
         public void updateWithFeedback(final Feedback feedback) {

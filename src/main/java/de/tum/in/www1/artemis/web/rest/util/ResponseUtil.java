@@ -20,6 +20,7 @@ public final class ResponseUtil implements tech.jhipster.web.util.ResponseUtil {
     /**
      * Sends an OK response entity that contains a file. Returns a not found response
      * if the file doesn't exist.
+     *
      * @param file the file to send as a response
      * @return the response
      */

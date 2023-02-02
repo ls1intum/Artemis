@@ -67,8 +67,8 @@ public class PlagiarismResource {
      * I.e. An editor or instructor sees a possible plagiarism case for the first time and decides if it should be further examined, or if it is not a plagiarism.
      *
      * @param comparisonId of the plagiarism comparison to update the status of
-     * @param courseId the id of the course
-     * @param statusDTO new status for the given comparison
+     * @param courseId     the id of the course
+     * @param statusDTO    new status for the given comparison
      * @return the ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the parameters are invalid
      */
     @PutMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}/status")
@@ -94,7 +94,7 @@ public class PlagiarismResource {
      * Retrieves the plagiarismComparison specified by its ID.
      * If a studentLogin is passed the comparison is anonymized
      *
-     * @param courseId the id of the course
+     * @param courseId     the id of the course
      * @param comparisonId the id of the PlagiarismComparison
      * @return the PlagiarismComparison
      * @throws AccessForbiddenException if the requesting user is not affected by the plagiarism case.
@@ -136,7 +136,7 @@ public class PlagiarismResource {
      * A student should not have sensitive information (e.g. the userLogin of the other student)
      *
      * @param comparison to anonymize.
-     * @param userLogin of the student asking to see his plagiarism comparison.
+     * @param userLogin  of the student asking to see his plagiarism comparison.
      */
     private void checkStudentAccess(PlagiarismComparison<?> comparison, String userLogin) {
         if (comparison.getSubmissionA().getStudentLogin().equals(userLogin)) {
@@ -154,11 +154,12 @@ public class PlagiarismResource {
 
     /**
      * Cleans up plagiarism results and comparisons
-     * If deleteAll is set to true, all plagiarism results belonging to the exercise are deleted, otherwise only plagiarism comparisons or with status DENIED or CONFIRMED are deleted and old results are deleted as well.
+     * If deleteAll is set to true, all plagiarism results belonging to the exercise are deleted, otherwise only plagiarism comparisons or with status DENIED or CONFIRMED are
+     * deleted and old results are deleted as well.
      *
-     * @param exerciseId the id of the exercise
+     * @param exerciseId         the id of the exercise
      * @param plagiarismResultId the id of plagiarism result
-     * @param deleteAll optional parameter whether all plagiarism results belonging to the exercise and all dependent data should be deleted
+     * @param deleteAll          optional parameter whether all plagiarism results belonging to the exercise and all dependent data should be deleted
      * @return the ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the parameters are invalid
      */
     @DeleteMapping("exercises/{exerciseId}/plagiarism-results/{plagiarismResultId}/plagiarism-comparisons")
