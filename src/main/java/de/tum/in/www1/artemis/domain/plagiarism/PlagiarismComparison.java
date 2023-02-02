@@ -81,7 +81,7 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
      *
      * @param jplagComparison JPlag comparison to map to the new PlagiarismComparison instance
      * @return a new instance with the content of the JPlagComparison
-     * @param exercise the exercise to which the comparison belongs, either Text or Programming
+     * @param exercise            the exercise to which the comparison belongs, either Text or Programming
      * @param submissionDirectory the directory to which all student submissions have been downloaded / stored
      */
     public static PlagiarismComparison<TextSubmissionElement> fromJPlagComparison(JPlagComparison jplagComparison, Exercise exercise, File submissionDirectory) {
@@ -99,6 +99,7 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
 
     /**
      * Maintain the bidirectional relationship manually
+     *
      * @param submissionA the new submission which will be attached to the comparison
      */
     public void setSubmissionA(PlagiarismSubmission<?> submissionA) {
@@ -111,6 +112,7 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
 
     /**
      * Maintain the bidirectional relationship manually
+     *
      * @param submissionB the new submission which will be attached to the comparison
      */
     public void setSubmissionB(PlagiarismSubmission<?> submissionB) {

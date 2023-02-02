@@ -28,6 +28,7 @@ public class UrlService {
 
     /**
      * Gets the repository slug from the given repository URL string, see {@link #getRepositorySlugFromUrl}
+     *
      * @param repositoryUrl The repository url as string
      * @return The repository slug
      * @throws VersionControlException if the URL is invalid and no repository slug could be extracted

@@ -167,6 +167,7 @@ public class GradingScale extends DomainObject {
 
     /**
      * Returns the max grade from grade step set of the grading scale
+     *
      * @return the max grade step
      */
     GradeStep maxGrade() {

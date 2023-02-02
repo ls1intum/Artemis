@@ -153,7 +153,8 @@ public class ExerciseService {
     }
 
     /**
-     * Given an exercise exerciseId, it creates an object node with numberOfSubmissions, totalNumberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
+     * Given an exercise exerciseId, it creates an object node with numberOfSubmissions, totalNumberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are
+     * used by both
      * stats for assessment dashboard and for instructor dashboard
      * TODO: refactor and improve this method
      *
@@ -369,6 +370,7 @@ public class ExerciseService {
 
     /**
      * checks the example submissions of the exercise and removes unnecessary associations to other objects
+     *
      * @param exercise the exercise for which example submissions should be checked
      */
     public void checkExampleSubmissions(Exercise exercise) {
@@ -501,7 +503,7 @@ public class ExerciseService {
      * Gets the exercise statistics by setting values for each field of the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      * Exercises with an assessment due date (or due date if there is no assessment due date) in the past are limited to the five most recent
      *
-     * @param courseId the id of the course
+     * @param courseId                 the id of the course
      * @param amountOfStudentsInCourse the amount of students in the course
      * @return A list of filled <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
@@ -536,8 +538,8 @@ public class ExerciseService {
      * Generates a <code>CourseManagementOverviewExerciseStatisticsDTO</code> for each given exercise
      *
      * @param exercisesForManagementOverview a set of exercises to generate the statistics for
-     * @param amountOfStudentsInCourse the amount of students in the course
-     * @param averageScoreById the average score for each exercise indexed by exerciseId
+     * @param amountOfStudentsInCourse       the amount of students in the course
+     * @param averageScoreById               the average score for each exercise indexed by exerciseId
      * @return A list of filled <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
     private List<CourseManagementOverviewExerciseStatisticsDTO> generateCourseManagementDTOs(Set<Exercise> exercisesForManagementOverview, Integer amountOfStudentsInCourse,
@@ -562,9 +564,9 @@ public class ExerciseService {
      * Sets the amount of students, participations and teams for the given <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      * Only the amount of students in the course is set if the exercise has ended, the rest is set to zero
      *
-     * @param exerciseStatisticsDTO the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
+     * @param exerciseStatisticsDTO    the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
      * @param amountOfStudentsInCourse the amount of students in the course
-     * @param exercise the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     * @param exercise                 the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
     private void setStudentsAndParticipationsAmountForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Integer amountOfStudentsInCourse,
             Exercise exercise) {
@@ -599,7 +601,7 @@ public class ExerciseService {
      * The amounts are set to zero if the assessment due date has passed
      *
      * @param exerciseStatisticsDTO the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
-     * @param exercise the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     * @param exercise              the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
     private void setAssessmentsAndSubmissionsForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Exercise exercise) {
         if (exercise.getAssessmentDueDate() != null && exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
@@ -621,7 +623,7 @@ public class ExerciseService {
      * then, sets the corresponding exercise field
      *
      * @param gradingCriteria grading criteria list of exercise
-     * @param exercise exercise to update     *
+     * @param exercise        exercise to update *
      */
     public void checkExerciseIfStructuredGradingInstructionFeedbackUsed(List<GradingCriterion> gradingCriteria, Exercise exercise) {
         List<Feedback> feedback = feedbackRepository.findFeedbackByExerciseGradingCriteria(gradingCriteria);
@@ -636,8 +638,8 @@ public class ExerciseService {
      * 1. The feedback associated with the exercise grading instruction needs to be updated
      * 2. After updating feedback, result needs to be re-calculated
      *
-     * @param exercise exercise to re-evaluate
-     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not     *
+     * @param exercise                                    exercise to re-evaluate
+     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not *
      */
     public void reEvaluateExercise(Exercise exercise, boolean deleteFeedbackAfterGradingInstructionUpdate) {
         List<GradingCriterion> gradingCriteria = exercise.getGradingCriteria();
@@ -703,9 +705,9 @@ public class ExerciseService {
     /**
      * Gets the list of feedback that is associated with deleted grading instructions
      *
-     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
-     * @param gradingInstructions grading instruction list to update
-     * @param exercise exercise for which the grading instructions have to be updated
+     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
+     * @param gradingInstructions                         grading instruction list to update
+     * @param exercise                                    exercise for which the grading instructions have to be updated
      * @return list including Feedback entries that have to be deleted due to updated grading instructions
      */
     public List<Feedback> getFeedbackToBeDeletedAfterGradingInstructionUpdate(boolean deleteFeedbackAfterGradingInstructionUpdate, List<GradingInstruction> gradingInstructions,

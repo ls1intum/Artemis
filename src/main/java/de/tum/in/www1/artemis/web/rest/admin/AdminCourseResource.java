@@ -62,7 +62,7 @@ public class AdminCourseResource {
      * POST /courses : create a new course.
      *
      * @param course the course to create
-     * @param file the optional course icon file
+     * @param file   the optional course icon file
      * @return the ResponseEntity with status 201 (Created) and with body the new course, or with status 400 (Bad Request) if the course has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */

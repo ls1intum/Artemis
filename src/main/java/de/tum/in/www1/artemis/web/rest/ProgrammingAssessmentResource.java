@@ -64,7 +64,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     /**
      * Update an assessment after a complaint was accepted.
      *
-     * @param submissionId the id of the submission for which the assessment should be updated
+     * @param submissionId     the id of the submission for which the assessment should be updated
      * @param assessmentUpdate the programing assessment update
      * @return the updated result
      */
@@ -114,8 +114,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      * Save or submit feedback for programming exercise.
      *
      * @param participationId the id of the participation that should be sent to the client
-     * @param submit       defines if assessment is submitted or saved
-     * @param newManualResult    result with list of feedbacks to be saved to the database
+     * @param submit          defines if assessment is submitted or saved
+     * @param newManualResult result with list of feedbacks to be saved to the database
      * @return the result saved to the database
      */
     @ResponseStatus(HttpStatus.OK)
@@ -220,9 +220,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     /**
      * Delete an assessment of a given submission.
      *
-     * @param participationId  - the id of the participation to the submission
-     * @param submissionId - the id of the submission for which the current assessment should be deleted
-     * @param resultId     - the id of the result which should get deleted
+     * @param participationId - the id of the participation to the submission
+     * @param submissionId    - the id of the submission for which the current assessment should be deleted
+     * @param resultId        - the id of the result which should get deleted
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
     @DeleteMapping("/participations/{participationId}/programming-submissions/{submissionId}/results/{resultId}")

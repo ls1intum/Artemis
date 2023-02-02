@@ -28,7 +28,7 @@ public class AdminTextExerciseResource {
      * node, this will always return 200, despite an error could occur on the other node.
      *
      * @param exerciseId id of the exercised that for which the automatic assessment should be
-     *                   triggered
+     *                       triggered
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("text-exercises/{exerciseId}/trigger-automatic-assessment")

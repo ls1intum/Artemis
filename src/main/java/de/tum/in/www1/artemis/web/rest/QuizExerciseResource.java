@@ -152,7 +152,7 @@ public class QuizExerciseResource {
     /**
      * PUT /quiz-exercises : Updates an existing quizExercise.
      *
-     * @param quizExercise the quizExercise to update
+     * @param quizExercise     the quizExercise to update
      * @param notificationText about the quiz exercise update that should be displayed to the student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with status 500
      *         (Internal Server Error) if the quizExercise couldn't be updated
@@ -327,7 +327,7 @@ public class QuizExerciseResource {
      * POST /quiz-exercises/:quizExerciseId/join : add a student to a particular batch for participating in it and if in INDIVIDUAL mode create the batch to join
      *
      * @param quizExerciseId the id of the quizExercise to which the batch to join belongs
-     * @param joinRequest DTO with the password for the batch to join; unused for quizzes in INDIVIDUAL mode
+     * @param joinRequest    DTO with the password for the batch to join; unused for quizzes in INDIVIDUAL mode
      * @return the ResponseEntity with status 200 (OK) and with body the quizBatch that was joined
      */
     @PostMapping("/quiz-exercises/{quizExerciseId}/join")
@@ -413,8 +413,8 @@ public class QuizExerciseResource {
     /**
      * PUT /quiz-exercises/:quizExerciseId/:action : perform the specified action for the quiz now
      *
-     * @param quizExerciseId     the id of the quiz exercise to start
-     * @param action the action to perform on the quiz (allowed actions: "start-now", "set-visible", "open-for-practice")
+     * @param quizExerciseId the id of the quiz exercise to start
+     * @param action         the action to perform on the quiz (allowed actions: "start-now", "set-visible", "open-for-practice")
      * @return the response entity with status 200 if quiz was started, appropriate error code otherwise
      */
     @PutMapping("/quiz-exercises/{quizExerciseId}/{action}")
@@ -536,7 +536,7 @@ public class QuizExerciseResource {
      * 3. if flag is set: -> change results if an answer or a question is set invalid -> recalculate statistics and results and save them.
      *
      * @param quizExerciseId the quiz id for the quiz that should be re-evaluated
-     * @param quizExercise the quizExercise to re-evaluate
+     * @param quizExercise   the quizExercise to re-evaluate
      * @return the ResponseEntity with status 200 (OK) and with body the re-evaluated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with
      *         status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
      */
@@ -593,9 +593,9 @@ public class QuizExerciseResource {
      *
      * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param importedExercise The new exercise containing values that should get overwritten in the
-     *                         imported exercise, s.a. the title or difficulty
+     *                             imported exercise, s.a. the title or difficulty
      * @return The imported exercise (200), a not found error (404) if the template does not exist,
-     * or a forbidden error (403) if the user is not at least an instructor in the target course.
+     *         or a forbidden error (403) if the user is not at least an instructor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping("/quiz-exercises/import/{sourceExerciseId}")

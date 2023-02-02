@@ -5,8 +5,10 @@ package de.tum.in.www1.artemis.util;
  * You can use this if some external method sets up some mocks for you, but you want to verify the called methods on
  * the mocks (or spies), so you have to return callback method calls, that verify this behavior.
  * Example:
- * <pre>{@code
- * @Service
+ *
+ * <pre>
+ * {@code
+ * &#64;Service
  * public class FooMockService {
  *     public List<Verifiable> setUpSomeMocks() {
  *          final var verifications = new ArrayList<Verifiable>();
@@ -22,7 +24,7 @@ package de.tum.in.www1.artemis.util;
  * }
  *
  * class TestBar {
- *     @Test
+ *     &#64;Test
  *     void testSomeStuff() {
  *          final var verifications = new ArrayList<Verifiable>();
  *          verifications.addAll(fooMockService.setUpSomeMocks());
@@ -35,7 +37,9 @@ package de.tum.in.www1.artemis.util;
  *          }
  *     }
  * }
- * }</pre>
+ * }
+ * </pre>
+ *
  * @see org.mockito.Mockito#verify(Object)
  */
 @FunctionalInterface

@@ -799,6 +799,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     /**
      * returns the number of correction rounds for an exercise. For course exercises this is 1, for exam exercises this must get fetched
+     *
      * @return the number of correctionRounds
      */
     @JsonIgnore
@@ -811,10 +812,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         }
     }
 
-    /** Helper method which does a hard copy of the Grading Criteria
+    /**
+     * Helper method which does a hard copy of the Grading Criteria
      * Also fills {@code gradingInstructionCopyTracker}.
      *
-     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
+     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      *
      * @return A clone of the grading criteria list
      */
@@ -830,12 +832,13 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return newGradingCriteria;
     }
 
-    /** Helper method which does a hard copy of the Grading Instructions
+    /**
+     * Helper method which does a hard copy of the Grading Instructions
      * Also fills {@code gradingInstructionCopyTracker}.
      *
-     * @param originalGradingCriterion The original grading criterion which contains the grading instructions
-     * @param newGradingCriterion The cloned grading criterion in which we insert the grading instructions
-     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
+     * @param originalGradingCriterion      The original grading criterion which contains the grading instructions
+     * @param newGradingCriterion           The cloned grading criterion in which we insert the grading instructions
+     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return A clone of the grading instruction list of the grading criterion
      */
     private List<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion,

@@ -143,8 +143,8 @@ public class FileUploadExerciseResource {
      * PUT /file-upload-exercises : Updates an existing fileUploadExercise.
      *
      * @param fileUploadExercise the fileUploadExercise to update
-     * @param notificationText the text shown to students
-     * @param exerciseId the id of exercise
+     * @param notificationText   the text shown to students
+     * @param exerciseId         the id of exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or with status 400 (Bad Request) if the fileUploadExercise is not valid, or
      *         with status 500 (Internal Server Error) if the fileUploadExercise couldn't be updated
      */
@@ -248,7 +248,7 @@ public class FileUploadExerciseResource {
     /**
      * POST /file-upload-exercises/:exerciseId/export-submissions : sends exercise submissions as zip
      *
-     * @param exerciseId the id of the exercise to get the repos from
+     * @param exerciseId              the id of the exercise to get the repos from
      * @param submissionExportOptions the options that should be used for the export
      * @return ResponseEntity with status
      */
@@ -271,14 +271,14 @@ public class FileUploadExerciseResource {
     /**
      * PUT /file-upload-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing fileUploadExercise.
      *
-     * @param exerciseId                                   of the exercise
-     * @param fileUploadExercise                           the fileUploadExercise to re-evaluate and update
-     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
+     * @param exerciseId                                  of the exercise
+     * @param fileUploadExercise                          the fileUploadExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
      *
      * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or
-     * with status 400 (Bad Request) if the fileUploadExercise is not valid, or with status 409 (Conflict)
-     * if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
-     * Server Error) if the fileUploadExercise couldn't be updated
+     *         with status 400 (Bad Request) if the fileUploadExercise is not valid, or with status 409 (Conflict)
+     *         if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
+     *         Server Error) if the fileUploadExercise couldn't be updated
      */
     @PutMapping(Endpoints.REEVALUATE_EXERCISE)
     @PreAuthorize("hasRole('EDITOR')")
