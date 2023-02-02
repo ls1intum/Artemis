@@ -210,60 +210,85 @@ export class TextSubmissionViewerComponent implements OnChanges {
     }
 
     insertMatchTokens(fileContent: string): string {
-        const matches = this.getMatchesForCurrentFile().sort((m1, m2) => m1.from.line - m2.from.line);
-        if (!matches.length) {
+        const matches = this.getMatchesForCurrentFile().sort((m1, m2) => {
+            if (!m1.from || !m1.to || !m2.from || !m2.to) {
+                return 0;
+            }
+            const lines = m1.from.line - m2.from.line;
+            if (lines === 0) {
+                return m1.from.column - m2.from.column;
+            }
+            return lines;
+        });
+        if (!matches.length || !matches[0].from || !matches[0].to) {
             return escape(fileContent);
         }
 
         const rows = fileContent.split('\n');
-        const offsets = new Array(rows.length).fill(0);
+        let result = '';
 
         for (let i = 0; i < matches[0].from.line - 1; i++) {
             if (rows[i]) {
-                rows[i] = escape(rows[i]);
+                result += escape(rows[i]) + '\n';
             }
         }
+        result += escape(rows[matches[0].from.line - 1].slice(0, matches[0].from.column - 1));
 
-        matches.forEach((match) => {
+        for (let i = 0; i < matches.length; i++) {
+            const match = matches[i];
             if (!match.from) {
                 captureException(new Error('"from" is not defined in insertMatchTokens'));
-                return;
+                continue;
             }
             if (!match.to) {
                 captureException(new Error('"to" is not defined in insertMatchTokens'));
-                return;
+                continue;
             }
 
             const idxLineFrom = match.from.line - 1;
             const idxLineTo = match.to.line - 1;
 
-            const idxColumnFrom = match.from.column - 1 + offsets[idxLineFrom];
+            const idxColumnFrom = match.from.column - 1;
+            const idxColumnTo = match.to.column + match.to.length - 1;
 
-            if (rows[idxLineFrom]) {
-                rows[idxLineFrom] = this.insertToken(rows[idxLineFrom], this.tokenStart, idxColumnFrom);
-                offsets[idxLineFrom] += this.tokenStart.length;
+            if (!rows[idxLineFrom]) {
+                continue;
             }
+            result += this.tokenStart;
 
-            for (let i = idxLineFrom + 1; i < idxLineTo; i++) {
-                if (rows[i]) {
-                    rows[i] = escape(rows[i]);
+            if (idxLineFrom === idxLineTo) {
+                result += escape(rows[idxLineFrom].slice(idxColumnFrom, idxColumnTo)) + this.tokenEnd;
+            } else {
+                result += escape(rows[idxLineFrom].slice(idxColumnFrom));
+                for (let j = idxLineFrom + 1; j < idxLineTo; j++) {
+                    if (rows[j]) {
+                        result += '\n' + escape(rows[j]);
+                    }
                 }
+                result += escape(rows[idxLineTo].slice(0, idxColumnTo)) + this.tokenEnd;
             }
 
-            const idxColumnTo = match.to.column + match.to.length - 1 + offsets[idxLineTo];
-
-            if (rows[idxLineTo]) {
-                rows[idxLineTo] = this.insertToken(rows[idxLineTo], this.tokenEnd, idxColumnTo);
-                offsets[idxLineTo] += this.tokenEnd.length;
-            }
-        });
-
-        for (let i = matches.last()!.to.line; i < rows.length; i++) {
-            if (rows[i]) {
-                rows[i] = escape(rows[i]);
+            // escape everything up until the next match (or the end of the string if there is no more match)
+            if (i === matches.length - 1) {
+                result += escape(rows[idxLineTo].slice(idxColumnTo));
+                for (let j = idxLineTo + 1; j < rows.length; j++) {
+                    if (rows[j]) {
+                        result += '\n' + escape(rows[j]);
+                    }
+                }
+            } else if (matches[i + 1].from.line === match.to.line) {
+                result += escape(rows[idxLineTo].slice(idxColumnTo, matches[i + 1].from.column - 1));
+            } else {
+                result += escape(rows[idxLineTo].slice(idxColumnTo)) + '\n';
+                for (let j = idxLineTo + 1; j < matches[i + 1].from.line - 1; j++) {
+                    if (rows[j]) {
+                        result += escape(rows[j]) + '\n';
+                    }
+                }
+                result += escape(rows[matches[i + 1].from.line - 1].slice(0, matches[i + 1].from.column - 1));
             }
         }
 
-        return rows.join('\n');
+        return result;
     }
 }
