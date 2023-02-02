@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.StructuredGradingInstruction;
 
 /**
- * Spring Data JPA repository for the GradingInstruction entity.
+ * Spring Data JPA repository for the StructuredGradingInstruction entity.
  */
 @Repository
 public interface StructuredGradingInstructionRepository extends JpaRepository<StructuredGradingInstruction, Long> {
