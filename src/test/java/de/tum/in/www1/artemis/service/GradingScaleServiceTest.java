@@ -459,7 +459,6 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     /**
      * Test grade steps matching against realistic exam results from a csv file
-     *
      */
     @Test
     void testGradeMappingWithRealExamResults() throws Exception {

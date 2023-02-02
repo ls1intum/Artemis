@@ -86,8 +86,8 @@ class TextClusterResourceIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-    * Checks the response data from retrieving cluster statistics is returned properly
-    */
+     * Checks the response data from retrieving cluster statistics is returned properly
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetClusterStats_forAllValuesSet() throws Exception {

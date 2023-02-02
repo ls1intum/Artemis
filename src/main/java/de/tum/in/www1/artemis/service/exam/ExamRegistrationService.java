@@ -143,7 +143,8 @@ public class ExamRegistrationService {
     }
 
     /**
-     * Registers student to the exam. In order to do this, we add the user to the course group, because the user only has access to the exam of a course if the student also has access to the course of the exam.
+     * Registers student to the exam. In order to do this, we add the user to the course group, because the user only has access to the exam of a course if the student also has
+     * access to the course of the exam.
      * We only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course).
      *
      * @param course  the course containing the exam
@@ -197,7 +198,7 @@ public class ExamRegistrationService {
     }
 
     /**
-     * @param exam                             the exam with eagerly loaded registered users for which a student should be unregistered
+     * @param exam                              the exam with eagerly loaded registered users for which a student should be unregistered
      * @param deleteParticipationsAndSubmission whether the participations and submissions of the student should be deleted
      * @param student                           the user object that should be unregistered
      */
@@ -236,7 +237,7 @@ public class ExamRegistrationService {
     /**
      * Unregisters all students from the exam
      *
-     * @param exam                             the exam with eagerly loaded registered users for which all students should be unregistered
+     * @param exam                              the exam with eagerly loaded registered users for which all students should be unregistered
      * @param deleteParticipationsAndSubmission whether the participations and submissions of the student should be deleted
      */
     public void unregisterAllStudentFromExam(Exam exam, boolean deleteParticipationsAndSubmission) {
@@ -263,7 +264,7 @@ public class ExamRegistrationService {
      * Adds all students registered in the course to the given exam
      *
      * @param courseId Id of the course
-     * @param exam   the exam with eagerly loaded registered users to which the course students should be added
+     * @param exam     the exam with eagerly loaded registered users to which the course students should be added
      */
     public void addAllStudentsOfCourseToExam(Long courseId, Exam exam) {
         Course course = courseRepository.findByIdElseThrow(courseId);

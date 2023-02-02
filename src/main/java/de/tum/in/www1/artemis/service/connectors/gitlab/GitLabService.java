@@ -177,9 +177,9 @@ public class GitLabService extends AbstractVersionControlService {
     /**
      * Protects a branch from the repository, so that developers cannot change the history
      *
-     * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
-     * @param branch            The name of the branch to protect (e.g "main")
-     * @throws VersionControlException      If the communication with the VCS fails.
+     * @param repositoryUrl The repository url of the repository to update. It contains the project key & the repository name.
+     * @param branch        The name of the branch to protect (e.g "main")
+     * @throws VersionControlException If the communication with the VCS fails.
      */
     private void protectBranch(VcsRepositoryUrl repositoryUrl, String branch) {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);

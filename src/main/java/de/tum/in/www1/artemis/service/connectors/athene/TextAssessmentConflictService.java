@@ -52,8 +52,8 @@ public class TextAssessmentConflictService {
      * Calls the remote feedback consistency service to check consistencies between feedback for an automatically assessed text exercise.
      *
      * @param textFeedbackConflictRequestDTOS list of request objects
-     * @param exerciseId exercise id that feedback belong to
-     * @param maxRetries number of retries before the request will be canceled
+     * @param exerciseId                      exercise id that feedback belong to
+     * @param maxRetries                      number of retries before the request will be canceled
      * @return A list of FeedbackConflictResponseDTO objects
      * @throws NetworkingError if the request isn't successful
      */
