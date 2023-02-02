@@ -45,6 +45,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     toggleMode = () => this.toggleWizardMode();
     getInvalidReasonsForWizard = () => this.getInvalidReasons(this.currentWizardModeStep);
     programmingLanguageChanged = (language: ProgrammingLanguage) => this.onProgrammingLanguageChange(language);
+    withDependenciesChanged = (withDependencies: boolean) => this.onWithDependenciesChanged(withDependencies);
     projectTypeChanged = (projectType: ProjectType) => this.onProjectTypeChange(projectType);
     staticCodeAnalysisChanged = () => this.onStaticCodeAnalysisChanged();
     currentWizardModeStep = 1;
@@ -663,6 +664,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return projectType;
     }
 
+    onWithDependenciesChanged(withDependencies: boolean) {
+        this.withDependenciesValue = withDependencies;
+
+        return withDependencies;
+    }
+
     onStaticCodeAnalysisChanged() {
         // On import: If SCA mode changed, activate recreation of build plans and update of the template
         if (this.isImport && this.programmingExercise.staticCodeAnalysisEnabled !== this.originalStaticCodeAnalysisEnabled) {
@@ -950,6 +957,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             appNamePatternForSwift: this.appNamePatternForSwift,
             modePickerOptions: this.modePickerOptions,
             withDependencies: this.withDependencies,
+            onWithDependenciesChanged: this.withDependenciesChanged,
             packageNameRequired: this.packageNameRequired,
             packageNamePattern: this.packageNamePattern,
             supportedLanguages: this.supportedLanguages,

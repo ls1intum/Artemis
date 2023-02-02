@@ -26,6 +26,7 @@ export type LanguageStepInputs = {
     appNamePatternForSwift: string;
     modePickerOptions: ModePickerOption<ProjectType>[];
     withDependencies: boolean;
+    onWithDependenciesChanged: (withDependencies: boolean) => boolean;
     packageNameRequired: boolean;
     packageNamePattern: string;
     supportedLanguages: string[];
