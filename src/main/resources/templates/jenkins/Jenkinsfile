@@ -30,9 +30,9 @@ node('docker') {
                     ]]
                 ])
             }
-            dir('#solutionCheckoutPath') {
-                script {
-                    if (#checkoutSolution) {
+            script {
+                if (#checkoutSolution) {
+                    dir('#solutionCheckoutPath') {
                         checkout([
                             $class: 'GitSCM',
                             branches: [[name: '**']],
