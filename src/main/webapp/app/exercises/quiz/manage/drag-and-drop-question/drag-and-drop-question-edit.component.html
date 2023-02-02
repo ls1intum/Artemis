@@ -194,7 +194,7 @@
                     [showPreviewButton]="false"
                     [enableResize]="true"
                     [domainCommands]="dragAndDropQuestionDomainCommands"
-                    (markdownChange)="changesInMarkdown()"
+                    (markdownChange)="changesInMarkdown($event)"
                     (textWithDomainCommandsFound)="domainCommandsFound($event)"
                     class="h-auto"
                 ></jhi-markdown-editor>
@@ -209,7 +209,7 @@
                             [showPreviewButton]="false"
                             [enableResize]="true"
                             [domainCommands]="dragAndDropQuestionDomainCommands"
-                            (markdownChange)="changesInMarkdown()"
+                            (markdownChange)="changesInMarkdown($event)"
                             (textWithDomainCommandsFound)="domainCommandsFound($event)"
                             [enableFileUpload]="false"
                             class="h-auto"

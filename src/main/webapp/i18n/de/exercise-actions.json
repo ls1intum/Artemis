@@ -47,8 +47,10 @@
             "cloneExerciseRepository": "Klone ein Repository für diese Übung",
             "repositoryPassword": "Dein Passwort lautet:",
             "hoverToShow": "(hover, um es anzuzeigen)",
-            "cloneSourceTree": "In SourceTree klonen",
-            "sourceTreeDescription": "<a href='https://www.sourcetreeapp.com' target='_blank'>Atlassian SourceTree</a> ist ein kostenloser GIT-Client für Mac und Windows.",
+            "cloneSourceTree": {
+                "button": "In Git-Client klonen",
+                "helpIcon": "Dies öffnet das Repository in Sourcetree oder Tower. Falls du diese nicht installiert hast, kannst du das Repository in deiner IDE oder dem Terminal klonen."
+            },
             "goToBuildPlan": "Zum Build-Plan gehen",
             "openTextEditor": "Texteditor öffnen",
             "copyUrl": "URL kopieren",

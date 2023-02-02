@@ -53,7 +53,12 @@
         <span jhiTranslate="artemisApp.exercise.teamAssignmentConfig.participants">Participants</span>
     </dd>
 </ng-container>
-<ng-container *ngIf="exercise.type !== ExerciseType.PROGRAMMING">
+<ng-container *ngIf="exercise.type !== ExerciseType.PROGRAMMING && exercise.course">
+    <dt><span jhiTranslate="artemisApp.exercise.startDate">Start Date</span></dt>
+    <dd>
+        <span *ngIf="exercise.startDate">{{ exercise.startDate | artemisDate }}</span>
+        <span *ngIf="!exercise.startDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+    </dd>
     <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
     <dd>
         <span *ngIf="exercise.releaseDate">{{ exercise.releaseDate | artemisDate }}</span>

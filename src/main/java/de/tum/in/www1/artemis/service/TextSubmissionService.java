@@ -50,7 +50,7 @@ public class TextSubmissionService extends SubmissionService {
      * Handles text submissions sent from the client and saves them in the database.
      *
      * @param textSubmission the text submission that should be saved
-     * @param exercise   the corresponding text exercise
+     * @param exercise       the corresponding text exercise
      * @param user           the user who initiated the save/submission
      * @return the saved text submission
      */
@@ -119,9 +119,9 @@ public class TextSubmissionService extends SubmissionService {
      * Given an exercise id, find a random text submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
      * assessment for the corresponding submission yet.
      *
-     * @param textExercise the exercise for which we want to retrieve a submission without manual result
+     * @param textExercise    the exercise for which we want to retrieve a submission without manual result
      * @param correctionRound - the correction round we want our submission to have results for
-     * @param examMode flag to determine if test runs should be ignored. This should be set to true for exam exercises
+     * @param examMode        flag to determine if test runs should be ignored. This should be set to true for exam exercises
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean examMode, int correctionRound) {
@@ -132,10 +132,10 @@ public class TextSubmissionService extends SubmissionService {
      * Given an exercise id, find a random text submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
      * assessment for the corresponding submission yet.
      *
-     * @param textExercise the exercise for which we want to retrieve a submission without manual result
+     * @param textExercise        the exercise for which we want to retrieve a submission without manual result
      * @param skipAssessmentQueue skip using the assessment queue and do NOT optimize the assessment order (default: false)
-     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
-     * @param correctionRound - the correction round we want our submission to have results for
+     * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param correctionRound     - the correction round we want our submission to have results for
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound) {
@@ -154,7 +154,7 @@ public class TextSubmissionService extends SubmissionService {
     /**
      * Lock a given text submission that still needs to be assessed to prevent other tutors from receiving and assessing it.
      *
-     * @param textSubmission textSubmission to be locked
+     * @param textSubmission  textSubmission to be locked
      * @param correctionRound get submission with results in the correction round
      */
     public void lockTextSubmissionToBeAssessed(TextSubmission textSubmission, int correctionRound) {

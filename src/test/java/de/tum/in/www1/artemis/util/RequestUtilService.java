@@ -369,6 +369,14 @@ public class RequestUtilService {
         return mapper.readValue(stringResponse, responseType);
     }
 
+    public <T, R> List<R> patchWithResponseBodyList(String path, T body, Class<R> listElementType, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.patch(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
+                .andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+        return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
+    }
+
     public void patch(String path, Object body, HttpStatus expectedStatus) throws Exception {
         String jsonBody = body != null ? mapper.writeValueAsString(body) : null;
         var requestBuilder = MockMvcRequestBuilders.patch(new URI(path)).contentType(MediaType.APPLICATION_JSON);

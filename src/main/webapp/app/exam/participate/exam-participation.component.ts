@@ -14,6 +14,7 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam.model';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, Subject, Subscription, of, throwError } from 'rxjs';
@@ -47,6 +48,8 @@ import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
+
+const getWebSocketChannelForWorkingTimeChange = (studentExamId: number) => `/topic/studentExams/${studentExamId}/working-time-change-during-conduction`;
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -139,10 +142,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private examMonitoringService: ExamMonitoringService,
         private examActionService: ExamActionService,
         private featureToggleService: FeatureToggleService,
+        private artemisDatePipe: ArtemisDatePipe,
     ) {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
-            this.alertService.error('artemisApp.examParticipation.saveSubmissionError');
+            this.alertService.error('artemisApp.exam.examParticipation.saveSubmissionError');
         });
     }
 
@@ -564,11 +568,32 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.examMonitoringUpdateSubscription?.unsubscribe();
         this.examActionService.unsubscribeForExamMonitoringUpdate(this.exam);
         window.clearInterval(this.autoSaveInterval);
+        this.websocketService.unsubscribe(getWebSocketChannelForWorkingTimeChange(this.studentExamId));
     }
 
+    /**
+     * Initializes the individual end dates and sets up a subscription for potential changes during the conduction
+     * @param startDate the start date of the exam
+     */
     initIndividualEndDates(startDate: dayjs.Dayjs) {
         this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
         this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
+
+        const channel = getWebSocketChannelForWorkingTimeChange(this.studentExam.id!);
+        this.websocketService.subscribe(channel);
+        this.websocketService.receive(channel).subscribe((workingTime: number) => {
+            const decreased = workingTime < (this.studentExam.workingTime ?? 0);
+            this.studentExam.workingTime = workingTime;
+            this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime, 'seconds');
+            this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
+            const dateFormat = startDate.isSame(this.individualStudentEndDate, 'day') ? 'time' : 'short';
+            const newIndividualStudentEndDateFormatted = this.artemisDatePipe.transform(this.individualStudentEndDate, dateFormat);
+            if (decreased) {
+                this.alertService.error('artemisApp.examParticipation.workingTimeDecreased', { date: newIndividualStudentEndDateFormatted });
+            } else {
+                this.alertService.success('artemisApp.examParticipation.workingTimeIncreased', { date: newIndividualStudentEndDateFormatted });
+            }
+        });
     }
 
     /**
