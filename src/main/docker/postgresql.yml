@@ -5,7 +5,7 @@
 services:
     postgresql:
         container_name: artemis-postgresql
-        image: postgres:15.1-alpine
+        image: postgres:15-alpine
         pull_policy: always
         user: postgres
         volumes:
