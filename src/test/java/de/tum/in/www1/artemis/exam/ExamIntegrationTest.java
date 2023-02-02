@@ -2009,7 +2009,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // Compare top-level DTO properties
         assertThat(examScores.maxPoints()).isEqualTo(exam.getExamMaxPoints());
 
-        assertThat(examScores.hasSecondCorrectionAndStarted()).isEqual(withSecondCorrectionAndStarted);
+        assertThat(examScores.hasSecondCorrectionAndStarted()).isEqualTo(withSecondCorrectionAndStarted);
 
         // For calculation assume that all exercises within an exerciseGroups have the same max points
         double calculatedAverageScore = 0.0;
@@ -2185,15 +2185,15 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(examChecklistDTO.getNumberOfTestRuns()).isNull();
         assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(expectedTotalExamAssessmentsFinishedByCorrectionRound);
 
-        await().until(() -> participantScoreScheduleService.isIdle());
-
-        // change back to instructor user
-        database.changeUser(TEST_PREFIX + "instructor1");
-
         bambooRequestMockProvider.reset();
 
         final ProgrammingExercise programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().iterator().next();
         mockDeleteProgrammingExercise(programmingExerciseTestService, programmingExercise, exam.getRegisteredUsers());
+
+        await().until(() -> participantScoreScheduleService.isIdle());
+
+        // change back to instructor user
+        database.changeUser(TEST_PREFIX + "instructor1");
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
