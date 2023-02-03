@@ -17,8 +17,8 @@
     </div>
     <div class="interaction" (click)="$event.stopPropagation()">
         <div ngbDropdown container="body" class="d-inline-block">
-            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" ngbDropdownToggle>
-                <fa-icon [icon]="faEllipsis" size="xs"></fa-icon>
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
+                <fa-icon [icon]="faEllipsis" size="sm"></fa-icon>
             </button>
             <div ngbDropdownMenu>
                 <button class="setting" ngbDropdownItem (click)="openConversationDetailDialog($event)" *ngIf="!isOneToOneChat(conversation)">
