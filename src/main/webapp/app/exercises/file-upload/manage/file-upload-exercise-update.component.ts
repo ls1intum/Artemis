@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
@@ -95,45 +95,8 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                 ),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
-                    if (!this.isExamMode) {
-                        this.exerciseCategories = this.fileUploadExercise.categories || [];
-                        if (this.examCourseId) {
-                            this.courseService.findAllCategoriesOfCourse(this.examCourseId).subscribe({
-                                next: (categoryRes: HttpResponse<string[]>) => {
-                                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                                },
-                                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                            });
-                        }
-                    } else {
-                        // Lock individual mode for exam exercises
-                        this.fileUploadExercise.mode = ExerciseMode.INDIVIDUAL;
-                        this.fileUploadExercise.teamAssignmentConfig = undefined;
-                        this.fileUploadExercise.teamMode = false;
-                        // Exam exercises cannot be not included into the total score
-                        if (this.fileUploadExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
-                            this.fileUploadExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
-                        }
-                    }
-                    if (this.isImport) {
-                        if (this.isExamMode) {
-                            // The target exerciseId where we want to import into
-                            const exerciseGroupId = params['exerciseGroupId'];
-                            const courseId = params['courseId'];
-                            const examId = params['examId'];
-
-                            this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.fileUploadExercise.exerciseGroup = res.body!));
-                            // We reference exam exercises by their exercise group, not their course. Having both would lead to conflicts on the server
-                            this.fileUploadExercise.course = undefined;
-                        } else {
-                            // The target course where we want to import into
-                            const targetCourseId = params['courseId'];
-                            this.courseService.find(targetCourseId).subscribe((res) => (this.fileUploadExercise.course = res.body!));
-                            // We reference normal exercises by their course, having both would lead to conflicts on the server
-                            this.fileUploadExercise.exerciseGroup = undefined;
-                        }
-                        resetDates(this.fileUploadExercise);
-                    }
+                    this.handleExerciseSettings();
+                    this.handleImport(params);
                 }),
             )
             .subscribe();
@@ -144,6 +107,49 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      */
     previousState() {
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.fileUploadExercise);
+    }
+    private handleImport(params: Params) {
+        if (this.isImport) {
+            if (this.isExamMode) {
+                // The target exerciseId where we want to import into
+                const exerciseGroupId = params['exerciseGroupId'];
+                const courseId = params['courseId'];
+                const examId = params['examId'];
+
+                this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.fileUploadExercise.exerciseGroup = res.body!));
+                // We reference exam exercises by their exercise group, not their course. Having both would lead to conflicts on the server
+                this.fileUploadExercise.course = undefined;
+            } else {
+                // The target course where we want to import into
+                const targetCourseId = params['courseId'];
+                this.courseService.find(targetCourseId).subscribe((res) => (this.fileUploadExercise.course = res.body!));
+                // We reference normal exercises by their course, having both would lead to conflicts on the server
+                this.fileUploadExercise.exerciseGroup = undefined;
+            }
+            resetDates(this.fileUploadExercise);
+        }
+    }
+    private handleExerciseSettings() {
+        if (!this.isExamMode) {
+            this.exerciseCategories = this.fileUploadExercise.categories || [];
+            if (this.examCourseId) {
+                this.courseService.findAllCategoriesOfCourse(this.examCourseId).subscribe({
+                    next: (categoryRes: HttpResponse<string[]>) => {
+                        this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+                    },
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                });
+            }
+        } else {
+            // Lock individual mode for exam exercises
+            this.fileUploadExercise.mode = ExerciseMode.INDIVIDUAL;
+            this.fileUploadExercise.teamAssignmentConfig = undefined;
+            this.fileUploadExercise.teamMode = false;
+            // Exam exercises cannot be not included into the total score
+            if (this.fileUploadExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+                this.fileUploadExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            }
+        }
     }
 
     save() {
