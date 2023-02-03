@@ -70,12 +70,6 @@ export class ExerciseImportComponent implements OnInit {
         if (this.programmingLanguage) {
             this.titleKey = 'artemisApp.programmingExercise.configureGrading.categories.importLabel';
         } else {
-            this.titleKey = `artemisApp.${this.exerciseType}Exercise.home.importLabel`;
-        }
-
-        if (this.programmingLanguage) {
-            this.titleKey = 'artemisApp.programmingExercise.configureGrading.categories.importLabel';
-        } else {
             this.titleKey =
                 this.exerciseType === ExerciseType.FILE_UPLOAD ? `artemisApp.fileUploadExercise.home.importLabel` : `artemisApp.${this.exerciseType}Exercise.home.importLabel`;
         }
