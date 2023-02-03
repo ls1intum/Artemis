@@ -125,6 +125,7 @@ public class Feedback extends DomainObject {
 
     /**
      * sets the detail text of the feedback. In case the detail text is longer than 5000 characters, the additional characters are cut off to avoid database issues
+     *
      * @param detailText the new detail text for the feedback, can be null
      */
     public void setDetailText(@Nullable String detailText) {
@@ -239,6 +240,7 @@ public class Feedback extends DomainObject {
     /**
      * be careful when using this method as it might result in org.hibernate.HibernateException: null index column for collection: de.tum.in.www1.artemis.domain.Result.feedbacks
      * when saving the result. The result object is the container that owns the feedback and uses CascadeType.ALL and orphanRemoval
+     *
      * @param result the result container object that owns the feedback
      */
     public void setResult(Result result) {
@@ -267,11 +269,11 @@ public class Feedback extends DomainObject {
     }
 
     /**
-     *  This function sets the described parameters and then returns the current instance with the updated references.
+     * This function sets the described parameters and then returns the current instance with the updated references.
      *
      * @param suggestedFeedbackOriginBlockReference - Block reference of the suggested (automatic) feedback
-     * @param submissionId - Submission reference where the suggested feedback was generated from
-     * @param suggestedFeedbackParticipationId - respective participation reference
+     * @param submissionId                          - Submission reference where the suggested feedback was generated from
+     * @param suggestedFeedbackParticipationId      - respective participation reference
      * @return updated Feedback
      */
     public Feedback suggestedFeedbackOrigin(String suggestedFeedbackOriginBlockReference, Long submissionId, Long suggestedFeedbackParticipationId) {
@@ -299,6 +301,7 @@ public class Feedback extends DomainObject {
 
     /**
      * Checks whether the feedback was created by static code analysis
+     *
      * @return true if it is static code analysis feedback else false
      */
     @JsonIgnore
@@ -308,6 +311,7 @@ public class Feedback extends DomainObject {
 
     /**
      * Checks whether the feedback was created by a submission policy
+     *
      * @return true if it is submission policy feedback else false
      */
     @JsonIgnore
@@ -317,6 +321,7 @@ public class Feedback extends DomainObject {
 
     /**
      * Checks whether the feedback was created by an automatic test
+     *
      * @return true if it is a test feedback else false
      */
     @JsonIgnore
@@ -340,6 +345,7 @@ public class Feedback extends DomainObject {
 
     /**
      * Copies an automatic feedback to be used for the manual result of a programming exercise
+     *
      * @return Copy of the automatic feedback without its original ID
      */
     public Feedback copyFeedback() {
@@ -369,7 +375,8 @@ public class Feedback extends DomainObject {
 
     /**
      * Calculates the score over all feedback elements that were set using structured grading instructions (SGI)
-     * @param inputScore totalScore which is summed up.
+     *
+     * @param inputScore          totalScore which is summed up.
      * @param gradingInstructions empty grading instruction Map to collect the used gradingInstructions
      * @return calculated total score from feedback elements set by SGI
      */

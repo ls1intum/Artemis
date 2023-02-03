@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, Optional, SimpleChanges } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { MissingResultInformation, ResultTemplateStatus, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -22,8 +22,9 @@ import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise
 import { faCircleNotch, faExclamationCircle, faFile } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { Badge, ResultService } from 'app/exercises/shared/result/result.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-result',
@@ -62,7 +63,7 @@ export class ResultComponent implements OnInit, OnChanges {
     badge: Badge;
     resultTooltip?: string;
 
-    latestIndividualDueDate?: dayjs.Dayjs;
+    latestDueDate: dayjs.Dayjs | undefined;
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -77,6 +78,7 @@ export class ResultComponent implements OnInit, OnChanges {
         private http: HttpClient,
         private modalService: NgbModal,
         private exerciseService: ExerciseService,
+        @Optional() private exerciseCacheService: ExerciseCacheService,
         private resultService: ResultService,
     ) {}
 
@@ -262,18 +264,21 @@ export class ResultComponent implements OnInit, OnChanges {
      * @param componentInstance the detailed result view
      */
     private determineShowMissingAutomaticFeedbackInformation(componentInstance: FeedbackComponent) {
-        if (!this.latestIndividualDueDate) {
-            this.exerciseService.getLatestDueDate(this.exercise!.id!).subscribe((latestIndividualDueDate?: dayjs.Dayjs) => {
-                this.latestIndividualDueDate = latestIndividualDueDate;
-                this.initializeMissingAutomaticFeedbackAndLatestIndividualDueDate(componentInstance);
-            });
+        if (this.latestDueDate) {
+            this.setShowMissingAutomaticFeedbackInformation(componentInstance, this.latestDueDate);
         } else {
-            this.initializeMissingAutomaticFeedbackAndLatestIndividualDueDate(componentInstance);
+            const service = this.exerciseCacheService ?? this.exerciseService;
+            service.getLatestDueDate(this.exercise!.id!).subscribe((latestDueDate) => {
+                if (latestDueDate) {
+                    this.setShowMissingAutomaticFeedbackInformation(componentInstance, latestDueDate);
+                }
+            });
         }
     }
 
-    private initializeMissingAutomaticFeedbackAndLatestIndividualDueDate(componentInstance: FeedbackComponent) {
-        componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
-        componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
+    private setShowMissingAutomaticFeedbackInformation(componentInstance: FeedbackComponent, latestDueDate: dayjs.Dayjs) {
+        this.latestDueDate = latestDueDate;
+        componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(latestDueDate);
+        componentInstance.latestDueDate = this.latestDueDate;
     }
 }

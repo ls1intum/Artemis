@@ -42,7 +42,7 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
      * Creates a new user in the VCS based on a local Artemis user. Should be called if Artemis handles user creation
      * and management
      *
-     * @param user The local Artemis user, which will be available in the VCS after invoking this method
+     * @param user     The local Artemis user, which will be available in the VCS after invoking this method
      * @param password the password of the user to be set
      */
     @Override
@@ -75,15 +75,15 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
      * Updates a new user in the VCS based on a local Artemis user. Should be called if Artemis handles user management.
      * This will change the following:
      * <ul>
-     *     <li>Update the password of the user</li>
-     *     <li>Update the groups the user belongs to, i.e. removing him from exercises that reference old groups</li>
+     * <li>Update the password of the user</li>
+     * <li>Update the groups the user belongs to, i.e. removing him from exercises that reference old groups</li>
      * </ul>
      *
-     * @param vcsLogin                  The username of the user in the VCS
-     * @param user                      The updated user in Artemis
-     * @param removedGroups             groups that the user does not belong to any longer
-     * @param addedGroups               The new groups the Artemis user got added to
-     * @param newPassword               The new password, null otherwise
+     * @param vcsLogin      The username of the user in the VCS
+     * @param user          The updated user in Artemis
+     * @param removedGroups groups that the user does not belong to any longer
+     * @param addedGroups   The new groups the Artemis user got added to
+     * @param newPassword   The new password, null otherwise
      */
     @Override
     public void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, String newPassword) {

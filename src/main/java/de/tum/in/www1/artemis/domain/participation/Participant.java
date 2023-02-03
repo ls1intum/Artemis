@@ -16,6 +16,7 @@ public interface Participant {
 
     /**
      * convenience method
+     *
      * @return either the user itself in a singleton set or all participants of a team
      */
     @JsonIgnore
