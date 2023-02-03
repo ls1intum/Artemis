@@ -31,10 +31,10 @@ public class TextSubmissionElement extends PlagiarismSubmissionElement {
     /**
      * Create a new TextSubmissionElement instance from an existing JPlag Token
      *
-     * @param token the JPlag Token to create the TextSubmissionElement from
+     * @param token                the JPlag Token to create the TextSubmissionElement from
      * @param plagiarismSubmission the PlagiarismSubmission the TextSubmissionElement belongs to
-     * @param exercise the exercise to which the element belongs, either Text or Programming
-     * @param submissionDirectory the directory to which all student submissions have been downloaded / stored
+     * @param exercise             the exercise to which the element belongs, either Text or Programming
+     * @param submissionDirectory  the directory to which all student submissions have been downloaded / stored
      * @return a new TextSubmissionElement instance
      */
     public static TextSubmissionElement fromJPlagToken(Token token, PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission, Exercise exercise, File submissionDirectory) {

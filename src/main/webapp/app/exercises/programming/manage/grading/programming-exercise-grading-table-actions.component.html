@@ -1,0 +1,18 @@
+<button id="import-configuration-button" class="btn btn-primary ms-3 my-1" (click)="openImportModal()" [disabled]="isSaving" *ngIf="activeTab === 'code-analysis'">
+    <fa-icon [icon]="faCopy"></fa-icon>
+    <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.import"> Import Configuration </span>
+</button>
+<button
+    id="save-table-button"
+    class="btn btn-primary ms-3 my-3"
+    jhiTranslate="artemisApp.programmingExercise.configureGrading.save"
+    (click)="onSave.emit()"
+    [disabled]="isSaving || !hasUnsavedChanges"
+></button>
+<button
+    id="reset-table-button"
+    class="btn btn-secondary ms-3 my-1"
+    (click)="onReset.emit()"
+    [disabled]="isSaving"
+    jhiTranslate="artemisApp.programmingExercise.configureGrading.reset"
+></button>

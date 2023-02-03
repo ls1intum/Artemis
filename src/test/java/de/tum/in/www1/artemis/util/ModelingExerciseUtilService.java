@@ -20,8 +20,9 @@ public class ModelingExerciseUtilService {
 
     /**
      * Create modeling exercise for a given course
-     * @param courseId  id of the given course
-     * @return  created modeling exercise
+     *
+     * @param courseId id of the given course
+     * @return created modeling exercise
      */
     public ModelingExercise createModelingExercise(Long courseId) {
         return createModelingExercise(courseId, null);
@@ -29,9 +30,10 @@ public class ModelingExerciseUtilService {
 
     /**
      * Create modeling exercise with a given id for a given course
-     * @param courseId  id of the given course
-     * @param exerciseId  id of modeling exercise
-     * @return  created modeling exercise
+     *
+     * @param courseId   id of the given course
+     * @param exerciseId id of modeling exercise
+     * @return created modeling exercise
      */
     public ModelingExercise createModelingExercise(Long courseId, Long exerciseId) {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
@@ -50,8 +52,9 @@ public class ModelingExerciseUtilService {
 
     /**
      * Add example submission to modeling exercise
-     * @param modelingExercise  modeling exercise for which the example submission should be added
-     * @return  modeling exercise with example submission
+     *
+     * @param modelingExercise modeling exercise for which the example submission should be added
+     * @return modeling exercise with example submission
      * @throws Exception if the resources file is not found
      */
     public ModelingExercise addExampleSubmission(ModelingExercise modelingExercise) throws Exception {

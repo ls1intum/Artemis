@@ -111,6 +111,7 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
 
     /**
      * sort after the comparisons with the highest similarity and limit the number of comparisons to size to prevent too many plagiarism results
+     *
      * @param size the size to which the comparisons should be limited, e.g. 500
      */
     public void sortAndLimit(int size) {
