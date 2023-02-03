@@ -25,9 +25,6 @@ export CYPRESS_studentGroupName=artemis-e2etest-students
 export CYPRESS_tutorGroupName=artemis-e2etest-tutors
 export CYPRESS_editorGroupName=artemis-e2etest-editors
 export CYPRESS_instructorGroupName=artemis-e2etest-instructors
-export BAMBOO_PLAN_KEY=${bamboo.planKey}
-export BAMBOO_BUILD_NUMBER=${bamboo.buildNumber}
-export BAMBOO_TOKEN=${bamboo.BAMBOO_PERSONAL_SECRET}
 
 export DATASOURCE_URL="jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"
 export UM_URL="https://jira-prelive.ase.in.tum.de"
