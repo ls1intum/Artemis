@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -11,7 +11,6 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { ExerciseTypeTOTAL } from 'app/entities/exercise.model';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
@@ -33,10 +32,8 @@ export class GradingKeyOverviewComponent implements OnInit {
 
     constructor(
         private route: ActivatedRoute,
-        private router: Router,
         private gradingSystemService: GradingSystemService,
         private bonusService: BonusService,
-        private courseStorageService: CourseStorageService,
         private scoresStorageService: ScoresStorageService,
         private navigationUtilService: ArtemisNavigationUtilService,
         private themeService: ThemeService,

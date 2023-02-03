@@ -20,7 +20,6 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { Bonus } from 'app/entities/bonus.model';
 import { HttpResponse } from '@angular/common/http';
-import { Course } from 'app/entities/course.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { ExerciseTypeTOTAL } from 'app/entities/exercise.model';
@@ -183,9 +182,6 @@ describe('GradeKeyOverviewComponent', () => {
         route.parent!.parent!.snapshot!.params.examId = undefined;
         const courseId = route.parent!.parent!.snapshot!.params.courseId;
         const reachablePoints = 200;
-        const course = { id: courseId, exercises: [{ id: 35 }] } as Course;
-        const courseStorageService = fixture.debugElement.injector.get(CourseStorageService);
-        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
 
         const scoresStorageService = fixture.debugElement.injector.get(ScoresStorageService);
         const getStoredScoresSpy = jest
@@ -206,9 +202,6 @@ describe('GradeKeyOverviewComponent', () => {
         expect(comp.title).toBe('Title');
         expect(comp.isBonus).toBeTrue();
         expect(comp.isExam).toBeFalse();
-
-        expect(getCourseSpy).toHaveBeenCalledOnce();
-        expect(getCourseSpy).toHaveBeenCalledWith(courseId);
 
         expect(getStoredScoresSpy).toHaveBeenCalledOnce();
         expect(getStoredScoresSpy).toHaveBeenCalledWith(courseId);
