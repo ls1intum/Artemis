@@ -46,6 +46,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     getInvalidReasonsForWizard = () => this.getInvalidReasons(this.currentWizardModeStep);
     programmingLanguageChanged = (language: ProgrammingLanguage) => this.onProgrammingLanguageChange(language);
     withDependenciesChanged = (withDependencies: boolean) => this.onWithDependenciesChanged(withDependencies);
+    categoriesChanged = (categories: ExerciseCategory[]) => this.updateCategories(categories);
     projectTypeChanged = (projectType: ProjectType) => this.onProjectTypeChange(projectType);
     staticCodeAnalysisChanged = () => this.onStaticCodeAnalysisChanged();
     currentWizardModeStep = 1;
@@ -514,6 +515,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     updateCategories(categories: ExerciseCategory[]) {
         this.programmingExercise.categories = categories;
+        this.exerciseCategories = categories;
     }
 
     save() {
@@ -948,7 +950,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
             exerciseCategories: this.exerciseCategories,
             existingCategories: this.existingCategories,
-            updateCategories: this.updateCategories,
+            updateCategories: this.categoriesChanged,
         };
     }
 
