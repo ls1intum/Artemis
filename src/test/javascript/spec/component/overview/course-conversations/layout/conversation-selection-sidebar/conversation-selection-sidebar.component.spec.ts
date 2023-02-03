@@ -74,7 +74,7 @@ examples.forEach((activeConversation) => {
                     MockProvider(AccountService),
                     { provide: LocalStorageService, useClass: MockLocalStorageService },
                     MockProvider(ConversationService, {
-                        getConversationName: (conversation: ConversationDto, showLogin = false) => {
+                        getConversationName: (conversation: ConversationDto) => {
                             return conversation.id + '';
                         },
                     }),
