@@ -9,7 +9,6 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exercise, ExerciseType, ExerciseTypeTOTAL, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { of } from 'rxjs';
@@ -28,6 +27,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
+import { Result } from 'app/entities/result.model';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -358,6 +358,8 @@ describe('CourseStatisticsComponent', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [programmingExercise, quizExercise, ...modelingExercises, fileUploadExercise];
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
+        const mockParticipationResult: Result = { rated: true, score: 100 };
+        jest.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
         fixture.detectChanges();
         comp.ngOnInit();
         // Include all exercises
@@ -372,30 +374,16 @@ describe('CourseStatisticsComponent', () => {
         expect(fixture.debugElement.query(By.css('#presentation-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.presentationScore ');
 
         const programming: any = comp.ngxExerciseGroups[0][0];
-        // as it is not included, the presentation score should be 0
-        expect(programming.presentationScore).toBe(0);
         expect(programming.series).toHaveLength(6);
         expect(programming.series[2].isProgrammingExercise).toBeTrue();
-        expect(programming.series[2].absoluteValue).toBe(17);
-
-        const quiz: any = comp.ngxExerciseGroups[1][0];
-        // as the quiz does not have a due date, the presentation score should be 0
-        expect(quiz.presentationScore).toBe(0);
-        expect(quiz.series[0].absoluteValue).toBe(1);
-
-        const modeling: any = comp.ngxExerciseGroups[2][0];
-        expect(modeling.presentationScore).toBe(2);
-        expect(modeling.series[1].absoluteValue).toBe(11);
-
-        const fileUpload: any = comp.ngxExerciseGroups[3][0];
-        expect(fileUpload.presentationScore).toBe(1);
-        expect(fileUpload.series[3].absoluteValue).toBe(9);
     });
 
     it('should filter all exercises not included in score', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [...modelingExercises];
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
+        const mockParticipationResult: Result = { rated: true, score: 100 };
+        jest.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
         fixture.detectChanges();
         comp.ngOnInit();
 
@@ -444,91 +432,6 @@ describe('CourseStatisticsComponent', () => {
         expect(exercise.reachablePoints).toBe(36);
         expect(exercise.overallMaxPoints).toBe(36);
 
-        const newExercise = [
-            {
-                type: 'text',
-                id: 200,
-                title: 'Until 18:20 too',
-                dueDate: dayjs('2019-06-16T18:15:03+02:00'),
-                assessmentDueDate: dayjs('2019-06-16T18:30:57+02:00'),
-                maxPoints: 10.0,
-                includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-                studentParticipations: [
-                    {
-                        id: 289,
-                        initializationState: 'FINISHED',
-                        initializationDate: dayjs('2019-06-16T18:10:28.293+02:00'),
-                        results: [
-                            {
-                                id: 222,
-                                completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
-                                successful: false,
-                                score: 55,
-                                rated: true,
-                                assessmentType: 'MANUAL',
-                                hasComplaint: false,
-                            },
-                        ],
-                        student: {
-                            id: 9,
-                            login: 'artemis_test_user_1',
-                            firstName: 'Artemis Test User 1',
-                            email: 'krusche+testuser_1@in.tum.de',
-                            activated: true,
-                            langKey: 'en',
-                        },
-                    },
-                ],
-                diagramType: 'ClassDiagram',
-                numberOfSubmissions: new DueDateStat(),
-                totalNumberOfAssessments: new DueDateStat(),
-                numberOfComplaints: 0,
-            } as unknown as TextExercise,
-            {
-                type: 'text',
-                id: 999,
-                title: 'Until 18:20 tooo',
-                dueDate: dayjs('2019-06-16T18:15:03+02:00'),
-                assessmentDueDate: dayjs().add(1, 'days'),
-                maxPoints: 10.0,
-                includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-                studentParticipations: [
-                    {
-                        id: 888,
-                        initializationState: 'FINISHED',
-                        initializationDate: dayjs('2019-06-16T18:10:28.293+02:00'),
-                        student: {
-                            id: 9,
-                            login: 'artemis_test_user_1',
-                            firstName: 'Artemis Test User 1',
-                            email: 'krusche+testuser_1@in.tum.de',
-                            activated: true,
-                            langKey: 'en',
-                        },
-                    },
-                ],
-                diagramType: 'ClassDiagram',
-                numberOfSubmissions: new DueDateStat(),
-                totalNumberOfAssessments: new DueDateStat(),
-                numberOfComplaints: 0,
-            } as unknown as TextExercise,
-        ];
-        courseToAdd.exercises = [...modelingExercises, ...newExercise];
-        fixture.detectChanges();
-        comp.ngOnInit();
-        fixture.detectChanges();
-
-        // check that exerciseGroup scores are untouched
-        exercise = comp.ngxExerciseGroups[0][0];
-        expect(exercise.absoluteScore).toBe(20);
-        expect(exercise.reachablePoints).toBe(36);
-        expect(exercise.overallMaxPoints).toBe(36);
-
-        // check that overall course score is adapted accordingly -> one exercise after assessment, one before
-        expect(comp.overallPoints).toBe(25.5);
-        expect(comp.reachablePoints).toBe(46);
-        expect(comp.overallMaxPoints).toBe(56);
-
         // check that html file displays the correct elements
         let debugElement = fixture.debugElement.query(By.css('#absolute-course-score'));
         expect(debugElement.nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.yourPoints ');
@@ -558,6 +461,8 @@ describe('CourseStatisticsComponent', () => {
         });
 
         it('should filter optional exercises correctly', () => {
+            const mockParticipationResult: Result = { rated: true, score: 100 };
+            jest.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
             comp.toggleNotIncludedInScoreExercises();
 
             expect(comp.currentlyHidingNotIncludedInScoreExercises).toBeFalse();

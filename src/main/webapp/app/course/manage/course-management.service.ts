@@ -21,11 +21,11 @@ import { objectToJsonBlob } from 'app/utils/blob-util';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
-import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { ExerciseType, ExerciseTypeTOTAL } from 'app/entities/exercise.model';
+import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -189,10 +189,10 @@ export class CourseManagementService {
         // Convert the received object to a Map.
         const scoresPerExerciseType: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO> = new Map();
         Object.entries(courseForDashboardDTO.scoresPerExerciseType).forEach(([exerciseType, courseScores]) => {
-            let exerciseTypeTyped: ExerciseType | ExerciseTypeTOTAL;
+            let exerciseTypeTyped: ExerciseType | ExerciseTypeTOTAL | undefined = undefined;
             if (exerciseType === ExerciseTypeTOTAL.TOTAL) {
                 exerciseTypeTyped = ExerciseTypeTOTAL.TOTAL;
-            } else {
+            } else if (Object.values(ExerciseType).some((value) => value === exerciseType)) {
                 exerciseTypeTyped = <ExerciseType>exerciseType;
             }
 
