@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
@@ -23,6 +23,7 @@ import { catchError } from 'rxjs/operators';
     selector: '[jhi-conversation-sidebar-entry]',
     templateUrl: './conversation-sidebar-entry.component.html',
     styleUrls: ['./conversation-sidebar-entry.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
@@ -41,6 +42,13 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
 
     @Output()
     settingsChanged = new EventEmitter<void>();
+
+    @Output()
+    conversationHiddenStatusChange = new EventEmitter<void>();
+
+    @Output()
+    conversationFavoriteStatusChange = new EventEmitter<void>();
+
     faEllipsis = faEllipsis;
     faMessage = faMessage;
     constructor(public conversationService: ConversationService, private alertService: AlertService, private modalService: NgbModal) {}
@@ -91,20 +99,20 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
             });
     }
     ngOnInit(): void {
-        this.hide$.pipe(debounceTime(500), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((shouldHide) => {
+        this.hide$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((shouldHide) => {
             this.conversationService.changeHiddenStatus(this.course.id!, this.conversation.id!, shouldHide).subscribe({
                 next: () => {
                     this.conversation.isHidden = shouldHide;
-                    this.settingsChanged.emit();
+                    this.conversationHiddenStatusChange.emit();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
         });
-        this.favorite$.pipe(debounceTime(500), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((shouldFavorite) => {
+        this.favorite$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((shouldFavorite) => {
             this.conversationService.changeFavoriteStatus(this.course.id!, this.conversation.id!, shouldFavorite).subscribe({
                 next: () => {
                     this.conversation.isFavorite = shouldFavorite;
-                    this.settingsChanged.emit();
+                    this.conversationFavoriteStatusChange.emit();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
