@@ -53,6 +53,9 @@ describe('ProgrammingExerciseLanguageComponent', () => {
                     selectedProjectType: ProjectType.FACT,
                     supportedLanguages: [],
                     withDependencies: false,
+                    onWithDependenciesChanged(withDependencies: boolean): boolean {
+                        return false;
+                    },
                     appNamePatternForSwift: '',
                 };
 
