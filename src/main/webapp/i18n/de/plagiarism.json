@@ -44,7 +44,7 @@
             "resetFilter": "Filter zurücksetzen",
             "loading": "Laden...",
             "fetchingResults": "Plagiate werden geladen...",
-            "replyToAccusation": "Antwort auf den Vorwurf",
+            "replyToAccusation": "Stellung zu dem Vorwurf nehmen",
             "replyToAccusationDeadlineNotification": "Sie haben bis zum {{ deadline }} Zeit, sich zu dem Vorwurf zu äußern",
             "cleanUp": {
                 "confirmDialog": {
