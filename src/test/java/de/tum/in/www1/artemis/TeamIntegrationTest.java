@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 
 class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -451,9 +452,9 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         team = teamRepo.save(team);
 
         // Check for endpoint: @GetMapping("/courses/for-dashboard")
-        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
-        Exercise serverExercise = courses.stream().filter(c -> c.getId().equals(course.getId())).findAny()
-                .flatMap(c -> c.getExercises().stream().filter(e -> e.getId().equals(exercise.getId())).findAny()).orElseThrow();
+        List<CourseForDashboardDTO> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        Exercise serverExercise = courses.stream().filter(c -> c.course().getId().equals(course.getId())).findAny()
+                .flatMap(c -> c.course().getExercises().stream().filter(e -> e.getId().equals(exercise.getId())).findAny()).orElseThrow();
         assertThat(serverExercise.getStudentAssignedTeamId()).as("Assigned team id on exercise from dashboard is correct for student.").isEqualTo(team.getId());
         assertThat(serverExercise.isStudentAssignedTeamIdComputed()).as("Assigned team id on exercise was computed.").isTrue();
 
