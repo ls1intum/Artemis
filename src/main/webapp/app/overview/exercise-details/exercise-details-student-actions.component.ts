@@ -82,6 +82,12 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         this.updateParticipations();
     }
 
+    receiveNewParticipation(newParticipation: StudentParticipation) {
+        const studentParticipations = this.exercise.studentParticipations ?? [];
+        this.exercise.studentParticipations = studentParticipations.map((participation) => (participation.id === newParticipation.id ? newParticipation : participation));
+        this.updateParticipations();
+    }
+
     updateParticipations() {
         const studentParticipations = this.exercise.studentParticipations ?? [];
         this.gradedParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, false);
@@ -121,11 +127,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             .subscribe({
                 next: (participation) => {
                     if (participation) {
-                        this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
-                        this.gradedParticipation = participation;
+                        this.receiveNewParticipation(participation);
                     }
                     if (this.programmingExercise) {
-                        if (participation.initializationState === InitializationState.INITIALIZED) {
+                        if (participation?.initializationState === InitializationState.INITIALIZED) {
                             if (this.programmingExercise.allowOfflineIde) {
                                 this.alertService.success('artemisApp.exercise.personalRepositoryClone');
                             } else {
@@ -213,7 +218,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.practiceParticipation?.initializationState === InitializationState.INITIALIZED && this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
         const activeGradedParticipation = this.gradedParticipation?.initializationState === InitializationState.INITIALIZED;
         const inactiveGradedParticipation =
-            this.gradedParticipation?.initializationState === InitializationState.INACTIVE && !isStartExerciseAvailable(this.exercise, this.gradedParticipation);
+            !!this.gradedParticipation?.initializationState &&
+            [InitializationState.INACTIVE, InitializationState.FINISHED].includes(this.gradedParticipation.initializationState) &&
+            !isStartExerciseAvailable(this.exercise, this.gradedParticipation);
 
         return activePracticeParticipation || activeGradedParticipation || inactiveGradedParticipation;
     }

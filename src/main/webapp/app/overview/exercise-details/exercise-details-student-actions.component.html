@@ -176,6 +176,7 @@
                 class="start-practice"
                 [smallButtons]="smallButtons"
                 [exercise]="exercise"
+                (practiceModeStarted)="receiveNewParticipation($event)"
                 *ngIf="(!exercise.teamMode || exercise.studentAssignedTeamId) && isStartPracticeAvailable()"
             ></jhi-start-practice-mode-button>
 

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { finalize } from 'rxjs/operators';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
@@ -22,6 +22,8 @@ export class StartPracticeModeButtonComponent implements OnInit {
     smallButtons: boolean;
     @Input()
     exercise: Exercise;
+    @Output()
+    practiceModeStarted = new EventEmitter();
 
     startingPracticeMode = false;
     gradedStudentParticipation?: StudentParticipation;
@@ -43,7 +45,7 @@ export class StartPracticeModeButtonComponent implements OnInit {
             .subscribe({
                 next: (participation) => {
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                        if (participation.initializationState === InitializationState.INITIALIZED) {
+                        if (participation?.initializationState === InitializationState.INITIALIZED) {
                             if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
                                 this.alertService.success('artemisApp.exercise.personalRepositoryClone');
                             } else {
@@ -51,6 +53,9 @@ export class StartPracticeModeButtonComponent implements OnInit {
                             }
                         } else {
                             this.alertService.error('artemisApp.exercise.startError');
+                        }
+                        if (participation) {
+                            this.practiceModeStarted.emit(participation);
                         }
                     }
                 },
