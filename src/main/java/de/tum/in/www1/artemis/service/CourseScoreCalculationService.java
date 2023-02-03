@@ -213,15 +213,18 @@ public class CourseScoreCalculationService {
 
         Map<String, CourseScoresDTO> scoresPerExerciseType = new HashMap<>();
 
-        long courseId = course.getId();
-
         // Retrieve required entities
 
         Set<Exercise> courseExercises = course.getExercises();
 
         MaxAndReachablePoints maxAndReachablePoints = calculateMaxAndReachablePoints(courseExercises);
 
-        List<PlagiarismCase> plagiarismCases = plagiarismCaseRepository.findByCourseIdAndStudentId(courseId, userId);
+        List<PlagiarismCase> plagiarismCases = new ArrayList<>();
+        for (Exercise exercise : courseExercises) {
+            if (Hibernate.isInitialized(exercise.getPlagiarismCases())) {
+                plagiarismCases.addAll(exercise.getPlagiarismCases());
+            }
+        }
 
         // Get scores for all exercises in course.
         StudentScoresDTO totalStudentScores = calculateCourseScoreForStudent(course, userId, studentParticipations, maxAndReachablePoints.maxPoints,
