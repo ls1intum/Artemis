@@ -19,9 +19,9 @@ export HOST_HOSTNAME=$(hostname)
 
 export GH_REGISTRY_TOKEN='${bamboo.GH_REGISTRY_TOKEN}'
 
-docker-compose -f cypress-E2E-tests.yml -f docker-compose.coverage.yml pull
-docker-compose -f cypress-E2E-tests.yml -f docker-compose.coverage.yml build --no-cache --pull
-docker-compose -f cypress-E2E-tests.yml -f docker-compose.coverage.yml up --exit-code-from artemis-cypress
+docker-compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml pull
+docker-compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml build --no-cache --pull
+docker-compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml up --exit-code-from artemis-cypress
 exitCode=$?
 echo "Cypress container exit code: $exitCode"
 if [ $exitCode -eq 0 ]
