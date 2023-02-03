@@ -8,7 +8,7 @@ import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.mod
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { Course, CourseGroup } from 'app/entities/course.model';
-import { Exercise, ExerciseType, ExerciseTypeTOTAL } from 'app/entities/exercise.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { Organization } from 'app/entities/organization.model';
@@ -44,7 +44,7 @@ describe('Course Management Service', () => {
     let course: Course;
     let courseForDashboard: CourseForDashboardDTO;
     let courseScores: CourseScoresDTO;
-    let scoresPerExerciseType: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO>;
+    let scoresPerExerciseType: { [key: string]: CourseScoresDTO };
     let participationResult: Result;
     let onlineCourseConfiguration: OnlineCourseConfiguration;
     let exercises: Exercise[];
@@ -86,9 +86,7 @@ describe('Course Management Service', () => {
         courseForDashboard = new CourseForDashboardDTO();
         courseForDashboard.course = course;
         courseScores = { maxPoints: 0, reachablePoints: 0, studentScores: { absoluteScore: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 } };
-        scoresPerExerciseType = new Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO>();
-        scoresPerExerciseType.set(ExerciseTypeTOTAL.TOTAL, courseScores);
-        scoresPerExerciseType.set(ExerciseType.PROGRAMMING, courseScores);
+        scoresPerExerciseType = { total: courseScores, programming: courseScores };
         courseForDashboard.scoresPerExerciseType = scoresPerExerciseType;
         participationResult = new Result();
         courseForDashboard.participationResults = [participationResult];
