@@ -278,10 +278,9 @@ public class ExerciseHintService {
      * Returns the title of the hint identified by the given hint id if the exercise id stored in the hint matches the
      * provided exercise id.
      *
-     * @param exerciseId the exercise id that must match the one stored in the hint
+     * @param exerciseId     the exercise id that must match the one stored in the hint
      * @param exerciseHintId the id of the hint
      * @return the title of the hint if it was found; null otherwise
-     *
      * @throws ConflictException if the provided exercise id does not match the one stored in the hint
      */
     @Cacheable(cacheNames = "exerciseHintTitle", key = "''.concat(#exerciseId).concat('-').concat(#exerciseHintId)", unless = "#result == null")

@@ -46,13 +46,13 @@ public class PlagiarismCaseService {
     /**
      * Save the verdict for a plagiarism case.
      * <ul>
-     *     <li>If the verdict is a point deduction additionally save the point deduction.</li>
-     *     <li>If the verdict is a warning additionally save the warning message.</li>
+     * <li>If the verdict is a point deduction additionally save the point deduction.</li>
+     * <li>If the verdict is a warning additionally save the warning message.</li>
      * </ul>
      *
-     * @param plagiarismCaseId      the ID of the plagiarism case for which to save the verdict
-     * @param plagiarismVerdictDTO  the verdict to be saved
-     * @return                      the plagiarism case with the verdict
+     * @param plagiarismCaseId     the ID of the plagiarism case for which to save the verdict
+     * @param plagiarismVerdictDTO the verdict to be saved
+     * @return the plagiarism case with the verdict
      */
     public PlagiarismCase updatePlagiarismCaseVerdict(long plagiarismCaseId, PlagiarismVerdictDTO plagiarismVerdictDTO) {
         PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(plagiarismCaseId);
@@ -75,8 +75,8 @@ public class PlagiarismCaseService {
     /**
      * Save a post for a plagiarism case and notify the student about the plagiarism case.
      *
-     * @param plagiarismCaseId  the ID of the plagiarism case for which to save the post
-     * @param post              the post which belongs to the plagiarism case
+     * @param plagiarismCaseId the ID of the plagiarism case for which to save the post
+     * @param post             the post which belongs to the plagiarism case
      */
     public void savePostForPlagiarismCaseAndNotifyStudent(long plagiarismCaseId, Post post) {
         PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCaseId);
@@ -88,7 +88,7 @@ public class PlagiarismCaseService {
     /**
      * Create or add to plagiarism cases for both students involved in a plagiarism comparison if it is determined to be plagiarism.
      *
-     * @param plagiarismComparisonId    the ID of the plagiarism comparison
+     * @param plagiarismComparisonId the ID of the plagiarism comparison
      */
     public void createOrAddToPlagiarismCasesForComparison(long plagiarismComparisonId) {
         var plagiarismComparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparisonId);
@@ -101,13 +101,14 @@ public class PlagiarismCaseService {
     /**
      * Create or add to a plagiarism case for a student defined via the submission involved in a plagiarism comparison.
      * The following logic applies:
-     *      * <ul>
-     *      *     <li>Create a new plagiarism case if the student isn't already part of a plagiarism case in the exercise</li>
-     *      *     <li>Add the submission of the student to existing plagiarism case otherwise</li>
-     *      * </ul>
      *
-     * @param plagiarismComparison  the plagiarism comparison for which to create the plagiarism case
-     * @param plagiarismSubmission  the plagiarism submission of the student for which to create the plagiarism case
+     * <ul>
+     * <li>Create a new plagiarism case if the student isn't already part of a plagiarism case in the exercise</li>
+     * <li>Add the submission of the student to existing plagiarism case otherwise</li>
+     * </ul>
+     *
+     * @param plagiarismComparison the plagiarism comparison for which to create the plagiarism case
+     * @param plagiarismSubmission the plagiarism submission of the student for which to create the plagiarism case
      */
     public void createOrAddToPlagiarismCaseForStudent(PlagiarismComparison<?> plagiarismComparison, PlagiarismSubmission<?> plagiarismSubmission) {
         var plagiarismCase = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismSubmission.getStudentLogin(),
@@ -137,7 +138,7 @@ public class PlagiarismCaseService {
      * Removes the plagiarism submissions from the plagiarism cases of both students involved in the plagiarism comparison.
      * Deletes the plagiarism case of either student if it doesn't contain any submissions afterwards.
      *
-     * @param plagiarismComparisonId    the ID of the plagiarism comparison
+     * @param plagiarismComparisonId the ID of the plagiarism comparison
      */
     public void removeSubmissionsInPlagiarismCasesForComparison(long plagiarismComparisonId) {
         // remove plagiarism case from both submissions

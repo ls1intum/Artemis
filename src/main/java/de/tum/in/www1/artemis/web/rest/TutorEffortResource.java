@@ -48,7 +48,8 @@ public class TutorEffortResource {
 
     /**
      * GET courses/{courseId}/exercises/{exerciseId}/tutor-effort : Calculates and returns tutor effort as a list for the respective course and exercise
-     * @param courseId the id of the course to query for
+     *
+     * @param courseId   the id of the course to query for
      * @param exerciseId the id of the exercise to query for
      * @return list of TutorEffort objects or no content if no results found
      */

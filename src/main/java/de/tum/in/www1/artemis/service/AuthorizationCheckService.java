@@ -49,7 +49,7 @@ public class AuthorizationCheckService {
      * The course is identified from either exercise. Course or exercise.exerciseGroup.exam.course
      *
      * @param exercise belongs to a course that will be checked for permission rights
-     * @param user the user whose permissions should be checked
+     * @param user     the user whose permissions should be checked
      * @return true if the currently logged-in user is at least an editor, false otherwise
      */
     public boolean isAtLeastEditorForExercise(@NotNull Exercise exercise, @Nullable User user) {
@@ -61,7 +61,7 @@ public class AuthorizationCheckService {
      * Throws an AccessForbiddenException if the user has no access which returns a 403
      *
      * @param course the course that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user   the user whose permissions should be checked
      */
     private void checkIsAtLeastEditorInCourseElseThrow(@NotNull Course course, @Nullable User user) {
         if (!isAtLeastEditorInCourse(course, user)) {
@@ -73,7 +73,7 @@ public class AuthorizationCheckService {
      * Checks if the passed user is at least an editor in the given course.
      *
      * @param course the course that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user   the user whose permissions should be checked
      * @return true if the passed user is at least an editor in the course, false otherwise
      */
     public boolean isAtLeastEditorInCourse(@NotNull Course course, @Nullable User user) {
@@ -88,7 +88,7 @@ public class AuthorizationCheckService {
      * https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html#filter-java.util.function.Predicate
      *
      * @param exercise the exercise that needs to be checked
-     * @param <T> The type of the concrete exercise, because Exercise is an abstract class
+     * @param <T>      The type of the concrete exercise, because Exercise is an abstract class
      * @return true if the user is at least a teaching assistant (also if the user is instructor or admin) in the course of the given exercise
      */
     public <T extends Exercise> boolean isAtLeastTeachingAssistantForExercise(Optional<T> exercise) {
@@ -111,7 +111,7 @@ public class AuthorizationCheckService {
      * The course is identified from {@link Exercise#getCourseViaExerciseGroupOrCourseMember()}
      *
      * @param exercise the exercise that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user     the user whose permissions should be checked
      * @return true if the passed user is at least a teaching assistant (also if the user is instructor or admin), false otherwise
      */
     public boolean isAtLeastTeachingAssistantForExercise(@NotNull Exercise exercise, @Nullable User user) {
@@ -133,7 +133,7 @@ public class AuthorizationCheckService {
      * checks if the currently logged-in user is at least a student in the course of the given exercise.
      *
      * @param exercise belongs to a course that will be checked for permission rights
-     * @param user the user whose permissions should be checked
+     * @param user     the user whose permissions should be checked
      * @return true if the currently logged-in user is at least a student (also if the user is teaching assistant, instructor or admin), false otherwise
      */
     public boolean isAtLeastStudentForExercise(@NotNull Exercise exercise, @Nullable User user) {
@@ -146,7 +146,7 @@ public class AuthorizationCheckService {
      * Throws an AccessForbiddenException if the user has no access which returns a 403
      *
      * @param course the course that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user   the user whose permissions should be checked
      */
     private void checkIsAtLeastTeachingAssistantInCourseElseThrow(@NotNull Course course, @Nullable User user) {
         if (!isAtLeastTeachingAssistantInCourse(course, user)) {
@@ -158,7 +158,7 @@ public class AuthorizationCheckService {
      * Checks if the passed user is at least a teaching assistant in the given course.
      *
      * @param course the course that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user   the user whose permissions should be checked
      * @return true if the passed user is at least a teaching assistant in the course (also if the user is instructor or admin), false otherwise
      */
     public boolean isAtLeastTeachingAssistantInCourse(@NotNull Course course, @Nullable User user) {
@@ -171,7 +171,7 @@ public class AuthorizationCheckService {
      * Throws an AccessForbiddenException if the user has no access which returns a 403
      *
      * @param course the course that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user   the user whose permissions should be checked
      */
     private void checkIsAtLeastStudentInCourseElseThrow(@NotNull Course course, @Nullable User user) {
         if (!isAtLeastStudentInCourse(course, user)) {
@@ -183,7 +183,7 @@ public class AuthorizationCheckService {
      * checks if the passed user is at least a teaching assistant in the given course
      *
      * @param course the course that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user   the user whose permissions should be checked
      * @return true if the passed user is at least a teaching assistant in the course (also if the user is instructor or admin), false otherwise
      */
     public boolean isAtLeastStudentInCourse(@NotNull Course course, @Nullable User user) {
@@ -197,7 +197,7 @@ public class AuthorizationCheckService {
      * The course is identified from either exercise. Course or exercise.exerciseGroup.exam.course
      *
      * @param exercise belongs to a course that will be checked for permission rights
-     * @param user the user whose permissions should be checked
+     * @param user     the user whose permissions should be checked
      * @return true if the currently logged-in user is at least an instructor (or admin), false otherwise
      */
     public boolean isAtLeastInstructorForExercise(@NotNull Exercise exercise, @Nullable User user) {
@@ -218,9 +218,9 @@ public class AuthorizationCheckService {
      * Convenience method: Checks if the passed user has at least the given role for the given lecture.
      * Throws an AccessForbiddenException if the user has no access which returns a 403
      *
-     * @param role the role that should be checked
+     * @param role    the role that should be checked
      * @param lecture belongs to a course that will be checked for permission rights
-     * @param user the user whose permissions should be checked
+     * @param user    the user whose permissions should be checked
      */
     public void checkHasAtLeastRoleForLectureElseThrow(@NotNull Role role, @NotNull Lecture lecture, @Nullable User user) {
         checkHasAtLeastRoleInCourseElseThrow(role, lecture.getCourse(), user);
@@ -230,9 +230,9 @@ public class AuthorizationCheckService {
      * Convenience method: Checks if the passed user has at least the given role for the given exercise.
      * Throws an AccessForbiddenException if the user has no access which returns a 403
      *
-     * @param role the role that should be checked
+     * @param role     the role that should be checked
      * @param exercise belongs to a course that will be checked for permission rights
-     * @param user the user whose permissions should be checked
+     * @param user     the user whose permissions should be checked
      */
     public void checkHasAtLeastRoleForExerciseElseThrow(@NotNull Role role, @NotNull Exercise exercise, @Nullable User user) {
         checkHasAtLeastRoleInCourseElseThrow(role, exercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -242,9 +242,9 @@ public class AuthorizationCheckService {
      * Checks if the passed user has at least the given role in the given course.
      * Throws an AccessForbiddenException if the user has no access which returns a 403
      *
-     * @param role the role that should be checked
+     * @param role   the role that should be checked
      * @param course the course that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user   the user whose permissions should be checked
      */
     public void checkHasAtLeastRoleInCourseElseThrow(@NotNull Role role, @NotNull Course course, @Nullable User user) {
         // Note: the consumer is necessary to get an exhaustive check for the switch expression here, also see https://stackoverflow.com/questions/66204407
@@ -265,7 +265,7 @@ public class AuthorizationCheckService {
      * Throws an AccessForbiddenException if the user has no access which returns a 403
      *
      * @param course the course that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user   the user whose permissions should be checked
      */
     private void checkIsAtLeastInstructorInCourseElseThrow(@NotNull Course course, @Nullable User user) {
         if (!isAtLeastInstructorInCourse(course, user)) {
@@ -277,7 +277,7 @@ public class AuthorizationCheckService {
      * checks if the passed user is at least instructor in the given course
      *
      * @param course the course that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user   the user whose permissions should be checked
      * @return true if the passed user is at least instructor in the course (also if the user is admin), false otherwise
      */
     public boolean isAtLeastInstructorInCourse(@NotNull Course course, @Nullable User user) {
@@ -289,7 +289,7 @@ public class AuthorizationCheckService {
      * checks if the passed user is instructor in the given course
      *
      * @param course the course that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user   the user whose permissions should be checked
      * @return true, if user is instructor of this course, otherwise false
      */
     public boolean isInstructorInCourse(@NotNull Course course, @Nullable User user) {
@@ -301,7 +301,7 @@ public class AuthorizationCheckService {
      * checks if the passed user is editor in the given course
      *
      * @param course the course that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user   the user whose permissions should be checked
      * @return true, if user is an editor of this course, otherwise false
      */
     public boolean isEditorInCourse(@NotNull Course course, @Nullable User user) {
@@ -313,7 +313,7 @@ public class AuthorizationCheckService {
      * checks if the currently logged-in user is teaching assistant of this course
      *
      * @param course the course that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user   the user whose permissions should be checked
      * @return true, if user is teaching assistant of this course, otherwise false
      */
     public boolean isTeachingAssistantInCourse(@NotNull Course course, @Nullable User user) {
@@ -325,7 +325,7 @@ public class AuthorizationCheckService {
      * checks if the currently logged-in user is only a student of this course. This means the user is NOT a tutor, NOT an editor, NOT an instructor and NOT an ADMIN
      *
      * @param course the course that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user   the user whose permissions should be checked
      * @return true, if user is only student of this course, otherwise false
      */
     public boolean isOnlyStudentInCourse(@NotNull Course course, @Nullable User user) {
@@ -337,7 +337,7 @@ public class AuthorizationCheckService {
      * checks if the currently logged-in user is student in the given course
      *
      * @param course the course that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user   the user whose permissions should be checked
      * @return true, if user is student of this course, otherwise false
      */
     public boolean isStudentInCourse(@NotNull Course course, @Nullable User user) {
@@ -376,7 +376,7 @@ public class AuthorizationCheckService {
      * checks if the currently logged-in user is owner of the given participation
      *
      * @param participation the participation that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user          the user whose permissions should be checked
      * @return true, if user is student is owner of this participation, otherwise false
      */
     public boolean isOwnerOfParticipation(@NotNull StudentParticipation participation, @Nullable User user) {
@@ -403,9 +403,9 @@ public class AuthorizationCheckService {
     /**
      * checks if the currently logged-in user is student of the given team
      *
-     * @param course the course to which the team belongs to (acts as scope for team short name)
+     * @param course        the course to which the team belongs to (acts as scope for team short name)
      * @param teamShortName the short name of the team that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user          the user whose permissions should be checked
      * @return true, if user is student is owner of this team, otherwise false
      */
     public boolean isStudentInTeam(@NotNull Course course, String teamShortName, @NotNull User user) {
@@ -416,7 +416,7 @@ public class AuthorizationCheckService {
      * checks if the passed user is allowed to see the given exercise, i.e. if the passed user is at least a student in the course
      *
      * @param exercise the exercise that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param user     the user whose permissions should be checked
      * @return true, if user is allowed to see this exercise, otherwise false
      */
     public boolean isAllowedToSeeExercise(@NotNull Exercise exercise, @Nullable User user) {
@@ -458,8 +458,8 @@ public class AuthorizationCheckService {
 
     /**
      * Checks if the passed user is an admin user
-     * @param user the user with authorities. If the user is null, the currently logged-in user will be used.
      *
+     * @param user the user with authorities. If the user is null, the currently logged-in user will be used.
      * @return true, if user is admin, otherwise false
      */
     public boolean isAdmin(@Nullable User user) {
@@ -471,6 +471,7 @@ public class AuthorizationCheckService {
 
     /**
      * Checks if the passed user is an admin user. Throws an AccessForbiddenException in case the user is not an admin
+     *
      * @param user the user with authorities. If the user is null, the currently logged-in user will be used.
      **/
     public void checkIsAdminElseThrow(@Nullable User user) {
@@ -504,7 +505,7 @@ public class AuthorizationCheckService {
      * - OR if the exam has already ended and the results were published
      *
      * @param exercise - Exercise that the result is requested for
-     * @param user - User that requests the result
+     * @param user     - User that requests the result
      * @return true if user is allowed to see the result, false otherwise
      */
     public boolean isAllowedToGetExamResult(Exercise exercise, User user) {
@@ -544,7 +545,7 @@ public class AuthorizationCheckService {
      * Tutors of an exercise are allowed to assess the submissions, but only instructors are allowed to assess with a specific result
      *
      * @param exercise Exercise of the submission
-     * @param user User the requests the assessment
+     * @param user     User the requests the assessment
      * @param resultId of the result the teaching assistant wants to assess
      * @return true if caller is allowed to assess submissions
      */

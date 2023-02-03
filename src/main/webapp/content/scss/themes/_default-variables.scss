@@ -154,7 +154,10 @@ $md-file-input-border-color: $border-color;
 $md-resize-icon-color: rgba(0, 0, 0, 0.125);
 
 // Metis
-$metis-conversation-sidebar: #494848;
+$metis-conversation-sidebar: $gray-600;
+$metis-conversation-sidebar-active: $gray-900;
+$metis-conversation-sidebar-button-background-hover: $gray-400;
+
 $metis-light-gray: #979797;
 $metis-gray: #6a737d;
 $metis-blue: $link-color;
