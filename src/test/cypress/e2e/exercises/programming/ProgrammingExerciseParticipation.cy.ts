@@ -1,8 +1,8 @@
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import allSuccessful from '../../../fixtures/programming_exercise_submissions/all_successful/submission.json';
-import partiallySuccessful from '../../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
-import buildError from '../../../fixtures/programming_exercise_submissions/build_error/submission.json';
+import allSuccessful from '../../../fixtures/exercise/programming/all_successful/submission.json';
+import partiallySuccessful from '../../../fixtures/exercise/programming/partially_successful/submission.json';
+import buildError from '../../../fixtures/exercise/programming/build_error/submission.json';
 import { artemis } from '../../../support/ArtemisTesting';
 import {
     ProgrammingExerciseSubmission,

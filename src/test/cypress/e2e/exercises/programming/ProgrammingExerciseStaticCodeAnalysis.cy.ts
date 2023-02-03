@@ -1,6 +1,6 @@
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import scaSubmission from '../../../fixtures/programming_exercise_submissions/static_code_analysis/submission.json';
+import scaSubmission from '../../../fixtures/exercise/programming/static_code_analysis/submission.json';
 import { artemis } from '../../../support/ArtemisTesting';
 import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';

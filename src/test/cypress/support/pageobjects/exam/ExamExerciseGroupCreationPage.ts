@@ -1,6 +1,6 @@
 import { Exam } from 'app/entities/exam.model';
 import { artemis } from '../../ArtemisTesting';
-import multipleChoiceTemplate from '../../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
+import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { BASE_API, EXERCISE_TYPE, PUT } from '../../constants';
 import { POST } from '../../constants';
 

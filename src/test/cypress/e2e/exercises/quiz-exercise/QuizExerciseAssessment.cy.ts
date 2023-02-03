@@ -1,8 +1,8 @@
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { artemis } from '../../../support/ArtemisTesting';
-import shortAnswerQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/shortAnswerQuiz_template.json';
-import multipleChoiceQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
+import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
+import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
 // Accounts
