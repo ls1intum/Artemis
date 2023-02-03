@@ -84,8 +84,8 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
     /**
      * Create a new PlagiarismSubmission instance from an existing JPlag Submission
      *
-     * @param jplagSubmission the JPlag Submission to create the PlagiarismSubmission from
-     * @param exercise the exercise to which the comparison belongs, either Text or Programming
+     * @param jplagSubmission     the JPlag Submission to create the PlagiarismSubmission from
+     * @param exercise            the exercise to which the comparison belongs, either Text or Programming
      * @param submissionDirectory the directory to which all student submissions have been downloaded / stored
      * @return a new PlagiarismSubmission instance
      */

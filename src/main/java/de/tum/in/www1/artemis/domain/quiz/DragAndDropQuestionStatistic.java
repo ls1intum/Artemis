@@ -64,7 +64,7 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
      *
      * @param submittedAnswer the submittedAnswer object which contains all selected answers
      * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
-     *                        of the quizExercise)
+     *                            of the quizExercise)
      * @param change          the int-value, which will be added to the Counter and participants
      */
     @Override

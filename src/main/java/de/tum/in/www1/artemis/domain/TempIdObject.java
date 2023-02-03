@@ -26,6 +26,7 @@ public abstract class TempIdObject extends DomainObject {
 
     /**
      * checks the tempId first and then the database id
+     *
      * @param obj another object
      * @return true when the tempIds are equal or the ids are equal
      */

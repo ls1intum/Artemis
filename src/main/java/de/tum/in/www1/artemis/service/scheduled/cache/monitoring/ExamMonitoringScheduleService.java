@@ -106,8 +106,8 @@ public class ExamMonitoringScheduleService {
     /**
      * Used to handle the received actions.
      *
-     * @param examId    identifies the cache
-     * @param action    new exam action
+     * @param examId identifies the cache
+     * @param action new exam action
      */
     public void addExamActions(Long examId, ExamAction action) {
         if (action != null && action.getStudentExamId() != null) {
@@ -138,8 +138,8 @@ public class ExamMonitoringScheduleService {
     /**
      * Used to update monitoring during the exam.
      *
-     * @param examId        identifies the cache
-     * @param monitoring    new exam action
+     * @param examId     identifies the cache
+     * @param monitoring new exam action
      */
     public void notifyMonitoringUpdate(Long examId, boolean monitoring) {
         messagingService.sendMessage("/topic/exam-monitoring/" + examId + "/update", monitoring);
