@@ -51,9 +51,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Value("${jenkins.use-crumb:#{true}}")
     private boolean useCrumb;
 
-    @Value("${server.url}")
-    private String artemisServerUrl;
-
     private final JenkinsBuildPlanService jenkinsBuildPlanService;
 
     private final JenkinsServer jenkinsServer;
