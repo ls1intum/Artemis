@@ -2,13 +2,13 @@
     <!-- Todo: Do not hide when popover is open-->
     <div class="section-header" (click)="toggleCollapsed()" [attr.aria-expanded]="!isCollapsed">
         <div>
-            <fa-icon [icon]="faChevronRight" [rotate]="!isCollapsed ? 90 : undefined"></fa-icon>
-            <span>{{ label }}</span>
+            <fa-icon size="xs" [icon]="faChevronRight" [rotate]="!isCollapsed ? 90 : undefined"></fa-icon>
+            <span class="fw-bold">{{ label }}</span>
             <span [hidden]="!anyConversationUnread">
                 <fa-icon [icon]="faMessage" class="text-info"></fa-icon>
             </span>
         </div>
-        <div *ngIf="sectionButtons" class="interaction" (click)="$event.stopPropagation()">
+        <div *ngIf="sectionButtons" (click)="$event.stopPropagation()">
             <ng-template [ngTemplateOutlet]="sectionButtons" [ngTemplateOutletContext]="{}"></ng-template>
         </div>
     </div>
@@ -22,6 +22,8 @@
                 jhi-conversation-sidebar-entry
                 (click)="conversationSelected.emit(conversation)"
                 (settingsChanged)="settingsChanged.emit()"
+                (conversationFavoriteStatusChange)="conversationFavoriteStatusChange.emit()"
+                (conversationHiddenStatusChange)="conversationHiddenStatusChange.emit()"
             ></li>
             <ng-container *ngIf="hiddenConversations && hiddenConversations.length > 0">
                 <li (click)="showHiddenConversations = !showHiddenConversations" class="hidden-conversation-divider text-center">
@@ -44,6 +46,8 @@
                         jhi-conversation-sidebar-entry
                         (click)="conversationSelected.emit(conversation)"
                         (settingsChanged)="settingsChanged.emit()"
+                        (conversationFavoriteStatusChange)="conversationFavoriteStatusChange.emit()"
+                        (conversationHiddenStatusChange)="conversationHiddenStatusChange.emit()"
                     ></li>
                 </ng-container>
             </ng-container>

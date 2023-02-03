@@ -1,10 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { Lti13ExerciseLaunchComponent } from 'app/lti/lti13-exercise-launch.component';
-import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpClient } from '@angular/common/http';
-import { MockRouter } from '../../helpers/mocks/mock-router';
 import { of, throwError } from 'rxjs';
 
 describe('Lti13ExerciseLaunchComponent', () => {
@@ -22,10 +21,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule],
-            providers: [
-                { provide: ActivatedRoute, useValue: route },
-                { provide: Router, useClass: MockRouter },
-            ],
+            providers: [{ provide: ActivatedRoute, useValue: route }],
         })
             .compileComponents()
             .then(() => {

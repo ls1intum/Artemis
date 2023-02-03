@@ -157,6 +157,7 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
 
     /**
      * Schedule a cluster building task for a modeling exercise to start immediately.
+     *
      * @param exercise exercise to build clusters for
      */
     public void scheduleExerciseForInstant(ModelingExercise exercise) {
@@ -201,6 +202,7 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
      * - Due
      * - Build & Test after due date
      * - Assessment due date
+     *
      * @param exerciseId the id of the exercise for which the tasks should be cancelled
      */
     public void cancelAllScheduledTasks(Long exerciseId) {

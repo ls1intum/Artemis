@@ -155,7 +155,7 @@ public class GitlabRequestMockProvider {
      * Method to mock the getUser method to return a mocked user for the given username
      *
      * @param username The username of the user which should be returned
-     * @param user The user which should be returned
+     * @param user     The user which should be returned
      * @throws GitLabApiException in case of GitLab API errors
      */
     public void mockGetUserID(String username, User user) throws GitLabApiException {
@@ -199,7 +199,7 @@ public class GitlabRequestMockProvider {
      *
      * @param participation         Affected participation
      * @param commitHashPushDateMap A map mapping the commit hashes to their push date. We expect here that only one commit is pushed at a time and the order of the map is the
-     *                              order of the commits
+     *                                  order of the commits
      * @throws GitLabApiException if events API fails
      */
     public void mockGetPushDate(ProgrammingExerciseParticipation participation, Map<String, ZonedDateTime> commitHashPushDateMap) throws GitLabApiException {

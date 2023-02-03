@@ -54,7 +54,7 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
     /**
      * Gets a task by its name and associated programming exercise
      *
-     * @param taskName The name of the task
+     * @param taskName   The name of the task
      * @param exerciseId The programming exercise the task should be associated with
      * @return The task with the given name and programming exercise
      */
@@ -69,6 +69,7 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
 
     /**
      * Gets all tasks with its test cases and solution entries of the test case for a programming exercise
+     *
      * @param exerciseId of the exercise
      * @return All tasks with solution entries and associated test cases
      * @throws EntityNotFoundException If the exercise with exerciseId does not exist
@@ -80,6 +81,7 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
 
     /**
      * Gets all tasks with its test cases and solution entries of the test case for a programming exercise
+     *
      * @param exerciseId of the exercise
      * @return All tasks with solution entries and associated test cases
      */
@@ -95,6 +97,7 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
 
     /**
      * Gets all tasks with its test cases for a programming exercise
+     *
      * @param exerciseId of the exercise
      * @return All tasks with solution entries and associated test cases
      */

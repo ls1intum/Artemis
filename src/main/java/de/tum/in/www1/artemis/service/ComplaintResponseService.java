@@ -45,7 +45,8 @@ public class ComplaintResponseService {
      * Removes the empty complaint response and thus the lock for a given complaint
      *
      * The empty complaint response acts as a lock. Only the reviewer of the empty complaint response and instructors can resolve the complaint as long as the lock
-     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods remove the current empty complaint response thus removing the lock
+     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods remove the current empty complaint response thus removing the
+     * lock
      *
      * @param complaint the complaint for which to remove the empty response for
      */
@@ -223,7 +224,7 @@ public class ComplaintResponseService {
      * Checks if a user is blocked by a complaintResponse representing a lock
      *
      * @param complaintResponseRepresentingLock the complaintResponse representing a lock
-     * @param user user to check
+     * @param user                              user to check
      * @return true if blocked by lock, false otherwise
      */
     public boolean blockedByLock(ComplaintResponse complaintResponseRepresentingLock, User user) {
@@ -244,15 +245,15 @@ public class ComplaintResponseService {
      * to respond to complaints
      *
      * 1. Team Exercises
-     *     => The team tutor assesses the submissions and responds to complaints and more feedback requests
+     * => The team tutor assesses the submissions and responds to complaints and more feedback requests
      *
      * 2. Individual Exercises
-     *     => Complaints can only be handled by a tutor who is not the original assessor
-     *     => Complaints of exam test runs can be assessed by instructors. They are identified by the same user being the assessor and student
-     *     => More feedback requests are handled by the assessor himself
+     * => Complaints can only be handled by a tutor who is not the original assessor
+     * => Complaints of exam test runs can be assessed by instructors. They are identified by the same user being the assessor and student
+     * => More feedback requests are handled by the assessor himself
      *
      * @param complaint Complaint for which to check
-     * @param user user who is trying to create a response to the complaint
+     * @param user      user who is trying to create a response to the complaint
      * @return true if the tutor is allowed to respond to the complaint, false otherwise
      */
     public boolean isUserAuthorizedToRespondToComplaint(Complaint complaint, User user) {

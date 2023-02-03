@@ -171,11 +171,12 @@ public class FileService implements DisposableBean {
 
     /**
      * Creates a new file from given contents
-     * @param filePath the path to save the file to excluding the filename
-     * @param filename the filename of the file to save
+     *
+     * @param filePath         the path to save the file to excluding the filename
+     * @param filename         the filename of the file to save
      * @param fileNameAddition the addition to the filename to make sure it is unique
-     * @param fileExtension the extension of the file to save
-     * @param keepFileName specifies if original file name should be kept
+     * @param fileExtension    the extension of the file to save
+     * @param keepFileName     specifies if original file name should be kept
      * @return the created file
      */
     private File createNewFile(String filePath, String filename, String fileNameAddition, String fileExtension, boolean keepFileName) throws IOException {
@@ -241,7 +242,7 @@ public class FileService implements DisposableBean {
      * @param newFilePath  the new file path (this file will be moved into its proper location, if it was a temporary file)
      * @param targetFolder the folder that a temporary file should be moved to
      * @param entityId     id of the entity this file belongs to (needed to generate
-     *                     public path). If this is null, a placeholder will be inserted where the id would be
+     *                         public path). If this is null, a placeholder will be inserted where the id would be
      * @return the resulting public path (is identical to newFilePath, if file didn't need to be moved)
      */
     public String manageFilesForUpdatedFilePath(String oldFilePath, String newFilePath, String targetFolder, Long entityId) {
