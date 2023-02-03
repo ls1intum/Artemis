@@ -697,14 +697,14 @@ For each service being used in these *docker compose* files a **base service** (
 is defined in the following files:
 
 * ``artemis/artemis.yml``: **Artemis Service**
-* ``mysql.yaml``: **MySQL DB Service**
-* ``gitlab/gitlab.yaml``: **GitLab Service**
-* ``jenkins/jenkins.yaml``: **Jenkins Service**
+* ``mysql.yml``: **MySQL DB Service**
+* ``gitlab/gitlab.yml``: **GitLab Service**
+* ``jenkins/jenkins.yml``: **Jenkins Service**
 
 For testing mails or SAML logins you can append the following services to any setup with an artemis container:
 
 * ``mailhog.yml``: **Mailhog Service** (email testing tool)
-* ``saml-test/saml-test.yaml``: **Saml-Test Service** (SAML Test Identity Provider for testing SAML features)
+* ``saml-test/saml-test.yml``: **Saml-Test Service** (SAML Test Identity Provider for testing SAML features)
 
 An example command to run such an extended setup:
 
