@@ -100,10 +100,10 @@ public abstract class AssessmentResource {
     /**
      * Save or submit manual assessment depending on the submit flag.
      *
-     * @param submission the submission containing the assessment
+     * @param submission   the submission containing the assessment
      * @param feedbackList list of feedbacks
-     * @param submit if true the assessment is submitted, else only saved
-     * @param resultId resultId of the result we save the feedbackList to, null of no results exists yet
+     * @param submit       if true the assessment is submitted, else only saved
+     * @param resultId     resultId of the result we save the feedbackList to, null of no results exists yet
      * @return result after saving/submitting modeling assessment
      */
     ResponseEntity<Result> saveAssessment(Submission submission, boolean submit, List<Feedback> feedbackList, Long resultId) {
@@ -140,7 +140,7 @@ public abstract class AssessmentResource {
 
     /**
      * @param exampleSubmissionId id of the example submission
-     * @param feedbacks list of feedbacks
+     * @param feedbacks           list of feedbacks
      * @return result after saving example assessment
      */
     protected ResponseEntity<Result> saveExampleAssessment(long exampleSubmissionId, List<Feedback> feedbacks) {

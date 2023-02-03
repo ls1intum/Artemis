@@ -23,6 +23,7 @@ public class BambooServerConfiguration {
 
     /**
      * initializes the bamboo server with the provided token (if available) or with username and password (fallback that will be removed soon)
+     *
      * @return the initialized BambooServer object that can be used to publish build plans
      */
     @Bean

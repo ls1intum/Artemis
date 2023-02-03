@@ -508,8 +508,8 @@ class Lti13ServiceTest {
     }
 
     /**
-         * A wrapper for Entities that are related to each other.
-         */
+     * A wrapper for Entities that are related to each other.
+     */
     private record State(LtiResourceLaunch ltiResourceLaunch, Exercise exercise, User user, StudentParticipation participation, Result result,
             ClientRegistration clientRegistration) {
     }

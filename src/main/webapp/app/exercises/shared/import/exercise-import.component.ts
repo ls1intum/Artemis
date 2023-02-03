@@ -2,8 +2,9 @@ import { Component, Injector, Input, OnInit } from '@angular/core';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ModelingExercisePagingService } from 'app/exercises/modeling/manage/modeling-exercise-paging.service';
+import { CodeAnalysisPagingService } from 'app/exercises/programming/manage/services/code-analysis-paging.service';
 import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
 import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
 import { ExercisePagingService } from 'app/exercises/shared/manage/exercise-paging.service';
@@ -25,6 +26,13 @@ export class ExerciseImportComponent implements OnInit {
 
     @Input()
     exerciseType?: ExerciseType;
+
+    /**
+     * The programming language is only set when filtering for exercises with SCA enabled.
+     * In this case we only want to display exercises with the given language
+     */
+    @Input()
+    programmingLanguage?: ProgrammingLanguage;
 
     private search = new Subject<void>();
     private sort = new Subject<void>();
@@ -59,7 +67,11 @@ export class ExerciseImportComponent implements OnInit {
             return;
         }
         this.pagingService = this.getPagingService();
-        this.titleKey = `artemisApp.${this.exerciseType}Exercise.home.importLabel`;
+        if (this.programmingLanguage) {
+            this.titleKey = 'artemisApp.programmingExercise.configureGrading.categories.importLabel';
+        } else {
+            this.titleKey = `artemisApp.${this.exerciseType}Exercise.home.importLabel`;
+        }
         this.content = { resultsOnPage: [], numberOfPages: 0 };
 
         this.performSearch(this.sort, 0);
@@ -71,6 +83,9 @@ export class ExerciseImportComponent implements OnInit {
             case ExerciseType.MODELING:
                 return this.injector.get(ModelingExercisePagingService);
             case ExerciseType.PROGRAMMING:
+                if (this.programmingLanguage) {
+                    return this.injector.get(CodeAnalysisPagingService);
+                }
                 return this.injector.get(ProgrammingExercisePagingService);
             case ExerciseType.QUIZ:
                 return this.injector.get(QuizExercisePagingService);
@@ -91,7 +106,7 @@ export class ExerciseImportComponent implements OnInit {
             .pipe(
                 debounceTime(debounce),
                 tap(() => (this.loading = true)),
-                switchMap(() => this.pagingService.searchForExercises(this.state, this.isCourseFilter, this.isExamFilter)),
+                switchMap(() => this.pagingService.searchForExercises(this.state, this.isCourseFilter, this.isExamFilter, this.programmingLanguage)),
             )
             .subscribe((resp: SearchResult<Exercise>) => {
                 this.content = resp;
