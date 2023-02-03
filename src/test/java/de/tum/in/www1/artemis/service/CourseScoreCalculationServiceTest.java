@@ -169,7 +169,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         // Create course with assessment due date passed.
         Course pastCourse = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
 
-        User student = userRepository.findOneByLogin("student1").get();
+        User student = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
 
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(pastCourse);

@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 
 class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -644,7 +645,9 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setExampleSolutionPublicationDate(null);
         fileUploadExerciseRepository.save(fileUploadExercise);
 
-        course = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        CourseForDashboardDTO courseForDashboard = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
+                HttpStatus.OK, CourseForDashboardDTO.class);
+        course = courseForDashboard.course();
         FileUploadExercise fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
 
         if (isStudent) {
@@ -658,7 +661,9 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         fileUploadExerciseRepository.save(fileUploadExercise);
 
-        course = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        courseForDashboard = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        course = courseForDashboard.course();
         fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
 
         assertThat(fileUploadExerciseFromApi.getExampleSolution()).isEqualTo(fileUploadExercise.getExampleSolution());
@@ -667,7 +672,9 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         fileUploadExerciseRepository.save(fileUploadExercise);
 
-        course = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        courseForDashboard = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        course = courseForDashboard.course();
         fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
 
         if (isStudent) {

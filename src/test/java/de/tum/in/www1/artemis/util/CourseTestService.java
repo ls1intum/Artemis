@@ -631,7 +631,9 @@ public class CourseTestService {
     // Test
     public void testGetCourseForDashboard(boolean userRefresh) throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
-        Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK, Course.class);
+        CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        Course receivedCourse = receivedCourseForDashboard.course();
 
         // Test that the received course has five exercises
         assertThat(receivedCourse.getExercises()).as("Five exercises are returned").hasSize(5);
@@ -677,7 +679,8 @@ public class CourseTestService {
         }
 
         // Perform the request that is being tested here
-        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        List<CourseForDashboardDTO> coursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        List<Course> courses = coursesForDashboard.stream().map(CourseForDashboardDTO::course).collect(Collectors.toList());
 
         Course activeCourse = coursesCreated.get(0);
         Course inactiveCourse = coursesCreated.get(1);
@@ -725,7 +728,8 @@ public class CourseTestService {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
                 userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
         course = courseRepo.save(course);
-        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        List<CourseForDashboardDTO> coursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        List<Course> courses = coursesForDashboard.stream().map(CourseForDashboardDTO::course).toList();
         final var finalCourse = course;
         Course courseInList = courses.stream().filter(c -> c.getId().equals(finalCourse.getId())).findFirst().orElse(null);
         assertThat(courseInList).isNotNull();
@@ -744,7 +748,8 @@ public class CourseTestService {
         courseActive = courseRepo.save(courseActive);
         courseRepo.save(courseNotActivePast);
         courseRepo.save(courseNotActiveFuture);
-        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        List<CourseForDashboardDTO> coursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        List<Course> courses = coursesForDashboard.stream().map(CourseForDashboardDTO::course).toList();
 
         assertThat(courses.stream().filter(c -> Objects.equals(c.getId(), courseNotActivePast.getId())).toList()).as("Past inactive course was filtered out").isEmpty();
         assertThat(courses.stream().filter(c -> Objects.equals(c.getId(), courseNotActiveFuture.getId())).toList()).as("Future inactive course was filtered out").isEmpty();
