@@ -69,7 +69,7 @@ public class TutorialGroupSession extends DomainObject {
     private Integer attendanceCount;
 
     /**
-     * If the session is a recurring session, this is the  the schedule that generated this session.
+     * If the session is a recurring session, this is the the schedule that generated this session.
      * <p>
      * Will be null if the session is not recurring, meaning an instructor / tutor created it individually.
      */

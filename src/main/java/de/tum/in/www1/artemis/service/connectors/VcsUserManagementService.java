@@ -21,8 +21,8 @@ public interface VcsUserManagementService {
      * Updates a new user in the VCS based on a local Artemis user. Should be called if Artemis handles user management.
      * This will change the following:
      * <ul>
-     *     <li>Update the password of the user</li>
-     *     <li>Update the groups the user belongs to, i.e. removing him from exercises that reference old groups</li>
+     * <li>Update the password of the user</li>
+     * <li>Update the groups the user belongs to, i.e. removing him from exercises that reference old groups</li>
      * </ul>
      *
      * @param vcsLogin      The username of the user in the VCS

@@ -239,9 +239,10 @@ public class ProgrammingExerciseExportService {
      * solution, or tests repository.
      *
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
-     * @param exerciseId The id of the programming exercise that has the repository
+     *
+     * @param exerciseId     The id of the programming exercise that has the repository
      * @param repositoryType the type of repository to export
-     * @param exportErrors List of failures that occurred during the export
+     * @param exportErrors   List of failures that occurred during the export
      * @return a zipped file
      */
     public Optional<File> exportInstructorRepositoryForExercise(long exerciseId, RepositoryType repositoryType, List<String> exportErrors) {
@@ -253,7 +254,8 @@ public class ProgrammingExerciseExportService {
      * Exports a solution repository available for an instructor/tutor/student for a given programming exercise.
      *
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
-     * @param exerciseId The id of the programming exercise that has the repository
+     *
+     * @param exerciseId   The id of the programming exercise that has the repository
      * @param includeTests flag that indicates whether the tests should also be exported
      * @param exportErrors List of failures that occurred during the export
      * @return a zipped file
@@ -267,9 +269,10 @@ public class ProgrammingExerciseExportService {
      * Exports an auxiliary repository available for an instructor/editor/tutor for a given programming exercise.
      *
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
-     * @param exerciseId The id of the programming exercise that has the repository
+     *
+     * @param exerciseId          The id of the programming exercise that has the repository
      * @param auxiliaryRepository the auxiliary repository to export
-     * @param exportErrors List of failures that occurred during the export
+     * @param exportErrors        List of failures that occurred during the export
      * @return a zipped file
      */
     public Optional<File> exportInstructorAuxiliaryRepositoryForExercise(long exerciseId, AuxiliaryRepository auxiliaryRepository, List<String> exportErrors) {
@@ -283,7 +286,7 @@ public class ProgrammingExerciseExportService {
      *
      * @param exerciseId     The id of the programming exercise that has the repository
      * @param repositoryType the type of repository to export
-     * @param outputDir The directory used for store the zip file
+     * @param outputDir      The directory used for store the zip file
      * @param exportErrors   List of failures that occurred during the export
      * @return a zipped file
      */
@@ -301,10 +304,10 @@ public class ProgrammingExerciseExportService {
     /**
      * Exports an auxiliary repository for a given programming exercise.
      *
-     * @param exerciseId     The id of the programming exercise that has the repository
+     * @param exerciseId          The id of the programming exercise that has the repository
      * @param auxiliaryRepository the auxiliary repository to export
-     * @param outputDir The directory used for storing the zip file
-     * @param exportErrors   List of failures that occurred during the export
+     * @param outputDir           The directory used for storing the zip file
+     * @param exportErrors        List of failures that occurred during the export
      * @return the zipped file containing the auxiliary repository
      */
     public Optional<File> exportInstructorAuxiliaryRepositoryForExercise(long exerciseId, AuxiliaryRepository auxiliaryRepository, Path outputDir, List<String> exportErrors) {
@@ -464,7 +467,7 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise     the programming exercise
      * @param participations          participations that should be exported
      * @param repositoryExportOptions the options that should be used for the export
-     * @param outputDir The directory used for store the zip file
+     * @param outputDir               The directory used for store the zip file
      * @param exportErrors            A list of errors that occurred during export (populated by this function)
      * @return List of zip file paths
      */
@@ -501,10 +504,10 @@ public class ProgrammingExerciseExportService {
      *
      * @param repositoryUrl The url of the repository to zip
      * @param zipFilename   The name of the zip file
-     * @param outputDir The directory used for downloading and zipping the repository
+     * @param outputDir     The directory used for downloading and zipping the repository
      * @param contentFilter The path filter to exclude some files, can be null to include everything
      * @return The path to the zip file.
-     * @throws IOException if the zip file couldn't be created
+     * @throws IOException     if the zip file couldn't be created
      * @throws GitAPIException if the repo couldn't get checked out
      */
     private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename, Path outputDir, @Nullable Predicate<Path> contentFilter)
@@ -527,7 +530,7 @@ public class ProgrammingExerciseExportService {
      *
      * @param programmingExercise The programming exercise to which all repos belong to
      * @param pathsToZippedRepos  The paths to all zipped repositories
-     * @param outputDir The directory used for downloading and zipping the repository
+     * @param outputDir           The directory used for downloading and zipping the repository
      * @return the zip file
      */
     private File createZipWithAllRepositories(ProgrammingExercise programmingExercise, List<Path> pathsToZippedRepos, Path outputDir) throws IOException {
@@ -552,7 +555,7 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise     The programming exercise for the participation
      * @param participation           The participation, for which the repository should get zipped
      * @param repositoryExportOptions The options, that should get applied to the zipped repo
-     * @param outputDir The directory used for downloading and zipping the repository
+     * @param outputDir               The directory used for downloading and zipping the repository
      * @return The checked out and zipped repository
      * @throws IOException if zip file creation failed
      */
@@ -615,8 +618,9 @@ public class ProgrammingExerciseExportService {
 
     /**
      * delete all files in the directory based on the given programming exercise and target path
+     *
      * @param programmingExercise the programming exercise for which repos have been downloaded
-     * @param targetPath the path in which the repositories have been downloaded
+     * @param targetPath          the path in which the repositories have been downloaded
      */
     public void deleteReposDownloadProjectRootDirectory(ProgrammingExercise programmingExercise, String targetPath) {
         final String projectDirName = programmingExercise.getProjectKey();
@@ -634,8 +638,8 @@ public class ProgrammingExerciseExportService {
      * Filters out all late commits of submissions from the checked out repository of a participation
      *
      * @param repositoryExportOptions The options that should get applied when exporting the submissions
-     * @param participation  The participation related to the repository
-     * @param repo           The repository for which to filter all late submissions
+     * @param participation           The participation related to the repository
+     * @param repo                    The repository for which to filter all late submissions
      */
     private void filterLateSubmissions(RepositoryExportOptionsDTO repositoryExportOptions, ProgrammingExerciseStudentParticipation participation, Repository repo) {
         log.debug("Filter late submissions for participation {}", participation.toString());

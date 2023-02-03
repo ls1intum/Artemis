@@ -234,11 +234,11 @@ public class TutorialGroupService {
      * Important to note: A registration must contain a title of the tutorial group, but it must not contain a student.
      *
      * <ul>
-     *     <li> Only title -> Create Tutorial Group with the given title if it not exists
-     *     <li> Title and student -> Create Tutorial Group with given title if not exists AND register student.
-     *     <ul>
-     *         <li> If student is already registered in a tutorial group of the same course, the student will be deregistered from the old tutorial group.
-     *     </ul>
+     * <li>Only title -> Create Tutorial Group with the given title if it not exists
+     * <li>Title and student -> Create Tutorial Group with given title if not exists AND register student.
+     * <ul>
+     * <li>If student is already registered in a tutorial group of the same course, the student will be deregistered from the old tutorial group.
+     * </ul>
      * </ul>
      *
      * @param course        The course to import the registrations for.
