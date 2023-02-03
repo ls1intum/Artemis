@@ -424,6 +424,7 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, refresh);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user);
+        courseService.fetchPlagiarismCasesForCourses(List.of(course), user.getId());
         CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
         logDuration(List.of(course), user, timeNanoStart);
         return courseForDashboardDTO;

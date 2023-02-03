@@ -54,7 +54,6 @@ public class CourseScoreCalculationService {
 
     /**
      * Calculates max and reachable max points for the given exercises.
-     * Implementation is adapted from course-score-calculation.service.ts.
      *
      * @param exercises the exercises which are included into max points calculation
      * @return the max and reachable max points for the given exercises

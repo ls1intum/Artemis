@@ -213,6 +213,12 @@ public class CourseService {
         }
     }
 
+    /**
+     * Add plagiarism cases to each exercise of the given courses.
+     *
+     * @param courses the courses for which the plagiarism cases should be fetched.
+     * @param userId  the user for which the plagiarism cases should be fetched.
+     */
     public void fetchPlagiarismCasesForCourses(List<Course> courses, Long userId) {
         Set<Long> exerciseIds = courses.stream().flatMap(course -> course.getExercises().stream()).map(Exercise::getId).collect(Collectors.toSet());
         List<PlagiarismCase> plagiarismCasesOfUserInCourseExercises = plagiarismCaseRepository.findByStudentIdAndExerciseIds(userId, exerciseIds);
