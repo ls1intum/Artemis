@@ -32,27 +32,13 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     List<Exam> findByCourseId(long courseId);
 
     @Query("""
-            SELECT DISTINCT ex
+            SELECT ex
             FROM Exam ex
                 LEFT JOIN FETCH ex.exerciseGroups eg
                 LEFT JOIN FETCH eg.exercises
             WHERE ex.course.id = :courseId
             """)
     List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") long courseId);
-
-    // Find all exams for a single course (id) that are already visible and the user is registered or at least a tutor
-    @Query("""
-            SELECT DISTINCT ex
-            FROM Exam ex
-                LEFT JOIN ex.registeredUsers registeredUsers
-            WHERE ex.course.id = :courseId
-                AND ex.visibleDate <= :now
-                AND (registeredUsers.id = :userId
-                    OR ex.course.teachingAssistantGroupName IN :groupNames
-                    OR ex.course.editorGroupName IN :groupNames
-                    OR ex.course.instructorGroupName IN :groupNames)
-            """)
-    Set<Exam> findByCourseIdForUser(@Param("courseId") long courseId, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames, @Param("now") ZonedDateTime now);
 
     // Find all exams for multiple courses (ids) that are already visible and the user is registered or at least a tutor
     @Query("""
@@ -177,7 +163,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     // @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises", "studentExams.exercises.participations" })
 
     @Query("""
-            SELECT DISTINCT exam
+            SELECT exam
             FROM Exam exam
                 LEFT JOIN FETCH exam.studentExams studentExams
                 LEFT JOIN FETCH exam.exerciseGroups exerciseGroups

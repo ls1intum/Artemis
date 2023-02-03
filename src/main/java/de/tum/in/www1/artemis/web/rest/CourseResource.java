@@ -35,7 +35,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.*;
@@ -448,9 +447,9 @@ public class CourseResource {
             Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
             int noOfIndividualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of()).size();
             int noOfTeamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of()).size();
-            Set<Exam> exams = courses.stream().flatMap(course -> course.getExams().stream()).collect(Collectors.toSet());
+            int noOfExams = courses.stream().mapToInt(course -> course.getExams().size()).sum();
             log.info("/courses/for-dashboard finished in {} for {} courses with {} individual exercise(s), {} team exercise(s), and {} exam(s) for user {}",
-                    TimeLogUtil.formatDurationFrom(timeNanoStart), courses.size(), noOfIndividualExercises, noOfTeamExercises, exams.size(), user.getLogin());
+                    TimeLogUtil.formatDurationFrom(timeNanoStart), courses.size(), noOfIndividualExercises, noOfTeamExercises, noOfExams, user.getLogin());
         }
     }
 

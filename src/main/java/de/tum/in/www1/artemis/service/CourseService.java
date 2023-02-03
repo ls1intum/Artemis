@@ -224,7 +224,7 @@ public class CourseService {
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
         course.setExercises(exerciseService.filterExercisesForCourse(course, user));
         exerciseService.loadExerciseDetailsIfNecessary(course, user);
-        course.setExams(examRepository.findByCourseIdForUser(course.getId(), user.getId(), user.getGroups(), ZonedDateTime.now()));
+        course.setExams(examRepository.findByCourseIdsForUser(Set.of(course.getId()), user.getId(), user.getGroups(), ZonedDateTime.now()));
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
         course.setLearningGoals(learningGoalService.findAllForCourse(course, user, refresh));
         course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
