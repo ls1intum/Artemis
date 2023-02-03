@@ -139,7 +139,6 @@ public class FileUploadExerciseResource {
             throws URISyntaxException {
 
         if (sourceId <= 0 || (importedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedFileUploadExercise.getExerciseGroup() == null)) {
-            log.debug("Either the courseId or exerciseGroupId must be set for an import");
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
         }
         importedFileUploadExercise.checkCourseAndExerciseGroupExclusivity("File Upload Exercise");
