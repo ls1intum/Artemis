@@ -8,7 +8,7 @@ services:
             file: ./artemis/artemis.yml
             service: artemis-app
         ports:
-            - 5005:5005 # Java Remote Debugging port declared in the java cmd options
+            - "5005:5005" # Java Remote Debugging port declared in the java cmd options
         command: >
             /bin/sh -c
             '/usr/local/bin/wait-for -t 0 artemis-mysql:3306

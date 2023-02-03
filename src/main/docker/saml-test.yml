@@ -15,7 +15,7 @@ services:
         image: docker.io/jamedjo/test-saml-idp
         pull_policy: always
         ports:
-            - 9980:8080
+            - "9980:8080"
         volumes:
             - ./saml-test/saml20-sp-remote.php:/var/www/simplesamlphp/metadata/saml20-sp-remote.php
             - ./saml-test/config.php:/var/www/simplesamlphp/config/config.php

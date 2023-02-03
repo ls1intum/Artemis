@@ -23,10 +23,10 @@ services:
                 letsencrypt['auto_renew_minute'] = "30"
                 letsencrypt['auto_renew_day_of_month'] = "*/7"
         ports:
-            - '2222:22'
-            - '80:80'
-            - '443:443'
-        shm_size: '256m'
+            - "2222:22"
+            - "80:80"
+            - "443:443"
+        shm_size: "256m"
     gitlab-runner:
         image: docker.io/gitlab/gitlab-runner:latest
         pull_policy: always

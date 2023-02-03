@@ -21,8 +21,8 @@ services:
         networks:
             - artemis
         environment:
-            - CASC_JENKINS_CONFIG=/usr/share/jenkins/ref/jenkins-casc-config.yml
-            - JAVA_OPTS
+            CASC_JENKINS_CONFIG: "/usr/share/jenkins/ref/jenkins-casc-config.yml"
+            JAVA_OPTS:
 
 networks:
     artemis:

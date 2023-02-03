@@ -26,7 +26,7 @@ services:
         volumes:
             - artemis-bitbucket-data:/var/atlassian/application-data/bitbucket
         environment:
-            - SPRING_APPLICATION_JSON={"plugin":{"ssh":{"baseurl":"ssh://bitbucket:7999"}}}
+            SPRING_APPLICATION_JSON: '{"plugin":{"ssh":{"baseurl":"ssh://bitbucket:7999"}}}'
         ports:
             - "7990:7990"
             - "7999:7999"
@@ -58,7 +58,7 @@ services:
             - artemis-bamboo-build-agent:/var/atlassian/application-data/bamboo-agent
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
-            - BAMBOO_SERVER=http://bamboo:8085
+            BAMBOO_SERVER: "http://bamboo:8085"
         networks:
             - artemis
 

@@ -31,7 +31,7 @@ services:
             start_period: 300s
             interval: 1s
         ports:
-            - 8080:8080
+            - "8080:8080"
         networks:
             - artemis
 
