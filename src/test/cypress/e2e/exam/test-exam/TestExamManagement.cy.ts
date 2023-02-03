@@ -1,39 +1,37 @@
-import { Interception } from 'cypress/types/net-stubbing';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
-import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
-import { artemis } from '../../support/ArtemisTesting';
-import { generateUUID } from '../../support/utils';
+import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { artemis } from '../../../support/ArtemisTesting';
+import { generateUUID } from '../../../support/utils';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
-// Requests
-const courseManagementRequests = artemis.requests.courseManagement;
-
-// User management
+// Users
 const users = artemis.users;
 const admin = users.getAdmin();
 const instructor = users.getInstructor();
 const studentOne = users.getStudentOne();
 
-// Pageobjects
+// Requests
+const courseManagementRequests = artemis.requests.courseManagement;
+
+// PageObjects
 const navigationBar = artemis.pageobjects.navigationBar;
 const courseManagement = artemis.pageobjects.course.management;
 const examManagement = artemis.pageobjects.exam.management;
-const textCreation = artemis.pageobjects.exercise.text.creation;
 const programmingCreation = artemis.pageobjects.exercise.programming.creation;
 const quizCreation = artemis.pageobjects.exercise.quiz.creation;
 const modelingCreation = artemis.pageobjects.exercise.modeling.creation;
+const textCreation = artemis.pageobjects.exercise.text.creation;
 const exerciseGroups = artemis.pageobjects.exam.exerciseGroups;
 const exerciseGroupCreation = artemis.pageobjects.exam.exerciseGroupCreation;
-const studentExamManagement = artemis.pageobjects.exam.studentExamManagement;
 
 // Common primitives
 const uid = generateUUID();
-const examTitle = 'exam' + uid;
+const examTitle = 'test-exam' + uid;
 let groupCount = 0;
 let createdGroup: ExerciseGroup;
 
-describe('Exam management', () => {
+describe('Test Exam management', () => {
     let course: Course;
     let exam: Exam;
 
@@ -42,7 +40,7 @@ describe('Exam management', () => {
         courseManagementRequests.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
             courseManagementRequests.addStudentToCourse(course, studentOne);
-            const examConfig = new CypressExamBuilder(course).title(examTitle).build();
+            const examConfig = new CypressExamBuilder(course).title(examTitle).testExam().build();
             courseManagementRequests.createExam(examConfig).then((examResponse) => {
                 exam = examResponse.body;
             });
@@ -157,29 +155,6 @@ describe('Exam management', () => {
             }
             exerciseGroups.clickDeleteGroup(group.id!, group.title!);
             exerciseGroups.shouldNotExist(group.id!);
-        });
-    });
-
-    describe('Manage Students', () => {
-        beforeEach(() => {
-            cy.login(instructor);
-        });
-
-        it('Registers the course students for the exam', () => {
-            // We already verified in the previous test that we can navigate here
-            cy.visit(`/course-management/${course.id}/exams`);
-            examManagement.openStudentRegistration(exam.id!);
-            studentExamManagement.clickRegisterCourseStudents().then((request: Interception) => {
-                expect(request.response!.statusCode).to.eq(200);
-            });
-            cy.get('#registered-students').contains(studentOne.username).should('be.visible');
-        });
-
-        it('Generates student exams', () => {
-            cy.visit(`/course-management/${course.id}/exams`);
-            examManagement.openStudentExams(exam.id!);
-            studentExamManagement.clickGenerateStudentExams();
-            cy.get('#generateMissingStudentExamsButton').should('be.disabled');
         });
     });
 
