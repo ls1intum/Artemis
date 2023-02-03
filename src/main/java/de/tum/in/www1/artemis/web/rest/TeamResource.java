@@ -144,7 +144,7 @@ public class TeamResource {
      * @param exerciseId the id of the exercise that the team belongs to
      * @param teamId     the id of the team which to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated team, or with status 400 (Bad Request) if the team is not valid, or with status 500 (Internal
-     * Server Error) if the team couldn't be updated
+     *         Server Error) if the team couldn't be updated
      */
     @PutMapping("/exercises/{exerciseId}/teams/{teamId}")
     @PreAuthorize("hasRole('TA')")
@@ -213,7 +213,7 @@ public class TeamResource {
      * GET /exercises/:exerciseId/teams/:id : get the "id" team.
      *
      * @param exerciseId the id of the exercise that the team belongs to
-     * @param teamId         the id of the team to retrieve
+     * @param teamId     the id of the team to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the team, or with status 404 (Not Found)
      */
     @GetMapping("/exercises/{exerciseId}/teams/{teamId}")

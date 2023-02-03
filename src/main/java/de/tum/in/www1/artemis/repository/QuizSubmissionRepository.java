@@ -46,7 +46,8 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
 
     /**
      * Retrieve QuizSubmission for given quiz batch and studentLogin
-     * @param quizBatch the quiz batch for which QuizSubmission is to be retrieved
+     *
+     * @param quizBatch    the quiz batch for which QuizSubmission is to be retrieved
      * @param studentLogin the login of the student for which QuizSubmission is to be retrieved
      * @return QuizSubmission for given quiz batch and studentLogin
      */
