@@ -70,7 +70,7 @@ public class AtheneTrackingTokenProvider {
      * Header.
      *
      * @param bodyBuilder HttpResponse BodyBuilder
-     * @param result Result Object
+     * @param result      Result Object
      */
     public void addTokenToResponseEntity(ResponseEntity.BodyBuilder bodyBuilder, Result result) {
         bodyBuilder.header("X-Athene-Tracking-Authorization", createToken(result));

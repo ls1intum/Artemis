@@ -179,7 +179,7 @@ public class LectureResource {
      * @param sourceLectureId The ID of the original lecture which should get imported
      * @param courseId        The ID of the course to import the lecture to
      * @return The imported lecture (200), a not found error (404) if the lecture does not exist,
-     * or a forbidden error (403) if the user is not at least an editor in the source or target course.
+     *         or a forbidden error (403) if the user is not at least an editor in the source or target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping("/lectures/import/{sourceLectureId}")

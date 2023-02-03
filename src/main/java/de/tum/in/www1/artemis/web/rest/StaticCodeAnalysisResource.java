@@ -57,12 +57,9 @@ public class StaticCodeAnalysisResource {
         log.debug("REST request to get static code analysis categories for programming exercise {}", exerciseId);
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-
-        if (!Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
-            throw new BadRequestAlertException("Static code analysis is not enabled", ENTITY_NAME, "staticCodeAnalysisNotEnabled");
-        }
-
+        checkSCAEnabledForExerciseElseThrow(programmingExercise);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
+
         Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.findByExerciseId(exerciseId);
         return ResponseEntity.ok(staticCodeAnalysisCategories);
     }
@@ -82,10 +79,7 @@ public class StaticCodeAnalysisResource {
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
-        if (!Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
-            throw new BadRequestAlertException("Static code analysis is not enabled", ENTITY_NAME, "staticCodeAnalysisNotEnabled");
-        }
-
+        checkSCAEnabledForExerciseElseThrow(programmingExercise);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         validateCategories(categories, exerciseId);
@@ -105,13 +99,46 @@ public class StaticCodeAnalysisResource {
         log.debug("REST request to reset static code analysis categories for programming exercise {}", exerciseId);
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        checkSCAEnabledForExerciseElseThrow(programmingExercise);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
+        Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.resetCategories(programmingExercise);
+        return ResponseEntity.ok(staticCodeAnalysisCategories);
+    }
+
+    /**
+     * PATCH /programming-exercises/:exerciseId/static-code-analysis-categories/import
+     *
+     * @param exerciseId       The exercise to copy the configuration into
+     * @param sourceExerciseId The exercise to take the existing configuration from
+     * @return The newly created SCA configuration
+     * @see StaticCodeAnalysisService#importCategoriesFromExercise(ProgrammingExercise, ProgrammingExercise)
+     */
+    @PatchMapping(Endpoints.IMPORT)
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<Set<StaticCodeAnalysisCategory>> importStaticCodeAnalysisCategoriesFromExercise(@PathVariable Long exerciseId, @RequestParam Long sourceExerciseId) {
+        log.debug("REST request to import static code analysis categories to programming exercise {} from exercise {}", exerciseId, sourceExerciseId);
+
+        ProgrammingExercise targetExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        checkSCAEnabledForExerciseElseThrow(targetExercise);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, targetExercise, null);
+
+        ProgrammingExercise sourceExercise = programmingExerciseRepository.findByIdElseThrow(sourceExerciseId);
+        checkSCAEnabledForExerciseElseThrow(sourceExercise);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, sourceExercise, null);
+
+        if (targetExercise.getProgrammingLanguage() != sourceExercise.getProgrammingLanguage()) {
+            throw new ConflictException("SCA configurations can only be imported from exercises with the same programming language", ENTITY_NAME, "programmingLanguageMismatch");
+        }
+
+        Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.importCategoriesFromExercise(sourceExercise, targetExercise);
+        return ResponseEntity.ok(staticCodeAnalysisCategories);
+    }
+
+    private void checkSCAEnabledForExerciseElseThrow(ProgrammingExercise programmingExercise) {
         if (!Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
             throw new BadRequestAlertException("Static code analysis is not enabled", ENTITY_NAME, "staticCodeAnalysisNotEnabled");
         }
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
-        Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.resetCategories(programmingExercise);
-        return ResponseEntity.ok(staticCodeAnalysisCategories);
     }
 
     /**
@@ -129,25 +156,25 @@ public class StaticCodeAnalysisResource {
 
             // Penalty must not be null or negative
             if (category.getPenalty() == null || category.getPenalty() < 0) {
-                throw new BadRequestAlertException("Penalty for static code analysis category " + category.getId() + " must be a non-negative integer.", ENTITY_NAME,
+                throw new BadRequestAlertException("Penalty for static code analysis category " + category.getName() + " must be a non-negative integer.", ENTITY_NAME,
                         "scaCategoryPenaltyError");
             }
 
             // MaxPenalty must not be smaller than penalty
             if (category.getMaxPenalty() != null && category.getPenalty() > category.getMaxPenalty()) {
-                throw new BadRequestAlertException("Max Penalty for static code analysis category " + category.getId() + " must not be smaller than the penalty.", ENTITY_NAME,
+                throw new BadRequestAlertException("Max Penalty for static code analysis category " + category.getName() + " must not be smaller than the penalty.", ENTITY_NAME,
                         "scaCategoryMaxPenaltyError");
             }
 
             // Category state must not be null
             if (category.getState() == null) {
-                throw new BadRequestAlertException("Max Penalty for static code analysis category " + category.getId() + " must not be smaller than the penalty.", ENTITY_NAME,
+                throw new BadRequestAlertException("Max Penalty for static code analysis category " + category.getName() + " must not be smaller than the penalty.", ENTITY_NAME,
                         "scaCategoryStateError");
             }
 
             // Exercise id of the request path must match the exerciseId in the request body if present
             if (category.getExercise() != null && !Objects.equals(category.getExercise().getId(), exerciseId)) {
-                throw new ConflictException("Exercise id path variable does not match exercise id of static code analysis category " + category.getId(), ENTITY_NAME,
+                throw new ConflictException("Exercise id path variable does not match exercise id of static code analysis category " + category.getName(), ENTITY_NAME,
                         "scaCategoryExerciseIdError");
             }
         }
@@ -160,6 +187,8 @@ public class StaticCodeAnalysisResource {
         public static final String CATEGORIES = PROGRAMMING_EXERCISE + "/static-code-analysis-categories";
 
         public static final String RESET = PROGRAMMING_EXERCISE + "/static-code-analysis-categories/reset";
+
+        public static final String IMPORT = PROGRAMMING_EXERCISE + "/static-code-analysis-categories/import";
 
         private Endpoints() {
         }

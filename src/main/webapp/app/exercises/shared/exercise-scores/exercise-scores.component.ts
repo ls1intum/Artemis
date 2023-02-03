@@ -25,6 +25,7 @@ import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/share
 import { faCodeBranch, faDownload, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { Range } from 'app/shared/util/utils';
+import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 
 /**
  * Filter properties for a result
@@ -42,6 +43,7 @@ enum FilterProp {
     selector: 'jhi-exercise-scores',
     styleUrls: ['./exercise-scores.component.scss'],
     templateUrl: './exercise-scores.component.html',
+    providers: [ExerciseCacheService],
     encapsulation: ViewEncapsulation.None,
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
