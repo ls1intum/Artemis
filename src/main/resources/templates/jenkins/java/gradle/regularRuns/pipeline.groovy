@@ -67,7 +67,7 @@ private void staticCodeAnalysis() {
 }
 
 private void collectTestwiseCoverageReport() {
-    success {
+    catchError {
         sh '''
         rm -rf testwiseCoverageReport
         mkdir testwiseCoverageReport
