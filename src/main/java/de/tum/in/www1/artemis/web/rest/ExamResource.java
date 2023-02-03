@@ -360,7 +360,7 @@ public class ExamResource {
      * GET /exams : Find all exams the user is allowed to access
      *
      * @param withExercises if only exams with at least one exercise Groups should be considered
-     * @param search Pageable with all relevant information
+     * @param search        Pageable with all relevant information
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
     @GetMapping("exams")
@@ -664,7 +664,8 @@ public class ExamResource {
     }
 
     /**
-     * POST /courses/:courseId/exams/:examId/students/:studentLogin : Add one single given user (based on the login) to the students of the exam so that the student can access the exam
+     * POST /courses/:courseId/exams/:examId/students/:studentLogin : Add one single given user (based on the login) to the students of the exam so that the student can access the
+     * exam
      *
      * @param courseId     the id of the course
      * @param examId       the id of the exam
@@ -1031,7 +1032,7 @@ public class ExamResource {
      * @param courseId the id of the course
      * @param examId   the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body or NotFound if it could not be
-     * determined
+     *         determined
      */
     @GetMapping("courses/{courseId}/exams/{examId}/latest-end-date")
     @PreAuthorize("hasRole('TA')")

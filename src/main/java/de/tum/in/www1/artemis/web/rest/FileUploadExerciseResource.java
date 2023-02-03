@@ -126,7 +126,7 @@ public class FileUploadExerciseResource {
      * Referenced entities will get cloned and assigned a new id.
      * Uses {@link FileUploadExerciseImportService}.
      *
-     * @param sourceId The ID of the original exercise which should get imported
+     * @param sourceId                   The ID of the original exercise which should get imported
      * @param importedFileUploadExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
      * @throws URISyntaxException When the URI of the response entity is invalid
      *
@@ -211,7 +211,7 @@ public class FileUploadExerciseResource {
      * @param notificationText   the text shown to students
      * @param exerciseId         the id of exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or with status 400 (Bad Request) if the fileUploadExercise is not valid, or
-     * with status 500 (Internal Server Error) if the fileUploadExercise couldn't be updated
+     *         with status 500 (Internal Server Error) if the fileUploadExercise couldn't be updated
      */
     @PutMapping("/file-upload-exercises/{exerciseId}")
     @PreAuthorize("hasRole('EDITOR')")
@@ -340,9 +340,9 @@ public class FileUploadExerciseResource {
      * @param fileUploadExercise                          the fileUploadExercise to re-evaluate and update
      * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
      * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or
-     * with status 400 (Bad Request) if the fileUploadExercise is not valid, or with status 409 (Conflict)
-     * if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
-     * Server Error) if the fileUploadExercise couldn't be updated
+     *         with status 400 (Bad Request) if the fileUploadExercise is not valid, or with status 409 (Conflict)
+     *         if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
+     *         Server Error) if the fileUploadExercise couldn't be updated
      */
     @PutMapping(Endpoints.REEVALUATE_EXERCISE)
     @PreAuthorize("hasRole('EDITOR')")

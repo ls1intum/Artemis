@@ -52,10 +52,10 @@ public class LiquibaseConfiguration {
     /**
      * reads properties and configures liquibase
      *
-     * @param liquibaseDataSource the liquibase sql data source
-     * @param liquibaseProperties the liquibase properties
+     * @param liquibaseDataSource      the liquibase sql data source
+     * @param liquibaseProperties      the liquibase properties
      * @param dataSourceObjectProvider the sql data source
-     * @param dataSourceProperties data source properties
+     * @param dataSourceProperties     data source properties
      * @return the configured spring liquibase object
      */
     @Bean
@@ -168,6 +168,7 @@ public class LiquibaseConfiguration {
 
     /**
      * stores the current version in the database
+     *
      * @param event used to retrieve the application context and the used profiles
      */
     @EventListener()

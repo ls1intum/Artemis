@@ -24,7 +24,9 @@ import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-/** REST controller for managing ModelingAssessment. */
+/**
+ * REST controller for managing ModelingAssessment.
+ */
 @RestController
 @RequestMapping("/api")
 public class ModelingAssessmentResource extends AssessmentResource {
@@ -84,9 +86,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * PUT modeling-submissions/:submissionId/result/resultId/assessment : save manual modeling assessment. See {@link AssessmentResource#saveAssessment}.
      *
      * @param submissionId id of the submission
-     * @param resultId id of the result
-     * @param feedbacks list of feedbacks
-     * @param submit if true the assessment is submitted, else only saved
+     * @param resultId     id of the result
+     * @param feedbacks    list of feedbacks
+     * @param submit       if true the assessment is submitted, else only saved
      * @return result after saving/submitting modeling assessment
      */
     @ResponseStatus(HttpStatus.OK)
@@ -104,7 +106,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * PUT modeling-submissions/:submissionId/example-assessment : save manual example modeling assessment
      *
      * @param exampleSubmissionId id of the example submission
-     * @param feedbacks list of feedbacks
+     * @param feedbacks           list of feedbacks
      * @return result after saving example modeling assessment
      */
     @ResponseStatus(HttpStatus.OK)
@@ -170,8 +172,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * Delete an assessment of a given submission.
      *
      * @param participationId - the id of the participation to the submission
-     * @param submissionId - the id of the submission for which the current assessment should be deleted
-     * @param resultId     - the id of the result which should get deleted
+     * @param submissionId    - the id of the submission for which the current assessment should be deleted
+     * @param resultId        - the id of the result which should get deleted
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
     @DeleteMapping("/participations/{participationId}/modeling-submissions/{submissionId}/results/{resultId}")

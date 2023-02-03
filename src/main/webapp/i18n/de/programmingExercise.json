@@ -10,9 +10,9 @@
                 "linkLabel": "Neue Programmieraufgabe verlinken",
                 "createOrEditLabel": "Programmieraufgabe erstellen oder bearbeiten"
             },
-            "created": "Programmieraufgabe erstellt mit Title {{ param }}",
-            "updated": "Programmieraufgabe aktualisiert mit Title {{ param }}",
-            "deleted": "Programmieraufgabe gelöscht mit Title {{ param }}",
+            "created": "Programmieraufgabe erstellt mit Titel {{ param }}",
+            "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",
+            "deleted": "Programmieraufgabe gelöscht mit Titel {{ param }}",
             "delete": {
                 "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?",
                 "studentRepos": "Alle Studierenden-Repositories löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen, die Übung zuerst zu archivieren!",
@@ -236,7 +236,6 @@
             },
             "export": {
                 "downloadRepo": "Repo Herunterladen",
-                "downloadExampleSolutionRepo": "Lösungs-Repo Herunterladen",
                 "downloadExampleSolution": "Beispiellösung herunterladen",
                 "downloadTests": "Tests herunterladen",
                 "downloadTestsWithExampleSolution": "Tests mit Beispiellösung herunterladen",

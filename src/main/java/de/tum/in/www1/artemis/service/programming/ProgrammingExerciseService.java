@@ -142,20 +142,20 @@ public class ProgrammingExerciseService {
     /**
      * Setups the context of a new programming exercise. This includes:
      * <ul>
-     *     <li>The VCS project</li>
-     *     <li>All repositories (test, exercise, solution)</li>
-     *     <li>The template and solution participation</li>
-     *     <li>VCS webhooks</li>
-     *     <li>Bamboo build plans</li>
+     * <li>The VCS project</li>
+     * <li>All repositories (test, exercise, solution)</li>
+     * <li>The template and solution participation</li>
+     * <li>VCS webhooks</li>
+     * <li>Bamboo build plans</li>
      * </ul>
      *
      * The exercise gets set up in the following order:
      * <ol>
-     *     <li>Create all repositories for the new exercise</li>
-     *     <li>Setup template and push it to the repositories</li>
-     *     <li>Setup new build plans for exercise</li>
-     *     <li>Add all webhooks</li>
-     *     <li>Init scheduled jobs for exercise maintenance</li>
+     * <li>Create all repositories for the new exercise</li>
+     * <li>Setup template and push it to the repositories</li>
+     * <li>Setup new build plans for exercise</li>
+     * <li>Add all webhooks</li>
+     * <li>Init scheduled jobs for exercise maintenance</li>
      * </ol>
      *
      * @param programmingExercise The programmingExercise that should be setup
@@ -214,7 +214,7 @@ public class ProgrammingExerciseService {
      * 3. Configure CI permissions
      *
      * @param programmingExercise Programming exercise for the build plans should be generated. The programming
-     *                            exercise should contain a fully initialized template and solution participation.
+     *                                exercise should contain a fully initialized template and solution participation.
      */
     public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
@@ -288,7 +288,8 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Set up the exercise template by determining the files needed for the template and copying them. Commit and push the changes to all repositories for this programming exercise.
+     * Set up the exercise template by determining the files needed for the template and copying them. Commit and push the changes to all repositories for this programming
+     * exercise.
      *
      * @param programmingExercise the programming exercise that should be set up
      * @param exerciseCreator     the User that performed the action (used as Git commit author)

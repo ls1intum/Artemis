@@ -80,7 +80,7 @@ public class GroupChatAuthorizationService extends ConversationAuthorizationServ
     }
 
     /**
-     * Checks if a user is allowed to remove a user from  a group chat or throws an exception if not
+     * Checks if a user is allowed to remove a user from a group chat or throws an exception if not
      *
      * @param groupChat the group chat the user should be removed from
      * @param user      the user that wants to remove the other user

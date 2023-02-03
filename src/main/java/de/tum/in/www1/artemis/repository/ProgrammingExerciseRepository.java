@@ -82,6 +82,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * Returns all programming exercises with its test cases
+     *
      * @return all programming exercises
      */
     @Query("SELECT p FROM ProgrammingExercise p LEFT JOIN FETCH p.testCases")
@@ -89,6 +90,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * Returns all programming exercises with their hints and tasks
+     *
      * @return all programming exercises
      */
     @Query("""
@@ -352,8 +354,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * We therefore have to check here if any submission of the student was submitted before the deadline.
      *
      * @param examId the exam id we are interested in
-     * @return the number of the latest submissions belonging to a participation belonging to the exam id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
-     *         due date at all (only exercises with manual or semi-automatic correction are considered)
+     * @return the number of the latest submissions belonging to a participation belonging to the exam id, which have the submitted flag set to true and the submission date before
+     *         the exercise due date, or no exercise due date at all (only exercises with manual or semi-automatic correction are considered)
      */
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
@@ -370,7 +372,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * We therefore have to check here if any submission of the student was submitted before the deadline.
      *
      * @param exerciseIds the exercise ids of the course we are interested in
-     * @return the number of submissions belonging to the course id, which have the submitted flag set to true (only exercises with manual or semi-automatic correction are considered)
+     * @return the number of submissions belonging to the course id, which have the submitted flag set to true (only exercises with manual or semi-automatic correction are
+     *         considered)
      */
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
@@ -462,7 +465,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     /**
      * Find a programming exercise by its id, including template and solution but without results.
      * TODO: we should remove this method later on and use 'findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow' in all places,
-     *  they have same functionality.
+     * they have same functionality.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
@@ -515,18 +518,18 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * @param exerciseId     the exercise we are interested in
+     * @param exerciseId the exercise we are interested in
      * @return the number of programming submissions which should be assessed
-     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
+     *         We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
      */
     default long countLegalSubmissionsByExerciseIdSubmitted(Long exerciseId) {
         return countLegalSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
     }
 
     /**
-     * @param exerciseId     the exercise we are interested in
+     * @param exerciseId the exercise we are interested in
      * @return the number of assessed programming submissions
-     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
+     *         We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
      */
     default long countAssessmentsByExerciseIdSubmitted(Long exerciseId) {
         return countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
@@ -582,6 +585,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     /**
      * Retrieve the programming exercise from a programming exercise participation. In case the programming exercise is null or not initialized,
      * this method will load it properly from the database and connect it to the participation
+     *
      * @param participation the programming exercise participation for which the programming exercise should be found
      * @return the programming exercise
      */
@@ -603,7 +607,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * Validate the programming exercise title.
      * 1. Check presence and length of exercise title
      * 2. Find forbidden patterns in exercise title
-     *  @param programmingExercise Programming exercise to be validated
+     *
+     * @param programmingExercise Programming exercise to be validated
      * @param course              Course of the programming exercise
      */
     default void validateTitle(ProgrammingExercise programmingExercise, Course course) {
@@ -632,7 +637,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * 2. Check presence and length of course short name
      * 3. Find forbidden patterns in exercise short name
      * 4. Check that the short name doesn't already exist withing course or exam exercises
-     *  @param programmingExercise Programming exercise to be validated
+     *
+     * @param programmingExercise Programming exercise to be validated
      * @param course              Course of the programming exercise
      */
     default void validateCourseAndExerciseShortName(ProgrammingExercise programmingExercise, Course course) {
@@ -666,7 +672,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * Validate the general course settings.
      * 1. Validate the title
      * 2. Validate the course and programming exercise short name.
-     *  @param programmingExercise Programming exercise to be validated
+     *
+     * @param programmingExercise Programming exercise to be validated
      * @param course              Course of the programming exercise
      */
     default void validateCourseSettings(ProgrammingExercise programmingExercise, Course course) {

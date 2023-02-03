@@ -25,10 +25,10 @@ public class LectureService {
     }
 
     /**
-     * For tutors, admins and instructors returns  lecture with all attachments, for students lecture with only active attachments
+     * For tutors, admins and instructors returns lecture with all attachments, for students lecture with only active attachments
      *
      * @param lectureWithAttachments lecture that has attachments
-     * @param user the user for which this call should filter
+     * @param user                   the user for which this call should filter
      * @return lecture with filtered attachments
      */
     public Lecture filterActiveAttachments(Lecture lectureWithAttachments, User user) {
@@ -51,7 +51,7 @@ public class LectureService {
      * Filter active attachments for a set of lectures.
      *
      * @param lecturesWithAttachments lectures that have attachments
-     * @param user the user for which this call should filter
+     * @param user                    the user for which this call should filter
      * @return lectures with filtered attachments
      */
     public Set<Lecture> filterActiveAttachments(Set<Lecture> lecturesWithAttachments, User user) {
@@ -64,6 +64,7 @@ public class LectureService {
 
     /**
      * Search for all lectures fitting a {@link PageableSearchDTO search query}. The result is paged.
+     *
      * @param search The search query defining the search term and the size of the returned page
      * @param user   The user for whom to fetch all available lectures
      * @return A wrapper object containing a list of all found lectures and the total number of pages
@@ -83,6 +84,7 @@ public class LectureService {
 
     /**
      * Deletes the given lecture (with its lecture units).
+     *
      * @param lecture the lecture to be deleted
      */
     public void delete(Lecture lecture) {

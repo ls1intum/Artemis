@@ -67,6 +67,11 @@ export class ExerciseImportComponent implements OnInit {
             return;
         }
         this.pagingService = this.getPagingService();
+        if (this.programmingLanguage) {
+            this.titleKey = 'artemisApp.programmingExercise.configureGrading.categories.importLabel';
+        } else {
+            this.titleKey = `artemisApp.${this.exerciseType}Exercise.home.importLabel`;
+        }
 
         if (this.programmingLanguage) {
             this.titleKey = 'artemisApp.programmingExercise.configureGrading.categories.importLabel';

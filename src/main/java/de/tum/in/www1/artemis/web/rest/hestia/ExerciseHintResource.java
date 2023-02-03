@@ -74,7 +74,7 @@ public class ExerciseHintResource {
      * @param exerciseHint the exerciseHint to create
      * @param exerciseId   the exerciseId of the exercise of which to create the exerciseHint
      * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the new exerciseHint,
-     * or with status {@code 409 (Conflict)} if the exerciseId is invalid,
+     *         or with status {@code 409 (Conflict)} if the exerciseId is invalid,
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PostMapping("programming-exercises/{exerciseId}/exercise-hints")
@@ -113,8 +113,8 @@ public class ExerciseHintResource {
      * @param exerciseId     the exerciseId of the exercise of which to update the exerciseHint
      * @param exerciseHintId the id to the exerciseHint
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated exerciseHint,
-     * or with status {@code 409 (Conflict} if the exerciseHint or exerciseId are not valid,
-     * or with status {@code 500 (Internal Server Error)} if the exerciseHint couldn't be updated.
+     *         or with status {@code 409 (Conflict} if the exerciseHint or exerciseId are not valid,
+     *         or with status {@code 500 (Internal Server Error)} if the exerciseHint couldn't be updated.
      */
     @PutMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}")
     @PreAuthorize("hasRole('EDITOR')")
@@ -158,7 +158,7 @@ public class ExerciseHintResource {
      * @param exerciseHintId the id of the exerciseHint
      * @param exerciseId     the exerciseId of the exercise of which to retrieve the exerciseHints' title
      * @return the title of the hint wrapped in an ResponseEntity or 404 Not Found if no hint with that id exists
-     * or with status {@code 409 (Conflict)} if the exerciseId is not valid.
+     *         or with status {@code 409 (Conflict)} if the exerciseId is not valid.
      */
     @GetMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}/title")
     @PreAuthorize("hasRole('USER')")
@@ -173,8 +173,8 @@ public class ExerciseHintResource {
      * @param exerciseHintId the id of the exerciseHint to retrieve.
      * @param exerciseId     the exerciseId of the exercise of which to retrieve the exerciseHint
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the exerciseHint,
-     * or with status {@code 404 (Not Found)},
-     * or with status {@code 409 (Conflict)} if the exerciseId is not valid.
+     *         or with status {@code 404 (Not Found)},
+     *         or with status {@code 409 (Conflict)} if the exerciseId is not valid.
      */
     @GetMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}")
     @PreAuthorize("hasRole('TA')")
@@ -201,8 +201,8 @@ public class ExerciseHintResource {
      *
      * @param exerciseId the exercise id of which to retrieve the exercise hints.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the exerciseHint,
-     * or with status {@code 404 (Not Found)},
-     * or with status {@code 409 (Conflict)} if the exerciseId is not valid.
+     *         or with status {@code 404 (Not Found)},
+     *         or with status {@code 409 (Conflict)} if the exerciseId is not valid.
      */
     @GetMapping("programming-exercises/{exerciseId}/exercise-hints")
     @PreAuthorize("hasRole('TA')")
@@ -219,7 +219,7 @@ public class ExerciseHintResource {
      *
      * @param exerciseId the exercise id of which to retrieve the exercise hints.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the exercise hints,
-     * or with status {@code 404 (Not Found)}
+     *         or with status {@code 404 (Not Found)}
      */
     @GetMapping("programming-exercises/{exerciseId}/exercise-hints/activated")
     @PreAuthorize("hasRole('USER')")
@@ -269,7 +269,7 @@ public class ExerciseHintResource {
      * @param exerciseId     The id of the exercise of which to activate the exercise hint
      * @param exerciseHintId The id of the exercise hint to activate
      * @return The {@link ResponseEntity} with status {@code 200 (OK)} and with body the activated exercise hint with content
-     * or with status {@code 400 (BAD_REQUEST)} if the hint could not be activated
+     *         or with status {@code 400 (BAD_REQUEST)} if the hint could not be activated
      */
     @PostMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}/activate")
     @PreAuthorize("hasRole('USER')")
@@ -324,7 +324,7 @@ public class ExerciseHintResource {
      * @param exerciseHintId the id of the exerciseHint to delete
      * @param exerciseId     the exercise id of which to delete the exercise hint
      * @return the {@link ResponseEntity} with status {@code 204 (NO_CONTENT)},
-     * or with status {@code 409 (Conflict)} if the exerciseId is not valid.
+     *         or with status {@code 409 (Conflict)} if the exerciseId is not valid.
      */
     @DeleteMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}")
     @PreAuthorize("hasRole('EDITOR')")

@@ -374,8 +374,7 @@ public class QuizExerciseService {
     }
 
     /**
-     *
-     * @param quizExercise the changed quiz exercise from the client
+     * @param quizExercise         the changed quiz exercise from the client
      * @param originalQuizExercise the original quiz exercise (with statistics)
      * @return the updated quiz exercise with the changed statistics
      */
@@ -404,6 +403,7 @@ public class QuizExerciseService {
 
     /**
      * Reset a QuizExercise to its original state, delete statistics and cleanup the schedule service.
+     *
      * @param exerciseId id of the exercise to reset
      */
     public void resetExercise(Long exerciseId) {
@@ -414,10 +414,12 @@ public class QuizExerciseService {
         quizExercise.setIsOpenForPractice(Boolean.FALSE);
         if (!quizExercise.isExamExercise()) {
             // do not set the release date of exam exercises
-            quizExercise.setReleaseDate(ZonedDateTime.now().plusYears(1));
+            quizExercise.setReleaseDate(ZonedDateTime.now());
         }
         quizExercise.setDueDate(null);
         quizExercise.setQuizBatches(Set.of());
+
+        resetInvalidQuestions(quizExercise);
 
         quizExercise = save(quizExercise);
 
@@ -436,8 +438,9 @@ public class QuizExerciseService {
 
     /**
      * Update a QuizExercise so that it ends at a specific date and moves the start date of the batches as required. Does not save the quiz.
-     * @param quizExercise  The quiz to end
-     * @param endDate       When the quize should end
+     *
+     * @param quizExercise The quiz to end
+     * @param endDate      When the quize should end
      */
     public void endQuiz(QuizExercise quizExercise, ZonedDateTime endDate) {
         quizExercise.setDueDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
@@ -465,5 +468,16 @@ public class QuizExerciseService {
         Specification<QuizExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
         Page<QuizExercise> exercisePage = quizExerciseRepository.findAll(specification, pageable);
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
+    }
+
+    /**
+     * Reset the invalid status of questions of given quizExercise to false
+     *
+     * @param quizExercise The quiz exercise which questions to be reset
+     */
+    private void resetInvalidQuestions(QuizExercise quizExercise) {
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            question.setInvalid(false);
+        }
     }
 }

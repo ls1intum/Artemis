@@ -65,9 +65,9 @@ public abstract class ExerciseImportService {
      * This helper method does a hard copy of the result of a submission.
      * To copy the feedback, it calls {@link #copyFeedback(List, Result, Map)}
      *
-     * @param originalResult      The original result to be copied
-     * @param newSubmission       The submission in which we link the result clone
-     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
+     * @param originalResult                The original result to be copied
+     * @param newSubmission                 The submission in which we link the result clone
+     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned result
      */
     Result copyExampleResult(Result originalResult, Submission newSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
@@ -96,7 +96,7 @@ public abstract class ExerciseImportService {
      *
      * @param originalFeedbacks             The original list of feedbacks to be copied
      * @param newResult                     The result in which we link the new feedback
-     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
+     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned list of feedback
      */
     private List<Feedback> copyFeedback(List<Feedback> originalFeedbacks, Result newResult, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
