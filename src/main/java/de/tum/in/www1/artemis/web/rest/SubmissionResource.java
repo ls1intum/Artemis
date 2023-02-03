@@ -100,7 +100,7 @@ public class SubmissionResource {
      *
      * Only returns the users test run submission for a specific exercise
      *
-     * @param exerciseId exerciseID  for which all submissions should be returned
+     * @param exerciseId exerciseID for which all submissions should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of the latest test run submission in body
      */
     @GetMapping("/exercises/{exerciseId}/test-run-submissions")

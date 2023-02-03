@@ -177,7 +177,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      * 1. set score and round it to the specified accuracy in the course
      * 2. set successful = true, if score >= 100 or false if not
      *
-     * @param score new score
+     * @param score  new score
      * @param course the course that specifies the accuracy
      */
     public void setScore(Double score, Course course) {
@@ -191,7 +191,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      *
      * @param totalPoints total amount of points between 0 and maxPoints
      * @param maxPoints   maximum points reachable at corresponding exercise
-     * @param course the course that specifies the accuracy
+     * @param course      the course that specifies the accuracy
      */
     public void setScore(double totalPoints, double maxPoints, Course course) {
         setScore(totalPoints / maxPoints * 100, course);
@@ -219,9 +219,10 @@ public class Result extends DomainObject implements Comparable<Result> {
      * - the submission date is before the due date OR
      * - no due date is set OR
      * - the submission type is INSTRUCTOR / TEST
+     *
      * @param exerciseDueDate date after which no normal submission is considered rated.
-     * @param submission to which the result belongs.
-     * @param participation to wich the submission belongs
+     * @param submission      to which the result belongs.
+     * @param participation   to wich the submission belongs
      */
     public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, Submission submission, Participation participation) {
         if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
@@ -280,7 +281,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      * Assigns the given feedback list to the result. It first sets the positive flag and the feedback type of every feedback element, clears the existing list of feedback and
      * assigns the new feedback afterwards. IMPORTANT: This method should not be used for Quiz and Programming exercises with completely automatic assessments!
      *
-     * @param feedbacks the new feedback list
+     * @param feedbacks            the new feedback list
      * @param skipAutomaticResults if true automatic results won't be updated
      */
     public void updateAllFeedbackItems(List<Feedback> feedbacks, boolean skipAutomaticResults) {
@@ -386,6 +387,7 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     /**
      * `hasComplaint` could be null in the database
+     *
      * @return hasComplaint property value
      */
     public Optional<Boolean> getHasComplaint() {
@@ -469,6 +471,7 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     /**
      * Remove all feedbacks marked with visibility never.
+     *
      * @param isBeforeDueDate if feedbacks marked with visibility 'after due date' should also be removed.
      */
     public void filterSensitiveFeedbacks(boolean isBeforeDueDate) {
@@ -511,6 +514,7 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     /**
      * Calculates the total score for programming exercises. Do not use it for other exercise types
+     *
      * @return calculated totalScore
      */
     public Double calculateTotalPointsForProgrammingExercises() {
@@ -558,6 +562,7 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     /**
      * calculates the score for programming exercises
+     *
      * @param exercise the exercise
      */
     public void calculateScoreForProgrammingExercise(ProgrammingExercise exercise) {
@@ -567,6 +572,7 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     /**
      * Copies the relevant counters for programming exercises i.e. amount of (passed) test cases and code issues into this result
+     *
      * @param originalResult the source for the values
      */
     public void copyProgrammingExerciseCounters(Result originalResult) {

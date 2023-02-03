@@ -294,7 +294,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
      * Changes the group of the user.
      *
      * @param userLogin the login of the user
-     * @param groups the groups to change
+     * @param groups    the groups to change
      */
     private void changeUserGroup(String userLogin, Set<String> groups) {
         Optional<User> user = userRepo.findOneWithGroupsByLogin(userLogin);

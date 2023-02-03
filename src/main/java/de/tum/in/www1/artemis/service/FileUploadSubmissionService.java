@@ -56,7 +56,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @param file                 the file that will be stored on the server
      * @param user                 the user who initiated the save/submission
      * @return the saved file upload submission
-     * @throws IOException if file can't be saved
+     * @throws IOException        if file can't be saved
      * @throws EmptyFileException if file is empty
      */
     public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise, User user)
@@ -87,8 +87,8 @@ public class FileUploadSubmissionService extends SubmissionService {
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
      * @param fileUploadExercise the exercise for which we want to retrieve a submission without manual result
-     * @param correctionRound - the correction round we want our submission to have results for
-     * @param examMode flag to determine if test runs should be ignored. This should be set to true for exam exercises
+     * @param correctionRound    - the correction round we want our submission to have results for
+     * @param examMode           flag to determine if test runs should be ignored. This should be set to true for exam exercises
      * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public Optional<FileUploadSubmission> getRandomFileUploadSubmissionEligibleForNewAssessment(FileUploadExercise fileUploadExercise, boolean examMode, int correctionRound) {
@@ -101,14 +101,15 @@ public class FileUploadSubmissionService extends SubmissionService {
     }
 
     /**
-     * Saves the given submission. Is used for creating and updating file upload submissions. Rolls back if inserting fails - occurs for concurrent createFileUploadSubmission() calls.
+     * Saves the given submission. Is used for creating and updating file upload submissions. Rolls back if inserting fails - occurs for concurrent createFileUploadSubmission()
+     * calls.
      *
      * @param fileUploadSubmission the submission that should be saved
      * @param file                 the file that will be saved on the server
      * @param participation        the participation the submission belongs to
      * @param exercise             the exercise the submission belongs to
      * @return the fileUploadSubmission entity that was saved to the database
-     * @throws IOException if file can't be saved
+     * @throws IOException        if file can't be saved
      * @throws EmptyFileException if file is empty
      */
     public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
@@ -204,12 +205,13 @@ public class FileUploadSubmissionService extends SubmissionService {
     }
 
     /**
-     * Get the file upload submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it. Additionally, check if the
+     * Get the file upload submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it. Additionally, check if
+     * the
      * submission lock limit has been reached.
      *
      * @param submissionId       the id of the file upload submission
      * @param fileUploadExercise the corresponding exercise
-     * @param correctionRound the correctionRound for which the submission should lock a result
+     * @param correctionRound    the correctionRound for which the submission should lock a result
      * @return the locked file upload submission
      */
     public FileUploadSubmission lockAndGetFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise, int correctionRound) {
@@ -227,8 +229,8 @@ public class FileUploadSubmissionService extends SubmissionService {
     /**
      * Get a file upload submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
      *
-     * @param fileUploadExercise the exercise the submission should belong to
-     * @param correctionRound - the correction round we want our submission to have results for
+     * @param fileUploadExercise          the exercise the submission should belong to
+     * @param correctionRound             - the correction round we want our submission to have results for
      * @param ignoreTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a locked file upload submission that needs an assessment
      */
