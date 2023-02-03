@@ -63,10 +63,6 @@ public class PipelineGroovyBuildPlanCreator extends AbstractBuildPlanCreator {
         final String pipelineScript = loadPipelineScript(resource);
 
         final boolean isStaticCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
-        // ToDo: was only enabled in case this is the solution build plan
-        // -> define a global variable in the Jenkinsfile and make script in pipeline conditional on that
-        // ToDo: same for staticCodeAnalysisScript: do not build that here in the code, but add the script always in pipeline.groovy
-        // the #staticCodeAnalysisEnabled now exists for that, pipeline.groovy for Gradle regularRuns is already adapted
         final boolean isTestwiseCoverageAnalysisEnabled = exercise.isTestwiseCoverageEnabled();
         final var replacements = getReplacements(programmingLanguage, projectType, isStaticCodeAnalysisEnabled, isTestwiseCoverageAnalysisEnabled);
 
