@@ -45,7 +45,7 @@
             "loading": "Loading...",
             "fetchingResults": "Fetching plagiarism results...",
             "replyToAccusation": "Reply to Accusation",
-            "replyToAccusationDeadlineNotification": "You have until {{ deadline }} to reply to the accusation",
+            "replyToAccusationDeadlineNotification": "You can provide a statement to this accusation until <b>{{ deadline }}</b> the latest.",
             "cleanUp": {
                 "confirmDialog": {
                     "title": "Clean up plagiarism comparisons",
