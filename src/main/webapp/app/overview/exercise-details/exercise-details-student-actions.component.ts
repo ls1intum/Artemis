@@ -84,7 +84,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
 
     receiveNewParticipation(newParticipation: StudentParticipation) {
         const studentParticipations = this.exercise.studentParticipations ?? [];
-        this.exercise.studentParticipations = studentParticipations.map((participation) => (participation.id === newParticipation.id ? newParticipation : participation));
+        if (studentParticipations.map((participation) => participation.id).includes(newParticipation.id)) {
+            this.exercise.studentParticipations = studentParticipations.map((participation) => (participation.id === newParticipation.id ? newParticipation : participation));
+        } else {
+            this.exercise.studentParticipations = [...studentParticipations, newParticipation];
+        }
         this.updateParticipations();
     }
 
