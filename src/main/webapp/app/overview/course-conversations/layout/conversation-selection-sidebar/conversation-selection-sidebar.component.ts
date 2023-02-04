@@ -1,8 +1,8 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import interact from 'interactjs';
 import { faChevronLeft, faChevronRight, faComments, faCompress, faExpand, faFilter, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 
-import { EMPTY, Subject, delay, from, map, startWith, takeUntil } from 'rxjs';
+import { EMPTY, Subject, from, map, takeUntil } from 'rxjs';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
@@ -19,7 +19,6 @@ import { OneToOneChatDTO, isOneToOneChatDto } from 'app/entities/metis/conversat
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
 import { catchError, debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { ConversationSidebarSectionComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-sidebar-section/conversation-sidebar-section.component';
 import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 
 interface SearchQuery {
@@ -30,10 +29,9 @@ interface SearchQuery {
     selector: 'jhi-conversation-selection-sidebar',
     styleUrls: ['./conversation-selection-sidebar.component.scss'],
     templateUrl: './conversation-selection-sidebar.component.html',
+    encapsulation: ViewEncapsulation.None,
 })
 export class ConversationSelectionSidebarComponent implements AfterViewInit, OnInit, OnDestroy {
-    @ViewChildren(ConversationSidebarSectionComponent) sidebarSections: QueryList<ConversationSidebarSectionComponent>;
-    collapseToggles: ConversationSidebarSectionComponent[] = [];
     private ngUnsubscribe = new Subject<void>();
     private readonly search$ = new Subject<SearchQuery>();
     searchTerm = '';
@@ -59,6 +57,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     faFilter = faFilter;
     faExpand = faExpand;
     faCompress = faCompress;
+    numberOfConversationsPassingFilter = 0;
 
     canCreateChannel = canCreateChannel;
 
@@ -117,6 +116,12 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                     this.displayedGroupChats = this.groupChats.filter((conversation) => {
                         return this.conversationService.getConversationName(conversation).toLowerCase().includes(searchTerm);
                     });
+                    this.numberOfConversationsPassingFilter =
+                        this.displayedStarredConversations.length +
+                        this.displayedChannelConversations.length +
+                        this.displayedOneToOneChats.length +
+                        this.displayedGroupChats.length;
+
                     this.cdr.detectChanges();
                 },
             });
@@ -188,39 +193,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         });
     }
 
-    collectSections() {
-        if (this.sidebarSections) {
-            this.collapseToggles = this.sidebarSections.toArray();
-        }
-    }
-
-    collapseAll() {
-        this.collapseToggles.forEach((section) => {
-            if (!section.isCollapsed) {
-                section.toggleCollapsed();
-            }
-        });
-    }
-
-    expandAll() {
-        this.collapseToggles.forEach((section) => {
-            if (section.isCollapsed) {
-                section.toggleCollapsed();
-            }
-        });
-    }
-
     ngAfterViewInit(): void {
-        this.sidebarSections.changes
-            .pipe(
-                startWith([undefined]), // to catch the initial value
-                delay(0), // wait for all current async tasks to finish, which could change the query list using ngIf etc.
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe(() => {
-                this.collectSections();
-            });
-
         // allows the conversation sidebar to be resized towards the right-hand side
         interact('.expanded-conversations')
             .resizable({
@@ -350,5 +323,13 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
 
     onConversationSelected($event: ConversationDto) {
         this.metisConversationService.setActiveConversation($event);
+    }
+
+    onConversationHiddenStatusChange() {
+        this.onConversationsUpdate([...this.allConversations]);
+    }
+
+    onConversationFavoriteStatusChange() {
+        this.onConversationsUpdate([...this.allConversations]);
     }
 }

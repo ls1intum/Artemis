@@ -6,6 +6,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, switchMap, take, takeUntil } from 'rxjs';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { Course } from 'app/entities/course.model';
+import { PageType } from 'app/shared/metis/metis.util';
 
 @Component({
     selector: 'jhi-course-conversations',
@@ -16,24 +18,29 @@ import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
-
+    course?: Course;
     isLoading = false;
     isServiceSetUp = false;
-    postInThread: Post;
-    showPostThread = false;
+    postInThread?: Post;
     activeConversation?: ConversationDto = undefined;
     conversationsOfUser: ConversationDto[] = [];
-    constructor(private router: Router, private activatedRoute: ActivatedRoute, public metisConversationService: MetisConversationService) {}
+    constructor(private router: Router, private activatedRoute: ActivatedRoute, public metisConversationService: MetisConversationService, public metisService: MetisService) {}
 
     getAsChannel = getAsChannelDto;
-    setPostInThread(post?: Post) {
-        this.showPostThread = false;
 
-        if (post) {
-            this.postInThread = post;
-            this.showPostThread = true;
-        }
+    private subscribeToMetis() {
+        this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
+            if (this.postInThread?.id && posts) {
+                this.postInThread = posts.find((post) => post.id === this.postInThread?.id);
+            }
+        });
     }
+
+    private setupMetis() {
+        this.metisService.setPageType(PageType.OVERVIEW);
+        this.metisService.setCourse(this.course!);
+    }
+
     ngOnInit(): void {
         this.activatedRoute
             .parent!.parent!.paramMap.pipe(
@@ -46,6 +53,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe({
                 complete: () => {
+                    this.course = this.metisConversationService.course;
+                    this.setupMetis();
+                    this.subscribeToMetis();
                     this.subscribeToQueryParameter();
                     // service is fully set up, now we can subscribe to the respective observables
                     this.subscribeToActiveConversation();
@@ -84,6 +94,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDto) => {
             this.activeConversation = conversation;
+            this.postInThread = undefined;
             this.updateQueryParameters();
         });
     }
