@@ -498,6 +498,33 @@ describe('FileUploadAssessmentComponent', () => {
             expect(onSuccessCalled).toBeFalse();
             expect(onErrorCalled).toBeTrue();
         });
+
+        it('should not update assessment after complaint if assessments are invalid', () => {
+            const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
+
+            let onSuccessCalled = false;
+            let onErrorCalled = false;
+            const assessmentAfterComplaint: AssessmentAfterComplaint = {
+                complaintResponse: new ComplaintResponse(),
+                onSuccess: () => (onSuccessCalled = true),
+                onError: () => (onErrorCalled = true),
+            };
+
+            const feedback = new Feedback();
+            feedback.credits = 10;
+            feedback.detailText = undefined;
+            feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+            comp.unreferencedFeedback = [feedback];
+            comp.isLoading = false;
+
+            comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+
+            expect(comp.isLoading).toBeFalse();
+            expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
+            expect(alertServiceErrorSpy).toHaveBeenCalledWith('artemisApp.fileUploadAssessment.error.invalidAssessments');
+            expect(onSuccessCalled).toBeFalse();
+            expect(onErrorCalled).toBeTrue();
+        });
     });
 
     describe('attachmentExtension', () => {
