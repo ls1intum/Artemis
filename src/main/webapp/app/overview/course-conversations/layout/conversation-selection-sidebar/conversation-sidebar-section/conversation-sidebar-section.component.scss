@@ -1,32 +1,19 @@
+@import '../conversation-selection-sidebar.component.scss';
+
 .sidebar-section {
-    .interaction {
-        visibility: hidden;
-    }
-
-    &:hover {
-        .interaction {
-            visibility: visible;
-
-            .btn {
-                color: white;
-                border-color: white;
-
-                &:hover {
-                    background-color: black;
-                }
-            }
-        }
-    }
-
     .section-header {
         display: flex;
         justify-content: space-between;
         cursor: pointer;
         padding: 0.2rem;
+        color: var(--metis-conversation-sidebar);
 
         &:hover {
-            background-color: var(--metis-blue);
-            color: white;
+            color: var(--metis-conversation-sidebar-active);
+
+            .sidebar-button {
+                @include active-icon;
+            }
         }
     }
 
@@ -38,11 +25,11 @@
 
     .hidden-conversation-divider {
         cursor: pointer;
+        color: var(--metis-conversation-sidebar);
 
         &:hover {
             text-decoration: underline;
-            background-color: var(--metis-blue);
-            color: white;
+            color: var(--metis-conversation-sidebar-active);
         }
     }
 }

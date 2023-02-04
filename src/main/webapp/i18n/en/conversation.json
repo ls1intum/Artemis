@@ -16,7 +16,12 @@
             "archived": "Archived",
             "sendMessage": "Send",
             "conversationMessages": {
-                "searchBarPlaceholder": "Search for a message within the current conversation"
+                "searchLabel": "Search messages",
+                "clearSearch": "Clear search",
+                "searchBarPlaceholder": "Search for messages within the current conversation",
+                "searchResultsMultiple": "{{ count }} messages found",
+                "searchResultsSingle": "1 message found",
+                "searchResultsNone": "No messages found"
             },
             "threadSideBar": {
                 "label": "Thread",
@@ -32,10 +37,9 @@
                 "channels": "Channels",
                 "createChannel": "Create channel",
                 "browseChannels": "Browse channels",
-                "expandAll": "Expand all",
-                "collapseAll": "Collapse all",
                 "groupChats": "Group Chats",
                 "oneToOneChats": "Direct Messages",
+                "filterConversationPlaceholder": "Filter conversations",
                 "sideBarSection": {
                     "shown": "shown",
                     "hidden": "hidden",
