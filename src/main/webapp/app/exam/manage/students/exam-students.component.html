@@ -17,7 +17,7 @@
                 <jhi-user-import-button class="ms-4" [courseId]="courseId" [exam]="exam" [examUserMode]="true" (finish)="reloadExamWithRegisteredUsers()"></jhi-user-import-button>
             </ng-container>
             <ng-container *ngIf="!isTestExam">
-                <jhi-student-upload-images-button [courseId]="courseId" (finish)="reloadExamWithRegisteredUsers()"></jhi-student-upload-images-button>
+                <jhi-student-upload-images-button [courseId]="courseId" [exam]="exam" (finish)="reloadExamWithRegisteredUsers()"></jhi-student-upload-images-button>
             </ng-container>
             <button
                 *ngIf="!isTestExam"

@@ -2,9 +2,8 @@ package de.tum.in.www1.artemis.service.exam;
 
 import java.awt.*;
 import java.io.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripperByArea;
@@ -18,9 +17,7 @@ import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.web.rest.dto.ExamUserWithImageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ImageDTO;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service Implementation for managing Exam Users.
@@ -45,7 +42,7 @@ public class ExamUserService {
     /**
      * Extracts all images from PDF file and map each image with student registration number.
      *
-     * @param file PDF file to be parsed
+     * @param  file PDF file to be parsed
      * @return list of ExamUserWithImageDTO
      */
     public List<ExamUserWithImageDTO> parsePDF(MultipartFile file) {
@@ -73,7 +70,7 @@ public class ExamUserService {
                 stripper.extractRegions(document1.getPage(image.page() - 1));
                 String string = stripper.getTextForRegion("image:" + (image.page() - 1));
 
-                studentWithImages.add(new ExamUserWithImageDTO(string != null ? string.split("\\s").length > 0 ? string.split("\\s")[1] : "empty" : "null string", image));
+                studentWithImages.add(new ExamUserWithImageDTO(string != null ? string.split("\\s").length > 0 ? string.split("\\s")[1] : "no registration number" : "", image));
             }
             document1.close();
             return studentWithImages;
@@ -86,34 +83,41 @@ public class ExamUserService {
     }
 
     /**
-     * save images
+     * Saves all images from PDF file
      *
-     * @param examUserWithImageDTOs PDF file to be parsed
+     * @param file  PDF file to be parsed
      * @return list of ExamUserWithImageDTO
      */
-    public List<ExamUserWithImageDTO> saveImages(long examId, List<ExamUserWithImageDTO> examUserWithImageDTOs) {
-        log.info("Save images for exam users: {}", examUserWithImageDTOs);
-        List<ExamUserWithImageDTO> notFoundExamUsersWithImageDTOs = new ArrayList<>();
+    public Set<String> saveImages(long examId, MultipartFile file) {
+        log.debug("Save images for file: {}", file);
+        Set<String> notFoundExamUsersRegistrationNumbers = new HashSet<>();
+        List<ExamUserWithImageDTO> examUserWithImageDTOs = parsePDF(file);
 
         examUserWithImageDTOs.forEach(examUserWithImageDTO -> {
             Optional<User> user = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(examUserWithImageDTO.studentRegistrationNumber());
             if (user.isPresent()) {
                 ExamUser examUser = examUserRepository.findByExamIdAndUserId(examId, user.get().getId());
                 if (examUser == null) {
-                    notFoundExamUsersWithImageDTOs.add(examUserWithImageDTO);
+                    notFoundExamUsersRegistrationNumbers.add(examUserWithImageDTO.studentRegistrationNumber());
                 }
                 else {
-                    MultipartFile file = fileService.convertByteArrayToMultipart(examUserWithImageDTO.studentRegistrationNumber() + "_student_image", ".png",
+                    MultipartFile studentImage = fileService.convertByteArrayToMultipart(examUserWithImageDTO.studentRegistrationNumber() + "_student_image", ".png",
                             examUserWithImageDTO.image().imageInBytes());
-                    String responsePath = fileService.handleSaveFile(file, false, false);
+                    String responsePath = fileService.handleSaveFile(studentImage, false, false);
                     examUser.setStudentImagePath(responsePath);
                     examUserRepository.save(examUser);
                 }
             }
             else {
-                throw new EntityNotFoundException("User" + examUserWithImageDTO.studentRegistrationNumber() + " not found");
+                notFoundExamUsersRegistrationNumbers.add(examUserWithImageDTO.studentRegistrationNumber());
             }
         });
-        return notFoundExamUsersWithImageDTOs;
+        return notFoundExamUsersRegistrationNumbers;
+    }
+
+    /**
+     * Contains the information about an exam user with image
+     */
+    private record ExamUserWithImageDTO(String studentRegistrationNumber, ImageDTO image) {
     }
 }

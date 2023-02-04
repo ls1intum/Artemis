@@ -2,16 +2,12 @@ import { Component, Input, OnDestroy, ViewChild, ViewEncapsulation } from '@angu
 import { NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExamUserDTO } from 'app/entities/exam-user-dto.mode';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { StudentDTO } from 'app/entities/student-dto.model';
 import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { onError } from 'app/shared/util/global.utils';
 
 @Component({
@@ -24,16 +20,13 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
     readonly ActionType = ActionType;
 
     @ViewChild('importForm', { static: false }) importForm: NgForm;
-    examUsersToUploadImage: ExamUserDTO[] = [];
-    notFoundUsers: StudentDTO[] = [];
-    dataWithImages: any[] = [];
+    notFoundUsers: string[] = [];
     file: File;
 
     @Input() courseId: number;
     @Input() exam: Exam | undefined;
 
     isParsing = false;
-    validationError?: string;
     noUsersFoundError?: boolean;
     hasParsed = false;
 
@@ -48,40 +41,10 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
     faUpload = faUpload;
     faArrowRight = faArrowRight;
 
-    constructor(
-        private activeModal: NgbActiveModal,
-        private alertService: AlertService,
-        private examManagementService: ExamManagementService,
-        private courseManagementService: CourseManagementService,
-        private tutorialGroupService: TutorialGroupsService,
-    ) {}
+    constructor(private activeModal: NgbActiveModal, private alertService: AlertService, private examManagementService: ExamManagementService) {}
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
-    }
-
-    private resetDialog() {
-        this.examUsersToUploadImage = [];
-        this.notFoundUsers = [];
-        this.hasParsed = false;
-    }
-
-    /**
-     * Callback method that is called when the import request was successful
-     * @param {HttpResponse<StudentDTO[]>} notFoundUsers - List of users that could NOT be imported since they were not found
-     */
-    onSaveSuccess(notFoundUsers: HttpResponse<StudentDTO[]>) {
-        this.isParsing = false;
-        this.hasParsed = true;
-        this.notFoundUsers = notFoundUsers.body! || [];
-    }
-
-    /**
-     * Callback method that is called when the import request failed
-     */
-    onSaveError() {
-        this.alertService.error('artemisApp.importUsers.genericErrorMessage');
-        this.isParsing = false;
     }
 
     clear() {
@@ -99,41 +62,36 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
     }
 
     /**
-     * Parse pdf file and extract images with student registration numbers
+     * Parse pdf file and save images of registered students
      */
     parsePDFFile() {
         if (this.exam?.id) {
+            console.log('inside:');
             const formData: FormData = new FormData();
             formData.append('file', this.file);
 
-            this.examManagementService.parsePDFFile(this.courseId, this.exam.id, formData).subscribe({
+            this.examManagementService.saveImages(this.courseId, this.exam.id, formData).subscribe({
                 next: (res: any) => {
                     if (res) {
-                        this.dataWithImages = res.body;
+                        console.log(res, 'saved');
+                        this.notFoundUsers = res.body;
+                        console.log(this.notFoundUsers);
+                        this.isParsing = false;
+                        this.hasParsed = true;
+                        this.activeModal.close();
                     }
                 },
                 error: (res: HttpErrorResponse) => {
                     if (res.error.params === 'file' && res?.error?.title) {
+                        console.log(res.error.title);
                         this.alertService.error(res.error.title);
                     } else {
+                        console.log(res.error);
                         onError(this.alertService, res);
                     }
                     this.isParsing = false;
+                    this.hasParsed = false;
                 },
-            });
-        }
-    }
-
-    /**
-     * Upload all images for registered students
-     */
-    uploadImagesForRegisteredStudents() {
-        if (this.exam?.id) {
-            this.examManagementService.uploadImagesForRegisteredStudents(this.courseId, this.exam.id, this.dataWithImages).subscribe({
-                next: () => {
-                    // todo: reload table
-                },
-                error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
             });
         }
     }

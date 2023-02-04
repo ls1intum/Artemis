@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
-import de.tum.in.www1.artemis.web.rest.dto.ExamUserWithImageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -94,39 +93,20 @@ public class ExamUserResource {
     }
 
     /**
-     * POST courses/{courseId}/exams/{examId}/exam-users-parse-pdf : Parse pdf and get exam user data
+     * POST courses/{courseId}/exams/{examId}/exam-users-save-images : save exam user images
      *
      * @param courseId     the id of the course
      * @param examId       the id of the exam
-     * @param file         the pdf file to parse
-     * @return list of examUsersWithImage ResponseEntity with status 200 (OK)
+     * @param file         the pdf file
+     * @return list of not found student matriculation numbers ResponseEntity with status 200 (OK)
      */
-    @PostMapping("courses/{courseId}/exams/{examId}/exam-users-parse-pdf")
+    @PostMapping("courses/{courseId}/exams/{examId}/exam-users-save-images")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<ExamUserWithImageDTO>> getUsersDataFromPDF(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Set<String>> saveUsersImages(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam("file") MultipartFile file) {
         log.debug("REST request to parse pdf : {}", file.getOriginalFilename());
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-
-        return ResponseEntity.ok().body(examUserService.parsePDF(file));
-    }
-
-    /**
-     * POST courses/{courseId}/exams/{examId}/exam-users-save-image : save exam user image
-     *
-     * @param courseId     the id of the course
-     * @param examId       the id of the exam
-     * @return list of not found examUsersWithImage ResponseEntity with status 200 (OK)
-     */
-    @PostMapping("courses/{courseId}/exams/{examId}/exam-users-save-image")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<ExamUserWithImageDTO>> saveUsersImage(@PathVariable Long courseId, @PathVariable Long examId,
-            @RequestBody List<ExamUserWithImageDTO> examUserWithImageDTOs) {
-        log.debug("REST request to parse pdf : {}", examUserWithImageDTOs);
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        return ResponseEntity.ok().body(examUserService.saveImages(examId, examUserWithImageDTOs));
+        return ResponseEntity.ok().body(examUserService.saveImages(examId, file));
     }
 }

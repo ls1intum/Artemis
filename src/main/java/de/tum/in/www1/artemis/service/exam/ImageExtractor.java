@@ -38,7 +38,7 @@ public class ImageExtractor extends PDFStreamEngine {
     private int currentPage;
 
     public ImageExtractor(PDDocument document) {
-        images = new ArrayList<>();
+        this.images = new ArrayList<>();
         this.pdfDocument = document;
 
         addOperator(new Concatenate());
@@ -103,7 +103,9 @@ public class ImageExtractor extends PDFStreamEngine {
         return images;
     }
 
-    // convert BufferedImage to byte[]
+    /**
+     * Converts BufferedImage to byte[]
+     */
     private byte[] toByteArray(BufferedImage bi, String format) throws IOException {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

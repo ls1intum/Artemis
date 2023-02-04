@@ -192,14 +192,9 @@ export class UsersImportDialogComponent implements OnDestroy {
             const hasLogin = this.checkIfEntryContainsKey(user, POSSIBLE_LOGIN_HEADERS);
             const hasRegistrationNumber = this.checkIfEntryContainsKey(user, POSSIBLE_REGISTRATION_NUMBER_HEADERS);
             const hasEmail = this.checkIfEntryContainsKey(user, POSSIBLE_EMAIL_HEADERS);
-            const hasRoom = this.checkIfEntryContainsKey(user, POSSIBLE_ROOM_HEADERS);
-            const hasSeat = this.checkIfEntryContainsKey(user, POSSIBLE_SEAT_HEADERS);
 
             if (!hasLogin && !hasRegistrationNumber && !hasEmail) {
                 // '+ 2' instead of '+ 1' due to the header column in the csv file
-                invalidList.push(i + 2);
-            }
-            if (this.examUserMode && !hasRoom && !hasSeat) {
                 invalidList.push(i + 2);
             }
         }
