@@ -99,7 +99,8 @@ describe('ConversationService', () => {
         // one to one chat
         const oneToOneChat = generateOneToOneChatDTO({});
         oneToOneChat.members = [requestingUser, otherUser];
-        expect(service.getConversationName(oneToOneChat)).toBe('timo moritz (login)');
+        expect(service.getConversationName(oneToOneChat)).toBe('timo moritz');
+        expect(service.getConversationName(oneToOneChat, true)).toBe('timo moritz (login)');
         // group chat with explicit name
         const groupChat = generateExampleGroupChatDTO({ name: 'hello' });
         expect(service.getConversationName(groupChat)).toBe(groupChat.name);
@@ -110,7 +111,8 @@ describe('ConversationService', () => {
         // group chat without explicit name and one other
         const groupChatWithOneOther = generateExampleGroupChatDTO({ name: '' });
         groupChatWithOneOther.members = [requestingUser, otherUser];
-        expect(service.getConversationName(groupChatWithOneOther)).toBe('timo moritz (login)');
+        expect(service.getConversationName(groupChatWithOneOther)).toBe('timo moritz');
+        expect(service.getConversationName(groupChatWithOneOther, true)).toBe('timo moritz (login)');
         // group chat without explicit name and two others
         const groupChatWithTwoOthers = generateExampleGroupChatDTO({ name: '' });
         groupChatWithTwoOthers.members = [requestingUser, otherUser, otherUserTwo];
