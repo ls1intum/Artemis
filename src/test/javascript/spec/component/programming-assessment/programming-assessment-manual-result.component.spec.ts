@@ -49,7 +49,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
-import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { AssessmentAfterComplaint, ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-complaint-alert/assessment-complaint-alert.component';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
@@ -498,9 +498,21 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     it('should update assessment after complaint', fakeAsync(() => {
         comp.ngOnInit();
         tick(100);
-        comp.onUpdateAssessmentAfterComplaint(new ComplaintResponse());
+
+        let onSuccessCalled = false;
+        let onErrorCalled = false;
+        const assessmentAfterComplaint: AssessmentAfterComplaint = {
+            complaintResponse: new ComplaintResponse(),
+            onSuccess: () => (onSuccessCalled = true),
+            onError: () => (onErrorCalled = true),
+        };
+
+        comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+
         expect(updateAfterComplaintStub).toHaveBeenCalledOnce();
         expect(comp.manualResult!.score).toBe(100);
         flush();
+        expect(onSuccessCalled).toBeTrue();
+        expect(onErrorCalled).toBeFalse();
     }));
 });
