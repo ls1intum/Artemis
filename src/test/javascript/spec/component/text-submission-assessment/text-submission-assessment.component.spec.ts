@@ -266,7 +266,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(onErrorCalled).toBeTrue();
     });
 
-    it('should send update when complaint resolved and assessments are valid', () => {
+    it.each([false, true])('should send update when complaint resolved and assessments are valid, serverReturnsError=%s', (serverReturnsError: boolean) => {
         const unreferencedFeedback = new Feedback();
         unreferencedFeedback.credits = 5;
         unreferencedFeedback.detailText = 'gj';
@@ -275,7 +275,8 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.unreferencedFeedback = [unreferencedFeedback];
 
         const updateAssessmentAfterComplaintStub = jest.spyOn(textAssessmentService, 'updateAssessmentAfterComplaint');
-        updateAssessmentAfterComplaintStub.mockReturnValue(of(new HttpResponse({ body: new Result() })));
+        const serverResponse = serverReturnsError ? throwError(() => new HttpErrorResponse({ status: 400 })) : of(new HttpResponse({ body: new Result() }));
+        updateAssessmentAfterComplaintStub.mockReturnValue(serverResponse);
 
         // would be called on receive of event
         let onSuccessCalled = false;
@@ -288,8 +289,8 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         component.updateAssessmentAfterComplaint(assessmentAfterComplaint);
         expect(updateAssessmentAfterComplaintStub).toHaveBeenCalledOnce();
-        expect(onSuccessCalled).toBeTrue();
-        expect(onErrorCalled).toBeFalse();
+        expect(onSuccessCalled).toBe(!serverReturnsError);
+        expect(onErrorCalled).toBe(serverReturnsError);
     });
 
     it('should submit the assessment with correct parameters', () => {

@@ -2,7 +2,7 @@ import * as ace from 'brace';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -28,7 +28,7 @@ import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { delay } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
@@ -495,24 +495,31 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         flush();
     }));
 
-    it('should update assessment after complaint', fakeAsync(() => {
-        comp.ngOnInit();
-        tick(100);
+    it.each([false, true])(
+        'should update assessment after complaint, serverReturnsError=%s',
+        fakeAsync((serverReturnsError: boolean) => {
+            comp.ngOnInit();
+            tick(100);
 
-        let onSuccessCalled = false;
-        let onErrorCalled = false;
-        const assessmentAfterComplaint: AssessmentAfterComplaint = {
-            complaintResponse: new ComplaintResponse(),
-            onSuccess: () => (onSuccessCalled = true),
-            onError: () => (onErrorCalled = true),
-        };
+            let onSuccessCalled = false;
+            let onErrorCalled = false;
+            const assessmentAfterComplaint: AssessmentAfterComplaint = {
+                complaintResponse: new ComplaintResponse(),
+                onSuccess: () => (onSuccessCalled = true),
+                onError: () => (onErrorCalled = true),
+            };
 
-        comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+            if (serverReturnsError) {
+                updateAfterComplaintStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+            }
 
-        expect(updateAfterComplaintStub).toHaveBeenCalledOnce();
-        expect(comp.manualResult!.score).toBe(100);
-        flush();
-        expect(onSuccessCalled).toBeTrue();
-        expect(onErrorCalled).toBeFalse();
-    }));
+            comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+
+            expect(updateAfterComplaintStub).toHaveBeenCalledOnce();
+            expect(comp.manualResult!.score).toBe(serverReturnsError ? 0 : 100);
+            flush();
+            expect(onSuccessCalled).toBe(!serverReturnsError);
+            expect(onErrorCalled).toBe(serverReturnsError);
+        }),
+    );
 });
