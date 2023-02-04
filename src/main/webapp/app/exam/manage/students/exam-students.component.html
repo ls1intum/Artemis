@@ -98,7 +98,12 @@
                         </ng-template>
                     </ng-template>
                 </ngx-datatable-column>
-
+                <ngx-datatable-column prop="" [minWidth]="60" [width]="80" [maxWidth]="100">
+                    <ng-template ngx-datatable-header-template></ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <img class="img-fluid" [src]="SERVER_API_URL + value?.studentImagePath" />
+                    </ng-template>
+                </ngx-datatable-column>
                 <ngx-datatable-column prop="" [minWidth]="150" [width]="200" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('login')">
@@ -150,7 +155,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="plannedRoom" [minWidth]="150" [width]="250">
+                <ngx-datatable-column prop="plannedRoom" [minWidth]="100" [width]="120" [maxWidth]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('plannedRoom')">
                             <!--                            todo: translate-->
@@ -163,7 +168,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="plannedSeat" [minWidth]="150" [width]="250">
+                <ngx-datatable-column prop="plannedSeat" [minWidth]="100" [width]="120" [maxWidth]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('plannedSeat')">
                             <!--                            todo: translate-->
@@ -176,7 +181,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="actualRoom" [minWidth]="150" [width]="250">
+                <ngx-datatable-column prop="actualRoom" [minWidth]="100" [width]="120" [maxWidth]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('actualRoom')">
                             <!--                            todo: translate-->
@@ -189,7 +194,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="actualSeat" [minWidth]="150" [width]="250">
+                <ngx-datatable-column prop="actualSeat" [minWidth]="100" [width]="120" [maxWidth]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('actualSeat')">
                             <!--                            todo: translate-->

@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -201,10 +202,17 @@ public class ExamRegistrationService {
             userService.addUserToGroup(student, course.getStudentGroupName(), Role.STUDENT);
         }
 
-        ExamUser registeredExamUser = new ExamUser();
-        registeredExamUser.setUser(student);
-        setExamUserObject(exam, registeredExamUser);
-        examRepository.save(exam);
+        ExamUser registeredExamUserCheck = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
+
+        if (!exam.getExamUsers().contains(registeredExamUserCheck)) {
+            ExamUser registeredExamUser = new ExamUser();
+            registeredExamUser.setUser(student);
+            setExamUserObject(exam, registeredExamUser);
+            examRepository.save(exam);
+        }
+        else {
+            throw new ConflictException("Student is already registered", "exam", "registeredExamStudent");
+        }
 
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle(), "student=" + student.getLogin());
