@@ -18,7 +18,7 @@ import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
-import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { AssessmentAfterComplaint, ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { SubmissionExerciseType, SubmissionType, getFirstResult, setLatestSubmissionResult } from 'app/entities/submission.model';
@@ -395,11 +395,20 @@ describe('FileUploadAssessmentComponent', () => {
             setLatestSubmissionResult(comp.submission, initResult);
 
             fixture.detectChanges();
-            const complaintResponse = new ComplaintResponse();
-            comp.onUpdateAssessmentAfterComplaint(complaintResponse);
+            let onSuccessCalled = false;
+            let onErrorCalled = false;
+            const assessmentAfterComplaint: AssessmentAfterComplaint = {
+                complaintResponse: new ComplaintResponse(),
+                onSuccess: () => (onSuccessCalled = true),
+                onError: () => (onErrorCalled = true),
+            };
+
+            comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
             expect(comp.isLoading).toBeFalse();
             expect(comp.result).toEqual(changedResult);
             expect(comp.participation.results![0]).toEqual(changedResult);
+            expect(onSuccessCalled).toBeTrue();
+            expect(onErrorCalled).toBeFalse();
         });
 
         it('should not update assessment after complaint if already locked', () => {
@@ -430,10 +439,20 @@ describe('FileUploadAssessmentComponent', () => {
             setLatestSubmissionResult(comp.submission, initResult);
 
             fixture.detectChanges();
-            const complaintResponse = new ComplaintResponse();
-            comp.onUpdateAssessmentAfterComplaint(complaintResponse);
+
+            let onSuccessCalled = false;
+            let onErrorCalled = false;
+            const assessmentAfterComplaint: AssessmentAfterComplaint = {
+                complaintResponse: new ComplaintResponse(),
+                onSuccess: () => (onSuccessCalled = true),
+                onError: () => (onErrorCalled = true),
+            };
+
+            comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
             expect(comp.isLoading).toBeFalse();
             expect(alertServiceErrorSpy).toHaveBeenCalledWith('errormessage', []);
+            expect(onSuccessCalled).toBeFalse();
+            expect(onErrorCalled).toBeTrue();
         });
 
         it('should not update assessment after complaint', () => {
@@ -464,10 +483,20 @@ describe('FileUploadAssessmentComponent', () => {
             setLatestSubmissionResult(comp.submission, initResult);
 
             fixture.detectChanges();
-            const complaintResponse = new ComplaintResponse();
-            comp.onUpdateAssessmentAfterComplaint(complaintResponse);
+
+            let onSuccessCalled = false;
+            let onErrorCalled = false;
+            const assessmentAfterComplaint: AssessmentAfterComplaint = {
+                complaintResponse: new ComplaintResponse(),
+                onSuccess: () => (onSuccessCalled = true),
+                onError: () => (onErrorCalled = true),
+            };
+
+            comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
             expect(comp.isLoading).toBeFalse();
             expect(alertServiceErrorSpy).toHaveBeenCalledWith('artemisApp.assessment.messages.updateAfterComplaintFailed');
+            expect(onSuccessCalled).toBeFalse();
+            expect(onErrorCalled).toBeTrue();
         });
     });
 

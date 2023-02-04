@@ -41,6 +41,7 @@ import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import dayjs from 'dayjs/esm';
+import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;
@@ -318,9 +319,19 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.ngOnInit();
         tick(500);
 
-        component.onUpdateAssessmentAfterComplaint(complaintResponse);
+        let onSuccessCalled = false;
+        let onErrorCalled = false;
+        const assessmentAfterComplaint: AssessmentAfterComplaint = {
+            complaintResponse,
+            onSuccess: () => (onSuccessCalled = true),
+            onError: () => (onErrorCalled = true),
+        };
+
+        component.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
         expect(serviceSpy).toHaveBeenCalledOnce();
         expect(component.result?.participation?.results).toEqual([changedResult]);
+        expect(onSuccessCalled).toBeTrue();
+        expect(onErrorCalled).toBeFalse();
     }));
 
     it('should cancel the current assessment', fakeAsync(() => {
