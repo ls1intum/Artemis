@@ -213,13 +213,14 @@ public class RequestUtilService {
 
     /**
      * Mocks sending a request and returns response content as string
-     * @param path the url to send request to
-     * @param body the body of the request
-     * @param expectedStatus the status that the request will return
-     * @param httpHeaders headers of request
+     *
+     * @param path                    the url to send request to
+     * @param body                    the body of the request
+     * @param expectedStatus          the status that the request will return
+     * @param httpHeaders             headers of request
      * @param expectedResponseHeaders headers of response
-     * @param params parameters for multi value
-     * @param <T> Request type
+     * @param params                  parameters for multi value
+     * @param <T>                     Request type
      * @return Request content as string
      * @throws Exception
      */
@@ -366,6 +367,14 @@ public class RequestUtilService {
         final var stringResponse = patchWithResponseBody(path, body, String.class, expectedStatus);
 
         return mapper.readValue(stringResponse, responseType);
+    }
+
+    public <T, R> List<R> patchWithResponseBodyList(String path, T body, Class<R> listElementType, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.patch(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
+                .andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+        return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
     }
 
     public void patch(String path, Object body, HttpStatus expectedStatus) throws Exception {

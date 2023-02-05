@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,10 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.plagiarism.*;
@@ -74,6 +72,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     /***
      * Create a given amount of plagiarism cases
+     *
      * @param numberOfPlagiarismCases The required number of cases
      * @return The list of generated plagiarism cases
      */
@@ -349,5 +348,30 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             assertThat(submission.getPlagiarismComparison().getSubmissionA()).as("should prepare plagiarism case response entity").isNull();
             assertThat(submission.getPlagiarismComparison().getSubmissionB()).as("should prepare plagiarism case response entity").isNull();
         }
+    }
+
+    @Test
+    void testPlagiarismCase_getStudents() throws Exception {
+
+        var individualPlagiarismCase = new PlagiarismCase();
+        assertThat(individualPlagiarismCase.getStudents()).as("should return empty set if neither student or team has been set").isEmpty();
+
+        User student1 = new User();
+        student1.setId(1L);
+        individualPlagiarismCase.setStudent(student1);
+
+        assertThat(individualPlagiarismCase.getStudents()).as("should return the student in a set if it is an individual plagiarism case").isEqualTo(Set.of(student1));
+
+        User student2 = new User();
+        student2.setId(2L);
+
+        Team team = new Team();
+        Set<User> teamStudents = Set.of(student1, student2);
+        team.setStudents(teamStudents);
+
+        var teamPlagiarismCase = new PlagiarismCase();
+        teamPlagiarismCase.setTeam(team);
+
+        assertThat(teamPlagiarismCase.getStudents()).as("should get the set of all students in the team if it is a team plagiarism case").isEqualTo(teamStudents);
     }
 }

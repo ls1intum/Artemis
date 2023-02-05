@@ -49,6 +49,13 @@ const courseData = {
     presentationScore: 10,
 };
 
+const editedCourseData = {
+    title: '',
+    shortName: '',
+    testCourse: false,
+};
+
+const allowGroupCustomization: boolean = Cypress.env('allowGroupCustomization');
 const dateFormat = 'MMM D, YYYY HH:mm';
 
 describe('Course management', () => {
@@ -102,6 +109,7 @@ describe('Course management', () => {
 
     describe('Course creation', () => {
         let courseId: number;
+        let courseId2: number;
 
         beforeEach(() => {
             const uid = generateUUID();
@@ -176,6 +184,81 @@ describe('Course management', () => {
             courseManagementPage.getCourseMaxTeamComplaints().contains(courseData.maxTeamComplaints);
             courseManagementPage.getMaxComplaintTimeDays().contains(courseData.maxComplaintTimeDays);
             courseManagementPage.getMaxRequestMoreFeedbackTimeDays().contains(courseData.maxRequestMoreFeedbackTimeDays);
+        });
+
+        if (allowGroupCustomization) {
+            it('Creates a new course with custom groups', () => {
+                navigationBar.openCourseManagement();
+                courseManagementPage.openCourseCreation();
+                courseCreationPage.setTitle(courseData.title);
+                courseCreationPage.setShortName(courseData.shortName);
+                courseCreationPage.setTestCourse(courseData.testCourse);
+                courseCreationPage.setCustomizeGroupNames(true);
+                courseCreationPage.setStudentGroup(courseData.studentGroupName);
+                courseCreationPage.setTutorGroup(courseData.tutorGroupName);
+                courseCreationPage.setEditorGroup(courseData.editorGroupName);
+                courseCreationPage.setInstructorGroup(courseData.instructorGroupName);
+                courseCreationPage.submit().then((request: Interception) => {
+                    const courseBody = request.response!.body;
+                    courseId2 = courseBody.id!;
+                    expect(courseBody.title).to.eq(courseData.title);
+                    expect(courseBody.shortName).to.eq(courseData.shortName);
+                    expect(courseBody.testCourse).to.eq(courseData.testCourse);
+                    expect(courseBody.studentGroupName).to.eq(courseData.studentGroupName);
+                    expect(courseBody.teachingAssistantGroupName).to.eq(courseData.tutorGroupName);
+                    expect(courseBody.editorGroupName).to.eq(courseData.editorGroupName);
+                    expect(courseBody.instructorGroupName).to.eq(courseData.instructorGroupName);
+                });
+                courseManagementPage.getCourseHeaderTitle().contains(courseData.title).should('be.visible');
+                courseManagementPage.getCourseTitle().contains(courseData.title);
+                courseManagementPage.getCourseShortName().contains(courseData.shortName);
+                courseManagementPage.getCourseTestCourse().contains(convertBooleanToYesNo(courseData.testCourse));
+                courseManagementPage.getCourseStudentGroupName().contains(courseData.studentGroupName);
+                courseManagementPage.getCourseTutorGroupName().contains(courseData.tutorGroupName);
+                courseManagementPage.getCourseEditorGroupName().contains(courseData.editorGroupName);
+                courseManagementPage.getCourseInstructorGroupName().contains(courseData.instructorGroupName);
+            });
+        }
+
+        after(() => {
+            if (courseId) {
+                courseManagementRequests.deleteCourse(courseId).its('status').should('eq', 200);
+            }
+            if (courseId2) {
+                courseManagementRequests.deleteCourse(courseId2).its('status').should('eq', 200);
+            }
+        });
+    });
+
+    describe('Course edit', () => {
+        let courseId: number;
+        const uid = generateUUID();
+        editedCourseData.title = 'Cypress course' + uid;
+        editedCourseData.shortName = 'cypress' + uid;
+
+        beforeEach(() => {
+            courseManagementRequests.createCourse(false, courseData.title, courseData.shortName).its('status').should('eq', 201);
+        });
+
+        it('Edits a existing course', () => {
+            navigationBar.openCourseManagement();
+            courseManagementPage.openCourse(courseData.shortName);
+            courseManagementPage.openCourseEdit();
+
+            courseCreationPage.setTitle(editedCourseData.title);
+            courseCreationPage.setTestCourse(editedCourseData.testCourse);
+
+            courseCreationPage.update().then((request: Interception) => {
+                const courseBody = request.response!.body;
+                courseId = courseBody.id!;
+                expect(courseBody.title).to.eq(editedCourseData.title);
+                expect(courseBody.shortName).to.eq(courseData.shortName);
+                expect(courseBody.testCourse).to.eq(editedCourseData.testCourse);
+            });
+            courseManagementPage.getCourseHeaderTitle().contains(editedCourseData.title).should('be.visible');
+            courseManagementPage.getCourseTitle().contains(editedCourseData.title);
+            courseManagementPage.getCourseShortName().contains(courseData.shortName);
+            courseManagementPage.getCourseTestCourse().contains(convertBooleanToYesNo(editedCourseData.testCourse));
         });
 
         after(() => {

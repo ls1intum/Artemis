@@ -38,6 +38,7 @@ public class RatingService {
 
     /**
      * Get all ratings for the "courseId" Course
+     *
      * @param courseId - id of the course that the ratings are fetched for
      * @return List of Ratings for the course
      */
@@ -47,6 +48,7 @@ public class RatingService {
 
     /**
      * Count all ratings for the "exerciseId" Exercise
+     *
      * @param exerciseId - id of the exercise that the ratings are fetched for
      * @return number of ratings for the exercise
      */
