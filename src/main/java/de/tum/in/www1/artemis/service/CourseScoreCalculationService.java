@@ -266,7 +266,7 @@ public class CourseScoreCalculationService {
      * @param plagiarismCases            the plagiarism verdicts for the student.
      * @return a StudentScoresDTO instance with the presentation score, relative and absolute points achieved by the given student.
      */
-    private StudentScoresDTO calculateCourseScoreForStudent(Course course, Long studentId, List<StudentParticipation> participationsOfStudent, double maxPointsInCourse,
+    public StudentScoresDTO calculateCourseScoreForStudent(Course course, Long studentId, List<StudentParticipation> participationsOfStudent, double maxPointsInCourse,
             double reachableMaxPointsInCourse, List<PlagiarismCase> plagiarismCases) {
 
         PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
@@ -323,7 +323,7 @@ public class CourseScoreCalculationService {
         return pointsAchievedFromExercise;
     }
 
-    private Result getResultForParticipation(Participation participation, ZonedDateTime dueDate) {
+    public Result getResultForParticipation(Participation participation, ZonedDateTime dueDate) {
         if (participation == null) {
             return null;
         }
@@ -419,11 +419,11 @@ public class CourseScoreCalculationService {
      * @param coursePresentationScore   presentation score limit of the course that needs to be passed to get the bonus for the final exam
      * @return True if presentation score limit is not set or surpassed, otherwise false.
      */
-    private boolean isPresentationScoreSufficientForBonus(int achievedPresentationScore, Integer coursePresentationScore) {
+    public boolean isPresentationScoreSufficientForBonus(int achievedPresentationScore, Integer coursePresentationScore) {
         return coursePresentationScore == null || achievedPresentationScore >= coursePresentationScore;
     }
 
-    private PlagiarismVerdict findMostServerePlagiarismVerdict(Collection<PlagiarismCase> plagiarismCasesForSingleStudent) {
+    public PlagiarismVerdict findMostServerePlagiarismVerdict(Collection<PlagiarismCase> plagiarismCasesForSingleStudent) {
         if (plagiarismCasesForSingleStudent.isEmpty()) {
             return null;
         }
