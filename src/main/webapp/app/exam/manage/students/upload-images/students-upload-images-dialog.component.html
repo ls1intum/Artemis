@@ -60,7 +60,7 @@
                 (click)="parsePDFFile()"
             >
                 <fa-icon [icon]="faUpload" class="me-2"></fa-icon>
-                <span>Save Images</span>
+                <span jhiTranslate="artemisApp.exam.examUsers.saveImages">Save Images</span>
                 <fa-icon class="ms-1" [hidden]="!isParsing" [spin]="true" [icon]="faCircleNotch"></fa-icon>
             </button>
             <ng-template #buttonAfterParse>

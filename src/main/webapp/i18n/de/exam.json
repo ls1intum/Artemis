@@ -2,17 +2,24 @@
     "artemisApp": {
         "exam": {
             "examUsers": {
-                "uploadImage": "Upload images",
-                "uploadImageTooltip": "Upload images for the registered students",
-                "introText": "This dialog can be used to upload pdf file and extract images for registered students.",
-                "dialogText": "Each entry in the input file must contain a value for either matriculation number, login or email.\nValues for last and first name are optional.",
-                "pdfExampleText": "Example of a valid PDF file format:",
+                "uploadImage": "Bilder hochladen",
+                "uploadImageTooltip": "Hochladen von Bildern für die registrierten Studenten",
+                "introText": "Dieser Dialog kann zum Hochladen von PDF-Dateien und zum Extrahieren von Bildern für registrierte Studenten verwendet werden.",
+                "dialogText": "Jeder Eintrag in der Eingabedatei muss entweder einen Wert für die Matrikelnummer, das Login oder die E-Mail enthalten.\nDie Angaben zu Name und Vorname sind optional.",
+                "pdfExampleText": "Beispiel für ein gültiges PDF-Dateiformat:",
                 "pdfFile": {
-                    "label": "Select .pdf file",
-                    "tooltip": "Please select a .pdf file containing registered students image and matriculation number."
+                    "label": ".pdf-Datei auswählen",
+                    "tooltip": "Bitte wählen Sie eine .pdf-Datei aus, die das Bild des registrierten Studenten und seine Matrikelnummer enthält."
                 },
-                "dialogTitle": "Upload images",
-                "allImagesSaved": "All images were saved successfully."
+                "dialogTitle": "Bilder hochladen",
+                "allImagesSaved": "Alle Bilder wurden erfolgreich gespeichert.",
+                "plannedSeat": "Geplanter Sitz",
+                "plannedRoom": "Geplanter Raum",
+                "actualSeat": "Aktueller Sitz",
+                "actualRoom": "Aktueller Raum",
+                "room": "Raum",
+                "seat": "Sitz",
+                "saveImages": "Bilder speichern"
             },
             "overview": {
                 "start": "Beginn: {{start}}",

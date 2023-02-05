@@ -12,7 +12,14 @@
                     "tooltip": "Please select a .pdf file containing registered students image and matriculation number."
                 },
                 "dialogTitle": "Upload images",
-                "allImagesSaved": "All images were saved successfully."
+                "allImagesSaved": "All images were saved successfully.",
+                "plannedSeat": "Planned Seat",
+                "plannedRoom": "Planned Room",
+                "actualSeat": "Actual Seat",
+                "actualRoom": "Actual Room",
+                "room": "Room",
+                "seat": "Seat",
+                "saveImages": "Save Images"
             },
             "overview": {
                 "start": "Start: {{start}}",
