@@ -14,11 +14,20 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Repository
 public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Long> {
+
+    @Query("""
+            SELECT tutorialGroup
+            FROM TutorialGroup tutorialGroup
+            LEFT JOIN FETCH tutorialGroup.tutorialGroupChannel
+            WHERE tutorialGroup.id = :#{#tutorialGroupId}
+            """)
+    Optional<TutorialGroup> getTutorialGroupWithChannel(@Param("tutorialGroupId") Long tutorialGroupId);
 
     @Query("""
             SELECT tutorialGroup.title
@@ -127,5 +136,9 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
 
     default TutorialGroup findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(long tutorialGroupId) {
         return this.findByIdWithTeachingAssistantAndRegistrationsAndSessions(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
+    }
+
+    default Optional<Channel> getTutorialGroupChannel(Long tutorialGroupId) {
+        return getTutorialGroupWithChannel(tutorialGroupId).map(TutorialGroup::getTutorialGroupChannel);
     }
 }

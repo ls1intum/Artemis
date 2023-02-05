@@ -332,6 +332,17 @@ public class CourseService {
     }
 
     private void deleteTutorialGroupsOfCourse(Course course) {
+        var tutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId());
+        tutorialGroups.forEach(tutorialGroup -> {
+            if (tutorialGroup.getTutorialGroupChannel() != null) {
+                if (tutorialGroup.getTutorialGroupChannel().getTutorialGroup() != null) {
+                    tutorialGroup.getTutorialGroupChannel().setTutorialGroup(null);
+                }
+                tutorialGroup.setTutorialGroupChannel(null);
+
+            }
+        });
+        tutorialGroupRepository.saveAll(tutorialGroups);
         this.tutorialGroupRepository.deleteAllByCourse(course);
     }
 

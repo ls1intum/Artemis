@@ -108,7 +108,11 @@ public class ChannelResource {
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(channelDTO.getDescription());
 
-        var createdChannel = channelService.createChannel(course, channelToCreate);
+        if (channelToCreate.getName() != null && channelToCreate.getName().trim().startsWith("$")) {
+            throw new BadRequestAlertException("User generated channels cannot start with $", "channel", "channelNameInvalid");
+        }
+
+        var createdChannel = channelService.createChannel(course, channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDto(requestingUser, createdChannel));
     }
 
@@ -131,6 +135,11 @@ public class ChannelResource {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
         }
         channelAuthorizationService.isAllowedToUpdateChannel(originalChannel, requestingUser);
+
+        if (channelDTO.getName() != null && channelDTO.getName().trim().startsWith("$")) {
+            throw new BadRequestAlertException("User generated channels cannot start with $", "channel", "channelNameInvalid");
+        }
+
         var updatedChannel = channelService.updateChannel(originalChannel.getId(), courseId, channelDTO);
         return ResponseEntity.ok().body(conversationDTOService.convertChannelToDto(requestingUser, updatedChannel));
     }

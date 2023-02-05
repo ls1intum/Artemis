@@ -192,7 +192,7 @@ public class ConversationDTOService {
             conversationDTO.setIsCreator(conversation.getCreator().getId().equals(requestingUser.getId()));
         }
         else {
-            log.error("Unexpected Behaviour: Conversation {} has no creator", conversation.getId());
+            // Is the case for conversations created by the system such as tutorial group channels
             conversationDTO.setIsCreator(false);
         }
     }

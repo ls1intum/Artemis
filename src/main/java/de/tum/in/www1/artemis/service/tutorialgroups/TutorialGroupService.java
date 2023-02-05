@@ -30,6 +30,8 @@ import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -53,9 +55,12 @@ public class TutorialGroupService {
 
     private final TutorialGroupSessionRepository tutorialGroupSessionRepository;
 
+    private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+
     public TutorialGroupService(SingleUserNotificationService singleUserNotificationService, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
             TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository,
-            TutorialGroupSessionRepository tutorialGroupSessionRepository) {
+            TutorialGroupSessionRepository tutorialGroupSessionRepository, ChannelService channelService, ConversationService conversationService,
+            TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
@@ -63,6 +68,7 @@ public class TutorialGroupService {
         this.singleUserNotificationService = singleUserNotificationService;
         this.courseRepository = courseRepository;
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
+        this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
     }
 
     /**
@@ -132,6 +138,8 @@ public class TutorialGroupService {
 
     /**
      * Deregister a student from a tutorial group.
+     * <p>
+     * In addition, also removes the students from the respective tutorial group channel if it exists.
      *
      * @param student          The student to deregister.
      * @param tutorialGroup    The tutorial group to deregister from.
@@ -142,6 +150,8 @@ public class TutorialGroupService {
         Optional<TutorialGroupRegistration> existingRegistration = tutorialGroupRegistrationRepository.findTutorialGroupRegistrationByTutorialGroupAndStudentAndType(tutorialGroup,
                 student, registrationType);
         if (existingRegistration.isEmpty()) {
+            // we still need to make sure the user is also already removed from the channel
+            tutorialGroupChannelManagementService.removeUsersFromTutorialGroupChannel(tutorialGroup, Set.of(student));
             return; // No registration found, nothing to do.
         }
         tutorialGroupRegistrationRepository.delete(existingRegistration.get());
@@ -149,14 +159,18 @@ public class TutorialGroupService {
         if (tutorialGroup.getTeachingAssistant() != null && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
             singleUserNotificationService.notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student, responsibleUser);
         }
+        tutorialGroupChannelManagementService.removeUsersFromTutorialGroupChannel(tutorialGroup, Set.of(student));
     }
 
-    public void deregisterStudentsFromAllTutorialGroupInCourse(Set<User> students, Course course, TutorialGroupRegistrationType registrationType) {
+    private void deregisterStudentsFromAllTutorialGroupInCourse(Set<User> students, Course course, TutorialGroupRegistrationType registrationType) {
         tutorialGroupRegistrationRepository.deleteAllByStudentIsInAndTypeAndTutorialGroupCourse(students, registrationType, course);
+        tutorialGroupChannelManagementService.removeUsersFromAllTutorialGroupChannelsInCourse(course, students);
     }
 
     /**
      * Register a student to a tutorial group.
+     * <p>
+     * In addition, also adds the student to the respective tutorial group channel if it exists.
      *
      * @param student          The student to register.
      * @param tutorialGroup    The tutorial group to register to.
@@ -167,6 +181,8 @@ public class TutorialGroupService {
         Optional<TutorialGroupRegistration> existingRegistration = tutorialGroupRegistrationRepository.findTutorialGroupRegistrationByTutorialGroupAndStudentAndType(tutorialGroup,
                 student, registrationType);
         if (existingRegistration.isPresent()) {
+            // we still need to make sure the user is also already added to the channel
+            tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(tutorialGroup, Set.of(student));
             return; // Registration already exists, nothing to do.
         }
         TutorialGroupRegistration newRegistration = new TutorialGroupRegistration(student, tutorialGroup, registrationType);
@@ -175,6 +191,7 @@ public class TutorialGroupService {
         if (tutorialGroup.getTeachingAssistant() != null && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
             singleUserNotificationService.notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student, responsibleUser);
         }
+        tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(tutorialGroup, Set.of(student));
     }
 
     private void registerMultipleStudentsToTutorialGroup(Set<User> students, TutorialGroup tutorialGroup, TutorialGroupRegistrationType registrationType, User responsibleUser,
@@ -195,10 +212,13 @@ public class TutorialGroupService {
                 singleUserNotificationService.notifyTutorAboutMultipleRegistrationsToTutorialGroup(tutorialGroup, studentsToRegister, responsibleUser);
             }
         }
+        tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(tutorialGroup, students);
     }
 
     /**
      * Register multiple students to a tutorial group.
+     * <p>
+     * In addition, also adds the students to the respective tutorial group channel if it exists.
      *
      * @param tutorialGroup    the tutorial group to register the students for
      * @param studentDTOs      The students to register.
@@ -240,6 +260,11 @@ public class TutorialGroupService {
      *         <li> If student is already registered in a tutorial group of the same course, the student will be deregistered from the old tutorial group.
      *     </ul>
      * </ul>
+     *
+     * <p>
+     *
+     * In addition, the students will be added to the tutorial group channel if it exists.
+     *
      *
      * @param course        The course to import the registrations for.
      * @param registrations The registrations to import.
@@ -345,6 +370,11 @@ public class TutorialGroupService {
 
         var tutorialGroupsMentionedInRegistrations = new HashSet<>(foundTutorialGroups);
         tutorialGroupsMentionedInRegistrations.addAll(tutorialGroupRepository.saveAll(tutorialGroupsToCreate));
+
+        tutorialGroupsMentionedInRegistrations.forEach(tutorialGroup -> {
+            tutorialGroupChannelManagementService.setUpChannelForTutorialGroup(tutorialGroup);
+        });
+
         return tutorialGroupsMentionedInRegistrations;
     }
 

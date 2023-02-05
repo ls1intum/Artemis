@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 
 @Entity
 @Table(name = "tutorial_group")
@@ -105,6 +106,19 @@ public class TutorialGroup extends DomainObject {
     @JsonIgnoreProperties(value = "tutorialGroup, tutorialGroupSchedule", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<TutorialGroupSession> tutorialGroupSessions = new HashSet<>();
+
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "tutorial_group_channel_id")
+    @JsonIgnoreProperties("tutorialGroup")
+    private Channel tutorialGroupChannel;
+
+    public Channel getTutorialGroupChannel() {
+        return tutorialGroupChannel;
+    }
+
+    public void setTutorialGroupChannel(Channel tutorialGroupChannel) {
+        this.tutorialGroupChannel = tutorialGroupChannel;
+    }
 
     public TutorialGroupSchedule getTutorialGroupSchedule() {
         return tutorialGroupSchedule;

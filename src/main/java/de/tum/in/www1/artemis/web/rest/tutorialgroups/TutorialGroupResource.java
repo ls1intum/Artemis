@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.notifications.TutorialGroupNotificationService;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupScheduleService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -75,10 +76,13 @@ public class TutorialGroupResource {
 
     private final TutorialGroupScheduleService tutorialGroupScheduleService;
 
+    private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+
     public TutorialGroupResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository,
             TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository, TutorialGroupNotificationService tutorialGroupNotificationService,
             TutorialGroupNotificationRepository tutorialGroupNotificationRepository, SingleUserNotificationService singleUserNotificationService,
-            TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository, TutorialGroupScheduleService tutorialGroupScheduleService) {
+            TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository, TutorialGroupScheduleService tutorialGroupScheduleService,
+            TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
         this.tutorialGroupService = tutorialGroupService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
@@ -89,6 +93,7 @@ public class TutorialGroupResource {
         this.singleUserNotificationService = singleUserNotificationService;
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
         this.tutorialGroupScheduleService = tutorialGroupScheduleService;
+        this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
     }
 
     /**
@@ -229,6 +234,8 @@ public class TutorialGroupResource {
             taFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(persistedTutorialGroup, user, responsibleUser));
         }
 
+        tutorialGroupChannelManagementService.setUpChannelForTutorialGroup(persistedTutorialGroup);
+
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId()))
                 .body(TutorialGroup.preventCircularJsonConversion(persistedTutorialGroup));
     }
@@ -250,6 +257,7 @@ public class TutorialGroupResource {
         checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
         tutorialGroupNotificationService.notifyAboutTutorialGroupDeletion(tutorialGroupFromDatabase);
         tutorialGroupNotificationRepository.deleteAllByTutorialGroupId(tutorialGroupId);
+        tutorialGroupChannelManagementService.deleteTutorialGroupChannel(tutorialGroupFromDatabase);
         tutorialGroupRepository.deleteById(tutorialGroupFromDatabase.getId());
         return ResponseEntity.noContent().build();
     }
@@ -295,6 +303,8 @@ public class TutorialGroupResource {
 
         if (!oldTutorialGroup.getTitle().equals(updatedTutorialGroup.getTitle())) {
             checkTitleIsValid(updatedTutorialGroup);
+            tutorialGroupChannelManagementService.updateNameAndDescriptionOfTutorialGroupChannel(updatedTutorialGroup);
+
         }
 
         Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
@@ -313,11 +323,18 @@ public class TutorialGroupResource {
 
         if (newTA != null && (oldTA == null || !oldTA.equals(newTA))) {
             var newTAFromDatabase = userRepository.findOneByLogin(newTA.getLogin());
-            newTAFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, user, responsibleUser));
+            newTAFromDatabase.ifPresent(user -> {
+                singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, user, responsibleUser);
+                tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(updatedTutorialGroup, Set.of(user));
+                tutorialGroupChannelManagementService.grantUsersModeratorRoleToTutorialGroupChannel(updatedTutorialGroup, Set.of(user));
+            });
         }
         if (oldTA != null && (newTA == null || !newTA.equals(oldTA))) {
             var oldTAFromDatabase = userRepository.findOneByLogin(oldTA.getLogin());
-            oldTAFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(oldTutorialGroup, user, responsibleUser));
+            oldTAFromDatabase.ifPresent(user -> {
+                singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(oldTutorialGroup, user, responsibleUser);
+                tutorialGroupChannelManagementService.removeUsersFromTutorialGroupChannel(oldTutorialGroup, Set.of(user));
+            });
         }
 
         if (StringUtils.hasText(tutorialGroupUpdateDTO.notificationText())) {
