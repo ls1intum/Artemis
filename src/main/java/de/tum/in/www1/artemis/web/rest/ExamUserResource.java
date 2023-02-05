@@ -89,6 +89,8 @@ public class ExamUserResource {
         examUser.setActualRoom(examUserDTO.room());
         examUser = examUserRepository.save(examUser);
 
+        examUser.getUser().setVisibleRegistrationNumber(examUser.getUser().getRegistrationNumber());
+
         return ResponseEntity.ok().body(examUser);
     }
 
