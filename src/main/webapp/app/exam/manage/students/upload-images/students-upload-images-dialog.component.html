@@ -28,29 +28,38 @@
     </div>
     <div class="modal-footer justify-content-between">
         <div *ngIf="notFoundUsers && notFoundUsers.length > 0" class="flex-shrink-0 me-2 d-flex">
-            <div *ngIf="!hasParsed; else numbersAfterImport">
-                <strong>{{ 'artemisApp.importUsers.numberOfUsers' | artemisTranslate }}</strong>
-                <span>&nbsp;{{ notFoundUsers.length }}</span>
-            </div>
-            <ng-template #numbersAfterImport>
-                <div>
-                    <strong>{{ 'artemisApp.importUsers.numberOfUsersImported' | artemisTranslate }}</strong>
-                    <span>1</span>
-                </div>
+            <div *ngIf="hasParsed">
                 <div class="ms-2">
                     <strong>{{ 'artemisApp.importUsers.numberOfUsersNotImported' | artemisTranslate }}</strong>
-                    <span><b style="color: red">2</b></span>
+                    <span
+                        ><b style="color: red">{{ numberOfImagesNotSaved }}</b></span
+                    >
                 </div>
-            </ng-template>
+            </div>
         </div>
         <div class="flex-grow-1 d-flex justify-content-end">
             <button *ngIf="!hasParsed" type="button" class="btn btn-default cancel me-2" data-dismiss="modal" (click)="clear()">
                 <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
-            <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="!file" (click)="parsePDFFile()">
+            <button
+                *ngIf="!hasParsed; else buttonAfterParse"
+                type="submit"
+                id="import"
+                name="importButton"
+                class="btn btn-primary"
+                [disabled]="!file || isParsing"
+                (click)="parsePDFFile()"
+            >
                 <fa-icon [icon]="faUpload" class="me-2"></fa-icon>
                 <span>Save Images</span>
+                <fa-icon class="ms-1" [hidden]="!isParsing" [spin]="true" [icon]="faCircleNotch"></fa-icon>
             </button>
+            <ng-template #buttonAfterParse>
+                <button [ngClass]="hasParsed && notFoundUsers.length === 0 ? 'btn btn-success' : 'btn btn-danger'" id="finish-button" (click)="onFinish()">
+                    <fa-icon [icon]="faCheck" class="me-2"></fa-icon>
+                    <span jhiTranslate="entity.action.finish">Finish</span>
+                </button>
+            </ng-template>
         </div>
     </div>
 </form>

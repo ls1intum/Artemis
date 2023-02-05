@@ -65,28 +65,23 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
      * Parse pdf file and save images of registered students
      */
     parsePDFFile() {
+        this.isParsing = true;
         if (this.exam?.id) {
-            console.log('inside:');
             const formData: FormData = new FormData();
             formData.append('file', this.file);
 
             this.examManagementService.saveImages(this.courseId, this.exam.id, formData).subscribe({
                 next: (res: any) => {
                     if (res) {
-                        console.log(res, 'saved');
                         this.notFoundUsers = res.body;
-                        console.log(this.notFoundUsers);
                         this.isParsing = false;
                         this.hasParsed = true;
-                        this.activeModal.close();
                     }
                 },
                 error: (res: HttpErrorResponse) => {
                     if (res.error.params === 'file' && res?.error?.title) {
-                        console.log(res.error.title);
                         this.alertService.error(res.error.title);
                     } else {
-                        console.log(res.error);
                         onError(this.alertService, res);
                     }
                     this.isParsing = false;
@@ -94,5 +89,12 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
                 },
             });
         }
+    }
+
+    /**
+     * Number of images which could not be saved
+     */
+    get numberOfImagesNotSaved(): number {
+        return !this.hasParsed ? 0 : this.notFoundUsers.length;
     }
 }
