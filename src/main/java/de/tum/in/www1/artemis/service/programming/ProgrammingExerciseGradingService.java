@@ -330,6 +330,12 @@ public class ProgrammingExerciseGradingService {
         List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).toList();
         latestSemiAutomaticResult = resultService.addFeedbackToResult(latestSemiAutomaticResult, copiedFeedbacks, false);
 
+        latestSemiAutomaticResult.setTestCaseCount(newAutomaticResult.getTestCaseCount());
+        latestSemiAutomaticResult.setPassedTestCaseCount(newAutomaticResult.getPassedTestCaseCount());
+        latestSemiAutomaticResult.setCodeIssueCount(newAutomaticResult.getCodeIssueCount());
+
+        latestSemiAutomaticResult.calculateTotalPointsForProgrammingExercises();
+
         return resultRepository.save(latestSemiAutomaticResult);
     }
 
