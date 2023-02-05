@@ -9,7 +9,6 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { DomainChange, DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { FileWithHasMatch } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
-import { captureException } from '@sentry/angular';
 import { escape } from 'lodash-es';
 
 type FilesWithType = { [p: string]: FileType };
