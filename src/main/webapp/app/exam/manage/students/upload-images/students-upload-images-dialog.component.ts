@@ -27,7 +27,6 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
     @Input() exam: Exam | undefined;
 
     isParsing = false;
-    noUsersFoundError?: boolean;
     hasParsed = false;
 
     private dialogErrorSource = new Subject<string>();
@@ -55,8 +54,15 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
         this.activeModal.close();
     }
 
+    private resetDialog() {
+        this.isParsing = false;
+        this.notFoundUsers = [];
+        this.hasParsed = false;
+    }
+
     onPDFFileSelect(event: any) {
         if (event.target.files.length > 0) {
+            this.resetDialog();
             this.file = event.target.files[0];
         }
     }

@@ -11,7 +11,8 @@
                     "label": "Select .pdf file",
                     "tooltip": "Please select a .pdf file containing registered students image and matriculation number."
                 },
-                "dialogTitle": "Upload images"
+                "dialogTitle": "Upload images",
+                "allImagesSaved": "All images were saved successfully."
             },
             "overview": {
                 "start": "Beginn: {{start}}",

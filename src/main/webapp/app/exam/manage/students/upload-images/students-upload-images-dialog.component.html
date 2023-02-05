@@ -11,7 +11,7 @@
             <p class="intro-text" jhiTranslate="artemisApp.exam.examUsers.pdfExampleText"></p>
         </div>
         <div class="d-flex justify-content-center align-items-center">
-            <img class="border" width="400" src="/content/images/upload_student_images_pdf_example_img.png" />
+            <img class="border" width="300" src="/content/images/upload_student_images_pdf_example_img.png" />
         </div>
         <div class="form-group">
             <div class="d-flex align-items-end">
@@ -27,7 +27,7 @@
         </div>
     </div>
     <div class="modal-footer justify-content-between">
-        <div *ngIf="notFoundUsers && notFoundUsers.length > 0" class="flex-shrink-0 me-2 d-flex">
+        <div *ngIf="notFoundUsers && notFoundUsers.length > 0; else allImagesSaved" class="flex-shrink-0 me-2 d-flex">
             <div *ngIf="hasParsed">
                 <div class="ms-2">
                     <strong>{{ 'artemisApp.importUsers.numberOfUsersNotImported' | artemisTranslate }}</strong>
@@ -37,6 +37,15 @@
                 </div>
             </div>
         </div>
+        <ng-template #allImagesSaved>
+            <div class="flex-shrink-0 me-2 d-flex">
+                <div *ngIf="hasParsed">
+                    <div class="ms-2">
+                        <strong style="color: green" jhiTranslate="artemisApp.exam.examUsers.allImagesSaved"></strong>
+                    </div>
+                </div>
+            </div>
+        </ng-template>
         <div class="flex-grow-1 d-flex justify-content-end">
             <button *ngIf="!hasParsed" type="button" class="btn btn-default cancel me-2" data-dismiss="modal" (click)="clear()">
                 <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
