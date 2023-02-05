@@ -362,13 +362,12 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
 
         this.assessmentsService
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             .updateAssessmentAfterComplaint(
                 this.assessments,
                 this.textBlocksWithFeedback,
                 assessmentAfterComplaint.complaintResponse,
-                this.submission?.id!,
-                this.participation?.id!,
+                this.submission?.id!, // eslint-disable-line @typescript-eslint/no-non-null-asserted-optional-chain
+                this.participation?.id!, // eslint-disable-line @typescript-eslint/no-non-null-asserted-optional-chain
             )
             .subscribe({
                 next: (response) => {
