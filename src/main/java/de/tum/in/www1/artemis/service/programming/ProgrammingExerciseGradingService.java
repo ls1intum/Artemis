@@ -334,7 +334,9 @@ public class ProgrammingExerciseGradingService {
         latestSemiAutomaticResult.setPassedTestCaseCount(newAutomaticResult.getPassedTestCaseCount());
         latestSemiAutomaticResult.setCodeIssueCount(newAutomaticResult.getCodeIssueCount());
 
-        latestSemiAutomaticResult.calculateTotalPointsForProgrammingExercises();
+        Exercise exercise = latestSemiAutomaticResult.getParticipation().getExercise();
+        latestSemiAutomaticResult.setScore(latestSemiAutomaticResult.calculateTotalPointsForProgrammingExercises(), exercise.getMaxPoints(),
+                exercise.getCourseViaExerciseGroupOrCourseMember());
 
         return resultRepository.save(latestSemiAutomaticResult);
     }
