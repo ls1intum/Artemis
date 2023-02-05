@@ -21,6 +21,7 @@ public class LogResource {
 
     /**
      * GET logs -- Gets the current log levels.
+     *
      * @return A list of all loggers with their log level
      */
     @GetMapping("logs")
@@ -32,6 +33,7 @@ public class LogResource {
 
     /**
      * PUT logs -- Changes the log level of a logger.
+     *
      * @param jsonLogger The logger with the new log level
      * @return The updated logger
      */

@@ -33,6 +33,7 @@ public class AuthorizationTestService {
 
     /**
      * Tests all endpoints and prints the reports
+     *
      * @param endpointMap The map of all endpoints
      */
     public void testEndpoints(Map<RequestMappingInfo, HandlerMethod> endpointMap) throws InvocationTargetException, IllegalAccessException {
@@ -48,9 +49,11 @@ public class AuthorizationTestService {
     }
 
     /**
-     * Evaluates whether a given endpoint should be tested. Only endpoints defined in artemis and not annotated with @ManualConfig are tested. If onlyConditional is true, only endpoints
+     * Evaluates whether a given endpoint should be tested. Only endpoints defined in artemis and not annotated with @ManualConfig are tested. If onlyConditional is true, only
+     * endpoints
      * that depend on a specific profile are tested.
-     * @param method The handler method of the endpoint
+     *
+     * @param method          The handler method of the endpoint
      * @param onlyConditional Whether only endpoints that depend on a profile should be tested
      * @return true if the endpoint should be tested, false otherwise
      */
@@ -61,6 +64,7 @@ public class AuthorizationTestService {
 
     /**
      * Evaluates whether a given endpoint depends on a specific profile
+     *
      * @param handlerMethod The handler method of the endpoint
      * @return true if the endpoint depends on a profile, false otherwise
      */
@@ -166,6 +170,7 @@ public class AuthorizationTestService {
 
     /**
      * Creates a formatted string representation of the given reports
+     *
      * @param reportsMap The reports to format
      * @return The formatted string
      */
@@ -184,10 +189,11 @@ public class AuthorizationTestService {
 
     /**
      * Checks if the given pre-authorization annotation on a class element is valid
+     *
      * @param classAnnotation The annotation to check
-     * @param javaClass The class the annotation is on
-     * @param javaMethod The method of the endpoint currently in scope
-     * @param classReports The current collection of reports
+     * @param javaClass       The class the annotation is on
+     * @param javaMethod      The method of the endpoint currently in scope
+     * @param classReports    The current collection of reports
      */
     private void checkClassAnnotation(Annotation classAnnotation, Class<?> javaClass, Method javaMethod, Map<Class<?>, Set<String>> classReports)
             throws InvocationTargetException, IllegalAccessException {
@@ -213,8 +219,9 @@ public class AuthorizationTestService {
 
     /**
      * Checks if the given pre-authorization annotation on a method element is valid
-     * @param annotation The annotation to check
-     * @param javaMethod The method the annotation is on
+     *
+     * @param annotation    The annotation to check
+     * @param javaMethod    The method the annotation is on
      * @param methodReports The current collection of reports
      */
     private void checkMethodAnnotation(Annotation annotation, Method javaMethod, Map<Method, Set<String>> methodReports) throws InvocationTargetException, IllegalAccessException {
@@ -250,7 +257,8 @@ public class AuthorizationTestService {
 
     /**
      * Prints the reports and fails the test if there are any
-     * @param classReports The class reports
+     *
+     * @param classReports  The class reports
      * @param methodReports The method reports
      */
     private void printReports(Map<Class<?>, Set<String>> classReports, Map<Method, Set<String>> methodReports) {

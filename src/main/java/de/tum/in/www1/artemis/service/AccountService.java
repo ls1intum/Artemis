@@ -31,6 +31,7 @@ public class AccountService {
 
     /**
      * A password is invalid if it is empty, too short or too long.
+     *
      * @param password the password to validate
      * @return whether the password is invalid or not
      */

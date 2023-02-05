@@ -67,7 +67,7 @@ public class PublicResultResource {
      * - Update the result's score based on the exercise's test cases (weights, etc.)
      * - Update the exercise's test cases if the build is from a solution participation
      *
-     * @param token CI auth token
+     * @param token       CI auth token
      * @param requestBody build result of CI system
      * @return a ResponseEntity to the CI system
      */

@@ -53,7 +53,7 @@ public class PublicProgrammingSubmissionResource {
      * VCS Server at the push of a new commit
      *
      * @param participationId the participationId of the participation the repository is linked to
-     * @param requestBody the body of the post request by the VCS.
+     * @param requestBody     the body of the post request by the VCS.
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the latest commit was already notified about
      */
     @PostMapping("programming-submissions/{participationId}")
@@ -103,7 +103,7 @@ public class PublicProgrammingSubmissionResource {
      * This means that legacy exercises will trigger the repositories to be built, but we won't create submissions here anymore.
      * Therefore, incoming build results will have to create new submissions with SubmissionType.OTHER.
      *
-     * @param exerciseId the id of the programmingExercise where the test cases got changed
+     * @param exerciseId  the id of the programmingExercise where the test cases got changed
      * @param requestBody the body of the post request by the VCS.
      * @return the ResponseEntity with status 200 (OK)
      */

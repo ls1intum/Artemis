@@ -63,7 +63,7 @@ public class LegacyResource {
      * @param participationId the participationId of the participation the repository is linked to
      * @param requestBody     the body of the post request by the VCS.
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the latest commit was
-     * already notified about
+     *         already notified about
      * @deprecated use {@link PublicProgrammingSubmissionResource#processNewProgrammingSubmission(Long, Object)} instead
      */
     @PostMapping("programming-submissions/{participationId}")

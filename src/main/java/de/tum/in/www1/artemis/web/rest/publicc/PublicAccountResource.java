@@ -71,9 +71,9 @@ public class PublicAccountResource {
      * {@code POST /register} : register the user.
      *
      * @param managedUserVM the managed user View Model.
-     * @throws PasswordViolatesRequirementsException  {@code 400 (Bad Request)} if the password does not meet the requirements.
-     * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
-     * @throws LoginAlreadyUsedException {@code 400 (Bad Request)} if the login is already used.
+     * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the password does not meet the requirements.
+     * @throws EmailAlreadyUsedException             {@code 400 (Bad Request)} if the email is already used.
+     * @throws LoginAlreadyUsedException             {@code 400 (Bad Request)} if the login is already used.
      */
     @PostMapping("register")
     @EnforceNothing
@@ -211,7 +211,7 @@ public class PublicAccountResource {
      *
      * @param keyAndPassword the generated key and the new password.
      * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the password does not meet the requirements.
-     * @throws RuntimeException         {@code 500 (Internal Server Error)} if the password could not be reset.
+     * @throws RuntimeException                      {@code 500 (Internal Server Error)} if the password could not be reset.
      */
     @PostMapping("account/reset-password/finish")
     @EnforceNothing
