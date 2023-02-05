@@ -27,9 +27,9 @@ public class FeatureToggleResource {
     /**
      * PUT feature-toggle -- Updates all given features by enabling/disabling them. (Map of feature -> shouldBeEnabled)
      *
-     * @see FeatureToggleService
      * @param features A map of features (feature -> shouldBeActivated)
      * @return A list of all enabled features
+     * @see FeatureToggleService
      */
     @PutMapping("feature-toggle")
     @EnforceAdmin

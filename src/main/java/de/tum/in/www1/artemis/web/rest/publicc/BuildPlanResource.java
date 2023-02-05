@@ -29,7 +29,7 @@ public class BuildPlanResource {
      * Returns the build plan for a given programming exercise.
      *
      * @param exerciseId the exercise for which the build plan should be retrieved
-     * @param secret the secret to authenticate the request
+     * @param secret     the secret to authenticate the request
      * @return the build plan stored in the database
      */
     @GetMapping("programming-exercises/{exerciseId}/build-plan")

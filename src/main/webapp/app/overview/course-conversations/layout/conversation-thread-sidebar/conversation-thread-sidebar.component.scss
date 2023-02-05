@@ -16,6 +16,16 @@ $thread-section-card-min-width: 420px;
 .expanded-thread {
     width: calc(#{$draggable-width} + #{$thread-section-card-min-width});
 
+    .scrollbar {
+        position: relative;
+        max-height: 1000px;
+        overflow: auto;
+    }
+
+    .wrapper-scroll-y {
+        display: block;
+    }
+
     .draggable-left {
         display: flex;
         flex-direction: column;

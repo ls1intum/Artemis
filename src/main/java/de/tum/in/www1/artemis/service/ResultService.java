@@ -88,10 +88,9 @@ public class ResultService {
     /**
      * Handle the manual creation of a new result potentially including feedback
      *
-     * @param result newly created Result
+     * @param result                            newly created Result
      * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
-     * @param ratedResult override value for rated property of result
-     *
+     * @param ratedResult                       override value for rated property of result
      * @return updated result with eagerly loaded Submission and Feedback items.
      */
     public Result createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback, boolean ratedResult) {
@@ -131,7 +130,9 @@ public class ResultService {
      * Deletes result with corresponding complaint and complaint response
      *
      * @param result                      the result to delete
-     * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole participation or exercise is deleted, the participant scores have been deleted before and clearing is not necessary, then this value should be false
+     * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole
+     *                                        participation or exercise is deleted, the participant scores have been deleted before and clearing is not necessary, then this value
+     *                                        should be false
      */
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
@@ -144,7 +145,9 @@ public class ResultService {
      * Deletes result with corresponding complaint and complaint response
      *
      * @param resultId                    the id of the result for which all references should be deleted
-     * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole participation or exercise is deleted, the participant scores have been deleted before and clearing is not necessary, then this value should be false
+     * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole
+     *                                        participation or exercise is deleted, the participant scores have been deleted before and clearing is not necessary, then this value
+     *                                        should be false
      */
     public void deleteResultReferences(Long resultId, boolean shouldClearParticipantScore) {
         log.debug("Delete result references {}", resultId);
@@ -159,7 +162,7 @@ public class ResultService {
     /**
      * Create a new example result for the provided submission ID.
      *
-     * @param submissionId The ID of the submission (that is connected to an example submission) for which a result should get created
+     * @param submissionId                      The ID of the submission (that is connected to an example submission) for which a result should get created
      * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
      * @return The newly created (and empty) example result
      */
@@ -184,9 +187,9 @@ public class ResultService {
      * <p>
      * If the result is not saved (shouldSave = false), the caller is responsible to save the result (which will persist the feedback changes as well)
      *
-     * @param result           the result with should be saved with the given feedback
-     * @param feedbackList     new feedback items which replace the existing feedback
-     * @param shouldSave       whether the result should be saved or not
+     * @param result       the result with should be saved with the given feedback
+     * @param feedbackList new feedback items which replace the existing feedback
+     * @param shouldSave   whether the result should be saved or not
      * @return the updated (and potentially saved) result
      */
     public Result storeFeedbackInResult(@NotNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
@@ -203,9 +206,9 @@ public class ResultService {
      * <p>
      * If the result is not saved (shouldSave = false), the caller is responsible to save the result (which will persist the feedback changes as well)
      *
-     * @param result           the result with should be saved with the given feedback
-     * @param feedbackList     new feedback items which should be added to the feedback
-     * @param shouldSave       whether the result should be saved or not
+     * @param result       the result with should be saved with the given feedback
+     * @param feedbackList new feedback items which should be added to the feedback
+     * @param shouldSave   whether the result should be saved or not
      * @return the updated (and potentially saved) result
      */
     @NotNull
@@ -218,7 +221,7 @@ public class ResultService {
     /**
      * Returns a list of feedbacks that is filtered for students depending on the settings and the time.
      *
-     * @param result    the result for which the feedback elements should be returned
+     * @param result the result for which the feedback elements should be returned
      * @return the list of filtered feedbacks
      */
     public List<Feedback> getFeedbacksForResult(Result result) {
@@ -258,6 +261,7 @@ public class ResultService {
 
     /**
      * Returns the matching template, solution or student participation for a given build plan key.
+     *
      * @param planKey the build plan key
      * @return the matching participation
      */
@@ -289,8 +293,8 @@ public class ResultService {
     /**
      * Get the successful results for an exercise, ordered ascending by build completion date.
      *
-     * @param exercise which the results belong to.
-     * @param participations the participations for which the results should be returned
+     * @param exercise        which the results belong to.
+     * @param participations  the participations for which the results should be returned
      * @param withSubmissions true, if each result should also contain the submissions.
      * @return a list of results as described above for the given exercise.
      */
@@ -331,9 +335,10 @@ public class ResultService {
 
     /**
      * Returns the result for the given id with authorization checks.
+     *
      * @param participationId the id of the participation
-     * @param resultId the id of the result
-     * @param role the minimum role required to access the result
+     * @param resultId        the id of the result
+     * @param role            the minimum role required to access the result
      * @return the result
      */
     public Result getResultForParticipationAndCheckAccess(Long participationId, Long resultId, Role role) {

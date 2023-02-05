@@ -34,6 +34,7 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
 
     // ng-container to render createEditAnswerPostComponent
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
+    @ViewChild('createAnswerPostModal') createAnswerPostModalComponent: AnswerPostCreateEditModalComponent;
 
     constructor(private metisService: MetisService, protected changeDetector: ChangeDetectorRef) {
         super();
@@ -117,4 +118,11 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
      * by this means, Angular determines which answerPost in the collection of answerPosts has to be reloaded/destroyed on changes
      */
     answerPostTrackByFn = (index: number, answerPost: AnswerPost): number => answerPost.id!;
+
+    /**
+     * Open create answer modal
+     */
+    openCreateAnswerPostModal() {
+        this.createAnswerPostModalComponent.open();
+    }
 }

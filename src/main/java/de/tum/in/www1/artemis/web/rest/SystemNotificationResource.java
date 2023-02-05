@@ -20,7 +20,9 @@ import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
 
-/** REST controller for managing SystemNotification. */
+/**
+ * REST controller for managing SystemNotification.
+ */
 @RestController
 @RequestMapping("api/")
 public class SystemNotificationResource {

@@ -89,7 +89,7 @@ public class ResultResource {
     /**
      * GET /exercises/:exerciseId/results : get the successful results for an exercise, ordered ascending by build completion date.
      *
-     * @param exerciseId the id of the exercise for which to retrieve the results
+     * @param exerciseId      the id of the exercise for which to retrieve the results
      * @param withSubmissions defines if submissions are loaded from the database for the results
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
@@ -114,7 +114,7 @@ public class ResultResource {
      * GET /exercises/:exerciseId/results-with-points-per-criterion : get the successful results for an exercise, ordered ascending by build completion date.
      * Also contains for each result the points the student achieved with manual feedback. Those points are grouped as sum for each grading criterion.
      *
-     * @param exerciseId of the exercise for which to retrieve the results.
+     * @param exerciseId      of the exercise for which to retrieve the results.
      * @param withSubmissions defines if submissions are loaded from the database for the results.
      * @return the ResponseEntity with status 200 (OK) and the list of results with points in body.
      */
@@ -139,7 +139,7 @@ public class ResultResource {
      * GET /participations/:participationId/results/:resultId : get the "id" result.
      *
      * @param participationId the id of the participation to the result
-     * @param resultId the id of the result to retrieve
+     * @param resultId        the id of the result to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
     @GetMapping("participations/{participationId}/results/{resultId}")
@@ -154,9 +154,11 @@ public class ResultResource {
      * GET /participations/:participationId/results/:resultId/details : get the build result details from CI service for the "id" result.
      * This method is only invoked if the result actually includes details (e.g. feedback or build errors)
      *
-     * @param participationId  the id of the participation to the result
-     * @param resultId the id of the result to retrieve. If the participation related to the result is not a StudentParticipation or ProgrammingExerciseParticipation, the endpoint will return forbidden!
-     * @return the ResponseEntity with status 200 (OK) and with body the result, status 404 (Not Found) if the result does not exist or 403 (forbidden) if the user does not have permissions to access the participation.
+     * @param participationId the id of the participation to the result
+     * @param resultId        the id of the result to retrieve. If the participation related to the result is not a StudentParticipation or ProgrammingExerciseParticipation, the
+     *                            endpoint will return forbidden!
+     * @return the ResponseEntity with status 200 (OK) and with body the result, status 404 (Not Found) if the result does not exist or 403 (forbidden) if the user does not have
+     *         permissions to access the participation.
      */
     @GetMapping("participations/{participationId}/results/{resultId}/details")
     @PreAuthorize("hasRole('USER')")
@@ -192,7 +194,7 @@ public class ResultResource {
      * DELETE /participations/:participationId/results/:resultId : delete the "id" result.
      *
      * @param participationId the id of the participation to the result
-     * @param resultId the id of the result to delete
+     * @param resultId        the id of the result to delete
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("participations/{participationId}/results/{resultId}")
@@ -207,8 +209,8 @@ public class ResultResource {
     /**
      * POST exercises/:exerciseId/example-submissions/:submissionId/example-results : Creates a new example result for the provided example submission ID.
      *
-     * @param exerciseId id of the exercise to the submission
-     * @param exampleSubmissionId The example submission ID for which an example result should get created
+     * @param exerciseId                        id of the exercise to the submission
+     * @param exampleSubmissionId               The example submission ID for which an example result should get created
      * @param isProgrammingExerciseWithFeedback Whether the related exercise is a programming exercise with feedback
      * @return The newly created result
      */
@@ -228,11 +230,12 @@ public class ResultResource {
     }
 
     /**
-     * POST exercises/:exerciseId/external-submission-results : Creates a new result for the provided exercise and student (a participation and an empty submission will also be created if they do not exist yet)
+     * POST exercises/:exerciseId/external-submission-results : Creates a new result for the provided exercise and student (a participation and an empty submission will also be
+     * created if they do not exist yet)
      *
-     * @param exerciseId The exercise ID for which a result should get created
+     * @param exerciseId   The exercise ID for which a result should get created
      * @param studentLogin The student login (username) for which a result should get created
-     * @param result The result to be created
+     * @param result       The result to be created
      * @return The newly created result
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */

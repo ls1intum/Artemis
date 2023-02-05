@@ -69,6 +69,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     /**
      * Tests the registration of a user when an old unactivated User existed.
      * Also tries to verify that the inability to delete such user in GitLab does not hinder the operation.
+     *
      * @throws Exception on unknown failure
      */
     @Test
@@ -105,6 +106,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
 
     /**
      * Tests the registration of a user can not overwrite and existing user.
+     *
      * @throws Exception on unknown failure
      */
     @Test

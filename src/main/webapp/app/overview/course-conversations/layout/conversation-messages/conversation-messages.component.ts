@@ -1,7 +1,21 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectorRef,
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnDestroy,
+    OnInit,
+    Output,
+    QueryList,
+    ViewChild,
+    ViewChildren,
+    ViewEncapsulation,
+} from '@angular/core';
 import { faCircleNotch, faEnvelope, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, map, takeUntil } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
@@ -12,11 +26,12 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { OneToOneChat, isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { canCreateNewMessageInConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
-
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 @Component({
     selector: 'jhi-conversation-messages',
     templateUrl: './conversation-messages.component.html',
     styleUrls: ['./conversation-messages.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
@@ -25,10 +40,14 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     @Output() openThread = new EventEmitter<Post>();
 
+    @ViewChild('searchInput')
+    searchInput: ElementRef;
+
     @ViewChildren('postingThread')
     messages: QueryList<any>;
     @ViewChild('container')
     content: ElementRef;
+    @Input()
     course?: Course;
 
     getAsChannel = getAsChannelDto;
@@ -38,10 +57,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     previousScrollDistanceFromTop: number;
     // as set for the css class '.posting-infinite-scroll-container'
     messagesContainerHeight = 700;
-    postDisplayedInThread: Post;
-
     currentPostContextFilter?: PostContextFilter;
-    searchText?: string;
+    private readonly search$ = new Subject<string>();
+    searchText = '';
     _activeConversation?: ConversationDto;
 
     newPost?: Post;
@@ -56,17 +74,16 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     faCircleNotch = faCircleNotch;
 
     constructor(
-        protected metisService: MetisService, // instance from course-messages.component
-        public metisConversationService: MetisConversationService, // instance from course-messages.component
+        public metisService: MetisService, // instance from course-conversations.component
+        public metisConversationService: MetisConversationService, // instance from course-conversations.component
         public cdr: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
-        this.course = this.metisConversationService.course!;
-        this.cdr.detectChanges();
-        this.setupMetis();
+        this.subscribeToSearch();
         this.subscribeToMetis();
         this.subscribeToActiveConversation();
+        this.cdr.detectChanges();
     }
 
     private subscribeToActiveConversation() {
@@ -74,6 +91,25 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this._activeConversation = conversation;
             this.onActiveConversationChange();
         });
+    }
+
+    private subscribeToSearch() {
+        this.search$
+            .pipe(
+                debounceTime(300),
+                distinctUntilChanged(),
+                map((searchText: string | null | undefined) => {
+                    const cleanedSearchText = searchText !== null && searchText !== undefined ? searchText : '';
+                    return cleanedSearchText.trim().toLowerCase();
+                }),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe({
+                next: (searchText: string) => {
+                    this.searchText = searchText;
+                    this.onSearch();
+                },
+            });
     }
 
     ngAfterViewInit() {
@@ -87,17 +123,14 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private onActiveConversationChange() {
         if (this.course && this._activeConversation) {
-            this.searchText = '';
-            this.commandMetisToFetchPosts(true);
+            if (this.searchInput) {
+                this.searchInput.nativeElement.value = '';
+                this.searchText = '';
+            }
+            this.onSearch();
             this.createEmptyPost();
         }
     }
-
-    private setupMetis() {
-        this.metisService.setPageType(PageType.OVERVIEW);
-        this.metisService.setCourse(this.course!);
-    }
-
     private subscribeToMetis() {
         this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
             this.setPosts(posts);
@@ -122,11 +155,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     setPosts(posts: Post[]): void {
-        this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
-        this.posts = posts.slice().reverse();
-        if (this.postDisplayedInThread) {
-            this.setPostForThread(posts.find((post) => post.id === this.postDisplayedInThread?.id)!);
+        if (this.content) {
+            this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
         }
+        this.posts = posts.slice().reverse();
     }
 
     fetchNextPage() {
@@ -135,6 +167,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.page += 1;
             this.commandMetisToFetchPosts();
         }
+        this.content.nativeElement.scrollTop = this.content.nativeElement.scrollTop + 50;
     }
 
     public commandMetisToFetchPosts(forceUpdate = false) {
@@ -176,7 +209,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     postsTrackByFn = (index: number, post: Post): number => post.id!;
 
     setPostForThread(post: Post) {
-        this.postDisplayedInThread = post;
         this.openThread.emit(post);
     }
     handleScrollOnNewMessage = () => {
@@ -187,5 +219,17 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     scrollToBottomOfMessages() {
         this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+    }
+
+    onSearchQueryInput($event: Event) {
+        const searchTerm = ($event.target as HTMLInputElement).value?.trim().toLowerCase() ?? '';
+        this.search$.next(searchTerm);
+    }
+
+    clearSearchInput() {
+        if (this.searchInput) {
+            this.searchInput.nativeElement.value = '';
+            this.searchInput.nativeElement.dispatchEvent(new Event('input'));
+        }
     }
 }

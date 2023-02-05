@@ -65,19 +65,23 @@ examples.forEach((conversation) => {
         });
 
         it('should call changeHiddenStatus when button is clicked', fakeAsync(() => {
+            const conversationHiddenStatusChangeSpy = jest.spyOn(component.conversationHiddenStatusChange, 'emit');
             const button = fixture.debugElement.nativeElement.querySelector('.hide');
             button.click();
             tick(501);
             expect(changeHiddenStatusSpy).toHaveBeenCalledOnce();
             expect(changeHiddenStatusSpy).toHaveBeenCalledWith(course.id, conversation.id, true);
+            expect(conversationHiddenStatusChangeSpy).toHaveBeenCalledOnce();
         }));
 
         it('should call changeFavoriteStatus when button is clicked', fakeAsync(() => {
+            const conversationFavoriteStatusChangeSpy = jest.spyOn(component.conversationFavoriteStatusChange, 'emit');
             const button = fixture.debugElement.nativeElement.querySelector('.favorite');
             button.click();
             tick(501);
             expect(changeFavoriteStatusSpy).toHaveBeenCalledOnce();
             expect(changeFavoriteStatusSpy).toHaveBeenCalledWith(course.id, conversation.id, true);
+            expect(conversationFavoriteStatusChangeSpy).toHaveBeenCalledOnce();
         }));
 
         it('should open conversation detail with setting tab if setting button is clicked', fakeAsync(() => {
