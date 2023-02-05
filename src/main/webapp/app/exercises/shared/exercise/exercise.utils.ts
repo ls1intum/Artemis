@@ -1,7 +1,7 @@
 import { SimpleChanges } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
-import { Participation } from 'app/entities/participation/participation.model';
+import { InitializationState, Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -133,49 +133,44 @@ export const getExerciseDueDate = (exercise: Exercise, participation?: Participa
 };
 
 /**
- * Checks if the given exercise has student participations.
- *
- * @param exercise
- * @return {boolean}
- */
-export const hasStudentParticipations = (exercise: Exercise) => {
-    return exercise.studentParticipations && exercise.studentParticipations.length > 0;
-};
-
-/**
  * Determines if the exercise can be started, this is the case if:
- * - It is after the start date or the participant is at least a tutor
  * - In case of a programming exercise it is not before the due date
+ * - There is no participation or in case of a programming exercise the setup is not yet finished
  * @param exercise the exercise that should be started
+ * @param participation the potentially existing participation
  */
-export const isStartExerciseAvailable = (exercise: Exercise): boolean => {
-    return exercise.type !== ExerciseType.PROGRAMMING || !exercise.dueDate || dayjs().isBefore(exercise.dueDate);
+export const isStartExerciseAvailable = (exercise: Exercise, participation?: StudentParticipation): boolean => {
+    const isProgrammingExercise = exercise.type === ExerciseType.PROGRAMMING;
+    const validDueDate = !isProgrammingExercise || !exercise.dueDate || dayjs().isBefore(exercise.dueDate);
+
+    return validDueDate && (!participation || (isProgrammingExercise && programmingSetupNotFinished(participation)));
 };
 
 /**
- * Determines if the student can resume
+ * Determines if the student can resume a participation
  * @param exercise the exercise that should be started
- * @param studentParticipation the optional student participation with possibly an individual due date
+ * @param participation the optional student participation with possibly an individual due date
  */
-export const isResumeExerciseAvailable = (exercise: Exercise, studentParticipation?: StudentParticipation): boolean => {
-    if (!studentParticipation?.individualDueDate) {
-        return isStartExerciseAvailable(exercise);
-    }
-    return dayjs().isBefore(studentParticipation.individualDueDate);
+export const isResumeExerciseAvailable = (exercise: Exercise, participation?: StudentParticipation): boolean => {
+    const dueDate = participation?.individualDueDate ?? exercise.dueDate;
+    // A normal participation may only be resumed before the due date, a testrun only afterwards
+    return (!dueDate || dayjs().isBefore(dueDate)) === !participation?.testRun;
 };
 
 /**
  * The start practice button should be available for programming and quiz exercises
- * - For quizzes when they are open for practice and the regular work periode is over
+ * - For quizzes when they are open for practice and the regular work period is over
  * - For programming exercises when it's after the due date
+ * @param exercise the exercise that the student wants to practice
+ * @param participation the potentially existing participation
  */
-export const isStartPracticeAvailable = (exercise: Exercise): boolean => {
+export const isStartPracticeAvailable = (exercise: Exercise, participation?: StudentParticipation): boolean => {
     switch (exercise.type) {
         case ExerciseType.QUIZ:
             const quizExercise = exercise as QuizExercise;
             return !!(quizExercise.isOpenForPractice && quizExercise.quizEnded);
         case ExerciseType.PROGRAMMING:
-            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !exercise.teamMode;
+            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !exercise.teamMode && (!participation || programmingSetupNotFinished(participation));
         default:
             return false;
     }
@@ -219,4 +214,13 @@ export const getPositiveAndCappedTotalScore = (totalScore: number, maxPoints: nu
     }
 
     return +totalScore.toFixed(2);
+};
+
+const programmingSetupNotFinished = (participation: StudentParticipation): boolean => {
+    return (
+        !!participation.initializationState &&
+        [InitializationState.UNINITIALIZED, InitializationState.BUILD_PLAN_CONFIGURED, InitializationState.REPO_CONFIGURED, InitializationState.REPO_COPIED].includes(
+            participation.initializationState,
+        )
+    );
 };
