@@ -37,9 +37,8 @@ public abstract class Posting extends DomainObject {
     @Column(name = "creation_date", updatable = false)
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
-    // TODO: in the future we should allow longer posts with more than 1000 characters
-    @Size(max = 1000)
-    @Column(name = "content", length = 1000)
+    @Size(max = 5000)
+    @Column(name = "content", length = 5000)
     private String content;
 
     // To be used as soon as more advanced strategies for post similarity comparisons are developed
