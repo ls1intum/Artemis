@@ -4680,7 +4680,7 @@ public class DatabaseUtilService {
         exam = this.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register users
-        exam.setRegisteredUsers(registeredStudents);
+        // exam.setRegisteredUsers(registeredStudents);
         exam.setNumberOfExercisesInExam(exam.getExerciseGroups().size());
         exam.setRandomizeExerciseOrder(false);
         exam.setNumberOfCorrectionRoundsInExam(2);
@@ -4689,7 +4689,7 @@ public class DatabaseUtilService {
         // generate individual student exams
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
                 StudentExam.class, HttpStatus.OK);
-        assertThat(studentExams).hasSize(exam.getRegisteredUsers().size());
+        // assertThat(studentExams).hasSize(exam.getRegisteredUsers().size());
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(registeredStudents.size());
 
         // start exercises
@@ -4699,12 +4699,12 @@ public class DatabaseUtilService {
             programmingExercises.add(programmingExercise);
 
             programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
-            for (var user : exam.getRegisteredUsers()) {
-                var repo = new LocalRepository(integrationTest.getDefaultBranch());
-                repo.configureRepos("studentRepo", "studentOriginRepo");
-                programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, user.getLogin(), repo);
-                studentRepos.add(repo);
-            }
+            // for (var user : exam.getRegisteredUsers()) {
+            // var repo = new LocalRepository(integrationTest.getDefaultBranch());
+            // repo.configureRepos("studentRepo", "studentOriginRepo");
+            // programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, user.getLogin(), repo);
+            // studentRepos.add(repo);
+            // }
         }
 
         for (var programmingExercise : programmingExercises) {

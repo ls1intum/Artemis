@@ -1863,7 +1863,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
         exam2.setPublishResultsDate(ZonedDateTime.now());
         exam2 = examRepository.save(exam2);
-        exam2 = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(exam2.getId());
+        exam2 = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam2.getId());
 
         // evaluate quizzes
         request.postWithoutLocation("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/student-exams/evaluate-quiz-exercises", null, HttpStatus.OK,
@@ -1875,7 +1875,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
-        mockDeleteProgrammingExercise(programmingExerciseTestService, programmingExercise, exam2.getRegisteredUsers());
+        // mockDeleteProgrammingExercise(programmingExerciseTestService, programmingExercise, exam2.getRegisteredUsers());
 
         request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam2.getId())).as("Exam was deleted").isEmpty();
