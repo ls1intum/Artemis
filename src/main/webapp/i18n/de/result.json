@@ -86,6 +86,7 @@
             "preliminaryTooltip": "Dein Ergebnis ist noch nicht endgültig, weil weitere Tests nach der Einreichungsfrist ausgeführt werden.",
             "preliminaryTooltipSemiAutomatic": "Dein Ergebnis ist noch nicht endgültig, weil weitere Tests nach der Einreichungsfrist ausgeführt werden oder eine manuelle Bewertung aussteht.",
             "noResultDetails": "Keine weiteren Informationen verfügbar für dieses Ergebnis.",
+            "onlyCompilationTested": "Dein Code wurde erfolgreich kompiliert. Im moment sind keine Testfälle sichtbar",
             "chart": {
                 "points": "Punkte",
                 "deductions": "Abzüge",
