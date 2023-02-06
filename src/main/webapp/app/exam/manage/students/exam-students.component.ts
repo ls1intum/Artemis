@@ -34,6 +34,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     readonly ButtonSize = ButtonSize;
     readonly ActionType = ActionType;
     readonly SERVER_API_URL = SERVER_API_URL;
+    readonly missingImage = '/content/images/missing_image.png';
 
     courseId: number;
     exam: Exam;
