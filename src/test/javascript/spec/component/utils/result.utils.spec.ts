@@ -55,8 +55,8 @@ describe('ResultUtils', () => {
         },
         { result: { score: undefined, successful: true }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-success' },
         { result: { score: undefined, successful: false }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
-        { result: { score: MIN_SCORE_GREEN }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-success' },
-        { result: { score: MIN_SCORE_ORANGE }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'result-orange' },
+        { result: { score: MIN_SCORE_GREEN, testCaseCount: 1 }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-success' },
+        { result: { score: MIN_SCORE_ORANGE, testCaseCount: 1 }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'result-orange' },
         { result: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
     ])('should correctly determine text color class', ({ result, templateStatus, expected }) => {
         expect(getTextColorClass(result, templateStatus!)).toBe(expected);

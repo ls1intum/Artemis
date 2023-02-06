@@ -12,7 +12,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercises/shared/participation/participation.utils';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 
@@ -207,12 +207,12 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
         return 'text-secondary';
     }
 
-    if (isOnlyCompilationTested(result, templateStatus)) {
-        return 'text-success';
-    }
-
     if (result?.score === undefined) {
         return result?.successful ? 'text-success' : 'text-danger';
+    }
+
+    if (isOnlyCompilationTested(result, templateStatus) && result.participation?.exercise?.type === ExerciseType.PROGRAMMING) {
+        return 'text-success';
     }
 
     if (result.score >= MIN_SCORE_GREEN) {
