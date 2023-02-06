@@ -178,7 +178,7 @@ export const evaluateTemplateStatus = (
 
 /**
  * Checks if only compilation was tested. This is the case, when a successful result is present with 0 of 0 passed tests
- * This could be because all test cases have visibility after the due date.
+ * This could be because all test cases are only visible after the due date.
  */
 export const isOnlyCompilationTested = (result: Result | undefined, templateStatus: ResultTemplateStatus): boolean => {
     const zeroTests = !result?.testCaseCount;
