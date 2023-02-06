@@ -47,9 +47,9 @@
                     <label class="d-block">{{ 'artemisApp.dialogs.createChannel.channelForm.isPublicInput.label' | artemisTranslate }}</label>
                     <div class="btn-group" role="group">
                         <input formControlName="isPublic" type="radio" class="btn-check" id="public" autocomplete="off" checked [value]="true" />
-                        <label class="btn btn-secondary" for="public">{{ 'artemisApp.dialogs.createChannel.channelForm.isPublicInput.public' | artemisTranslate }}</label>
+                        <label class="btn btn-outline-secondary" for="public">{{ 'artemisApp.dialogs.createChannel.channelForm.isPublicInput.public' | artemisTranslate }}</label>
                         <input formControlName="isPublic" type="radio" class="btn-check" id="private" autocomplete="off" [value]="false" />
-                        <label class="btn btn-secondary" for="private">{{ 'artemisApp.dialogs.createChannel.channelForm.isPublicInput.private' | artemisTranslate }}</label>
+                        <label class="btn btn-outline-secondary" for="private">{{ 'artemisApp.dialogs.createChannel.channelForm.isPublicInput.private' | artemisTranslate }}</label>
                     </div>
                     <small id="isPublicHelp" class="form-text text-muted d-block">{{
                         'artemisApp.dialogs.createChannel.channelForm.isPublicInput.explanation' | artemisTranslate
@@ -62,11 +62,11 @@
                     <label class="d-block">{{ 'artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.label' | artemisTranslate }}</label>
                     <div class="btn-group" role="group">
                         <input formControlName="isAnnouncementChannel" type="radio" class="btn-check" id="isAnnouncementChannel" autocomplete="off" checked [value]="true" />
-                        <label class="btn btn-secondary" for="isAnnouncementChannel">{{
+                        <label class="btn btn-outline-secondary" for="isAnnouncementChannel">{{
                             'artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.true' | artemisTranslate
                         }}</label>
                         <input formControlName="isAnnouncementChannel" type="radio" class="btn-check" id="isNotAnnouncementChannel" autocomplete="off" [value]="false" />
-                        <label class="btn btn-secondary" for="isNotAnnouncementChannel">{{
+                        <label class="btn btn-outline-secondary" for="isNotAnnouncementChannel">{{
                             'artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.false' | artemisTranslate
                         }}</label>
                     </div>
