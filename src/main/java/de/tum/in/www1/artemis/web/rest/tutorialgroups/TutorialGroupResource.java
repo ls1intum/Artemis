@@ -234,7 +234,9 @@ public class TutorialGroupResource {
             taFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(persistedTutorialGroup, user, responsibleUser));
         }
 
-        tutorialGroupChannelManagementService.setUpChannelForTutorialGroup(persistedTutorialGroup);
+        if (configuration.getUseTutorialGroupChannels()) {
+            tutorialGroupChannelManagementService.setUpChannelForTutorialGroup(persistedTutorialGroup);
+        }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId()))
                 .body(TutorialGroup.preventCircularJsonConversion(persistedTutorialGroup));
@@ -301,12 +303,6 @@ public class TutorialGroupResource {
             checkScheduleDateAndTimeFormatAreValid(updatedTutorialGroup.getTutorialGroupSchedule());
         }
 
-        if (!oldTutorialGroup.getTitle().equals(updatedTutorialGroup.getTitle())) {
-            checkTitleIsValid(updatedTutorialGroup);
-            tutorialGroupChannelManagementService.updateNameAndDescriptionOfTutorialGroupChannel(updatedTutorialGroup);
-
-        }
-
         Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
         if (configurationOptional.isEmpty()) {
             throw new BadRequestException("The course has no tutorial groups configuration");
@@ -314,6 +310,13 @@ public class TutorialGroupResource {
         var configuration = configurationOptional.get();
         if (configuration.getCourse().getTimeZone() == null) {
             throw new BadRequestException("The course has no time zone");
+        }
+        if (!oldTutorialGroup.getTitle().equals(updatedTutorialGroup.getTitle())) {
+            checkTitleIsValid(updatedTutorialGroup);
+            if (configuration.getUseTutorialGroupChannels()) {
+                tutorialGroupChannelManagementService.updateNameAndDescriptionOfTutorialGroupChannel(updatedTutorialGroup);
+            }
+
         }
 
         // Note: We have to load the teaching assistants from database otherwise languageKey is not defined and email sending fails
@@ -325,15 +328,19 @@ public class TutorialGroupResource {
             var newTAFromDatabase = userRepository.findOneByLogin(newTA.getLogin());
             newTAFromDatabase.ifPresent(user -> {
                 singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, user, responsibleUser);
-                tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(updatedTutorialGroup, Set.of(user));
-                tutorialGroupChannelManagementService.grantUsersModeratorRoleToTutorialGroupChannel(updatedTutorialGroup, Set.of(user));
+                if (configuration.getUseTutorialGroupChannels()) {
+                    tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(updatedTutorialGroup, Set.of(user));
+                    tutorialGroupChannelManagementService.grantUsersModeratorRoleToTutorialGroupChannel(updatedTutorialGroup, Set.of(user));
+                }
             });
         }
         if (oldTA != null && (newTA == null || !newTA.equals(oldTA))) {
             var oldTAFromDatabase = userRepository.findOneByLogin(oldTA.getLogin());
             oldTAFromDatabase.ifPresent(user -> {
                 singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(oldTutorialGroup, user, responsibleUser);
-                tutorialGroupChannelManagementService.removeUsersFromTutorialGroupChannel(oldTutorialGroup, Set.of(user));
+                if (configuration.getUseTutorialGroupChannels()) {
+                    tutorialGroupChannelManagementService.removeUsersFromTutorialGroupChannel(oldTutorialGroup, Set.of(user));
+                }
             });
         }
 

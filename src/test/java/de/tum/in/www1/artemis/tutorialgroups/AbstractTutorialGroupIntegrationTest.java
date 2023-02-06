@@ -148,6 +148,8 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         tutorialGroupsConfiguration.setCourse(courseRepository.findById(courseId).get());
         tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(firstAugustMonday.toString());
         tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toString());
+        tutorialGroupsConfiguration.setUseTutorialGroupChannels(true);
+        tutorialGroupsConfiguration.setUsePublicTutorialGroupChannels(true);
         return tutorialGroupsConfiguration;
     }
 
@@ -265,13 +267,18 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         assertThat(tutorialGroupSessionToCheck.getStatusExplanation()).isEqualTo(expectedStatusExplanation);
     }
 
-    void assertConfigurationStructure(TutorialGroupsConfiguration configuration, LocalDate expectedPeriodStart, LocalDate expectedPeriodEnd, Long courseId) {
+    void assertConfigurationStructure(TutorialGroupsConfiguration configuration, LocalDate expectedPeriodStart, LocalDate expectedPeriodEnd, Long courseId,
+            Boolean expectedChannelModeEnabled, Boolean expectedChannelsPublic) {
         assertThat(configuration.getCourse().getId()).isEqualTo(courseId);
         assertThat(LocalDate.parse(configuration.getTutorialPeriodStartInclusive())).isEqualTo(expectedPeriodStart);
         assertThat(LocalDate.parse(configuration.getTutorialPeriodEndInclusive())).isEqualTo(expectedPeriodEnd);
+        assertThat(configuration.getUseTutorialGroupChannels()).isEqualTo(expectedChannelModeEnabled);
+        assertThat(configuration.getUsePublicTutorialGroupChannels()).isEqualTo(expectedChannelsPublic);
     }
 
     Channel asserTutorialGroupChannelIsCorrectlyConfigured(TutorialGroup tutorialGroup) {
+        var configuration = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(tutorialGroup.getCourse().getId()).getTutorialGroupsConfiguration();
+
         Function<TutorialGroup, String> expectedTutorialGroupName = (TutorialGroup tg) -> {
             var cleanedTitle = tg.getTitle().replaceAll("\\s", "-").toLowerCase();
             return "$" + cleanedTitle.substring(0, Math.min(cleanedTitle.length(), 19));
@@ -282,7 +289,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         assertThat(channelOptional).isPresent();
         var channel = channelOptional.get();
         assertThat(channel.getName()).isEqualTo(expectedTutorialGroupName.apply(tutorialGroupFromDb));
-        assertThat(channel.getIsPublic()).isTrue();
+        assertThat(channel.getIsPublic()).isEqualTo(configuration.getUsePublicTutorialGroupChannels());
         assertThat(channel.getIsArchived()).isFalse();
         assertThat(channel.getDescription()).isEqualTo(tutorialGroupFromDb.getTitle());
         assertThat(channel.getCreator()).isNull();

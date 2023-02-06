@@ -13,5 +13,15 @@
                                  referencedColumnNames="id" referencedTableName="conversation"/>
         <addUniqueConstraint columnNames="tutorial_group_channel_id" constraintName="tutorial_group_channel_uq"
                              tableName="tutorial_group"/>
+        <addColumn tableName="tutorial_groups_configuration">
+            <column name="use_tutorial_group_channels" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="tutorial_groups_configuration">
+            <column name="use_public_tutorial_group_channels" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>

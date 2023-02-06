@@ -52,6 +52,27 @@ public class TutorialGroupChannelManagementService {
     }
 
     /**
+     * Sets up the channels for all tutorial groups of the given course.
+     *
+     * @param course the course for which the channels should be set up
+     * @return the set of channels that were set up
+     */
+    public Set<Channel> setUpChannelsForCourse(Course course) {
+        log.debug("Set up tutorial group channels for course with id {}", course.getId());
+        return tutorialGroupRepository.findAllByCourseIdWithChannel(course.getId()).stream().map(this::setUpChannelForTutorialGroup).collect(Collectors.toSet());
+    }
+
+    /**
+     * Removes the channels for all tutorial groups of the given course.
+     *
+     * @param course the course for which the channels should be removed
+     */
+    public void removeTutorialGroupChannelsForCourse(Course course) {
+        log.debug("Remove tutorial group channels for course with id {}", course.getId());
+        tutorialGroupRepository.findAllByCourseIdWithChannel(course.getId()).forEach(this::deleteTutorialGroupChannel);
+    }
+
+    /**
      * Perform setup of channel for the given tutorial group
      * <p>
      * - Create channel if it does not exist
@@ -289,4 +310,18 @@ public class TutorialGroupChannelManagementService {
         }
     }
 
+    /**
+     * Changes the channel mode for all tutorial group channels of the given course.
+     *
+     * @param course                      the course for which the channel mode should be changed
+     * @param tutorialGroupChannelsPublic the new channel mode
+     */
+    public void changeChannelModeForCourse(Course course, Boolean tutorialGroupChannelsPublic) {
+        var channels = tutorialGroupRepository.findAllByCourseIdWithChannel(course.getId()).stream().map(this::setUpChannelForTutorialGroup).collect(Collectors.toSet());
+        channels.forEach(channel -> {
+            channel.setIsPublic(tutorialGroupChannelsPublic);
+        });
+        channelRepository.saveAll(channels);
+        log.debug("Changed public for all tutorial group channels of course with id {} to {}", course.getId(), tutorialGroupChannelsPublic);
+    }
 }

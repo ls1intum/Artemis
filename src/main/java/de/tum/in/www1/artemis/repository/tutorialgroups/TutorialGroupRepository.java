@@ -38,7 +38,7 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
     Optional<String> getTutorialGroupTitle(@Param("tutorialGroupId") Long tutorialGroupId);
 
     @Query("""
-            SELECT DISTINCT tutorialGroup.campus
+                SELECT DISTINCT tutorialGroup.campus
             FROM TutorialGroup tutorialGroup
             WHERE tutorialGroup.course.id = :#{#courseId} AND tutorialGroup.campus IS NOT NULL""")
     Set<String> findAllUniqueCampusValuesInCourse(@Param("courseId") Long courseId);
@@ -50,6 +50,14 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             ORDER BY tutorialGroup.title""")
     Set<TutorialGroup> findAllByCourseId(@Param("courseId") Long courseId);
 
+    @Query("""
+            SELECT tutorialGroup
+            FROM TutorialGroup tutorialGroup
+            LEFT JOIN FETCH tutorialGroup.tutorialGroupChannel
+            WHERE tutorialGroup.course.id = :#{#courseId}
+            ORDER BY tutorialGroup.title""")
+    Set<TutorialGroup> findAllByCourseIdWithChannel(@Param("courseId") Long courseId);
+
     boolean existsByTitleAndCourse(String title, Course course);
 
     @Query("""
@@ -59,7 +67,7 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             LEFT JOIN FETCH tutorialGroup.registrations
             LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
             WHERE tutorialGroup.course.id = :#{#courseId}
-            ORDER BY tutorialGroup.title""")
+                ORDER BY tutorialGroup.title""")
     Set<TutorialGroup> findAllByCourseIdWithTeachingAssistantAndRegistrationsAndSessions(@Param("courseId") Long courseId);
 
     @Query("""
