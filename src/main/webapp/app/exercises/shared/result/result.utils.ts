@@ -191,10 +191,6 @@ export const isOnlyCompilationTested = (result: Result | undefined, templateStat
  * @return {string} the css class
  */
 export const getTextColorClass = (result: Result | undefined, templateStatus: ResultTemplateStatus) => {
-    if (isOnlyCompilationTested(result, templateStatus)) {
-        return 'text-success';
-    }
-
     if (!result) {
         return 'text-secondary';
     }
@@ -205,6 +201,10 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
 
     if (isBuildFailedAndResultIsAutomatic(result)) {
         return 'text-danger';
+    }
+
+    if (isOnlyCompilationTested(result, templateStatus)) {
+        return 'text-success';
     }
 
     if (resultIsPreliminary(result)) {
