@@ -203,12 +203,12 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
         return 'text-danger';
     }
 
-    if (isOnlyCompilationTested(result, templateStatus)) {
-        return 'text-success';
-    }
-
     if (resultIsPreliminary(result)) {
         return 'text-secondary';
+    }
+
+    if (isOnlyCompilationTested(result, templateStatus)) {
+        return 'text-success';
     }
 
     if (result?.score === undefined) {
