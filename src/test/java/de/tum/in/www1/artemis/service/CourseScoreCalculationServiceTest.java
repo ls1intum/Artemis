@@ -123,17 +123,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         studentParticipations.get(2).setResults(Collections.emptySet());
         resultRepository.saveAll(studentParticipations.get(2).getResults());
 
-        CourseScoresForExamBonusSourceDTO courseResult = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course.getId(), List.of(student.getId()));
-        assertThat(courseResult.studentScores()).hasSize(1);
-        assertThat(courseResult.studentScores().get(0).getStudentId()).isEqualTo(student.getId());
-        assertThat(courseResult.studentScores().get(0).getRelativeScore()).isEqualTo(16.0);
-        assertThat(courseResult.studentScores().get(0).getAbsoluteScore()).isEqualTo(4.0);
-        assertThat(courseResult.studentScores().get(0).getCurrentRelativeScore()).isEqualTo(80.0);
-        assertThat(courseResult.studentScores().get(0).getPresentationScore()).isEqualTo(0);
-        assertThat(courseResult.studentScores().get(0).isPresentationScorePassed()).isFalse();
-        assertThat(courseResult.studentScores().get(0).getMostSeverePlagiarismVerdict()).isNull();
-        assertThat(courseResult.studentScores().get(0).getAbsolutePointsEligibleForBonus()).isEqualTo(0.0);
-
         // Test with null score in result.
 
         // QuizExercise is selected because it has already a score of 0 in the initial test data and we have one participation for each exercise type.
@@ -144,12 +133,16 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         assertThat(result.getScore()).isEqualTo(0.0);
         result.score(null);
 
-        StudentScoresDTO studentScoreResult = courseScoreCalculationService.calculateCourseScoreForStudent(course, student.getId(), studentParticipations, 25.0, 5.0,
-                Collections.emptyList());
-        assertThat(studentScoreResult.getRelativeScore()).isEqualTo(16.0);
-        assertThat(studentScoreResult.getAbsoluteScore()).isEqualTo(4.0);
-        assertThat(studentScoreResult.getCurrentRelativeScore()).isEqualTo(80.0);
-        assertThat(studentScoreResult.getPresentationScore()).isEqualTo(0);
+        CourseScoresForExamBonusSourceDTO courseResult = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course.getId(), List.of(student.getId()));
+        assertThat(courseResult.studentScores()).hasSize(1);
+        assertThat(courseResult.studentScores().get(0).getStudentId()).isEqualTo(student.getId());
+        assertThat(courseResult.studentScores().get(0).getRelativeScore()).isEqualTo(16.0);
+        assertThat(courseResult.studentScores().get(0).getAbsoluteScore()).isEqualTo(4.0);
+        assertThat(courseResult.studentScores().get(0).getCurrentRelativeScore()).isEqualTo(80.0);
+        assertThat(courseResult.studentScores().get(0).getPresentationScore()).isEqualTo(0);
+        assertThat(courseResult.studentScores().get(0).isPresentationScorePassed()).isFalse();
+        assertThat(courseResult.studentScores().get(0).getMostSeverePlagiarismVerdict()).isNull();
+        assertThat(courseResult.studentScores().get(0).getAbsolutePointsEligibleForBonus()).isEqualTo(0.0);
     }
 
     @Test
