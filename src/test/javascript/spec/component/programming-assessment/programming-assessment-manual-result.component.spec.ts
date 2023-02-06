@@ -496,9 +496,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         flush();
     }));
 
-    it.each([false, true])(
-        'should update assessment after complaint, serverReturnsError=%s',
-        fakeAsync((serverReturnsError: boolean) => {
+    it.each([undefined, 'genericErrorKey', 'complaintLock'])(
+        'should update assessment after complaint, errorKeyFromServer=%s',
+        fakeAsync((errorKeyFromServer: string | undefined) => {
             comp.ngOnInit();
             tick(100);
 
@@ -510,20 +510,42 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 onError: () => (onErrorCalled = true),
             };
 
-            if (serverReturnsError) {
-                updateAfterComplaintStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+            const errorMessage = 'errMsg';
+            const errorParams = ['errParam1', 'errParam2'];
+            if (errorKeyFromServer) {
+                updateAfterComplaintStub.mockReturnValue(
+                    throwError(
+                        () =>
+                            new HttpErrorResponse({
+                                status: 400,
+                                error: { message: errorMessage, errorKey: errorKeyFromServer, params: errorParams },
+                            }),
+                    ),
+                );
             }
 
+            const alertService = TestBed.inject(AlertService);
+            const errorSpy = jest.spyOn(alertService, 'error');
             const validateSpy = jest.spyOn(comp, 'validateFeedback').mockImplementation(() => (comp.assessmentsAreValid = true));
 
             comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
 
             expect(validateSpy).toHaveBeenCalledOnce();
             expect(updateAfterComplaintStub).toHaveBeenCalledOnce();
-            expect(comp.manualResult!.score).toBe(serverReturnsError ? 0 : 100);
+            expect(comp.manualResult!.score).toBe(errorKeyFromServer ? 0 : 100);
             flush();
-            expect(onSuccessCalled).toBe(!serverReturnsError);
-            expect(onErrorCalled).toBe(serverReturnsError);
+            expect(onSuccessCalled).toBe(!errorKeyFromServer);
+            expect(onErrorCalled).toBe(!!errorKeyFromServer);
+            if (!errorKeyFromServer) {
+                expect(errorSpy).not.toHaveBeenCalled();
+            } else if (errorKeyFromServer === 'complaintLock') {
+                expect(errorSpy).toHaveBeenCalledOnce();
+                expect(errorSpy).toHaveBeenCalledWith(errorMessage, errorParams);
+            } else {
+                // Handle all other errors
+                expect(errorSpy).toHaveBeenCalledOnce();
+                expect(errorSpy).toHaveBeenCalledWith('artemisApp.assessment.messages.updateAfterComplaintFailed');
+            }
         }),
     );
 

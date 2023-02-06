@@ -292,9 +292,9 @@ describe('ModelingAssessmentEditorComponent', () => {
         return feedback;
     };
 
-    it.each([false, true])(
-        'should update assessment after complaint, serverReturnsError=%s',
-        fakeAsync((serverReturnsError: boolean) => {
+    it.each([undefined, 'genericErrorKey', 'complaintLock'])(
+        'should update assessment after complaint, errorKeyFromServer=%s',
+        fakeAsync((errorKeyFromServer: string | undefined) => {
             const complaintResponse = new ComplaintResponse();
             complaintResponse.id = 1;
             complaintResponse.responseText = 'response';
@@ -317,9 +317,24 @@ describe('ModelingAssessmentEditorComponent', () => {
                 } as unknown as Participation,
             } as unknown as Result;
 
-            const serverResponse = serverReturnsError ? throwError(() => new HttpErrorResponse({ status: 400 })) : of({ body: changedResult } as EntityResponseType);
+            const errorMessage = 'errMsg';
+            const errorParams = ['errParam1', 'errParam2'];
+
             const serviceSpy = jest.spyOn(service, 'updateAssessmentAfterComplaint');
-            serviceSpy.mockReturnValue(serverResponse);
+
+            if (errorKeyFromServer) {
+                serviceSpy.mockReturnValue(
+                    throwError(
+                        () =>
+                            new HttpErrorResponse({
+                                status: 400,
+                                error: { message: errorMessage, errorKey: errorKeyFromServer, params: errorParams },
+                            }),
+                    ),
+                );
+            } else {
+                serviceSpy.mockReturnValue(of({ body: changedResult } as EntityResponseType));
+            }
 
             component.ngOnInit();
             tick(500);
@@ -331,17 +346,30 @@ describe('ModelingAssessmentEditorComponent', () => {
                 onSuccess: () => (onSuccessCalled = true),
                 onError: () => (onErrorCalled = true),
             };
+
+            const alertService = TestBed.inject(AlertService);
+            const errorSpy = jest.spyOn(alertService, 'error');
             const validateSpy = jest.spyOn(component, 'validateFeedback').mockImplementation(() => (component.assessmentsAreValid = true));
+
             component.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+
             expect(validateSpy).toHaveBeenCalledOnce();
             expect(serviceSpy).toHaveBeenCalledOnce();
-            if (serverReturnsError) {
+            if (!errorKeyFromServer) {
+                expect(errorSpy).not.toHaveBeenCalled();
+                expect(component.result?.participation?.results).toEqual([changedResult]);
+            } else if (errorKeyFromServer === 'complaintLock') {
+                expect(errorSpy).toHaveBeenCalledOnce();
+                expect(errorSpy).toHaveBeenCalledWith(errorMessage, errorParams);
                 expect(component.result?.participation?.results).toBeUndefined();
             } else {
-                expect(component.result?.participation?.results).toEqual([changedResult]);
+                // Handle all other errors
+                expect(errorSpy).toHaveBeenCalledOnce();
+                expect(errorSpy).toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
+                expect(component.result?.participation?.results).toBeUndefined();
             }
-            expect(onSuccessCalled).toBe(!serverReturnsError);
-            expect(onErrorCalled).toBe(serverReturnsError);
+            expect(onSuccessCalled).toBe(!errorKeyFromServer);
+            expect(onErrorCalled).toBe(!!errorKeyFromServer);
         }),
     );
 
