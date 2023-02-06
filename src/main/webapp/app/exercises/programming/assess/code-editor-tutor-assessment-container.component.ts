@@ -391,6 +391,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @param assessmentAfterComplaint the response to the complaint that is sent to the server along with the assessment update along with onSuccess and onError callbacks
      */
     onUpdateAssessmentAfterComplaint(assessmentAfterComplaint: AssessmentAfterComplaint): void {
+        this.validateFeedback();
+        if (!this.assessmentsAreValid) {
+            this.alertService.error('artemisApp.programmingAssessment.invalidAssessments');
+            assessmentAfterComplaint.onError();
+            return;
+        }
         this.setFeedbacksForManualResult();
         this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, assessmentAfterComplaint.complaintResponse, this.submission!.id!).subscribe({
             next: (result: Result) => {

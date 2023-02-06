@@ -65,6 +65,7 @@ import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-ed
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
+import { AlertService } from 'app/core/util/alert.service';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -522,4 +523,25 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             expect(onErrorCalled).toBe(serverReturnsError);
         }),
     );
+
+    it('should display error when complaint resolved but assessment invalid', () => {
+        let onSuccessCalled = false;
+        let onErrorCalled = false;
+        const assessmentAfterComplaint: AssessmentAfterComplaint = {
+            complaintResponse: new ComplaintResponse(),
+            onSuccess: () => (onSuccessCalled = true),
+            onError: () => (onErrorCalled = true),
+        };
+        const alertService = TestBed.inject(AlertService);
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        const validateSpy = jest.spyOn(comp, 'validateFeedback').mockImplementation(() => (comp.assessmentsAreValid = false));
+
+        comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+        expect(validateSpy).toHaveBeenCalledOnce();
+        expect(errorSpy).toHaveBeenCalledOnce();
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingAssessment.invalidAssessments');
+        expect(onSuccessCalled).toBeFalse();
+        expect(onErrorCalled).toBeTrue();
+    });
 });

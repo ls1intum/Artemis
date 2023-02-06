@@ -379,6 +379,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * @param assessmentAfterComplaint the response to the complaint that is sent to the server along with the assessment update along with onSuccess and onError callbacks
      */
     onUpdateAssessmentAfterComplaint(assessmentAfterComplaint: AssessmentAfterComplaint): void {
+        this.validateFeedback();
+        if (!this.assessmentsAreValid) {
+            this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
+            assessmentAfterComplaint.onError();
+            return;
+        }
         this.modelingAssessmentService.updateAssessmentAfterComplaint(this.feedback, assessmentAfterComplaint.complaintResponse, this.submission!.id!).subscribe({
             next: (response) => {
                 assessmentAfterComplaint.onSuccess();

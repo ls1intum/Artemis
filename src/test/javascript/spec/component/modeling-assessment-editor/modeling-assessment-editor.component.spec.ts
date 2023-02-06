@@ -42,6 +42,7 @@ import { ExampleSubmissionService } from 'app/exercises/shared/example-submissio
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import dayjs from 'dayjs/esm';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;
@@ -452,5 +453,26 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         expect(importSpy).toHaveBeenCalledOnce();
         expect(importSpy).toHaveBeenCalledWith(component.submission.id, component.modelingExercise!.id);
+    });
+
+    it('should display error when complaint resolved but assessment invalid', () => {
+        let onSuccessCalled = false;
+        let onErrorCalled = false;
+        const assessmentAfterComplaint: AssessmentAfterComplaint = {
+            complaintResponse: new ComplaintResponse(),
+            onSuccess: () => (onSuccessCalled = true),
+            onError: () => (onErrorCalled = true),
+        };
+        const alertService = TestBed.inject(AlertService);
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        const validateSpy = jest.spyOn(component, 'validateFeedback').mockImplementation(() => (component.assessmentsAreValid = false));
+
+        component.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+        expect(validateSpy).toHaveBeenCalledOnce();
+        expect(errorSpy).toHaveBeenCalledOnce();
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.modelingAssessment.invalidAssessments');
+        expect(onSuccessCalled).toBeFalse();
+        expect(onErrorCalled).toBeTrue();
     });
 });
