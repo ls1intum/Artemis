@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED;
+import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
@@ -274,6 +274,20 @@ public class ParticipationResource {
         checkAccessPermissionOwner(participation, user);
         if (!isAllowedToParticipateInProgrammingExercise(programmingExercise, participation)) {
             throw new AccessForbiddenException("You are not allowed to resume that participation.");
+        }
+
+        // There is a second participation of that student in the exericse that is inactive/finished now
+        Optional<StudentParticipation> optionalOtherStudentParticipation = participationService.findOneByExerciseAndParticipantAnyStateAndTestRun(programmingExercise, user,
+                !participation.isTestRun());
+        if (optionalOtherStudentParticipation.isPresent()) {
+            StudentParticipation otherParticipation = optionalOtherStudentParticipation.get();
+            if (participation.getInitializationState() == INACTIVE) {
+                otherParticipation.setInitializationState(FINISHED);
+            }
+            else {
+                otherParticipation.setInitializationState(INACTIVE);
+            }
+            studentParticipationRepository.saveAndFlush(otherParticipation);
         }
 
         participation = participationService.resumeProgrammingExercise(participation);
