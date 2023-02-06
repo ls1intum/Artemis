@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -92,8 +93,8 @@ public class SubmissionResource {
         for (Result result : results) {
             resultService.deleteResult(result, true);
         }
-        if (submission.get() instanceof ProgrammingSubmission) {
-            ((ProgrammingSubmission) submission.get()).setBuildLogEntries(List.of());
+        if (submission.get() instanceof ProgrammingSubmission programmingSubmission) {
+            programmingSubmission.setBuildLogEntries(Collections.emptyList());
             submissionRepository.save(submission.get());
         }
         buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.get().getId());

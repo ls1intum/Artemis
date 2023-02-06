@@ -772,10 +772,10 @@ public class ParticipationService {
         resultsToBeDeleted.forEach(result -> resultService.deleteResult(result, false));
         // Delete all submissions for this participation
         submissions.forEach(submission -> {
-            if (submission instanceof ProgrammingSubmission) {
+            if (submission instanceof ProgrammingSubmission programmingSubmission) {
                 coverageReportRepository.deleteBySubmissionId(submission.getId());
                 // This clears the build log entries and deletes them from the corresponding table
-                ((ProgrammingSubmission) submission).setBuildLogEntries(List.of());
+                programmingSubmission.setBuildLogEntries(Collections.emptyList());
                 submissionRepository.save(submission);
                 buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
             }
