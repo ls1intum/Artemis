@@ -87,6 +87,9 @@ To get to this view, instructors can either click on one of the average score ba
 
 Competencies
 ^^^^^^^^^^^^
+Competencies are overarching learning objectives that link together different course materials.
+You can watch a short narrated `tutorial on TUM-Live <https://live.rbg.tum.de/w/artemisintro/26313>`_.
+
 An instructor can view and edit all competencies of a course on the competency management page.
 The table shows the title, description, and percentage of students that mastered the respective competency.
 
