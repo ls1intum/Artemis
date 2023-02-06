@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -6,6 +6,7 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, CourseWideContext, PageType } from '../metis.util';
 import { faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
+import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 
 @Component({
     selector: 'jhi-post',
@@ -21,6 +22,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     @Input() modalRef?: NgbModalRef;
     @Input() showAnswers: boolean;
     @Output() openThread = new EventEmitter<void>();
+    @ViewChild('postFooter') postFooterComponent: PostFooterComponent;
 
     displayInlineInput = false;
 
@@ -79,5 +81,12 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         if (!$event.metaKey) {
             this.modalRef?.dismiss();
         }
+    }
+
+    /**
+     * Open create answer modal
+     */
+    openCreateAnswerPostModal() {
+        this.postFooterComponent.openCreateAnswerPostModal();
     }
 }
