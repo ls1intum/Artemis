@@ -134,12 +134,11 @@ public class CourseScoreCalculationService {
                     maxAndReachablePoints.reachablePoints, plagiarismCases);
 
             boolean presentationScorePassed;
-            PlagiarismVerdict mostSeverePlagiarismVerdict;
+            PlagiarismVerdict mostSeverePlagiarismVerdict = null;
             boolean hasParticipated;
             PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
             if (entry.getValue().isEmpty()) {
                 presentationScorePassed = false;
-                mostSeverePlagiarismVerdict = null;
                 hasParticipated = false;
             }
             else if (plagiarismMapping.studentHasVerdict(entry.getKey(), PlagiarismVerdict.PLAGIARISM)) {
@@ -323,6 +322,13 @@ public class CourseScoreCalculationService {
         return pointsAchievedFromExercise;
     }
 
+    /**
+     * Returns the result of the participation that should be used for the score calculation.
+     *
+     * @param participation the participation for which the result should be returned.
+     * @param dueDate       the due date of the exercise.
+     * @return the result that should be used for the score calculation.
+     */
     public Result getResultForParticipation(Participation participation, ZonedDateTime dueDate) {
         if (participation == null) {
             return null;
@@ -423,6 +429,12 @@ public class CourseScoreCalculationService {
         return coursePresentationScore == null || achievedPresentationScore >= coursePresentationScore;
     }
 
+    /**
+     * Finds the most severe plagiarism verdict for a single student.
+     *
+     * @param plagiarismCasesForSingleStudent the plagiarism cases for a single student.
+     * @return the most severe plagiarism verdict for a single student.
+     */
     public PlagiarismVerdict findMostServerePlagiarismVerdict(Collection<PlagiarismCase> plagiarismCasesForSingleStudent) {
         if (plagiarismCasesForSingleStudent.isEmpty()) {
             return null;

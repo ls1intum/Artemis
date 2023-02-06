@@ -121,8 +121,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         // Test with empty result set.
         studentParticipations.get(2).setResults(Collections.emptySet());
-
-        // Save results and participations.
         resultRepository.saveAll(studentParticipations.get(2).getResults());
 
         CourseScoresForExamBonusSourceDTO courseResult = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course.getId(), List.of(student.getId()));
