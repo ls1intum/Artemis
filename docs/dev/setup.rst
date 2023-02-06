@@ -662,8 +662,11 @@ Getting Started with Docker Compose
 5. Run ``docker compose down`` in the project root to stop and remove the docker containers
 
 .. tip::
-  The first ``docker compose pull`` command is just necessary the first time as extra step, as otherwise Artemis will be
-  built from source as you don't already have an Artemis Image locally.
+  | The first ``docker compose pull`` command is just necessary the first time as an extra step,
+    as otherwise Artemis will be built from source as you don't already have an Artemis Image locally.
+  |
+  | For Arm-based Macs, Dev boards, etc. you will have to build the Artemis Docker Image first as we currently do not
+    distribute Docker Images for these architectures.
 
 Other Docker Compose Setups
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
