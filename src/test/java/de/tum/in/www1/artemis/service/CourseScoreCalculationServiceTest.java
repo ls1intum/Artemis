@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
 
@@ -34,6 +35,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ResultRepository resultRepository;
 
     private Course course;
 
@@ -113,6 +117,16 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         // Test with empty result set.
         studentParticipations.get(2).setResults(Collections.emptySet());
 
+        // Test with null score in result.
+
+        // QuizExercise is selected because it has already a score of 0 in the initial test data and we have one participation for each exercise type.
+        // Besides that, exercise type is irrelevant for this test.
+        StudentParticipation studentParticipationWithZeroScore = studentParticipations.stream().filter(participation -> participation.getExercise() instanceof QuizExercise)
+                .findFirst().orElseThrow();
+        Result result = studentParticipationWithZeroScore.getResults().iterator().next();
+        assertThat(result.getScore()).isEqualTo(0.0);
+        result.score(null);
+
         var studentScoreResult = courseScoreCalculationService.calculateCourseScoreForStudent(student.getId(), studentParticipations, 25.0, 5.0,
                 new PlagiarismCaseService.PlagiarismMapping(Collections.emptyMap()));
         assertThat(studentScoreResult.studentId()).isEqualTo(student.getId());
@@ -124,6 +138,60 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         assertThat(studentScoreResult.mostSeverePlagiarismVerdict()).isNull();
         assertThat(studentScoreResult.getAbsolutePointsEligibleForBonus()).isEqualTo(0.0);
 
+    }
+
+    @Test
+    void calculateCourseScoreWithNoParticipations() {
+
+        User student = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+
+        var studentScore = courseScoreCalculationService.calculateCourseScoreForStudent(student.getId(), Collections.emptyList(), 100, 100,
+                new PlagiarismCaseService.PlagiarismMapping(Collections.emptyMap()));
+        assertThat(studentScore.studentId()).isEqualTo(student.getId());
+        assertThat(studentScore.absolutePoints()).isEqualTo(0.0);
+        assertThat(studentScore.relativeScore()).isEqualTo(0.0);
+        assertThat(studentScore.currentRelativeScore()).isEqualTo(0.0);
+        assertThat(studentScore.achievedPresentationScore()).isEqualTo(0);
+        assertThat(studentScore.mostSeverePlagiarismVerdict()).isNull();
+        assertThat(studentScore.getAbsolutePointsEligibleForBonus()).isEqualTo(0.0);
+        assertThat(studentScore.hasParticipated()).isFalse();
+        assertThat(studentScore.presentationScorePassed()).isFalse();
+
+    }
+
+    @Test
+    void getResultsForParticipationEdgeCases() {
+
+        ZonedDateTime dueDate = ZonedDateTime.now();
+        course.getExercises().forEach(ex -> ex.setDueDate(dueDate));
+
+        exerciseRepository.saveAll(course.getExercises());
+
+        // Test null participation case.
+        assertThat(courseScoreCalculationService.getResultForParticipation(null, dueDate)).isNull();
+
+        User student = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+
+        var studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
+
+        assertThat(studentParticipations).isNotEmpty();
+
+        // Test with multiple results to assert they are sorted.
+        StudentParticipation studentParticipation = studentParticipations.get(0);
+        database.createSubmissionAndResult(studentParticipation, 50, true);
+        database.createSubmissionAndResult(studentParticipation, 40, true);
+        Result latestResult = database.createSubmissionAndResult(studentParticipation, 60, true);
+
+        // Test getting the latest rated result.
+        studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
+        assertThat(courseScoreCalculationService.getResultForParticipation(studentParticipations.get(0), dueDate).getScore()).isEqualTo(latestResult.getScore());
+
+        // Test with latest rated result after the due date and grade period.
+        latestResult.setCompletionDate(dueDate.plusSeconds(30L)); // Grade Period is 10 seconds, add more than that.
+        resultRepository.save(latestResult);
+
+        studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
+        assertThat(courseScoreCalculationService.getResultForParticipation(studentParticipations.get(0), dueDate).getScore()).isEqualTo(0L);
     }
 
 }
