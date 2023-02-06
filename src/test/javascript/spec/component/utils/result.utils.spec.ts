@@ -1,4 +1,4 @@
-import { ResultTemplateStatus, getResultIconClass, getTextColorClass, getUnreferencedFeedback, onlyShowSuccessfulCompileStatus } from 'app/exercises/shared/result/result.utils';
+import { ResultTemplateStatus, getResultIconClass, getTextColorClass, getUnreferencedFeedback, isOnlyCompilationTested } from 'app/exercises/shared/result/result.utils';
 import { FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -37,7 +37,7 @@ describe('ResultUtils', () => {
             expected: false,
         },
     ])('should correctly determine if compilation is tested', ({ result, templateStatus, expected }) => {
-        expect(onlyShowSuccessfulCompileStatus(result, templateStatus!)).toBe(expected);
+        expect(isOnlyCompilationTested(result, templateStatus!)).toBe(expected);
     });
 
     it.each([

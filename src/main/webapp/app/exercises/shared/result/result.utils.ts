@@ -178,9 +178,9 @@ export const evaluateTemplateStatus = (
 
 /**
  * Checks if only compilation was tested. This is the case, when a successful result is present with 0 of 0 passed tests
- *
+ * This could be because all test cases have visibility after the due date.
  */
-export const onlyShowSuccessfulCompileStatus = (result: Result | undefined, templateStatus: ResultTemplateStatus): boolean => {
+export const isOnlyCompilationTested = (result: Result | undefined, templateStatus: ResultTemplateStatus): boolean => {
     const zeroTests = !result?.testCaseCount;
     return templateStatus !== ResultTemplateStatus.NO_RESULT && templateStatus !== ResultTemplateStatus.IS_BUILDING && !isBuildFailed(result?.submission) && zeroTests;
 };
@@ -191,6 +191,10 @@ export const onlyShowSuccessfulCompileStatus = (result: Result | undefined, temp
  * @return {string} the css class
  */
 export const getTextColorClass = (result: Result | undefined, templateStatus: ResultTemplateStatus) => {
+    if (isOnlyCompilationTested(result, templateStatus)) {
+        return 'text-success';
+    }
+
     if (!result) {
         return 'text-secondary';
     }
@@ -239,7 +243,7 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
         return faQuestionCircle;
     }
 
-    if (onlyShowSuccessfulCompileStatus(result, templateStatus)) {
+    if (isOnlyCompilationTested(result, templateStatus)) {
         return faCheckCircle;
     }
 
