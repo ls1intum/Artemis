@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 
@@ -49,9 +50,11 @@ public class ChannelResource {
 
     private final ConversationService conversationService;
 
+    private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+
     public ChannelResource(ChannelService channelService, ChannelRepository channelRepository, ChannelAuthorizationService channelAuthorizationService,
             AuthorizationCheckService authorizationCheckService, ConversationDTOService conversationDTOService, CourseRepository courseRepository, UserRepository userRepository,
-            ConversationService conversationService) {
+            ConversationService conversationService, TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.channelAuthorizationService = channelAuthorizationService;
@@ -60,6 +63,7 @@ public class ChannelResource {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.conversationService = conversationService;
+        this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
     }
 
     /**
@@ -161,6 +165,11 @@ public class ChannelResource {
         }
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         channelAuthorizationService.isAllowedToDeleteChannel(channel, requestingUser);
+
+        tutorialGroupChannelManagementService.getTutorialGroupBelongingToChannel(channel).ifPresentOrElse(tutorialGroup -> {
+            throw new BadRequestAlertException("The channel belongs to tutorial group " + tutorialGroup.getTitle(), CHANNEL_ENTITY_NAME, "channel.tutorialGroup.mismatch");
+        }, Optional::empty);
+
         conversationService.deleteConversation(channel);
         return ResponseEntity.ok().build();
     }

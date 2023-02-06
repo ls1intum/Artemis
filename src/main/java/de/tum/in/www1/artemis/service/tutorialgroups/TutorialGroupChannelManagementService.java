@@ -281,12 +281,27 @@ public class TutorialGroupChannelManagementService {
     }
 
     /**
+     * Get the tutorial group belonging to the given channel. If the tutorial group is not loaded, it will be fetched from the database.
+     *
+     * @param channel the channel for which the tutorial group should be fetched
+     * @return the tutorial group belonging to the channel, if it exists
+     */
+    public Optional<TutorialGroup> getTutorialGroupBelongingToChannel(Channel channel) {
+        if (getPersistenceUtil().isLoaded(channel, "tutorialGroup")) {
+            return Optional.ofNullable(channel.getTutorialGroup());
+        }
+        else {
+            return tutorialGroupRepository.findByTutorialGroupChannelId(channel.getId());
+        }
+    }
+
+    /**
      * Get the channel of the given tutorial group. If the channel is not loaded, it will be fetched from the database.
      *
      * @param tutorialGroup the tutorial group for which the channel should be fetched
      * @return the channel of the tutorial group, if it exists
      */
-    private Optional<Channel> getTutorialGroupChannel(TutorialGroup tutorialGroup) {
+    public Optional<Channel> getTutorialGroupChannel(TutorialGroup tutorialGroup) {
         if (getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupChannel")) {
             return Optional.ofNullable(tutorialGroup.getTutorialGroupChannel());
         }
