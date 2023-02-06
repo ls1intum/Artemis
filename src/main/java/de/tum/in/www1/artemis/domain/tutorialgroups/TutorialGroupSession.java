@@ -5,6 +5,8 @@ import static javax.persistence.Persistence.getPersistenceUtil;
 import java.time.ZonedDateTime;
 
 import javax.persistence.*;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
@@ -59,7 +61,15 @@ public class TutorialGroupSession extends DomainObject {
     private String location;
 
     /**
-     * If the session is a recurring session, this is the  the schedule that generated this session.
+     * The number of students that attended the session.
+     */
+    @Min(0)
+    @Max(3000)
+    @Column(name = "attendance_count")
+    private Integer attendanceCount;
+
+    /**
+     * If the session is a recurring session, this is the the schedule that generated this session.
      * <p>
      * Will be null if the session is not recurring, meaning an instructor / tutor created it individually.
      */
@@ -177,5 +187,13 @@ public class TutorialGroupSession extends DomainObject {
             tutorialGroupSession.getTutorialGroup().setTutorialGroupSchedule(null);
         }
         return tutorialGroupSession;
+    }
+
+    public Integer getAttendanceCount() {
+        return attendanceCount;
+    }
+
+    public void setAttendanceCount(Integer attendanceCount) {
+        this.attendanceCount = attendanceCount;
     }
 }

@@ -7,6 +7,7 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -42,11 +43,11 @@ public class QuizExerciseService {
 
     private final QuizBatchService quizBatchService;
 
-    private final AuthorizationCheckService authCheckService;
+    private final ExerciseSpecificationService exerciseSpecificationService;
 
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository, ResultRepository resultRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService,
-            QuizStatisticService quizStatisticService, QuizBatchService quizBatchService, AuthorizationCheckService authCheckService) {
+            QuizStatisticService quizStatisticService, QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.shortAnswerMappingRepository = shortAnswerMappingRepository;
@@ -55,7 +56,7 @@ public class QuizExerciseService {
         this.quizScheduleService = quizScheduleService;
         this.quizStatisticService = quizStatisticService;
         this.quizBatchService = quizBatchService;
-        this.authCheckService = authCheckService;
+        this.exerciseSpecificationService = exerciseSpecificationService;
     }
 
     /**
@@ -373,8 +374,7 @@ public class QuizExerciseService {
     }
 
     /**
-     *
-     * @param quizExercise the changed quiz exercise from the client
+     * @param quizExercise         the changed quiz exercise from the client
      * @param originalQuizExercise the original quiz exercise (with statistics)
      * @return the updated quiz exercise with the changed statistics
      */
@@ -403,6 +403,7 @@ public class QuizExerciseService {
 
     /**
      * Reset a QuizExercise to its original state, delete statistics and cleanup the schedule service.
+     *
      * @param exerciseId id of the exercise to reset
      */
     public void resetExercise(Long exerciseId) {
@@ -413,10 +414,12 @@ public class QuizExerciseService {
         quizExercise.setIsOpenForPractice(Boolean.FALSE);
         if (!quizExercise.isExamExercise()) {
             // do not set the release date of exam exercises
-            quizExercise.setReleaseDate(ZonedDateTime.now().plusYears(1));
+            quizExercise.setReleaseDate(ZonedDateTime.now());
         }
         quizExercise.setDueDate(null);
         quizExercise.setQuizBatches(Set.of());
+
+        resetInvalidQuestions(quizExercise);
 
         quizExercise = save(quizExercise);
 
@@ -435,8 +438,9 @@ public class QuizExerciseService {
 
     /**
      * Update a QuizExercise so that it ends at a specific date and moves the start date of the batches as required. Does not save the quiz.
-     * @param quizExercise  The quiz to end
-     * @param endDate       When the quize should end
+     *
+     * @param quizExercise The quiz to end
+     * @param endDate      When the quize should end
      */
     public void endQuiz(QuizExercise quizExercise, ZonedDateTime endDate) {
         quizExercise.setDueDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
@@ -449,38 +453,31 @@ public class QuizExerciseService {
      * have to send hundreds/thousands of exercises if there are that many in Artemis.
      *
      * @param search         The search query defining the search term and the size of the returned page
-     * @param isCourseFilter Whether to search in the courses for exercises
-     * @param isExamFilter   Whether to search in the groups for exercises
+     * @param isCourseFilter Whether to search in courses for exercises
+     * @param isExamFilter   Whether to search in exams for exercises
      * @param user           The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
     public SearchResultPageDTO<QuizExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
             final User user) {
+        if (!isCourseFilter && !isExamFilter) {
+            return new SearchResultPageDTO<>(Collections.emptyList(), 0);
+        }
         final var pageable = PageUtil.createExercisePageRequest(search);
         final var searchTerm = search.getSearchTerm();
-        Page<QuizExercise> exercisePage = Page.empty();
-        if (authCheckService.isAdmin(user)) {
-            if (isCourseFilter && isExamFilter) {
-                exercisePage = quizExerciseRepository.queryBySearchTermInAllCoursesAndExams(searchTerm, pageable);
-            }
-            else if (isCourseFilter) {
-                exercisePage = quizExerciseRepository.queryBySearchTermInAllCourses(searchTerm, pageable);
-            }
-            else if (isExamFilter) {
-                exercisePage = quizExerciseRepository.queryBySearchTermInAllExams(searchTerm, pageable);
-            }
-        }
-        else {
-            if (isCourseFilter && isExamFilter) {
-                exercisePage = quizExerciseRepository.queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
-            else if (isCourseFilter) {
-                exercisePage = quizExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
-            else if (isExamFilter) {
-                exercisePage = quizExerciseRepository.queryBySearchTermInAllExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
-        }
+        Specification<QuizExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
+        Page<QuizExercise> exercisePage = quizExerciseRepository.findAll(specification, pageable);
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
+    }
+
+    /**
+     * Reset the invalid status of questions of given quizExercise to false
+     *
+     * @param quizExercise The quiz exercise which questions to be reset
+     */
+    private void resetInvalidQuestions(QuizExercise quizExercise) {
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            question.setInvalid(false);
+        }
     }
 }

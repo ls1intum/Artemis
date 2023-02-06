@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,9 +27,9 @@ public class ProgrammingLanguageConfiguration {
     private Map<ProgrammingLanguage, Map<ProjectType, String>> images = new EnumMap<>(ProgrammingLanguage.class);
 
     /**
-     * Contains all the docker run arguments optained from the spring properties
+     * Contains all the docker run arguments obtained from the spring properties
      */
-    private Map<String, String> defaultDockerFlags;
+    private List<DockerFlag> defaultDockerFlags;
 
     /**
      * Set the map of languages to build images.
@@ -44,10 +45,21 @@ public class ProgrammingLanguageConfiguration {
     }
 
     /**
-     * @return The list of configured docker run arguments.
+     * Returns a list of CLI parameters that should be passed to a {@code docker run} command.
+     * <p>
+     * Options and their value are two individual CLI parameters in this representation.
+     * E.g., {@code --cpus 2 -p 8080:80} is represented as {@code [--cpus, "2", -p, "8080:80"]}.
+     * All option values are quoted to prevent accidental splitting.
+     *
+     * @return The list of CLI parameters.
      */
-    public Map<String, String> getDefaultDockerFlags() {
-        return defaultDockerFlags;
+    public List<String> getDefaultDockerFlags() {
+        return defaultDockerFlags.stream().flatMap(this::buildDockerFlag).toList();
+    }
+
+    private Stream<String> buildDockerFlag(final DockerFlag dockerFlag) {
+        // the flag value might contain spaces, quoting to prevent splitting
+        return Stream.of(dockerFlag.flag(), "\"" + dockerFlag.value() + "\"");
     }
 
     /**
@@ -56,7 +68,7 @@ public class ProgrammingLanguageConfiguration {
      *
      * @param dockerFlags key value pairs of run arguments
      */
-    public void setDefaultDockerFlags(final Map<String, String> dockerFlags) {
+    public void setDefaultDockerFlags(final List<DockerFlag> dockerFlags) {
         log.info("Set Docker flags to {}", dockerFlags);
         this.defaultDockerFlags = dockerFlags;
     }
@@ -177,5 +189,16 @@ public class ProgrammingLanguageConfiguration {
             case FACT -> ProjectType.FACT;
             case GCC -> ProjectType.GCC;
         };
+    }
+
+    /**
+     * A key-value pair of a CLI flag and its value for a {@code docker run} command.
+     * <p>
+     * E.g., the CLI option {@code --cpus 2} is represented as flag {@code --cpus} and value {@code 2}.
+     *
+     * @param flag  The option name.
+     * @param value The option value.
+     */
+    public record DockerFlag(String flag, String value) {
     }
 }

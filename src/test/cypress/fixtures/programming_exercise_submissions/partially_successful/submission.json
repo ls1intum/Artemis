@@ -12,5 +12,6 @@
             "name": "SortStrategy.java",
             "path": "programming_exercise_submissions/all_successful/SortStrategy.txt"
         }
-    ]
+    ],
+    "expectedResult": "46.2%"
 }

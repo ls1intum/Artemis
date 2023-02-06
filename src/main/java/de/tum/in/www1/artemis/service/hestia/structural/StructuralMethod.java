@@ -61,7 +61,7 @@ class StructuralMethod implements StructuralElement {
      * Formats the modifiers of this method.
      *
      * @param structuralClassElements The elements of the class from the test.json
-     * @param isAbstract Whether the method is abstract
+     * @param isAbstract              Whether the method is abstract
      * @return The modifiers as Java code
      */
     private String formatModifiers(StructuralClassElements structuralClassElements, boolean isAbstract) {
