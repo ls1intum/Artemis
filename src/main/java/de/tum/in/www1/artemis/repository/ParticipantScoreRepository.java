@@ -32,6 +32,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     /**
      * Find all outdated participant scores where the last result was deleted (and therefore set to null).
      * Note: There are valid scores where the last *rated* result is null because of practice runs, see {@link #clearAllByResultId(Long)}
+     *
      * @return A list of outdated participant scores
      */
     @Query("""
@@ -72,7 +73,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
      * Gets average score for each exercise
      *
      * @param exercises exercises to get the average score for
-     * @return List<Map<String, Object>> with a map for every exercise containing exerciseId and the average score
+     * @return List<Map < String, Object>> with a map for every exercise containing exerciseId and the average score
      */
     @Query("""
             SELECT p.exercise.id AS exerciseId, AVG(p.lastScore) AS averageScore
@@ -98,8 +99,9 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     /**
      * Safely removes the result from all participant scores by setting it to null.
      * The scheduler will later evaluate and delete the participant score if no older result exists.
-     * @see ParticipantScoreScheduleService
+     *
      * @param resultId the id of the result to be removed
+     * @see ParticipantScoreScheduleService
      */
     default void clearAllByResultId(Long resultId) {
         this.clearLastResultByResultId(resultId);
@@ -132,6 +134,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     /**
      * Delete all participant scores for a given exercise
      * Note: Only call this method when the exercise is about to be deleted. Otherwise, use {@link #clearAllByResultId(Long)}.
+     *
      * @param exerciseId the exercise id for which to remove all participant scores
      */
     @Transactional // ok because of delete
@@ -166,8 +169,8 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
      * therefore it is hard to tell if they are over, so always calculate a score for them
      *
      * @param exerciseStatisticsDTO the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
-     * @param averageScoreById the average score for each exercise indexed by exerciseId
-     * @param exercise the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     * @param averageScoreById      the average score for each exercise indexed by exerciseId
+     * @param exercise              the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
     default void setAverageScoreForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Map<Long, Double> averageScoreById, Exercise exercise) {
         Double averageScore;

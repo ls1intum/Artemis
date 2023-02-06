@@ -37,6 +37,7 @@ public class ResourceLoaderService {
     /**
      * Load the resource from the specified path. The path MUST NOT start with a '/', it is appended automatically if needed.
      * File will be loaded from the relative path, if it exists, from the classpath otherwise.
+     *
      * @param path the path to load the file from. Must not start with a '/'.
      * @return the loaded resource, which might not exist ({@link Resource#exists()}.
      */
@@ -57,6 +58,7 @@ public class ResourceLoaderService {
     /**
      * Load the resource from the specified path.
      * File will be loaded from the relative path, if it exists, from the classpath otherwise.
+     *
      * @param pathSegments the segments of the path (e.g. ["templates", "java", "pom.xml"]). Will automatically be joined with '/'.
      * @return the loaded resource, which might not exist ({@link Resource#exists()}.
      */
@@ -67,6 +69,7 @@ public class ResourceLoaderService {
     /**
      * Load the resources from the specified path. The path MUST NOT start with a '/', it is appended automatically if needed.
      * Files will be loaded from the relative path, it is non-empty (at least one resource), from the classpath otherwise.
+     *
      * @param path the path to load the file from. Must not start with a '/'.
      * @return the loaded resources, which might be an empty array
      */
@@ -96,6 +99,7 @@ public class ResourceLoaderService {
     /**
      * Load the resources from the specified path.
      * Files will be loaded from the relative path, it is non-empty (at least one resource), from the classpath otherwise.
+     *
      * @param pathSegments the segments of the path (e.g. ["templates", "java"]). Will automatically be joined with '/'.
      * @return the loaded resources, which might be an empty array
      */
@@ -107,6 +111,7 @@ public class ResourceLoaderService {
      * Return the file system path where templates are stored.
      * If no template path is defined, the current directory where Artemis was started from is used (e.g. the `templates` folder next to the 'Artemis.war' file).
      * If a template path is defined, it is used.
+     *
      * @return the template system path if defined (with a trailing '/') or "" if is not set
      */
     private String getTemplateFileSystemPath() {

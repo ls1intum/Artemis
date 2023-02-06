@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.exam;
 
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 import static de.tum.in.www1.artemis.util.SensitiveInformationUtil.*;
 import static de.tum.in.www1.artemis.util.TestConstants.*;
 import static org.assertj.core.api.Assertions.*;
@@ -13,7 +12,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -37,7 +35,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -57,7 +54,6 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
-import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
@@ -286,47 +282,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         examVisibleDate = ZonedDateTime.now().minusMinutes(15);
         // --> 2 min = 120s working time
 
-        final var course = database.addEmptyCourse();
-        var exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
-
         Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
-        // register users
-        exam.setExamUsers(Set.of(new ExamUser()));
-        exam.setRandomizeExerciseOrder(false);
-        exam = examRepository.save(exam);
-
-        // generate individual student exams
-        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
-                StudentExam.class, HttpStatus.OK);
-        assertThat(studentExams).hasSize(exam.getExamUsers().size());
-        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(registeredStudents.size());
-
-        // start exercises
-
-        List<ProgrammingExercise> programmingExercises = new ArrayList<>();
-        for (var exercise : exam.getExerciseGroups().get(6).getExercises()) {
-            var programmingExercise = (ProgrammingExercise) exercise;
-            programmingExercises.add(programmingExercise);
-
-            programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
-            for (var user : exam.getExamUsers()) {
-                var repo = new LocalRepository(defaultBranch);
-                repo.configureRepos("studentRepo", "studentOriginRepo");
-                programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, user.getUser().getLogin(), repo);
-                studentRepos.add(repo);
-            }
-        }
-
-        for (var programmingExercise : programmingExercises) {
-            for (var user : registeredStudents) {
-                mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
-            }
-        }
-
-        int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
-
-        assertThat(noGeneratedParticipations).isEqualTo(registeredStudents.size() * exam.getExerciseGroups().size());
+        List<StudentExam> studentExams = database.prepareStudentExamsForConduction(TEST_PREFIX, this, bitbucketRequestMockProvider, programmingExerciseTestService, request,
+                examVisibleDate, examStartDate, examEndDate, registeredStudents, studentRepos);
+        Exam exam = examRepository.findByIdElseThrow(studentExams.get(0).getExam().getId());
+        Course course = exam.getCourse();
 
         if (!early) {
             // simulate "wait" for exam to start
@@ -1903,6 +1863,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
         exam2.setPublishResultsDate(ZonedDateTime.now());
         exam2 = examRepository.save(exam2);
+        exam2 = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(exam2.getId());
 
         // evaluate quizzes
         request.postWithoutLocation("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/student-exams/evaluate-quiz-exercises", null, HttpStatus.OK,
@@ -1911,32 +1872,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
         final ProgrammingExercise programmingExercise = (ProgrammingExercise) exam2.getExerciseGroups().get(6).getExercises().iterator().next();
-        final String projectKey = programmingExercise.getProjectKey();
-        programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
 
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
-        List<String> studentLogins = new ArrayList<>();
-        for (final User user : exam2.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toList())) {
-            studentLogins.add(user.getLogin());
-        }
-        bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
-        List<String> planNames = new ArrayList<>(studentLogins);
-        planNames.add(TEMPLATE.getName());
-        planNames.add(SOLUTION.getName());
-        for (final String planName : planNames) {
-            bambooRequestMockProvider.mockDeleteBambooBuildPlan(projectKey + "-" + planName.toUpperCase(), false);
-        }
-        List<String> repoNames = new ArrayList<>(studentLogins);
+        mockDeleteProgrammingExercise(programmingExerciseTestService, programmingExercise, exam2.getRegisteredUsers());
 
-        for (final var repoType : RepositoryType.values()) {
-            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, programmingExercise.generateRepositoryName(repoType), false);
-        }
-
-        for (final var repoName : repoNames) {
-            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
-        }
-        bitbucketRequestMockProvider.mockDeleteProject(projectKey, false);
         request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam2.getId())).as("Exam was deleted").isEmpty();
 

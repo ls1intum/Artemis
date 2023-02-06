@@ -37,8 +37,9 @@ public class LectureUnitProcessingService {
 
     /**
      * Split units from given file according to given split information.
+     *
      * @param lectureUnitInformationDTO The split information
-     * @param file The file (lecture slide) to be split
+     * @param file                      The file (lecture slide) to be split
      * @return The prepared units to be saved
      */
     public List<LectureUnitDTO> splitUnits(LectureUnitInformationDTO lectureUnitInformationDTO, MultipartFile file) throws IOException {
@@ -84,7 +85,8 @@ public class LectureUnitProcessingService {
 
     /**
      * Removes the break slides from the given document.
-     * @param document         document to remove break slides from
+     *
+     * @param document document to remove break slides from
      */
     private void removeBreakSlides(PDDocument document) {
 
@@ -118,6 +120,7 @@ public class LectureUnitProcessingService {
 
     /**
      * Prepare information of split units for client
+     *
      * @param file The file (lecture slide) to be split
      * @return The prepared information of split units LectureUnitInformationDTO
      */

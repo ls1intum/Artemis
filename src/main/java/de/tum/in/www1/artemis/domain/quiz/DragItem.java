@@ -119,7 +119,7 @@ public class DragItem extends TempIdObject {
      */
 
     /**
-     *Initialisation of the DragItem on Server start
+     * Initialisation of the DragItem on Server start
      */
     @PostLoad
     public void onLoad() {

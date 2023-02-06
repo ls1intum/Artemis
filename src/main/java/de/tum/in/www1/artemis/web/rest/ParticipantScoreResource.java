@@ -102,7 +102,7 @@ public class ParticipantScoreResource {
     }
 
     /**
-     * GET /courses/:courseId/participant-scores  gets the participant scores of the course
+     * GET /courses/:courseId/participant-scores gets the participant scores of the course
      *
      * @param courseId   the id of the course for which to get the participant score
      * @param pageable   pageable object
@@ -124,7 +124,7 @@ public class ParticipantScoreResource {
     }
 
     /**
-     * GET /courses/:courseId/participant-scores/average-participant  gets the average scores of the participants in the course
+     * GET /courses/:courseId/participant-scores/average-participant gets the average scores of the participants in the course
      * <p>
      * Important: Exercises with {@link de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore#NOT_INCLUDED} will be not taken into account!
      *
@@ -146,7 +146,7 @@ public class ParticipantScoreResource {
     }
 
     /**
-     * GET /courses/:courseId/participant-scores/average  gets the average score of the course
+     * GET /courses/:courseId/participant-scores/average gets the average score of the course
      * <p>
      * Important: Exercises with {@link de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore#NOT_INCLUDED} will be not taken into account!
      *
@@ -174,7 +174,7 @@ public class ParticipantScoreResource {
     }
 
     /**
-     * GET /exams/:examId/participant-scores  gets the participant scores of the exam
+     * GET /exams/:examId/participant-scores gets the participant scores of the exam
      *
      * @param examId     the id of the exam for which to get the participant score
      * @param pageable   pageable object
@@ -227,7 +227,7 @@ public class ParticipantScoreResource {
     }
 
     /**
-     * GET /exams/:examId/participant-scores/average-participant  gets the average scores of the participants in the exam
+     * GET /exams/:examId/participant-scores/average-participant gets the average scores of the participants in the exam
      * <p>
      * Important: Exercises with {@link de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore#NOT_INCLUDED} will be not taken into account!
      *

@@ -89,7 +89,7 @@ public class FileResource {
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
      * @deprecated Implement your own usage of {@link FileService#handleSaveFile(MultipartFile, boolean, boolean)} with a mixed multipart request instead. An example for this is
-     * * {@link AttachmentUnitResource#updateAttachmentUnit(Long, Long, AttachmentUnit, Attachment, MultipartFile, boolean, String)}
+     *             {@link AttachmentUnitResource#updateAttachmentUnit(Long, Long, AttachmentUnit, Attachment, MultipartFile, boolean, String)}
      */
     @Deprecated
     @PostMapping("fileUpload")
@@ -218,9 +218,9 @@ public class FileResource {
     /**
      * GET /files/file-upload/submission/:submissionId/:filename : Get the file upload exercise submission file
      *
-     * @param submissionId         id of the submission, the file belongs to
-     * @param exerciseId           id of the exercise, the file belongs to
-     * @param filename             the filename of the file
+     * @param submissionId id of the submission, the file belongs to
+     * @param exerciseId   id of the exercise, the file belongs to
+     * @param filename     the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}")
@@ -268,7 +268,7 @@ public class FileResource {
      * GET /files/user/signatures/:examUserId/:filename : Get the exam user signature
      *
      * @param examUserId ID of the exam user, the image belongs to
-     * @param filename the filename of the file
+     * @param filename   the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/user/signatures/{examUserId}/{filename:.+}")
@@ -282,7 +282,7 @@ public class FileResource {
      * GET /files/exam-user/:examUserId/:filename : Get the image of exam user
      *
      * @param examUserId ID of the exam user, the image belongs to
-     * @param filename the filename of the file
+     * @param filename   the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/exam-user/{examUserId}/{filename:.+}")
@@ -295,8 +295,8 @@ public class FileResource {
     /**
      * GET /files/attachments/lecture/:lectureId/:filename : Get the lecture attachment
      *
-     * @param lectureId            ID of the lecture, the attachment belongs to
-     * @param filename             the filename of the file
+     * @param lectureId ID of the lecture, the attachment belongs to
+     * @param filename  the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{filename:.+}")
@@ -324,7 +324,7 @@ public class FileResource {
      * GET /files/attachments/lecture/{lectureId}/merge-pdf : Get the lecture units
      * PDF attachments merged
      *
-     * @param lectureId            ID of the lecture, the lecture units belongs to
+     * @param lectureId ID of the lecture, the lecture units belongs to
      * @return The merged PDF file, 403 if the logged-in user is not allowed to
      *         access it, or 404 if the files to be merged do not exist
      */
@@ -359,8 +359,8 @@ public class FileResource {
     /**
      * GET files/attachments/attachment-unit/:attachmentUnitId/:filename : Get the lecture unit attachment
      *
-     * @param attachmentUnitId     ID of the attachment unit, the attachment belongs to
-     * @param filename             the filename of the file
+     * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
+     * @param filename         the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/{filename:.+}")
@@ -384,7 +384,7 @@ public class FileResource {
     /**
      * Builds the response with headers, body and content type for specified path and file name
      *
-     * @param path to the file
+     * @param path     to the file
      * @param filename the name of the file
      * @return response entity
      */

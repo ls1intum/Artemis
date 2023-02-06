@@ -31,28 +31,28 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
  *
  * The generator currently deals with the following structural elements:
  * <ul>
- *     <li>Class hierarchy: abstract modifier, stereotype, declared super classes and implemented interfaces.</li>
- *     <li>Attributes: name, type and visibility modifier.</li>
- *     <li>Constructor: parameter types and visibility modifier.</li>
- *     <li>Methods: name, parameter types, return type and also visibility modifier. These basic elements get aggregated
- *          into types and their children classes.</li>
- *     <li>Types: class hierarchy and methods.</li>
- *     <li>Interfaces: the elements in the types.</li>
- *     <li>Classes: the elements in the types as well as attributes and constructors.</li>
- *     <li>Enums: the elements in the classes as well as enum values.</li>
+ * <li>Class hierarchy: abstract modifier, stereotype, declared super classes and implemented interfaces.</li>
+ * <li>Attributes: name, type and visibility modifier.</li>
+ * <li>Constructor: parameter types and visibility modifier.</li>
+ * <li>Methods: name, parameter types, return type and also visibility modifier. These basic elements get aggregated
+ * into types and their children classes.</li>
+ * <li>Types: class hierarchy and methods.</li>
+ * <li>Interfaces: the elements in the types.</li>
+ * <li>Classes: the elements in the types as well as attributes and constructors.</li>
+ * <li>Enums: the elements in the classes as well as enum values.</li>
  * </ul>
  *
  * The steps the oracle generator takes are the following:
  * <ol>
- *     <li>Feed the Spoon Framework the path to the projects of the solution and template projects and also the path
- *          where the oracle file needs to be saved.</li>
- *     <li>Extract all the types (and classes, enums, interfaces) from the meta models of the projects using the Spoon Framework.</li>
- *     <li>Create pairs of homologous types from the types in the solution and their corresponding counterparts in the template.</li>
- *     <li>Compute the diff for each pair of types and for each structural element contained in the types,
- *          e.g. for each of the structural elements described above check here which ones are present in the solution
- *          code and not in the template code.</li>
- *    <li>Generate the JSON representation for each diff.</li>
- *    <li>Assemble the JSON objects into a JSON array of all the types of the structure diff.</li>
+ * <li>Feed the Spoon Framework the path to the projects of the solution and template projects and also the path
+ * where the oracle file needs to be saved.</li>
+ * <li>Extract all the types (and classes, enums, interfaces) from the meta models of the projects using the Spoon Framework.</li>
+ * <li>Create pairs of homologous types from the types in the solution and their corresponding counterparts in the template.</li>
+ * <li>Compute the diff for each pair of types and for each structural element contained in the types,
+ * e.g. for each of the structural elements described above check here which ones are present in the solution
+ * code and not in the template code.</li>
+ * <li>Generate the JSON representation for each diff.</li>
+ * <li>Assemble the JSON objects into a JSON array of all the types of the structure diff.</li>
  * </ol>
  */
 public class OracleGenerator {
