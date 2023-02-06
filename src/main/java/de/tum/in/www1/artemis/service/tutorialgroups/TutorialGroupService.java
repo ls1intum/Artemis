@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepo
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -57,10 +58,12 @@ public class TutorialGroupService {
 
     private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
+    private final ConversationDTOService conversationDTOService;
+
     public TutorialGroupService(SingleUserNotificationService singleUserNotificationService, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
             TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository,
             TutorialGroupSessionRepository tutorialGroupSessionRepository, ChannelService channelService, ConversationService conversationService,
-            TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
+            TutorialGroupChannelManagementService tutorialGroupChannelManagementService, ConversationDTOService conversationDTOService) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
@@ -69,6 +72,7 @@ public class TutorialGroupService {
         this.courseRepository = courseRepository;
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
+        this.conversationDTOService = conversationDTOService;
     }
 
     /**
@@ -102,6 +106,10 @@ public class TutorialGroupService {
         else {
             tutorialGroup.setTeachingAssistantName(null);
         }
+
+        var channel = tutorialGroupChannelManagementService.getTutorialGroupChannel(tutorialGroup);
+        channel.ifPresent(value -> tutorialGroup.setChannel(conversationDTOService.convertChannelToDto(user, value)));
+
         this.setNextSession(tutorialGroup);
     }
 

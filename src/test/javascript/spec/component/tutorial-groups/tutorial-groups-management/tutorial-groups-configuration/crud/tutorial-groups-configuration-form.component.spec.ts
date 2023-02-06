@@ -13,6 +13,7 @@ import {
 import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
+import { Course } from 'app/entities/course.model';
 
 describe('TutorialGroupsConfigurationFormComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsConfigurationFormComponent>;
@@ -34,6 +35,7 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TutorialGroupsConfigurationFormComponent);
                 component = fixture.componentInstance;
+                component.course = { id: 1, postsEnabled: true } as Course;
                 clickSubmit = generateClickSubmitButton(component, fixture, {
                     period: validPeriod,
                     usePublicTutorialGroupChannels: true,

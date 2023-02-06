@@ -36,7 +36,9 @@
                 "registrations": "Registrierungen",
                 "schedule": "Sitzungsplan",
                 "sessions": "Sitzungen",
-                "nextSession": "Nächste Sitzung"
+                "nextSession": "Nächste Sitzung",
+                "channel": "Nachrichtenkanal",
+                "channelWithName": "Kanal: {{ channel }}"
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Wochentag",
