@@ -159,6 +159,10 @@ public class CourseTestService {
         // Add users that are not in the course
         database.createAndSaveUser(userPrefix + "tutor6");
         database.createAndSaveUser(userPrefix + "instructor2");
+
+        User customUser = database.createAndSaveUser(userPrefix + "custom1");
+        customUser.setGroups(Set.of(userPrefix + "customGroup"));
+        userRepo.save(customUser);
     }
 
     private void adjustUserGroupsToCustomGroups(String suffix) {
@@ -667,47 +671,72 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetCoursesForDashboardRegisteredUnregisteredExam(boolean userRefresh) throws Exception {
+    public void testGetAllCoursesForDashboardExams(boolean userRefresh) throws Exception {
+        User customUser = userRepo.findOneWithGroupsByLogin(userPrefix + "custom1").get();
         User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").get();
-
         String suffix = "instructorExam";
         adjustUserGroupsToCustomGroups(suffix);
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
-                userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
-        course = courseRepo.save(course);
-        Exam examRegistered = ModelFactory.generateExam(course);
-        examRegistered.addRegisteredUser(student);
-        examRepo.save(examRegistered);
-        Exam examUnregistered = ModelFactory.generateExam(course);
-        examRepo.save(examUnregistered);
-        Exam testExam = ModelFactory.generateTestExam(course);
-        examRepo.save(testExam);
 
-        Course receivedCourse = request.get("/api/courses/" + course.getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK, Course.class);
-        assertThat(receivedCourse).isNotNull();
-        assertThat(receivedCourse.getExams()).containsExactlyInAnyOrder(examRegistered, testExam);
-    }
+        // Custom user is student in 0 and 1, tutor in 2, editor in 3 and instructor in 4
+        Course[] courses = new Course[5];
+        courses[0] = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "customGroup", userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix,
+                userPrefix + "instructor" + suffix);
+        courses[1] = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "customGroup", userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix,
+                userPrefix + "instructor" + suffix);
+        courses[2] = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "customGroup", userPrefix + "editor" + suffix,
+                userPrefix + "instructor" + suffix);
+        courses[3] = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix, userPrefix + "customGroup",
+                userPrefix + "instructor" + suffix);
+        courses[4] = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix,
+                userPrefix + "customGroup");
 
-    // Test
-    public void testGetCoursesForDashboardInstructorExam(boolean userRefresh) throws Exception {
-        User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").get();
+        for (int i = 0; i < courses.length; i++) {
+            courses[i] = courseRepo.save(courses[i]);
+            Exam examRegistered = ModelFactory.generateExam(courses[i]);
+            Exam examUnregistered = ModelFactory.generateExam(courses[i]);
+            Exam testExam = ModelFactory.generateTestExam(courses[i]);
+            if (i == 0) {
+                examRegistered.setVisibleDate(ZonedDateTime.now().plusHours(1));
+                examUnregistered.setVisibleDate(ZonedDateTime.now().plusHours(1));
+                testExam.setVisibleDate(ZonedDateTime.now().plusHours(1));
+            }
+            if (i < 2) {
+                examRegistered.addRegisteredUser(customUser);
+            }
+            examRegistered.addRegisteredUser(student);
+            examRepo.saveAll(List.of(examRegistered, examUnregistered, testExam));
 
-        String suffix = "instructorExam";
-        adjustUserGroupsToCustomGroups(suffix);
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
-                userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
-        course = courseRepo.save(course);
-        Exam examRegistered = ModelFactory.generateExam(course);
-        examRegistered.addRegisteredUser(student);
-        examRepo.save(examRegistered);
-        Exam examUnregistered = ModelFactory.generateExam(course);
-        examRepo.save(examUnregistered);
-        Exam testExam = ModelFactory.generateTestExam(course);
-        examRepo.save(testExam);
-
-        Course receivedCourse = request.get("/api/courses/" + course.getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK, Course.class);
-        assertThat(receivedCourse).isNotNull();
-        assertThat(receivedCourse.getExams()).containsExactlyInAnyOrder(examUnregistered, examRegistered, testExam);
+            Course receivedCourse = request.get("/api/courses/" + courses[i].getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK, Course.class);
+            assertThat(receivedCourse).isNotNull();
+            if (i == 0) {
+                assertThat(receivedCourse.getExams()).isEmpty();
+            }
+            else if (i == 1) {
+                assertThat(receivedCourse.getExams()).containsExactlyInAnyOrder(examRegistered, testExam);
+            }
+            else {
+                assertThat(receivedCourse.getExams()).containsExactlyInAnyOrder(examUnregistered, examRegistered, testExam);
+            }
+        }
+        List<Course> receivedCourses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        for (int i = 0; i < courses.length; i++) {
+            Course receivedCourse = null;
+            for (Course course : receivedCourses) {
+                if (course.getId().equals(courses[i].getId())) {
+                    receivedCourse = course;
+                }
+            }
+            assertThat(receivedCourse).isNotNull();
+            if (i == 0) {
+                assertThat(receivedCourse.getExams()).isEmpty();
+            }
+            else if (i == 1) {
+                assertThat(receivedCourse.getExams()).hasSize(2);
+            }
+            else {
+                assertThat(receivedCourse.getExams()).hasSize(3);
+            }
+        }
     }
 
     // Test
@@ -774,52 +803,6 @@ public class CourseTestService {
         Course courseInList = courses.stream().filter(c -> c.getId().equals(finalCourse.getId())).findFirst().orElse(null);
         assertThat(courseInList).isNotNull();
         assertThat(courseInList.getExercises()).as("Course doesn't have any exercises").isEmpty();
-    }
-
-    // Test
-    public void testGetCoursesRegisteredUnregisteredStudentExam() throws Exception {
-        User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").get();
-
-        String suffix = "registered";
-        adjustUserGroupsToCustomGroups(suffix);
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
-                userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
-        course = courseRepo.save(course);
-        Exam examRegistered = ModelFactory.generateExam(course);
-        examRegistered.addRegisteredUser(student);
-        examRepo.save(examRegistered);
-        Exam examUnregistered = ModelFactory.generateExam(course);
-        examRepo.save(examUnregistered);
-        Exam testExam = ModelFactory.generateTestExam(course);
-        examRepo.save(testExam);
-        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
-        final var finalCourse = course;
-        Course courseInList = courses.stream().filter(c -> c.getId().equals(finalCourse.getId())).findFirst().orElse(null);
-        assertThat(courseInList).isNotNull();
-        assertThat(courseInList.getExams()).containsExactlyInAnyOrder(examRegistered, testExam);
-    }
-
-    // Test
-    public void testGetCoursesInstructorExam() throws Exception {
-        User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").get();
-
-        String suffix = "instructorExam";
-        adjustUserGroupsToCustomGroups(suffix);
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
-                userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
-        course = courseRepo.save(course);
-        Exam examRegistered = ModelFactory.generateExam(course);
-        examRegistered.addRegisteredUser(student);
-        examRepo.save(examRegistered);
-        Exam examUnregistered = ModelFactory.generateExam(course);
-        examRepo.save(examUnregistered);
-        Exam testExam = ModelFactory.generateTestExam(course);
-        examRepo.save(testExam);
-        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
-        final var finalCourse = course;
-        Course courseInList = courses.stream().filter(c -> c.getId().equals(finalCourse.getId())).findFirst().orElse(null);
-        assertThat(courseInList).isNotNull();
-        assertThat(courseInList.getExams()).containsExactlyInAnyOrder(examRegistered, examUnregistered, testExam);
     }
 
     // Test

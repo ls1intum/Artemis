@@ -217,17 +217,10 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "custom1", roles = { "USER", "TA", "EDITOR", "INSTRUCTOR" })
     @ValueSource(booleans = { true, false })
-    void testGetCoursesForDashboardRegisteredUnregisteredExam(boolean userRefresh) throws Exception {
-        courseTestService.testGetCoursesForDashboardRegisteredUnregisteredExam(userRefresh);
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    @ValueSource(booleans = { true, false })
-    void testGetCoursesForDashboardInstructorExam(boolean userRefresh) throws Exception {
-        courseTestService.testGetCoursesForDashboardInstructorExam(userRefresh);
+    void testGetAllCoursesForDashboardExams(boolean userRefresh) throws Exception {
+        courseTestService.testGetAllCoursesForDashboardExams(userRefresh);
     }
 
     @Test
@@ -240,18 +233,6 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetCoursesWithoutActiveExercises() throws Exception {
         courseTestService.testGetCoursesWithoutActiveExercises();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCoursesRegisteredUnregisteredStudentExam() throws Exception {
-        courseTestService.testGetCoursesRegisteredUnregisteredStudentExam();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetCoursesInstructorExam() throws Exception {
-        courseTestService.testGetCoursesInstructorExam();
     }
 
     @Test
