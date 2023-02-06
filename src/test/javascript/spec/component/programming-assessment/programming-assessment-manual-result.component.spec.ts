@@ -514,8 +514,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 updateAfterComplaintStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
             }
 
+            const validateSpy = jest.spyOn(comp, 'validateFeedback').mockImplementation(() => (comp.assessmentsAreValid = true));
+
             comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
 
+            expect(validateSpy).toHaveBeenCalledOnce();
             expect(updateAfterComplaintStub).toHaveBeenCalledOnce();
             expect(comp.manualResult!.score).toBe(serverReturnsError ? 0 : 100);
             flush();

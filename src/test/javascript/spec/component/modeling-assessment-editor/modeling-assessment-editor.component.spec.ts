@@ -331,8 +331,9 @@ describe('ModelingAssessmentEditorComponent', () => {
                 onSuccess: () => (onSuccessCalled = true),
                 onError: () => (onErrorCalled = true),
             };
-
+            const validateSpy = jest.spyOn(component, 'validateFeedback').mockImplementation(() => (component.assessmentsAreValid = true));
             component.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+            expect(validateSpy).toHaveBeenCalledOnce();
             expect(serviceSpy).toHaveBeenCalledOnce();
             if (serverReturnsError) {
                 expect(component.result?.participation?.results).toBeUndefined();
