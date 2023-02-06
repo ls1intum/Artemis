@@ -1,4 +1,4 @@
-import { ResultTemplateStatus, getResultIconClass, getTextColorClass, getUnreferencedFeedback, isOnlyCompilationTested } from 'app/exercises/shared/result/result.utils';
+import { getResultIconClass, getTextColorClass, getUnreferencedFeedback, isOnlyCompilationTested, ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
 import { FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -17,7 +17,11 @@ describe('ResultUtils', () => {
 
     it.each([
         {
-            result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER }, { type: FeedbackType.MANUAL }], testCaseCount: 0 },
+            result: {
+                participation: { exercise: { type: ExerciseType.PROGRAMMING } },
+                feedbacks: [{ type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER }, { type: FeedbackType.MANUAL }],
+                testCaseCount: 0,
+            } as Result,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: true,
         },
@@ -68,6 +72,7 @@ describe('ResultUtils', () => {
     });
 
     it.each([
+        { result: { participation: { exercise: { type: ExerciseType.PROGRAMMING } } } as Result, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faCheckCircle },
         { result: undefined, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faQuestionCircle },
         {
             result: { submission: { submissionExerciseType: SubmissionExerciseType.PROGRAMMING, buildFailed: true }, assessmentType: AssessmentType.AUTOMATIC },
@@ -79,7 +84,6 @@ describe('ResultUtils', () => {
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faQuestionCircle,
         },
-        { result: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faCheckCircle },
         {
             result: { score: undefined, successful: true, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
             templateStatus: ResultTemplateStatus.HAS_RESULT,

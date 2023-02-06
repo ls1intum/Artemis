@@ -182,7 +182,14 @@ export const evaluateTemplateStatus = (
  */
 export const isOnlyCompilationTested = (result: Result | undefined, templateStatus: ResultTemplateStatus): boolean => {
     const zeroTests = !result?.testCaseCount;
-    return templateStatus !== ResultTemplateStatus.NO_RESULT && templateStatus !== ResultTemplateStatus.IS_BUILDING && !isBuildFailed(result?.submission) && zeroTests;
+    const isProgrammingExercise: boolean = result?.participation?.exercise?.type === ExerciseType.PROGRAMMING;
+    return (
+        templateStatus !== ResultTemplateStatus.NO_RESULT &&
+        templateStatus !== ResultTemplateStatus.IS_BUILDING &&
+        !isBuildFailed(result?.submission) &&
+        zeroTests &&
+        isProgrammingExercise
+    );
 };
 
 /**
@@ -211,7 +218,7 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
         return result?.successful ? 'text-success' : 'text-danger';
     }
 
-    if (isOnlyCompilationTested(result, templateStatus) && result.participation?.exercise?.type === ExerciseType.PROGRAMMING) {
+    if (isOnlyCompilationTested(result, templateStatus)) {
         return 'text-success';
     }
 
