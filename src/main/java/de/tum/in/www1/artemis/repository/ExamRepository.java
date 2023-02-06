@@ -40,7 +40,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") long courseId);
 
-    // Find all exams for multiple courses (ids) that are already visible and the user is registered or at least a tutor
+    // Find all exams for multiple courses (ids) that are already visible to the user (either registered, at least tutor or the exam is a test exam)
     @Query("""
             SELECT e
             FROM Exam e
@@ -50,7 +50,8 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                 AND (registeredUsers.id = :userId
                     OR e.course.teachingAssistantGroupName IN :groupNames
                     OR e.course.editorGroupName IN :groupNames
-                    OR e.course.instructorGroupName IN :groupNames)
+                    OR e.course.instructorGroupName IN :groupNames
+                    OR e.testExam = true)
             """)
     Set<Exam> findByCourseIdsForUser(@Param("courseIds") Set<Long> courseIds, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames,
             @Param("now") ZonedDateTime now);
