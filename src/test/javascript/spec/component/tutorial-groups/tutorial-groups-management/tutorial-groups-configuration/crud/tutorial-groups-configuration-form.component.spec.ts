@@ -36,6 +36,8 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
                 component = fixture.componentInstance;
                 clickSubmit = generateClickSubmitButton(component, fixture, {
                     period: validPeriod,
+                    usePublicTutorialGroupChannels: true,
+                    useTutorialGroupChannels: true,
                 });
 
                 testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
@@ -87,5 +89,7 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
     // === helper functions ===
     const setValidFormValues = () => {
         component.form.get('period')!.setValue(validPeriod);
+        component.form.get('usePublicTutorialGroupChannels')!.setValue(true);
+        component.form.get('useTutorialGroupChannels')!.setValue(true);
     };
 });

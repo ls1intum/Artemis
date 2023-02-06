@@ -4,6 +4,8 @@ import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 
 export interface TutorialGroupsConfigurationFormData {
     period?: Date[];
+    usePublicTutorialGroupChannels?: boolean;
+    useTutorialGroupChannels?: boolean;
 }
 
 @Component({
@@ -15,6 +17,8 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
     @Input()
     formData: TutorialGroupsConfigurationFormData = {
         period: undefined,
+        usePublicTutorialGroupChannels: false,
+        useTutorialGroupChannels: false,
     };
     @Input() isEditMode = false;
     @Output() formSubmitted: EventEmitter<TutorialGroupsConfigurationFormData> = new EventEmitter<TutorialGroupsConfigurationFormData>();
@@ -27,6 +31,14 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
 
     get periodControl() {
         return this.form.get('period');
+    }
+
+    get useTutorialGroupChannelsControl() {
+        return this.form.get('useTutorialGroupChannels');
+    }
+
+    get usePublicTutorialGroupChannelsControl() {
+        return this.form.get('usePublicTutorialGroupChannels');
     }
 
     get isSubmitPossible() {
@@ -53,6 +65,8 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
 
         this.form = this.fb.group({
             period: [undefined, Validators.required],
+            useTutorialGroupChannels: [false],
+            usePublicTutorialGroupChannels: [false],
         });
     }
 
