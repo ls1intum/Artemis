@@ -61,7 +61,7 @@ public class ExamSubmissionService {
      * @param user            the user that wants to submit
      * @param withGracePeriod whether the grace period should be taken into account or not
      * @return true if it is not an exam of if it is an exam and the submission is in time and the exercise is part of
-     * the user's student exam
+     *         the user's student exam
      */
     public boolean isAllowedToSubmitDuringExam(Exercise exercise, User user, boolean withGracePeriod) {
         if (isExamSubmission(exercise)) {

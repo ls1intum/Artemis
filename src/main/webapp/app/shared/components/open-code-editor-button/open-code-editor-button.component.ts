@@ -3,6 +3,8 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import dayjs from 'dayjs/esm';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-open-code-editor-button',
@@ -20,7 +22,7 @@ export class OpenCodeEditorButtonComponent implements OnChanges {
     @Input()
     courseAndExerciseNavigationUrlSegment: any[];
     @Input()
-    exerciseId: number;
+    exercise: Exercise;
 
     courseAndExerciseNavigationUrl: string;
     activeParticipation: ProgrammingExerciseStudentParticipation;
@@ -32,7 +34,8 @@ export class OpenCodeEditorButtonComponent implements OnChanges {
 
     ngOnChanges() {
         this.courseAndExerciseNavigationUrl = this.courseAndExerciseNavigationUrlSegment.reduce((acc, segment) => `${acc}/${segment}`);
-        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations, true) ?? this.participations[0];
+        const shouldPreferPractice = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
+        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations, shouldPreferPractice) ?? this.participations[0];
     }
 
     switchPracticeMode() {

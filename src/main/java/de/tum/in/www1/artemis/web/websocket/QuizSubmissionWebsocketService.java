@@ -77,8 +77,8 @@ public class QuizSubmissionWebsocketService {
     /**
      * Should be invoked using a thread asynchronously
      *
-     * @param username the user who saved / submitted the quiz submission
-     * @param exerciseId the quiz exercise id
+     * @param username       the user who saved / submitted the quiz submission
+     * @param exerciseId     the quiz exercise id
      * @param quizSubmission the quiz submission that is returned back to the user
      */
     private void sendSubmissionToUser(String username, Long exerciseId, QuizSubmission quizSubmission) {

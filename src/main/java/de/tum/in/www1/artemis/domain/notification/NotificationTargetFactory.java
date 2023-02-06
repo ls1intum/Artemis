@@ -47,6 +47,7 @@ public class NotificationTargetFactory {
 
     /**
      * Create the needed target for "ExerciseReleased" notifications
+     *
      * @param exercise that was released
      * @return the final target property
      */
@@ -56,6 +57,7 @@ public class NotificationTargetFactory {
 
     /**
      * Create the needed target for "ExerciseUpdated" notifications
+     *
      * @param exercise that was updated
      * @return the final target property
      */
@@ -96,7 +98,7 @@ public class NotificationTargetFactory {
      * Create a NotificationTarget for a GroupNotification for an Exercise.
      *
      * @param exercise for which to create the notification
-     * @param message to use for the notification
+     * @param message  to use for the notification
      * @return the final NotificationTarget for this case
      */
     public static NotificationTarget createExerciseTarget(Exercise exercise, String message) {
@@ -129,6 +131,7 @@ public class NotificationTargetFactory {
 
     /**
      * Create the needed target for "AttachmentUpdated" notifications
+     *
      * @param lecture where an attachment was updated
      * @return the final NotificationTarget
      */
@@ -141,7 +144,7 @@ public class NotificationTargetFactory {
     /**
      * Create a NotificationTarget for a GroupNotification for a Course.
      *
-     * @param course for which to create the notification
+     * @param course  for which to create the notification
      * @param message to use for the notification
      * @return the final NotificationTarget for this case
      */
@@ -154,7 +157,7 @@ public class NotificationTargetFactory {
     /**
      * Create a NotificationTarget for "LecturePost" notifications
      *
-     * @param post which contains the needed lecture
+     * @param post   which contains the needed lecture
      * @param course the post belongs to
      * @return the final NotificationTarget
      */
@@ -167,7 +170,7 @@ public class NotificationTargetFactory {
     /**
      * Create a NotificationTarget for "ExercisePost" notifications
      *
-     * @param post which contains the needed exercise
+     * @param post   which contains the needed exercise
      * @param course the post belongs to
      * @return the final NotificationTarget
      */
@@ -180,7 +183,7 @@ public class NotificationTargetFactory {
     /**
      * Create a NotificationTarget for "CoursePost" notifications
      *
-     * @param post course-wide post
+     * @param post   course-wide post
      * @param course the post belongs to
      * @return the final NotificationTarget
      */
@@ -245,7 +248,7 @@ public class NotificationTargetFactory {
     /**
      * Extracts a viable URL from the provided notification that is based on a Post and baseUrl
      *
-     * @param post which information will be needed to create the URL
+     * @param post    which information will be needed to create the URL
      * @param baseUrl the prefix (depends on current set up (e.g. "http://localhost:9000/courses"))
      * @return viable URL to the notification related page
      */

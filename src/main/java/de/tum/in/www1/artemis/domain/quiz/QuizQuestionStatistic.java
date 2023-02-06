@@ -55,7 +55,7 @@ public abstract class QuizQuestionStatistic extends QuizStatistic {
      *
      * @param submittedAnswer the submittedAnswer object which contains all selected answers
      * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
-     *                        of the quizExercise)
+     *                            of the quizExercise)
      */
     public void addResult(SubmittedAnswer submittedAnswer, boolean rated) {
         changeStatisticBasedOnResult(submittedAnswer, rated, 1);
@@ -66,7 +66,7 @@ public abstract class QuizQuestionStatistic extends QuizStatistic {
      *
      * @param submittedAnswer the submittedAnswer object which contains all selected answers
      * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
-     *                        of the quizExercise)
+     *                            of the quizExercise)
      */
     public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated) {
         changeStatisticBasedOnResult(submittedAnswer, rated, -1);

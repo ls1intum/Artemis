@@ -16,7 +16,7 @@ class SerializerUtil {
     /**
      * This method is used to serialize the string representations of each modifier into a JSON array.
      *
-     * @param modifiers A collection of modifiers that needs to get serialized.
+     * @param modifiers  A collection of modifiers that needs to get serialized.
      * @param javaMember The model of the {@link java.lang.reflect.Member} for which all modifiers should get serialized
      * @return The JSON array containing the string representations of the modifiers.
      */
@@ -91,12 +91,12 @@ class SerializerUtil {
     /**
      * creates the json object for the serialization and inserts the name and the modifiers
      *
-     * @param name The name property of the new JSON object
-     * @param javaMember The model for the {@link java.lang.reflect.Member} for which all modifiers should get serialized
-     * @param modifiers A collection of modifiers that need to get serialized
+     * @param name        The name property of the new JSON object
+     * @param javaMember  The model for the {@link java.lang.reflect.Member} for which all modifiers should get serialized
+     * @param modifiers   A collection of modifiers that need to get serialized
      * @param annotations A collection of annotations that need to get serialized
      * @return A new JSON object containing all serialized modifiers under the {@code "modifiers"} key and the name of
-     *  the object under the {@code "name"} key
+     *         the object under the {@code "name"} key
      */
     static JsonObject createJsonObject(String name, Set<String> modifiers, JavaMember javaMember, List<JavaAnnotation> annotations) {
         JsonObject jsonObject = new JsonObject();
