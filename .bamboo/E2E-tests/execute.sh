@@ -10,7 +10,7 @@ exitCode=$?
 echo "Cypress container exit code: $exitCode"
 if [ $exitCode -eq 0 ]
 then
-    touch ../../../../.successful
+    touch .successful
 else
     echo "Not creating success file because the tests failed"
 fi
