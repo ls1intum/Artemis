@@ -75,6 +75,10 @@
                     "maxLengthValidationError": "Der Titel kann max {{ max }} Zeichen lang sein!",
                     "regexValidationError": "Titel dürfen nur Buchstaben, Zahlen, Leerzeichen und Bindestriche enthalten."
                 },
+                "updateChannelNameInput": {
+                    "label": "Kanalnamen aktualisieren",
+                    "explanation": "Wenn mit dieser Übungsgruppe ein Nachrichtenkanal verbunden ist, wird der Name des Kanals mit dem Titel der Übungsgruppe aktualisiert, falls du diese Option aktivierst."
+                },
                 "teachingAssistantInput": {
                     "label": "Tutor:in",
                     "placeholder": "Wähle eine Tutor:in aus, die für diese Gruppe verantwortlich ist.",

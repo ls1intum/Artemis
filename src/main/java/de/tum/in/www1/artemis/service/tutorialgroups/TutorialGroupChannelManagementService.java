@@ -91,14 +91,13 @@ public class TutorialGroupChannelManagementService {
     }
 
     /**
-     * Updates the name and description of the tutorial group channel to the current values of the tutorial group.
+     * Updates the name of the tutorial group channel to the current title of the tutorial group.
      *
      * @param tutorialGroup the tutorial group for which the channel should be updated
      */
-    public void updateNameAndDescriptionOfTutorialGroupChannel(TutorialGroup tutorialGroup) {
+    public void updateNameOfTutorialGroupChannel(TutorialGroup tutorialGroup) {
         getTutorialGroupChannel(tutorialGroup).ifPresentOrElse(channel -> {
             channel.setName(determineUniqueTutorialGroupChannelName(tutorialGroup));
-            channel.setDescription(tutorialGroup.getTitle());
             channelRepository.save(channel);
             log.debug("Updated title of channel with id {} of tutorial group with id {}", channel.getId(), tutorialGroup.getId());
         }, () -> log.debug("Channel for tutorial group with id {} does not exist, cannot update title", tutorialGroup.getId()));
@@ -231,7 +230,6 @@ public class TutorialGroupChannelManagementService {
         tutorialGroupChannel.setName(determineUniqueTutorialGroupChannelName(tutorialGroup));
         tutorialGroupChannel.setIsPublic(true); // TODO: make this configurable if desired requirement
         tutorialGroupChannel.setIsAnnouncementChannel(false);
-        tutorialGroupChannel.setDescription(tutorialGroup.getTitle());
         var persistedChannel = channelService.createChannel(tutorialGroup.getCourse(), tutorialGroupChannel, Optional.empty());
         log.debug("Created channel with id {} for tutorial group with id {}", persistedChannel.getId(), tutorialGroup.getId());
         tutorialGroup.setTutorialGroupChannel(persistedChannel);
@@ -288,18 +286,13 @@ public class TutorialGroupChannelManagementService {
     }
 
     /**
-     * Get the channel of the given tutorial group. If the channel is not loaded, it will be fetched from the database.
+     * Get the channel of the given tutorial group.
      *
      * @param tutorialGroup the tutorial group for which the channel should be fetched
      * @return the channel of the tutorial group, if it exists
      */
     public Optional<Channel> getTutorialGroupChannel(TutorialGroup tutorialGroup) {
-        if (getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupChannel")) {
-            return Optional.ofNullable(tutorialGroup.getTutorialGroupChannel());
-        }
-        else {
-            return tutorialGroupRepository.getTutorialGroupChannel(tutorialGroup.getId());
-        }
+        return tutorialGroupRepository.getTutorialGroupChannel(tutorialGroup.getId());
     }
 
     /**

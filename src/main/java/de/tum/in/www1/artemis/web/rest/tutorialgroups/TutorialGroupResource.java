@@ -267,10 +267,12 @@ public class TutorialGroupResource {
     /**
      * A DTO representing an updated tutorial group with an optional notification text about the update
      *
-     * @param tutorialGroup    the updated tutorial group
-     * @param notificationText the optional notification text
+     * @param tutorialGroup                  the updated tutorial group
+     * @param notificationText               the optional notification text
+     * @param updateTutorialGroupChannelName whether the tutorial group channel name should be updated with the new tutorial group title or not
      */
-    public record TutorialGroupUpdateDTO(@Valid @NotNull TutorialGroup tutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText) {
+    public record TutorialGroupUpdateDTO(@Valid @NotNull TutorialGroup tutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText,
+            @Nullable Boolean updateTutorialGroupChannelName) {
     }
 
     /**
@@ -313,10 +315,9 @@ public class TutorialGroupResource {
         }
         if (!oldTutorialGroup.getTitle().equals(updatedTutorialGroup.getTitle())) {
             checkTitleIsValid(updatedTutorialGroup);
-            if (configuration.getUseTutorialGroupChannels()) {
-                tutorialGroupChannelManagementService.updateNameAndDescriptionOfTutorialGroupChannel(updatedTutorialGroup);
+            if (configuration.getUseTutorialGroupChannels() && tutorialGroupUpdateDTO.updateTutorialGroupChannelName()) {
+                tutorialGroupChannelManagementService.updateNameOfTutorialGroupChannel(updatedTutorialGroup);
             }
-
         }
 
         // Note: We have to load the teaching assistants from database otherwise languageKey is not defined and email sending fails

@@ -291,7 +291,6 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         assertThat(channel.getName()).isEqualTo(expectedTutorialGroupName.apply(tutorialGroupFromDb));
         assertThat(channel.getIsPublic()).isEqualTo(configuration.getUsePublicTutorialGroupChannels());
         assertThat(channel.getIsArchived()).isFalse();
-        assertThat(channel.getDescription()).isEqualTo(tutorialGroupFromDb.getTitle());
         assertThat(channel.getCreator()).isNull();
         assertThat(channel.getIsAnnouncementChannel()).isFalse();
 

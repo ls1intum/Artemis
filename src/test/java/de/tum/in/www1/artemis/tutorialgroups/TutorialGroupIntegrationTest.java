@@ -86,7 +86,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupWithoutSchedule("tutor1"), TutorialGroup.class, HttpStatus.FORBIDDEN);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId,
                 new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get(),
-                        "Lorem Ipsum"),
+                        "Lorem Ipsum", true),
                 TutorialGroup.class, HttpStatus.FORBIDDEN);
         request.delete(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId, HttpStatus.FORBIDDEN);
         request.postListWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/register-multiple", new HashSet<>(), StudentDTO.class,
@@ -291,7 +291,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         // when
         var updatedTutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId,
-                new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum"), TutorialGroup.class, HttpStatus.OK);
+                new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.OK);
 
         // then
         assertThat(updatedTutorialGroup.getTitle()).isEqualTo(newRandomTitle);
@@ -308,7 +308,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         existingTutorialGroup.setTitle("  " + existingGroupTwo.getTitle() + " ");
         // when
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId,
-                new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum"), TutorialGroup.class, HttpStatus.BAD_REQUEST);
+                new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.BAD_REQUEST);
         // then
         assertThat(tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get().getTitle()).isEqualTo(originalTitle);
         asserTutorialGroupChannelIsCorrectlyConfigured(existingTutorialGroup);

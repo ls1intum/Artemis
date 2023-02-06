@@ -75,6 +75,10 @@
                     "maxLengthValidationError": "Title can be max {{ max }} characters long!",
                     "regexValidationError": "Titles can only contain letters, numbers, spaces and dashes."
                 },
+                "updateChannelNameInput": {
+                    "label": "Update Channel Name",
+                    "explanation": "If there is a messages channel associated with this tutorial group, the name of the channel will be updated with the title of the tutorial group if you enable this option."
+                },
                 "teachingAssistantInput": {
                     "label": "Tutor",
                     "placeholder": "Select a tutor that will be responsible for this group.",
