@@ -109,7 +109,7 @@ public class TutorialGroup extends DomainObject {
 
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "tutorial_group_channel_id")
-    @JsonIgnoreProperties("tutorialGroup")
+    @JsonIgnore
     private Channel tutorialGroupChannel;
 
     public Channel getTutorialGroupChannel() {

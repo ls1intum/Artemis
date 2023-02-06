@@ -4,15 +4,11 @@ import javax.annotation.Nullable;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.OneToOne;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
 @Entity
 @DiscriminatorValue("C")
@@ -67,13 +63,6 @@ public class Channel extends Conversation {
     @NotNull
     private Boolean isArchived;
 
-    /**
-     * Relationship is set if this channel is the official channel for communication of a tutorial group.
-     */
-    @OneToOne(mappedBy = "tutorialGroupChannel")
-    @JsonIgnoreProperties(value = "tutorialGroupChannel", allowSetters = true)
-    private TutorialGroup tutorialGroup;
-
     @Nullable
     public String getName() {
         return name;
@@ -124,13 +113,5 @@ public class Channel extends Conversation {
 
     public void setIsAnnouncementChannel(Boolean announcementChannel) {
         isAnnouncementChannel = announcementChannel;
-    }
-
-    public TutorialGroup getTutorialGroup() {
-        return tutorialGroup;
-    }
-
-    public void setTutorialGroup(TutorialGroup tutorialGroup) {
-        this.tutorialGroup = tutorialGroup;
     }
 }

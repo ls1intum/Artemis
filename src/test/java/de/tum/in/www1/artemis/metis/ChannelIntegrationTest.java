@@ -208,7 +208,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         var channelFromDatabase = channelRepository.findById(channel.getId()).get();
 
         tutorialGroup.setTutorialGroupChannel(channelFromDatabase);
-        channelFromDatabase.setTutorialGroup(tutorialGroup);
         tutorialGroup = tutorialGroupRepository.save(tutorialGroup);
 
         // when

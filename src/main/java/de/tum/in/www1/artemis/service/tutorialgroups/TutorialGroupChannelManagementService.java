@@ -113,9 +113,6 @@ public class TutorialGroupChannelManagementService {
         tutorialGroupRepository.getTutorialGroupWithChannel(tutorialGroup.getId()).ifPresentOrElse(tg -> {
             if (tg.getTutorialGroupChannel() != null) {
                 var channel = tg.getTutorialGroupChannel();
-                if (channel.getTutorialGroup() != null) {
-                    tg.getTutorialGroupChannel().setTutorialGroup(null);
-                }
                 tg.setTutorialGroupChannel(null);
                 tutorialGroupRepository.save(tg);
                 conversationService.deleteConversation(channel);
@@ -281,18 +278,13 @@ public class TutorialGroupChannelManagementService {
     }
 
     /**
-     * Get the tutorial group belonging to the given channel. If the tutorial group is not loaded, it will be fetched from the database.
+     * Get the tutorial group belonging to the given channel.
      *
      * @param channel the channel for which the tutorial group should be fetched
      * @return the tutorial group belonging to the channel, if it exists
      */
     public Optional<TutorialGroup> getTutorialGroupBelongingToChannel(Channel channel) {
-        if (getPersistenceUtil().isLoaded(channel, "tutorialGroup")) {
-            return Optional.ofNullable(channel.getTutorialGroup());
-        }
-        else {
-            return tutorialGroupRepository.findByTutorialGroupChannelId(channel.getId());
-        }
+        return tutorialGroupRepository.findByTutorialGroupChannelId(channel.getId());
     }
 
     /**
