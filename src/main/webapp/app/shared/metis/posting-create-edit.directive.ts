@@ -6,7 +6,8 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { PostingEditType } from 'app/shared/metis/metis.util';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 
-const MAX_CONTENT_LENGTH = 1000;
+// Note: this number should be the same as in Posting.java
+const MAX_CONTENT_LENGTH = 5000;
 
 @Directive()
 export abstract class PostingCreateEditDirective<T extends Posting> implements OnInit, OnChanges {
