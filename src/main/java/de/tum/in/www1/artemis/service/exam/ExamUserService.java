@@ -42,7 +42,7 @@ public class ExamUserService {
     /**
      * Extracts all images from PDF file and map each image with student registration number.
      *
-     * @param  file PDF file to be parsed
+     * @param file PDF file to be parsed
      * @return list of ExamUserWithImageDTO
      */
     public List<ExamUserWithImageDTO> parsePDF(MultipartFile file) {
@@ -85,7 +85,7 @@ public class ExamUserService {
     /**
      * Saves all images from PDF file
      *
-     * @param file  PDF file to be parsed
+     * @param file PDF file to be parsed
      * @return list of ExamUserWithImageDTO
      */
     public Set<String> saveImages(long examId, MultipartFile file) {

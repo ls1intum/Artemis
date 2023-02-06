@@ -56,9 +56,9 @@ public class ExamUserResource {
     /**
      * POST /courses/:courseId/exams/:examId/exam-users : Update the exam user with the given DTO info
      *
-     * @param courseId     the id of the course
-     * @param examId       the id of the exam
-     * @param examUserDTO  the dto containing exam user info
+     * @param courseId    the id of the course
+     * @param examId      the id of the exam
+     * @param examUserDTO the dto containing exam user info
      * @return saved examUser ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
     @PostMapping("courses/{courseId}/exams/{examId}/exam-users")
@@ -97,9 +97,9 @@ public class ExamUserResource {
     /**
      * POST courses/{courseId}/exams/{examId}/exam-users-save-images : save exam user images
      *
-     * @param courseId     the id of the course
-     * @param examId       the id of the exam
-     * @param file         the pdf file
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @param file     the pdf file
      * @return list of not found student matriculation numbers ResponseEntity with status 200 (OK)
      */
     @PostMapping("courses/{courseId}/exams/{examId}/exam-users-save-images")

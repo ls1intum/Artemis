@@ -97,7 +97,7 @@ public class ImageExtractor extends PDFStreamEngine {
     }
 
     /**
-     * Returns the images found after invoking {@link #process()}  method.
+     * Returns the images found after invoking {@link #process()} method.
      */
     public List<ImageDTO> getImages() {
         return images;
