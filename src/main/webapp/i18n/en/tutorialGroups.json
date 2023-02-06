@@ -38,7 +38,8 @@
                 "sessions": "Sessions",
                 "nextSession": "Next Session",
                 "channel": "Channel",
-                "channelWithName": "Channel: {{ channel }}"
+                "channelWithName": "Channel: {{ channel }}",
+                "channelReverse": "Channel of the tutorial group {{ title }}"
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Day of Week",

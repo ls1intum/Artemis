@@ -38,7 +38,8 @@
                 "sessions": "Sitzungen",
                 "nextSession": "Nächste Sitzung",
                 "channel": "Nachrichtenkanal",
-                "channelWithName": "Kanal: {{ channel }}"
+                "channelWithName": "Kanal: {{ channel }}",
+                "channelReverse": "Kanal der Übungsgruppe {{ title }}"
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Wochentag",
