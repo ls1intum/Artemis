@@ -164,4 +164,13 @@ describe('PostComponent', () => {
         expect(component.content).toBe(metisPostExerciseUser1.content);
         expect(component.posting.title).toBe(metisPostExerciseUser1.title);
     });
+
+    it('should open create answer post modal', () => {
+        component.posting = metisPostExerciseUser1;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent, 'openCreateAnswerPostModal');
+        component.openCreateAnswerPostModal();
+        expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
+    });
 });
