@@ -46,6 +46,9 @@
                         <small id="channelHelp" class="form-text text-muted d-block">{{
                             'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.explanation' | artemisTranslate
                         }}</small>
+                        <div class="alert alert-danger" role="alert" *ngIf="showChannelDeletionWarning" id="channelDeletionWarning">
+                            {{ 'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.channelDeletionWarning' | artemisTranslate }}
+                        </div>
                     </div>
                     <!--Public Channel / Private Channel -->
                     <div class="form-group" [hidden]="!useTutorialGroupChannelsControl?.value">

@@ -61,14 +61,35 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
         runOnPushChangeDetection(fixture);
         const formData: TutorialGroupsConfigurationFormData = {
             period: validPeriod,
+            usePublicTutorialGroupChannels: true,
+            useTutorialGroupChannels: true,
         };
         component.formData = formData;
         component.ngOnChanges();
 
-        const formControlNames = ['period'];
+        const formControlNames = ['period', 'usePublicTutorialGroupChannels', 'useTutorialGroupChannels'];
         formControlNames.forEach((control) => {
             expect(component.form.get(control)!.value).toEqual(formData[control]);
         });
+    });
+
+    it('should show channel deletion warning when channel option is disabled in edit mode', () => {
+        component.isEditMode = true;
+        runOnPushChangeDetection(fixture);
+        const formData: TutorialGroupsConfigurationFormData = {
+            period: validPeriod,
+            usePublicTutorialGroupChannels: true,
+            useTutorialGroupChannels: true,
+        };
+        component.formData = formData;
+        component.ngOnChanges();
+
+        component.form.get('useTutorialGroupChannels')!.setValue(false);
+        runOnPushChangeDetection(fixture);
+        fixture.detectChanges();
+        expect(component.showChannelDeletionWarning).toBeTrue();
+        const channelDeletionWarning = fixture.nativeElement.querySelector('#channelDeletionWarning');
+        expect(channelDeletionWarning).not.toBeNull();
     });
 
     it('should submit valid form', fakeAsync(() => {

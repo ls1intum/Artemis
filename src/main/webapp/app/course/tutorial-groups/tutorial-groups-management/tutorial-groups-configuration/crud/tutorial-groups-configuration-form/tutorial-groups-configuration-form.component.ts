@@ -29,6 +29,8 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
 
     faCalendarAlt = faCalendarAlt;
 
+    existingChannelSetting?: boolean;
+
     form: FormGroup;
 
     constructor(private fb: FormBuilder) {}
@@ -59,7 +61,18 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
         }
     }
     private setFormValues(formData: TutorialGroupsConfigurationFormData) {
+        this.existingChannelSetting = formData.useTutorialGroupChannels;
         this.form.patchValue(formData);
+    }
+
+    get showChannelDeletionWarning() {
+        if (!this.isEditMode) {
+            return false;
+        }
+        if (this.existingChannelSetting === undefined) {
+            return false;
+        }
+        return this.existingChannelSetting && this.useTutorialGroupChannelsControl?.value === false;
     }
 
     private initializeForm() {
