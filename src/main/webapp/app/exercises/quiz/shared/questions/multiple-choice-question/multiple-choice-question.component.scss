@@ -170,11 +170,11 @@
 }
 
 .visual-answer-add-container:hover {
-    background: lighten(var(--quiz-visual-answer-add-container-color), 20%);
+    background: var(--quiz-visual-answer-add-container-hover-color);
 }
 
 .visual-answer-add-container-disabled {
-    background: lighten(var(--quiz-visual-answer-add-container-color), 20%);
+    background: var(--quiz-visual-answer-add-container-hover-color);
     align-items: center;
     display: flex;
     justify-content: center;

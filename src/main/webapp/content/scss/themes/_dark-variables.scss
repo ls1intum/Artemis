@@ -342,6 +342,7 @@ $quiz-visual-answer-correct-container-color: #53a351;
 $quiz-visual-answer-correct-container-hover-color: #90c48e;
 $quiz-visual-answer-wrong-container-hover-color: #f3837a;
 $quiz-visual-answer-add-container-color: #508ac7;
+$quiz-visual-answer-add-container-hover-color: lighten($quiz-visual-answer-add-container-color, 20%);
 
 $dnd-question-drop-location-background: white;
 $dnd-question-drop-location-border-color: black;
