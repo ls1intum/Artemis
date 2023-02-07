@@ -300,6 +300,29 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAssignedTeachingAssistant_asInstructor_shouldUpdateTutorialGroupAndChannel() throws Exception {
+        // given
+        var existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
+        existingTutorialGroup.setTeachingAssistant(database.getUserByLogin(testPrefix + "tutor2"));
+
+        // when
+        var updatedTutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId,
+                new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.OK);
+
+        // then
+        assertThat(updatedTutorialGroup.getTeachingAssistant().getLogin()).isEqualTo(testPrefix + "tutor2");
+        asserTutorialGroupChannelIsCorrectlyConfigured(updatedTutorialGroup);
+
+        // reset teaching assistant to tutor 1
+        existingTutorialGroup.setTeachingAssistant(database.getUserByLogin(testPrefix + "tutor1"));
+        updatedTutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId,
+                new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.OK);
+        assertThat(updatedTutorialGroup.getTeachingAssistant().getLogin()).isEqualTo(testPrefix + "tutor1");
+        asserTutorialGroupChannelIsCorrectlyConfigured(updatedTutorialGroup);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void update_withTitleAlreadyExists_shouldReturnBadRequest() throws Exception {
         // given
         var existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
