@@ -123,17 +123,22 @@ public final class Constants {
 
     public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were unlocked successfully.";
 
-    public static final int FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS = 5000;
+    // The db-column of type TEXT in MySQL can hold up to 65_535 _bytes_, PostgreSQL has no limitation.
+    private static final int MYSQL_MAX_TEXT_SIZE = 65_535;
+
+    // Since some characters might use up to four bytes, some overhead is reserved for that
+    // (assuming that most characters are regular ASCII ones).
+    private static final int MYSQL_SAFE_MAX_TEXT_SIZE = 50_000;
+
+    public static final int FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS = MYSQL_SAFE_MAX_TEXT_SIZE;
 
     // This value limits the amount of characters allowed for a complaint response text.
-    // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
     // Also, the value on the client side must match this value.
-    public static final int COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
+    public static final int COMPLAINT_RESPONSE_TEXT_LIMIT = MYSQL_MAX_TEXT_SIZE;
 
     // This value limits the amount of characters allowed for a complaint text.
-    // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
     // Also, the value on the client side must match this value.
-    public static final int COMPLAINT_TEXT_LIMIT = 65535;
+    public static final int COMPLAINT_TEXT_LIMIT = MYSQL_MAX_TEXT_SIZE;
 
     public static final String ASSIGNMENT_CHECKOUT_PATH = "assignment";
 

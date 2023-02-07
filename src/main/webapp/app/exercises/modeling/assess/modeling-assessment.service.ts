@@ -12,7 +12,9 @@ export type EntityResponseType = HttpResponse<Result>;
 @Injectable({ providedIn: 'root' })
 export class ModelingAssessmentService {
     private readonly MAX_FEEDBACK_TEXT_LENGTH = 500;
-    private readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 5000;
+    // keep in sync with Constants.java
+    private readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 50_000;
+
     private resourceUrl = SERVER_API_URL + 'api';
 
     constructor(private http: HttpClient) {}

@@ -103,8 +103,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
                 issue.setFilePath(removeCIDirectoriesFromPath(issue.getFilePath()));
 
                 if (issue.getMessage() != null) {
-                    // Note: the feedback detail text is limited to 5.000 characters, so we limit the issue message to 4.500 characters to avoid issues
-                    // the remaining 500 characters are used for the json structure of the issue
+                    // Note: the remaining 500 characters are used for the json structure of the issue
                     int maxLength = Math.min(issue.getMessage().length(), FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS - 500);
                     issue.setMessage(issue.getMessage().substring(0, maxLength));
                 }

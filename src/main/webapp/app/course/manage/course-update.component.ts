@@ -63,10 +63,11 @@ export class CourseUpdateComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
 
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
-    // This is the maximum value allowed in our database. These values must be the same as in Constants.java
-    // Currently set to 65535 as this is the limit of TEXT
-    readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
-    readonly COMPLAINT_TEXT_LIMIT = 65535;
+    // These values must be the same as in Constants.java.
+    // See Constants.java for details on why this value has been chosen.
+    readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65_535;
+    readonly COMPLAINT_TEXT_LIMIT = 65_535;
+
     tutorialGroupsFeatureActivated = false;
 
     constructor(
