@@ -20,6 +20,7 @@ import org.w3c.dom.Document;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
@@ -113,14 +114,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, InternalVcsRepositoryURLs internalVcsRepositoryURLs,
             boolean checkoutSolution, String buildPlanUrl) {
         final var resourcePath = Path.of("templates", "jenkins", "config.xml");
-        Resource resource = resourceLoaderService.getResource("templates", "jenkins", "Jenkinsfile");
-        String jenkinsFileScript;
-        try {
-            jenkinsFileScript = Files.readString(resource.getFile().toPath());
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        String jenkinsFileScript = loadJenkinsfile();
         var replacements = getReplacements(internalVcsRepositoryURLs, checkoutSolution, buildPlanUrl);
         jenkinsFileScript = jenkinsFileScript.replace("'", "&apos;");
         jenkinsFileScript = jenkinsFileScript.replace("<", "&lt;");
@@ -142,4 +136,16 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         }
         return jenkinsFileScript;
     }
+
+    private String loadJenkinsfile() {
+        Resource resource = resourceLoaderService.getResource("templates", "jenkins", "Jenkinsfile");
+
+        try {
+            return Files.readString(resource.getFile().toPath());
+        }
+        catch (IOException e) {
+            throw new ContinuousIntegrationBuildPlanException("Could not load Jenkinsfile.", e);
+        }
+    }
+
 }
