@@ -3,7 +3,6 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
@@ -34,7 +33,7 @@ export class OpenCodeEditorButtonComponent implements OnChanges {
 
     ngOnChanges() {
         this.courseAndExerciseNavigationUrl = this.courseAndExerciseNavigationUrlSegment.reduce((acc, segment) => `${acc}/${segment}`);
-        const shouldPreferPractice = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
+        const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise);
         this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations, shouldPreferPractice) ?? this.participations[0];
     }
 
