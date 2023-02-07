@@ -94,8 +94,11 @@ public class SubmissionResource {
             resultService.deleteResult(result, true);
         }
         if (submission.get() instanceof ProgrammingSubmission programmingSubmission) {
+            // This clears the build log entries and deletes them from the corresponding table
             programmingSubmission.setBuildLogEntries(Collections.emptyList());
-            submissionRepository.save(submission.get());
+            programmingSubmission.setResults(Collections.emptyList());
+            submissionRepository.save(programmingSubmission);
+            buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
         }
         buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.get().getId());
         submissionRepository.deleteById(id);
