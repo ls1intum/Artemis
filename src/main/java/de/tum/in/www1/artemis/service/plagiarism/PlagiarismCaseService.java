@@ -1,15 +1,20 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
+
+import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
@@ -18,11 +23,15 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismSubmissionRepository;
+import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismVerdictDTO;
 
 @Service
 public class PlagiarismCaseService {
+
+    @Value("${server.url}")
+    private URL artemisServerUrl;
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
@@ -34,13 +43,16 @@ public class PlagiarismCaseService {
 
     private final PlagiarismSubmissionRepository plagiarismSubmissionRepository;
 
+    private final MailService mailService;
+
     public PlagiarismCaseService(PlagiarismCaseRepository plagiarismCaseRepository, PlagiarismComparisonRepository plagiarismComparisonRepository, UserRepository userRepository,
-            SingleUserNotificationService singleUserNotificationService, PlagiarismSubmissionRepository plagiarismSubmissionRepository) {
+            SingleUserNotificationService singleUserNotificationService, PlagiarismSubmissionRepository plagiarismSubmissionRepository, MailService mailService) {
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.userRepository = userRepository;
         this.singleUserNotificationService = singleUserNotificationService;
         this.plagiarismSubmissionRepository = plagiarismSubmissionRepository;
+        this.mailService = mailService;
     }
 
     /**
@@ -83,6 +95,15 @@ public class PlagiarismCaseService {
         plagiarismCase.setPost(post);
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
         singleUserNotificationService.notifyUserAboutNewPlagiarismCase(plagiarismCase, plagiarismCase.getStudent());
+
+        Exercise exercise = plagiarismCase.getExercise();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        NotificationTarget target = new NotificationTarget(PLAGIARISM_DETECTED_TEXT, plagiarismCaseId, PLAGIARISM_TEXT, course.getId(), COURSES_TEXT);
+        Context context = new Context();
+        context.setVariable("content", plagiarismCase.getPost().getContent());
+        context.setVariable("notificationUrl", extractNotificationUrl(target, artemisServerUrl.toString()));
+        mailService.sendEmailFromTemplate(plagiarismCase.getStudent(), "mail/notification/plagiarismCaseEmail", context, "email.plagiarism.title",
+                new Object[] { exercise.getTitle(), course.getTitle() });
     }
 
     /**

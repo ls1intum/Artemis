@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<th:block th:replace="mail/notification/fragments :: head"/>
+<th:block>
+    <head>
+        <th:block th:replace="mail/notification/fragments :: headMetaDataAndIconLink"/>
+        <th:block th:replace="mail/notification/fragments :: css"/>
+    </head>
+</th:block>
 <body>
 <th:block th:replace="mail/notification/fragments :: header"/>
 <!-- Message Body Start -->
 <div id="message-body">
     <div class="notification-content">
         <div>
-            <p th:utext="${notificationSubject.getPost().getContent()}">Post Content</p>
+            <p th:utext="${content}">Post Content</p>
         </div>
         <th:block th:replace="mail/notification/fragments :: openInArtemisButton"/>
     </div>

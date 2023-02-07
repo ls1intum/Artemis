@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
+import org.springframework.lang.Nullable;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -139,12 +140,25 @@ public class MailService {
      * @param titleKey     The key mapping the title for the subject of the mail
      */
     public void sendEmailFromTemplate(User user, String templateName, String titleKey) {
+        sendEmailFromTemplate(user, templateName, new Context(), titleKey, null);
+    }
+
+    /**
+     * Sends a predefined mail based on a template
+     *
+     * @param user         The receiver of the mail
+     * @param templateName The name of the template
+     * @param context      The context of the templateName
+     * @param titleKey     The key mapping the title for the subject of the mail
+     * @param titleArgs    The arguments of the message of titleKey
+     */
+    public void sendEmailFromTemplate(User user, String templateName, Context context, String titleKey, @Nullable Object[] titleArgs) {
         Locale locale = Locale.forLanguageTag(user.getLangKey());
-        Context context = new Context(locale);
+        context.setLocale(locale);
         context.setVariable(USER, user);
         context.setVariable(BASE_URL, artemisServerUrl);
         String content = templateEngine.process(templateName, context);
-        String subject = messageSource.getMessage(titleKey, null, context.getLocale());
+        String subject = messageSource.getMessage(titleKey, titleArgs, context.getLocale());
         sendEmail(user, subject, content, false, true);
     }
 
