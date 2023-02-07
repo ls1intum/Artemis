@@ -25,6 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.thymeleaf.context.Context;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
@@ -263,6 +264,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         postToSave.setCourse(course);
 
         var plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setStudent(student1);
         plagiarismCase.setExercise(existingExercisePosts.get(0).getExercise());
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
         postToSave.setPlagiarismCase(plagiarismCase);
@@ -272,6 +274,8 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         List<Post> updatedPlagiarismCasePosts = postRepository.findPostsByPlagiarismCaseId(plagiarismCase.getId());
         assertThat(updatedPlagiarismCasePosts).hasSize(1);
         verify(singleUserNotificationService, times(1)).notifyUserAboutNewPlagiarismCase(any(), any());
+        verify(mailService, times(1)).sendEmailFromTemplate(eq(student1), eq("mail/notification/plagiarismCaseEmail"), any(Context.class), eq("email.plagiarism.title"),
+                eq(new Object[] { existingExercisePosts.get(0).getExercise().getTitle(), course.getTitle() }));
     }
 
     @Test
