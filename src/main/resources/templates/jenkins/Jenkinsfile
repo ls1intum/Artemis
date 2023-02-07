@@ -19,7 +19,7 @@ node('docker') {
             dir('#assignmentCheckoutPath') {
                 checkout([
                     $class: 'GitSCM',
-                    branches: [[name: '**']],
+                    branches: [[name: '#defaultBranch']],
                     doGenerateSubmoduleConfigurations: false,
                     extensions: [],
                     submoduleCfg: [],
