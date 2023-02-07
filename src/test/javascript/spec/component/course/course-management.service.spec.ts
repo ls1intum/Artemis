@@ -193,6 +193,13 @@ describe('Course Management Service', () => {
         tick();
     }));
 
+    it('should pass through an empty response body when fetching all courses for dashboard', () => {
+        courseManagementService.findAllForDashboard().subscribe((res) => expect(res.body).toEqual(null));
+
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-dashboard` });
+        req.flush(null);
+    });
+
     it('should find one course for dashboard', fakeAsync(() => {
         returnedFromService = { ...courseForDashboard };
         courseStorageService
@@ -208,6 +215,13 @@ describe('Course Management Service', () => {
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/for-dashboard`, returnedFromService, course, true);
         tick();
     }));
+
+    it('should pass through an empty response body when fetching one course for dashboard', () => {
+        courseManagementService.findOneForDashboard(course.id!).subscribe((res) => expect(res.body).toEqual(null));
+
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-dashboard` });
+        req.flush(null);
+    });
 
     it('should set the scoresPerExerciseType and participantScores in the scoresStorageService', fakeAsync(() => {
         const setStoredScoresSpy = jest.spyOn(scoresStorageService, 'setStoredScoresPerExerciseType');

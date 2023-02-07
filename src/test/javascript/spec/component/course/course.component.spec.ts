@@ -1,4 +1,5 @@
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
@@ -105,6 +106,7 @@ describe('CoursesComponent', () => {
     let exerciseService: ExerciseService;
     let router: Router;
     let location: Location;
+    let httpMock: HttpTestingController;
 
     const route = { data: of({ courseId: course1.id }), children: [] } as any as ActivatedRoute;
 
@@ -143,6 +145,7 @@ describe('CoursesComponent', () => {
                 serverDateService = TestBed.inject(ArtemisServerDateService);
                 TestBed.inject(AlertService);
                 exerciseService = TestBed.inject(ExerciseService);
+                httpMock = TestBed.inject(HttpTestingController);
                 fixture.detectChanges();
             });
         router = TestBed.inject(Router);
@@ -179,6 +182,19 @@ describe('CoursesComponent', () => {
             expect(component.exams).toEqual([exam1, exam2]);
             expect(component.nextRelevantExams).toHaveLength(1);
             expect(component.nextRelevantExams?.[0]).toEqual(exam1);
+        });
+
+        it('should handle an empty response body correctly when fetching all courses for dashboard', () => {
+            const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
+            const courseStorageServiceSpy = jest.spyOn(courseStorageService, 'setCourses');
+
+            const req = httpMock.expectOne({ method: 'GET', url: `${SERVER_API_URL}api/courses/for-dashboard` });
+            component.ngOnInit();
+
+            expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
+            req.flush(null);
+            expect(component.courses).toEqual(undefined);
+            expect(courseStorageServiceSpy).not.toHaveBeenCalled();
         });
 
         it('should load exercises on init', () => {
