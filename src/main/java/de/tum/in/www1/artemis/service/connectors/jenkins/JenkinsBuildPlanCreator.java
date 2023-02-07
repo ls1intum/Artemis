@@ -91,7 +91,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         this.artemisNotificationUrl = ARTEMIS_SERVER_URL + Constants.NEW_RESULT_RESOURCE_API_PATH;
     }
 
-    private Map<String, String> getReplacements(InternalVcsRepositoryURLs internalVcsRepositoryURLs, boolean checkoutSolution, String buildPlanUrl) {
+    private Map<String, String> getReplacements(InternalVcsRepositoryURLs internalVcsRepositoryURLs, boolean checkoutSolution, String buildPlanUrl, String jenkinsFileScript) {
         Map<String, String> replacements = new HashMap<>();
         replacements.put(REPLACE_TEST_REPO, internalVcsRepositoryURLs.testRepositoryUrl().getURI().toString());
         replacements.put(REPLACE_ASSIGNMENT_REPO, internalVcsRepositoryURLs.assignmentRepositoryUrl().getURI().toString());
@@ -106,6 +106,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         replacements.put(REPLACE_DEFAULT_BRANCH, defaultBranch);
         replacements.put(REPLACE_CHECKOUT_SOLUTION, Boolean.toString(checkoutSolution));
         replacements.put(REPLACE_BUILD_PLAN_URL, buildPlanUrl);
+        replacements = Map.of(REPLACE_PIPELINE_SCRIPT, jenkinsFileScript, REPLACE_PUSH_TOKEN, pushToken);
 
         return replacements;
     }
@@ -115,14 +116,12 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
             boolean checkoutSolution, String buildPlanUrl) {
         final var resourcePath = Path.of("templates", "jenkins", "config.xml");
         String jenkinsFileScript = loadJenkinsfile();
-        var replacements = getReplacements(internalVcsRepositoryURLs, checkoutSolution, buildPlanUrl);
+        var replacements = getReplacements(internalVcsRepositoryURLs, checkoutSolution, buildPlanUrl, jenkinsFileScript);
         jenkinsFileScript = jenkinsFileScript.replace("'", "&apos;");
         jenkinsFileScript = jenkinsFileScript.replace("<", "&lt;");
         jenkinsFileScript = jenkinsFileScript.replace(">", "&gt;");
         jenkinsFileScript = jenkinsFileScript.replace("\\", "\\\\");
         jenkinsFileScript = replacePipelineScriptParameters(jenkinsFileScript, replacements);
-
-        replacements = Map.of(REPLACE_PIPELINE_SCRIPT, jenkinsFileScript, REPLACE_PUSH_TOKEN, pushToken);
 
         final var xmlResource = resourceLoaderService.getResource(resourcePath.toString());
         return XmlFileUtils.readXmlFile(xmlResource, replacements);
