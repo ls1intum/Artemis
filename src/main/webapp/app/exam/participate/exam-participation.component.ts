@@ -639,7 +639,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.exerciseIndex = this.studentExam.exercises!.findIndex((exercise1) => exercise1.id === exercise.id);
 
         // if we do not have a valid participation for the exercise -> initialize it
-        console.log(ExamParticipationComponent.isExerciseParticipationValid(exercise), exercise);
         if (!ExamParticipationComponent.isExerciseParticipationValid(exercise)) {
             // TODO: after client is online again, subscribe is not executed, might be a problem of the Observable in createParticipationForExercise
             this.createParticipationForExercise(exercise).subscribe((participation) => {
