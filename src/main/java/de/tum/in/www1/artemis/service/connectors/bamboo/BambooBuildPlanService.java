@@ -99,17 +99,17 @@ public class BambooBuildPlanService {
      * Creates a Build Plan for a Programming Exercise
      *
      * @param programmingExercise    programming exercise with the required
-     *                               information to create the base build plan
+     *                                   information to create the base build plan
      * @param planKey                the key of the build plan
      * @param repositoryName         the slug of the assignment repository (used to
-     *                               separate between exercise and solution), i.e.
-     *                               the unique identifier
+     *                                   separate between exercise and solution), i.e.
+     *                                   the unique identifier
      * @param testRepositoryName     the slug of the test repository, i.e. the
-     *                               unique identifier
+     *                                   unique identifier
      * @param solutionRepositoryName the slug of the solution repository, i.e. the
-     *                               unique identifier
+     *                                   unique identifier
      * @param auxiliaryRepositories  List of auxiliary repositories to be included in
-     *                               the build plan
+     *                                   the build plan
      */
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName, String solutionRepositoryName,
             List<AuxiliaryRepository.AuxRepoNameWithSlug> auxiliaryRepositories) {
@@ -132,8 +132,8 @@ public class BambooBuildPlanService {
      * Set Build Plan Permissions for admins, instructors, editors and teaching assistants.
      *
      * @param programmingExercise a programming exercise with the required
-     *                            information to set the needed build plan
-     *                            permissions
+     *                                information to set the needed build plan
+     *                                permissions
      * @param planKey             The name of the source plan
      */
     public void setBuildPlanPermissionsForExercise(ProgrammingExercise programmingExercise, String planKey) {
@@ -504,7 +504,8 @@ public class BambooBuildPlanService {
         }
     }
 
-    /** Assembles a bamboo docker configuration for a given programming exercise and project type
+    /**
+     * Assembles a bamboo docker configuration for a given programming exercise and project type
      *
      * @param programmingLanguage
      * @param projectType
@@ -519,13 +520,13 @@ public class BambooBuildPlanService {
         return dockerConfiguration;
     }
 
-    /** Get the docker run arguments for a Bamboo DockerConfiguration.
+    /**
+     * Get the docker run arguments for a Bamboo DockerConfiguration.
      * The configuration is obtained from the programmingLanguageConfiguration.
      *
      * @return An array of string containing all the configured docker run argument key-value pairs prefixed with two dashes
      */
     private String[] getDefaultDockerRunArguments() {
-        // Bamboo needs all docker run arguments in separate lines
-        return programmingLanguageConfiguration.getDefaultDockerFlags().entrySet().stream().map(entry -> "--" + entry.getKey() + "=" + entry.getValue()).toArray(String[]::new);
+        return programmingLanguageConfiguration.getDefaultDockerFlags().toArray(new String[0]);
     }
 }

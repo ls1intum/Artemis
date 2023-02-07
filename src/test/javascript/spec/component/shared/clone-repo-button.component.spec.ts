@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
 import { TranslateService } from '@ngx-translate/core';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
@@ -23,6 +24,8 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
+import { Exercise } from 'app/entities/exercise.model';
 
 describe('JhiCloneRepoButtonComponent', () => {
     let component: CloneRepoButtonComponent;
@@ -85,6 +88,7 @@ describe('JhiCloneRepoButtonComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(SafeUrlPipe),
                 MockDirective(FeatureToggleDirective),
+                MockComponent(HelpIconComponent),
             ],
             providers: [
                 MockProvider(AlertService),
@@ -238,14 +242,16 @@ describe('JhiCloneRepoButtonComponent', () => {
         component.ngOnInit();
         component.ngOnChanges();
 
+        expect(component.activeParticipation).toEqual(participation1);
         expect(component.isTeamParticipation).toBeFalse();
-        expect(component.getHttpOrSshRepositoryUrl()).toBe('https://user1@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-practice.git');
-        expect(component.cloneHeadline).toBe('artemisApp.exerciseActions.clonePracticeRepository');
+        expect(component.getHttpOrSshRepositoryUrl()).toBe('https://user1@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git');
+        expect(component.cloneHeadline).toBe('artemisApp.exerciseActions.cloneRatedRepository');
 
         component.switchPracticeMode();
 
-        expect(component.getHttpOrSshRepositoryUrl()).toBe('https://user1@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git');
-        expect(component.cloneHeadline).toBe('artemisApp.exerciseActions.cloneRatedRepository');
+        expect(component.activeParticipation).toEqual(participation2);
+        expect(component.getHttpOrSshRepositoryUrl()).toBe('https://user1@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-practice.git');
+        expect(component.cloneHeadline).toBe('artemisApp.exerciseActions.clonePracticeRepository');
     });
 
     it('should handle no participation', () => {
@@ -293,6 +299,42 @@ describe('JhiCloneRepoButtonComponent', () => {
         tick();
         expect(component.useSsh).toBeFalsy();
     }));
+
+    it.each([
+        [
+            [
+                { id: 1, testRun: true },
+                { id: 2, testRun: false },
+            ],
+            { dueDate: dayjs().subtract(1, 'hour') } as Exercise,
+            1,
+        ],
+        [[{ id: 1, testRun: true }], { dueDate: dayjs().subtract(1, 'hour') } as Exercise, 1],
+        [[{ id: 2, testRun: false }], { dueDate: dayjs().subtract(1, 'hour') } as Exercise, 2],
+        [
+            [
+                { id: 1, testRun: true },
+                { id: 2, testRun: false },
+            ],
+            { dueDate: dayjs().add(1, 'hour') } as Exercise,
+            2,
+        ],
+        [[{ id: 2, testRun: false }], { dueDate: dayjs().add(1, 'hour') } as Exercise, 2],
+        [
+            [
+                { id: 1, testRun: true },
+                { id: 2, testRun: false },
+            ],
+            { dueDate: undefined } as Exercise,
+            2,
+        ],
+        [[{ id: 2, testRun: false }], { dueDate: undefined } as Exercise, 2],
+    ])('should correctly choose active participation', (participations: ProgrammingExerciseStudentParticipation[], exercise: Exercise, expected: number) => {
+        component.participations = participations;
+        component.exercise = exercise;
+        component.ngOnChanges();
+        expect(component.activeParticipation?.id).toBe(expected);
+    });
 
     function stubServices() {
         const identityStub = jest.spyOn(accountService, 'identity');

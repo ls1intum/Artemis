@@ -64,7 +64,7 @@ export class FeedbackComponent implements OnInit {
      * the result.
      */
     @Input() showMissingAutomaticFeedbackInformation = false;
-    @Input() latestIndividualDueDate?: dayjs.Dayjs;
+    @Input() latestDueDate?: dayjs.Dayjs;
     @Input() taskName?: string;
     @Input() numberOfNotExecutedTests?: number;
 

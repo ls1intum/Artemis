@@ -40,7 +40,7 @@ public interface VersionControlService {
      * Deletes the project for the given courseShortName and project key
      *
      * @param courseShortName of the course the repository belongs to
-     * @param projectKey of the project that should be deleted
+     * @param projectKey      of the project that should be deleted
      */
     void deleteProject(String courseShortName, String projectKey);
 
@@ -136,9 +136,9 @@ public interface VersionControlService {
     /**
      * Add the user to the repository
      *
-     * @param repositoryUrl     The repository url of the repository to which to add the user. It contains the project key & the repository name.
-     * @param user              User which to add to the repository
-     * @param permissions       The permissions the user should get for the repository.
+     * @param repositoryUrl The repository url of the repository to which to add the user. It contains the project key & the repository name.
+     * @param user          User which to add to the repository
+     * @param permissions   The permissions the user should get for the repository.
      */
     void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user, RepositoryPermissions permissions);
 

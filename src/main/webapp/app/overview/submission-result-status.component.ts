@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
@@ -10,7 +10,7 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-submission-result-status',
     templateUrl: './submission-result-status.component.html',
 })
-export class SubmissionResultStatusComponent implements OnInit {
+export class SubmissionResultStatusComponent implements OnChanges {
     readonly ExerciseType = ExerciseType;
     readonly InitializationState = InitializationState;
     readonly dayjs = dayjs;
@@ -32,20 +32,22 @@ export class SubmissionResultStatusComponent implements OnInit {
     @Input() short = false;
     @Input() triggerLastGraded = true;
 
-    uninitializedQuiz: boolean;
     quizNotStarted: boolean;
-    afterDueDate: boolean;
+    exerciseMissedDeadline: boolean;
     uninitialized: boolean;
     notSubmitted: boolean;
 
-    ngOnInit() {
+    ngOnChanges() {
+        const afterDueDate = !!this.exercise.dueDate && this.exercise.dueDate.isBefore(dayjs());
+        this.exerciseMissedDeadline = afterDueDate && !this.studentParticipation;
+
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
-            this.uninitializedQuiz = ArtemisQuizService.isUninitialized(quizExercise);
+            this.uninitialized = ArtemisQuizService.isUninitialized(quizExercise);
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
+        } else {
+            this.uninitialized = !afterDueDate && !this.studentParticipation;
+            this.notSubmitted = !afterDueDate && !!this.studentParticipation && !this.studentParticipation.submissions?.length;
         }
-        this.afterDueDate = !!this.exercise.dueDate && this.exercise.dueDate.isBefore(dayjs());
-        this.uninitialized = !this.afterDueDate && !this.exercise.studentParticipations?.length;
-        this.notSubmitted = !this.afterDueDate && !!this.exercise.studentParticipations?.length;
     }
 }

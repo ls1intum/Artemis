@@ -15,9 +15,9 @@ public class UrlUtils {
      * I.e. if you have a path of <code>/api/some/&lt;variable&gt;/endpoint/&lt;another variable&gt;</code> and
      * <code>args=["firstArg", 42]</code>, then the returned builder will be based on this path: <code>/api/some/frstArg/endpoint/42</code>
      *
-     * @param baseUrl The URL to take as basis when building the endpoints path
+     * @param baseUrl      The URL to take as basis when building the endpoints path
      * @param pathSegments The segments to be appended to the base URL
-     * @param args Arguments that should replace the variable path segments
+     * @param args         Arguments that should replace the variable path segments
      * @return A URI builder which combines all parameters into one base path for a REST API endpoint
      */
     public static UriComponentsBuilder buildEndpoint(String baseUrl, List<String> pathSegments, Object... args) {
