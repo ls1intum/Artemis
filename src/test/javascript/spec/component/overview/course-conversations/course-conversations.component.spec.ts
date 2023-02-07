@@ -14,9 +14,10 @@ import { Course } from 'app/entities/course.model';
 import { EMPTY } from 'rxjs';
 import { BehaviorSubject } from 'rxjs';
 import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
-import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { Post } from 'app/entities/metis/post.model';
 const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
 examples.forEach((activeConversation) => {
@@ -24,13 +25,16 @@ examples.forEach((activeConversation) => {
         let component: CourseConversationsComponent;
         let fixture: ComponentFixture<CourseConversationsComponent>;
         let metisConversationService: MetisConversationService;
+        let metisService: MetisService;
         const course = { id: 1 } as Course;
         let queryParamsSubject: BehaviorSubject<Params>;
         const router = new MockRouter();
+        let postsSubject = new BehaviorSubject<Post[]>([]);
 
         beforeEach(waitForAsync(() => {
             queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
             metisConversationService = {} as MetisConversationService;
+            metisService = {} as MetisService;
             TestBed.configureTestingModule({
                 declarations: [
                     CourseConversationsComponent,
@@ -43,6 +47,7 @@ examples.forEach((activeConversation) => {
                 providers: [
                     MockProvider(AlertService),
                     MockProvider(MetisConversationService),
+                    MockProvider(MetisService),
                     { provide: Router, useValue: router },
                     {
                         provide: ActivatedRoute,
@@ -69,10 +74,14 @@ examples.forEach((activeConversation) => {
                             provide: MetisConversationService,
                             useValue: metisConversationService,
                         },
+                        {
+                            provide: MetisService,
+                            useValue: metisService,
+                        },
                     ],
                 },
             }).createComponent(CourseConversationsComponent);
-
+            postsSubject = new BehaviorSubject([]);
             Object.defineProperty(metisConversationService, 'setActiveConversation', { value: jest.fn(), configurable: true, writable: true });
             Object.defineProperty(metisConversationService, 'course', { get: () => course });
             Object.defineProperty(metisConversationService, 'activeConversation$', { get: () => new BehaviorSubject(activeConversation).asObservable() });
@@ -87,6 +96,11 @@ examples.forEach((activeConversation) => {
             Object.defineProperty(metisConversationService, 'isLoading$', {
                 get: () => new BehaviorSubject(false).asObservable(),
             });
+            Object.defineProperty(metisService, 'posts', {
+                get: () => postsSubject.asObservable(),
+            });
+            Object.defineProperty(metisService, 'setPageType', { value: jest.fn() });
+            Object.defineProperty(metisService, 'setCourse', { value: jest.fn() });
             component = fixture.componentInstance;
         }));
 
@@ -102,13 +116,16 @@ examples.forEach((activeConversation) => {
             expect(component.activeConversation).toEqual(activeConversation);
         });
 
-        it('should set thread post', () => {
+        it('should update thread in post', fakeAsync(() => {
             fixture.detectChanges();
-            const post = { id: 1 } as Post;
-            component.setPostInThread(post);
-            expect(component.postInThread).toEqual(post);
-            expect(component.showPostThread).toBeTrue();
-        });
+            const originalPost = { id: 1, content: 'loremIpsum' } as Post;
+            component.postInThread = originalPost;
+            fixture.detectChanges();
+            const updatedPost = { id: 1, content: 'updatedContent' } as Post;
+            postsSubject.next([updatedPost]);
+            tick();
+            expect(component.postInThread).toEqual(updatedPost);
+        }));
 
         it('should set active conversation depending on the query param', fakeAsync(() => {
             const setActiveConversationByIdSpy = jest.spyOn(metisConversationService, 'setActiveConversation');

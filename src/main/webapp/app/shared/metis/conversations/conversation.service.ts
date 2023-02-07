@@ -36,7 +36,7 @@ export class ConversationService {
 
     constructor(protected http: HttpClient, protected translationService: TranslateService, protected accountService: AccountService) {}
 
-    getConversationName = (conversation: ConversationDto | undefined): string => {
+    getConversationName = (conversation: ConversationDto | undefined, showLogin = false): string => {
         if (!conversation) {
             return '';
         }
@@ -48,7 +48,7 @@ export class ConversationService {
             return channelName;
         } else if (isOneToOneChatDto(conversation)) {
             const otherUser = conversation.members?.find((user) => user.isRequestingUser === false);
-            return otherUser ? getUserLabel(otherUser) : '';
+            return otherUser ? getUserLabel(otherUser, showLogin) : '';
         } else if (isGroupChatDto(conversation)) {
             if (conversation.name && conversation.name.length > 0) {
                 return conversation.name;
@@ -60,7 +60,7 @@ export class ConversationService {
             if (membersWithoutUser.length === 0) {
                 return containsCurrentUser ? this.translationService.instant('artemisApp.conversationsLayout.onlyYou') : '';
             } else if (membersWithoutUser.length === 1) {
-                return getUserLabel(membersWithoutUser[0], true);
+                return getUserLabel(membersWithoutUser[0], showLogin);
             } else if (membersWithoutUser.length === 2) {
                 return `${getUserLabel(membersWithoutUser[0], false)}, ${getUserLabel(membersWithoutUser[1], false)}`;
             } else {

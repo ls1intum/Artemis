@@ -25,6 +25,7 @@ public enum ParticipationLifecycle {
 
     /**
      * Find the corresponding participation to an exercise lifecycle if one exists.
+     *
      * @param lifecycle of an exercise.
      * @return a participation lifecycle, if a corresponding participation lifecycle exists.
      */

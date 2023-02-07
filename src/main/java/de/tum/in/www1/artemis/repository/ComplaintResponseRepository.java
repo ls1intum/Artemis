@@ -35,7 +35,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
     /**
      * This magic method counts the number of complaints responses by complaint type associated to an exam id
      *
-     * @param examId      - the id of the exam we want to filter by
+     * @param examId        - the id of the exam we want to filter by
      * @param complaintType - complaint type we want to filter by
      * @return number of complaints response associated to exam examId
      */
@@ -44,7 +44,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
     /**
      * This magic method counts the number of complaints responses by complaint type associated to an exercise id
      *
-     * @param exerciseId      - the id of the exercise we want to filter by
+     * @param exerciseId    - the id of the exercise we want to filter by
      * @param complaintType - complaint type we want to filter by
      * @return number of complaints response associated to exercise exerciseId
      */
@@ -59,7 +59,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
     /**
      * This method counts the number of complaints by complaint type associated to an exercise id
      *
-     * @param exerciseIds    - the id of the course we want to filter by
+     * @param exerciseIds   - the id of the course we want to filter by
      * @param complaintType - complaint type we want to filter by
      * @return number of complaints associated to exercise exerciseId
      */
@@ -82,7 +82,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
     /**
      * This method counts the number of complaints by complaint type associated to an exercise id
      *
-     * @param exerciseIds    - the id of the course we want to filter by
+     * @param exerciseIds   - the id of the course we want to filter by
      * @param complaintType - complaint type we want to filter by
      * @return number of complaints associated to exercise exerciseId
      */
@@ -102,6 +102,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
 
     /**
      * Delete all complaint responses that belong to the given result
+     *
      * @param resultId the id of the result where the complaint response should be deleted
      */
     @Transactional // ok because of delete
