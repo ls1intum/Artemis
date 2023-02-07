@@ -94,7 +94,7 @@ public class TutorialGroupsConfigurationResource {
         courseRepository.save(course);
 
         if (persistedConfiguration.getUseTutorialGroupChannels()) {
-            tutorialGroupChannelManagementService.setUpChannelsForCourse(course);
+            tutorialGroupChannelManagementService.createTutorialGroupsChannelsForAllTutorialGroupsOfCourse(course);
         }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "tutorial-groups-configuration/" + tutorialGroupsConfiguration.getId())).body(persistedConfiguration);
@@ -139,7 +139,7 @@ public class TutorialGroupsConfigurationResource {
         if (useTutorialGroupChannelSettingChanged) {
             log.debug("Tutorial group channel setting changed, updating tutorial group channels for course: {}", configurationFromDatabase.getCourse().getId());
             if (persistedConfiguration.getUseTutorialGroupChannels()) {
-                tutorialGroupChannelManagementService.setUpChannelsForCourse(configurationFromDatabase.getCourse());
+                tutorialGroupChannelManagementService.createTutorialGroupsChannelsForAllTutorialGroupsOfCourse(configurationFromDatabase.getCourse());
             }
             else {
                 tutorialGroupChannelManagementService.removeTutorialGroupChannelsForCourse(configurationFromDatabase.getCourse());

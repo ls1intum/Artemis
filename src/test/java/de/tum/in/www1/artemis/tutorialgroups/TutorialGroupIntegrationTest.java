@@ -72,8 +72,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         exampleTwoTutorialGroupId = databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum2", 10, true, "LoremIpsum2", Language.GERMAN,
                 userRepository.findOneByLogin(testPrefix + "tutor2").get(), Set.of(userRepository.findOneByLogin(testPrefix + "student2").get())).getId();
-        tutorialGroupChannelManagementService.setUpChannelForTutorialGroup(tutorialGroupRepository.findByIdElseThrow(exampleOneTutorialGroupId));
-        tutorialGroupChannelManagementService.setUpChannelForTutorialGroup(tutorialGroupRepository.findByIdElseThrow(exampleTwoTutorialGroupId));
+        tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroupRepository.findByIdElseThrow(exampleOneTutorialGroupId));
+        tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroupRepository.findByIdElseThrow(exampleTwoTutorialGroupId));
 
     }
 
@@ -655,8 +655,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         tutorialGroupRegistrationRepository.deleteAllByStudent(userRepository.findOneByLogin(testPrefix + "student3").get());
         tutorialGroupRegistrationRepository.deleteAllByStudent(userRepository.findOneByLogin(testPrefix + "student4").get());
         var group2 = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(group2Id).get();
-        tutorialGroupChannelManagementService.setUpChannelForTutorialGroup(group1);
-        tutorialGroupChannelManagementService.setUpChannelForTutorialGroup(group2);
+        tutorialGroupChannelManagementService.createChannelForTutorialGroup(group1);
+        tutorialGroupChannelManagementService.createChannelForTutorialGroup(group2);
 
         var student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), student1);

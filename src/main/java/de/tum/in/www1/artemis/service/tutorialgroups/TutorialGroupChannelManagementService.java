@@ -57,9 +57,9 @@ public class TutorialGroupChannelManagementService {
      * @param course the course for which the channels should be set up
      * @return the set of channels that were set up
      */
-    public Set<Channel> setUpChannelsForCourse(Course course) {
+    public Set<Channel> createTutorialGroupsChannelsForAllTutorialGroupsOfCourse(Course course) {
         log.debug("Set up tutorial group channels for course with id {}", course.getId());
-        return tutorialGroupRepository.findAllByCourseIdWithChannel(course.getId()).stream().map(this::setUpChannelForTutorialGroup).collect(Collectors.toSet());
+        return tutorialGroupRepository.findAllByCourseIdWithChannel(course.getId()).stream().map(this::createChannelForTutorialGroup).collect(Collectors.toSet());
     }
 
     /**
@@ -82,7 +82,7 @@ public class TutorialGroupChannelManagementService {
      * @param tutorialGroupToSetUp the tutorial group for which the channel should be set up
      * @return the created or existing channel
      */
-    public Channel setUpChannelForTutorialGroup(TutorialGroup tutorialGroupToSetUp) {
+    public Channel createChannelForTutorialGroup(TutorialGroup tutorialGroupToSetUp) {
         var channel = getTutorialGroupChannel(tutorialGroupToSetUp).orElseGet(() -> createTutorialGroupChannel(tutorialGroupToSetUp));
         addAllStudentsOfTutorialGroupToChannel(tutorialGroupToSetUp);
         addTeachingAssistantToTutorialGroupChannel(tutorialGroupToSetUp);
@@ -317,7 +317,7 @@ public class TutorialGroupChannelManagementService {
      * @param tutorialGroupChannelsPublic the new channel mode
      */
     public void changeChannelModeForCourse(Course course, Boolean tutorialGroupChannelsPublic) {
-        var channels = tutorialGroupRepository.findAllByCourseIdWithChannel(course.getId()).stream().map(this::setUpChannelForTutorialGroup).collect(Collectors.toSet());
+        var channels = tutorialGroupRepository.findAllByCourseIdWithChannel(course.getId()).stream().map(this::createChannelForTutorialGroup).collect(Collectors.toSet());
         channels.forEach(channel -> {
             channel.setIsPublic(tutorialGroupChannelsPublic);
         });

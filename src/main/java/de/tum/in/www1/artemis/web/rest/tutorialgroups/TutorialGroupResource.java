@@ -235,7 +235,7 @@ public class TutorialGroupResource {
         }
 
         if (configuration.getUseTutorialGroupChannels()) {
-            tutorialGroupChannelManagementService.setUpChannelForTutorialGroup(persistedTutorialGroup);
+            tutorialGroupChannelManagementService.createChannelForTutorialGroup(persistedTutorialGroup);
         }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId()))
