@@ -775,10 +775,10 @@ public class ParticipationService {
             if (submission instanceof ProgrammingSubmission programmingSubmission) {
                 coverageReportRepository.deleteBySubmissionId(submission.getId());
                 // This clears the build log entries and deletes them from the corresponding table
-                buildLogEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
                 programmingSubmission.setBuildLogEntries(Collections.emptyList());
-                submission.setResults(Collections.emptyList());
+                programmingSubmission.setResults(Collections.emptyList());
                 submissionRepository.save(programmingSubmission);
+                buildLogEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
                 buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
             }
             submissionRepository.deleteById(submission.getId());
