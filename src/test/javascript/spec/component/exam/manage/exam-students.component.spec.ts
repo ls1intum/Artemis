@@ -10,6 +10,7 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
+import { StudentsUploadImagesButtonComponent } from 'app/exam/manage/students/upload-images/students-upload-images-button.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -44,6 +45,7 @@ describe('ExamStudentsComponent', () => {
             declarations: [
                 ExamStudentsComponent,
                 MockComponent(UsersImportButtonComponent),
+                MockComponent(StudentsUploadImagesButtonComponent),
                 MockComponent(DataTableComponent),
                 MockDirective(TranslateDirective),
                 MockDirective(DeleteButtonDirective),
@@ -89,6 +91,7 @@ describe('ExamStudentsComponent', () => {
         const student3 = { login: 'user3', registrationNumber: '1234567' } as StudentDTO;
         const callbackSpy = jest.fn();
         const flashSpy = jest.spyOn(component, 'flashRowClass');
+        const reloadSpy = jest.spyOn(component, 'reloadExamWithRegisteredUsers');
         const examServiceStub = jest.spyOn(examManagementService, 'addStudentToExam').mockReturnValue(of(new HttpResponse({ body: student3 })));
         fixture.detectChanges();
 
@@ -96,8 +99,9 @@ describe('ExamStudentsComponent', () => {
         fixture.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, user3.login);
-        expect(component.allRegisteredUsers).toEqual([user1, user2, user3]);
-        expect(callbackSpy).toHaveBeenCalledWith(user3);
+        expect(component.allRegisteredUsers).toEqual([{ ...user1, user: user1 }, { ...user2, user: user2 }, { ...user3 }]);
+        expect(reloadSpy).toHaveBeenCalledOnce();
+        expect(callbackSpy).not.toHaveBeenCalled();
         expect(flashSpy).toHaveBeenCalledOnce();
         expect(component.isTransitioning).toBeFalse();
     });
@@ -130,19 +134,19 @@ describe('ExamStudentsComponent', () => {
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(component.exam).toEqual(examWithOneUser);
-        expect(component.allRegisteredUsers).toEqual([user2]);
+        expect(component.allRegisteredUsers).toEqual([{ ...user2, user: user2 }]);
     });
 
     it('should remove users from the exam', () => {
         const examServiceStub = jest.spyOn(examManagementService, 'removeStudentFromExam').mockReturnValue(of(new HttpResponse()));
         fixture.detectChanges();
-        component.allRegisteredUsers = [user1, user2];
+        component.allRegisteredUsers = [{ user: user1 }, { user: user2 }];
 
-        component.removeFromExam(user2, { deleteParticipationsAndSubmission: false });
+        component.removeFromExam({ user: user2 }, { deleteParticipationsAndSubmission: false });
         fixture.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, user2.login, false);
-        expect(component.allRegisteredUsers).toEqual([user1]);
+        expect(component.allRegisteredUsers).toEqual([{ user: user1 }]);
     });
 
     it('should register all enrolled students of the course to the exam', () => {
@@ -156,7 +160,7 @@ describe('ExamStudentsComponent', () => {
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(examServiceStubAddAll).toHaveBeenCalledWith(course.id, examWithCourse.id);
-        expect(component.allRegisteredUsers).toEqual([user2]);
+        expect(component.allRegisteredUsers).toEqual([{ ...user2, user: user2 }]);
     });
 
     it('should remove all users from the exam', () => {
