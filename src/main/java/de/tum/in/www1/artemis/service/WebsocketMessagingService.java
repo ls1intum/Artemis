@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 
 /**
@@ -32,12 +33,15 @@ public class WebsocketMessagingService {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final StudentExamRepository studentExamRepository;
+
     public WebsocketMessagingService(SimpMessageSendingOperations messagingTemplate, ExamDateService examDateService, ExerciseDateService exerciseDateService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, StudentExamRepository studentExamRepository) {
         this.messagingTemplate = messagingTemplate;
         this.examDateService = examDateService;
         this.exerciseDateService = exerciseDateService;
         this.authCheckService = authCheckService;
+        this.studentExamRepository = studentExamRepository;
     }
 
     /**
@@ -80,9 +84,18 @@ public class WebsocketMessagingService {
         // TODO: Are there other cases that must be handled here?
         if (participation instanceof StudentParticipation studentParticipation) {
             final Exercise exercise = studentParticipation.getExercise();
-            final boolean isWorkingPeriodOver;
+            boolean isWorkingPeriodOver = false;
             if (exercise.isExamExercise()) {
-                isWorkingPeriodOver = examDateService.isExerciseWorkingPeriodOver(exercise);
+                var exam = exercise.getExerciseGroup().getExam();
+                if (exam.isTestExam()) {
+                    var studentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());
+                    if (studentExam.isPresent()) {
+                        isWorkingPeriodOver = studentExam.get().isSubmitted() || studentExam.get().isEnded();
+                    }
+                }
+                else {
+                    isWorkingPeriodOver = examDateService.isExerciseWorkingPeriodOver(exercise);
+                }
             }
             else {
                 isWorkingPeriodOver = exerciseDateService.isAfterLatestDueDate(exercise);
@@ -90,10 +103,10 @@ public class WebsocketMessagingService {
             // Don't send students results after the exam ended
             boolean isAfterExamEnd = isWorkingPeriodOver && exercise.isExamExercise();
             // If the assessment due date is not over yet, do not send manual feedback to students!
-            boolean isReadyForRelease = AssessmentType.AUTOMATIC == result.getAssessmentType() || exercise.getAssessmentDueDate() == null
+            boolean isAutomaticAssessmentOrDueDateNotOverYet = AssessmentType.AUTOMATIC == result.getAssessmentType() || exercise.getAssessmentDueDate() == null
                     || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
 
-            if (isReadyForRelease && !isAfterExamEnd) {
+            if (isAutomaticAssessmentOrDueDateNotOverYet && !isAfterExamEnd) {
                 result.filterSensitiveInformation();
 
                 studentParticipation.getStudents().stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
