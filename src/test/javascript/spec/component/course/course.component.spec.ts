@@ -193,7 +193,7 @@ describe('CoursesComponent', () => {
 
             expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
             req.flush(null);
-            expect(component.courses).toEqual(undefined);
+            expect(component.courses).toBeUndefined();
             expect(courseStorageServiceSpy).not.toHaveBeenCalled();
         });
 

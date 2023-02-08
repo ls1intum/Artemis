@@ -427,7 +427,7 @@ describe('CourseStatisticsComponent', () => {
         comp.ngOnInit();
         fixture.detectChanges();
         expect(comp.ngxExerciseGroups).toHaveLength(1);
-        let exercise: any = comp.ngxExerciseGroups[0][0];
+        const exercise: any = comp.ngxExerciseGroups[0][0];
         expect(exercise.absoluteScore).toBe(20);
         expect(exercise.reachablePoints).toBe(36);
         expect(exercise.overallMaxPoints).toBe(36);

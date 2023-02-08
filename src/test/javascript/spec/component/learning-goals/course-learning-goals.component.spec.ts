@@ -39,7 +39,7 @@ describe('CourseLearningGoals', () => {
     let courseLearningGoalsComponentFixture: ComponentFixture<CourseLearningGoalsComponent>;
     let courseLearningGoalsComponent: CourseLearningGoalsComponent;
     let learningGoalService: LearningGoalService;
-    let mockCourseStorageService = {
+    const mockCourseStorageService = {
         getCourse: () => {},
         setCourses: () => {},
         subscribeToCourseUpdates: () => of(),
