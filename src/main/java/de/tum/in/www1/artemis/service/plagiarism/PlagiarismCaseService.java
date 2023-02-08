@@ -4,7 +4,10 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFacto
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
