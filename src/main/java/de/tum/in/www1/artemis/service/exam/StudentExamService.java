@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.SubmissionVersionService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -57,6 +58,8 @@ public class StudentExamService {
     private final UserRepository userRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingTriggerService programmingTriggerService;
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
@@ -88,7 +91,8 @@ public class StudentExamService {
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository, CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository,
+            CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -102,6 +106,7 @@ public class StudentExamService {
         this.examQuizService = examQuizService;
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingTriggerService = programmingTriggerService;
         this.examRepository = examRepository;
         this.cacheManager = cacheManager;
         this.messagingTemplate = messagingTemplate;
@@ -134,6 +139,13 @@ public class StudentExamService {
         if (studentExam.isTestRun() || studentExam.getExam().isTestExam()) {
             // immediately evaluate quiz participations for test runs and test exams
             examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExam);
+
+            // Retrigger build for all programing exercises
+            var currentStudentParticipations = studentExam.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
+                    .map(Exercise::getStudentParticipations).flatMap(Collection::stream).map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation)
+                    .filter(studentParticipation -> studentParticipation.isOwnedBy(currentUser)).toList();
+
+            programmingTriggerService.triggerBuildForParticipations(currentStudentParticipations);
         }
 
         // NOTE: only for real exams and test exams, the student repositories need to be locked
