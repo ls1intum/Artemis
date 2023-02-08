@@ -3,7 +3,7 @@ import { Course } from 'app/entities/course.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription, forkJoin } from 'rxjs';
+import { Subject, Subscription, forkJoin, take, takeUntil } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -29,6 +29,8 @@ import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/s
     providers: [MetisConversationService],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
+    private ngUnsubscribe = new Subject<void>();
+
     private courseId: number;
     private subscription: Subscription;
     public course?: Course;
@@ -96,7 +98,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.subscribeForQuizChanges();
         this.metisConversationService
             .setUpConversationService(this.courseId)
-            .pipe()
+            .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe({
                 complete: () => {
                     // service is fully set up, now we can subscribe to the respective observables
@@ -204,6 +206,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
         this.controlsSubscription?.unsubscribe();
         this.vcSubscription?.unsubscribe();
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 
     subscribeForQuizChanges() {
