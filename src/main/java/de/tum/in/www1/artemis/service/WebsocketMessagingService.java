@@ -90,10 +90,10 @@ public class WebsocketMessagingService {
             // Don't send students results after the exam ended
             boolean isAfterExamEnd = isWorkingPeriodOver && exercise.isExamExercise() && !exercise.getExamViaExerciseGroupOrCourseMember().isTestExam();
             // If the assessment due date is not over yet, do not send manual feedback to students!
-            boolean isAutomaticAssessmentOrDueDateNotOverYet = AssessmentType.AUTOMATIC == result.getAssessmentType() || exercise.getAssessmentDueDate() == null
+            boolean isAutomaticAssessmentOrDueDateOver = AssessmentType.AUTOMATIC == result.getAssessmentType() || exercise.getAssessmentDueDate() == null
                     || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
 
-            if (isAutomaticAssessmentOrDueDateNotOverYet && !isAfterExamEnd) {
+            if (isAutomaticAssessmentOrDueDateOver && !isAfterExamEnd) {
                 result.filterSensitiveInformation();
 
                 studentParticipation.getStudents().stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
