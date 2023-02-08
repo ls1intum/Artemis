@@ -5,7 +5,7 @@ import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, ExerciseTypeTOTAL } from 'app/entities/exercise.model';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
@@ -13,10 +13,13 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { PieChartModule } from '@swimlane/ngx-charts';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
 
 describe('CourseCardComponent', () => {
     let fixture: ComponentFixture<CourseCardComponent>;
     let component: CourseCardComponent;
+    let scoresStorageService: ScoresStorageService;
     const submission: ProgrammingSubmission = {
         submissionExerciseType: SubmissionExerciseType.PROGRAMMING,
         id: 3,
@@ -44,6 +47,7 @@ describe('CourseCardComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseCardComponent);
                 component = fixture.componentInstance;
+                scoresStorageService = TestBed.inject(ScoresStorageService);
                 component.course = course;
             });
     });
@@ -57,5 +61,23 @@ describe('CourseCardComponent', () => {
         fixture.detectChanges();
         component.ngOnChanges();
         expect(component.nextRelevantExercise).toEqual(secondNextExercise);
+    });
+
+    it('should display the total course scores returned from the scores storage service', () => {
+        const mockScores: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO> = new Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO>();
+        const mockCourseScoresDTO: CourseScoresDTO = {
+            maxPoints: 0,
+            reachablePoints: 20,
+            studentScores: { absoluteScore: 4, relativeScore: 0.3, currentRelativeScore: 0.2, presentationScore: 0 },
+        };
+        mockScores.set(ExerciseTypeTOTAL.TOTAL, mockCourseScoresDTO);
+        jest.spyOn(scoresStorageService, 'getStoredScoresPerExerciseType').mockReturnValue(mockScores);
+
+        fixture.detectChanges();
+        component.ngOnChanges();
+
+        expect(component.totalRelativeScore).toBe(0.2);
+        expect(component.totalAbsoluteScore).toBe(4);
+        expect(component.totalReachableScore).toBe(20);
     });
 });

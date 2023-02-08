@@ -193,7 +193,7 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should pass through an empty response body when fetching all courses for dashboard', () => {
+    it('should pass on an empty response body when fetching all courses for dashboard and there is no response body sent from the server', () => {
         courseManagementService.findAllForDashboard().subscribe((res) => expect(res.body).toBeNull());
 
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-dashboard` });
@@ -216,7 +216,7 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should pass through an empty response body when fetching one course for dashboard', () => {
+    it('should pass on an empty response body when fetching one course for dashboard and there is no response body sent from the server', () => {
         courseManagementService.findOneForDashboard(course.id!).subscribe((res) => expect(res.body).toBeNull());
 
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-dashboard` });
