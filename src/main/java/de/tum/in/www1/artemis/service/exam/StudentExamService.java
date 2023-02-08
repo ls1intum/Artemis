@@ -140,7 +140,7 @@ public class StudentExamService {
             // immediately evaluate quiz participations for test runs and test exams
             examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExam);
 
-            // Trigger build for all programing exercises
+            // Trigger build for all programing participations
             var currentStudentParticipations = studentExam.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
                     .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(exercise.getId(), currentUser.getId()).stream())
                     .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();

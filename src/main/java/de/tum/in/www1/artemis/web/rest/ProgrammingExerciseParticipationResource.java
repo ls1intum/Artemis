@@ -10,11 +10,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
@@ -76,7 +82,7 @@ public class ProgrammingExerciseParticipationResource {
         }
 
         // hide details that should not be shown to the students
-        resultService.filterSensitiveInformationInResultsIfNotLeastTA(participation, participation.getResults());
+        resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults());
         return ResponseEntity.ok(participation);
     }
 
@@ -98,7 +104,7 @@ public class ProgrammingExerciseParticipationResource {
         }
 
         Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
-        result.ifPresent(value -> resultService.filterSensitiveInformationInResultIfNotAtLeastTA(participation, value));
+        result.ifPresent(value -> resultService.filterSensitiveInformationIfNecessary(participation, value));
 
         return result.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
     }

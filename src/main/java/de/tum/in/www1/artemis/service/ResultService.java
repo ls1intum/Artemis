@@ -212,8 +212,7 @@ public class ResultService {
      * @return the list of filtered feedbacks
      */
     public List<Feedback> getFeedbacksForResult(Result result) {
-        Exercise exercise = result.getParticipation().getExercise();
-        this.filterSensitiveInformationInResultIfNotAtLeastTA(result.getParticipation(), result);
+        this.filterSensitiveInformationIfNecessary(result.getParticipation(), result);
 
         // remove unnecessary data to keep the json payload smaller
         for (Feedback feedback : result.getFeedbacks()) {
@@ -229,8 +228,8 @@ public class ResultService {
      * @param participation the result belongs to.
      * @param result        a result of this participation
      */
-    public void filterSensitiveInformationInResultIfNotAtLeastTA(final Participation participation, final Result result) {
-        this.filterSensitiveInformationInResultsIfNotLeastTA(participation, List.of(result));
+    public void filterSensitiveInformationIfNecessary(final Participation participation, final Result result) {
+        this.filterSensitiveInformationIfNecessary(participation, List.of(result));
     }
 
     /**
@@ -239,7 +238,7 @@ public class ResultService {
      * @param participation the results belong to.
      * @param results       collection of results of this participation
      */
-    public void filterSensitiveInformationInResultsIfNotLeastTA(final Participation participation, final Collection<Result> results) {
+    public void filterSensitiveInformationIfNecessary(final Participation participation, final Collection<Result> results) {
         results.forEach(Result::filterSensitiveInformation);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
             // The test cases marked as after_due_date should only be shown after all

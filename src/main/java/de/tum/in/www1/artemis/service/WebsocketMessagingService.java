@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 
 /**
@@ -33,15 +32,12 @@ public class WebsocketMessagingService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final StudentExamRepository studentExamRepository;
-
     public WebsocketMessagingService(SimpMessageSendingOperations messagingTemplate, ExamDateService examDateService, ExerciseDateService exerciseDateService,
-            AuthorizationCheckService authCheckService, StudentExamRepository studentExamRepository) {
+            AuthorizationCheckService authCheckService) {
         this.messagingTemplate = messagingTemplate;
         this.examDateService = examDateService;
         this.exerciseDateService = exerciseDateService;
         this.authCheckService = authCheckService;
-        this.studentExamRepository = studentExamRepository;
     }
 
     /**
