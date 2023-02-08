@@ -84,18 +84,9 @@ public class WebsocketMessagingService {
         // TODO: Are there other cases that must be handled here?
         if (participation instanceof StudentParticipation studentParticipation) {
             final Exercise exercise = studentParticipation.getExercise();
-            boolean isWorkingPeriodOver = false;
+            boolean isWorkingPeriodOver;
             if (exercise.isExamExercise()) {
-                var exam = exercise.getExerciseGroup().getExam();
-                if (exam.isTestExam()) {
-                    var studentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());
-                    if (studentExam.isPresent()) {
-                        isWorkingPeriodOver = studentExam.get().isSubmitted() || studentExam.get().isEnded();
-                    }
-                }
-                else {
-                    isWorkingPeriodOver = examDateService.isExerciseWorkingPeriodOver(exercise);
-                }
+                isWorkingPeriodOver = examDateService.isExerciseWorkingPeriodOver(exercise, studentParticipation);
             }
             else {
                 isWorkingPeriodOver = exerciseDateService.isAfterLatestDueDate(exercise);
