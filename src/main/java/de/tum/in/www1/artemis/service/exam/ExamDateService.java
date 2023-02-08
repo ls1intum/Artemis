@@ -64,7 +64,8 @@ public class ExamDateService {
      * <lI>For tests exams, if the student has handed in their own student exam</lI>
      * </ul>
      *
-     * @param exercise the course or exam exercise
+     * @param exercise             the course or exam exercise
+     * @param studentParticipation used to find the related student exams for test exams
      * @return <code>true</code> if the exercise is over and students cannot submit (graded) solutions anymore, <code>false</code> otherwise
      * @throws EntityNotFoundException the given exercise is an exam exercise and the exam cannot be found
      */
