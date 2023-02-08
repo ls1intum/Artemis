@@ -1550,7 +1550,8 @@ public class DatabaseUtilService {
         return exam;
     }
 
-    private ExamUser newExamUserEntity(Exam exam, User user) {
+    public ExamUser newExamUserEntity(Exam exam, User user) {
+        exam = examRepository.save(exam);
         ExamUser registeredExamUser = new ExamUser();
         registeredExamUser.setUser(user);
         registeredExamUser.setExam(exam);

@@ -671,7 +671,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // Register two new students
         var student5 = database.getUserByLogin(TEST_PREFIX + "student5");
         var student6 = database.getUserByLogin(TEST_PREFIX + "student6");
-        // exam.getRegisteredUsers().addAll(Set.of(student5, student6));
+        var registeredUsers = Set.of(student5, student6);
+        Set<ExamUser> registeredExamUsers = new HashSet<>();
+        for (var user : registeredUsers) {
+            var registeredExamUser = database.newExamUserEntity(exam, user);
+            exam.addExamUser(registeredExamUser);
+            registeredExamUsers.add(registeredExamUser);
+        }
         examRepository.save(exam);
 
         // Generate individual exams for the two missing students
@@ -2204,7 +2210,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         bambooRequestMockProvider.reset();
 
         final ProgrammingExercise programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().iterator().next();
-        // mockDeleteProgrammingExercise(programmingExerciseTestService, programmingExercise, exam.getRegisteredUsers());
+
+        Set<User> users = new HashSet<>();
+        for (var user : exam.getExamUsers()) {
+            users.add(user.getUser());
+        }
+        mockDeleteProgrammingExercise(programmingExerciseTestService, programmingExercise, users);
 
         await().until(() -> participantScoreScheduleService.isIdle());
 
@@ -2369,7 +2380,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testIsUserRegisteredForExam() {
         var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        // exam1.addRegisteredUser(student1);
+        var examUser = new ExamUser();
+        examUser.setExam(exam1);
+        examUser.setUser(student1);
+        examUser = examUserRepository.save(examUser);
+        exam1.addExamUser(examUser);
         final var exam = examRepository.save(exam1);
         final var isUserRegistered = examRegistrationService.isUserRegisteredForExam(exam.getId(), student1.getId());
         final var isCurrentUserRegistered = examRegistrationService.isCurrentUserRegisteredForExam(exam.getId());
@@ -2911,11 +2926,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testCheckRegistrationOrRegisterStudentToTestExam_successfulRegistration() {
         Exam testExam = ModelFactory.generateTestExam(course1);
         var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        // testExam.addRegisteredUser(student1);
+        testExam = examRepository.save(testExam);
+        var examUser = new ExamUser();
+        examUser.setExam(testExam);
+        examUser.setUser(student1);
+        examUser = examUserRepository.save(examUser);
+        testExam.addExamUser(examUser);
         testExam = examRepository.save(testExam);
         examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, testExam.getId(), student1);
         Exam testExamReloaded = examRepository.findByIdWithExamUsersElseThrow(testExam.getId());
-        assertTrue(testExamReloaded.getExamUsers().contains(student1));
+        assertTrue(testExamReloaded.getExamUsers().contains(examUser));
     }
 
     // ExamResource - getStudentExamForTestExamForStart
@@ -2947,6 +2967,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testGetStudentExamForTestExamForStart_fetchExam_successful() throws Exception {
         var student5 = database.getUserByLogin(TEST_PREFIX + "student5");
         var testExam5 = database.addTestExam(course2);
+        testExam5 = examRepository.save(testExam5);
+        var examUser5 = new ExamUser();
+        examUser5.setExam(testExam5);
+        examUser5.setUser(student5);
+        examUser5 = examUserRepository.save(examUser5);
+        testExam5.addExamUser(examUser5);
+        examRepository.save(testExam5);
         var studentExam5 = database.addStudentExamForTestExam(testExam5, student5);
         StudentExam studentExamReceived = request.get("/api/courses/" + course2.getId() + "/exams/" + testExam5.getId() + "/start", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamReceived).isEqualTo(studentExam5);
