@@ -70,6 +70,7 @@ Atlassian Setup (Bamboo, Bitbucket and Jira)
 
 - When you push new code to Bitbucket (from your local machine or from the online code editor), for a Java or a Kotlin exercise and no result is being displayed in Artemis,
   check the corresponding Bamboo build plan. If the plan failed and it says "No failed test found. A possible compilation error occurred.", then check the logs.
-  If they say ``./gradlew: Permission denied``, then go to the build plan configuration (Actions -> Configure plan -> Default Job) and add ``chmod +x gradlew`` to the "Tests" Script before the ``./gradlew clean test`` line.
-  Push some code to Bitbucket again and check the Bamboo logs once more. If they now say ``Execution failed for task ':compileJava'. > invalid source release: 17``, then change the ``./gradlew clean test`` command in the build configuration to ``./gradlew clean test -Dorg.gradle.java.home=/usr/lib/jvm/java-17-oracle`` (pointing to the Java installation that you added as a server capability).
+
+    * If it says ``./gradlew: Permission denied``, then go to the build plan configuration (Actions -> Configure plan -> Default Job) and add ``chmod +x gradlew`` to the "Tests" Script before the ``./gradlew clean test`` line.
+    * If it says ``Execution failed for task ':compileJava'. > invalid source release: 17``, then change the ``./gradlew clean test`` command in the build configuration to ``./gradlew clean test -Dorg.gradle.java.home=/usr/lib/jvm/java-17-oracle`` (pointing to the Java installation that you added as a server capability).
 
