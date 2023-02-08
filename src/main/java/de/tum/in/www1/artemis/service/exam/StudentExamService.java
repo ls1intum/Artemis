@@ -140,10 +140,10 @@ public class StudentExamService {
             // immediately evaluate quiz participations for test runs and test exams
             examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExam);
 
-            // Retrigger build for all programing exercises
+            // Trigger build for all programing exercises
             var currentStudentParticipations = studentExam.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
-                    .map(Exercise::getStudentParticipations).flatMap(Collection::stream).map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation)
-                    .filter(studentParticipation -> studentParticipation.isOwnedBy(currentUser)).toList();
+                    .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), currentUser.getId()).stream())
+                    .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
 
             programmingTriggerService.triggerBuildForParticipations(currentStudentParticipations);
         }
