@@ -11,7 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -252,39 +255,45 @@ public class ResultService {
 
             Exercise exercise = participation.getExercise();
             if (exercise.isExamExercise()) {
-                Exam exam = exercise.getExerciseGroup().getExam();
-                boolean shouldResultsBePublished = exam.resultsPublished();
-                if (!shouldResultsBePublished && exam.isTestExam() && participation instanceof StudentParticipation studentParticipation) {
-                    var participant = studentParticipation.getParticipant();
-                    var studentExamOptional = studentExamRepository.findByExamIdAndUserId(exam.getId(), participant.getId());
-                    if (studentExamOptional.isPresent()) {
-                        shouldResultsBePublished = studentExamOptional.get().areResultsPublishedYet();
-                    }
-                }
-                boolean finalShouldResultsBePublished = shouldResultsBePublished;
-                results.forEach(result -> result.filterSensitiveFeedbacks(!finalShouldResultsBePublished));
+                filterSensitiveFeedbacksInExamExercise(participation, results, exercise);
             }
             else {
-                boolean beforeLatestDueDate = exerciseDateService.isBeforeLatestDueDate(exercise);
-                boolean participationBeforeDueDate = exerciseDateService.isBeforeDueDate(participation);
-                results.forEach(result -> {
-                    boolean isBeforeDueDateOrAutomaticAndBeforeLatestDueDate = participationBeforeDueDate
-                            || (AssessmentType.AUTOMATIC.equals(result.getAssessmentType()) && beforeLatestDueDate);
-                    result.filterSensitiveFeedbacks(isBeforeDueDateOrAutomaticAndBeforeLatestDueDate);
-                });
-
-                results.forEach(result -> {
-                    boolean assessmentTypeSetAndNonAutomatic = result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC;
-                    boolean assessmentDueDateSetAndNotOver = exercise.getAssessmentDueDate() != null && ZonedDateTime.now().isBefore(exercise.getAssessmentDueDate());
-
-                    // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
-                    if (assessmentTypeSetAndNonAutomatic && assessmentDueDateSetAndNotOver) {
-                        // filter all non-automatic feedbacks
-                        result.setFeedbacks(result.getFeedbacks().stream().filter(feedback -> feedback.getType() != null && feedback.getType() == FeedbackType.AUTOMATIC).toList());
-                    }
-                });
+                filterSensitiveFeedbackInCourseExercise(participation, results, exercise);
             }
         }
+    }
+
+    private void filterSensitiveFeedbackInCourseExercise(Participation participation, Collection<Result> results, Exercise exercise) {
+        boolean beforeLatestDueDate = exerciseDateService.isBeforeLatestDueDate(exercise);
+        boolean participationBeforeDueDate = exerciseDateService.isBeforeDueDate(participation);
+        results.forEach(result -> {
+            boolean isBeforeDueDateOrAutomaticAndBeforeLatestDueDate = participationBeforeDueDate
+                    || (AssessmentType.AUTOMATIC.equals(result.getAssessmentType()) && beforeLatestDueDate);
+            result.filterSensitiveFeedbacks(isBeforeDueDateOrAutomaticAndBeforeLatestDueDate);
+
+            boolean assessmentTypeSetAndNonAutomatic = result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC;
+            boolean beforeAssessmentDueDate = exercise.getAssessmentDueDate() != null && ZonedDateTime.now().isBefore(exercise.getAssessmentDueDate());
+
+            // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
+            if (assessmentTypeSetAndNonAutomatic && beforeAssessmentDueDate) {
+                // filter all non-automatic feedbacks
+                result.getFeedbacks().removeIf(feedback -> feedback.getType() != FeedbackType.AUTOMATIC);
+            }
+        });
+    }
+
+    private void filterSensitiveFeedbacksInExamExercise(Participation participation, Collection<Result> results, Exercise exercise) {
+        Exam exam = exercise.getExerciseGroup().getExam();
+        boolean shouldResultsBePublished = exam.resultsPublished();
+        if (!shouldResultsBePublished && exam.isTestExam() && participation instanceof StudentParticipation studentParticipation) {
+            var participant = studentParticipation.getParticipant();
+            var studentExamOptional = studentExamRepository.findByExamIdAndUserId(exam.getId(), participant.getId());
+            if (studentExamOptional.isPresent()) {
+                shouldResultsBePublished = studentExamOptional.get().areResultsPublishedYet();
+            }
+        }
+        boolean finalShouldResultsBePublished = shouldResultsBePublished;
+        results.forEach(result -> result.filterSensitiveFeedbacks(!finalShouldResultsBePublished));
     }
 
     @NotNull
