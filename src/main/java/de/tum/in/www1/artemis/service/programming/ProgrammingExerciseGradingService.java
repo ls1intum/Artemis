@@ -686,7 +686,6 @@ public class ProgrammingExerciseGradingService {
     /**
      * Adds the appropriate feedback to the result in case the automatic test cases were not executed.
      *
-     *
      * @param result                     to which the feedback should be added.
      * @param exercise                   to which the result belongs to.
      * @param staticCodeAnalysisFeedback that has been created for this result.
