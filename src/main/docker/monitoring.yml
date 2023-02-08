@@ -17,6 +17,9 @@ services:
     # remove the "127.0.0.1:" prefix
     ports:
       - "127.0.0.1:9090:9090"
+    # also expose the port to make it reachable docker internally even if the external port mapping changes
+    expose:
+        - "9090"
     # On macOS, remove next line and replace localhost by host.docker.internal in prometheus/prometheus.yml and
     # grafana/provisioning/datasources/datasource.yml
     network_mode: 'host' # to test locally running service
@@ -34,6 +37,9 @@ services:
     # remove the "127.0.0.1:" prefix
     ports:
       - "127.0.0.1:3000:3000"
+    # also expose the port to make it reachable docker internally even if the external port mapping changes
+    expose:
+      - "3000"
     # On macOS, remove next line and replace localhost by host.docker.internal in prometheus/prometheus.yml and
     # grafana/provisioning/datasources/datasource.yml
     network_mode: 'host' # to test locally running service

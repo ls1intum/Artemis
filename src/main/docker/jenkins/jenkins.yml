@@ -18,6 +18,9 @@ services:
             - /usr/bin/docker:/usr/bin/docker:ro
         ports:
             - "8082:8080"
+        # also expose the port to make it reachable docker internally even if the external port mapping changes
+        expose:
+            - "8080"
         networks:
             - artemis
         environment:

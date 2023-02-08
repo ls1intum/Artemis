@@ -20,6 +20,10 @@ services:
         ports:
             - "2222:22"
             - "8081:80"
+        # also expose the ports to make them reachable docker internally even if the external port mapping changes
+        expose:
+            - "22"
+            - "80"
         networks:
             - artemis
 

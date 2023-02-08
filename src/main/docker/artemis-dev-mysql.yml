@@ -9,6 +9,9 @@ services:
             service: artemis-app
         ports:
             - "5005:5005" # Java Remote Debugging port declared in the java cmd options
+        # also expose the port to make it reachable docker internally even if the external port mapping changes
+        expose:
+            - "5005"
         command: >
             /bin/sh -c
             '/usr/local/bin/wait-for -t 0 artemis-mysql:3306

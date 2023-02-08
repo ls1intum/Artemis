@@ -12,6 +12,10 @@ services:
         ports:
             - "1025:1025"
             - "8025:8025"
+        # also expose the ports to make them reachable docker internally even if the external port mapping changes
+        expose:
+            - "1025"
+            - "8025"
         networks:
             - artemis
 

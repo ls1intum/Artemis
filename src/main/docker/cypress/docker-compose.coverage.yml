@@ -5,6 +5,9 @@ services:
             dockerfile: src/main/docker/cypress/Coverage-Dockerfile
         ports:
             - "6300:6300" # JaCoCo agent port
+        # also expose the port to make it reachable docker internally even if the external port mapping changes
+        expose:
+            - "6300"
 
     artemis-cypress:
         build:

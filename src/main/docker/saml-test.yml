@@ -16,6 +16,9 @@ services:
         pull_policy: always
         ports:
             - "9980:8080"
+        # also expose the port to make it reachable docker internally even if the external port mapping changes
+        expose:
+            - "8080"
         volumes:
             - ./saml-test/saml20-sp-remote.php:/var/www/simplesamlphp/metadata/saml20-sp-remote.php
             - ./saml-test/config.php:/var/www/simplesamlphp/config/config.php

@@ -26,6 +26,9 @@ services:
             SPRING_PROFILES_ACTIVE: "artemis,bamboo,bitbucket,jira,prod,docker,cypress"
         ports:
             - "54321:54321"
+        # also expose the port to make it reachable docker internally even if the external port mapping changes
+        expose:
+            - "54321"
         healthcheck:
             test: wget -nv -t1 --spider http://localhost:54321/actuator/health || exit 1
 
