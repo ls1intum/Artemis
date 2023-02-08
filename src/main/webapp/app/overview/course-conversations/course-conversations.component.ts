@@ -45,11 +45,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.metisConversationService.isServiceSetup$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isServiceSetUp: boolean) => {
             if (isServiceSetUp) {
-                // service is fully set up in course-overview, now we can subscribe to the respective observables
                 this.course = this.metisConversationService.course;
                 this.setupMetis();
                 this.subscribeToMetis();
                 this.subscribeToQueryParameter();
+                // service is fully set up, now we can subscribe to the respective observables
                 this.subscribeToActiveConversation();
                 this.subscribeToConversationsOfUser();
                 this.subscribeToLoading();
