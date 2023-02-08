@@ -12,15 +12,9 @@ services:
         # also expose the port to make it reachable docker internally even if the external port mapping changes
         expose:
             - "5005"
-        command: >
-            /bin/sh -c
-            '/usr/local/bin/wait-for -t 0 artemis-mysql:3306
-            && /run_artemis.sh'
         environment:
             JAVA_REMOTE_DEBUG: true
             SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,dev,docker
-        volumes:
-            - ./scripts/wait-for.sh:/usr/local/bin/wait-for:ro
         depends_on:
             mysql:
                 condition: service_healthy

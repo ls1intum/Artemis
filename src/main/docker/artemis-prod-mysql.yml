@@ -1,7 +1,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # Artemis-Prod-MySQL Setup
 # ----------------------------------------------------------------------------------------------------------------------
-# this is the default artemis development setup also linked to in the docker-compose.yml in the project root
+# this is the default artemis production setup also linked to in the docker-compose.yml in the project root
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
