@@ -142,7 +142,7 @@ public class StudentExamService {
 
             // Trigger build for all programing exercises
             var currentStudentParticipations = studentExam.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
-                    .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), currentUser.getId()).stream())
+                    .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(exercise.getId(), currentUser.getId()).stream())
                     .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
 
             programmingTriggerService.triggerBuildForParticipations(currentStudentParticipations);
