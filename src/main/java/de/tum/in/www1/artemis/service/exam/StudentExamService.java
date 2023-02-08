@@ -166,7 +166,7 @@ public class StudentExamService {
 
             if (!currentStudentParticipations.isEmpty()) {
                 // Delay to ensure that "Building and testing" is shown in the client
-                scheduler.schedule(() -> programmingTriggerService.triggerBuildForParticipations(currentStudentParticipations), Instant.now().plus(5, ChronoUnit.SECONDS));
+                scheduler.schedule(() -> programmingTriggerService.triggerBuildForParticipations(currentStudentParticipations), Instant.now().plus(3, ChronoUnit.SECONDS));
             }
         }
 
