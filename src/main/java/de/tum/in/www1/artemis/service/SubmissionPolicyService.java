@@ -47,7 +47,7 @@ public class SubmissionPolicyService {
      * Currently, the client always sends inactive policies to prevent unwanted effects
      * on participations.
      *
-     * @param submissionPolicy that should be added to the programming exercise
+     * @param submissionPolicy    that should be added to the programming exercise
      * @param programmingExercise that the submission policy is added to
      * @return the persisted submission policy object that is associated with the programming exercise
      */
@@ -83,8 +83,8 @@ public class SubmissionPolicyService {
      * either active or inactive and has a positive submission limit. Depending on the
      * type of submission policy, individual checks are applied:
      * <ol>
-     *     <li>Lock Repository Policy: No additional checks</li>
-     *     <li>Submission Penalty Policy: Ensures that the penalty is greater than 0.</li>
+     * <li>Lock Repository Policy: No additional checks</li>
+     * <li>Submission Penalty Policy: Ensures that the penalty is greater than 0.</li>
      * </ol>
      *
      * @param submissionPolicy that should be validated
@@ -196,7 +196,7 @@ public class SubmissionPolicyService {
      * every participation repository with 5 submissions is unlocked.
      *
      * @param programmingExercise for which the submission policy should be changed
-     * @param newPolicy with updates attribute values
+     * @param newPolicy           with updates attribute values
      * @return the updated submission policy
      */
     public SubmissionPolicy updateSubmissionPolicy(ProgrammingExercise programmingExercise, SubmissionPolicy newPolicy) {
@@ -259,7 +259,7 @@ public class SubmissionPolicyService {
     /**
      * Calculates the deduction for one programming exercise participation.
      *
-     * @param participation for which the deduction should be determined
+     * @param participation           for which the deduction should be determined
      * @param submissionPenaltyPolicy that contains the policy configuration of the programming exercise
      * @return total deduction in absolute points
      */
@@ -281,8 +281,8 @@ public class SubmissionPolicyService {
      * greater than the allowed submissions, the result will not be included in the participation
      * score.
      *
-     * @param result that is coming in from a build result
-     * @param participation that the result will belong to
+     * @param result               that is coming in from a build result
+     * @param participation        that the result will belong to
      * @param lockRepositoryPolicy defining the number of allowed submissions for this exercise
      */
     public void handleLockRepositoryPolicy(Result result, Participation participation, LockRepositoryPolicy lockRepositoryPolicy) {
@@ -334,7 +334,7 @@ public class SubmissionPolicyService {
      * The added feedback is negative and has negative credits depending on the number of
      * submissions exceeding the submission limit.
      *
-     * @param result to which the feedback item should be added
+     * @param result        to which the feedback item should be added
      * @param penaltyPolicy that specifies the submission limit and penalty
      */
     public void createFeedbackForPenaltyPolicy(Result result, SubmissionPenaltyPolicy penaltyPolicy) {
@@ -356,7 +356,7 @@ public class SubmissionPolicyService {
      * Determines whether a participation repository is locked, depending on the active policy
      * of a programming exercise. This method does NOT take any other factors into account.
      *
-     * @param policy that determines the submission limit for the programming exercise
+     * @param policy                   that determines the submission limit for the programming exercise
      * @param programmingParticipation that is either locked or unlocked
      * @return true when the repository should be locked, false if not
      */

@@ -345,10 +345,11 @@ public class ProgrammingPlagiarismDetectionService {
         // Used for sending progress notifications
         var topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExercise.getId());
 
+        int maxRepositories = participations.size() + 1;
         List<Repository> downloadedRepositories = new ArrayList<>();
         participations.parallelStream().forEach(participation -> {
             try {
-                var progressMessage = "Downloading repositories: " + (downloadedRepositories.size() + 1) + "/" + participations.size();
+                var progressMessage = "Downloading repositories: " + (downloadedRepositories.size() + 1) + "/" + maxRepositories;
                 plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
 
                 Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
@@ -363,6 +364,9 @@ public class ProgrammingPlagiarismDetectionService {
 
         // clone the template repo
         try {
+            var progressMessage = "Downloading repositories: " + maxRepositories + "/" + maxRepositories;
+            plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
+
             Repository templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), targetPath);
             gitService.resetToOriginHead(templateRepo); // start with clean state
             downloadedRepositories.add(templateRepo);

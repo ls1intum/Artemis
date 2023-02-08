@@ -123,6 +123,10 @@ public class ProgrammingExerciseTestCaseService {
     /**
      * Checks if the sum of test case weights is valid.
      *
+     * The test case weights are valid if at least one test has a weight >0 for purely automatic feedback so that students can still achieve 100% score.
+     * If manual feedback is given, then a test case weight of zero is okay, as students can still receive points via manual feedbacks.
+     *
+     * @param exercise  the test cases belong to.
      * @param testCases of the exercise.
      * @return true, if the sum of weights is not negative.
      */

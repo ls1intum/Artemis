@@ -252,6 +252,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
         comp.exercise = exercise;
         comp.examMode = true;
+        comp.updateParticipations();
 
         fixture.detectChanges();
         tick();

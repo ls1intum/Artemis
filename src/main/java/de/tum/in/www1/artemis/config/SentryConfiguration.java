@@ -72,6 +72,7 @@ public class SentryConfiguration {
 
     /**
      * Get the traces sample rate based on the environment.
+     *
      * @return 0% for local, 100% for test, 20% for production environments
      */
     private double getTracesSampleRate() {
