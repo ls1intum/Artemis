@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.service.exam;
 import static de.tum.in.www1.artemis.config.Constants.EXAM_EXERCISE_START_STATUS;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -14,10 +16,12 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -87,12 +91,14 @@ public class StudentExamService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final TaskScheduler scheduler;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository,
-            CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate) {
+            CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate, @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -110,6 +116,7 @@ public class StudentExamService {
         this.examRepository = examRepository;
         this.cacheManager = cacheManager;
         this.messagingTemplate = messagingTemplate;
+        this.scheduler = scheduler;
     }
 
     /**
@@ -135,6 +142,18 @@ public class StudentExamService {
             log.error("saveSubmissions threw an exception", e);
         }
 
+        // NOTE: only for real exams and test exams, the student repositories need to be locked
+        // For test runs, this is not needed, because instructors have admin permissions on the VCS project (which contains the repository) anyway
+        if (!studentExam.isTestRun()) {
+            try {
+                // lock the programming exercise repository access (important in case of early exam submissions)
+                lockStudentRepositories(currentUser, existingStudentExam);
+            }
+            catch (Exception e) {
+                log.error("lockStudentRepositories threw an exception", e);
+            }
+        }
+
         // NOTE: only for test runs and test exams, the quizzes should be evaluated automatically
         if (studentExam.isTestRun() || studentExam.getExam().isTestExam()) {
             // immediately evaluate quiz participations for test runs and test exams
@@ -145,18 +164,9 @@ public class StudentExamService {
                     .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(exercise.getId(), currentUser.getId()).stream())
                     .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
 
-            programmingTriggerService.triggerBuildForParticipations(currentStudentParticipations);
-        }
-
-        // NOTE: only for real exams and test exams, the student repositories need to be locked
-        // For test runs, this is not needed, because instructors have admin permissions on the VCS project (which contains the repository) anyway
-        if (!studentExam.isTestRun()) {
-            try {
-                // lock the programming exercise repository access (important in case of early exam submissions)
-                lockStudentRepositories(currentUser, existingStudentExam);
-            }
-            catch (Exception e) {
-                log.error("lockStudentRepositories threw an exception", e);
+            if (!currentStudentParticipations.isEmpty()) {
+                // Delay to ensure that "Building and testing" is shown in the client
+                scheduler.schedule(() -> programmingTriggerService.triggerBuildForParticipations(currentStudentParticipations), Instant.now().plus(5, ChronoUnit.SECONDS));
             }
         }
 
