@@ -41,6 +41,7 @@ import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -248,15 +249,24 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should display error when complaint resolved but assessment invalid', () => {
         // would be called on receive of event
-        const complaintResponse = new ComplaintResponse();
+        let onSuccessCalled = false;
+        let onErrorCalled = false;
+        const assessmentAfterComplaint: AssessmentAfterComplaint = {
+            complaintResponse: new ComplaintResponse(),
+            onSuccess: () => (onSuccessCalled = true),
+            onError: () => (onErrorCalled = true),
+        };
+
         const alertService = TestBed.inject(AlertService);
         const errorStub = jest.spyOn(alertService, 'error');
 
-        component.updateAssessmentAfterComplaint(complaintResponse);
+        component.updateAssessmentAfterComplaint(assessmentAfterComplaint);
         expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
+        expect(onSuccessCalled).toBeFalse();
+        expect(onErrorCalled).toBeTrue();
     });
 
-    it('should send update when complaint resolved and assessments are valid', () => {
+    it.each([false, true])('should send update when complaint resolved and assessments are valid, serverReturnsError=%s', (serverReturnsError: boolean) => {
         const unreferencedFeedback = new Feedback();
         unreferencedFeedback.credits = 5;
         unreferencedFeedback.detailText = 'gj';
@@ -265,12 +275,22 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.unreferencedFeedback = [unreferencedFeedback];
 
         const updateAssessmentAfterComplaintStub = jest.spyOn(textAssessmentService, 'updateAssessmentAfterComplaint');
-        updateAssessmentAfterComplaintStub.mockReturnValue(of(new HttpResponse({ body: new Result() })));
+        const serverResponse = serverReturnsError ? throwError(() => new HttpErrorResponse({ status: 400 })) : of(new HttpResponse({ body: new Result() }));
+        updateAssessmentAfterComplaintStub.mockReturnValue(serverResponse);
 
         // would be called on receive of event
-        const complaintResponse = new ComplaintResponse();
-        component.updateAssessmentAfterComplaint(complaintResponse);
+        let onSuccessCalled = false;
+        let onErrorCalled = false;
+        const assessmentAfterComplaint: AssessmentAfterComplaint = {
+            complaintResponse: new ComplaintResponse(),
+            onSuccess: () => (onSuccessCalled = true),
+            onError: () => (onErrorCalled = true),
+        };
+
+        component.updateAssessmentAfterComplaint(assessmentAfterComplaint);
         expect(updateAssessmentAfterComplaintStub).toHaveBeenCalledOnce();
+        expect(onSuccessCalled).toBe(!serverReturnsError);
+        expect(onErrorCalled).toBe(serverReturnsError);
     });
 
     it('should submit the assessment with correct parameters', () => {

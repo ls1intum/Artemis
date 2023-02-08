@@ -28,6 +28,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     @Input()
     unsavedFiles: { [fileName: string]: string };
     @Input() disableActions = false;
+    @Input() disableAutoSave = false;
     @Input()
     get editorState() {
         return this.editorStateValue;
@@ -105,13 +106,15 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
             .pipe(tap((isBuilding: boolean) => (this.isBuilding = isBuilding)))
             .subscribe();
 
-        this.autoSaveInterval = window.setInterval(() => {
-            this.autoSaveTimer++;
-            if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
-                this.autoSaveTimer = 0;
-                this.onSave();
-            }
-        }, AUTOSAVE_CHECK_INTERVAL);
+        if (!this.disableAutoSave) {
+            this.autoSaveInterval = window.setInterval(() => {
+                this.autoSaveTimer++;
+                if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
+                    this.autoSaveTimer = 0;
+                    this.onSave();
+                }
+            }, AUTOSAVE_CHECK_INTERVAL);
+        }
     }
 
     /**
