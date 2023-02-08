@@ -5,8 +5,6 @@
 services:
     artemis-app:
         container_name: artemis-app
-        extra_hosts:
-            - "host.docker.internal:host-gateway"
         platform: linux/amd64
         # look in the docs for more information about how to build your Artemis code with Docker
         # https://docs.artemis.cit.tum.de/dev/setup/#

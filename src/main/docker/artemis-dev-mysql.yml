@@ -7,6 +7,10 @@ services:
         extends:
             file: ./artemis/artemis.yml
             service: artemis-app
+        # just add this linux workaround for docker compose in a development version of artemis as developers
+        # might want to access external services on the docker host
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         ports:
             - "5005:5005" # Java Remote Debugging port declared in the java cmd options
         # also expose the port to make it reachable docker internally even if the external port mapping changes
