@@ -23,7 +23,7 @@ public class BuildPlan extends DomainObject {
     @Column(name = "build_plan", table = "build_plan", length = 10_000)
     private String buildPlan;
 
-    @OneToMany(orphanRemoval = true)
+    @OneToMany
     @JoinColumn(name = "build_plan_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<ProgrammingExercise> programmingExercises = new HashSet<>();
