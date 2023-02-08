@@ -13,7 +13,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Complaint } from 'app/entities/complaint.model';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -36,6 +35,7 @@ import { SubmissionType, getLatestSubmissionResult } from 'app/entities/submissi
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
+import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -388,17 +388,25 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
      * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
      *
-     * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
+     * @param assessmentAfterComplaint the response to the complaint that is sent to the server along with the assessment update along with onSuccess and onError callbacks
      */
-    onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
+    onUpdateAssessmentAfterComplaint(assessmentAfterComplaint: AssessmentAfterComplaint): void {
+        this.validateFeedback();
+        if (!this.assessmentsAreValid) {
+            this.alertService.error('artemisApp.programmingAssessment.invalidAssessments');
+            assessmentAfterComplaint.onError();
+            return;
+        }
         this.setFeedbacksForManualResult();
-        this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, complaintResponse, this.submission!.id!).subscribe({
+        this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, assessmentAfterComplaint.complaintResponse, this.submission!.id!).subscribe({
             next: (result: Result) => {
+                assessmentAfterComplaint.onSuccess();
                 this.participation.results![0] = this.manualResult = result;
                 this.alertService.closeAll();
                 this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
             },
             error: (httpErrorResponse: HttpErrorResponse) => {
+                assessmentAfterComplaint.onError();
                 this.alertService.closeAll();
                 const error = httpErrorResponse.error;
                 if (error && error.errorKey && error.errorKey === 'complaintLock') {

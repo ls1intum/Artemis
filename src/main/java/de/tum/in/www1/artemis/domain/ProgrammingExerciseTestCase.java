@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.*;
 
@@ -234,4 +235,29 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         return "ProgrammingExerciseTestCase{" + "id=" + getId() + ", testName='" + testName + '\'' + ", weight=" + weight + ", active=" + active + ", visibility=" + visibility
                 + ", bonusMultiplier=" + bonusMultiplier + ", bonusPoints=" + bonusPoints + '}';
     }
+
+    /**
+     * Check if the provided test was found in the result's feedbacks with positive = true.
+     *
+     * @param result of the build run.
+     * @return true if there is a positive feedback for a given test.
+     */
+    public boolean isSuccessful(Result result) {
+        return result.getFeedbacks().stream().anyMatch(feedback -> {
+            boolean testNameAreSame = feedback.getText() != null && feedback.getText().equalsIgnoreCase(this.getTestName());
+            return testNameAreSame && Boolean.TRUE.equals(feedback.isPositive());
+        });
+    }
+
+    /**
+     * Check if the provided test was not found in the result's feedbacks.
+     *
+     * @param result of the build run.
+     * @return true if there is no feedback for a given test.
+     */
+    public boolean wasNotExecuted(Result result) {
+        return result.getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC)
+                .noneMatch(feedback -> feedback.getText() != null && feedback.getText().equalsIgnoreCase(this.getTestName()));
+    }
+
 }
