@@ -18,7 +18,7 @@ public class FeedbackSelector {
      *
      * @param modelElement the UML model element the Feedback will be suggested for
      * @param feedbackList the list of feedback to choose from
-     * @param result the result the selected feedback will belong to
+     * @param result       the result the selected feedback will belong to
      * @return the feedback that is selected for suggestion
      */
     public static Feedback selectFeedback(ModelElement modelElement, List<Feedback> feedbackList, Result result) {

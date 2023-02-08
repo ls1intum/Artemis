@@ -173,12 +173,9 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     openImportModal() {
         const modalRef = this.modalService.open(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
-        modalRef.result.then(
-            (result: ProgrammingExercise) => {
-                this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import', result.id]);
-            },
-            () => {},
-        );
+        modalRef.result.then((result: ProgrammingExercise) => {
+            this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import', result.id]);
+        });
     }
 
     toggleProgrammingExercise(programmingExercise: ProgrammingExercise) {

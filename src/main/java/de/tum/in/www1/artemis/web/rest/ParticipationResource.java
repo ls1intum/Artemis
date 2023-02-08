@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED;
+import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
@@ -206,7 +206,7 @@ public class ParticipationResource {
     /**
      * POST /exercises/:exerciseId/participations : start the "participationId" exercise for the current user.
      *
-     * @param exerciseId the participationId of the exercise for which to init a participation
+     * @param exerciseId             the participationId of the exercise for which to init a participation
      * @param useGradedParticipation a flag that indicates that the student wants to use their graded participation as baseline for the new repo
      * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
      * @throws URISyntaxException If the URI for the created participation could not be created
@@ -250,9 +250,9 @@ public class ParticipationResource {
     /**
      * PUT exercises/:exerciseId/resume-programming-participation: resume the participation of the current user in the given programming exercise
      *
-     * @param exerciseId of the exercise for which to resume participation
+     * @param exerciseId      of the exercise for which to resume participation
      * @param participationId of the participation that should be resumed
-     * @param principal  current user principal
+     * @param principal       current user principal
      * @return ResponseEntity with status 200 (OK) and with updated participation as a body, or with status 500 (Internal Server Error)
      */
     @PutMapping("exercises/{exerciseId}/resume-programming-participation/{participationId}")
@@ -274,6 +274,20 @@ public class ParticipationResource {
         checkAccessPermissionOwner(participation, user);
         if (!isAllowedToParticipateInProgrammingExercise(programmingExercise, participation)) {
             throw new AccessForbiddenException("You are not allowed to resume that participation.");
+        }
+
+        // There is a second participation of that student in the exericse that is inactive/finished now
+        Optional<StudentParticipation> optionalOtherStudentParticipation = participationService.findOneByExerciseAndParticipantAnyStateAndTestRun(programmingExercise, user,
+                !participation.isTestRun());
+        if (optionalOtherStudentParticipation.isPresent()) {
+            StudentParticipation otherParticipation = optionalOtherStudentParticipation.get();
+            if (participation.getInitializationState() == INACTIVE) {
+                otherParticipation.setInitializationState(FINISHED);
+            }
+            else {
+                otherParticipation.setInitializationState(INACTIVE);
+            }
+            studentParticipationRepository.saveAndFlush(otherParticipation);
         }
 
         participation = participationService.resumeProgrammingExercise(participation);
@@ -338,6 +352,7 @@ public class ParticipationResource {
 
     /**
      * Checks if the student is currently allowed to participate in the course exercise using this participation
+     *
      * @param programmingExercise the exercise where the user wants to participate
      * @param participation       the participation, may be null in case there is none
      * @return a boolean indicating if the user may participate
@@ -373,7 +388,7 @@ public class ParticipationResource {
      * @param exerciseId    the id of the exercise, the participation belongs to
      * @param participation the participation to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated participation, or with status 400 (Bad Request) if the participation is not valid, or with status
-     * 500 (Internal Server Error) if the participation couldn't be updated
+     *         500 (Internal Server Error) if the participation couldn't be updated
      */
     @PutMapping("exercises/{exerciseId}/participations")
     @PreAuthorize("hasRole('TA')")
@@ -699,7 +714,8 @@ public class ParticipationResource {
     }
 
     /**
-     * DELETE /participations/:participationId : delete the "participationId" participation. This only works for student participations - other participations should not be deleted here!
+     * DELETE /participations/:participationId : delete the "participationId" participation. This only works for student participations - other participations should not be deleted
+     * here!
      *
      * @param participationId  the participationId of the participation to delete
      * @param deleteBuildPlan  True, if the build plan should also get deleted
@@ -720,7 +736,8 @@ public class ParticipationResource {
     }
 
     /**
-     * DELETE guided-tour/participations/:participationId : delete the "participationId" participation of student participations for guided tutorials (e.g. when restarting a tutorial)
+     * DELETE guided-tour/participations/:participationId : delete the "participationId" participation of student participations for guided tutorials (e.g. when restarting a
+     * tutorial)
      * Please note: all users can delete their own participation when it belongs to a guided tutorial
      *
      * @param participationId  the participationId of the participation to delete

@@ -53,8 +53,8 @@ public class UMLModelParser {
      * Gets the selected element from relationship JSON object and returns the corresponding element from elements map
      *
      * @param relationshipJson the JSON object containing the relationship
-     * @param elementsMap a map containing all elements, necessary for assigning source and target element of the relationships
-     * @param jsonField field to get from the relationship JSON object
+     * @param elementsMap      a map containing all elements, necessary for assigning source and target element of the relationships
+     * @param jsonField        field to get from the relationship JSON object
      * @return the UMLElement object parsed from the JSON object
      */
     static <T extends UMLElement> T findElement(JsonObject relationshipJson, Map<String, T> elementsMap, String jsonField) {

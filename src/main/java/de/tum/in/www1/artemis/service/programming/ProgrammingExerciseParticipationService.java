@@ -76,7 +76,8 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param programmingExerciseId ProgrammingExercise id
      * @return the SolutionProgrammingExerciseParticipation of programming exercise.
-     * @throws EntityNotFoundException if the SolutionParticipation can't be found (could be that the programming exercise does not exist or it does not have a SolutionParticipation).
+     * @throws EntityNotFoundException if the SolutionParticipation can't be found (could be that the programming exercise does not exist or it does not have a
+     *                                     SolutionParticipation).
      */
     // TODO: move into solutionParticipationRepository
     public SolutionProgrammingExerciseParticipation findSolutionParticipationByProgrammingExerciseId(Long programmingExerciseId) throws EntityNotFoundException {
@@ -92,7 +93,8 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param programmingExerciseId ProgrammingExercise id
      * @return the TemplateProgrammingExerciseParticipation of programming exercise.
-     * @throws EntityNotFoundException if the TemplateParticipation can't be found (could be that the programming exercise does not exist or it does not have a TemplateParticipation).
+     * @throws EntityNotFoundException if the TemplateParticipation can't be found (could be that the programming exercise does not exist or it does not have a
+     *                                     TemplateParticipation).
      */
     // TODO: move into templateParticipationRepository
     public TemplateProgrammingExerciseParticipation findTemplateParticipationByProgrammingExerciseId(Long programmingExerciseId) throws EntityNotFoundException {
@@ -105,9 +107,10 @@ public class ProgrammingExerciseParticipationService {
 
     /**
      * Tries to retrieve a student participation for the given exercise and username and test run flag.
-     * @param exercise the exercise for which to find a participation.
-     * @param username of the user to which the participation belongs.
-     * @param testRun true if the participation is a test run participation.
+     *
+     * @param exercise        the exercise for which to find a participation.
+     * @param username        of the user to which the participation belongs.
+     * @param testRun         true if the participation is a test run participation.
      * @param withSubmissions true if the participation should be loaded with its submissions.
      * @return the participation for the given exercise and user.
      * @throws EntityNotFoundException if there is no participation for the given exercise and user.

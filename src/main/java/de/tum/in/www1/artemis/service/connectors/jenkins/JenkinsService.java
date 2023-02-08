@@ -273,7 +273,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     /**
      * Removes the build logs that are not relevant to the student.
      *
-     * @param buildLogEntries unfiltered build logs
+     * @param buildLogEntries     unfiltered build logs
      * @param programmingLanguage the programming language of the build
      * @return filtered build logs
      */
