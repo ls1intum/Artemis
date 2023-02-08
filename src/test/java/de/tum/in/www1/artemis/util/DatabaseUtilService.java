@@ -259,6 +259,9 @@ public class DatabaseUtilService {
     private ExamRepository examRepository;
 
     @Autowired
+    private ExamUserRepository examUserRepository;
+
+    @Autowired
     private TextExerciseRepository textExerciseRepository;
 
     @Autowired
@@ -1536,18 +1539,31 @@ public class DatabaseUtilService {
         var student3 = getUserByLogin(userPrefix + "student3");
         var student4 = getUserByLogin(userPrefix + "student4");
         var registeredUsers = Set.of(student1, student2, student3, student4);
-
-        Exam finalExam = exam;
-        var examUsers = registeredUsers.stream().map(user -> {
-            var examUser = new ExamUser();
-            examUser.setUser(user);
-            examUser.setExam(finalExam);
-            return examUser;
-        }).collect(Collectors.toSet());
-
-        exam.setExamUsers(examUsers);
+        Set<ExamUser> registeredExamUsers = new HashSet<>();
+        for (var user : registeredUsers) {
+            var registeredExamUser = newExamUserEntity(exam, user);
+            exam.addExamUser(registeredExamUser);
+            registeredExamUsers.add(registeredExamUser);
+        }
+        exam.setExamUsers(registeredExamUsers);
         exam = examRepository.save(exam);
         return exam;
+    }
+
+    private ExamUser newExamUserEntity(Exam exam, User user) {
+        ExamUser registeredExamUser = new ExamUser();
+        registeredExamUser.setUser(user);
+        registeredExamUser.setExam(exam);
+
+        registeredExamUser.setDidCheckRegistrationNumber(false);
+        registeredExamUser.setDidCheckName(false);
+        registeredExamUser.setDidCheckLogin(false);
+        registeredExamUser.setDidCheckImage(false);
+        registeredExamUser.setPlannedRoom("not set");
+        registeredExamUser.setPlannedSeat("not set");
+
+        registeredExamUser = examUserRepository.save(registeredExamUser);
+        return registeredExamUser;
     }
 
     public Exam addExam(Course course) {
@@ -1562,16 +1578,16 @@ public class DatabaseUtilService {
 
     public Exam addTestExamWithRegisteredUser(Course course, User user) {
         Exam exam = ModelFactory.generateTestExam(course);
-        HashSet<User> userHashSet = new HashSet<>();
-        userHashSet.add(user);
-        exam.setExamUsers(Set.of(new ExamUser()));
+        var registeredExamUser = newExamUserEntity(exam, user);
+        exam.addExamUser(registeredExamUser);
         examRepository.save(exam);
         return exam;
     }
 
     public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ModelFactory.generateExam(course);
-        exam.addExamUser(new ExamUser());
+        var registeredExamUser = newExamUserEntity(exam, user);
+        exam.addExamUser(registeredExamUser);
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
@@ -1622,7 +1638,8 @@ public class DatabaseUtilService {
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
         exam.setWorkingTime(2 * 60 * 60);
-        // exam.addRegisteredUser(user);
+        var registeredExamUser = newExamUserEntity(exam, user);
+        exam.addExamUser(registeredExamUser);
         exam.setTestExam(false);
         examRepository.save(exam);
         var studentExam = new StudentExam();
@@ -1639,7 +1656,8 @@ public class DatabaseUtilService {
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
         exam.setWorkingTime(2 * 60 * 60);
-        // exam.addRegisteredUser(user);
+        var registeredExamUser = newExamUserEntity(exam, user);
+        exam.addExamUser(registeredExamUser);
         examRepository.save(exam);
         return exam;
     }
@@ -4680,7 +4698,13 @@ public class DatabaseUtilService {
         exam = this.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register users
-        // exam.setRegisteredUsers(registeredStudents);
+        Set<ExamUser> registeredExamUsers = new HashSet<>();
+        for (var user : registeredStudents) {
+            var registeredExamUser = newExamUserEntity(exam, user);
+            exam.addExamUser(registeredExamUser);
+            registeredExamUsers.add(registeredExamUser);
+        }
+        exam.setExamUsers(registeredExamUsers);
         exam.setNumberOfExercisesInExam(exam.getExerciseGroups().size());
         exam.setRandomizeExerciseOrder(false);
         exam.setNumberOfCorrectionRoundsInExam(2);
@@ -4689,7 +4713,7 @@ public class DatabaseUtilService {
         // generate individual student exams
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
                 StudentExam.class, HttpStatus.OK);
-        // assertThat(studentExams).hasSize(exam.getRegisteredUsers().size());
+        assertThat(studentExams).hasSize(exam.getExamUsers().size());
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(registeredStudents.size());
 
         // start exercises
@@ -4699,12 +4723,12 @@ public class DatabaseUtilService {
             programmingExercises.add(programmingExercise);
 
             programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
-            // for (var user : exam.getRegisteredUsers()) {
-            // var repo = new LocalRepository(integrationTest.getDefaultBranch());
-            // repo.configureRepos("studentRepo", "studentOriginRepo");
-            // programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, user.getLogin(), repo);
-            // studentRepos.add(repo);
-            // }
+            for (var examUser : exam.getExamUsers()) {
+                var repo = new LocalRepository(integrationTest.getDefaultBranch());
+                repo.configureRepos("studentRepo", "studentOriginRepo");
+                programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, examUser.getUser().getLogin(), repo);
+                studentRepos.add(repo);
+            }
         }
 
         for (var programmingExercise : programmingExercises) {

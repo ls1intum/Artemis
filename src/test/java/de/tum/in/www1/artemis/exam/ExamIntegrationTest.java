@@ -99,6 +99,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     private ExamRepository examRepository;
 
     @Autowired
+    private ExamUserRepository examUserRepository;
+
+    @Autowired
     private ExamService examService;
 
     @Autowired
@@ -335,7 +338,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/nonExistingStudent", null, HttpStatus.NOT_FOUND, null);
 
         Exam storedExam = examRepository.findWithExamUsersById(savedExam.getId()).get();
-        // assertThat(storedExam.getRegisteredUsers()).containsExactly(student1);
+        ExamUser examUserStudent1 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId());
+        assertThat(storedExam.getExamUsers()).containsExactly(examUserStudent1);
 
         request.delete("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.OK);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/nonExistingStudent", HttpStatus.NOT_FOUND);
@@ -383,12 +387,22 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // now a new user student101 should exist
         var student101 = database.getUserByLogin(STUDENT_111);
 
-        // assertThat(storedExam.getRegisteredUsers()).containsExactlyInAnyOrder(student1, student2, student5, student99, student101, student6, student7, student8, student9);
+        var examUser1 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId());
+        var examUser2 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student2.getId());
+        var examUser5 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student5.getId());
+        var examUser99 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student99.getId());
+        var examUser101 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student101.getId());
+        var examUser6 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student6.getId());
+        var examUser7 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student7.getId());
+        var examUser8 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student8.getId());
+        var examUser9 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student9.getId());
 
-        for (var user : storedExam.getExamUsers()) {
+        assertThat(storedExam.getExamUsers()).containsExactlyInAnyOrder(examUser1, examUser2, examUser5, examUser99, examUser101, examUser6, examUser7, examUser8, examUser9);
+
+        for (var examUser : storedExam.getExamUsers()) {
             // all registered users must have access to the course
-            // user = userRepo.findOneWithGroupsAndAuthoritiesByLogin(user.getUser().getLogin()).get();
-            assertThat(user.getUser().getGroups()).contains(course1.getStudentGroupName());
+            var user = userRepo.findOneWithGroupsAndAuthoritiesByLogin(examUser.getUser().getLogin()).get();
+            assertThat(user.getGroups()).contains(course1.getStudentGroupName());
         }
 
         // Make sure delete also works if so many objects have been created before
@@ -2063,7 +2077,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Ensure that all registered students have a StudentResult
         Set<Long> studentIdsWithStudentResults = examScores.studentResults().stream().map(ExamScoresDTO.StudentResult::userId).collect(Collectors.toSet());
-        Set<Long> registeredUsersIds = exam.getExamUsers().stream().map(DomainObject::getId).collect(Collectors.toSet());
+        Set<User> registeredUsers = exam.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
+        Set<Long> registeredUsersIds = registeredUsers.stream().map(User::getId).collect(Collectors.toSet());
         assertThat(studentIdsWithStudentResults).isEqualTo(registeredUsersIds);
 
         // Compare StudentResult with the generated results

@@ -237,7 +237,7 @@ public class ExamRegistrationService {
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
-        ExamUser registeredExamUser = currentUser.getExamUsers().stream().filter(examUser -> examUser.getExam().getId().equals(examId)).findFirst().orElseThrow();
+        ExamUser registeredExamUser = examUserRepository.findByExamIdAndUserId(exam.getId(), currentUser.getId());
 
         // We only need to update the registered exam users, if the user is not yet registered for the test exam
         if (!exam.getExamUsers().contains(registeredExamUser)) {
