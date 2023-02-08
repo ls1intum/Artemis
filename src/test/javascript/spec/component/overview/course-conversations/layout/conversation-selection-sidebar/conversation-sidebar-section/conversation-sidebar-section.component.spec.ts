@@ -29,6 +29,12 @@ class ConversationSidebarEntryStubComponent {
 
     @Output()
     settingsChanged = new EventEmitter<void>();
+
+    @Output()
+    conversationHiddenStatusChange = new EventEmitter<void>();
+
+    @Output()
+    conversationFavoriteStatusChange = new EventEmitter<void>();
 }
 
 const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
