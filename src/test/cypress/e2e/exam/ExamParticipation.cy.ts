@@ -68,6 +68,23 @@ describe('Exam participation', () => {
             }
             examParticipation.checkExamTitle(examTitle);
         });
+
+        it('Using save and continue to navigate within exam', () => {
+            examParticipation.startParticipation(studentTwo, course, exam);
+            examParticipation.openExercise(0);
+            for (let j = 0; j < exerciseArray.length; j++) {
+                const exercise = exerciseArray[j];
+                // Skip programming exercise this time to save execution time
+                // (we also need to use the navigation bar here, since programming  exercises do not have a "Save and continue" button)
+                if (exercise.type == EXERCISE_TYPE.Programming) {
+                    examParticipation.openExercise(j + 1);
+                } else {
+                    examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
+                    examParticipation.clickSaveAndContinue();
+                }
+            }
+            examParticipation.handInEarly();
+        });
     });
 
     describe('Normal Hand-in', () => {
@@ -97,7 +114,7 @@ describe('Exam participation', () => {
         });
 
         it('Participates as a student in a registered exam', () => {
-            examParticipation.startParticipation(studentTwo, course, exam);
+            examParticipation.startParticipation(studentOne, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
             examParticipation.openExercise(textExerciseIndex);
