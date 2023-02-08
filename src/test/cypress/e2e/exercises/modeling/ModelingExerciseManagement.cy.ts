@@ -2,23 +2,10 @@ import dayjs from 'dayjs/esm';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { dayjsToString } from '../../../support/utils';
-import { artemis } from '../../../support/ArtemisTesting';
 import { MODELING_EDITOR_CANVAS } from '../../../support/pageobjects/exercises/modeling/ModelingEditor';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-
-// Users
-const users = artemis.users;
-const admin = users.getAdmin();
-const instructor = users.getInstructor();
-const studentOne = users.getStudentOne();
-
-// Requests
-const courseManagementRequest = artemis.requests.courseManagement;
-
-// PageObjects
-const createModelingExercise = artemis.pageobjects.exercise.modeling.creation;
-const modelingExerciseExampleSubmission = artemis.pageobjects.assessment.modeling;
-const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
+import { courseManagementRequest, modelingExerciseAssessment, modelingExerciseCreation, modelingExerciseEditor } from '../../../support/artemis';
+import { admin, instructor, studentOne } from '../../../support/users';
 
 // Common primitives
 let course: Course;
@@ -53,10 +40,10 @@ describe('Modeling Exercise Management Spec', () => {
         it('Create a new modeling exercise', () => {
             cy.visit(`/course-management/${course.id}/exercises`);
             cy.get('#modeling-exercise-create-button').click();
-            createModelingExercise.setTitle(modelingExerciseTitle);
-            createModelingExercise.addCategories(['e2e-testing', 'test2']);
-            createModelingExercise.setPoints(10);
-            createModelingExercise
+            modelingExerciseCreation.setTitle(modelingExerciseTitle);
+            modelingExerciseCreation.addCategories(['e2e-testing', 'test2']);
+            modelingExerciseCreation.setPoints(10);
+            modelingExerciseCreation
                 .save()
                 .its('response.body')
                 .then((body: any) => {
@@ -64,25 +51,25 @@ describe('Modeling Exercise Management Spec', () => {
                     cy.contains(modelingExercise.title!).should('exist');
                     cy.log('Create Example Solution');
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
-                    modelingEditor.addComponentToExampleSolutionModel(1);
-                    createModelingExercise.save();
+                    modelingExerciseEditor.addComponentToExampleSolutionModel(1);
+                    modelingExerciseCreation.save();
                     cy.get(MODELING_EDITOR_CANVAS).children().eq(0).should('exist');
 
                     cy.log('Create Example Submission');
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
-                    modelingEditor.clickCreateExampleSubmission();
-                    modelingEditor.addComponentToExampleSolutionModel(1);
-                    modelingEditor.addComponentToExampleSolutionModel(2);
-                    modelingEditor.addComponentToExampleSolutionModel(3);
-                    modelingEditor.clickCreateNewExampleSubmission();
-                    modelingEditor.showExampleAssessment();
-                    modelingExerciseExampleSubmission.openAssessmentForComponent(1);
-                    modelingExerciseExampleSubmission.assessComponent(-1, 'False');
-                    modelingExerciseExampleSubmission.clickNextAssessment();
-                    modelingExerciseExampleSubmission.assessComponent(2, 'Good');
-                    modelingExerciseExampleSubmission.clickNextAssessment();
-                    modelingExerciseExampleSubmission.assessComponent(0, 'Unnecessary');
-                    modelingExerciseExampleSubmission.submitExample();
+                    modelingExerciseEditor.clickCreateExampleSubmission();
+                    modelingExerciseEditor.addComponentToExampleSolutionModel(1);
+                    modelingExerciseEditor.addComponentToExampleSolutionModel(2);
+                    modelingExerciseEditor.addComponentToExampleSolutionModel(3);
+                    modelingExerciseEditor.clickCreateNewExampleSubmission();
+                    modelingExerciseEditor.showExampleAssessment();
+                    modelingExerciseAssessment.openAssessmentForComponent(1);
+                    modelingExerciseAssessment.assessComponent(-1, 'False');
+                    modelingExerciseAssessment.clickNextAssessment();
+                    modelingExerciseAssessment.assessComponent(2, 'Good');
+                    modelingExerciseAssessment.clickNextAssessment();
+                    modelingExerciseAssessment.assessComponent(0, 'Unnecessary');
+                    modelingExerciseAssessment.submitExample();
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}`);
                     cy.get('#modeling-editor-canvas').should('exist');
                 });
@@ -101,14 +88,14 @@ describe('Modeling Exercise Management Spec', () => {
             cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
             const newTitle = 'Cypress EDITED ME';
             const points = 100;
-            createModelingExercise.setTitle(newTitle);
-            createModelingExercise.pickDifficulty({ hard: true });
-            createModelingExercise.setReleaseDate(dayjsToString(dayjs().add(1, 'day')));
-            createModelingExercise.setDueDate(dayjsToString(dayjs().add(2, 'day')));
-            createModelingExercise.setAssessmentDueDate(dayjsToString(dayjs().add(3, 'day')));
-            createModelingExercise.includeInOverallScore();
-            createModelingExercise.setPoints(points);
-            createModelingExercise.save();
+            modelingExerciseCreation.setTitle(newTitle);
+            modelingExerciseCreation.pickDifficulty({ hard: true });
+            modelingExerciseCreation.setReleaseDate(dayjsToString(dayjs().add(1, 'day')));
+            modelingExerciseCreation.setDueDate(dayjsToString(dayjs().add(2, 'day')));
+            modelingExerciseCreation.setAssessmentDueDate(dayjsToString(dayjs().add(3, 'day')));
+            modelingExerciseCreation.includeInOverallScore();
+            modelingExerciseCreation.setPoints(points);
+            modelingExerciseCreation.save();
             cy.visit(`/course-management/${course.id}/exercises`);
             cy.get('#exercise-card-' + modelingExercise.id)
                 .find('#modeling-exercise-' + modelingExercise.id + '-title')

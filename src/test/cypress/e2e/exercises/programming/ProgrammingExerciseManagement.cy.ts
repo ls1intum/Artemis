@@ -2,22 +2,10 @@ import { Interception } from 'cypress/types/net-stubbing';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { DELETE } from '../../../support/constants';
-import { artemis } from '../../../support/ArtemisTesting';
+import { courseManagement, courseManagementExercises, courseManagementRequest, navigationBar, programmingExerciseCreation } from '../../../support/artemis';
 import { generateUUID } from '../../../support/utils';
 import { PROGRAMMING_EXERCISE_BASE, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-
-// Users
-const users = artemis.users;
-const admin = users.getAdmin();
-
-// Requests
-const courseManagementRequest = artemis.requests.courseManagement;
-
-// PageObjects
-const courseManagementPage = artemis.pageobjects.course.management;
-const navigationBar = artemis.pageobjects.navigationBar;
-const programmingCreation = artemis.pageobjects.exercise.programming.creation;
-const courseExercises = artemis.pageobjects.course.managementExercises;
+import { admin } from '../../../support/users';
 
 describe('Programming Exercise Management', () => {
     let course: Course;
@@ -46,7 +34,7 @@ describe('Programming Exercise Management', () => {
         it('Deletes an existing programming exercise', () => {
             cy.login(admin, '/').wait(500);
             navigationBar.openCourseManagement();
-            courseManagementPage.openExercisesOfCourse(course.shortName!);
+            courseManagement.openExercisesOfCourse(course.shortName!);
             cy.get('#delete-exercise').click();
             // Check all checkboxes to get rid of the git repositories and build plans
             cy.get('#additional-check-0').check();
@@ -66,17 +54,17 @@ describe('Programming Exercise Management', () => {
         it('Creates a new programming exercise', () => {
             cy.login(admin, '/');
             navigationBar.openCourseManagement();
-            courseManagementPage.openExercisesOfCourse(course.shortName!);
-            courseExercises.clickCreateProgrammingExerciseButton();
+            courseManagement.openExercisesOfCourse(course.shortName!);
+            courseManagementExercises.clickCreateProgrammingExerciseButton();
             cy.url().should('include', '/programming-exercises/new');
             cy.log('Filling out programming exercise info...');
             const exerciseTitle = 'Cypress programming exercise ' + generateUUID();
-            programmingCreation.setTitle(exerciseTitle);
-            programmingCreation.setShortName('cypress' + generateUUID());
-            programmingCreation.setPackageName('de.test');
-            programmingCreation.setPoints(100);
-            programmingCreation.checkAllowOnlineEditor();
-            programmingCreation.generate().then((request: Interception) => {
+            programmingExerciseCreation.setTitle(exerciseTitle);
+            programmingExerciseCreation.setShortName('cypress' + generateUUID());
+            programmingExerciseCreation.setPackageName('de.test');
+            programmingExerciseCreation.setPoints(100);
+            programmingExerciseCreation.checkAllowOnlineEditor();
+            programmingExerciseCreation.generate().then((request: Interception) => {
                 const exercise = request.response!.body;
                 cy.get('#exercise-detail-title').should('contain.text', exerciseTitle);
                 cy.url().should('include', `/programming-exercises/${exercise.id}`);

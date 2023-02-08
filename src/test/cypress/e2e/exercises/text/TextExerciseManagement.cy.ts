@@ -2,33 +2,27 @@ import { Interception } from 'cypress/types/net-stubbing';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { BASE_API } from '../../../support/constants';
+import {
+    courseManagement,
+    courseManagementExercises,
+    courseManagementRequest,
+    navigationBar,
+    textExerciseCreation,
+    textExerciseExampleSubmissionCreation,
+    textExerciseExampleSubmissions,
+} from '../../../support/artemis';
 import { DELETE } from '../../../support/constants';
 import { generateUUID } from '../../../support/utils';
-import { artemis } from '../../../support/ArtemisTesting';
 import dayjs from 'dayjs/esm';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-
-// Users
-const users = artemis.users;
-const admin = users.getAdmin();
-
-// Requests
-const courseManagement = artemis.requests.courseManagement;
-
-// PageObjects
-const textCreation = artemis.pageobjects.exercise.text.creation;
-const exampleSubmissions = artemis.pageobjects.exercise.text.exampleSubmissions;
-const exampleSubmissionCreation = artemis.pageobjects.exercise.text.exampleSubmissionCreation;
-const navigationBar = artemis.pageobjects.navigationBar;
-const courseManagementPage = artemis.pageobjects.course.management;
-const courseManagementExercises = artemis.pageobjects.course.managementExercises;
+import { admin } from '../../../support/users';
 
 describe('Text exercise management', () => {
     let course: Course;
 
     before(() => {
         cy.login(admin);
-        courseManagement.createCourse().then((response) => {
+        courseManagementRequest.createCourse().then((response) => {
             course = convertCourseAfterMultiPart(response);
         });
     });
@@ -36,35 +30,35 @@ describe('Text exercise management', () => {
     it('Creates a text exercise in the UI', () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
-        courseManagementPage.openExercisesOfCourse(course.shortName!);
+        courseManagement.openExercisesOfCourse(course.shortName!);
         cy.get('#create-text-exercise').click();
 
         // Fill out text exercise form
         const exerciseTitle = 'text exercise' + generateUUID();
-        textCreation.typeTitle(exerciseTitle);
-        textCreation.setReleaseDate(dayjs());
-        textCreation.setDueDate(dayjs().add(1, 'days'));
-        textCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
-        textCreation.typeMaxPoints(10);
-        textCreation.checkAutomaticAssessmentSuggestions();
+        textExerciseCreation.typeTitle(exerciseTitle);
+        textExerciseCreation.setReleaseDate(dayjs());
+        textExerciseCreation.setDueDate(dayjs().add(1, 'days'));
+        textExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
+        textExerciseCreation.typeMaxPoints(10);
+        textExerciseCreation.checkAutomaticAssessmentSuggestions();
         const problemStatement = 'This is a problem statement';
         const exampleSolution = 'E = mc^2';
-        textCreation.typeProblemStatement(problemStatement);
-        textCreation.typeExampleSolution(exampleSolution);
+        textExerciseCreation.typeProblemStatement(problemStatement);
+        textExerciseCreation.typeExampleSolution(exampleSolution);
         let exercise: TextExercise;
-        textCreation.create().then((request: Interception) => {
+        textExerciseCreation.create().then((request: Interception) => {
             exercise = request.response!.body;
         });
 
         // Create an example submission
         cy.get('#example-submissions-button').click();
-        exampleSubmissions.clickCreateExampleSubmission();
-        exampleSubmissionCreation.showsExerciseTitle(exerciseTitle);
-        exampleSubmissionCreation.showsProblemStatement(problemStatement);
-        exampleSubmissionCreation.showsExampleSolution(exampleSolution);
+        textExerciseExampleSubmissions.clickCreateExampleSubmission();
+        textExerciseExampleSubmissionCreation.showsExerciseTitle(exerciseTitle);
+        textExerciseExampleSubmissionCreation.showsProblemStatement(problemStatement);
+        textExerciseExampleSubmissionCreation.showsExampleSolution(exampleSolution);
         const submission = 'This is an\nexample\nsubmission';
-        exampleSubmissionCreation.typeExampleSubmission(submission);
-        exampleSubmissionCreation.clickCreateNewExampleSubmission().then((request: Interception) => {
+        textExerciseExampleSubmissionCreation.typeExampleSubmission(submission);
+        textExerciseExampleSubmissionCreation.clickCreateNewExampleSubmission().then((request: Interception) => {
             expect(request.response!.statusCode).to.eq(200);
             expect(request.response!.body.submission.text).to.equal(submission);
         });
@@ -80,14 +74,14 @@ describe('Text exercise management', () => {
 
         beforeEach(() => {
             cy.login(admin, '/');
-            courseManagement.createTextExercise({ course }).then((response: Cypress.Response<TextExercise>) => {
+            courseManagementRequest.createTextExercise({ course }).then((response: Cypress.Response<TextExercise>) => {
                 exercise = response.body;
             });
         });
 
         it('Deletes an existing text exercise', () => {
             navigationBar.openCourseManagement();
-            courseManagementPage.openExercisesOfCourse(course.shortName!);
+            courseManagement.openExercisesOfCourse(course.shortName!);
             courseManagementExercises.clickDeleteExercise(exercise.id!);
             cy.get('#confirm-exercise-name').type(exercise.title!);
             cy.intercept(DELETE, BASE_API + 'text-exercises/*').as('deleteTextExercise');
@@ -100,7 +94,7 @@ describe('Text exercise management', () => {
     after(() => {
         if (course) {
             cy.login(admin);
-            courseManagement.deleteCourse(course.id!);
+            courseManagementRequest.deleteCourse(course.id!);
         }
     });
 });

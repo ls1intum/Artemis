@@ -1,11 +1,5 @@
-import { artemis } from '../support/ArtemisTesting';
-
-// Users
-const users = artemis.users;
-const studentOne = users.getStudentOne();
-
-// PageObjects
-const loginPage = artemis.pageobjects.login;
+import { loginPage } from '../support/artemis';
+import { studentOne } from '../support/users';
 
 describe('Login page tests', () => {
     it('Logs in via the UI', () => {

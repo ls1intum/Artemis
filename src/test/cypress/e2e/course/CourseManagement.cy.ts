@@ -1,23 +1,11 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { BASE_API, PUT } from '../../support/constants';
-import { artemis } from '../../support/ArtemisTesting';
+import { courseCreation, courseManagement, courseManagementRequest, navigationBar } from '../../support/artemis';
 import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import { Course } from 'app/entities/course.model';
 import day from 'dayjs/esm';
-
-// Users
-const users = artemis.users;
-const admin = users.getAdmin();
-const studentOne = users.getStudentOne();
-
-// Requests
-const courseManagementRequest = artemis.requests.courseManagement;
-
-// PageObjects
-const courseManagementPage = artemis.pageobjects.course.management;
-const navigationBar = artemis.pageobjects.navigationBar;
-const courseCreationPage = artemis.pageobjects.course.creation;
+import { admin, studentOne } from '../../support/users';
 
 // Selectors
 const modalDeleteButton = '#delete';
@@ -78,26 +66,26 @@ describe('Course management', () => {
         it('Adds a student manually to the course', () => {
             const username = studentOne.username;
             navigationBar.openCourseManagement();
-            courseManagementPage.openCourse(courseData.shortName);
-            courseManagementPage.addStudentToCourse(studentOne);
+            courseManagement.openCourse(courseData.shortName);
+            courseManagement.addStudentToCourse(studentOne);
             cy.get('#registered-students').contains(username).should('be.visible');
             navigationBar.openCourseManagement();
-            courseManagementPage.openCourse(courseData.shortName);
-            courseManagementPage.getCourseStudentGroupName().contains(`artemis-${courseData.shortName}-students (1)`);
+            courseManagement.openCourse(courseData.shortName);
+            courseManagement.getCourseStudentGroupName().contains(`artemis-${courseData.shortName}-students (1)`);
         });
 
         it('Removes a student manually from the course', () => {
             const username = studentOne.username;
             courseManagementRequest.addStudentToCourse(course, studentOne);
             navigationBar.openCourseManagement();
-            courseManagementPage.openStudentOverviewOfCourse(course.id!);
+            courseManagement.openStudentOverviewOfCourse(course.id!);
             cy.get('#registered-students').contains(username).should('be.visible');
             cy.get('#registered-students button[jhideletebutton]').should('be.visible').click();
             cy.get('.modal #delete').click();
             cy.get('#registered-students').contains(username).should('not.exist');
             navigationBar.openCourseManagement();
-            courseManagementPage.openCourse(courseData.shortName);
-            courseManagementPage.getCourseStudentGroupName().contains(`artemis-${courseData.shortName}-students (0)`);
+            courseManagement.openCourse(courseData.shortName);
+            courseManagement.getCourseStudentGroupName().contains(`artemis-${courseData.shortName}-students (0)`);
         });
 
         after(() => {
@@ -119,27 +107,27 @@ describe('Course management', () => {
 
         it('Creates a new course', () => {
             navigationBar.openCourseManagement();
-            courseManagementPage.openCourseCreation();
-            courseCreationPage.setTitle(courseData.title);
-            courseCreationPage.setShortName(courseData.shortName);
-            courseCreationPage.setDescription(courseData.description);
-            courseCreationPage.setTestCourse(courseData.testCourse);
-            courseCreationPage.setStartDate(courseData.startDate);
-            courseCreationPage.setEndDate(courseData.endDate);
-            courseCreationPage.setSemester(courseData.semester);
-            courseCreationPage.setCourseMaxPoints(courseData.maxPoints);
-            courseCreationPage.setProgrammingLanguage(courseData.programmingLanguage);
-            courseCreationPage.setEnableComplaints(courseData.enableComplaints);
-            courseCreationPage.setMaxComplaints(courseData.maxComplaints);
-            courseCreationPage.setMaxTeamComplaints(courseData.maxTeamComplaints);
-            courseCreationPage.setMaxComplaintsTimeDays(courseData.maxComplaintTimeDays);
-            courseCreationPage.setEnableMoreFeedback(courseData.enableMoreFeedback);
-            courseCreationPage.setMaxRequestMoreFeedbackTimeDays(courseData.maxRequestMoreFeedbackTimeDays);
-            courseCreationPage.setOnlineCourse(courseData.onlineCourse);
-            courseCreationPage.setPresentationScoreEnabled(courseData.presentationScoreEnabled);
-            courseCreationPage.setPresentationScore(courseData.presentationScore);
-            courseCreationPage.setCustomizeGroupNames(courseData.customizeGroupNames);
-            courseCreationPage.submit().then((request: Interception) => {
+            courseManagement.openCourseCreation();
+            courseCreation.setTitle(courseData.title);
+            courseCreation.setShortName(courseData.shortName);
+            courseCreation.setDescription(courseData.description);
+            courseCreation.setTestCourse(courseData.testCourse);
+            courseCreation.setStartDate(courseData.startDate);
+            courseCreation.setEndDate(courseData.endDate);
+            courseCreation.setSemester(courseData.semester);
+            courseCreation.setCourseMaxPoints(courseData.maxPoints);
+            courseCreation.setProgrammingLanguage(courseData.programmingLanguage);
+            courseCreation.setEnableComplaints(courseData.enableComplaints);
+            courseCreation.setMaxComplaints(courseData.maxComplaints);
+            courseCreation.setMaxTeamComplaints(courseData.maxTeamComplaints);
+            courseCreation.setMaxComplaintsTimeDays(courseData.maxComplaintTimeDays);
+            courseCreation.setEnableMoreFeedback(courseData.enableMoreFeedback);
+            courseCreation.setMaxRequestMoreFeedbackTimeDays(courseData.maxRequestMoreFeedbackTimeDays);
+            courseCreation.setOnlineCourse(courseData.onlineCourse);
+            courseCreation.setPresentationScoreEnabled(courseData.presentationScoreEnabled);
+            courseCreation.setPresentationScore(courseData.presentationScore);
+            courseCreation.setCustomizeGroupNames(courseData.customizeGroupNames);
+            courseCreation.submit().then((request: Interception) => {
                 const courseBody = request.response!.body;
                 courseId = courseBody.id!;
                 expect(courseBody.title).to.eq(courseData.title);
@@ -164,41 +152,41 @@ describe('Course management', () => {
                 expect(courseBody.instructorGroupName).to.eq(`artemis-${courseData.shortName}-instructors`);
                 expect(courseBody.teachingAssistantGroupName).to.eq(`artemis-${courseData.shortName}-tutors`);
             });
-            courseManagementPage.getCourseHeaderTitle().contains(courseData.title).should('be.visible');
-            courseManagementPage.getCourseHeaderDescription().contains(courseData.description);
-            courseManagementPage.getCourseTitle().contains(courseData.title);
-            courseManagementPage.getCourseShortName().contains(courseData.shortName);
-            courseManagementPage.getCourseStudentGroupName().contains(`artemis-${courseData.shortName}-students (0)`);
-            courseManagementPage.getCourseTutorGroupName().contains(`artemis-${courseData.shortName}-tutors (0)`);
-            courseManagementPage.getCourseEditorGroupName().contains(`artemis-${courseData.shortName}-editors (0)`);
-            courseManagementPage.getCourseInstructorGroupName().contains(`artemis-${courseData.shortName}-instructors (0)`);
-            courseManagementPage.getCourseStartDate().contains(courseData.startDate.format(dateFormat));
-            courseManagementPage.getCourseEndDate().contains(courseData.endDate.format(dateFormat));
-            courseManagementPage.getCourseSemester().contains(courseData.semester);
-            courseManagementPage.getCourseProgrammingLanguage().contains(courseData.programmingLanguage);
-            courseManagementPage.getCourseTestCourse().contains(convertBooleanToYesNo(courseData.testCourse));
-            courseManagementPage.getCourseOnlineCourse().contains(convertBooleanToYesNo(courseData.onlineCourse));
-            courseManagementPage.getCoursePresentationScoreEnabled().contains(convertBooleanToYesNo(courseData.presentationScoreEnabled));
-            courseManagementPage.getCoursePresentationScore().contains(courseData.presentationScore);
-            courseManagementPage.getCourseMaxComplaints().contains(courseData.maxComplaints);
-            courseManagementPage.getCourseMaxTeamComplaints().contains(courseData.maxTeamComplaints);
-            courseManagementPage.getMaxComplaintTimeDays().contains(courseData.maxComplaintTimeDays);
-            courseManagementPage.getMaxRequestMoreFeedbackTimeDays().contains(courseData.maxRequestMoreFeedbackTimeDays);
+            courseManagement.getCourseHeaderTitle().contains(courseData.title).should('be.visible');
+            courseManagement.getCourseHeaderDescription().contains(courseData.description);
+            courseManagement.getCourseTitle().contains(courseData.title);
+            courseManagement.getCourseShortName().contains(courseData.shortName);
+            courseManagement.getCourseStudentGroupName().contains(`artemis-${courseData.shortName}-students (0)`);
+            courseManagement.getCourseTutorGroupName().contains(`artemis-${courseData.shortName}-tutors (0)`);
+            courseManagement.getCourseEditorGroupName().contains(`artemis-${courseData.shortName}-editors (0)`);
+            courseManagement.getCourseInstructorGroupName().contains(`artemis-${courseData.shortName}-instructors (0)`);
+            courseManagement.getCourseStartDate().contains(courseData.startDate.format(dateFormat));
+            courseManagement.getCourseEndDate().contains(courseData.endDate.format(dateFormat));
+            courseManagement.getCourseSemester().contains(courseData.semester);
+            courseManagement.getCourseProgrammingLanguage().contains(courseData.programmingLanguage);
+            courseManagement.getCourseTestCourse().contains(convertBooleanToYesNo(courseData.testCourse));
+            courseManagement.getCourseOnlineCourse().contains(convertBooleanToYesNo(courseData.onlineCourse));
+            courseManagement.getCoursePresentationScoreEnabled().contains(convertBooleanToYesNo(courseData.presentationScoreEnabled));
+            courseManagement.getCoursePresentationScore().contains(courseData.presentationScore);
+            courseManagement.getCourseMaxComplaints().contains(courseData.maxComplaints);
+            courseManagement.getCourseMaxTeamComplaints().contains(courseData.maxTeamComplaints);
+            courseManagement.getMaxComplaintTimeDays().contains(courseData.maxComplaintTimeDays);
+            courseManagement.getMaxRequestMoreFeedbackTimeDays().contains(courseData.maxRequestMoreFeedbackTimeDays);
         });
 
         if (allowGroupCustomization) {
             it('Creates a new course with custom groups', () => {
                 navigationBar.openCourseManagement();
-                courseManagementPage.openCourseCreation();
-                courseCreationPage.setTitle(courseData.title);
-                courseCreationPage.setShortName(courseData.shortName);
-                courseCreationPage.setTestCourse(courseData.testCourse);
-                courseCreationPage.setCustomizeGroupNames(true);
-                courseCreationPage.setStudentGroup(courseData.studentGroupName);
-                courseCreationPage.setTutorGroup(courseData.tutorGroupName);
-                courseCreationPage.setEditorGroup(courseData.editorGroupName);
-                courseCreationPage.setInstructorGroup(courseData.instructorGroupName);
-                courseCreationPage.submit().then((request: Interception) => {
+                courseManagement.openCourseCreation();
+                courseCreation.setTitle(courseData.title);
+                courseCreation.setShortName(courseData.shortName);
+                courseCreation.setTestCourse(courseData.testCourse);
+                courseCreation.setCustomizeGroupNames(true);
+                courseCreation.setStudentGroup(courseData.studentGroupName);
+                courseCreation.setTutorGroup(courseData.tutorGroupName);
+                courseCreation.setEditorGroup(courseData.editorGroupName);
+                courseCreation.setInstructorGroup(courseData.instructorGroupName);
+                courseCreation.submit().then((request: Interception) => {
                     const courseBody = request.response!.body;
                     courseId2 = courseBody.id!;
                     expect(courseBody.title).to.eq(courseData.title);
@@ -209,14 +197,14 @@ describe('Course management', () => {
                     expect(courseBody.editorGroupName).to.eq(courseData.editorGroupName);
                     expect(courseBody.instructorGroupName).to.eq(courseData.instructorGroupName);
                 });
-                courseManagementPage.getCourseHeaderTitle().contains(courseData.title).should('be.visible');
-                courseManagementPage.getCourseTitle().contains(courseData.title);
-                courseManagementPage.getCourseShortName().contains(courseData.shortName);
-                courseManagementPage.getCourseTestCourse().contains(convertBooleanToYesNo(courseData.testCourse));
-                courseManagementPage.getCourseStudentGroupName().contains(courseData.studentGroupName);
-                courseManagementPage.getCourseTutorGroupName().contains(courseData.tutorGroupName);
-                courseManagementPage.getCourseEditorGroupName().contains(courseData.editorGroupName);
-                courseManagementPage.getCourseInstructorGroupName().contains(courseData.instructorGroupName);
+                courseManagement.getCourseHeaderTitle().contains(courseData.title).should('be.visible');
+                courseManagement.getCourseTitle().contains(courseData.title);
+                courseManagement.getCourseShortName().contains(courseData.shortName);
+                courseManagement.getCourseTestCourse().contains(convertBooleanToYesNo(courseData.testCourse));
+                courseManagement.getCourseStudentGroupName().contains(courseData.studentGroupName);
+                courseManagement.getCourseTutorGroupName().contains(courseData.tutorGroupName);
+                courseManagement.getCourseEditorGroupName().contains(courseData.editorGroupName);
+                courseManagement.getCourseInstructorGroupName().contains(courseData.instructorGroupName);
             });
         }
 
@@ -242,23 +230,23 @@ describe('Course management', () => {
 
         it('Edits a existing course', () => {
             navigationBar.openCourseManagement();
-            courseManagementPage.openCourse(courseData.shortName);
-            courseManagementPage.openCourseEdit();
+            courseManagement.openCourse(courseData.shortName);
+            courseManagement.openCourseEdit();
 
-            courseCreationPage.setTitle(editedCourseData.title);
-            courseCreationPage.setTestCourse(editedCourseData.testCourse);
+            courseCreation.setTitle(editedCourseData.title);
+            courseCreation.setTestCourse(editedCourseData.testCourse);
 
-            courseCreationPage.update().then((request: Interception) => {
+            courseCreation.update().then((request: Interception) => {
                 const courseBody = request.response!.body;
                 courseId = courseBody.id!;
                 expect(courseBody.title).to.eq(editedCourseData.title);
                 expect(courseBody.shortName).to.eq(courseData.shortName);
                 expect(courseBody.testCourse).to.eq(editedCourseData.testCourse);
             });
-            courseManagementPage.getCourseHeaderTitle().contains(editedCourseData.title).should('be.visible');
-            courseManagementPage.getCourseTitle().contains(editedCourseData.title);
-            courseManagementPage.getCourseShortName().contains(courseData.shortName);
-            courseManagementPage.getCourseTestCourse().contains(convertBooleanToYesNo(editedCourseData.testCourse));
+            courseManagement.getCourseHeaderTitle().contains(editedCourseData.title).should('be.visible');
+            courseManagement.getCourseTitle().contains(editedCourseData.title);
+            courseManagement.getCourseShortName().contains(courseData.shortName);
+            courseManagement.getCourseTestCourse().contains(convertBooleanToYesNo(editedCourseData.testCourse));
         });
 
         after(() => {
@@ -275,12 +263,12 @@ describe('Course management', () => {
 
         it('Deletes an existing course', () => {
             navigationBar.openCourseManagement();
-            courseManagementPage.openCourse(courseData.shortName);
+            courseManagement.openCourse(courseData.shortName);
             cy.get('#delete-course').click();
             cy.get(modalDeleteButton).should('be.disabled');
             cy.get('#confirm-exercise-name').type(courseData.title);
             cy.get(modalDeleteButton).should('not.be.disabled').click();
-            courseManagementPage.getCourseCard(courseData.shortName).should('not.exist');
+            courseManagement.getCourseCard(courseData.shortName).should('not.exist');
         });
     });
 
@@ -301,7 +289,7 @@ describe('Course management', () => {
                         });
                 });
             navigationBar.openCourseManagement();
-            courseManagementPage.openCourse(courseData.shortName);
+            courseManagement.openCourse(courseData.shortName);
             cy.get('#edit-course').click();
             cy.get('#delete-course-icon').click();
             cy.get('#delete-course-icon').should('not.exist');
@@ -320,7 +308,7 @@ describe('Course management', () => {
                 courseId = course.id!;
             });
             navigationBar.openCourseManagement();
-            courseManagementPage.openCourse(courseData.shortName);
+            courseManagement.openCourse(courseData.shortName);
             cy.get('#edit-course').click();
             cy.get('#delete-course-icon').should('not.exist');
             cy.get('.no-image').should('exist');

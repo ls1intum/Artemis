@@ -1,21 +1,10 @@
 import { Lecture } from 'app/entities/lecture.model';
 import { Course } from 'app/entities/course.model';
-import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
 import dayjs from 'dayjs/esm';
 import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
-
-// Users
-const users = artemis.users;
-const admin = users.getAdmin();
-const instructor = users.getInstructor();
-
-// Requests
-const courseManagementRequest = artemis.requests.courseManagement;
-
-// PageObjects
-const lectureManagement = artemis.pageobjects.lecture.management;
-const lectureCreation = artemis.pageobjects.lecture.creation;
+import { courseManagementRequest, lectureCreation, lectureManagement } from '../../support/artemis';
+import { admin, instructor } from '../../support/users';
 
 describe('Lecture management', () => {
     let course: Course;

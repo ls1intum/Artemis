@@ -1,20 +1,9 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { artemis } from '../../../support/ArtemisTesting';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-
-// Users
-const users = artemis.users;
-const admin = users.getAdmin();
-const studentOne = users.getStudentOne();
-
-// Requests
-const courseManagementRequest = artemis.requests.courseManagement;
-
-// PageObjects
-const textEditor = artemis.pageobjects.exercise.text.editor;
-const courseOverview = artemis.pageobjects.course.overview;
+import { courseManagementRequest, courseOverview, textExerciseEditor } from '../../../support/artemis';
+import { admin, studentOne } from '../../../support/users';
 
 describe('Text exercise participation', () => {
     let course: Course;
@@ -37,17 +26,17 @@ describe('Text exercise participation', () => {
         courseOverview.openRunningExercise(exercise.id!);
 
         // Verify the initial state of the text editor
-        textEditor.shouldShowExerciseTitleInHeader(exercise.title!);
-        textEditor.shouldShowProblemStatement();
+        textExerciseEditor.shouldShowExerciseTitleInHeader(exercise.title!);
+        textExerciseEditor.shouldShowProblemStatement();
 
         // Make a submission
         cy.fixture('loremIpsum.txt').then((submission) => {
-            textEditor.shouldShowNumberOfWords(0);
-            textEditor.shouldShowNumberOfCharacters(0);
-            textEditor.typeSubmission(exercise.id!, submission);
-            textEditor.shouldShowNumberOfWords(100);
-            textEditor.shouldShowNumberOfCharacters(591);
-            textEditor.submit().then((request: Interception) => {
+            textExerciseEditor.shouldShowNumberOfWords(0);
+            textExerciseEditor.shouldShowNumberOfCharacters(0);
+            textExerciseEditor.typeSubmission(exercise.id!, submission);
+            textExerciseEditor.shouldShowNumberOfWords(100);
+            textExerciseEditor.shouldShowNumberOfCharacters(591);
+            textExerciseEditor.submit().then((request: Interception) => {
                 expect(request.response!.body.text).to.eq(submission);
                 expect(request.response!.body.submitted).to.eq(true);
                 expect(request.response!.statusCode).to.eq(200);

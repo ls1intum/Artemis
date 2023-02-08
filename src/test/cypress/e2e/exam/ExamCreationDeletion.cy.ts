@@ -2,22 +2,9 @@ import { Interception } from 'cypress/types/net-stubbing';
 import { Course } from 'app/entities/course.model';
 import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
-import { artemis } from '../../support/ArtemisTesting';
 import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
-
-// Users
-const users = artemis.users;
-const admin = users.getAdmin();
-
-// Requests
-const courseManagementRequest = artemis.requests.courseManagement;
-
-// PageObjects
-const navigationBar = artemis.pageobjects.navigationBar;
-const courseManagementPage = artemis.pageobjects.course.management;
-const examManagementPage = artemis.pageobjects.exam.management;
-const examCreationPage = artemis.pageobjects.exam.creation;
-const examDetailsPage = artemis.pageobjects.exam.details;
+import { courseManagement, courseManagementRequest, examCreation, examDetails, examManagement, navigationBar } from '../../support/artemis';
+import { admin } from '../../support/users';
 
 // Common primitives
 const examData = {
@@ -65,21 +52,21 @@ describe('Exam creation/deletion', () => {
 
     it('Creates an exam', () => {
         navigationBar.openCourseManagement();
-        courseManagementPage.openExamsOfCourse(course.shortName!);
+        courseManagement.openExamsOfCourse(course.shortName!);
 
-        examManagementPage.createNewExam();
-        examCreationPage.setTitle(examData.title);
-        examCreationPage.setVisibleDate(examData.visibleDate);
-        examCreationPage.setStartDate(examData.startDate);
-        examCreationPage.setEndDate(examData.endDate);
-        examCreationPage.setNumberOfExercises(examData.numberOfExercises);
-        examCreationPage.setExamMaxPoints(examData.maxPoints);
+        examManagement.createNewExam();
+        examCreation.setTitle(examData.title);
+        examCreation.setVisibleDate(examData.visibleDate);
+        examCreation.setStartDate(examData.startDate);
+        examCreation.setEndDate(examData.endDate);
+        examCreation.setNumberOfExercises(examData.numberOfExercises);
+        examCreation.setExamMaxPoints(examData.maxPoints);
 
-        examCreationPage.setStartText(examData.startText);
-        examCreationPage.setEndText(examData.endText);
-        examCreationPage.setConfirmationStartText(examData.confirmationStartText);
-        examCreationPage.setConfirmationEndText(examData.confirmationEndText);
-        examCreationPage.submit().then((examResponse: Interception) => {
+        examCreation.setStartText(examData.startText);
+        examCreation.setEndText(examData.endText);
+        examCreation.setConfirmationStartText(examData.confirmationStartText);
+        examCreation.setConfirmationEndText(examData.confirmationEndText);
+        examCreation.submit().then((examResponse: Interception) => {
             const examBody = examResponse.response!.body;
             examId = examBody.id;
             expect(examResponse.response!.statusCode).to.eq(201);
@@ -95,17 +82,17 @@ describe('Exam creation/deletion', () => {
             expect(examBody.confirmationEndText).to.eq(examData.confirmationEndText);
             cy.url().should('contain', `/exams/${examId}`);
         });
-        examManagementPage.getExamTitle().contains(examData.title);
-        examManagementPage.getExamVisibleDate().contains(examData.visibleDate.format(dateFormat));
-        examManagementPage.getExamStartDate().contains(examData.startDate.format(dateFormat));
-        examManagementPage.getExamEndDate().contains(examData.endDate.format(dateFormat));
-        examManagementPage.getExamNumberOfExercises().contains(examData.numberOfExercises);
-        examManagementPage.getExamMaxPoints().contains(examData.maxPoints);
-        examManagementPage.getExamStartText().contains(examData.startText);
-        examManagementPage.getExamEndText().contains(examData.endText);
-        examManagementPage.getExamConfirmationStartText().contains(examData.confirmationStartText);
-        examManagementPage.getExamConfirmationEndText().contains(examData.confirmationEndText);
-        examManagementPage.getExamWorkingTime().contains('1d 0h');
+        examManagement.getExamTitle().contains(examData.title);
+        examManagement.getExamVisibleDate().contains(examData.visibleDate.format(dateFormat));
+        examManagement.getExamStartDate().contains(examData.startDate.format(dateFormat));
+        examManagement.getExamEndDate().contains(examData.endDate.format(dateFormat));
+        examManagement.getExamNumberOfExercises().contains(examData.numberOfExercises);
+        examManagement.getExamMaxPoints().contains(examData.maxPoints);
+        examManagement.getExamStartText().contains(examData.startText);
+        examManagement.getExamEndText().contains(examData.endText);
+        examManagement.getExamConfirmationStartText().contains(examData.confirmationStartText);
+        examManagement.getExamConfirmationEndText().contains(examData.confirmationEndText);
+        examManagement.getExamWorkingTime().contains('1d 0h');
     });
 
     describe('Exam deletion', () => {
@@ -119,10 +106,10 @@ describe('Exam creation/deletion', () => {
 
         it('Deletes an existing exam', () => {
             navigationBar.openCourseManagement();
-            courseManagementPage.openExamsOfCourse(course.shortName!);
-            examManagementPage.openExam(examId);
-            examDetailsPage.deleteExam(examData.title);
-            examManagementPage.getExamSelector(examData.title).should('not.exist');
+            courseManagement.openExamsOfCourse(course.shortName!);
+            examManagement.openExam(examId);
+            examDetails.deleteExam(examData.title);
+            examManagement.getExamSelector(examData.title).should('not.exist');
         });
     });
 
@@ -137,23 +124,23 @@ describe('Exam creation/deletion', () => {
 
         it('Edits an existing exam', () => {
             navigationBar.openCourseManagement();
-            courseManagementPage.openExamsOfCourse(course.shortName!);
-            examManagementPage.openExam(examId);
+            courseManagement.openExamsOfCourse(course.shortName!);
+            examManagement.openExam(examId);
             cy.get('#exam-detail-title').contains(examData.title);
             cy.get('#editButton').click();
 
-            examCreationPage.setTitle(editedExamData.title);
-            examCreationPage.setVisibleDate(editedExamData.visibleDate);
-            examCreationPage.setStartDate(editedExamData.startDate);
-            examCreationPage.setEndDate(editedExamData.endDate);
-            examCreationPage.setNumberOfExercises(editedExamData.numberOfExercises);
-            examCreationPage.setExamMaxPoints(editedExamData.maxPoints);
+            examCreation.setTitle(editedExamData.title);
+            examCreation.setVisibleDate(editedExamData.visibleDate);
+            examCreation.setStartDate(editedExamData.startDate);
+            examCreation.setEndDate(editedExamData.endDate);
+            examCreation.setNumberOfExercises(editedExamData.numberOfExercises);
+            examCreation.setExamMaxPoints(editedExamData.maxPoints);
 
-            examCreationPage.setStartText(editedExamData.startText);
-            examCreationPage.setEndText(editedExamData.endText);
-            examCreationPage.setConfirmationStartText(editedExamData.confirmationStartText);
-            examCreationPage.setConfirmationEndText(editedExamData.confirmationEndText);
-            examCreationPage.update().then((examResponse: Interception) => {
+            examCreation.setStartText(editedExamData.startText);
+            examCreation.setEndText(editedExamData.endText);
+            examCreation.setConfirmationStartText(editedExamData.confirmationStartText);
+            examCreation.setConfirmationEndText(editedExamData.confirmationEndText);
+            examCreation.update().then((examResponse: Interception) => {
                 const examBody = examResponse.response!.body;
                 examId = examBody.id;
                 expect(examResponse.response!.statusCode).to.eq(200);
@@ -169,17 +156,17 @@ describe('Exam creation/deletion', () => {
                 expect(examBody.confirmationEndText).to.eq(editedExamData.confirmationEndText);
                 cy.url().should('contain', `/exams/${examId}`);
             });
-            examManagementPage.getExamTitle().contains(editedExamData.title);
-            examManagementPage.getExamVisibleDate().contains(editedExamData.visibleDate.format(dateFormat));
-            examManagementPage.getExamStartDate().contains(editedExamData.startDate.format(dateFormat));
-            examManagementPage.getExamEndDate().contains(editedExamData.endDate.format(dateFormat));
-            examManagementPage.getExamNumberOfExercises().contains(editedExamData.numberOfExercises);
-            examManagementPage.getExamMaxPoints().contains(editedExamData.maxPoints);
-            examManagementPage.getExamStartText().contains(editedExamData.startText);
-            examManagementPage.getExamEndText().contains(editedExamData.endText);
-            examManagementPage.getExamConfirmationStartText().contains(editedExamData.confirmationStartText);
-            examManagementPage.getExamConfirmationEndText().contains(editedExamData.confirmationEndText);
-            examManagementPage.getExamWorkingTime().contains('2d 0h');
+            examManagement.getExamTitle().contains(editedExamData.title);
+            examManagement.getExamVisibleDate().contains(editedExamData.visibleDate.format(dateFormat));
+            examManagement.getExamStartDate().contains(editedExamData.startDate.format(dateFormat));
+            examManagement.getExamEndDate().contains(editedExamData.endDate.format(dateFormat));
+            examManagement.getExamNumberOfExercises().contains(editedExamData.numberOfExercises);
+            examManagement.getExamMaxPoints().contains(editedExamData.maxPoints);
+            examManagement.getExamStartText().contains(editedExamData.startText);
+            examManagement.getExamEndText().contains(editedExamData.endText);
+            examManagement.getExamConfirmationStartText().contains(editedExamData.confirmationStartText);
+            examManagement.getExamConfirmationEndText().contains(editedExamData.confirmationEndText);
+            examManagement.getExamWorkingTime().contains('2d 0h');
         });
     });
 

@@ -1,24 +1,13 @@
 import { Exam } from 'app/entities/exam.model';
 import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
-import { artemis } from '../../support/ArtemisTesting';
 import dayjs from 'dayjs/esm';
 import submission from '../../fixtures/programming_exercise_submissions/all_successful/submission.json';
 import { Course } from 'app/entities/course.model';
 import { generateUUID } from '../../support/utils';
 import { EXERCISE_TYPE } from '../../support/constants';
+import { courseManagementRequest, examExerciseGroupCreation, examParticipation } from '../../support/artemis';
 import { AdditionalData, Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
-
-// User management
-const users = artemis.users;
-const admin = users.getAdmin();
-const studentOne = users.getStudentOne();
-
-// Requests
-const courseManagementRequest = artemis.requests.courseManagement;
-
-// PageObjects
-const examParticipation = artemis.pageobjects.exam.participation;
-const exerciseGroupCreation = artemis.pageobjects.exam.exerciseGroupCreation;
+import { admin, studentOne } from '../../support/users';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
@@ -86,7 +75,7 @@ describe('Exam participation', () => {
 });
 
 function addGroupWithExercise(exam: Exam, exerciseType: EXERCISE_TYPE, additionalData?: AdditionalData) {
-    exerciseGroupCreation.addGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, (response) => {
+    examExerciseGroupCreation.addGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, (response) => {
         if (exerciseType == EXERCISE_TYPE.Quiz) {
             additionalData!.quizExerciseID = response.body.quizQuestions![0].id;
         }

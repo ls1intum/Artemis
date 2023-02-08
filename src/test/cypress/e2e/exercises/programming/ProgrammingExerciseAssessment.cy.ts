@@ -2,27 +2,18 @@ import { Interception } from 'cypress/types/net-stubbing';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { CypressAssessmentType, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { artemis } from 'src/test/cypress/support/ArtemisTesting';
 import dayjs from 'dayjs/esm';
-
-// Users
-const users = artemis.users;
-const admin = users.getAdmin();
-const instructor = users.getInstructor();
-const tutor = users.getTutor();
-const studentOne = users.getStudentOne();
-
-// Requests
-const courseManagementRequest = artemis.requests.courseManagement;
-
-// PageObjects
-const coursesPage = artemis.pageobjects.course.management;
-const courseAssessment = artemis.pageobjects.assessment.course;
-const exerciseAssessment = artemis.pageobjects.assessment.exercise;
-const programmingAssessment = artemis.pageobjects.assessment.programming;
-const exerciseResult = artemis.pageobjects.exercise.result;
-const programmingFeedback = artemis.pageobjects.exercise.programming.feedback;
-const onlineEditor = artemis.pageobjects.exercise.programming.editor;
+import {
+    courseAssessment,
+    courseManagement,
+    courseManagementRequest,
+    exerciseAssessment,
+    exerciseResult,
+    programmingExerciseAssessment,
+    programmingExerciseEditor,
+    programmingExerciseFeedback,
+} from '../../../support/artemis';
+import { admin, instructor, studentOne, tutor } from '../../../support/users';
 
 describe('Programming exercise assessment', () => {
     let course: Course;
@@ -56,14 +47,14 @@ describe('Programming exercise assessment', () => {
 
     function assessSubmission() {
         cy.login(tutor, '/course-management');
-        coursesPage.openAssessmentDashboardOfCourse(course.shortName!);
+        courseManagement.openAssessmentDashboardOfCourse(course.shortName!);
         courseAssessment.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
         exerciseAssessment.clickStartNewAssessment();
-        onlineEditor.openFileWithName(exercise.id!, 'BubbleSort.java');
-        programmingAssessment.provideFeedbackOnCodeLine(9, tutorCodeFeedbackPoints, tutorCodeFeedback);
-        programmingAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
-        programmingAssessment.submit().then((request: Interception) => {
+        programmingExerciseEditor.openFileWithName(exercise.id!, 'BubbleSort.java');
+        programmingExerciseAssessment.provideFeedbackOnCodeLine(9, tutorCodeFeedbackPoints, tutorCodeFeedback);
+        programmingExerciseAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
+        programmingExerciseAssessment.submit().then((request: Interception) => {
             expect(request.response!.statusCode).to.eq(200);
             // Wait until the assessment due date is over
             const now = dayjs();
@@ -78,17 +69,17 @@ describe('Programming exercise assessment', () => {
         const totalPoints = tutorFeedbackPoints + tutorCodeFeedbackPoints;
         const percentage = totalPoints * 10;
         exerciseResult.shouldShowExerciseTitle(exercise.title!);
-        programmingFeedback.complain(complaint);
+        programmingExerciseFeedback.complain(complaint);
         exerciseResult.clickOpenCodeEditor(exercise.id!);
-        programmingFeedback.shouldShowRepositoryLockedWarning();
-        programmingFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
-        programmingFeedback.shouldShowScore(percentage);
-        programmingFeedback.shouldShowCodeFeedback(exercise.id!, 'BubbleSort.java', tutorCodeFeedback, '-2', onlineEditor);
+        programmingExerciseFeedback.shouldShowRepositoryLockedWarning();
+        programmingExerciseFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
+        programmingExerciseFeedback.shouldShowScore(percentage);
+        programmingExerciseFeedback.shouldShowCodeFeedback(exercise.id!, 'BubbleSort.java', tutorCodeFeedback, '-2', programmingExerciseEditor);
     }
 
     function acceptComplaintAsInstructor() {
         cy.login(instructor, `/course-management/${course.id}/complaints`);
-        programmingAssessment.acceptComplaint('Makes sense').then((request: Interception) => {
+        programmingExerciseAssessment.acceptComplaint('Makes sense').then((request: Interception) => {
             expect(request.response!.statusCode).to.equal(200);
         });
     }

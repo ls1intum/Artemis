@@ -1,5 +1,5 @@
 import { Exam } from 'app/entities/exam.model';
-import { artemis } from '../../ArtemisTesting';
+import { courseManagementRequest } from '../../artemis';
 import multipleChoiceTemplate from '../../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import { BASE_API, EXERCISE_TYPE, PUT } from '../../constants';
 import { POST } from '../../constants';
@@ -29,7 +29,6 @@ export class ExamExerciseGroupCreationPage {
     }
 
     addGroupWithExercise(exam: Exam, title: string, exerciseType: EXERCISE_TYPE, processResponse: (data: any) => void) {
-        const courseManagementRequest = artemis.requests.courseManagement;
         courseManagementRequest.addExerciseGroupForExam(exam).then((groupResponse) => {
             switch (exerciseType) {
                 case EXERCISE_TYPE.Text:

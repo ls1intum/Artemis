@@ -3,22 +3,9 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
-import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
-
-// Users
-const users = artemis.users;
-const admin = users.getAdmin();
-const studentOne = users.getStudentOne();
-
-// Requests
-const courseManagementRequest = artemis.requests.courseManagement;
-
-// PageObjects
-const courseOverview = artemis.pageobjects.course.overview;
-const examNavigationBar = artemis.pageobjects.exam.navigationBar;
-const examStartEnd = artemis.pageobjects.exam.startEnd;
-const textEditor = artemis.pageobjects.exercise.text.editor;
+import { courseManagementRequest, courseOverview, examNavigation, examStartEnd, textExerciseEditor } from '../../support/artemis';
+import { admin, studentOne } from '../../support/users';
 
 describe('Exam date verification', () => {
     let course: Course;
@@ -97,11 +84,11 @@ describe('Exam date verification', () => {
                         cy.url().should('contain', `/exams/${exam.id}`);
                         cy.contains(exam.title!).should('be.visible');
                         examStartEnd.startExam();
-                        examNavigationBar.openExerciseAtIndex(0);
+                        examNavigation.openExerciseAtIndex(0);
                         cy.fixture('loremIpsum.txt').then((submission) => {
-                            textEditor.typeSubmission(exercise.id, submission);
+                            textExerciseEditor.typeSubmission(exercise.id, submission);
                         });
-                        examNavigationBar.clickSave();
+                        examNavigation.clickSave();
                     });
                 });
             });
@@ -130,11 +117,11 @@ describe('Exam date verification', () => {
                         courseOverview.openExam(exam.id!);
                         cy.contains(exam.title!).should('be.visible');
                         examStartEnd.startExam();
-                        examNavigationBar.openExerciseAtIndex(0);
+                        examNavigation.openExerciseAtIndex(0);
                         cy.fixture('loremIpsum.txt').then((submissionText) => {
-                            textEditor.typeSubmission(exercise.id, submissionText);
+                            textExerciseEditor.typeSubmission(exercise.id, submissionText);
                         });
-                        examNavigationBar.clickSave();
+                        examNavigation.clickSave();
                         if (examEnd.isAfter(dayjs())) {
                             cy.wait(examEnd.diff(dayjs()));
                         }

@@ -1,19 +1,8 @@
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { artemis } from '../../../support/ArtemisTesting';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-
-// Users
-const users = artemis.users;
-const admin = users.getAdmin();
-const studentOne = users.getStudentOne();
-
-// Requests
-const courseManagementRequest = artemis.requests.courseManagement;
-
-// PageObjects
-const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
-const courseOverview = artemis.pageobjects.course.overview;
+import { courseManagementRequest, courseOverview, modelingExerciseEditor } from '../../../support/artemis';
+import { admin, studentOne } from '../../../support/users';
 
 // Common primitives
 let course: Course;
@@ -41,9 +30,9 @@ describe('Modeling Exercise Participation Spec', () => {
         cy.reloadUntilFound('#start-exercise-' + modelingExercise.id);
         courseOverview.startExercise(modelingExercise.id!);
         cy.get('#open-exercise-' + modelingExercise.id).click();
-        modelingEditor.addComponentToModel(modelingExercise.id!, 1);
-        modelingEditor.addComponentToModel(modelingExercise.id!, 2);
-        modelingEditor.addComponentToModel(modelingExercise.id!, 3);
-        modelingEditor.submit();
+        modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 1);
+        modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 2);
+        modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 3);
+        modelingExerciseEditor.submit();
     });
 });
