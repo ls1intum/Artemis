@@ -1332,9 +1332,9 @@ public class ExamService {
      * @param user     The user for whom to fetch all available exercises
      * @return exam page
      */
-    public Page<Exam> getAllExams(Pageable pageable, final User user) {
+    public Page<Exam> getAllExams(Pageable pageable, final User user, ZonedDateTime fromDate, ZonedDateTime toDate) {
         final Page<Exam> examPage;
-        examPage = examRepository.findAllExamsInCoursesWhereInstructor(user.getGroups(), pageable);
+        examPage = examRepository.findAllExamsInCoursesWhereInstructor(user.getGroups(), pageable, fromDate, toDate);
         return examPage;
     }
 

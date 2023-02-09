@@ -9,10 +9,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.exam.*;
@@ -107,8 +105,6 @@ public class ExamUserResource {
     public ResponseEntity<Set<String>> saveUsersImages(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam("file") MultipartFile file) {
         log.debug("REST request to parse pdf : {}", file.getOriginalFilename());
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         return ResponseEntity.ok().body(examUserService.saveImages(examId, file));
     }
 }

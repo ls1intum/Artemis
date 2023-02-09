@@ -53,8 +53,10 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             SELECT e FROM Exam e
             WHERE e.course.instructorGroupName IN :groups
                 AND e.exerciseGroups IS NOT EMPTY
+                AND e.visibleDate >= :#{#fromDate} AND e.visibleDate <= :#{#toDate}
             """)
-    Page<Exam> findAllExamsInCoursesWhereInstructor(@Param("groups") Set<String> groups, Pageable pageable);
+    Page<Exam> findAllExamsInCoursesWhereInstructor(@Param("groups") Set<String> groups, Pageable pageable, @Param("fromDate") ZonedDateTime fromDate,
+            @Param("toDate") ZonedDateTime toDate);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups" })
     Optional<Exam> findWithExerciseGroupsById(long examId);

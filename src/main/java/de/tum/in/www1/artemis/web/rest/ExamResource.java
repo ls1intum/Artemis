@@ -9,8 +9,7 @@ import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.time.Duration;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -24,6 +23,8 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -371,10 +372,11 @@ public class ExamResource {
      */
     @GetMapping("exams/all")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<List<Exam>> getAllExams(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<Exam>> getAllExams(@ApiParam Pageable pageable, @RequestParam(value = "from") @DateTimeFormat(iso = ISO.DATE_TIME) ZonedDateTime from,
+            @RequestParam(value = "to") @DateTimeFormat(iso = ISO.DATE_TIME) ZonedDateTime to) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        final Page<Exam> page;
-        page = examService.getAllExams(pageable, user);
+        Page<Exam> page;
+        page = examService.getAllExams(pageable, user, from, to);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
