@@ -15,9 +15,9 @@ public class ProgrammingAssessmentService extends AssessmentService {
     public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
             SubmissionRepository submissionRepository, ExamDateService examDateService, UserRepository userRepository, GradingCriterionRepository gradingCriterionRepository,
-            LtiNewResultService ltiNewResultService) {
+            LtiNewResultService ltiNewResultService, ExerciseDateService exerciseDateService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
-                submissionRepository, examDateService, gradingCriterionRepository, userRepository, ltiNewResultService);
+                submissionRepository, examDateService, gradingCriterionRepository, userRepository, ltiNewResultService, exerciseDateService);
     }
 
     /**
