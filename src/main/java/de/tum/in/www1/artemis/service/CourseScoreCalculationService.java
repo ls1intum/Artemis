@@ -33,7 +33,9 @@ public class CourseScoreCalculationService {
 
     private static final double SCORE_NORMALIZATION_VALUE = 0.01;
 
-    // Scores are calculated for all exercises ("total") as well as for the subset of exercises of each exercise type.
+    /**
+     * Scores are calculated for all exercises ("total") as well as for the subset of exercises of each exercise type.
+     */
     public static final String TOTAL = "total";
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -346,21 +348,20 @@ public class CourseScoreCalculationService {
                 return ratedResults.get(0);
             }
 
-            // sorting in descending order to have the last result at the beginning
-            resultsList.sort(Comparator.comparing(Result::getCompletionDate).reversed());
+            Result latestResult = Collections.max(resultsList, Comparator.comparing(Result::getCompletionDate));
 
             long gracePeriodInSeconds = 10L;
-            if (dueDate == null
-                    || (resultsList.get(0).getCompletionDate() != null && !dueDate.plusSeconds(gracePeriodInSeconds).isBefore(resultsList.get(0).getCompletionDate()))) {
+            if (dueDate == null || (latestResult.getCompletionDate() != null && !dueDate.plusSeconds(gracePeriodInSeconds).isBefore(latestResult.getCompletionDate()))) {
                 // find the first result that is before the due date
-                chosenResult = resultsList.get(0);
+                chosenResult = latestResult;
             }
-            else if (resultsList.get(0).getCompletionDate() == null || dueDate.plusSeconds(gracePeriodInSeconds).isBefore(resultsList.get(0).getCompletionDate())) {
+            else if (latestResult.getCompletionDate() == null || dueDate.plusSeconds(gracePeriodInSeconds).isBefore(latestResult.getCompletionDate())) {
                 chosenResult = new Result();
                 chosenResult.setScore(0.0);
             }
             else {
-                chosenResult = resultsList.get(resultsList.size() - 1);
+                // Choose the oldest result.
+                chosenResult = Collections.min(resultsList, Comparator.comparing(Result::getCompletionDate));
             }
         }
         else {

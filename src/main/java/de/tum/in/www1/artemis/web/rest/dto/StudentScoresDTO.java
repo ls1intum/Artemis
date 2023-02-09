@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Represents the scores of a student in a course as returned from the server.
+ * This is the parent class of the StudentScoresForExamBonusSourceDTO and thus cannot be a record.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StudentScoresDTO {
