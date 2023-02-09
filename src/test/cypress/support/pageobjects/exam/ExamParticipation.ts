@@ -78,12 +78,12 @@ export class ExamParticipation {
         examStartEnd.startExam();
     }
 
-    clickSaveAndContinue() {
-        cy.get('#save').click();
+    selectExerciseOnOverview(index: number) {
+        cy.get(`.exercise-table tr:nth-child(${index}) a`).click();
     }
 
-    openExercise(index: number) {
-        examNavigation.openExerciseAtIndex(index);
+    clickSaveAndContinue() {
+        cy.get('#save').click();
     }
 
     checkExerciseTitle(exerciseID: number, title: string) {

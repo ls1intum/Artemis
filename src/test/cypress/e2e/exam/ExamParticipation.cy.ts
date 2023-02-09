@@ -5,10 +5,10 @@ import submission from '../../fixtures/programming_exercise_submissions/all_succ
 import { Course } from 'app/entities/course.model';
 import { generateUUID } from '../../support/utils';
 import { EXERCISE_TYPE } from '../../support/constants';
-import { courseManagementRequest, examExerciseGroupCreation, examParticipation, examStartEnd } from '../../support/artemis';
+import { courseManagementRequest, examExerciseGroupCreation, examNavigation, examParticipation, examStartEnd } from '../../support/artemis';
 import { AdditionalData, Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
 import { Interception } from 'cypress/types/net-stubbing';
-import { admin, studentOne, studentTwo } from '../../support/users';
+import { admin, studentOne, studentThree, studentTwo } from '../../support/users';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
@@ -45,6 +45,7 @@ describe('Exam participation', () => {
 
                     courseManagementRequest.registerStudentForExam(exam, studentOne);
                     courseManagementRequest.registerStudentForExam(exam, studentTwo);
+                    courseManagementRequest.registerStudentForExam(exam, studentThree);
                     courseManagementRequest.generateMissingIndividualExams(exam);
                     courseManagementRequest.prepareExerciseStartForExam(exam);
                 });
@@ -55,7 +56,7 @@ describe('Exam participation', () => {
             examParticipation.startParticipation(studentOne, course, exam);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
-                examParticipation.openExercise(j);
+                examNavigation.openExerciseAtIndex(j);
                 examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
             }
             examParticipation.handInEarly();
@@ -71,16 +72,33 @@ describe('Exam participation', () => {
 
         it('Using save and continue to navigate within exam', () => {
             examParticipation.startParticipation(studentTwo, course, exam);
-            examParticipation.openExercise(0);
+            examNavigation.openExerciseAtIndex(0);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
                 // Skip programming exercise this time to save execution time
                 // (we also need to use the navigation bar here, since programming  exercises do not have a "Save and continue" button)
                 if (exercise.type == EXERCISE_TYPE.Programming) {
-                    examParticipation.openExercise(j + 1);
+                    examNavigation.openExerciseAtIndex(j + 1);
                 } else {
                     examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
                     examParticipation.clickSaveAndContinue();
+                }
+            }
+            examParticipation.handInEarly();
+        });
+
+        it('Using exercise overview to navigate within exam', () => {
+            examParticipation.startParticipation(studentThree, course, exam);
+            for (let j = 0; j < exerciseArray.length; j++) {
+                const exercise = exerciseArray[j];
+                // Skip programming exercise this time to save execution time
+                // (we also need to use the navigation bar here, since programming  exercises do not have a "Save and continue" button)
+                if (exercise.type == EXERCISE_TYPE.Programming) {
+                    continue;
+                } else {
+                    examNavigation.openExerciseOverview();
+                    examParticipation.selectExerciseOnOverview(j + 1);
+                    examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
                 }
             }
             examParticipation.handInEarly();
@@ -117,7 +135,7 @@ describe('Exam participation', () => {
             examParticipation.startParticipation(studentOne, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
-            examParticipation.openExercise(textExerciseIndex);
+            examNavigation.openExerciseAtIndex(textExerciseIndex);
             examParticipation.makeSubmission(textExercise.id, textExercise.type, textExercise.additionalData);
             examParticipation.clickSaveAndContinue();
             cy.get('#fullname', { timeout: 20000 }).should('be.visible');
