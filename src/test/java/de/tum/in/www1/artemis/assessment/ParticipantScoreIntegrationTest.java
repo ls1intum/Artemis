@@ -17,6 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -61,6 +62,9 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
 
     @Autowired
     private LectureRepository lectureRepository;
@@ -136,7 +140,12 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         // setting up exam
         Exam exam = ModelFactory.generateExam(course);
         ModelFactory.generateExerciseGroup(true, exam);
-        // exam.addRegisteredUser(student1);
+        exam = examRepository.save(exam);
+        var examUser = new ExamUser();
+        examUser.setExam(exam);
+        examUser.setUser(student1);
+        examUserRepository.save(examUser);
+        exam.setExamUsers(Set.of(examUser));
         exam = examRepository.save(exam);
         idOfExam = exam.getId();
         var examTextExercise = createIndividualTextExerciseForExam();

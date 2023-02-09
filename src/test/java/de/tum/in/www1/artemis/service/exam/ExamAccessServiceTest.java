@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.*;
@@ -36,6 +37,9 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -92,7 +96,19 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         exam1 = database.addExamWithExerciseGroup(course1, true);
         exam2 = database.addExamWithExerciseGroup(course2, true);
         testExam1 = database.addTestExamWithExerciseGroup(course1, true);
+        testExam1 = examRepository.save(testExam1);
+        ExamUser examUser = new ExamUser();
+        examUser.setExam(testExam1);
+        examUser.setUser(student1);
+        examUser = examUserRepository.save(examUser);
+        testExam1.setExamUsers(Set.of(examUser));
         testExam2 = database.addTestExamWithExerciseGroup(course2, true);
+        testExam2 = examRepository.save(testExam2);
+        ExamUser examUser1 = new ExamUser();
+        examUser1.setExam(testExam2);
+        examUser1.setUser(student1);
+        examUser1 = examUserRepository.save(examUser1);
+        testExam2.setExamUsers(Set.of(examUser1));
         exerciseGroup1 = exam1.getExerciseGroups().get(0);
         exerciseGroup2 = exam2.getExerciseGroups().get(0);
         studentExam1 = database.addStudentExam(exam1);
@@ -304,7 +320,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckAndGetCourseAndExamAccessForConduction_registeredUser() {
-        testExam1.setExamUsers(Set.of());
+        exam1.setExamUsers(Set.of());
         examRepository.save(exam1);
         assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).isInstanceOf(BadRequestAlertException.class);
     }
