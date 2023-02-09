@@ -1283,6 +1283,42 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(comp.quizExercise.dueDateError).toBeFalsy();
                 expect(comp.quizExercise.dueDate).toBeUndefined();
             });
+
+            it('should not be valid if question point is not in valid range', () => {
+                let { question } = createValidMCQuestion();
+                question.points = 10000;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeFalse();
+                question = createValidDnDQuestion().question;
+                question.points = 0;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeFalse();
+                question = createValidSAQuestion().question;
+                question.points = -1;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeFalse();
+            });
+
+            it('should not be valid if question point is in valid range', () => {
+                let { question } = createValidMCQuestion();
+                question.points = 9999;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeTrue();
+                question = createValidDnDQuestion().question;
+                question.points = 100;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeTrue();
+                question = createValidSAQuestion().question;
+                question.points = 1;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeTrue();
+            });
         });
 
         describe('saving', () => {

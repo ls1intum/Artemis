@@ -75,7 +75,7 @@ export abstract class QuizExerciseValidationDirective {
             !!this.quizExercise.quizQuestions.length;
 
         const areAllQuestionsValid = this.quizExercise.quizQuestions?.every(function (question) {
-            if (question.points == undefined || question.points < 1) {
+            if (question.points == undefined || question.points < 1 || question.points > 9999) {
                 return false;
             }
             if (question.explanation && question.explanation.length > this.explanationLengthThreshold) {
