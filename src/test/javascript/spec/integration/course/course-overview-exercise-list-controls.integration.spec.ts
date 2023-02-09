@@ -35,7 +35,7 @@ describe('CourseOverviewExerciseListControls', () => {
     let course: Course;
 
     const parentRoute = { params: of({ courseId: '123' }) } as any as ActivatedRoute;
-    const route = { parent: parentRoute, params: of({ courseId: '123' }) } as any as ActivatedRoute;
+    const route = { parent: parentRoute, params: of({ courseId: '123' }), snapshot: { firstChild: { routeConfig: { path: 'courses/1/exercises' } } } } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
