@@ -1540,6 +1540,7 @@ public class DatabaseUtilService {
         var student4 = getUserByLogin(userPrefix + "student4");
         var registeredUsers = Set.of(student1, student2, student3, student4);
         Set<ExamUser> registeredExamUsers = new HashSet<>();
+        exam = examRepository.save(exam);
         for (var user : registeredUsers) {
             var registeredExamUser = newExamUserEntity(exam, user);
             exam.addExamUser(registeredExamUser);
@@ -1551,7 +1552,6 @@ public class DatabaseUtilService {
     }
 
     public ExamUser newExamUserEntity(Exam exam, User user) {
-        exam = examRepository.save(exam);
         ExamUser registeredExamUser = new ExamUser();
         registeredExamUser.setUser(user);
         registeredExamUser.setExam(exam);
@@ -1579,6 +1579,7 @@ public class DatabaseUtilService {
 
     public Exam addTestExamWithRegisteredUser(Course course, User user) {
         Exam exam = ModelFactory.generateTestExam(course);
+        exam = examRepository.save(exam);
         var registeredExamUser = newExamUserEntity(exam, user);
         exam.addExamUser(registeredExamUser);
         examRepository.save(exam);
@@ -1587,6 +1588,7 @@ public class DatabaseUtilService {
 
     public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ModelFactory.generateExam(course);
+        exam = examRepository.save(exam);
         var registeredExamUser = newExamUserEntity(exam, user);
         exam.addExamUser(registeredExamUser);
         exam.setVisibleDate(visibleDate);
@@ -1639,6 +1641,7 @@ public class DatabaseUtilService {
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
         exam.setWorkingTime(2 * 60 * 60);
+        exam = examRepository.save(exam);
         var registeredExamUser = newExamUserEntity(exam, user);
         exam.addExamUser(registeredExamUser);
         exam.setTestExam(false);
@@ -1657,6 +1660,7 @@ public class DatabaseUtilService {
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
         exam.setWorkingTime(2 * 60 * 60);
+        exam = examRepository.save(exam);
         var registeredExamUser = newExamUserEntity(exam, user);
         exam.addExamUser(registeredExamUser);
         examRepository.save(exam);
@@ -4700,6 +4704,7 @@ public class DatabaseUtilService {
 
         // register users
         Set<ExamUser> registeredExamUsers = new HashSet<>();
+        exam = examRepository.save(exam);
         for (var user : registeredStudents) {
             var registeredExamUser = newExamUserEntity(exam, user);
             exam.addExamUser(registeredExamUser);

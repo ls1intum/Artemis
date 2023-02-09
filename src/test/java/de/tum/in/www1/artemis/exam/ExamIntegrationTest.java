@@ -672,11 +672,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var student5 = database.getUserByLogin(TEST_PREFIX + "student5");
         var student6 = database.getUserByLogin(TEST_PREFIX + "student6");
         var registeredUsers = Set.of(student5, student6);
-        Set<ExamUser> registeredExamUsers = new HashSet<>();
+        exam = examRepository.save(exam);
         for (var user : registeredUsers) {
             var registeredExamUser = database.newExamUserEntity(exam, user);
             exam.addExamUser(registeredExamUser);
-            registeredExamUsers.add(registeredExamUser);
         }
         examRepository.save(exam);
 
