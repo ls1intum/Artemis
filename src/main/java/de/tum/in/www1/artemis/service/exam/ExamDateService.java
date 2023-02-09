@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -58,19 +60,28 @@ public class ExamDateService {
     /**
      * Returns <code>true</code> if the exercise working period is over, which is the case when:
      * <ul>
-     * <li>The due date is set and it has passed in case of course exercises.</li>
-     * <li>No student can hand in their exam anymore in case of exam exercises.</li>
+     * <li>For real exams, if no student can hand in their exam anymore</li>
+     * <lI>For tests exams, if the student has handed in their own student exam</lI>
      * </ul>
      *
-     * @param exercise the course or exam exercise
+     * @param exercise             the course or exam exercise
+     * @param studentParticipation used to find the related student exams for test exams
      * @return <code>true</code> if the exercise is over and students cannot submit (graded) solutions anymore, <code>false</code> otherwise
      * @throws EntityNotFoundException the given exercise is an exam exercise and the exam cannot be found
      */
-    public boolean isExerciseWorkingPeriodOver(Exercise exercise) {
+    public boolean isExerciseWorkingPeriodOver(Exercise exercise, StudentParticipation studentParticipation) {
         if (!exercise.isExamExercise()) {
             throw new IllegalArgumentException("This function should only be used for exam exercises");
         }
-        return isExamWithGracePeriodOver(exercise.getExamViaExerciseGroupOrCourseMember());
+        Exam exam = exercise.getExamViaExerciseGroupOrCourseMember();
+        if (exam.isTestExam()) {
+            var optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());
+            if (optionalStudentExam.isPresent()) {
+                StudentExam studentExam = optionalStudentExam.get();
+                return studentExam.isSubmitted() || studentExam.isEnded();
+            }
+        }
+        return isExamWithGracePeriodOver(exam);
     }
 
     /**
