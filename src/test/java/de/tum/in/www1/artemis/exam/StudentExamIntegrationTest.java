@@ -12,6 +12,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -70,6 +71,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
 
     @Autowired
     private ResultRepository resultRepository;
@@ -354,12 +358,16 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
+        var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         var exam = database.addExam(course1, examVisibleDate, examStartDate, examEndDate);
         exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
         exam.setTestExam(true);
+        var examUser5 = new ExamUser();
+        examUser5.setExam(exam);
+        examUser5.setUser(student1);
+        examUser5 = examUserRepository.save(examUser5);
+        exam.addExamUser(examUser5);
         exam = examRepository.save(exam);
-
-        var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
 
         bitbucketRequestMockProvider.mockUserExists(student1.getLogin());
         var programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().iterator().next();
@@ -560,7 +568,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // register user
         Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
-        exam.setExamUsers(new HashSet<>(Set.of(new ExamUser())));
+        for (User student : registeredStudents) {
+            var examUser = new ExamUser();
+            examUser.setUser(student);
+            examUser.setExam(exam);
+            examUser = examUserRepository.save(examUser);
+            exam.addExamUser(examUser);
+        }
         exam.setNumberOfExercisesInExam(2);
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
@@ -585,7 +599,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // register user
         Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
-        exam.setExamUsers(new HashSet<>(Set.of(new ExamUser())));
+        for (User student : registeredStudents) {
+            var examUser = new ExamUser();
+            examUser.setUser(student);
+            examUser.setExam(exam);
+            examUser = examUserRepository.save(examUser);
+            exam.addExamUser(examUser);
+        }
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
 
@@ -1875,7 +1895,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
-        // mockDeleteProgrammingExercise(programmingExerciseTestService, programmingExercise, exam2.getRegisteredUsers());
+        Set<User> users = exam2.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
+        mockDeleteProgrammingExercise(programmingExerciseTestService, programmingExercise, users);
 
         request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam2.getId())).as("Exam was deleted").isEmpty();
@@ -2291,6 +2312,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         testExamWithExercises.setVisibleDate(ZonedDateTime.now().minusHours(1));
         testExamWithExercises.setStartDate(ZonedDateTime.now().minusMinutes(30));
         testExamWithExercises.setWorkingTime(6000);
+        var examUser5 = new ExamUser();
+        examUser5.setExam(testExamWithExercises);
+        examUser5.setUser(student1);
+        examUser5 = examUserRepository.save(examUser5);
+        testExamWithExercises.addExamUser(examUser5);
         testExamWithExercises = examRepository.save(testExamWithExercises);
 
         // Step 1: Call /start
