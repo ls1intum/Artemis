@@ -37,7 +37,7 @@ public class FilePathService {
     }
 
     public static String getExamUserSignatureFilePath() {
-        return Path.of(fileUploadPath, "images", "user", "signatures").toString();
+        return Path.of(fileUploadPath, "images", "exam-user", "signatures").toString();
     }
 
     public static String getStudentImageFilePath() {

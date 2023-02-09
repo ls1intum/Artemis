@@ -381,7 +381,7 @@ public class FileService implements DisposableBean {
             return "/api/files/course/icons/" + id + "/" + filename;
         }
         if (actualPath.contains(FilePathService.getExamUserSignatureFilePath())) {
-            return "/api/files/user/signatures/" + id + "/" + filename;
+            return "/api/files/exam-user/signatures/" + id + "/" + filename;
         }
         if (actualPath.contains(FilePathService.getStudentImageFilePath())) {
             return "/api/files/exam-user/" + id + "/" + filename;
