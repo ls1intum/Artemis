@@ -10,6 +10,8 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.stereotype.Service;
 
+import com.nimbusds.oauth2.sdk.util.StringUtils;
+
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -109,9 +111,12 @@ public class ExamRegistrationService {
                     registeredExamUser.setUser(optionalStudent.get());
                     registeredExamUser.setExam(exam);
 
-                    registeredExamUser.setPlannedRoom(examUserDto.room());
-                    registeredExamUser.setPlannedSeat(examUserDto.seat());
-
+                    if (!StringUtils.isBlank(examUserDto.room())) {
+                        registeredExamUser.setPlannedRoom(examUserDto.room());
+                    }
+                    if (!StringUtils.isBlank(examUserDto.seat())) {
+                        registeredExamUser.setPlannedSeat(examUserDto.seat());
+                    }
                     registeredExamUser = examUserRepository.save(registeredExamUser);
                     exam.addExamUser(registeredExamUser);
                 }

@@ -53,9 +53,6 @@ public class ExamUserService {
             List<ImageDTO> images = imageExtractor.getImages();
             List<ExamUserWithImageDTO> studentWithImages = new ArrayList<>();
 
-            // load again as ImageExtractor closes the document
-            PDDocument document1 = PDDocument.load(file.getBytes());
-
             System.out.println(images.size());
             for (ImageDTO image : images) {
                 PDFTextStripperByArea stripper = new PDFTextStripperByArea();
@@ -67,12 +64,12 @@ public class ExamUserService {
                 Rectangle rect = new Rectangle(Math.round(image.xPosition()), 842 - (Math.round(image.yPosition())) - image.renderedHeight(), 4 * image.renderedWidth(),
                         image.renderedHeight());
                 stripper.addRegion("image:" + (image.page() - 1), rect);
-                stripper.extractRegions(document1.getPage(image.page() - 1));
+                stripper.extractRegions(document.getPage(image.page() - 1));
                 String string = stripper.getTextForRegion("image:" + (image.page() - 1));
 
                 studentWithImages.add(new ExamUserWithImageDTO(string != null ? string.split("\\s").length > 0 ? string.split("\\s")[1] : "no registration number" : "", image));
             }
-            document1.close();
+            document.close();
             return studentWithImages;
         }
         catch (IOException e) {

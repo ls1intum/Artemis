@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ImageDTO;
 
 /**
  * Processor to extract images from a PDF and get information.
- * ref: <a href="https://github.com/apache/pdfbox/blob/trunk/examples/src/main/java/org/apache/pdfbox/examples/util/PrintImageLocations.java">...</a>
+ * ref: https://github.com/apache/pdfbox/blob/trunk/examples/src/main/java/org/apache/pdfbox/examples/util/PrintImageLocations.java
  */
 public class ImageExtractor extends PDFStreamEngine {
 
@@ -56,8 +56,6 @@ public class ImageExtractor extends PDFStreamEngine {
                 currentPage++;
                 processPage(page);
             }
-
-            pdfDocument.close();
         }
         catch (IOException e) {
         }
@@ -66,6 +64,7 @@ public class ImageExtractor extends PDFStreamEngine {
 
     /**
      * This is used to handle an operation.
+     * It will get coordinates of all images in the pdf and store them in a list. This will run for every image in the pdf.
      *
      * @param operator The operation to perform.
      * @param operands The list of arguments.
@@ -81,6 +80,7 @@ public class ImageExtractor extends PDFStreamEngine {
 
                 PDImageXObject image = (PDImageXObject) xobject;
                 Matrix ctmNew = getGraphicsState().getCurrentTransformationMatrix();
+                // store the image coordinates, currentPage and the image in bytes
                 ImageDTO imageDTO = new ImageDTO(currentPage, ctmNew.getTranslateX(), ctmNew.getTranslateY(), image.getHeight(), image.getWidth(), Math.round(ctmNew.getScaleX()),
                         Math.round(ctmNew.getScaleY()), toByteArray(image.getImage(), "png"));
                 images.add(imageDTO);
