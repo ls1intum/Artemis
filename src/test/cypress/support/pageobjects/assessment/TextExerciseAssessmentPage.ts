@@ -35,12 +35,12 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
         return cy.wait('@submitFeedback');
     }
 
-    rejectComplaint(response: string) {
-        return super.rejectComplaint(response, CypressExerciseType.TEXT);
+    rejectComplaint(response: string, examMode: boolean) {
+        return super.rejectComplaint(response, examMode, CypressExerciseType.TEXT);
     }
 
-    acceptComplaint(response: string) {
-        return super.acceptComplaint(response, CypressExerciseType.TEXT);
+    acceptComplaint(response: string, examMode: boolean) {
+        return super.acceptComplaint(response, examMode, CypressExerciseType.TEXT);
     }
 
     getWordCountElement() {

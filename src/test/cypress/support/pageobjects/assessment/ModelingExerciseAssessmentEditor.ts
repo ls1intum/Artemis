@@ -22,11 +22,11 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
         this.getNextAssessmentField().click();
     }
 
-    rejectComplaint(response: string) {
-        return super.rejectComplaint(response, CypressExerciseType.MODELING);
+    rejectComplaint(response: string, examMode: false) {
+        return super.rejectComplaint(response, examMode, CypressExerciseType.MODELING);
     }
-    acceptComplaint(response: string) {
-        return super.acceptComplaint(response, CypressExerciseType.MODELING);
+    acceptComplaint(response: string, examMode: false) {
+        return super.acceptComplaint(response, examMode, CypressExerciseType.MODELING);
     }
 
     submitExample() {

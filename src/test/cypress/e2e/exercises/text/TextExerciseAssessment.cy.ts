@@ -1,7 +1,7 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { convertCourseAfterMultiPart, CypressExerciseType } from '../../../support/requests/CourseManagementRequests';
 import {
     courseAssessment,
     courseManagement,
@@ -72,7 +72,7 @@ describe('Text exercise assessment', () => {
 
         it('Instructor can see complaint and reject it', () => {
             cy.login(instructor, `/course-management/${course.id}/complaints`);
-            textExerciseAssessment.acceptComplaint('Makes sense').its('response.statusCode').should('eq', 200);
+            textAssessment.acceptComplaint('Makes sense', false).its('response.statusCode').should('eq', 200);
         });
     });
 

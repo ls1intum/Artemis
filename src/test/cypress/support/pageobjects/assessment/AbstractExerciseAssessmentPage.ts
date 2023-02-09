@@ -25,16 +25,16 @@ export abstract class AbstractExerciseAssessmentPage {
         return cy.wait('@submitAssessment');
     }
 
-    rejectComplaint(response: string, exerciseType: CypressExerciseType) {
-        return this.handleComplaint(response, false, exerciseType);
+    rejectComplaint(response: string, examMode: boolean, exerciseType: CypressExerciseType) {
+        return this.handleComplaint(response, false, exerciseType, examMode);
     }
 
-    acceptComplaint(response: string, exerciseType: CypressExerciseType) {
-        return this.handleComplaint(response, true, exerciseType);
+    acceptComplaint(response: string, examMode: boolean, exerciseType: CypressExerciseType) {
+        return this.handleComplaint(response, true, exerciseType, examMode);
     }
 
-    private handleComplaint(response: string, accept: boolean, exerciseType: CypressExerciseType) {
-        if (exerciseType !== CypressExerciseType.MODELING) {
+    private handleComplaint(response: string, accept: boolean, exerciseType: CypressExerciseType, examMode: boolean) {
+        if (exerciseType !== CypressExerciseType.MODELING && !examMode) {
             cy.get('#show-complaint').click();
         }
         cy.get('#responseTextArea').type(response, { parseSpecialCharSequences: false });
