@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
@@ -42,6 +43,8 @@ public class SubmissionResource {
 
     private final SubmissionService submissionService;
 
+    private final ProgrammingSubmissionService programmingSubmissionService;
+
     private final ResultService resultService;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -52,21 +55,19 @@ public class SubmissionResource {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final BuildLogEntryRepository buildLogEntryRepository;
-
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
-    public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, ResultService resultService,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExerciseRepository exerciseRepository, BuildLogEntryRepository buildLogEntryRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+    public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, ProgrammingSubmissionService programmingSubmissionService,
+            ResultService resultService, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
+            ExerciseRepository exerciseRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
+        this.programmingSubmissionService = programmingSubmissionService;
         this.resultService = resultService;
         this.exerciseRepository = exerciseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
-        this.buildLogEntryRepository = buildLogEntryRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
     }
 
@@ -93,12 +94,10 @@ public class SubmissionResource {
         for (Result result : results) {
             resultService.deleteResult(result, true);
         }
+        // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
+        submission.get().setResults(Collections.emptyList());
         if (submission.get() instanceof ProgrammingSubmission programmingSubmission) {
-            // This clears the build log entries and deletes them from the corresponding table
-            programmingSubmission.setBuildLogEntries(Collections.emptyList());
-            programmingSubmission.setResults(Collections.emptyList());
-            submissionRepository.save(programmingSubmission);
-            buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
+            programmingSubmissionService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
         }
         buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.get().getId());
         submissionRepository.deleteById(id);

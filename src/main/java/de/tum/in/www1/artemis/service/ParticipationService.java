@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -36,6 +37,8 @@ public class ParticipationService {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<VersionControlService> versionControlService;
+
+    private final ProgrammingSubmissionService programmingSubmissionService;
 
     private final ParticipationRepository participationRepository;
 
@@ -55,8 +58,6 @@ public class ParticipationService {
 
     private final CoverageReportRepository coverageReportRepository;
 
-    private final BuildLogEntryRepository buildLogEntryRepository;
-
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
     private final ParticipantScoreRepository participantScoreRepository;
@@ -66,14 +67,15 @@ public class ParticipationService {
     private final TeamScoreRepository teamScoreRepository;
 
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService, ResultService resultService,
-            CoverageReportRepository coverageReportRepository, BuildLogEntryRepository buildLogEntryRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
+            ProgrammingSubmissionService programmingSubmissionService, ParticipationRepository participationRepository,
+            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService,
+            ResultService resultService, CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
+        this.programmingSubmissionService = programmingSubmissionService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -83,7 +85,6 @@ public class ParticipationService {
         this.urlService = urlService;
         this.resultService = resultService;
         this.coverageReportRepository = coverageReportRepository;
-        this.buildLogEntryRepository = buildLogEntryRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.studentScoreRepository = studentScoreRepository;
@@ -772,13 +773,11 @@ public class ParticipationService {
         resultsToBeDeleted.forEach(result -> resultService.deleteResult(result, false));
         // Delete all submissions for this participation
         submissions.forEach(submission -> {
+            // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
+            submission.setResults(Collections.emptyList());
             if (submission instanceof ProgrammingSubmission programmingSubmission) {
                 coverageReportRepository.deleteBySubmissionId(submission.getId());
-                // This clears the build log entries and deletes them from the corresponding table
-                programmingSubmission.setBuildLogEntries(Collections.emptyList());
-                programmingSubmission.setResults(Collections.emptyList());
-                submissionRepository.save(programmingSubmission);
-                buildLogEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
+                programmingSubmissionService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
                 buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
             }
             submissionRepository.deleteById(submission.getId());

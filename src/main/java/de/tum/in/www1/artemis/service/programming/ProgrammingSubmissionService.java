@@ -47,6 +47,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    private final BuildLogEntryRepository buildLogEntryRepository;
+
     private final ProgrammingMessagingService programmingMessagingService;
 
     private final ResultRepository resultRepository;
@@ -66,7 +68,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
+            SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, BuildLogEntryRepository buildLogEntryRepository,
             ProgrammingMessagingService programmingMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExamSubmissionService examSubmissionService, GitService gitService,
@@ -78,6 +80,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 exerciseDateService, courseRepository, participationRepository, complaintRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.buildLogEntryRepository = buildLogEntryRepository;
         this.programmingMessagingService = programmingMessagingService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -545,5 +548,16 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // Make sure that submission is set back after saving
         newResult.setSubmission(existingSubmission);
         return newResult;
+    }
+
+    /**
+     * Delete the build log entries for the given programming submission
+     *
+     * @param programmingSubmission the programming submission for which the build logs should be deleted
+     */
+    public void deleteBuildLogEntriesForProgrammingSubmission(ProgrammingSubmission programmingSubmission) {
+        programmingSubmission.setBuildLogEntries(Collections.emptyList());
+        programmingSubmissionRepository.save(programmingSubmission);
+        buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
     }
 }
