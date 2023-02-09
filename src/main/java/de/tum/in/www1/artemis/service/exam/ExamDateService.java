@@ -60,7 +60,7 @@ public class ExamDateService {
     /**
      * Returns <code>true</code> if the exercise working period is over, which is the case when:
      * <ul>
-     * <li>For real exam, if no student can hand in their exam anymore</li>
+     * <li>For real exams, if no student can hand in their exam anymore</li>
      * <lI>For tests exams, if the student has handed in their own student exam</lI>
      * </ul>
      *
