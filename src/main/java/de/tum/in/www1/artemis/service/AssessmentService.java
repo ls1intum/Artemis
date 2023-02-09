@@ -44,12 +44,10 @@ public class AssessmentService {
 
     private final LtiNewResultService ltiNewResultService;
 
-    private final ExerciseDateService exerciseDateService;
-
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
             SubmissionRepository submissionRepository, ExamDateService examDateService, GradingCriterionRepository gradingCriterionRepository, UserRepository userRepository,
-            LtiNewResultService ltiNewResultService, ExerciseDateService exerciseDateService) {
+            LtiNewResultService ltiNewResultService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
@@ -62,7 +60,6 @@ public class AssessmentService {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.userRepository = userRepository;
         this.ltiNewResultService = ltiNewResultService;
-        this.exerciseDateService = exerciseDateService;
     }
 
     /**
