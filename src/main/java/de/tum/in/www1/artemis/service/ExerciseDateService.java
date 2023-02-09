@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.participation.ParticipationInterface;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 
@@ -66,7 +67,12 @@ public class ExerciseDateService {
     public boolean isAfterDueDate(ParticipationInterface participation) {
         final Exercise exercise = participation.getExercise();
         if (exercise.isExamExercise()) {
-            return examDateService.isExerciseWorkingPeriodOver(exercise);
+            if (participation instanceof StudentParticipation studentParticipation) {
+                return examDateService.isExerciseWorkingPeriodOver(exercise, studentParticipation);
+            }
+            else {
+                return examDateService.isExamWithGracePeriodOver(exercise.getExamViaExerciseGroupOrCourseMember());
+            }
         }
         else {
             final ZonedDateTime now = ZonedDateTime.now();
