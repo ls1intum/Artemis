@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -61,28 +62,31 @@ public class ResultService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiNewResultService ltiNewResultService, FeedbackRepository feedbackRepository,
-            WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
-            ComplaintRepository complaintRepository, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository,
-            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
+    private final StudentExamRepository studentExamRepository;
+
+    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiNewResultService ltiNewResultService,
+            WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
+            FeedbackRepository feedbackRepository, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
+            ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiNewResultService = ltiNewResultService;
         this.websocketMessagingService = websocketMessagingService;
-        this.feedbackRepository = feedbackRepository;
         this.complaintResponseRepository = complaintResponseRepository;
+        this.ratingRepository = ratingRepository;
+        this.feedbackRepository = feedbackRepository;
         this.submissionRepository = submissionRepository;
         this.complaintRepository = complaintRepository;
-        this.ratingRepository = ratingRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.authCheckService = authCheckService;
         this.exerciseDateService = exerciseDateService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.studentExamRepository = studentExamRepository;
     }
 
     /**
@@ -225,38 +229,86 @@ public class ResultService {
      * @return the list of filtered feedbacks
      */
     public List<Feedback> getFeedbacksForResult(Result result) {
-        Exercise exercise = result.getParticipation().getExercise();
-        boolean filterForStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise);
-
-        List<Feedback> feedbacks = result.getFeedbacks();
-        if (filterForStudent) {
-            if (exercise.isExamExercise()) {
-                Exam exam = exercise.getExerciseGroup().getExam();
-                result.filterSensitiveFeedbacks(!exam.resultsPublished());
-            }
-            else {
-                boolean applyFilter = exerciseDateService.isBeforeDueDate(result.getParticipation())
-                        || (AssessmentType.AUTOMATIC.equals(result.getAssessmentType()) && exerciseDateService.isBeforeLatestDueDate(exercise));
-                result.filterSensitiveFeedbacks(applyFilter);
-            }
-            feedbacks = result.getFeedbacks();
-
-            boolean resultSetAndNonAutomatic = result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC;
-            boolean dueDateNotSetOrNotOver = exercise.getAssessmentDueDate() != null && ZonedDateTime.now().isBefore(exercise.getAssessmentDueDate());
-
-            // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
-            if (!exercise.isExamExercise() && resultSetAndNonAutomatic && dueDateNotSetOrNotOver) {
-                // filter all non-automatic feedbacks
-                feedbacks = feedbacks.stream().filter(feedback -> feedback.getType() != null && feedback.getType() == FeedbackType.AUTOMATIC).toList();
-            }
-        }
+        this.filterSensitiveInformationIfNecessary(result.getParticipation(), result);
 
         // remove unnecessary data to keep the json payload smaller
-        for (Feedback feedback : feedbacks) {
+        for (Feedback feedback : result.getFeedbacks()) {
             feedback.setResult(null);
         }
 
-        return feedbacks;
+        return result.getFeedbacks();
+    }
+
+    /**
+     * Removes sensitive information that students should not see (yet) from the given result.
+     *
+     * @param participation the result belongs to.
+     * @param result        a result of this participation
+     */
+    public void filterSensitiveInformationIfNecessary(final Participation participation, final Result result) {
+        this.filterSensitiveInformationIfNecessary(participation, List.of(result));
+    }
+
+    /**
+     * Removes sensitive information that students should not see (yet) from the given results.
+     *
+     * @param participation the results belong to.
+     * @param results       collection of results of this participation
+     */
+    public void filterSensitiveInformationIfNecessary(final Participation participation, final Collection<Result> results) {
+        results.forEach(Result::filterSensitiveInformation);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
+            // The test cases marked as after_due_date should only be shown after all
+            // students can no longer submit so that no unfair advantage is possible.
+            //
+            // For course exercises, this applies only to automatic results. For manual ones the instructors
+            // are responsible to set an appropriate assessment due date.
+            //
+            // For exams, we filter sensitive results until the results are published.
+            // For test exam exercises, this is the case when the student submitted the test exam.
+
+            Exercise exercise = participation.getExercise();
+            if (exercise.isExamExercise()) {
+                filterSensitiveFeedbacksInExamExercise(participation, results, exercise);
+            }
+            else {
+                filterSensitiveFeedbackInCourseExercise(participation, results, exercise);
+            }
+        }
+    }
+
+    private void filterSensitiveFeedbackInCourseExercise(Participation participation, Collection<Result> results, Exercise exercise) {
+        boolean beforeLatestDueDate = exerciseDateService.isBeforeLatestDueDate(exercise);
+        boolean participationBeforeDueDate = exerciseDateService.isBeforeDueDate(participation);
+        results.forEach(result -> {
+            boolean isBeforeDueDateOrAutomaticAndBeforeLatestDueDate = participationBeforeDueDate
+                    || (AssessmentType.AUTOMATIC.equals(result.getAssessmentType()) && beforeLatestDueDate);
+            result.filterSensitiveFeedbacks(isBeforeDueDateOrAutomaticAndBeforeLatestDueDate);
+
+            boolean assessmentTypeSetAndNonAutomatic = result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC;
+            boolean beforeAssessmentDueDate = exercise.getAssessmentDueDate() != null && ZonedDateTime.now().isBefore(exercise.getAssessmentDueDate());
+
+            // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
+            if (assessmentTypeSetAndNonAutomatic && beforeAssessmentDueDate) {
+                // filter all non-automatic feedbacks
+                result.getFeedbacks().removeIf(feedback -> feedback.getType() != FeedbackType.AUTOMATIC);
+            }
+        });
+    }
+
+    private void filterSensitiveFeedbacksInExamExercise(Participation participation, Collection<Result> results, Exercise exercise) {
+        Exam exam = exercise.getExerciseGroup().getExam();
+        boolean shouldResultsBePublished = exam.resultsPublished();
+        if (!shouldResultsBePublished && exam.isTestExam() && participation instanceof StudentParticipation studentParticipation) {
+            var participant = studentParticipation.getParticipant();
+            var studentExamOptional = studentExamRepository.findByExamIdAndUserId(exam.getId(), participant.getId());
+            if (studentExamOptional.isPresent()) {
+                shouldResultsBePublished = studentExamOptional.get().areResultsPublishedYet();
+            }
+        }
+        for (Result result : results) {
+            result.filterSensitiveFeedbacks(!shouldResultsBePublished);
+        }
     }
 
     /**
