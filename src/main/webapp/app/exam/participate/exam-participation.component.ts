@@ -187,11 +187,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam = studentExam;
                         this.exam = studentExam.exam!;
                         this.testExam = this.exam.testExam!;
-                        if (this.exam.testExam) {
-                            // For TestExams, we either set the StartTime to the current time or the startedDate of the studentExam, if existent
-                            this.testStartTime = this.studentExam.startedDate ? this.studentExam.startedDate! : dayjs();
-                            this.initIndividualEndDates(this.testStartTime);
-                        } else {
+                        if (!this.exam.testExam) {
                             this.initIndividualEndDates(this.exam.startDate!);
                         }
 
