@@ -25,7 +25,7 @@ Prerequisites
 
     - **Java IDE with JDK 17**
 
-        **Recommendation:** IntelliJ IDEA 2022.1.3 or Eclipse IDE 2022-06.
+        **Recommendation:** IntelliJ IDEA 2022.3.2 or Eclipse IDE 2022-12.
 
     - **Git Client**
 
