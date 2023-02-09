@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -38,7 +37,7 @@ public class ParticipationService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final ProgrammingSubmissionService programmingSubmissionService;
+    private final BuildLogEntryService buildLogEntryService;
 
     private final ParticipationRepository participationRepository;
 
@@ -67,15 +66,15 @@ public class ParticipationService {
     private final TeamScoreRepository teamScoreRepository;
 
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ProgrammingSubmissionService programmingSubmissionService, ParticipationRepository participationRepository,
-            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService,
-            ResultService resultService, CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
+            BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService, ResultService resultService,
+            CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
-        this.programmingSubmissionService = programmingSubmissionService;
+        this.buildLogEntryService = buildLogEntryService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -777,7 +776,7 @@ public class ParticipationService {
             submission.setResults(Collections.emptyList());
             if (submission instanceof ProgrammingSubmission programmingSubmission) {
                 coverageReportRepository.deleteBySubmissionId(submission.getId());
-                programmingSubmissionService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
+                buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
                 buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
             }
             submissionRepository.deleteById(submission.getId());
