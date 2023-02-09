@@ -216,10 +216,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * Display the 'open code editor' or 'clone repo' buttons if
      * - the participation is initialized (build plan exists, this is always the case during an exam), or
      * - the participation is inactive (build plan cleaned up), but can not be resumed (e.g. because we're after the due date)
+     *
+     * For course exercises, an initialized practice participation should only be displayed if it's not possible to start a new graded participation.
+     * For exam exercises, only one active participation can exist, so this should be shown.
      */
     public shouldDisplayIDEButtons(): boolean {
-        const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise) || this.examMode;
-        const activePracticeParticipation = this.practiceParticipation?.initializationState === InitializationState.INITIALIZED && shouldPreferPractice;
+        const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise);
+        const activePracticeParticipation = this.practiceParticipation?.initializationState === InitializationState.INITIALIZED && (shouldPreferPractice || this.examMode);
         const activeGradedParticipation = this.gradedParticipation?.initializationState === InitializationState.INITIALIZED;
         const inactiveGradedParticipation =
             !!this.gradedParticipation?.initializationState &&
