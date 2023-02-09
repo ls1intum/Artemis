@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.service.exam;
 
-import java.awt.*;
-import java.io.*;
-import java.util.*;
+import java.awt.Rectangle;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripperByArea;
@@ -18,6 +21,7 @@ import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.dto.ImageDTO;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * Service Implementation for managing Exam Users.
@@ -53,7 +57,6 @@ public class ExamUserService {
             List<ImageDTO> images = imageExtractor.getImages();
             List<ExamUserWithImageDTO> studentWithImages = new ArrayList<>();
 
-            System.out.println(images.size());
             for (ImageDTO image : images) {
                 PDFTextStripperByArea stripper = new PDFTextStripperByArea();
                 stripper.setSortByPosition(true);
@@ -74,9 +77,8 @@ public class ExamUserService {
         }
         catch (IOException e) {
             log.error("Error while parsing PDF file", e);
-            e.printStackTrace();
+            throw new InternalServerErrorException("Error while parsing PDF file");
         }
-        return null;
     }
 
     /**

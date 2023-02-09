@@ -49,6 +49,15 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     List<Exam> findAllByEndDateGreaterThanEqual(@Param("date") ZonedDateTime date);
 
+    /**
+     * Query which fetches all the exams for which the user is instructor in the course and matching the dates (from/to).
+     *
+     * @param groups   user groups
+     * @param pageable Pageable
+     * @param fromDate fromDate it's the date from which the visibleDate should start
+     * @param toDate   toDate it's the date until which the visibleDate should end
+     * @return Page with search results
+     */
     @Query("""
             SELECT e FROM Exam e
             WHERE e.course.instructorGroupName IN :groups

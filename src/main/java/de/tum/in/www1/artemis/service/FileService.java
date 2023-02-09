@@ -1089,8 +1089,7 @@ public class FileService implements DisposableBean {
             return new CommonsMultipartFile(fileItem);
         }
         catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
+            throw new InternalServerErrorException("Error while converting byte[] to MultipartFile by using CommonsMultipartFile");
         }
     }
 }

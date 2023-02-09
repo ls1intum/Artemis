@@ -688,7 +688,6 @@ public class ExamResource {
         return ResponseEntity.ok(returnExam);
     }
 
-    // TODO: add @RequestBody dto
     /**
      * POST /courses/:courseId/exams/:examId/students/:studentLogin : Add one single given user (based on the login) to the students of the exam so that the student can access the
      * exam
