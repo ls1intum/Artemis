@@ -109,10 +109,6 @@ public class ExamRegistrationService {
                     registeredExamUser.setUser(optionalStudent.get());
                     registeredExamUser.setExam(exam);
 
-                    registeredExamUser.setDidCheckRegistrationNumber(false);
-                    registeredExamUser.setDidCheckName(false);
-                    registeredExamUser.setDidCheckLogin(false);
-                    registeredExamUser.setDidCheckImage(false);
                     registeredExamUser.setPlannedRoom(examUserDto.room());
                     registeredExamUser.setPlannedSeat(examUserDto.seat());
 
@@ -148,20 +144,6 @@ public class ExamRegistrationService {
         }
 
         return notFoundStudentsDTOs;
-    }
-
-    private void setExamUserObject(Exam exam, ExamUser registeredExamUser) {
-        registeredExamUser.setExam(exam);
-
-        registeredExamUser.setDidCheckRegistrationNumber(false);
-        registeredExamUser.setDidCheckName(false);
-        registeredExamUser.setDidCheckLogin(false);
-        registeredExamUser.setDidCheckImage(false);
-        registeredExamUser.setPlannedRoom("not set");
-        registeredExamUser.setPlannedSeat("not set");
-
-        registeredExamUser = examUserRepository.save(registeredExamUser);
-        exam.addExamUser(registeredExamUser);
     }
 
     /**
@@ -208,7 +190,9 @@ public class ExamRegistrationService {
         if (!exam.getExamUsers().contains(registeredExamUserCheck)) {
             ExamUser registeredExamUser = new ExamUser();
             registeredExamUser.setUser(student);
-            setExamUserObject(exam, registeredExamUser);
+            registeredExamUser.setExam(exam);
+            registeredExamUser = examUserRepository.save(registeredExamUser);
+            exam.addExamUser(registeredExamUser);
             examRepository.save(exam);
         }
         else {
@@ -334,7 +318,9 @@ public class ExamRegistrationService {
                     && !student.getGroups().contains(course.getInstructorGroupName())) {
                 ExamUser registeredExamUser = new ExamUser();
                 registeredExamUser.setUser(student);
-                setExamUserObject(exam, registeredExamUser);
+                registeredExamUser.setExam(exam);
+                registeredExamUser = examUserRepository.save(registeredExamUser);
+                exam.addExamUser(registeredExamUser);
                 userData.put("student " + i, student.toDatabaseString());
             }
         }

@@ -32,22 +32,22 @@ public class ExamUser extends AbstractAuditingEntity {
     private String actualSeat;
 
     @Column(name = "planned_room")
-    private String plannedRoom;
+    private String plannedRoom = "not set";
 
     @Column(name = "planned_seat")
-    private String plannedSeat;
+    private String plannedSeat = "not set";
 
     @Column(name = "did_check_image")
-    private Boolean didCheckImage;
+    private Boolean didCheckImage = false;
 
     @Column(name = "did_check_name")
-    private Boolean didCheckName;
+    private Boolean didCheckName = false;
 
     @Column(name = "did_check_login")
-    private Boolean didCheckLogin;
+    private Boolean didCheckLogin = false;
 
     @Column(name = "did_check_registration_number")
-    private Boolean didCheckRegistrationNumber;
+    private Boolean didCheckRegistrationNumber = false;
 
     @Size(max = 100)
     @Column(name = "signing_image_path", length = 100)

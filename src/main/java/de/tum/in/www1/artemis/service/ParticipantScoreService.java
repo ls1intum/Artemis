@@ -62,7 +62,7 @@ public class ParticipantScoreService {
         Set<Exercise> includedExercises = exercisesOfExam.stream().filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED))
                 .collect(Collectors.toSet());
 
-        Set<User> registeredUsers = exam.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toCollection(HashSet::new));
+        Set<User> registeredUsers = exam.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
 
         return calculateScores(includedExercises, registeredUsers, (double) exam.getExamMaxPoints());
     }

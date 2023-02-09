@@ -414,7 +414,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         // Get all registered users
 
         // Get all students who don't have an exam yet
-        Set<User> missingUsers = exam.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toCollection(HashSet::new));
+        Set<User> missingUsers = exam.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
         missingUsers.removeAll(usersWithStudentExam);
 
         // StudentExams are saved in the called method
