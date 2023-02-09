@@ -120,9 +120,9 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * POST file-upload--exercises/import: Imports an existing file upload exercise into an existing course
+     * POST file-upload-exercises/import: Imports an existing file upload exercise into an existing course
      * <p>
-     * This will import the whole exercise except for the participations and Dates.
+     * This will import the whole exercise except for the participations and dates.
      * Referenced entities will get cloned and assigned a new id.
      * Uses {@link FileUploadExerciseImportService}.
      *

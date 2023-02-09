@@ -78,7 +78,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ fileUploadExercise }) => {
             this.fileUploadExercise = fileUploadExercise;
             this.backupExercise = cloneDeep(this.fileUploadExercise);
-            getCourseId(fileUploadExercise);
             this.examCourseId = getCourseId(fileUploadExercise);
         });
 
@@ -108,6 +107,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     previousState() {
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.fileUploadExercise);
     }
+
     private handleImport(params: Params) {
         if (this.isImport) {
             if (this.isExamMode) {
@@ -129,6 +129,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
             resetDates(this.fileUploadExercise);
         }
     }
+
     private handleExerciseSettings() {
         if (!this.isExamMode) {
             this.exerciseCategories = this.fileUploadExercise.categories || [];
