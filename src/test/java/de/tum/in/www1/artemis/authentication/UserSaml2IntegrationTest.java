@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.web.rest.publicc.UserJwtResource;
+import de.tum.in.www1.artemis.web.rest.open.UserJwtResource;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
 /**

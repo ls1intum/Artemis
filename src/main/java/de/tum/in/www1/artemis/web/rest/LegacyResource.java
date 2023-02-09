@@ -13,9 +13,9 @@ import de.tum.in.www1.artemis.config.SecurityConfiguration;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
-import de.tum.in.www1.artemis.web.rest.publicc.PublicLtiResource;
-import de.tum.in.www1.artemis.web.rest.publicc.PublicProgrammingSubmissionResource;
-import de.tum.in.www1.artemis.web.rest.publicc.PublicResultResource;
+import de.tum.in.www1.artemis.web.rest.open.PublicLtiResource;
+import de.tum.in.www1.artemis.web.rest.open.PublicProgrammingSubmissionResource;
+import de.tum.in.www1.artemis.web.rest.open.PublicResultResource;
 
 /**
  * TODO: Remove this class in February 2024

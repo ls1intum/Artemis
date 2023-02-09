@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.publicc;
+package de.tum.in.www1.artemis.web.rest.open;
 
 import java.io.IOException;
 import java.util.Optional;

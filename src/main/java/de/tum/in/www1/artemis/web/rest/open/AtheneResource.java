@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.publicc;
+package de.tum.in.www1.artemis.web.rest.open;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

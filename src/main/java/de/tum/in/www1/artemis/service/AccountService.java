@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.web.rest.AccountResource;
-import de.tum.in.www1.artemis.web.rest.publicc.PublicAccountResource;
+import de.tum.in.www1.artemis.web.rest.open.PublicAccountResource;
 
 /**
  * Service class for {@link AccountResource} and {@link PublicAccountResource}.

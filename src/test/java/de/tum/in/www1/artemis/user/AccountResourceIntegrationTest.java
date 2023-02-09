@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ConfigUtil;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.AccountResource;
-import de.tum.in.www1.artemis.web.rest.publicc.PublicAccountResource;
+import de.tum.in.www1.artemis.web.rest.open.PublicAccountResource;
 import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
