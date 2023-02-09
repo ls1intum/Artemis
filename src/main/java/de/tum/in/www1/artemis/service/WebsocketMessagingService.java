@@ -80,20 +80,20 @@ public class WebsocketMessagingService {
         // TODO: Are there other cases that must be handled here?
         if (participation instanceof StudentParticipation studentParticipation) {
             final Exercise exercise = studentParticipation.getExercise();
-            final boolean isWorkingPeriodOver;
+            boolean isWorkingPeriodOver;
             if (exercise.isExamExercise()) {
-                isWorkingPeriodOver = examDateService.isExerciseWorkingPeriodOver(exercise);
+                isWorkingPeriodOver = examDateService.isExerciseWorkingPeriodOver(exercise, studentParticipation);
             }
             else {
                 isWorkingPeriodOver = exerciseDateService.isAfterLatestDueDate(exercise);
             }
             // Don't send students results after the exam ended
-            boolean isAfterExamEnd = isWorkingPeriodOver && exercise.isExamExercise();
+            boolean isAfterExamEnd = isWorkingPeriodOver && exercise.isExamExercise() && !exercise.getExamViaExerciseGroupOrCourseMember().isTestExam();
             // If the assessment due date is not over yet, do not send manual feedback to students!
-            boolean isReadyForRelease = AssessmentType.AUTOMATIC == result.getAssessmentType() || exercise.getAssessmentDueDate() == null
+            boolean isAutomaticAssessmentOrDueDateOver = AssessmentType.AUTOMATIC == result.getAssessmentType() || exercise.getAssessmentDueDate() == null
                     || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
 
-            if (isReadyForRelease && !isAfterExamEnd) {
+            if (isAutomaticAssessmentOrDueDateOver && !isAfterExamEnd) {
                 result.filterSensitiveInformation();
 
                 studentParticipation.getStudents().stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
