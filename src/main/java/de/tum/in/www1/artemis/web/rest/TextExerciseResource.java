@@ -336,6 +336,7 @@ public class TextExerciseResource {
 
             if (exerciseDateService.isBeforeAssessmentDueDate(textExercise)) {
                 textSubmission.setResults(Collections.emptyList());
+                participation.setResults(Collections.emptySet());
             }
 
             Result result = textSubmission.getLatestResult();

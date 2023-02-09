@@ -524,6 +524,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getDataForTextEditor_assessorHidden() throws Exception {
+        database.updateAssessmentDueDate(textExercise.getId(), null);
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
@@ -551,6 +552,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getDataForTextEditor_hasTextBlocks() throws Exception {
+        database.updateAssessmentDueDate(textExercise.getId(), null);
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         var textBlocks = textExerciseUtilService.generateTextBlocks(1);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
@@ -599,6 +601,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getDataForTextEditor_studentHidden() throws Exception {
+        database.updateAssessmentDueDate(textExercise.getId(), null);
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
@@ -615,6 +618,21 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getDataForTextEditor_beforeAssessmentDueDate_noResult() throws Exception {
+        database.updateAssessmentDueDate(textExercise.getId(), ZonedDateTime.now().plusDays(1));
+
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+
+        StudentParticipation participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
+
+        assertThat(participation.getResults()).isEmpty();
+        assertThat(participation.getSubmissions()).hasSize(1);
+        assertThat(participation.getSubmissions().iterator().next().getResults()).isEmpty();
     }
 
     private Result getExampleResultForTutor(HttpStatus expectedStatus, boolean isExample) throws Exception {

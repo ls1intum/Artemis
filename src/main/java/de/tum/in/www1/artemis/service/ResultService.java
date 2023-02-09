@@ -272,7 +272,7 @@ public class ResultService {
             result.filterSensitiveFeedbacks(isBeforeDueDateOrAutomaticAndBeforeLatestDueDate);
 
             boolean assessmentTypeSetAndNonAutomatic = result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC;
-            boolean beforeAssessmentDueDate = exercise.getAssessmentDueDate() != null && ZonedDateTime.now().isBefore(exercise.getAssessmentDueDate());
+            boolean beforeAssessmentDueDate = exerciseDateService.isBeforeAssessmentDueDate(exercise);
 
             // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
             if (assessmentTypeSetAndNonAutomatic && beforeAssessmentDueDate) {
