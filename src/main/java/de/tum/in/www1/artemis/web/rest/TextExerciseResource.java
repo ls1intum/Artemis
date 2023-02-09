@@ -95,6 +95,8 @@ public class TextExerciseResource {
 
     private final TextAssessmentKnowledgeService textAssessmentKnowledgeService;
 
+    private final ExerciseDateService exerciseDateService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
@@ -102,7 +104,7 @@ public class TextExerciseResource {
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository,
-            TextAssessmentKnowledgeService textAssessmentKnowledgeService) {
+            TextAssessmentKnowledgeService textAssessmentKnowledgeService, ExerciseDateService exerciseDateService) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -125,6 +127,7 @@ public class TextExerciseResource {
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
         this.courseRepository = courseRepository;
         this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -316,7 +319,7 @@ public class TextExerciseResource {
         }
 
         // if no results, check if there are really no results or the relation to results was not updated yet
-        if (participation.getResults().size() == 0) {
+        if (participation.getResults().isEmpty()) {
             List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
             participation.setResults(new HashSet<>(results));
         }
@@ -331,6 +334,10 @@ public class TextExerciseResource {
             // set reference to participation to null, since we are already inside a participation
             textSubmission.setParticipation(null);
 
+            if (exerciseDateService.isBeforeAssessmentDueDate(textExercise)) {
+                textSubmission.setResults(Collections.emptyList());
+            }
+
             Result result = textSubmission.getLatestResult();
             if (result != null) {
                 // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
@@ -343,7 +350,7 @@ public class TextExerciseResource {
                 }
 
                 if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
-                    result.setAssessor(null);
+                    result.filterSensitiveInformation();
                 }
             }
 

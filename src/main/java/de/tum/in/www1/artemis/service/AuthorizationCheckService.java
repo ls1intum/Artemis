@@ -29,8 +29,11 @@ public class AuthorizationCheckService {
 
     private final UserRepository userRepository;
 
-    public AuthorizationCheckService(UserRepository userRepository) {
+    private final ExerciseDateService exerciseDateService;
+
+    public AuthorizationCheckService(UserRepository userRepository, ExerciseDateService exerciseDateService) {
         this.userRepository = userRepository;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -492,8 +495,7 @@ public class AuthorizationCheckService {
      */
     public boolean isUserAllowedToGetResult(Exercise exercise, StudentParticipation participation, Result result) {
         return isAtLeastStudentForExercise(exercise) && (isOwnerOfParticipation(participation) || isAtLeastInstructorForExercise(exercise))
-                && (exercise.getAssessmentDueDate() == null || exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now())) && result.getAssessor() != null
-                && result.getCompletionDate() != null;
+                && exerciseDateService.isAfterAssessmentDueDate(exercise) && result.getAssessor() != null && result.getCompletionDate() != null;
     }
 
     /**

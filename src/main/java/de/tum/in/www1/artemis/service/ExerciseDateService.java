@@ -140,4 +140,29 @@ public class ExerciseDateService {
             return Optional.ofNullable(exercise.getDueDate());
         }
     }
+
+    /**
+     * Checks if the current time is before the assessment due date
+     * and no manual results should be published to the student
+     *
+     * @param exercise to check the assessment due date
+     * @return true if the assessment due date is in the future
+     */
+    public boolean isBeforeAssessmentDueDate(Exercise exercise) {
+        return !isAfterAssessmentDueDate(exercise);
+    }
+
+    /**
+     * Checks if the current time is after the assessment due date
+     * and manual results can be published to the student
+     *
+     * @param exercise to check the assessment due date
+     * @return true if the assessment due date is in the past
+     */
+    public boolean isAfterAssessmentDueDate(Exercise exercise) {
+        if (exercise.isExamExercise()) {
+            return exercise.getExamViaExerciseGroupOrCourseMember().resultsPublished();
+        }
+        return exercise.getAssessmentDueDate() == null || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
+    }
 }

@@ -44,10 +44,12 @@ public class AssessmentService {
 
     private final LtiNewResultService ltiNewResultService;
 
+    private final ExerciseDateService exerciseDateService;
+
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
             SubmissionRepository submissionRepository, ExamDateService examDateService, GradingCriterionRepository gradingCriterionRepository, UserRepository userRepository,
-            LtiNewResultService ltiNewResultService) {
+            LtiNewResultService ltiNewResultService, ExerciseDateService exerciseDateService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
@@ -60,6 +62,7 @@ public class AssessmentService {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.userRepository = userRepository;
         this.ltiNewResultService = ltiNewResultService;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -112,17 +115,7 @@ public class AssessmentService {
      * @return true if the given user can override a potentially existing result
      */
     public boolean isAllowedToCreateOrOverrideResult(Result existingResult, Exercise exercise, StudentParticipation participation, User user, boolean isAtLeastInstructor) {
-
         final boolean isExamMode = exercise.isExamExercise();
-        ZonedDateTime assessmentDueDate;
-
-        // For exam exercises, tutors cannot override submissions when the publishing result date is in the past (assessmentDueDate)
-        if (isExamMode) {
-            assessmentDueDate = exercise.getExerciseGroup().getExam().getPublishResultsDate();
-        }
-        else {
-            assessmentDueDate = exercise.getAssessmentDueDate();
-        }
 
         final boolean isAllowedToBeAssessor = isAllowedToBeAssessorOfResult(existingResult, exercise, participation, user);
         // TODO make sure that tutors cannot assess the first assessment after the assessmentDueDate/publish result date (post). This is currently just used in the put request.
@@ -145,7 +138,7 @@ public class AssessmentService {
         }
 
         // If the result was already submitted, the tutor can only override before a potentially existing assessment due date
-        final boolean isBeforeAssessmentDueDate = assessmentDueDate == null || ZonedDateTime.now().isBefore(assessmentDueDate);
+        final boolean isBeforeAssessmentDueDate = exerciseDateService.isBeforeAssessmentDueDate(exercise);
         return (isAllowedToBeAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
     }
 

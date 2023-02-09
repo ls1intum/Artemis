@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
 
-import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,6 +21,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.MailService;
 
 @Service
@@ -39,15 +39,18 @@ public class SingleUserNotificationService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final ExerciseDateService exerciseDateService;
+
     public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, UserRepository userRepository,
             SimpMessageSendingOperations messagingTemplate, MailService mailService, NotificationSettingsService notificationSettingsService,
-            StudentParticipationRepository studentParticipationRepository) {
+            StudentParticipationRepository studentParticipationRepository, ExerciseDateService exerciseDateService) {
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.userRepository = userRepository;
         this.messagingTemplate = messagingTemplate;
         this.mailService = mailService;
         this.notificationSettingsService = notificationSettingsService;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -153,7 +156,7 @@ public class SingleUserNotificationService {
      */
     public void checkNotificationForAssessmentExerciseSubmission(Exercise exercise, User recipient, Result result) {
         // only send the notification now if no assessment due date was set or if it is in the past
-        if (exercise.isCourseExercise() && (exercise.getAssessmentDueDate() == null || !exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now()))) {
+        if (exercise.isCourseExercise() && exerciseDateService.isAfterAssessmentDueDate(exercise)) {
             saturateExerciseWithResultAndStudentParticipationForGivenUserForEmail(exercise, recipient, result);
             notifyUserAboutAssessedExerciseSubmission(exercise, recipient);
         }

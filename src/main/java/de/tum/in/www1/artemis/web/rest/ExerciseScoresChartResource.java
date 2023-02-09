@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -89,7 +88,7 @@ public class ExerciseScoresChartResource {
 
         // If an assessment due date is set, only count the exercise as finished if we passed that date
         if (exercise.getAssessmentDueDate() != null) {
-            return ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
+            return exerciseDateService.isAfterAssessmentDueDate(exercise);
         }
 
         // If no assessment due date is set, make sure to only count exercises which have a passed due date

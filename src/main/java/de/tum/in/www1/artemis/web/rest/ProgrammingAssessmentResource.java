@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.LtiNewResultService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
@@ -53,9 +54,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
             WebsocketMessagingService messagingService, LtiNewResultService ltiNewResultService, StudentParticipationRepository studentParticipationRepository,
             ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExerciseDateService exerciseDateService) {
         super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
-                submissionRepository, singleUserNotificationService);
+                submissionRepository, singleUserNotificationService, exerciseDateService);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.ltiNewResultService = ltiNewResultService;
@@ -201,8 +202,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
         // Note: we always need to report the result over LTI, otherwise it might never become visible in the external system
         ltiNewResultService.onNewResult((StudentParticipation) newManualResult.getParticipation());
-        if (submit && ((newManualResult.getParticipation()).getExercise().getAssessmentDueDate() == null
-                || newManualResult.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
+        if (submit && exerciseDateService.isAfterAssessmentDueDate(programmingExercise)) {
             messagingService.broadcastNewResult(newManualResult.getParticipation(), newManualResult);
         }
 

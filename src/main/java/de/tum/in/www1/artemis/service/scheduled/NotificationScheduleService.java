@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import tech.jhipster.config.JHipsterConstants;
@@ -35,13 +36,16 @@ public class NotificationScheduleService {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
+    private final ExerciseDateService exerciseDateService;
+
     public NotificationScheduleService(ScheduleService scheduleService, ExerciseRepository exerciseRepository, GroupNotificationService groupNotificationService,
-            Environment environment, SingleUserNotificationService singleUserNotificationService) {
+            Environment environment, SingleUserNotificationService singleUserNotificationService, ExerciseDateService exerciseDateService) {
         this.scheduleService = scheduleService;
         this.exerciseRepository = exerciseRepository;
         this.environment = environment;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -123,7 +127,7 @@ public class NotificationScheduleService {
      */
     public void updateSchedulingForAssessedExercisesSubmissions(Exercise exercise) {
         checkSecurityUtils();
-        if (exercise.getAssessmentDueDate() == null || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate())) {
+        if (exerciseDateService.isAfterAssessmentDueDate(exercise)) {
             // to make sure no wrong notification is sent out the date is checked again in the concrete notification method
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.ASSESSMENT_DUE);
             return;

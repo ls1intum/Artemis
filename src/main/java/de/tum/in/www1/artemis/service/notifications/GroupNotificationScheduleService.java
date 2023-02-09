@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 
 @Service
@@ -16,11 +17,14 @@ public class GroupNotificationScheduleService {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final ExerciseDateService exerciseDateService;
+
     public GroupNotificationScheduleService(SingleUserNotificationService singleUserNotificationService, InstanceMessageSendService instanceMessageSendService,
-            GroupNotificationService groupNotificationService) {
+            GroupNotificationService groupNotificationService, ExerciseDateService exerciseDateService) {
         this.singleUserNotificationService = singleUserNotificationService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.groupNotificationService = groupNotificationService;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -167,7 +171,7 @@ public class GroupNotificationScheduleService {
      * @param exercise that is created
      */
     private void checkNotificationForAssessmentDueDate(Exercise exercise) {
-        if (exercise.isCourseExercise() && exercise.getAssessmentDueDate() != null && exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
+        if (exercise.isCourseExercise() && exerciseDateService.isBeforeAssessmentDueDate(exercise)) {
             instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exercise.getId());
         }
     }

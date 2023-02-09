@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,6 +16,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
@@ -48,9 +48,11 @@ public abstract class AssessmentResource {
 
     protected final SingleUserNotificationService singleUserNotificationService;
 
+    protected final ExerciseDateService exerciseDateService;
+
     public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, AssessmentService assessmentService,
             ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService) {
+            SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService, ExerciseDateService exerciseDateService) {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
@@ -61,6 +63,7 @@ public abstract class AssessmentResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.singleUserNotificationService = singleUserNotificationService;
+        this.exerciseDateService = exerciseDateService;
     }
 
     abstract String getEntityName();
@@ -132,7 +135,7 @@ public abstract class AssessmentResource {
         if (!isAtLeastInstructor) {
             participation.filterSensitiveInformation();
         }
-        if (submit && (participation.getExercise().getAssessmentDueDate() == null || participation.getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
+        if (submit && exerciseDateService.isAfterAssessmentDueDate(exercise)) {
             messagingService.broadcastNewResult(result.getParticipation(), result);
         }
         return ResponseEntity.ok(result);
