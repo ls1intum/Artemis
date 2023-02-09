@@ -292,8 +292,9 @@ public class ResultService {
                 shouldResultsBePublished = studentExamOptional.get().areResultsPublishedYet();
             }
         }
-        boolean finalShouldResultsBePublished = shouldResultsBePublished;
-        results.forEach(result -> result.filterSensitiveFeedbacks(!finalShouldResultsBePublished));
+        for (Result result : results) {
+            result.filterSensitiveFeedbacks(!shouldResultsBePublished);
+        }
     }
 
     @NotNull
