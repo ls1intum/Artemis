@@ -87,6 +87,9 @@ examples.forEach((activeConversation) => {
             Object.defineProperty(metisConversationService, 'activeConversation$', { get: () => new BehaviorSubject(activeConversation).asObservable() });
             Object.defineProperty(metisConversationService, 'forceRefresh', { value: () => EMPTY });
             Object.defineProperty(metisConversationService, 'setUpConversationService', { value: () => EMPTY });
+            Object.defineProperty(metisConversationService, 'isServiceSetup$', {
+                get: () => new BehaviorSubject(true).asObservable(),
+            });
             Object.defineProperty(metisConversationService, 'conversationsOfUser$', {
                 get: () => new BehaviorSubject([new GroupChatDto()]).asObservable(),
             });
