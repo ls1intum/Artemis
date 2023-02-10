@@ -369,11 +369,11 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
     @GetMapping("exams/active")
-    @PreAuthorize("hasRole('EDITOR')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<Exam>> getAllActiveExams(@ApiParam Pageable pageable) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         Page<Exam> page;
-        page = examService.getAllExams(pageable, user);
+        page = examService.getAllActiveExams(pageable, user);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
