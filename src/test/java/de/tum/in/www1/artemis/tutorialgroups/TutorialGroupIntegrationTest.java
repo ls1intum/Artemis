@@ -208,74 +208,84 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         oneOfCoursePrivateInfoHiddenTest(loadFromService, TEST_PREFIX + "tutor2");
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void averageAttendanceCalculationTest_NoSessions_AverageNull() throws Exception {
-        this.averageAttendanceTestScaffold(new Integer[] {}, null);
+    void averageAttendanceCalculationTest_NoSessions_AverageNull(boolean useSingleEndpoint) throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] {}, null, useSingleEndpoint);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void averageAttendanceCalculationTest_NoSessionWithAttendanceData_AverageNull() throws Exception {
-        this.averageAttendanceTestScaffold(new Integer[] { null }, null);
+    void averageAttendanceCalculationTest_NoSessionWithAttendanceData_AverageNull(boolean useSingleEndpoint) throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] { null }, null, useSingleEndpoint);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void averageAttendanceCalculationTest_lastThreeSessionsWithoutAttendanceData_AverageNull() throws Exception {
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, null }, null);
+    void averageAttendanceCalculationTest_lastThreeSessionsWithoutAttendanceData_AverageNull(boolean useSingleEndpoint) throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, null }, null, useSingleEndpoint);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void averageAttendanceCalculationTest_OneSession_AverageIsAttendanceOfSession() throws Exception {
-        this.averageAttendanceTestScaffold(new Integer[] { 8 }, 8);
+    void averageAttendanceCalculationTest_OneSession_AverageIsAttendanceOfSession(boolean useSingleEndpoint) throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] { 8 }, 8, useSingleEndpoint);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void averageAttendanceCalculationTest_OneSessionOfTheLastThreeHasAttendanceData_AverageIsAttendanceOfSession() throws Exception {
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, null }, 8);
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, null }, 8);
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, 8 }, 8);
-
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void averageAttendanceCalculationTest_TwoSessions_AverageIsArithmeticMean() throws Exception {
-        this.averageAttendanceTestScaffold(new Integer[] { 8, 5 }, 7);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void averageAttendanceCalculationTest_TwoSessionsOfTheLastThreeHaveAttendanceData_AverageIsArithmeticMean() throws Exception {
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, 5 }, 7);
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, 5 }, 7);
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, 5, null }, 7);
+    void averageAttendanceCalculationTest_OneSessionOfTheLastThreeHasAttendanceData_AverageIsAttendanceOfSession(boolean useSingleEndpoint) throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, null }, 8, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, null }, 8, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, 8 }, 8, useSingleEndpoint);
 
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void averageAttendanceCalculationTest_ThreeSessions_AverageIsArithmeticMean() throws Exception {
-        this.averageAttendanceTestScaffold(new Integer[] { 8, 5, 3 }, 5);
+    void averageAttendanceCalculationTest_TwoSessions_AverageIsArithmeticMean(boolean useSingleEndpoint) throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] { 8, 5 }, 7, useSingleEndpoint);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void averageAttendanceCalculationTest_MoreThanThreeSessions_AverageIsArithmeticMeanOfLastThree() throws Exception {
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, 5, 3 }, 5);
+    void averageAttendanceCalculationTest_TwoSessionsOfTheLastThreeHaveAttendanceData_AverageIsArithmeticMean(boolean useSingleEndpoint) throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, 5 }, 7, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, 5 }, 7, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, 5, null }, 7, useSingleEndpoint);
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void averageAttendanceCalculationTest_ThreeSessions_AverageIsArithmeticMean(boolean useSingleEndpoint) throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] { 8, 5, 3 }, 5, useSingleEndpoint);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void averageAttendanceCalculationTest_MoreThanThreeSessions_AverageIsArithmeticMeanOfLastThree(boolean useSingleEndpoint) throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, 5, 3 }, 5, useSingleEndpoint);
     }
 
     /**
      * Attendance Test Scaffold
      *
-     * @param attendance      for each attendance value a session will be created in order (with a difference of 1 day)
-     * @param expectedAverage expected average in the tutorial group
+     * @param attendance        for each attendance value a session will be created in order (with a difference of 1 day)
+     * @param expectedAverage   expected average in the tutorial group
+     * @param useSingleEndpoint uses the single endpoint if true, otherwise the multiple endpoint
      * @throws Exception
      */
-    void averageAttendanceTestScaffold(Integer[] attendance, Integer expectedAverage) throws Exception {
+    void averageAttendanceTestScaffold(Integer[] attendance, Integer expectedAverage, boolean useSingleEndpoint) throws Exception {
         // given
         var tutorialGroupId = databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
                 userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of()).getId();
@@ -290,7 +300,14 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var savedSessions = tutorialGroupSessionRepository.saveAllAndFlush(sessionToSave);
         assertThat(savedSessions).hasSize(attendance.length);
 
-        var tutorialGroup = request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroupId, HttpStatus.OK, TutorialGroup.class);
+        TutorialGroup tutorialGroup;
+        if (useSingleEndpoint) {
+            tutorialGroup = request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroupId, HttpStatus.OK, TutorialGroup.class);
+        }
+        else {
+            tutorialGroup = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class).stream()
+                    .filter(tg -> tg.getId().equals(tutorialGroupId)).findFirst().get();
+        }
 
         // then
         assertThat(tutorialGroup.getAverageAttendance()).isEqualTo(expectedAverage);
