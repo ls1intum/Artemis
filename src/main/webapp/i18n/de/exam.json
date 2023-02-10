@@ -19,7 +19,8 @@
                 "actualRoom": "Aktueller Raum",
                 "room": "Raum",
                 "seat": "Sitz",
-                "saveImages": "Bilder speichern"
+                "saveImages": "Bilder speichern",
+                "numberOfImagesSaved": "Gespeicherte Bilder"
             },
             "overview": {
                 "start": "Beginn: {{start}}",

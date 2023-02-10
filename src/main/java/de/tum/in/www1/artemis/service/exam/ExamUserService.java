@@ -3,10 +3,8 @@ package de.tum.in.www1.artemis.service.exam;
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripperByArea;
@@ -15,11 +13,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.nimbusds.oauth2.sdk.util.StringUtils;
+
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.web.rest.dto.ExamUsersNotFoundDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ImageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -69,8 +70,16 @@ public class ExamUserService {
                 stripper.addRegion("image:" + (image.page() - 1), rect);
                 stripper.extractRegions(document.getPage(image.page() - 1));
                 String string = stripper.getTextForRegion("image:" + (image.page() - 1));
+                String[] studentInformation = string.split("\\s");
 
-                studentWithImages.add(new ExamUserWithImageDTO(string != null ? string.split("\\s").length > 0 ? string.split("\\s")[1] : "no registration number" : "", image));
+                if (!StringUtils.isBlank(string) && studentInformation.length > 0 && studentInformation[1].matches("^[0-9]{8}$")) {
+                    // if the string is only numbers and has 8 digits, then it is the registration number
+                    // and it should be the second element in the array of the string
+                    studentWithImages.add(new ExamUserWithImageDTO(studentInformation[1], image));
+                }
+                else {
+                    studentWithImages.add(new ExamUserWithImageDTO("", image));
+                }
             }
             document.close();
             return studentWithImages;
@@ -87,9 +96,9 @@ public class ExamUserService {
      * @param file PDF file to be parsed
      * @return list of ExamUserWithImageDTO
      */
-    public Set<String> saveImages(long examId, MultipartFile file) {
+    public ExamUsersNotFoundDTO saveImages(long examId, MultipartFile file) {
         log.debug("Save images for file: {}", file);
-        Set<String> notFoundExamUsersRegistrationNumbers = new HashSet<>();
+        List<String> notFoundExamUsersRegistrationNumbers = new ArrayList<>();
         List<ExamUserWithImageDTO> examUserWithImageDTOs = parsePDF(file);
 
         examUserWithImageDTOs.forEach(examUserWithImageDTO -> {
@@ -100,6 +109,7 @@ public class ExamUserService {
                     notFoundExamUsersRegistrationNumbers.add(examUserWithImageDTO.studentRegistrationNumber());
                 }
                 else {
+                    System.out.println(examUserWithImageDTO.studentRegistrationNumber() + "_student_image");
                     MultipartFile studentImage = fileService.convertByteArrayToMultipart(examUserWithImageDTO.studentRegistrationNumber() + "_student_image", ".png",
                             examUserWithImageDTO.image().imageInBytes());
                     String responsePath = fileService.handleSaveFile(studentImage, false, false);
@@ -111,7 +121,9 @@ public class ExamUserService {
                 notFoundExamUsersRegistrationNumbers.add(examUserWithImageDTO.studentRegistrationNumber());
             }
         });
-        return notFoundExamUsersRegistrationNumbers;
+
+        return new ExamUsersNotFoundDTO(notFoundExamUsersRegistrationNumbers.size(), examUserWithImageDTOs.size() - notFoundExamUsersRegistrationNumbers.size(),
+                notFoundExamUsersRegistrationNumbers);
     }
 
     /**

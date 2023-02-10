@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +19,7 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamUserService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamUsersNotFoundDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -102,7 +101,7 @@ public class ExamUserResource {
      */
     @PostMapping("courses/{courseId}/exams/{examId}/exam-users-save-images")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Set<String>> saveUsersImages(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<ExamUsersNotFoundDTO> saveUsersImages(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam("file") MultipartFile file) {
         log.debug("REST request to parse pdf : {}", file.getOriginalFilename());
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         return ResponseEntity.ok().body(examUserService.saveImages(examId, file));

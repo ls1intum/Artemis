@@ -10,6 +10,11 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
 
+interface NotFoundExamUserType {
+    numberOfUsersNotFound: number;
+    numberOfImagesSaved: number;
+    listOfExamUserRegistrationNumbers: string[];
+}
 @Component({
     selector: 'jhi-student-upload-images-dialog',
     templateUrl: './students-upload-images-dialog.component.html',
@@ -20,7 +25,7 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
     readonly ActionType = ActionType;
 
     @ViewChild('importForm', { static: false }) importForm: NgForm;
-    notFoundUsers: string[] = [];
+    notFoundUsers: NotFoundExamUserType;
     file: File;
 
     @Input() courseId: number;
@@ -56,7 +61,7 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
 
     private resetDialog() {
         this.isParsing = false;
-        this.notFoundUsers = [];
+        this.notFoundUsers = {} as NotFoundExamUserType;
         this.hasParsed = false;
     }
 
@@ -101,6 +106,6 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
      * Number of images which could not be saved
      */
     get numberOfImagesNotSaved(): number {
-        return !this.hasParsed ? 0 : this.notFoundUsers.length;
+        return !this.hasParsed ? 0 : this.notFoundUsers.numberOfUsersNotFound;
     }
 }
