@@ -307,7 +307,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      */
     default void setNumberOfExamUsersForExams(List<Exam> exams) {
         List<Long> examIds = exams.stream().map(Exam::getId).toList();
-        List<long[]> examIdAndRegisteredUsersCountPairs = countExamUsersByExamIds(examIds); // List.of(new long[]{1L,2L,40L}); //
+        List<long[]> examIdAndRegisteredUsersCountPairs = countExamUsersByExamIds(examIds);
         Map<Long, Integer> registeredUsersCountMap = convertListOfCountsIntoMap(examIdAndRegisteredUsersCountPairs);
         exams.forEach(exam -> exam.setNumberOfExamUsers(registeredUsersCountMap.get(exam.getId()).longValue()));
     }

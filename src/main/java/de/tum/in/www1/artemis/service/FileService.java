@@ -1079,7 +1079,7 @@ public class FileService implements DisposableBean {
         try {
             Path tempPath = Path.of(FilePathService.getTempFilePath(), fileName + extension);
             Files.write(tempPath, streamByteArray);
-            File outputFile = Path.of(tempPath.toString()).toFile();
+            File outputFile = tempPath.toFile();
             FileItem fileItem = new DiskFileItem("mainFile", Files.probeContentType(outputFile.toPath()), false, outputFile.getName(), (int) outputFile.length(),
                     outputFile.getParentFile());
 
@@ -1089,6 +1089,7 @@ public class FileService implements DisposableBean {
             return new CommonsMultipartFile(fileItem);
         }
         catch (IOException e) {
+            log.warn("Could not convert file {}. Error message: {}", fileName, e.getMessage());
             throw new InternalServerErrorException("Error while converting byte[] to MultipartFile by using CommonsMultipartFile");
         }
     }
