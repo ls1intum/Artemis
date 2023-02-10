@@ -1330,19 +1330,12 @@ public class ExamService {
      *
      * @param pageable The search query defining the search term and the size of the returned page
      * @param user     The user for whom to fetch all available exercises
-     * @param active   If only active exams should be returned
      * @return exam page
      */
-    public Page<Exam> getAllExams(Pageable pageable, final User user, boolean active) {
+    public Page<Exam> getAllExams(Pageable pageable, final User user) {
         final Page<Exam> examPage;
-        if (active) {
-            // active exam means that exam has visible date in the past 7 days or next 7 days.
-            examPage = examRepository.findAllActiveExamsInCoursesWhereInstructor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(7), ZonedDateTime.now().plusDays(7));
-        }
-        else {
-            examPage = examRepository.findAllExamsInCoursesWhereInstructor(user.getGroups(), pageable);
-        }
-
+        // active exam means that exam has visible date in the past 7 days or next 7 days.
+        examPage = examRepository.findAllActiveExamsInCoursesWhereInstructor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(7), ZonedDateTime.now().plusDays(7));
         return examPage;
     }
 

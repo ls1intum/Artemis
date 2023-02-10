@@ -50,20 +50,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     List<Exam> findAllByEndDateGreaterThanEqual(@Param("date") ZonedDateTime date);
 
     /**
-     * Query which fetches all the exams for which the user is instructor in the course.
-     *
-     * @param groups   user groups
-     * @param pageable Pageable
-     * @return Page with search results
-     */
-    @Query("""
-            SELECT e FROM Exam e
-            WHERE e.course.instructorGroupName IN :groups
-                AND e.exerciseGroups IS NOT EMPTY
-            """)
-    Page<Exam> findAllExamsInCoursesWhereInstructor(@Param("groups") Set<String> groups, Pageable pageable);
-
-    /**
      * Query which fetches all the active exams for which the user is instructor.
      *
      * @param groups   user groups
