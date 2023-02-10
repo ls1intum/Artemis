@@ -185,6 +185,7 @@
                 "startTimeInPast": "Quiz: The Start Time has already passed.",
                 "questionTitle": "Question {{index}}: The title is missing.",
                 "questionScore": "Question {{index}}: At least one point is required per question.",
+                "questionScoreInvalid": "Question {{index}}: At least one question has invalid points.",
                 "questionCorrectAnswerOption": "Question {{index}}: No answer option is correct.",
                 "questionSingleChoiceCorrectAnswerOptions": "Question {{index}}: Multiple answer options are correct for a single choice question.",
                 "questionCorrectMapping": "Question {{index}}: No correct mapping.",

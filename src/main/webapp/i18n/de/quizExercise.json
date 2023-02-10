@@ -185,6 +185,7 @@
                 "startTimeInPast": "Quiz: Die Startzeit liegt in der Vergangenheit.",
                 "questionTitle": "Frage {{index}}: Der Titel fehlt.",
                 "questionScore": "Frage {{index}}: Mindestens einen Punkt pro Aufgabe erforderlich.",
+                "questionScoreInvalid": "Question {{index}}: Mindestens eine Frage hat ungültige Punkte.",
                 "questionCorrectAnswerOption": "Frage {{index}}: Es existiert keine korrekte Antwortmöglichkeit.",
                 "questionSingleChoiceCorrectAnswerOptions": "Frage {{index}}: Es existieren mehrere korrekte Antwortmöglichkeiten bei einer Frage mit Einfachauswahl.",
                 "questionCorrectMapping": "Frage {{index}}: Es existiert keine korrekte Zuordnung.",

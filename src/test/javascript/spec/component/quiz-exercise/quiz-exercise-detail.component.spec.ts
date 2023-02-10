@@ -1768,9 +1768,19 @@ describe('QuizExercise Management Detail Component', () => {
                     comp.quizExercise.quizQuestions = [question];
                 });
 
+                it('should put reason for undefined score', () => {
+                    question.points = undefined;
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionScore');
+                });
+
                 it('should put reason for negative score', () => {
                     question.points = -1;
-                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionScore');
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionScoreInvalid');
+                });
+
+                it('should put reason for score in invalid range', () => {
+                    question.points = 99999999999;
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionScoreInvalid');
                 });
 
                 it('should put reason for no title', () => {

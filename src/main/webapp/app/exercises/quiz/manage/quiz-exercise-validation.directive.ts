@@ -233,9 +233,14 @@ export abstract class QuizExerciseValidationDirective {
                     translateValues: { index: index + 1 },
                 });
             }
-            if (question.points == undefined || question.points < 1) {
+            if (question.points == undefined) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionScore',
+                    translateValues: { index: index + 1 },
+                });
+            } else if (question.points < 1 || question.points > 9999) {
+                invalidReasons.push({
+                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionScoreInvalid',
                     translateValues: { index: index + 1 },
                 });
             }
