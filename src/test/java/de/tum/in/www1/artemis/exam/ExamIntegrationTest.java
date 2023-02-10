@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -51,6 +52,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -171,6 +173,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private Course course2;
 
+    private Course course10;
+
     private Exam exam1;
 
     private Exam exam2;
@@ -191,9 +195,18 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         database.createAndSaveUser(TEST_PREFIX + "student42", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
         database.createAndSaveUser(TEST_PREFIX + "tutor6", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
         database.createAndSaveUser(TEST_PREFIX + "instructor6", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
+        database.createAndSaveUser(TEST_PREFIX + "instructor10", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
 
         course1 = database.addEmptyCourse();
         course2 = database.addEmptyCourse();
+
+        course10 = database.createCourse();
+        course10.setInstructorGroupName("instructor10-test-group");
+        course10 = courseRepo.save(course10);
+
+        User instructor10 = database.getUserByLogin(TEST_PREFIX + "instructor10");
+        instructor10.setGroups(Set.of(course10.getInstructorGroupName()));
+        userRepo.save(instructor10);
 
         User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         student1.setGroups(Set.of(course1.getStudentGroupName()));
@@ -423,29 +436,33 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetAllActiveExams() throws Exception {
-        // add additional active exam with visible date in the future
-        var exam3 = database.addExamWithExerciseGroup(course1, true);
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockCreateGroup(course10.getInstructorGroupName());
+        jiraRequestMockProvider.mockAddUserToGroup(course10.getInstructorGroupName(), false);
+
+        // switch to instructor10
+        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor10"));
+        // add additional active exam
+        var exam3 = database.addExamWithExerciseGroup(course10, true);
         exam3.setVisibleDate(ZonedDateTime.now().plusDays(1));
         exam3 = examRepository.save(exam3);
 
         // add additional exam not active
-        var exam4 = database.addExamWithExerciseGroup(course1, true);
+        var exam4 = database.addExamWithExerciseGroup(course10, true);
         exam4.setVisibleDate(ZonedDateTime.now().minusDays(10));
         examRepository.save(exam4);
 
         // add additional active exam but without exercise groups (it should not be returned)
-        var exam5 = database.addExam(course1);
+        var exam5 = database.addExam(course10);
         exam5.setVisibleDate(ZonedDateTime.now().minusDays(1));
         examRepository.save(exam5);
 
-        exam2.setVisibleDate(ZonedDateTime.now().minusDays(1));
-        exam2 = examRepository.save(exam2);
         List<Exam> activeExams = request.getList("/api/exams/active", HttpStatus.OK, Exam.class);
-        // only exam2 and exam3 should be returned (size 2)
-        assertThat(activeExams).hasSize(2);
-        assertThat(activeExams).containsExactlyInAnyOrder(exam2, exam3);
+        // only exam3 should be returned (size 1)
+        assertThat(activeExams).hasSize(1);
+        assertThat(activeExams).containsExactlyInAnyOrder(exam3);
     }
 
     @Test
