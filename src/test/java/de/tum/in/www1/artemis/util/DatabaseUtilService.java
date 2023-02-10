@@ -1540,31 +1540,17 @@ public class DatabaseUtilService {
         var student4 = getUserByLogin(userPrefix + "student4");
         var registeredUsers = Set.of(student1, student2, student3, student4);
         Set<ExamUser> registeredExamUsers = new HashSet<>();
-        exam = examRepository.save(exam);
         for (var user : registeredUsers) {
-            var registeredExamUser = newExamUserEntity(exam, user);
+            var registeredExamUser = new ExamUser();
+            registeredExamUser.setUser(user);
+            registeredExamUser.setExam(exam);
+            registeredExamUser = examUserRepository.save(registeredExamUser);
             exam.addExamUser(registeredExamUser);
             registeredExamUsers.add(registeredExamUser);
         }
         exam.setExamUsers(registeredExamUsers);
         exam = examRepository.save(exam);
         return exam;
-    }
-
-    public ExamUser newExamUserEntity(Exam exam, User user) {
-        ExamUser registeredExamUser = new ExamUser();
-        registeredExamUser.setUser(user);
-        registeredExamUser.setExam(exam);
-
-        registeredExamUser.setDidCheckRegistrationNumber(false);
-        registeredExamUser.setDidCheckName(false);
-        registeredExamUser.setDidCheckLogin(false);
-        registeredExamUser.setDidCheckImage(false);
-        registeredExamUser.setPlannedRoom("not set");
-        registeredExamUser.setPlannedSeat("not set");
-
-        registeredExamUser = examUserRepository.save(registeredExamUser);
-        return registeredExamUser;
     }
 
     public Exam addExam(Course course) {
@@ -1580,7 +1566,10 @@ public class DatabaseUtilService {
     public Exam addTestExamWithRegisteredUser(Course course, User user) {
         Exam exam = ModelFactory.generateTestExam(course);
         exam = examRepository.save(exam);
-        var registeredExamUser = newExamUserEntity(exam, user);
+        var registeredExamUser = new ExamUser();
+        registeredExamUser.setUser(user);
+        registeredExamUser.setExam(exam);
+        registeredExamUser = examUserRepository.save(registeredExamUser);
         exam.addExamUser(registeredExamUser);
         examRepository.save(exam);
         return exam;
@@ -1589,7 +1578,10 @@ public class DatabaseUtilService {
     public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ModelFactory.generateExam(course);
         exam = examRepository.save(exam);
-        var registeredExamUser = newExamUserEntity(exam, user);
+        var registeredExamUser = new ExamUser();
+        registeredExamUser.setUser(user);
+        registeredExamUser.setExam(exam);
+        registeredExamUser = examUserRepository.save(registeredExamUser);
         exam.addExamUser(registeredExamUser);
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
@@ -1642,7 +1634,10 @@ public class DatabaseUtilService {
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
         exam.setWorkingTime(2 * 60 * 60);
         exam = examRepository.save(exam);
-        var registeredExamUser = newExamUserEntity(exam, user);
+        var registeredExamUser = new ExamUser();
+        registeredExamUser.setUser(user);
+        registeredExamUser.setExam(exam);
+        registeredExamUser = examUserRepository.save(registeredExamUser);
         exam.addExamUser(registeredExamUser);
         exam.setTestExam(false);
         examRepository.save(exam);
@@ -1661,7 +1656,10 @@ public class DatabaseUtilService {
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
         exam.setWorkingTime(2 * 60 * 60);
         exam = examRepository.save(exam);
-        var registeredExamUser = newExamUserEntity(exam, user);
+        var registeredExamUser = new ExamUser();
+        registeredExamUser.setUser(user);
+        registeredExamUser.setExam(exam);
+        registeredExamUser = examUserRepository.save(registeredExamUser);
         exam.addExamUser(registeredExamUser);
         examRepository.save(exam);
         return exam;
@@ -4706,7 +4704,10 @@ public class DatabaseUtilService {
         Set<ExamUser> registeredExamUsers = new HashSet<>();
         exam = examRepository.save(exam);
         for (var user : registeredStudents) {
-            var registeredExamUser = newExamUserEntity(exam, user);
+            var registeredExamUser = new ExamUser();
+            registeredExamUser.setUser(user);
+            registeredExamUser.setExam(exam);
+            registeredExamUser = examUserRepository.save(registeredExamUser);
             exam.addExamUser(registeredExamUser);
             registeredExamUsers.add(registeredExamUser);
         }

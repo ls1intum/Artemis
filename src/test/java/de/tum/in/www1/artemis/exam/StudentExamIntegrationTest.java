@@ -152,8 +152,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
         course1 = database.addEmptyCourse();
         exam1 = database.addActiveExamWithRegisteredUser(course1, student2);
-
-        exam1.addExamUser(new ExamUser());
         exam1 = examRepository.save(exam1);
 
         exam2 = database.addExam(course1);

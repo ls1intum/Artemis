@@ -15,10 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamUserService;
@@ -42,20 +40,14 @@ public class ExamUserResource {
 
     private final ExamAccessService examAccessService;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
-    private final CourseRepository courseRepository;
-
     private final ExamUserService examUserService;
 
-    public ExamUserResource(ExamUserService examUserService, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, FileService fileService,
-            ExamAccessService examAccessService, ExamUserRepository examUserRepository, CourseRepository courseRepository) {
+    public ExamUserResource(ExamUserService examUserService, UserRepository userRepository, FileService fileService, ExamAccessService examAccessService,
+            ExamUserRepository examUserRepository) {
         this.userRepository = userRepository;
         this.fileService = fileService;
         this.examUserRepository = examUserRepository;
         this.examAccessService = examAccessService;
-        this.authorizationCheckService = authorizationCheckService;
-        this.courseRepository = courseRepository;
         this.examUserService = examUserService;
     }
 

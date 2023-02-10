@@ -23,8 +23,6 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -372,11 +370,10 @@ public class ExamResource {
      */
     @GetMapping("exams/all")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<List<Exam>> getAllExams(@ApiParam Pageable pageable, @RequestParam(value = "from") @DateTimeFormat(iso = ISO.DATE_TIME) ZonedDateTime from,
-            @RequestParam(value = "to") @DateTimeFormat(iso = ISO.DATE_TIME) ZonedDateTime to) {
+    public ResponseEntity<List<Exam>> getAllExams(@ApiParam Pageable pageable, @RequestParam(defaultValue = "false") boolean active) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         Page<Exam> page;
-        page = examService.getAllExams(pageable, user, from, to);
+        page = examService.getAllExams(pageable, user, active);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
