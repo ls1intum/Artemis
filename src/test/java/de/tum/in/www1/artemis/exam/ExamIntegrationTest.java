@@ -424,6 +424,32 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetAllActiveExams() throws Exception {
+        // add additional active exam with visible date in the future
+        var exam3 = database.addExamWithExerciseGroup(course1, true);
+        exam3.setVisibleDate(ZonedDateTime.now().plusDays(1));
+        exam3 = examRepository.save(exam3);
+
+        // add additional exam not active
+        var exam4 = database.addExamWithExerciseGroup(course1, true);
+        exam4.setVisibleDate(ZonedDateTime.now().minusDays(10));
+        examRepository.save(exam4);
+
+        // add additional active exam but without exercise groups (it should not be returned)
+        var exam5 = database.addExam(course1);
+        exam5.setVisibleDate(ZonedDateTime.now().minusDays(1));
+        examRepository.save(exam5);
+
+        exam2.setVisibleDate(ZonedDateTime.now().minusDays(1));
+        exam2 = examRepository.save(exam2);
+        List<Exam> activeExams = request.getList("/api/exams/active", HttpStatus.OK, Exam.class);
+        // only exam2 and exam3 should be returned (size 2)
+        assertThat(activeExams).hasSize(2);
+        assertThat(activeExams).containsExactlyInAnyOrder(exam2, exam3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRemoveAllStudentsFromExam_testExam() throws Exception {
         request.delete("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", HttpStatus.BAD_REQUEST);
     }
