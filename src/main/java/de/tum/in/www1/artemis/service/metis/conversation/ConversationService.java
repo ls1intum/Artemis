@@ -171,11 +171,14 @@ public class ConversationService {
     /**
      * Notify all members of a conversation about a new message in the conversation
      *
-     * @param conversation conversation which members to notify
+     * @param conversation conversation which members to notify about the new message (except the author)
+     * @param author       author of the new message to filter out
      */
-    public void notifyAllConversationMembersAboutNewMessage(Conversation conversation) {
+    public void notifyAllConversationMembersAboutNewMessage(Conversation conversation, User author) {
         var usersToContact = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
+        // filter out the author of the message
+        usersToContact.remove(author);
         broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.NEW_MESSAGE, conversation, usersToContact);
     }
 
