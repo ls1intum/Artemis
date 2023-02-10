@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamUsersNotFoundDTO;
 
 class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -141,9 +142,9 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         // upload exam user images
         var imageUploadResponse = request.getMvc().perform(buildUploadExamUserImages()).andExpect(status().isOk()).andReturn();
-        List<String> notFoundExamUsersRegistrationNumbers = mapper.readValue(imageUploadResponse.getResponse().getContentAsString(),
-                mapper.getTypeFactory().constructCollectionType(List.class, String.class));
-        assertThat(notFoundExamUsersRegistrationNumbers.size()).isEqualTo(0);
+        ExamUsersNotFoundDTO examUsersNotFoundDTO = mapper.readValue(imageUploadResponse.getResponse().getContentAsString(), ExamUsersNotFoundDTO.class);
+
+        assertThat(examUsersNotFoundDTO.numberOfUsersNotFound()).isEqualTo(0);
 
         // check if exam users have been updated with the images
         Exam exam = examRepository.findByIdWithExamUsersElseThrow(exam1.getId());
