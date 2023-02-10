@@ -114,7 +114,14 @@ public class TutorialGroupService {
      * @param tutorialGroup the tutorial group to set the averageAttendance for
      */
     private void setAverageAttendance(TutorialGroup tutorialGroup) {
-        tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId()).stream()
+        Collection<TutorialGroupSession> sessions;
+        if (getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
+            sessions = tutorialGroup.getTutorialGroupSessions();
+        }
+        else {
+            sessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId());
+        }
+        sessions.stream()
                 .filter(tutorialGroupSession -> TutorialGroupSessionStatus.ACTIVE.equals(tutorialGroupSession.getStatus())
                         && tutorialGroupSession.getEnd().isBefore(ZonedDateTime.now()))
                 .sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed()).limit(3)
