@@ -14,6 +14,7 @@ import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.mode
 import { captureException } from '@sentry/browser';
 import { ValidationReason } from 'app/entities/exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
+import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
 
 type InvalidFlaggedQuestions = {
     [title: string]: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] | undefined;
@@ -31,6 +32,7 @@ export abstract class QuizExerciseValidationDirective {
     readonly maxLengthThreshold = 250;
     readonly explanationLengthThreshold = 500;
     readonly hintLengthThreshold = 255;
+    readonly maxPoints = MAX_QUIZ_QUESTION_POINTS;
 
     warningQuizCache = false;
     quizIsValid: boolean;
@@ -75,7 +77,7 @@ export abstract class QuizExerciseValidationDirective {
             !!this.quizExercise.quizQuestions.length;
 
         const areAllQuestionsValid = this.quizExercise.quizQuestions?.every(function (question) {
-            if (question.points == undefined || question.points < 1 || question.points > 9999) {
+            if (question.points == undefined || question.points < 1 || question.points > this.maxPoints) {
                 return false;
             }
             if (question.explanation && question.explanation.length > this.explanationLengthThreshold) {
@@ -238,7 +240,7 @@ export abstract class QuizExerciseValidationDirective {
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionScore',
                     translateValues: { index: index + 1 },
                 });
-            } else if (question.points < 1 || question.points > 9999) {
+            } else if (question.points < 1 || question.points > this.maxPoints) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionScoreInvalid',
                     translateValues: { index: index + 1 },
