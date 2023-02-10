@@ -63,7 +63,6 @@ describe('Exam date verification', () => {
 
         it('Student can start after start Date', () => {
             let exerciseGroup: ExerciseGroup;
-            const student = studentOne;
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
@@ -72,14 +71,14 @@ describe('Exam date verification', () => {
                 .build();
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                courseManagementRequest.registerStudentForExam(exam, student);
+                courseManagementRequest.registerStudentForExam(exam, studentOne);
                 courseManagementRequest.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
                     courseManagementRequest.createTextExercise({ exerciseGroup }).then((exerciseResponse) => {
                         const exercise = exerciseResponse.body;
                         courseManagementRequest.generateMissingIndividualExams(exam);
                         courseManagementRequest.prepareExerciseStartForExam(exam);
-                        cy.login(student, `/courses/${course.id}/exams`);
+                        cy.login(studentOne, `/courses/${course.id}/exams`);
                         courseOverview.openExam(exam.id!);
                         cy.url().should('contain', `/exams/${exam.id}`);
                         cy.contains(exam.title!).should('be.visible');
@@ -97,7 +96,6 @@ describe('Exam date verification', () => {
         it('Exam ends after end time', () => {
             let exerciseGroup: ExerciseGroup;
             const examEnd = dayjs().add(30, 'seconds');
-            const student = studentOne;
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
@@ -106,14 +104,14 @@ describe('Exam date verification', () => {
                 .build();
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                courseManagementRequest.registerStudentForExam(exam, student);
+                courseManagementRequest.registerStudentForExam(exam, studentOne);
                 courseManagementRequest.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
                     courseManagementRequest.createTextExercise({ exerciseGroup }).then((exerciseResponse) => {
                         const exercise = exerciseResponse.body;
                         courseManagementRequest.generateMissingIndividualExams(exam);
                         courseManagementRequest.prepareExerciseStartForExam(exam);
-                        cy.login(student, `/courses/${course.id}/exams`);
+                        cy.login(studentOne, `/courses/${course.id}/exams`);
                         courseOverview.openExam(exam.id!);
                         cy.contains(exam.title!).should('be.visible');
                         examStartEnd.startExam();

@@ -1,4 +1,3 @@
-import { CypressUserManagement } from './users';
 import { ArtemisPageobjects } from './pageobjects/ArtemisPageobjects';
 import { ArtemisRequests } from './requests/ArtemisRequests';
 
