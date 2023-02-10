@@ -34,6 +34,10 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
         try {
             localVCFilterService.authenticateAndAuthorizeGitRequest(servletRequest, false);
         }
+        catch (LocalVCBadRequestException e) {
+            servletResponse.setStatus(400);
+            return;
+        }
         catch (LocalVCAuthException e) {
             servletResponse.setStatus(401);
             return;
@@ -42,13 +46,13 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
             servletResponse.setStatus(403);
             return;
         }
-        catch (LocalVCBadRequestException e) {
-            servletResponse.setStatus(400);
-            return;
-        }
         catch (LocalVCInternalException e) {
             servletResponse.setStatus(500);
             return;
+        }
+        catch (Exception e) {
+            servletResponse.setStatus(500);
+            log.error("Unexpected error while trying to fetch repository {}", servletRequest.getRequestURI(), e);
         }
 
         filterChain.doFilter(servletRequest, servletResponse);
