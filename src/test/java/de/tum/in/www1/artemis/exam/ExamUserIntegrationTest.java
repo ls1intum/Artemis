@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
 
-public class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "examuser";
 
