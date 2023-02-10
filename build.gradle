@@ -168,6 +168,8 @@ dependencies {
     implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
     implementation "org.gitlab4j:gitlab4j-api:5.0.1"
 
+    implementation "com.google.firebase:firebase-admin:9.1.1"
+
     implementation "de.jplag:jplag:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
     implementation "de.jplag:kotlin:${jplag_version}"
@@ -255,6 +257,7 @@ dependencies {
     implementation "io.netty:netty-all:4.1.85.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.1.0"
     implementation "org.springframework:spring-messaging:5.3.23"
+    implementation "org.springframework.retry:spring-retry:2.0.0"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
