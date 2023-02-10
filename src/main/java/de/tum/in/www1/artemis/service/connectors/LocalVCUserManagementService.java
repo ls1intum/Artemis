@@ -22,7 +22,7 @@ public class LocalVCUserManagementService implements VcsUserManagementService {
      * and management
      *
      * @param user     The local Artemis user, which will be available in the VCS
-     *                 after invoking this method
+     *                     after invoking this method
      * @param password the password of the user to be set
      */
     @Override

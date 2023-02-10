@@ -177,7 +177,7 @@ public class LocalVCService extends AbstractVersionControlService {
      * Create a new project
      *
      * @param programmingExercise the programming exercise for which the local git
-     *                            Project should be created
+     *                                Project should be created
      * @throws LocalVCException if the project could not be created
      */
     @Override
