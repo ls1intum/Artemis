@@ -149,7 +149,7 @@
                             <span *ngIf="programmingExercise.testRepositoryUrl"
                                 ><a *ngIf="!localVCEnabled; else downloadRepoLink" href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">Test</a
                                 ><ng-template #downloadRepoLink
-                                    ><a [routerLink]="" (click)="downloadRepository(programmingExercise.id, 'TESTS')"><fa-icon [icon]="faDownload"></fa-icon> Tests</a></ng-template
+                                    ><a [routerLink]="" (click)="downloadRepository(programmingExercise.id, 'TESTS')"><fa-icon [icon]="faDownload"></fa-icon> Test</a></ng-template
                                 ></span
                             >
                         </div>
