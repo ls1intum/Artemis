@@ -1,8 +1,9 @@
 import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy, OnInit, QueryList, TemplateRef, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
 import { Course } from 'app/entities/course.model';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription, forkJoin } from 'rxjs';
+import { Subject, Subscription, forkJoin, takeUntil } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -12,7 +13,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faMessage, faSync } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
@@ -25,14 +26,19 @@ import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/s
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
     styleUrls: ['course-overview.scss', './tab-bar/tab-bar.scss'],
+    providers: [MetisConversationService],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
+    private ngUnsubscribe = new Subject<void>();
+
     private courseId: number;
     private subscription: Subscription;
     public course?: Course;
     public refreshingCourse = false;
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
+    public hasUnreadMessages: boolean;
+    public messagesRouteLoaded: boolean;
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
@@ -51,6 +57,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     // Icons
     faSync = faSync;
+    faMessage = faMessage;
     faCircleNotch = faCircleNotch;
     FeatureToggle = FeatureToggle;
 
@@ -68,6 +75,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private profileService: ProfileService,
         private tutorialGroupService: TutorialGroupsService,
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
+        private metisConversationService: MetisConversationService,
     ) {}
 
     async ngOnInit() {
@@ -88,6 +96,15 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
         await this.subscribeToTeamAssignmentUpdates();
         this.subscribeForQuizChanges();
+        this.metisConversationService
+            .setUpConversationService(this.courseId)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe({
+                complete: () => {
+                    // service is fully set up, now we can subscribe to the respective observables
+                    this.subscribeToHasUnreadMessages();
+                },
+            });
     }
 
     ngAfterViewInit() {
@@ -99,12 +116,20 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
+    private subscribeToHasUnreadMessages() {
+        this.metisConversationService.hasUnreadMessages$.pipe().subscribe((hasUnreadMessages: boolean) => {
+            this.hasUnreadMessages = hasUnreadMessages ?? false;
+        });
+    }
+
     /**
      * Accepts a component reference of the subcomponent rendered based on the current route.
      * If it provides a controlsConfiguration, we try to render the controls component
      * @param componentRef the sub route component that has been mounted into the router outlet
      */
     onSubRouteActivate(componentRef: any) {
+        this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages';
+
         if (componentRef.controlConfiguration) {
             const provider = componentRef as BarControlConfigurationProvider;
             this.controlConfiguration = provider.controlConfiguration as BarControlConfiguration;
@@ -181,6 +206,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
         this.controlsSubscription?.unsubscribe();
         this.vcSubscription?.unsubscribe();
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 
     subscribeForQuizChanges() {
