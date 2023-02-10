@@ -126,8 +126,8 @@ public class NotificationSettingsService {
             Map.entry(NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN, new NotificationType[] { TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED }));
 
     // This set has to equal the UI configuration in the client notification settings structure file!
-    private static final Set<NotificationType> NOTIFICATION_TYPES_WITH_EMAIL_SUPPORT = Set.of(EXERCISE_RELEASED, EXERCISE_PRACTICE, ATTACHMENT_CHANGE, NEW_ANNOUNCEMENT_POST,
-            FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE, NEW_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT,
+    private static final Set<NotificationType> NOTIFICATION_TYPES_WITH_INSTANT_NOTIFICATION_SUPPORT = Set.of(EXERCISE_RELEASED, EXERCISE_PRACTICE, ATTACHMENT_CHANGE,
+            NEW_ANNOUNCEMENT_POST, FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE, NEW_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT,
             TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_STUDENT,
             TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED);
 
@@ -142,7 +142,8 @@ public class NotificationSettingsService {
      * @param communicationChannel which channel to use (e.g. email or webapp)
      * @return true if the type is allowed else false
      */
-    public boolean checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(Notification notification, User user, NotificationSettingsCommunicationChannel communicationChannel) {
+    public boolean checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(Notification notification, User user,
+            NotificationSettingsCommunicationChannel communicationChannel) {
         NotificationType type = findCorrespondingNotificationType(notification.getTitle());
 
         Set<NotificationSetting> decidedNotificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(user.getId());
@@ -160,18 +161,19 @@ public class NotificationSettingsService {
     }
 
     /**
-     * Checks if the notification type has email support (per default not for an individual user!)
-     * For some types there is no need for email support so they will be filtered out here.
+     * Checks if the notification type has instant notification support (per default not for an individual user!)
+     * For some types there is no need for instant notification support so they will be filtered out here.
      *
      * @param type of the notification
      * @return true if the type has email support else false
      */
-    public boolean checkNotificationTypeForEmailSupport(NotificationType type) {
-        return NOTIFICATION_TYPES_WITH_EMAIL_SUPPORT.contains(type);
+    public boolean checkNotificationTypeForInstantNotificationSupport(NotificationType type) {
+        return NOTIFICATION_TYPES_WITH_INSTANT_NOTIFICATION_SUPPORT.contains(type);
     }
 
     /**
      * Finds the deactivated NotificationTypes based on the user's NotificationSettings
+     *
      * @param communicationChannel indicates if the status should be used/checked for the webapp or for email
      * @param notificationSettings which should be mapped to their respective NotificationTypes and filtered by activation status
      * @return a set of NotificationTypes which are deactivated by the current user's notification settings
@@ -190,6 +192,7 @@ public class NotificationSettingsService {
 
     /**
      * Converts the provided NotificationType Set to a String Set (representing the titles from NotificationTitleTypeConstants)
+     *
      * @param types Set that should be converted to String
      * @return the converted String Set
      */
@@ -199,6 +202,7 @@ public class NotificationSettingsService {
 
     /**
      * Converts the provided NotificationSetting to a map of corresponding NotificationTypes and activation status.
+     *
      * @param notificationSettings which will be mapped to their respective NotificationTypes with respect to their activation status
      * @param communicationChannel indicates if the map should look for the email or webapp activity
      * @return a map with key of NotificationType and value Boolean indicating which types are (de)activated by the user's notification settings
@@ -219,6 +223,7 @@ public class NotificationSettingsService {
     /**
      * Extracts the settingsIds of a notification settings set
      * E.g. used to compare two sets of notification settings based on setting id
+     *
      * @param notificationSettings set which setting ids should be extracted
      * @return a set of settings ids
      */
@@ -230,6 +235,7 @@ public class NotificationSettingsService {
 
     /**
      * Compares two notification settings sets based on their notification setting ids
+     *
      * @param notificationSettingsA is the first set
      * @param notificationSettingsB is the second set
      * @return true if the notification setting ids of both are the same else return false
@@ -244,6 +250,7 @@ public class NotificationSettingsService {
      * Checks the personal notificationSettings retrieved from the DB.
      * If the loaded set is empty substitute it with the default settings
      * If the loaded set has different notification setting ids than the default settings both sets have to be merged
+     *
      * @param userNotificationSettings are the notification settings retrieved from the DB for the current user
      * @return the updated and correct notification settings
      */
@@ -274,8 +281,9 @@ public class NotificationSettingsService {
 
     /**
      * Updates the notificationSettings by setting the current user
+     *
      * @param notificationSettings which might be saved the very first time and have no user set yet
-     * @param currentUser who should be set
+     * @param currentUser          who should be set
      */
     public void setCurrentUser(NotificationSetting[] notificationSettings, User currentUser) {
         for (NotificationSetting notificationSetting : notificationSettings) {

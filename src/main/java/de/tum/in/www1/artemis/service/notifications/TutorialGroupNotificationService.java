@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
-import de.tum.in.www1.artemis.service.MailService;
 
 @Service
 public class TutorialGroupNotificationService {
@@ -72,8 +71,8 @@ public class TutorialGroupNotificationService {
         sendNotificationViaMail(notification, notifyTutor);
     }
 
-    private void sendNotificationViaMail(TutorialGroupNotification notification, boolean notifyTutor) {
-        if (notificationSettingsService.checkNotificationTypeForEmailSupport(notification.notificationType)) {
+    private void sendInstantNotification(TutorialGroupNotification notification, boolean notifyTutor) {
+        if (notificationSettingsService.checkNotificationTypeForInstantNotificationSupport(notification.notificationType)) {
             var usersToMail = findUsersToMail(notification, notifyTutor);
             if (!usersToMail.isEmpty()) {
                 mailService.sendNotificationEmailForMultipleUsers(notification, new ArrayList<>(usersToMail), notification.getTutorialGroup());

@@ -41,8 +41,8 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
         users.set(0, student1);
         userRepository.save(student1);
 
-        settingA = new NotificationSetting(student1, true, false, "notification.lecture-notification.attachment-changes");
-        settingsB = new NotificationSetting(student1, false, false, "notification.exercise-notification.exercise-open-for-practice");
+        settingA = new NotificationSetting(student1, true, false, true, "notification.lecture-notification.attachment-changes");
+        settingsB = new NotificationSetting(student1, false, false, true, "notification.exercise-notification.exercise-open-for-practice");
     }
 
     /**

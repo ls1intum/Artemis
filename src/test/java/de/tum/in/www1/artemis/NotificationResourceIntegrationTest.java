@@ -256,8 +256,8 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
         NotificationType allowedType = NotificationType.ATTACHMENT_CHANGE;
         NotificationType blockedType = NotificationType.EXERCISE_PRACTICE;
 
-        NotificationSetting allowedSetting = new NotificationSetting(users.get(0), true, false, "notification.lecture-notification.attachment-changes");
-        NotificationSetting blockedSetting = new NotificationSetting(users.get(0), false, false, "notification.exercise-notification.exercise-open-for-practice");
+        NotificationSetting allowedSetting = new NotificationSetting(users.get(0), true, false, true, "notification.lecture-notification.attachment-changes");
+        NotificationSetting blockedSetting = new NotificationSetting(users.get(0), false, false, true, "notification.exercise-notification.exercise-open-for-practice");
 
         notificationSettingRepository.save(allowedSetting);
         notificationSettingRepository.save(blockedSetting);

@@ -20,9 +20,9 @@ import org.springframework.test.context.TestPropertySource;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsProgrammingLanguageFeatureService;
+import de.tum.in.www1.artemis.service.notifications.MailService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;

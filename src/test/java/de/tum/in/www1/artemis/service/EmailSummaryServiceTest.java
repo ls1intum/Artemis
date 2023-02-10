@@ -63,14 +63,14 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         // preparation of the test data where a user deactivated weekly summaries
         User userWithDeactivatedWeeklySummaries = database.getUserByLogin(USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN);
-        NotificationSetting deactivatedWeeklySummarySetting = new NotificationSetting(userWithDeactivatedWeeklySummaries, false, false,
+        NotificationSetting deactivatedWeeklySummarySetting = new NotificationSetting(userWithDeactivatedWeeklySummaries, false, false, true,
                 NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
         notificationSettingRepository.save(deactivatedWeeklySummarySetting);
 
         // preparation of the test data where a user activated weekly summaries
         User userWithActivatedWeeklySummaries = database.getUserByLogin(USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN);
 
-        NotificationSetting activatedWeeklySummarySetting = new NotificationSetting(userWithActivatedWeeklySummaries, false, true,
+        NotificationSetting activatedWeeklySummarySetting = new NotificationSetting(userWithActivatedWeeklySummaries, false, true, true,
                 NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
         notificationSettingRepository.save(activatedWeeklySummarySetting);
 
@@ -113,7 +113,7 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         currentUsers.remove(userWithActivatedWeeklySummaries);
         currentUsers.remove(userWithDeactivatedWeeklySummaries);
         if (!currentUsers.isEmpty()) {
-            currentUsers.forEach(user -> notificationSettingRepository.save(new NotificationSetting(user, false, false, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY)));
+            currentUsers.forEach(user -> notificationSettingRepository.save(new NotificationSetting(user, false, false, true, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY)));
         }
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));

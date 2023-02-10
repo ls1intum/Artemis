@@ -316,7 +316,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      * @param notificationSettingIdentifier of the corresponding notification type
      */
     private void prepareNotificationSettingForTest(User user, String notificationSettingIdentifier) {
-        NotificationSetting notificationSetting = new NotificationSetting(user, true, true, notificationSettingIdentifier);
+        NotificationSetting notificationSetting = new NotificationSetting(user, true, true, true, notificationSettingIdentifier);
         notificationSettingRepository.save(notificationSetting);
     }
 

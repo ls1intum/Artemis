@@ -14,6 +14,7 @@ import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisMailException;
+import de.tum.in.www1.artemis.service.notifications.MailService;
 import tech.jhipster.config.JHipsterProperties;
 
 /**

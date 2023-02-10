@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXERCISE_SUBMISSION_ASSESSED;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.extractNotificationUrl;
@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.exception.ArtemisMailException;
-import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
+import de.tum.in.www1.artemis.service.TimeService;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -41,7 +41,7 @@ import tech.jhipster.config.JHipsterProperties;
  * We use the @Async annotation to send emails asynchronously.
  */
 @Service
-public class MailService {
+public class MailService implements InstantNotificationService {
 
     private final Logger log = LoggerFactory.getLogger(MailService.class);
 
@@ -181,13 +181,14 @@ public class MailService {
         return String.format(newAnnouncementString, postTitle, courseTitle);
     }
 
+    @Override
     /**
      * Sends a notification based email to one user
      * @param notification which properties are used to create the email
      * @param user who should be contacted
      * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
      */
-    public void sendNotificationEmail(Notification notification, User user, Object notificationSubject) {
+    public void sendNotification(Notification notification, User user, Object notificationSubject) {
         NotificationType notificationType = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
         log.debug("Sending \"{}\" notification email to '{}'", notificationType.name(), user.getEmail());
 
@@ -310,11 +311,11 @@ public class MailService {
         }
     }
 
+    @Override
     @Async
-    public void sendNotificationEmailForMultipleUsers(Notification notification, List<User> users, Object notificationSubject) {
-        users.forEach(user -> sendNotificationEmail(notification, user, notificationSubject));
+    public void sendNotification(Notification notification, List<User> users, Object notificationSubject) {
+        users.forEach(user -> sendNotification(notification, user, notificationSubject));
     }
-
     /// Weekly Summary Email
 
     /**

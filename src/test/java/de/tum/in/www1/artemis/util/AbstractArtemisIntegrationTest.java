@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.service.connectors.Lti10Service;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.service.notifications.MailService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.notifications.TutorialGroupNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;

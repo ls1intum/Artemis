@@ -38,13 +38,13 @@ public class NotificationSetting extends DomainObject {
     }
 
     // used to create default settings where both communication channels are supported
-    public NotificationSetting(boolean webapp, boolean email, String settingId) {
+    public NotificationSetting(boolean webapp, boolean email, boolean push, String settingId) {
         this.setWebapp(webapp);
         this.setEmail(email);
         this.setSettingId(settingId);
     }
 
-    public NotificationSetting(User user, boolean webapp, boolean email, String settingId) {
+    public NotificationSetting(User user, boolean webapp, boolean email, boolean push, String settingId) {
         this.setUser(user);
         this.setWebapp(webapp);
         this.setEmail(email);

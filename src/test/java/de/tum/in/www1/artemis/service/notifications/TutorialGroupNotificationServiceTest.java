@@ -114,7 +114,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
     }
 
     private void prepareNotificationSettingForTest(User user, String notificationSettingIdentifier) {
-        NotificationSetting notificationSetting = new NotificationSetting(user, true, true, notificationSettingIdentifier);
+        NotificationSetting notificationSetting = new NotificationSetting(user, true, true, true, notificationSettingIdentifier);
         notificationSettingRepository.save(notificationSetting);
     }
 

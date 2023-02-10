@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.notifications.push_notifications;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -15,8 +16,11 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.messaging.Message;
 
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+
 @Service
-public class FirebasePushNotificationService {
+public class FirebasePushNotificationService extends PushNotificationService {
 
     private final Logger log = LoggerFactory.getLogger(FirebasePushNotificationService.class);
 
@@ -59,6 +63,16 @@ public class FirebasePushNotificationService {
         // .getInstance()
         // .send(Message.builder().build())
         // }
+
+    }
+
+    @Override
+    void sendPushNotification(String title, String body, String target, NotificationType notificationType, List<User> users) {
+
+    }
+
+    @Override
+    void sendPushNotification(String title, String body, String target, NotificationType notificationType, User user) {
 
     }
 }
