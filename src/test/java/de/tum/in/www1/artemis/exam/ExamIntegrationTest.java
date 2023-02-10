@@ -454,11 +454,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exam4.setVisibleDate(ZonedDateTime.now().minusDays(10));
         examRepository.save(exam4);
 
-        // add additional active exam but without exercise groups (it should not be returned)
-        var exam5 = database.addExam(course10);
-        exam5.setVisibleDate(ZonedDateTime.now().minusDays(1));
-        examRepository.save(exam5);
-
         List<Exam> activeExams = request.getList("/api/exams/active", HttpStatus.OK, Exam.class);
         // only exam3 should be returned (size 1)
         assertThat(activeExams).hasSize(1);

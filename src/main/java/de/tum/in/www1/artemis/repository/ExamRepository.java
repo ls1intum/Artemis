@@ -61,7 +61,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("""
             SELECT e FROM Exam e
             WHERE e.course.instructorGroupName IN :groups
-                AND e.exerciseGroups IS NOT EMPTY
                 AND e.visibleDate >= :fromDate
                 AND e.visibleDate <= :toDate
             """)

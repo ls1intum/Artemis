@@ -109,7 +109,6 @@ public class ExamUserService {
                     notFoundExamUsersRegistrationNumbers.add(examUserWithImageDTO.studentRegistrationNumber());
                 }
                 else {
-                    System.out.println(examUserWithImageDTO.studentRegistrationNumber() + "_student_image");
                     MultipartFile studentImage = fileService.convertByteArrayToMultipart(examUserWithImageDTO.studentRegistrationNumber() + "_student_image", ".png",
                             examUserWithImageDTO.image().imageInBytes());
                     String responsePath = fileService.handleSaveFile(studentImage, false, false);
