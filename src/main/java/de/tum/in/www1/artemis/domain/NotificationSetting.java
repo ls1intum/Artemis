@@ -29,6 +29,10 @@ public class NotificationSetting extends DomainObject {
     @Column(name = "email", columnDefinition = "boolean default false", nullable = false)
     private boolean email = false;
 
+    // TODO: write migration query
+    @Column(name = "push", columnDefinition = "boolean default false", nullable = false)
+    private boolean push = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties("notificationSetting")
     private User user;
@@ -42,6 +46,7 @@ public class NotificationSetting extends DomainObject {
         this.setWebapp(webapp);
         this.setEmail(email);
         this.setSettingId(settingId);
+        this.setPush(push);
     }
 
     public NotificationSetting(User user, boolean webapp, boolean email, boolean push, String settingId) {
@@ -49,6 +54,7 @@ public class NotificationSetting extends DomainObject {
         this.setWebapp(webapp);
         this.setEmail(email);
         this.setSettingId(settingId);
+        this.setPush(push);
     }
 
     public String getSettingId() {
@@ -83,9 +89,17 @@ public class NotificationSetting extends DomainObject {
         this.user = user;
     }
 
+    public void setPush(boolean push) {
+        this.push = push;
+    }
+
+    public boolean getPush() {
+        return push;
+    }
+
     @Override
     public String toString() {
-        return "NotificationSetting{" + ", settingId='" + settingId + '\'' + ", webapp=" + webapp + ", email=" + email + ", user=" + user + '}';
+        return "NotificationSetting{" + ", settingId='" + settingId + '\'' + ", webapp=" + webapp + ", email=" + email + ", push=" + push + ", user=" + user + '}';
     }
 
     @Override
@@ -109,7 +123,8 @@ public class NotificationSetting extends DomainObject {
         NotificationSetting providedSetting = (NotificationSetting) obj;
         boolean userCheck = checkUser(this.user, providedSetting.user);
         boolean settingIdCheck = checkSettingId(this.settingId, providedSetting.settingId);
-        return domainObjectCheck && userCheck && settingIdCheck && this.webapp == providedSetting.webapp && this.email == providedSetting.email;
+        return domainObjectCheck && userCheck && settingIdCheck && this.webapp == providedSetting.webapp && this.email == providedSetting.email
+                && this.push == providedSetting.push;
     }
 
     private boolean checkUser(User thisUser, User providedUser) {

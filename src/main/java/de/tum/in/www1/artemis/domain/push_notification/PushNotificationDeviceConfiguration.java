@@ -9,6 +9,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import de.tum.in.www1.artemis.domain.User;
 
+// TODO: write migration script
 @Entity
 @Table(name = "pushNotificationDeviceConfiguration")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

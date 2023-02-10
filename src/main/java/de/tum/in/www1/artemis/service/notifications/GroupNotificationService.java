@@ -34,7 +34,7 @@ public class GroupNotificationService {
 
     private final UserRepository userRepository;
 
-    private final MailService mailService;
+    private final GeneralInstantNotificationService notificationService;
 
     private final NotificationSettingsService notificationSettingsService;
 
@@ -43,7 +43,7 @@ public class GroupNotificationService {
         this.groupNotificationRepository = groupNotificationRepository;
         this.messagingTemplate = messagingTemplate;
         this.userRepository = userRepository;
-        this.mailService = mailService;
+        this.notificationService = notificationService;
         this.notificationSettingsService = notificationSettingsService;
     }
 

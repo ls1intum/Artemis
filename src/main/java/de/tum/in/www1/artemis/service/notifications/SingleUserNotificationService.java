@@ -32,19 +32,19 @@ public class SingleUserNotificationService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private final MailService mailService;
+    private final GeneralInstantNotificationService notificationService;
 
     private final NotificationSettingsService notificationSettingsService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
     public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, UserRepository userRepository,
-            SimpMessageSendingOperations messagingTemplate, MailService mailService, NotificationSettingsService notificationSettingsService,
+            SimpMessageSendingOperations messagingTemplate, GeneralInstantNotificationService notificationService, NotificationSettingsService notificationSettingsService,
             StudentParticipationRepository studentParticipationRepository) {
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.userRepository = userRepository;
         this.messagingTemplate = messagingTemplate;
-        this.mailService = mailService;
+        this.notificationService = notificationService;
         this.notificationSettingsService = notificationSettingsService;
         this.studentParticipationRepository = studentParticipationRepository;
     }
