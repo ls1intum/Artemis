@@ -97,6 +97,33 @@ public class TutorialGroupService {
             tutorialGroup.setTeachingAssistantName(null);
         }
         this.setNextSession(tutorialGroup);
+        this.setAverageAttendance(tutorialGroup);
+    }
+
+    /**
+     * Sets the averageAttendance transient field of the given tutorial group
+     * <p>
+     * Calculation:
+     * <ul>
+     * <li>Get set of the last three completed sessions (or less than three if not more available)</li>
+     * <li>Remove sessions without attendance data (null) from the set</li>
+     * <li>If set is empty, set attendance average of tutorial group to null (meaning could not be determined)</li>
+     * <li>If set is non empty, set the attendance average of the tutorial group to the arithmetic mean (rounded to integer)</li>
+     * </ul>
+     *
+     * @param tutorialGroup the tutorial group to set the averageAttendance for
+     */
+    private void setAverageAttendance(TutorialGroup tutorialGroup) {
+        tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId()).stream()
+                .filter(tutorialGroupSession -> TutorialGroupSessionStatus.ACTIVE.equals(tutorialGroupSession.getStatus())
+                        && tutorialGroupSession.getEnd().isBefore(ZonedDateTime.now()))
+                .sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed()).limit(3)
+                .map(tutorialGroupSession -> Optional.ofNullable(tutorialGroupSession.getAttendanceCount())).flatMap(Optional::stream).mapToInt(attendance -> attendance).average()
+                .ifPresentOrElse(value -> {
+                    tutorialGroup.setAverageAttendance((int) Math.round(value));
+                }, () -> {
+                    tutorialGroup.setAverageAttendance(null);
+                });
     }
 
     /**

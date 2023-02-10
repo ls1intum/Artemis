@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource;
@@ -205,6 +206,98 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void getOneOfCourse_asNotTutorOfGroup_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
         oneOfCoursePrivateInfoHiddenTest(loadFromService, TEST_PREFIX + "tutor2");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void averageAttendanceCalculationTest_NoSessions_AverageNull() throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] {}, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void averageAttendanceCalculationTest_NoSessionWithAttendanceData_AverageNull() throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] { null }, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void averageAttendanceCalculationTest_lastThreeSessionsWithoutAttendanceData_AverageNull() throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, null }, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void averageAttendanceCalculationTest_OneSession_AverageIsAttendanceOfSession() throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] { 8 }, 8);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void averageAttendanceCalculationTest_OneSessionOfTheLastThreeHasAttendanceData_AverageIsAttendanceOfSession() throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, null }, 8);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, null }, 8);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, 8 }, 8);
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void averageAttendanceCalculationTest_TwoSessions_AverageIsArithmeticMean() throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] { 8, 5 }, 7);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void averageAttendanceCalculationTest_TwoSessionsOfTheLastThreeHaveAttendanceData_AverageIsArithmeticMean() throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, 5 }, 7);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, 5 }, 7);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, 5, null }, 7);
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void averageAttendanceCalculationTest_ThreeSessions_AverageIsArithmeticMean() throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] { 8, 5, 3 }, 5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void averageAttendanceCalculationTest_MoreThanThreeSessions_AverageIsArithmeticMeanOfLastThree() throws Exception {
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, 5, 3 }, 5);
+    }
+
+    /**
+     * Attendance Test Scaffold
+     *
+     * @param attendance      for each attendance value a session will be created in order (with a difference of 1 day)
+     * @param expectedAverage expected average in the tutorial group
+     * @throws Exception
+     */
+    void averageAttendanceTestScaffold(Integer[] attendance, Integer expectedAverage) throws Exception {
+        // given
+        var tutorialGroupId = databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
+                userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of()).getId();
+        var sessionToSave = new ArrayList<TutorialGroupSession>();
+        var date = firstAugustMonday;
+        for (Integer att : attendance) {
+            var session = databaseUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(date), getExampleSessionEndOnDate(date), att);
+            sessionToSave.add(session);
+            date = date.plusDays(1);
+        }
+        Collections.shuffle(sessionToSave);
+        var savedSessions = tutorialGroupSessionRepository.saveAllAndFlush(sessionToSave);
+        assertThat(savedSessions).hasSize(attendance.length);
+
+        var tutorialGroup = request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroupId, HttpStatus.OK, TutorialGroup.class);
+
+        // then
+        assertThat(tutorialGroup.getAverageAttendance()).isEqualTo(expectedAverage);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteAllInBatch(savedSessions);
+        tutorialGroupRepository.deleteById(tutorialGroupId);
     }
 
     @Test
