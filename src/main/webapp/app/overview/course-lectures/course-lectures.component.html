@@ -35,11 +35,8 @@
                     <span *ngIf="!weeklyLecturesGrouped[weekKey].start || !weeklyLecturesGrouped[weekKey].end">
                         {{ 'artemisApp.courseOverview.exerciseList.noDateAssociated' | artemisTranslate }}
                     </span>
-                    <span
-                        class="ms-2"
-                        jhiTranslate="artemisApp.courseOverview.lectureList.lectureGroupHeader"
-                        [translateValues]="{ total: weeklyLecturesGrouped[weekKey]!.lectures.length }"
-                    >
+                    <span class="ms-2">
+                        jhiTranslate="artemisApp.courseOverview.lectureList.lectureGroupHeader" [translateValues]="{ total: weeklyLecturesGrouped[weekKey]!.lectures.length }" >
                         Exercises: {{ weeklyLecturesGrouped[weekKey]!.lectures.length }}
                     </span>
                 </div>
