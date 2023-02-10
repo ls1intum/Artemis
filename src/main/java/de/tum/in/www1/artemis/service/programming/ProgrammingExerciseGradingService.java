@@ -195,6 +195,8 @@ public class ProgrammingExerciseGradingService {
     /**
      * Retrieves the submission that is assigned to the specified participation and its commit hash matches the one from the build result.
      *
+     * @param participationId id of the participation
+     * @param buildResult     The build result
      * @return The submission or empty if no submissions exist
      */
     protected Optional<ProgrammingSubmission> getSubmissionForBuildResult(Long participationId, AbstractBuildResultNotificationDTO buildResult) {
