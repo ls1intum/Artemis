@@ -40,7 +40,15 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") long courseId);
 
-    // Find all exams for multiple courses (ids) that are already visible to the user (either registered, at least tutor or the exam is a test exam)
+    /**
+     * Find all exams for multiple courses that are already visible to the user (either registered, at least tutor or the exam is a test exam)
+     *
+     * @param courseIds  set of courseIds that the exams should be retreived
+     * @param userId     the id of the user requesting the exams
+     * @param groupNames the groups of the user requesting the exams
+     * @param now        the current date, typically ZonedDateTime.now()
+     * @return a set of all visible exams for the user in the provided courses
+     */
     @Query("""
             SELECT e
             FROM Exam e

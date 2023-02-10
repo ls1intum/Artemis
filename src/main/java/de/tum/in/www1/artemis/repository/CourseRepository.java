@@ -56,7 +56,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
-    // Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
+    /**
+     * Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
+     *
+     * @param now the current date, typically ZonedDateTime.now()
+     * @return List of found courses with lectures and their attachments
+     */
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
     @Query("""
             SELECT DISTINCT c
@@ -66,7 +71,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllActiveWithLectures(@Param("now") ZonedDateTime now);
 
-    // Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
+    /**
+     * Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
+     *
+     * @param courseId the id of the course to find
+     * @return Found course with lectures, their attachments and exams
+     */
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
     Optional<Course> findWithLecturesAndExamsById(long courseId);
 
