@@ -630,9 +630,6 @@ public class StudentExamResource {
 
         // Create new exam session
         createNewExamSession(request, studentExam);
-
-        // Remove not needed objects
-        studentExam.getExam().setCourse(null);
     }
 
     /**
