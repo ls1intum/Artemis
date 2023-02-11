@@ -2009,25 +2009,23 @@ public class DatabaseUtilService {
     // @formatter:off
     public Result addVariousFeedbackTypeFeedbacksToResult(Result result) {
         // The order of declaration here should be the same order as in FeedbackType for each enum type
-        List<Feedback> feedbacks = Arrays.asList(
+        List<Feedback> feedbacks = feedbackRepo.saveAll(Arrays.asList(
             new Feedback().detailText("manual").type(FeedbackType.MANUAL),
             new Feedback().detailText("manual_unreferenced").type(FeedbackType.MANUAL_UNREFERENCED),
             new Feedback().detailText("automatic_adapted").type(FeedbackType.AUTOMATIC_ADAPTED),
             new Feedback().detailText("automatic").type(FeedbackType.AUTOMATIC)
-        );
+        ));
 
-        feedbackRepo.saveAll(feedbacks);
         return resultRepo.save(result.feedbacks(feedbacks));
     }
 
     public Result addVariousVisibilityFeedbackToResult(Result result) {
-        List<Feedback> feedbacks = Arrays.asList(
+        List<Feedback> feedbacks = feedbackRepo.saveAll(Arrays.asList(
             new Feedback().detailText("afterDueDate1").visibility(Visibility.AFTER_DUE_DATE),
             new Feedback().detailText("never1").visibility(Visibility.NEVER),
             new Feedback().detailText("always1").visibility(Visibility.ALWAYS)
-        );
+        ));
 
-        feedbackRepo.saveAll(feedbacks);
         return resultRepo.save(result.feedbacks(feedbacks));
     }
     // @formatter on
