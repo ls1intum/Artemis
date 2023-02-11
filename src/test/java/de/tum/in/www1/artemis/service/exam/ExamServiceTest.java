@@ -88,8 +88,8 @@ class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
                 assertThat(exercise.getNumberOfParticipations()).isNotNull();
             });
         });
-        assertThat(exam1.getNumberOfRegisteredUsers()).isNotNull();
-        assertThat(exam1.getNumberOfRegisteredUsers()).isZero();
+        assertThat(exam1.getNumberOfExamUsers()).isNotNull();
+        assertThat(exam1.getNumberOfExamUsers()).isZero();
     }
 
     @Test
@@ -213,8 +213,8 @@ class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         exam.setEndDate(ZonedDateTime.now().plusDays(2));
         exam.setNumberOfCorrectionRoundsInExam(1);
         exam.setModuleNumber("IN0001");
-        exam.setNumberOfRegisteredUsers(10L);
-        assertThat(exam.getNumberOfRegisteredUsers()).isEqualTo(10);
+        exam.setNumberOfExamUsers(10L);
+        assertThat(exam.getNumberOfExamUsers()).isEqualTo(10);
         assertThat(exam.getModuleNumber()).isEqualTo("IN0001");
         return exam;
     }

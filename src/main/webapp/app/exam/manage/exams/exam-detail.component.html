@@ -172,7 +172,7 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.examStudents.registeredStudents">Registered students</span></dt>
                 <dd>
-                    <span *ngIf="exam.numberOfRegisteredUsers; else numberOfRegisteredUsersNotSet">{{ exam.numberOfRegisteredUsers }}</span>
+                    <span *ngIf="exam.numberOfExamUsers; else numberOfRegisteredUsersNotSet">{{ exam.numberOfExamUsers }}</span>
                     <ng-template #numberOfRegisteredUsersNotSet>{{ 0 }}</ng-template>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.startText">Exam start text</span></dt>
