@@ -11,9 +11,8 @@ import org.apache.pdfbox.text.PDFTextStripperByArea;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-
-import com.nimbusds.oauth2.sdk.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
@@ -72,7 +71,7 @@ public class ExamUserService {
                 String string = stripper.getTextForRegion("image:" + (image.page() - 1));
                 String[] studentInformation = string.split("\\s");
 
-                if (!StringUtils.isBlank(string) && studentInformation.length > 0 && studentInformation[1].matches("^[0-9]{8}$")) {
+                if (StringUtils.hasText(string) && studentInformation.length > 0 && studentInformation[1].matches("^[0-9]{8}$")) {
                     // if the string is only numbers and has 8 digits, then it is the registration number
                     // and it should be the second element in the array of the string
                     studentWithImages.add(new ExamUserWithImageDTO(studentInformation[1], image));

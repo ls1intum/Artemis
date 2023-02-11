@@ -9,8 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.stereotype.Service;
-
-import com.nimbusds.oauth2.sdk.util.StringUtils;
+import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
@@ -111,10 +110,10 @@ public class ExamRegistrationService {
                     registeredExamUser.setUser(optionalStudent.get());
                     registeredExamUser.setExam(exam);
 
-                    if (!StringUtils.isBlank(examUserDto.room())) {
+                    if (StringUtils.hasText(examUserDto.room())) {
                         registeredExamUser.setPlannedRoom(examUserDto.room());
                     }
-                    if (!StringUtils.isBlank(examUserDto.seat())) {
+                    if (StringUtils.hasText(examUserDto.seat())) {
                         registeredExamUser.setPlannedSeat(examUserDto.seat());
                     }
                     registeredExamUser = examUserRepository.save(registeredExamUser);
