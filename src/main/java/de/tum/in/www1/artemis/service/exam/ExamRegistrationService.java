@@ -104,9 +104,9 @@ public class ExamRegistrationService {
                 notFoundStudentsDTOs.add(examUserDto);
             }
             else {
-                ExamUser registeredExamUserCheck = examUserRepository.findByExamIdAndUserId(exam.getId(), optionalStudent.get().getId());
-                if (!exam.getExamUsers().contains(registeredExamUserCheck) && !optionalStudent.get().getAuthorities().contains(ADMIN_AUTHORITY)
-                        && !optionalStudent.get().getGroups().contains(course.getInstructorGroupName())) {
+                User student = optionalStudent.get();
+                ExamUser examUser = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
+                if (!exam.getExamUsers().contains(examUser) && !authorizationCheckService.isInstructorInCourse(course, student) && !authorizationCheckService.isAdmin(student)) {
                     ExamUser registeredExamUser = new ExamUser();
                     registeredExamUser.setUser(optionalStudent.get());
                     registeredExamUser.setExam(exam);
@@ -121,11 +121,11 @@ public class ExamRegistrationService {
                     exam.addExamUser(registeredExamUser);
                 }
 
-                if (registeredExamUserCheck != null && exam.getExamUsers().contains(registeredExamUserCheck)) {
-                    registeredExamUserCheck.setPlannedRoom(examUserDto.room());
-                    registeredExamUserCheck.setPlannedSeat(examUserDto.seat());
-                    registeredExamUserCheck = examUserRepository.save(registeredExamUserCheck);
-                    exam.addExamUser(registeredExamUserCheck);
+                if (examUser != null && exam.getExamUsers().contains(examUser)) {
+                    examUser.setPlannedRoom(examUserDto.room());
+                    examUser.setPlannedSeat(examUserDto.seat());
+                    examUser = examUserRepository.save(examUser);
+                    exam.addExamUser(examUser);
                 }
 
             }

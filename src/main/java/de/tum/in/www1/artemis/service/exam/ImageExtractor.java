@@ -82,9 +82,8 @@ public class ImageExtractor extends PDFStreamEngine {
         if (INVOKE_OPERATOR.equals(operation)) {
             COSName objectName = (COSName) operands.get(0);
             PDXObject xobject = getResources().getXObject(objectName);
-            if (xobject instanceof PDImageXObject) {
+            if (xobject instanceof PDImageXObject image) {
 
-                PDImageXObject image = (PDImageXObject) xobject;
                 Matrix ctmNew = getGraphicsState().getCurrentTransformationMatrix();
                 // store the image coordinates, currentPage and the image in bytes
                 ImageDTO imageDTO = new ImageDTO(currentPage, ctmNew.getTranslateX(), ctmNew.getTranslateY(), image.getHeight(), image.getWidth(), Math.round(ctmNew.getScaleX()),
@@ -92,8 +91,7 @@ public class ImageExtractor extends PDFStreamEngine {
                 images.add(imageDTO);
 
             }
-            else if (xobject instanceof PDFormXObject) {
-                PDFormXObject form = (PDFormXObject) xobject;
+            else if (xobject instanceof PDFormXObject form) {
                 showForm(form);
             }
         }
@@ -113,7 +111,6 @@ public class ImageExtractor extends PDFStreamEngine {
      * Converts BufferedImage to byte[]
      */
     private byte[] toByteArray(BufferedImage bi, String format) throws IOException {
-
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(bi, format, baos);
         byte[] bytes = baos.toByteArray();
