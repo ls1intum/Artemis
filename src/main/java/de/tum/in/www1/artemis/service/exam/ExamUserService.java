@@ -92,7 +92,8 @@ public class ExamUserService {
     /**
      * Saves all images from PDF file
      *
-     * @param file PDF file to be parsed
+     * @param examId the examId to which the images and exam users will belong
+     * @param file   PDF file to be parsed
      * @return list of ExamUserWithImageDTO
      */
     public ExamUsersNotFoundDTO saveImages(long examId, MultipartFile file) {
@@ -108,9 +109,9 @@ public class ExamUserService {
                     notFoundExamUsersRegistrationNumbers.add(examUserWithImageDTO.studentRegistrationNumber());
                 }
                 else {
-                    MultipartFile studentImage = fileService.convertByteArrayToMultipart(examUserWithImageDTO.studentRegistrationNumber() + "_student_image", ".png",
+                    MultipartFile studentImageFile = fileService.convertByteArrayToMultipart(examUserWithImageDTO.studentRegistrationNumber() + "_student_image", ".png",
                             examUserWithImageDTO.image().imageInBytes());
-                    String responsePath = fileService.handleSaveFile(studentImage, false, false);
+                    String responsePath = fileService.handleSaveFile(studentImageFile, false, false);
                     examUser.setStudentImagePath(responsePath);
                     examUserRepository.save(examUser);
                 }

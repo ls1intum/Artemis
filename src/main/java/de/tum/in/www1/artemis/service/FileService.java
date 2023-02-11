@@ -1072,8 +1072,9 @@ public class FileService implements DisposableBean {
      * Convert byte[] to MultipartFile by using CommonsMultipartFile
      *
      * @param fileName        file name to set file name
+     * @param extension       extension of the file
      * @param streamByteArray byte array to save to the temp file
-     * @return multipartFile
+     * @return multipartFile wrapper for the file stored on disk
      */
     public MultipartFile convertByteArrayToMultipart(String fileName, String extension, byte[] streamByteArray) {
         try {

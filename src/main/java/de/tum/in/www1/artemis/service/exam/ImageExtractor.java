@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * Processor to extract images from a PDF and get information.
- * ref: https://github.com/apache/pdfbox/blob/trunk/examples/src/main/java/org/apache/pdfbox/examples/util/PrintImageLocations.java
+ * ref: <a href="https://github.com/apache/pdfbox/blob/trunk/examples/src/main/java/org/apache/pdfbox/examples/util/PrintImageLocations.java">PrintImageLocations.java</a>
  */
 public class ImageExtractor extends PDFStreamEngine {
 
@@ -54,6 +54,11 @@ public class ImageExtractor extends PDFStreamEngine {
         addOperator(new SetMatrix());
     }
 
+    /**
+     * process all pages of the pdfDocument
+     *
+     * @return the object to allow concatenating method calls
+     */
     public ImageExtractor process() {
         try {
             currentPage = 0;
@@ -81,17 +86,16 @@ public class ImageExtractor extends PDFStreamEngine {
         String operation = operator.getName();
         if (INVOKE_OPERATOR.equals(operation)) {
             COSName objectName = (COSName) operands.get(0);
-            PDXObject xobject = getResources().getXObject(objectName);
-            if (xobject instanceof PDImageXObject image) {
+            PDXObject pdxObject = getResources().getXObject(objectName);
+            if (pdxObject instanceof PDImageXObject image) {
 
-                Matrix ctmNew = getGraphicsState().getCurrentTransformationMatrix();
+                Matrix matrix = getGraphicsState().getCurrentTransformationMatrix();
                 // store the image coordinates, currentPage and the image in bytes
-                ImageDTO imageDTO = new ImageDTO(currentPage, ctmNew.getTranslateX(), ctmNew.getTranslateY(), image.getHeight(), image.getWidth(), Math.round(ctmNew.getScaleX()),
-                        Math.round(ctmNew.getScaleY()), toByteArray(image.getImage(), "png"));
+                ImageDTO imageDTO = new ImageDTO(currentPage, matrix.getTranslateX(), matrix.getTranslateY(), image.getHeight(), image.getWidth(), Math.round(matrix.getScaleX()),
+                        Math.round(matrix.getScaleY()), toByteArray(image.getImage(), "png"));
                 images.add(imageDTO);
-
             }
-            else if (xobject instanceof PDFormXObject form) {
+            else if (pdxObject instanceof PDFormXObject form) {
                 showForm(form);
             }
         }
@@ -101,7 +105,7 @@ public class ImageExtractor extends PDFStreamEngine {
     }
 
     /**
-     * Returns the images found after invoking {@link #process()} method.
+     * @return the images found after invoking {@link #process()} method.
      */
     public List<ImageDTO> getImages() {
         return images;
@@ -110,10 +114,9 @@ public class ImageExtractor extends PDFStreamEngine {
     /**
      * Converts BufferedImage to byte[]
      */
-    private byte[] toByteArray(BufferedImage bi, String format) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(bi, format, baos);
-        byte[] bytes = baos.toByteArray();
-        return bytes;
+    private byte[] toByteArray(BufferedImage bufferedImage, String format) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ImageIO.write(bufferedImage, format, outputStream);
+        return outputStream.toByteArray();
     }
 }

@@ -53,14 +53,15 @@ public class ExamUserResource {
     /**
      * POST /courses/:courseId/exams/:examId/exam-users : Update the exam user with the given DTO info
      *
-     * @param courseId    the id of the course
-     * @param examId      the id of the exam
-     * @param examUserDTO the dto containing exam user info
+     * @param examUserDTO   the dto containing exam user info
+     * @param signatureFile the signature of the student
+     * @param courseId      the id of the course
+     * @param examId        the id of the exam
      * @return saved examUser ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
     @PostMapping("courses/{courseId}/exams/{examId}/exam-users")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<ExamUser> updateExamUser(@RequestPart ExamUserDTO examUserDTO, @RequestPart(value = "file", required = false) MultipartFile file,
+    public ResponseEntity<ExamUser> updateExamUser(@RequestPart ExamUserDTO examUserDTO, @RequestPart(value = "file", required = false) MultipartFile signatureFile,
             @PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to update {} as exam user to exam : {}", examUserDTO.login(), examId);
 
@@ -74,8 +75,8 @@ public class ExamUserResource {
             throw new EntityNotFoundException("Exam user", examUserDTO.login());
         }
 
-        if (file != null) {
-            String responsePath = fileService.handleSaveFile(file, true, false);
+        if (signatureFile != null) {
+            String responsePath = fileService.handleSaveFile(signatureFile, true, false);
             examUser.setSigningImagePath(responsePath);
         }
         examUser.setDidCheckImage(examUserDTO.didCheckImage());
