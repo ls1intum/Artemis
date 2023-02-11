@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUsersNotFoundDTO;
 
@@ -52,14 +51,12 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     private Exam exam1;
 
-    private static final int NUMBER_OF_STUDENTS = 5;
+    private static final int NUMBER_OF_STUDENTS = 4;
 
     @BeforeEach
-    void initTestCase() throws Exception {
+    void initTestCase() {
         database.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 0, 0, 1);
         // Add users that are not in the course
-        database.createAndSaveUser(TEST_PREFIX + "student42", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
-        database.createAndSaveUser(TEST_PREFIX + "instructor6", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
 
         var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         var student2 = database.getUserByLogin(TEST_PREFIX + "student2");

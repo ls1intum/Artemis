@@ -400,7 +400,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     /**
      * Generates the missing student exams randomly based on the exam configuration and the exercise groups.
      * The difference between all registered users and the users who already have an individual exam is the set of users for which student exams will be created.
-     *
+     * <p>
      * Important: the passed exams needs to include the registered users, exercise groups and exercises (eagerly loaded)
      *
      * @param exam with eagerly loaded registered users, exerciseGroups and exercises loaded
@@ -411,8 +411,6 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         // Get all users who already have an individual exam
         Set<User> usersWithStudentExam = findUsersWithStudentExamsForExam(exam.getId());
 
-        // Get all registered users
-
         // Get all students who don't have an exam yet
         Set<User> missingUsers = exam.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
         missingUsers.removeAll(usersWithStudentExam);
@@ -420,5 +418,4 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         // StudentExams are saved in the called method
         return createRandomStudentExams(exam, missingUsers);
     }
-
 }

@@ -42,10 +42,10 @@ public class ExamUser extends AbstractAuditingEntity {
     private String actualSeat;
 
     @Column(name = "planned_room")
-    private String plannedRoom = "not set";
+    private String plannedRoom;
 
     @Column(name = "planned_seat")
-    private String plannedSeat = "not set";
+    private String plannedSeat;
 
     @Column(name = "did_check_image")
     private Boolean didCheckImage = false;

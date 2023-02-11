@@ -7,6 +7,7 @@ import { Exam } from 'app/entities/exam.model';
 import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/button.component';
+
 describe('StudentsUploadImagesButtonComponent', () => {
     let fixture: ComponentFixture<StudentsUploadImagesButtonComponent>;
     let comp: StudentsUploadImagesButtonComponent;
