@@ -80,6 +80,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     Optional<ProgrammingExercise> findWithSubmissionPolicyById(Long exerciseId);
 
+    List<ProgrammingExercise> findByProjectKey(String projectKey);
+
+    @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
+    List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(String projectKey);
+
     /**
      * Returns all programming exercises with its test cases
      *
@@ -224,8 +229,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             WHERE pep.id = :#{#participationId}
             """)
     Optional<ProgrammingExercise> findByStudentParticipationIdWithTemplateParticipation(@Param("participationId") Long participationId);
-
-    List<ProgrammingExercise> findByProjectKey(String projectKey);
 
     @Query("""
             SELECT p FROM ProgrammingExercise p

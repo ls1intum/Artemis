@@ -47,8 +47,6 @@ public class ProgrammingExerciseParticipationService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserRepository userRepository;
-
     private final GitService gitService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -56,7 +54,7 @@ public class ProgrammingExerciseParticipationService {
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentParticipationRepository studentParticipationRepository,
             ParticipationRepository participationRepository, TeamService teamService, TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
-            Optional<VersionControlService> versionControlService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
+            Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService, GitService gitService,
             ProgrammingExerciseRepository programmingExerciseRepository) {
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -66,7 +64,6 @@ public class ProgrammingExerciseParticipationService {
         this.teamService = teamService;
         this.versionControlService = versionControlService;
         this.authCheckService = authCheckService;
-        this.userRepository = userRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
@@ -193,11 +190,11 @@ public class ProgrammingExerciseParticipationService {
      * @param participation to check permissions for.
      * @return true if the user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
      */
-    public boolean canAccessParticipation(@NotNull ProgrammingExerciseParticipation participation) {
+    public boolean canAccessParticipation(@NotNull ProgrammingExerciseParticipation participation, User user) {
         if (participation == null) {
             return false;
         }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+
         // If the current user is owner of the participation, they are allowed to access it
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && studentParticipation.isOwnedBy(user)) {
             return true;

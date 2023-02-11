@@ -18,18 +18,17 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.exception.LocalVCException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
-import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
 @Service
 @Profile("localvc")
@@ -46,8 +45,6 @@ public class LocalVCFilterService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
@@ -58,38 +55,34 @@ public class LocalVCFilterService {
 
     private final ExamSubmissionService examSubmissionService;
 
-    private final SubmissionPolicyService submissionPolicyService;
-
-    private final PlagiarismService plagiarismService;
+    private final RepositoryAccessService repositoryAccessService;
 
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
     public LocalVCFilterService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, CourseService courseService,
-            AuthorizationCheckService authorizationCheckService, ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService,
+            AuthorizationCheckService authorizationCheckService, ProgrammingExerciseService programmingExerciseService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExamSubmissionService examSubmissionService,
-            SubmissionPolicyService submissionPolicyService, PlagiarismService plagiarismService) {
+            RepositoryAccessService repositoryAccessService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
         this.courseService = courseService;
         this.authorizationCheckService = authorizationCheckService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.examSubmissionService = examSubmissionService;
-        this.submissionPolicyService = submissionPolicyService;
-        this.plagiarismService = plagiarismService;
+        this.repositoryAccessService = repositoryAccessService;
     }
 
     /**
-     * @param servletRequest The object containing all information about the incoming request.
-     * @param forPush        Whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
+     * @param servletRequest       The object containing all information about the incoming request.
+     * @param repositoryActionType Indicates whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
      * @throws LocalVCAuthException For when the user cannot be authenticated or is not authorized to access the repository.
      */
-    public void authenticateAndAuthorizeGitRequest(HttpServletRequest servletRequest, boolean forPush) throws LocalVCAuthException {
+    public void authenticateAndAuthorizeGitRequest(HttpServletRequest servletRequest, RepositoryActionType repositoryActionType) throws LocalVCAuthException {
 
         String basicAuthCredentials = checkAuthorizationHeader(servletRequest.getHeader(LocalVCFilterService.AUTHORIZATION_HEADER));
 
@@ -126,13 +119,18 @@ public class LocalVCFilterService {
         ProgrammingExercise exercise;
 
         try {
-            exercise = programmingExerciseService.findOneByProjectKey(projectKey);
+            exercise = programmingExerciseService.findOneByProjectKey(projectKey, true);
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey);
         }
 
-        authorizeUser(repositoryTypeOrUserName, exercise, user, isTestRunRepository, forPush);
+        // Check that offline IDE usage is allowed.
+        if (Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
+            throw new LocalVCForbiddenException();
+        }
+
+        authorizeUser(repositoryTypeOrUserName, user, exercise, isTestRunRepository, repositoryActionType);
     }
 
     private String checkAuthorizationHeader(String authorizationHeader) throws LocalVCAuthException {
@@ -162,14 +160,8 @@ public class LocalVCFilterService {
             throw new LocalVCAuthException();
         }
 
-        User user = userRepository.findOneByLogin(username).orElse(null);
-
         // Check that the user exists.
-        if (user == null) {
-            throw new LocalVCAuthException();
-        }
-
-        return user;
+        return userRepository.findOneByLogin(username).orElseThrow(LocalVCAuthException::new);
     }
 
     private LocalVCRepositoryUrl validateRepositoryUrl(String url) throws LocalVCBadRequestException {
@@ -186,92 +178,122 @@ public class LocalVCFilterService {
         return localVCRepositoryUrl;
     }
 
-    private void authorizeUser(String repositoryTypeOrUserName, ProgrammingExercise exercise, User user, boolean isTestRunRepository, boolean forPush)
+    private void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, boolean isTestRunRepository, RepositoryActionType repositoryActionType)
             throws LocalVCAuthException, LocalVCForbiddenException, LocalVCInternalException {
 
-        if (isRequestingBaseRepository(repositoryTypeOrUserName)) {
-            // ---- Requesting one of the base repositories ("exercise", "tests", or "solution") ----
-            authorizeUserForBaseRepository(user, repositoryTypeOrUserName, exercise);
+        if (isRequestingTestRepository(repositoryTypeOrUserName)) {
+            try {
+                repositoryAccessService.checkAccessTestRepositoryElseThrow(false, exercise, user);
+            }
+            catch (AccessForbiddenException e) {
+                throw new LocalVCForbiddenException();
+            }
             return;
         }
 
-        // ---- Requesting one of the participant repositories. ----
+        Participation participation;
 
-        // Check that offline IDE usage is allowed.
-        if (Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
-            throw new LocalVCForbiddenException();
-        }
-
-        if (!repositoryTypeOrUserName.equals(user.getLogin())) {
-            // Instructors can fetch and push to any repository.
-            if (authorizationCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-                return;
-            }
-            // Teaching assistants can only fetch any repository.
-            if (!forPush && authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-                return;
-            }
-            // Could still be a team exercise. This is checked in the next step.
-        }
-
-        ProgrammingExerciseStudentParticipation participation;
         try {
-            participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRun(exercise, repositoryTypeOrUserName,
-                    isTestRunRepository, false);
+            if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
+                participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
+            }
+            else if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
+                participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
+            }
+            else {
+                participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRun(exercise, repositoryTypeOrUserName,
+                        isTestRunRepository, false);
+
+                // In this case, the username in the repositoryUrl must correspond to the user, if it is not a team exercise.
+                if (!repositoryTypeOrUserName.equals(user.getLogin()) && !exercise.isTeamMode()) {
+                    throw new LocalVCAuthException();
+                }
+            }
         }
         catch (EntityNotFoundException e) {
-            // This should not happen. If the participation was deleted, the repository should have been deleted as well which results in an immediate 404.
             throw new LocalVCInternalException(
-                    "Could not find participation for exercise " + exercise.getId() + " and user " + user.getLogin() + " and test run " + isTestRunRepository);
+                    "Could not find single participation for exercise " + exercise.getId() + " and repository type or user name " + repositoryTypeOrUserName);
         }
 
-        if (exercise.isTeamMode()) {
-            // ---- Repository belongs to a team. ----
-
-            // Check that the team name in the repository name corresponds to the team that is found in the participation.
-            if (participation.getTeam().isEmpty()) {
-                throw new LocalVCInternalException("Programming exercise participation " + participation.getId() + " is missing a team.");
-            }
-            if (!participation.getTeam().get().getShortName().equals(repositoryTypeOrUserName)) {
-                throw new LocalVCAuthException();
-            }
+        try {
+            repositoryAccessService.checkAccessRepositoryElseThrow(participation, exercise, user, repositoryActionType);
         }
-        else {
-            // ---- Repository belongs to a single student. ----
-
-            // Check that the username in the repository name corresponds to the username used for Basic Auth.
-            if (!user.getLogin().equals(repositoryTypeOrUserName)) {
-                throw new LocalVCAuthException();
-            }
-        }
-
-        // Check that the student or the student's team owns the participation.
-        if (!participation.isOwnedBy(user)) {
-            throw new LocalVCAuthException();
-        }
-
-        if (exercise.isExamExercise()) {
-            authorizeUserForExamExercise(participation, exercise, user, forPush);
-        }
-        else {
-            authorizeUserForCourseExercise(participation, exercise, isTestRunRepository, forPush);
-        }
-
-        // Check the submission policy.
-        checkSubmissionPolicy(exercise, participation);
-
-        // Check whether there was plagiarism detected and the user was notified by the instructor.
-        if (plagiarismService.wasUserNotifiedByInstructor(participation.getId(), user.getLogin())) {
+        catch (AccessForbiddenException e) {
             throw new LocalVCForbiddenException();
         }
+        catch (IllegalArgumentException e) {
+            throw new LocalVCInternalException();
+        }
+
+        // if (isRequestingBaseRepository(repositoryTypeOrUserName)) {
+        // // ---- Requesting one of the base repositories ("exercise", "tests", or "solution") ----
+        // authorizeUserForBaseRepository(user, repositoryTypeOrUserName, exercise);
+        // return;
+        // }
+        //
+        // // ---- Requesting one of the participant repositories. ----
+        //
+        //
+        //
+        // if (!repositoryTypeOrUserName.equals(user.getLogin())) {
+        // // Instructors can fetch and push to any repository.
+        // if (authorizationCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+        // return;
+        // }
+        //
+        // // Teaching assistants can only fetch any repository.
+        // if (!forPush && authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+        // return;
+        // }
+        //
+        // // Could still be a team mode exercise. If not, the user is trying to access another student's repository.
+        // if (!exercise.isTeamMode()) {
+        // throw new LocalVCAuthException();
+        // }
+        // }
+        //
+        // ProgrammingExerciseStudentParticipation participation;
+        // try {
+        // participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRun(exercise, repositoryTypeOrUserName,
+        // isTestRunRepository, false);
+        // }
+        // catch (EntityNotFoundException e) {
+        // // This should not happen. If the participation was deleted, the repository should have been deleted as well which results in an immediate 404.
+        // throw new LocalVCInternalException(
+        // "Could not find participation for exercise " + exercise.getId() + " and user " + user.getLogin() + " and test run " + isTestRunRepository);
+        // }
+        //
+        // // Check that the student or the student's team owns the participation.
+        // if (!participation.isOwnedBy(user)) {
+        // throw new LocalVCAuthException();
+        // }
+        //
+        // if (exercise.isExamExercise()) {
+        // authorizeUserForExamExercise(participation, exercise, user, forPush);
+        // }
+        // else {
+        // authorizeUserForCourseExercise(participation, exercise, isTestRunRepository, forPush);
+        // }
+        //
+        // // ---- Below checks are only relevant when the user pushes to the repository. If forPush == false, this code will not be reached. ----
+        //
+        // // Check the submission policy.
+        // if (exercise.getSubmissionPolicy() instanceof LockRepositoryPolicy policy && submissionPolicyService.isParticipationLocked(policy, participation)) {
+        // throw new LocalVCForbiddenException();
+        // }
+        //
+        // // Check whether there was plagiarism detected and the user was notified by the instructor.
+        // if (plagiarismService.wasUserNotifiedByInstructor(participation.getId(), user.getLogin())) {
+        // throw new LocalVCForbiddenException();
+        // }
     }
 
     private boolean isRequestingBaseRepository(String requestedRepositoryType) {
-        for (RepositoryType repositoryType : RepositoryType.values()) {
-            if (repositoryType.toString().equals(requestedRepositoryType))
-                return true;
-        }
-        return false;
+        return requestedRepositoryType.equals(RepositoryType.TEMPLATE.toString()) || requestedRepositoryType.equals(RepositoryType.SOLUTION.toString());
+    }
+
+    private boolean isRequestingTestRepository(String repositoryTypeOrUserName) {
+        return repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString());
     }
 
     private void authorizeUserForBaseRepository(User user, String repositoryType, ProgrammingExercise exercise) throws LocalVCAuthException, LocalVCInternalException {
@@ -308,11 +330,6 @@ public class LocalVCFilterService {
 
     private void authorizeUserForExamExercise(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise exercise, User user, boolean forPush)
             throws LocalVCAuthException, LocalVCForbiddenException {
-
-        // Check that the student owns the participation.
-        // if (participation.getStudent().isEmpty() || !participation.getStudent().get().getLogin().equals(user.getLogin())) {
-        // throw new LocalVCAuthException();
-        // }
 
         // Access is allowed for test runs independent of the start date and due date.
         if (participation.isTestRun()) {
@@ -356,25 +373,6 @@ public class LocalVCFilterService {
         // Due date of the exercise must be in the future.
         Optional<ZonedDateTime> dueDate = ExerciseDateService.getDueDate(participation);
         if (dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
-            throw new LocalVCForbiddenException();
-        }
-    }
-
-    private void checkSubmissionPolicy(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation)
-            throws LocalVCInternalException, LocalVCForbiddenException {
-        boolean submissionPolicyEnforced = false;
-
-        Optional<ProgrammingExercise> programmingExerciseWithPolicy = programmingExerciseRepository.findWithSubmissionPolicyById(exercise.getId());
-
-        if (programmingExerciseWithPolicy.isEmpty()) {
-            throw new LocalVCInternalException();
-        }
-
-        if (programmingExerciseWithPolicy.get().getSubmissionPolicy() instanceof LockRepositoryPolicy policy) {
-            submissionPolicyEnforced = submissionPolicyService.isParticipationLocked(policy, participation);
-        }
-
-        if (submissionPolicyEnforced) {
             throw new LocalVCForbiddenException();
         }
     }

@@ -1202,16 +1202,22 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Finds one programming exercise by its project key.
+     * Finds one programming exercise including its submission policy by the exercise's project key.
      *
      * @param projectKey the project key of the programming exercise.
      * @return the programming exercise.
      * @throws EntityNotFoundException if no programming exercise or multiple exercises with the given project key exist.
      */
-    public ProgrammingExercise findOneByProjectKey(String projectKey) throws EntityNotFoundException {
-        List<ProgrammingExercise> exercises = programmingExerciseRepository.findByProjectKey(projectKey);
+    public ProgrammingExercise findOneByProjectKey(String projectKey, boolean withSubmissionPolicy) throws EntityNotFoundException {
+        List<ProgrammingExercise> exercises;
+        if (withSubmissionPolicy) {
+            exercises = programmingExerciseRepository.findWithSubmissionPolicyByProjectKey(projectKey);
+        }
+        else {
+            exercises = programmingExerciseRepository.findByProjectKey(projectKey);
+        }
         if (exercises.size() != 1) {
-            throw new EntityNotFoundException("No course or multiple courses found for the given project key: " + projectKey);
+            throw new EntityNotFoundException("No exercise or multiple exercises found for the given project key: " + projectKey);
         }
         return exercises.get(0);
     }

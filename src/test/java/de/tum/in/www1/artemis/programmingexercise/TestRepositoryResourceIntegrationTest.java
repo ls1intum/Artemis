@@ -480,8 +480,6 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckoutRepositoryByNameAsStudent() {
         ProgrammingExercise exercise = programmingExerciseRepository.save(programmingExercise);
-        assertThrows(IllegalAccessException.class, () -> repositoryService.checkoutRepositoryByName(exercise, exercise.getVcsTemplateRepositoryUrl(), false));
-
         Principal mockPrincipal = mock(Principal.class);
         doReturn(TEST_PREFIX + "student1").when(mockPrincipal).getName();
         assertThrows(IllegalAccessException.class, () -> repositoryService.checkoutRepositoryByName(mockPrincipal, exercise, exercise.getVcsTemplateRepositoryUrl()));

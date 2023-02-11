@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
+
 /**
  * Filters incoming fetch requests reaching the local git server implementation.
  */
@@ -32,7 +34,7 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
         servletResponse.setHeader("WWW-Authenticate", "Basic");
 
         try {
-            localVCFilterService.authenticateAndAuthorizeGitRequest(servletRequest, false);
+            localVCFilterService.authenticateAndAuthorizeGitRequest(servletRequest, RepositoryActionType.READ);
         }
         catch (LocalVCBadRequestException e) {
             servletResponse.setStatus(400);

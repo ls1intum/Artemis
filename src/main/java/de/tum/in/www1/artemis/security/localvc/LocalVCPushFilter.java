@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
+
 /**
  * Filters incoming push requests reaching the local Version Control implementation.
  */
@@ -32,7 +34,7 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
         servletResponse.setHeader("WWW-Authenticate", "Basic");
 
         try {
-            localVCFilterService.authenticateAndAuthorizeGitRequest(servletRequest, true);
+            localVCFilterService.authenticateAndAuthorizeGitRequest(servletRequest, RepositoryActionType.WRITE);
         }
         catch (LocalVCBadRequestException e) {
             servletResponse.setStatus(400);

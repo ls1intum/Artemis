@@ -361,7 +361,8 @@ public class ResultResource {
             }
         }
         else if (participation instanceof ProgrammingExerciseParticipation) {
-            if (!programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
+            if (!programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation,
+                    userRepository.getUserWithGroupsAndAuthorities())) {
                 throw new AccessForbiddenException("participation", participationId);
             }
         }

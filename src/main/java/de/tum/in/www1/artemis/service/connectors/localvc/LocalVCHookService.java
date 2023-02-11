@@ -80,7 +80,7 @@ public class LocalVCHookService {
         ProgrammingExercise exercise;
 
         try {
-            exercise = programmingExerciseService.findOneByProjectKey(localVCRepositoryUrl.getProjectKey());
+            exercise = programmingExerciseService.findOneByProjectKey(localVCRepositoryUrl.getProjectKey(), false);
         }
         catch (EntityNotFoundException e) {
             // This should never happen, as the unambiguous exercise is already retrieved in the LocalVCPushFilter.

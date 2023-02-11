@@ -315,26 +315,6 @@ public class RepositoryService {
     /**
      * Retrieve a repository by its name.
      *
-     * @param exercise       to which the repository belongs.
-     * @param repoUrl        of the repository on the server.
-     * @param pullOnCheckout if true pulls after checking out the git repository.
-     * @return the repository if available.
-     * @throws GitAPIException        if the repository can't be checked out.
-     * @throws IllegalAccessException if the user does not have access to the repository.
-     */
-    public Repository checkoutRepositoryByName(Exercise exercise, VcsRepositoryUrl repoUrl, boolean pullOnCheckout) throws IllegalAccessException, GitAPIException {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
-        if (!hasPermissions) {
-            throw new IllegalAccessException();
-        }
-        return gitService.getOrCheckoutRepository(repoUrl, pullOnCheckout);
-    }
-
-    /**
-     * Retrieve a repository by its name.
-     *
      * @param principal entity used for permission checking.
      * @param exercise  to which the repository belongs.
      * @param repoUrl   of the repository on the server.
