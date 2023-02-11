@@ -30,8 +30,8 @@ public class TextAssessmentQueueService {
      * Calculates the proposedTextSubmission for a given Text exercise. This means the Text exercise which should be assessed next
      *
      * @param textExercise the exercise for
-     * @throws IllegalArgumentException if textExercise isn't automatically assessable
      * @return a TextSubmission with the highest information Gain if there is one
+     * @throws IllegalArgumentException if textExercise isn't automatically assessable
      */
     public Optional<TextSubmission> getProposedTextSubmission(TextExercise textExercise) {
         return getProposedTextSubmission(textExercise, null);
@@ -41,9 +41,9 @@ public class TextAssessmentQueueService {
      * Calculates the proposedTextSubmission for a given Text exercise
      *
      * @param textExercise the exercise for
-     * @param languages  list of languages the submission which the returned submission should have if null all languages are allowed
-     * @throws IllegalArgumentException if textExercise isn't automatically assessable
+     * @param languages    list of languages the submission which the returned submission should have if null all languages are allowed
      * @return a TextSubmission with the highest information Gain if there is one
+     * @throws IllegalArgumentException if textExercise isn't automatically assessable
      */
     @Transactional(readOnly = true) // TODO: remove transactional
     public Optional<TextSubmission> getProposedTextSubmission(TextExercise textExercise, List<Language> languages) {
@@ -62,6 +62,7 @@ public class TextAssessmentQueueService {
     /**
      * Return all TextSubmission which are the latest TextSubmission of a Participation and doesn't have a Result so far
      * The corresponding TextBlocks and Participations are retrieved from the database
+     *
      * @param exercise Exercise for which all assessed submissions should be retrieved
      * @return an unmodifiable list of all TextSubmission which aren't assessed at the Moment, but need assessment in the future.
      */
@@ -91,7 +92,7 @@ public class TextAssessmentQueueService {
      * Given an TextSubmission calculate the expected information gain
      * based on the smallerClusterMap and addedDistancesMap
      *
-     * @param textSubmission the textSubmission
+     * @param textSubmission    the textSubmission
      * @param smallerClusterMap Map of TextBlocks to percentage of smaller clusters the TextBlock Cluster
      * @return information gain for the TextSubmission
      */
@@ -114,9 +115,9 @@ public class TextAssessmentQueueService {
      * Sums up all the distances in the Blocks cluster
      *
      * @param textBlock textBlock for which the distance should be added
-     * @param cluster in which the textBlock distance should be added up
-     * @throws IllegalArgumentException if textBlock isn't an element of cluster
+     * @param cluster   in which the textBlock distance should be added up
      * @return added Distance to all other text blocks in the cluster
+     * @throws IllegalArgumentException if textBlock isn't an element of cluster
      */
     private double calculateAddedDistance(TextBlock textBlock, TextCluster cluster) {
         if (!cluster.getBlocks().contains(textBlock)) {
@@ -132,7 +133,7 @@ public class TextAssessmentQueueService {
      * Calculates and sets all AddedDistances to a list of TextBlocks in a Cluster
      *
      * @param textBlockList list of the TextBlocks
-     * @param textCluster Cluster
+     * @param textCluster   Cluster
      */
     public void setAddedDistances(List<TextBlock> textBlockList, TextCluster textCluster) {
         textBlockList.forEach(textBlock -> {
@@ -144,10 +145,11 @@ public class TextAssessmentQueueService {
     /**
      * Calculates the Percentages of Smaller Clusters for a list of textSubmissions
      * All TextSubmissions must have the same exercise
+     *
      * @param textSubmissionList for which the smaller clusters should be calculated
-     * @throws IllegalArgumentException if not all TextSubmissions are from the same exercise
      * @return return a map where the textBlock is the key and smaller cluster percentage is the value
-     * If a textBlock has no cluster or is already assessable, it isn't in the map
+     *         If a textBlock has no cluster or is already assessable, it isn't in the map
+     * @throws IllegalArgumentException if not all TextSubmissions are from the same exercise
      */
     public Map<TextBlock, Double> calculateSmallerClusterPercentageBatch(List<TextSubmission> textSubmissionList) {
         Map<TextBlock, Double> result = new HashMap<>();

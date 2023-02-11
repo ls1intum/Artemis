@@ -24,17 +24,18 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationLifecycle;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -56,6 +57,12 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Autowired
     private BitbucketRequestMockProvider bitbucketRequestMockProvider;
+
+    @Autowired
+    private ExamRepository examRepository;
+
+    @Autowired
+    private StudentExamRepository studentExamRepository;
 
     private ProgrammingExercise programmingExercise;
 
@@ -624,10 +631,31 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         verify(scheduleService, timeout(5000).times(1)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.ASSESSMENT_DUE);
     }
 
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void foo() {
+        ProgrammingExercise examExercise = database.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        Exam exam = examExercise.getExamViaExerciseGroupOrCourseMember();
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(1));
+        exam = examRepository.save(exam);
+        User user = database.getUserByLogin(TEST_PREFIX + "student1");
+        StudentExam studentExam = database.addStudentExamWithUser(exam, user);
+        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) database
+                .addProgrammingParticipationWithResultForExercise(examExercise, TEST_PREFIX + "student1").getParticipation();
+        studentExam.setExercises(List.of(examExercise));
+        studentExam.setWorkingTime(1);
+        studentExamRepository.save(studentExam);
+
+        instanceMessageReceiveService.processExamWorkingTimeChangeDuringConduction(studentExam.getId());
+
+        verify(versionControlService, timeout(200).times(1)).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), examExercise.getProjectKey(),
+                participation.getStudents());
+    }
+
     /**
      * Sets the due date and build and test after due date for the {@code programmingExercise} to NOW + the delay.
      *
-     * @param dueDateDelayMillis amount of milliseconds from reference in which the due date should be.
+     * @param dueDateDelayMillis          amount of milliseconds from reference in which the due date should be.
      * @param buildAndTestDateDelayMillis amount of milliseconds from reference in which the build and test after due date should be.
      */
     private void setupProgrammingExerciseDates(final ZonedDateTime reference, Long dueDateDelayMillis, Long buildAndTestDateDelayMillis) {

@@ -140,7 +140,7 @@ public class NotificationTarget {
 
     /**
      * @return the NotificationTarget as a JSON String
-     * This is needed to stay consistent with the legacy implementation & data in the DB
+     *         This is needed to stay consistent with the legacy implementation & data in the DB
      */
     public String toJsonString() {
         String result = null;

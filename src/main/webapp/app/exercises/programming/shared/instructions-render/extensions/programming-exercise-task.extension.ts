@@ -113,7 +113,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                             completeString: testMatch[0],
                             taskName: testMatch[1],
                             // split the names by "," only when there is not a closing bracket without a previous opening bracket
-                            tests: testMatch[2].split(/,(?![^(]*?\))/).map((s) => s.trim()),
+                            tests: testMatch[2] ? testMatch[2].split(/,(?![^(]*?\))/).map((s) => s.trim()) : [],
                         };
                     });
                 const tasksWithParticipationId: TaskArrayWithExercise = {

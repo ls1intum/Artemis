@@ -566,10 +566,12 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.question = new DragAndDropQuestion();
         component.question.text = 'should be removed';
 
-        component.changesInMarkdown();
+        const newValue = 'new value';
+        component.changesInMarkdown(newValue);
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.question.text).toBeUndefined();
+        expect(component.questionEditorText).toBe(newValue);
     });
 
     it('should detect domain commands', () => {

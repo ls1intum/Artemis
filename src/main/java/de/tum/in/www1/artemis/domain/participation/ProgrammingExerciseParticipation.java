@@ -39,6 +39,7 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
 
     /**
      * This method is used to automatically create a user independent URL when serializing subclasses into json
+     *
      * @return a user independent url without the username
      */
     @Nullable

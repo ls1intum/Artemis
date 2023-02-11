@@ -18,6 +18,12 @@ export class ConversationSidebarSectionComponent implements OnInit {
     @Output()
     settingsChanged = new EventEmitter<void>();
 
+    @Output()
+    conversationHiddenStatusChange = new EventEmitter<void>();
+
+    @Output()
+    conversationFavoriteStatusChange = new EventEmitter<void>();
+
     @Input()
     label: string;
 

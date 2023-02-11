@@ -212,6 +212,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const activeParticipation: ProgrammingExerciseStudentParticipation = { id: 1, initializationState: InitializationState.INITIALIZED };
         const practiceParticipation: ProgrammingExerciseStudentParticipation = { id: 2, testRun: true, initializationState: InitializationState.INACTIVE };
         comp.exercise = { id: 3, studentParticipations: [inactiveParticipation, practiceParticipation] } as ProgrammingExercise;
+        comp.updateParticipations();
 
         resumeStub.mockReturnValue(of(activeParticipation));
 
@@ -251,6 +252,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
         comp.exercise = exercise;
         comp.examMode = true;
+        comp.updateParticipations();
 
         fixture.detectChanges();
         tick();

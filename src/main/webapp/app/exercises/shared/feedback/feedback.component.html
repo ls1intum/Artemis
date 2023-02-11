@@ -13,7 +13,7 @@
     <!-- Message, if defined -->
     <div *ngIf="messageKey" class="mb-3"><h6 [innerHTML]="messageKey | artemisTranslate"></h6></div>
     <div *ngIf="showMissingAutomaticFeedbackInformation" class="mb-3">
-        <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate : { date: latestIndividualDueDate }"></h6>
+        <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate : { date: latestDueDate }"></h6>
     </div>
 
     <!-- Loading state -->

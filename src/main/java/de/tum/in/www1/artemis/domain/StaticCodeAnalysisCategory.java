@@ -76,6 +76,22 @@ public class StaticCodeAnalysisCategory extends DomainObject {
         this.exercise = exercise;
     }
 
+    /**
+     * Creates a copy of this object with the same values.
+     * As an exception, the {exercise} attribute will not be set and be null.
+     *
+     * @return New SCA category object with the same values
+     * @see de.tum.in.www1.artemis.service.StaticCodeAnalysisService#importCategoriesFromExercise(ProgrammingExercise, ProgrammingExercise)
+     */
+    public StaticCodeAnalysisCategory copy() {
+        StaticCodeAnalysisCategory category = new StaticCodeAnalysisCategory();
+        category.setName(getName());
+        category.setPenalty(getPenalty());
+        category.setMaxPenalty(getMaxPenalty());
+        category.setState(getState());
+        return category;
+    }
+
     @Override
     public String toString() {
         return "StaticCodeAnalysisCategory{" + "id=" + getId() + ", name='" + name + '\'' + ", penalty=" + penalty + ", maxPenalty=" + maxPenalty + ", state=" + state + '}';

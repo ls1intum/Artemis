@@ -212,6 +212,7 @@ public class InstanceMessageReceiveService {
 
     /**
      * Unlocks all repositories that do not have an individual due date before now
+     *
      * @param exerciseId the id of the programming exercises where the repos should be unlocked
      */
     public void processUnlockAllRepositoriesWithoutEarlierIndividualDueDate(Long exerciseId) {
@@ -226,6 +227,7 @@ public class InstanceMessageReceiveService {
 
     /**
      * Locks all repositories that do not have an individual due date after now
+     *
      * @param exerciseId the id of the programming exercises where the repos should be locked
      */
     public void processLockAllRepositoriesWithoutLaterIndividualDueDate(Long exerciseId) {
@@ -270,6 +272,11 @@ public class InstanceMessageReceiveService {
     public void processScheduleExamMonitoringCancel(Long examId) {
         log.info("Received schedule cancel for exam monitoring {}", examId);
         examMonitoringScheduleService.cancelExamMonitoringTask(examId);
+    }
+
+    public void processExamWorkingTimeChangeDuringConduction(Long studentExamId) {
+        log.info("Received reschedule of student exam during conduction {}", studentExamId);
+        programmingExerciseScheduleService.rescheduleStudentExamDuringConduction(studentExamId);
     }
 
     public void processScheduleParticipantScore(Long exerciseId, Long participantId, Long resultIdToBeDeleted) {

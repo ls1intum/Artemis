@@ -19,6 +19,7 @@ public abstract class ProgrammingLanguageFeatureService {
 
     /**
      * Get the ProgrammingLanguageFeature configured for the given ProgrammingLanguage.
+     *
      * @param programmingLanguage for which the ProgrammingLanguageFeature should be returned
      * @return the ProgrammingLanguageFeature for the requested ProgrammingLanguage
      * @throws IllegalArgumentException if no ProgrammingLanguageFeature for the specified ProgrammingLanguage could be found
