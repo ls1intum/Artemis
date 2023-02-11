@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -189,10 +188,10 @@ public class ExamRegistrationService {
             userService.addUserToGroup(student, course.getStudentGroupName(), Role.STUDENT);
         }
 
-        ExamUser registeredExamUserCheck = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
+        ExamUser registeredExamUser = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
 
-        if (!exam.getExamUsers().contains(registeredExamUserCheck)) {
-            ExamUser registeredExamUser = new ExamUser();
+        if (!exam.getExamUsers().contains(registeredExamUser)) {
+            registeredExamUser = new ExamUser();
             registeredExamUser.setUser(student);
             registeredExamUser.setExam(exam);
             registeredExamUser = examUserRepository.save(registeredExamUser);
@@ -200,7 +199,8 @@ public class ExamRegistrationService {
             examRepository.save(exam);
         }
         else {
-            throw new ConflictException("Student is already registered", "exam", "registeredExamStudent");
+            log.warn("Student {} is already registered for the exam {}", student.getLogin(), exam.getId());
+            return;
         }
 
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -286,10 +286,10 @@ public class ExamRegistrationService {
     public void unregisterAllStudentFromExam(Exam exam, boolean deleteParticipationsAndSubmission) {
 
         // remove all registered students
-        List<ExamUser> registeredExamUserList = examUserRepository.findAllByExamId(exam.getId());
-        registeredExamUserList.forEach(exam::removeExamUser);
+        List<ExamUser> registeredExamUsers = examUserRepository.findAllByExamId(exam.getId());
+        registeredExamUsers.forEach(exam::removeExamUser);
         examRepository.save(exam);
-        examUserRepository.deleteAllById(registeredExamUserList.stream().map(ExamUser::getId).toList());
+        examUserRepository.deleteAllById(registeredExamUsers.stream().map(ExamUser::getId).toList());
 
         // remove all students exams
         Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(exam.getId());
