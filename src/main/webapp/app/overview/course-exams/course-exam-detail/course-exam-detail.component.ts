@@ -69,8 +69,7 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
 
     /**
      * navigate to /courses/:courseId/exams/:examId for real exams or
-     * /courses/:courseId/exams/:examId/test-exam/start for test exams or
-     * /course-management/:courseId/exams/:examId for tutors
+     * /courses/:courseId/exams/:examId/test-exam/start for test exams
      */
     openExam() {
         if (this.exam.testExam) {
