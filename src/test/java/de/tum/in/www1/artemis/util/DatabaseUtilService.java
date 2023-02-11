@@ -2006,16 +2006,22 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
-    public Result addVariousVisibilityFeedbackToResults(Result result) {
-        Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("afterDueDate1").visibility(Visibility.AFTER_DUE_DATE));
-        Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("never1").visibility(Visibility.NEVER));
-        Feedback feedback3 = feedbackRepo.save(new Feedback().detailText("always1").visibility(Visibility.ALWAYS));
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(feedback1);
-        feedbacks.add(feedback2);
-        feedbacks.add(feedback3);
-        result.addFeedbacks(feedbacks);
-        return resultRepo.save(result);
+    public Result addVariousFeedbackTypeFeedbacksToResult(Result result) {
+        // The order of declaration here should be the same order as in FeedbackType for each enum type
+        List<Feedback> feedbacks = Arrays.asList(feedbackRepo.save(new Feedback().detailText("manual").type(FeedbackType.MANUAL)),
+                feedbackRepo.save(new Feedback().detailText("manual_unreferenced").type(FeedbackType.MANUAL_UNREFERENCED)),
+                feedbackRepo.save(new Feedback().detailText("automatic_adapted").type(FeedbackType.AUTOMATIC_ADAPTED)),
+                feedbackRepo.save(new Feedback().detailText("automatic").type(FeedbackType.AUTOMATIC)));
+
+        return resultRepo.save(result.feedbacks(feedbacks));
+    }
+
+    public Result addVariousVisibilityFeedbackToResult(Result result) {
+        List<Feedback> feedbacks = Arrays.asList(feedbackRepo.save(new Feedback().detailText("afterDueDate1").visibility(Visibility.AFTER_DUE_DATE)),
+                feedbackRepo.save(new Feedback().detailText("never1").visibility(Visibility.NEVER)),
+                feedbackRepo.save(new Feedback().detailText("always1").visibility(Visibility.ALWAYS)));
+
+        return resultRepo.save(result.feedbacks(feedbacks));
     }
 
     public Result addFeedbackToResult(Feedback feedback, Result result) {
