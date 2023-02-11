@@ -23,7 +23,7 @@ import {
     textExerciseEditor,
 } from '../../support/artemis';
 import { admin, instructor, studentOne, tutor } from '../../support/users';
-import { CypressExerciseType } from '../../support/requests/CourseManagementRequests';
+import { EXERCISE_TYPE } from '../../support/constants';
 
 let exam: Exam;
 let exerciseGroup: ExerciseGroup;
@@ -98,7 +98,7 @@ describe('Exam assessment', () => {
 
         it('Complaints about programming exercises assessment', () => {
             if (programmingAssessmentSuccessful) {
-                handleComplaint(false, CypressExerciseType.PROGRAMMING);
+                handleComplaint(false, EXERCISE_TYPE.Programming);
             }
         });
     });
@@ -146,7 +146,7 @@ describe('Exam assessment', () => {
 
         it('Complaints about modeling exercises assessment', () => {
             if (modelingAssessmentSuccessful) {
-                handleComplaint(true, CypressExerciseType.MODELING);
+                handleComplaint(true, EXERCISE_TYPE.Modeling);
             }
         });
     });
@@ -191,7 +191,7 @@ describe('Exam assessment', () => {
 
         it('Complaints about text exercises assessment', () => {
             if (textAssessmentSuccessful) {
-                handleComplaint(false, CypressExerciseType.TEXT);
+                handleComplaint(false, EXERCISE_TYPE.Text);
             }
         });
     });
@@ -272,7 +272,7 @@ function prepareExam(end: dayjs.Dayjs, resultDate = end.add(1, 'seconds')) {
     });
 }
 
-function handleComplaint(reject: boolean, exerciseType: CypressExerciseType) {
+function handleComplaint(reject: boolean, exerciseType: EXERCISE_TYPE) {
     const complaintText = 'Lorem ipsum dolor sit amet';
     const complaintResponseText = ' consetetur sadipscing elitr';
 
@@ -294,7 +294,7 @@ function handleComplaint(reject: boolean, exerciseType: CypressExerciseType) {
     } else {
         examAssessment.acceptComplaint(complaintResponseText, true, exerciseType);
     }
-    if (exerciseType == CypressExerciseType.MODELING) {
+    if (exerciseType == EXERCISE_TYPE.Modeling) {
         cy.get('.message').should('contain.text', 'Response to complaint has been submitted');
     } else {
         cy.get('.message').should('contain.text', 'The assessment was updated successfully.');

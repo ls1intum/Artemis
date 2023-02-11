@@ -1,7 +1,6 @@
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
 import { MODELING_EDITOR_CANVAS } from '../exercises/modeling/ModelingEditor';
-import { CypressExerciseType } from '../../requests/CourseManagementRequests';
-import { BASE_API, PUT } from '../../constants';
+import { BASE_API, EXERCISE_TYPE, PUT } from '../../constants';
 
 const ASSESSMENT_CONTAINER = '#modeling-assessment-container';
 
@@ -23,10 +22,10 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
     }
 
     rejectComplaint(response: string, examMode: false) {
-        return super.rejectComplaint(response, examMode, CypressExerciseType.MODELING);
+        return super.rejectComplaint(response, examMode, EXERCISE_TYPE.Modeling);
     }
     acceptComplaint(response: string, examMode: false) {
-        return super.acceptComplaint(response, examMode, CypressExerciseType.MODELING);
+        return super.acceptComplaint(response, examMode, EXERCISE_TYPE.Modeling);
     }
 
     submitExample() {
