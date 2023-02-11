@@ -2030,7 +2030,7 @@ public class DatabaseUtilService {
         feedbackRepo.saveAll(feedbacks);
         return resultRepo.save(result.feedbacks(feedbacks));
     }
-    // @formatter on
+    // @formatter:on
 
     public Result addFeedbackToResult(Feedback feedback, Result result) {
         feedbackRepo.save(feedback);
