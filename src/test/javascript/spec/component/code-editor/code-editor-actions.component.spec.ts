@@ -272,27 +272,40 @@ describe('CodeEditorActionsComponent', () => {
         flush();
     }));
 
-    it('should autosave unsaved files after 30 seconds', fakeAsync(() => {
-        const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
-        const savedFilesResult: { [fileName: string]: null } = { fileName: null };
-        const saveObservable = new Subject<typeof savedFilesResult>();
-        comp.editorState = EditorState.UNSAVED_CHANGES;
-        comp.isBuilding = false;
-        comp.unsavedFiles = unsavedFiles;
-        fixture.detectChanges();
+    it.each([false, true])(
+        'should autosave unsaved files after 30 seconds if autosave is not disabled',
+        fakeAsync((disableAutoSave: boolean) => {
+            const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
+            const savedFilesResult: { [fileName: string]: null } = { fileName: null };
+            const saveObservable = new Subject<typeof savedFilesResult>();
+            comp.editorState = EditorState.UNSAVED_CHANGES;
+            comp.isBuilding = false;
+            comp.unsavedFiles = unsavedFiles;
+            comp.disableAutoSave = disableAutoSave;
 
-        updateFilesStub.mockReturnValue(saveObservable);
+            const saveChangedFilesSpy = jest.spyOn(comp, 'saveChangedFiles');
+            fixture.detectChanges();
 
-        tick(1000 * 31);
+            updateFilesStub.mockReturnValue(saveObservable);
 
-        // receive result for save
-        saveObservable.next(savedFilesResult);
-        expect(comp.editorState).toEqual(EditorState.SAVING);
+            tick(1000 * 31);
 
-        fixture.detectChanges();
-        fixture.destroy();
-        flush();
-    }));
+            // receive result for save
+            if (disableAutoSave) {
+                expect(saveChangedFilesSpy).not.toHaveBeenCalled();
+                expect(comp.editorState).toEqual(EditorState.UNSAVED_CHANGES);
+            } else {
+                expect(saveChangedFilesSpy).toHaveBeenCalledOnce();
+                expect(saveChangedFilesSpy).toHaveBeenCalledWith();
+                saveObservable.next(savedFilesResult);
+                expect(comp.editorState).toEqual(EditorState.SAVING);
+            }
+
+            fixture.detectChanges();
+            fixture.destroy();
+            flush();
+        }),
+    );
 
     it('should save on destroy', () => {
         const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
