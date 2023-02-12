@@ -1,13 +1,11 @@
 import { BASE_API, POST } from '../../../constants';
+import { getExercise } from '../../../utils';
 
 export class MultipleChoiceQuiz {
-    private getQuizBody(quizQuestionId: number) {
-        return cy.get('#question' + quizQuestionId);
-    }
-
-    tickAnswerOption(optionNumber: number, quizQuestionId = 0) {
-        this.getQuizBody(quizQuestionId)
-            .get('#answer-option-' + optionNumber)
+    tickAnswerOption(exerciseID: number, optionNumber: number, quizQuestionId = 0) {
+        getExercise(exerciseID)
+            .find('#question' + quizQuestionId)
+            .find('#answer-option-' + optionNumber)
             .find('#mc-answer-selection-' + optionNumber)
             .click();
     }

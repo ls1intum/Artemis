@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -68,11 +69,13 @@ public class ExerciseResource {
 
     private final ParticipationRepository participationRepository;
 
+    private final ExamAccessService examAccessService;
+
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
-            ParticipationRepository participationRepository) {
+            ParticipationRepository participationRepository, ExamAccessService examAccessService) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -86,6 +89,7 @@ public class ExerciseResource {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.quizBatchService = quizBatchService;
         this.participationRepository = participationRepository;
+        this.examAccessService = examAccessService;
     }
 
     /**
@@ -139,7 +143,41 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId : get the "exerciseId" exercise with data useful for tutors.
+     * GET /exercises/:exerciseId/example-solution : get the exercise with example solution without sensitive fields
+     * if the user is allowed to access the example solution and if the example solution is published.
+     *
+     * @param exerciseId the exerciseId of the exercise with the example solution
+     * @return the ResponseEntity with status 200 (OK) and with the body of the exercise with its example solution after filtering sensitive data, or with
+     *         status 404 (Not Found) if the exercise is not found, or with status 403 (Forbidden) if the current user does not have access to the example solution.
+     */
+    @GetMapping("/exercises/{exerciseId}/example-solution")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Exercise> getExerciseForExampleSolution(@PathVariable Long exerciseId) {
+
+        log.debug("REST request to get exercise with example solution: {}", exerciseId);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+
+        if (exercise.isExamExercise()) {
+            examAccessService.checkExamExerciseForExampleSolutionAccessElseThrow(exercise);
+        }
+        else {
+            // Course exercise
+            if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
+                throw new AccessForbiddenException("You are not allowed to see this exercise!");
+            }
+            if (!exercise.isExampleSolutionPublished()) {
+                throw new AccessForbiddenException("Example solution for exercise is not published yet!");
+            }
+        }
+
+        exercise.filterSensitiveInformation();
+        return ResponseEntity.ok(exercise);
+    }
+
+    /**
+     * GET /exercises/:exerciseId/for-assessment-dashboard : get the "exerciseId" exercise with data useful for tutors.
      *
      * @param exerciseId the exerciseId of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
@@ -205,7 +243,8 @@ public class ExerciseResource {
     }
 
     /**
-     * Reset the exercise by deleting all its participations /exercises/:exerciseId/reset This can be used by all exercise types, however they can also provide custom implementations
+     * Reset the exercise by deleting all its participations /exercises/:exerciseId/reset This can be used by all exercise types, however they can also provide custom
+     * implementations
      *
      * @param exerciseId exercise to delete
      * @return the ResponseEntity with status 200 (OK)

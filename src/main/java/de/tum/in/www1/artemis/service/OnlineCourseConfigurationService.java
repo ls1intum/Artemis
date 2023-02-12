@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.apache.commons.lang.RandomStringUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,6 +41,7 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
     }
 
     public List<ClientRegistration> getAllClientRegistrations() {
+        // TODO: we should avoid findAll() and instead try to retrieve the correct object directly from the database, potentially in a batch
         return onlineCourseConfigurationRepository.findAll().stream().map(this::getClientRegistration).filter(Objects::nonNull).toList();
     }
 
@@ -52,6 +53,7 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
 
     /**
      * Creates an initial configuration for online courses with default and random values
+     *
      * @param course the online course we create a configuration for
      * @return the created online course configuration
      */
@@ -68,6 +70,7 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
 
     /**
      * Validates the online course configuration
+     *
      * @param ocConfiguration the online course configuration being validated
      * @throws BadRequestAlertException 400 (Bad Request) if the online course configuration is invalid
      */

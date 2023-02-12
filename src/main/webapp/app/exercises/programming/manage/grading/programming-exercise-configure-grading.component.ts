@@ -61,6 +61,10 @@ const DefaultFieldValues = {
     [EditableField.MAX_PENALTY]: 0,
 };
 
+export type GradingTab = 'test-cases' | 'code-analysis' | 'submission-policy';
+
+export type Table = 'testCases' | 'codeAnalysis';
+
 @Component({
     selector: 'jhi-programming-exercise-configure-grading',
     templateUrl: './programming-exercise-configure-grading.component.html',
@@ -108,7 +112,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     isLoading = false;
     // This flag means that the grading config were edited, but no submission run was triggered yet.
     hasUpdatedGradingConfig = false;
-    activeTab: string;
+    activeTab: GradingTab;
 
     gradingStatistics?: ProgrammingExerciseGradingStatistics;
     maxIssuesPerCategory = 0;
@@ -142,6 +146,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Sets value of the testcases
      * @param testCases the test cases which should be set
      */
+    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set testCases(testCases: ProgrammingExerciseTestCase[]) {
         this.testCasesValue = testCases;
         this.updateTestCaseFilter();
@@ -460,6 +465,26 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         });
     }
 
+    importCategories(sourceExerciseId: number) {
+        this.isSaving = true;
+
+        this.gradingService
+            .importCategoriesFromExercise(this.programmingExercise.id!, sourceExerciseId)
+            .pipe(
+                tap((newConfiguration: StaticCodeAnalysisCategory[]) => {
+                    this.staticCodeAnalysisCategoriesForTable = newConfiguration;
+                    this.setChartAndBackupCategoryView();
+
+                    this.alertService.success('artemisApp.programmingExercise.configureGrading.categories.importSuccessful', { exercise: sourceExerciseId });
+                }),
+                catchError(() => {
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.importFailed`, { exercise: sourceExerciseId });
+                    return of(null);
+                }),
+            )
+            .subscribe(() => (this.isSaving = false));
+    }
+
     /**
      * Reset all test cases.
      */
@@ -666,7 +691,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Switch tabs
      * @param tab The target tab
      */
-    selectTab(tab: string) {
+    selectTab(tab: GradingTab) {
         const parentUrl = this.router.url.substring(0, this.router.url.lastIndexOf('/'));
         this.location.replaceState(`${parentUrl}/${tab}`);
         this.activeTab = tab;
@@ -689,7 +714,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     }
 
     tableSorts = { testCases: [{ prop: 'testName', dir: 'asc' }], codeAnalysis: [{ prop: 'name', dir: 'asc' }] };
-    onSort(table: 'testCases' | 'codeAnalysis', config: any) {
+    onSort(table: Table, config: any) {
         this.tableSorts[table] = config.sorts;
     }
 
@@ -698,7 +723,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param table The table of the property
      * @param prop The sorted property
      */
-    iconForSortPropField(table: 'testCases' | 'codeAnalysis', prop: string) {
+    iconForSortPropField(table: Table, prop: string) {
         const propSort = this.tableSorts[table].find((e) => e.prop === prop);
         if (!propSort) {
             return faSort;

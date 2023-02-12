@@ -44,6 +44,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
                 component = fixture.componentInstance;
                 tutorialGroup = generateExampleTutorialGroup({});
                 setInputValues();
+                fixture.detectChanges();
             });
     });
     const setInputValues = () => {
@@ -59,8 +60,6 @@ describe('TutorialGroupRowButtonsComponent', () => {
             result: of(),
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-
-        fixture.detectChanges();
         const openDialogSpy = jest.spyOn(component, 'openSessionDialog');
 
         const button = fixture.debugElement.nativeElement.querySelector('#sessions-' + tutorialGroup.id);
@@ -69,7 +68,12 @@ describe('TutorialGroupRowButtonsComponent', () => {
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledWith(TutorialGroupSessionsManagementComponent, { backdrop: 'static', scrollable: false, size: 'xl' });
+            expect(modalOpenSpy).toHaveBeenCalledWith(TutorialGroupSessionsManagementComponent, {
+                backdrop: 'static',
+                scrollable: false,
+                animation: false,
+                windowClass: 'session-management-dialog',
+            });
             expect(mockModalRef.componentInstance.tutorialGroupId).toEqual(tutorialGroup.id);
             expect(mockModalRef.componentInstance.course).toEqual(course);
         });
@@ -82,8 +86,6 @@ describe('TutorialGroupRowButtonsComponent', () => {
             result: of(),
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-
-        fixture.detectChanges();
         const openDialogSpy = jest.spyOn(component, 'openRegistrationDialog');
 
         const button = fixture.debugElement.nativeElement.querySelector('#registrations-' + tutorialGroup.id);
@@ -92,7 +94,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledWith(RegisteredStudentsComponent, { backdrop: 'static', scrollable: false, size: 'xl' });
+            expect(modalOpenSpy).toHaveBeenCalledWith(RegisteredStudentsComponent, { backdrop: 'static', scrollable: false, size: 'xl', animation: false });
             expect(mockModalRef.componentInstance.tutorialGroupId).toEqual(tutorialGroup.id);
             expect(mockModalRef.componentInstance.course).toEqual(course);
         });
@@ -109,15 +111,12 @@ describe('TutorialGroupRowButtonsComponent', () => {
         const tutorialGroupService = TestBed.inject(TutorialGroupsService);
         const deleteSpy = jest.spyOn(tutorialGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>({})));
         const deleteEventSpy = jest.spyOn(component.tutorialGroupDeleted, 'emit');
-
-        fixture.detectChanges();
         component.deleteTutorialGroup();
         expect(deleteSpy).toHaveBeenCalledWith(course.id!, tutorialGroup.id);
         expect(deleteEventSpy).toHaveBeenCalledOnce();
     });
 
     const testButtonLeadsToRouting = (buttonId: string, expectedRoute: (string | number)[]) => {
-        fixture.detectChanges();
         const navigateSpy = jest.spyOn(router, 'navigateByUrl');
 
         const button = fixture.debugElement.nativeElement.querySelector('#' + buttonId);

@@ -24,7 +24,7 @@ public class RoundingUtil {
     /**
      * Rounds a score to the specified amount of decimal places after the decimal symbol
      *
-     * @param score The score to round
+     * @param score  The score to round
      * @param course The course that specifies the amount of decimal places in the attribute {@link Course#getAccuracyOfScores()}
      * @return The rounded number
      */

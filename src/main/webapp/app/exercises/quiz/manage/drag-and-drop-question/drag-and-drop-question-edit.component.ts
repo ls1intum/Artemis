@@ -621,17 +621,16 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     getMappingIndex(mapping: DragAndDropMapping): number {
         const visitedDropLocations: DropLocation[] = [];
         // Save reference to this due nested some calls
-        const that = this;
         if (
-            this.question.correctMappings!.some(function (correctMapping) {
+            this.question.correctMappings!.some((correctMapping) => {
                 if (
                     !visitedDropLocations.some((dropLocation: DropLocation) => {
-                        return that.dragAndDropQuestionUtil.isSameEntityWithTempId(dropLocation, correctMapping.dropLocation);
+                        return this.dragAndDropQuestionUtil.isSameEntityWithTempId(dropLocation, correctMapping.dropLocation);
                     })
                 ) {
                     visitedDropLocations.push(correctMapping.dropLocation!);
                 }
-                return that.dragAndDropQuestionUtil.isSameEntityWithTempId(correctMapping.dropLocation, mapping.dropLocation);
+                return this.dragAndDropQuestionUtil.isSameEntityWithTempId(correctMapping.dropLocation, mapping.dropLocation);
             })
         ) {
             return visitedDropLocations.length;
@@ -845,8 +844,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * Detect of text changes in the markdown editor
      * 1. Parse the text in the editor to get the newest values
      * 2. Notify the parent component to check the validity of the text
+     * @param value the new value of the markdown editor
      */
-    changesInMarkdown(): void {
+    changesInMarkdown(value: string): void {
+        this.questionEditorText = value;
         this.prepareForSave();
         this.questionUpdated.emit();
         this.changeDetector.detectChanges();

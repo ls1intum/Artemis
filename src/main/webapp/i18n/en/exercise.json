@@ -47,8 +47,10 @@
             "actions": "Actions",
             "notStarted": "You have not started this exercise yet.",
             "problemStatement": "Problem Statement",
+            "emptyProblemStatement": "(No problem statement)",
             "instructions": "Instructions",
             "exampleSolution": "Example Solution",
+            "emptyExampleSolution": "(No example solution)",
             "exampleSolutionPublicationDateError": "For graded exercises, Example Solution Publication Date must be after Release, Start and Due Date if set. Please check your selection again",
             "exampleSolutionPublicationDateWarning": "Example Solution Publication Date is before Due Date!",
             "assessmentCriterion": "Assessment Criterion",
@@ -94,6 +96,7 @@
             "includedInOverallScoreExamLabel": "Should this exercise be included in the exam score calculation?",
             "includedInOverallScore": "Included in Score",
             "includedCompletely": "Included",
+            "categoriesTooltip": "You can define up to two categories per exercise (Enter category and press ENTER). You are free in defining them, though it might be best to use them consistently. They will be visible to students.",
             "includedCompletelyTooltip": "All points and bonus points earned in this exercise count towards your course/exam score!",
             "includedAsBonus": "Bonus",
             "includedAsBonusTooltip": "All points earned in this exercise count towards your course/exam score as bonus points!",
@@ -213,7 +216,7 @@
             "isTeamExercise": "This is a team exercise.",
             "update": {
                 "warning": {
-                    "warning": "Warning: These changes will possibly cause problems",
+                    "warning": "Warning: These changes could cause problems",
                     "saveExerciseWithoutReevaluation": "Save without re-evaluation",
                     "problems": "To avoid inconsistencies between existing feedback and future feedback that is associated to affected grading instruction, the exercise has to be re-evaluated. This includes the recalculation of the results.",
                     "instructionDeleted": "Grading instruction deleted",

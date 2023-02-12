@@ -63,8 +63,9 @@ public class ProgrammingMessagingService {
 
     /**
      * Notifies the user (or all users of the team) about a submission error
+     *
      * @param participation the participation for which the submission error should be reported
-     * @param error the submission error wrapped in an object
+     * @param error         the submission error wrapped in an object
      */
     public void notifyUserAboutSubmissionError(Participation participation, BuildTriggerWebsocketError error) {
         if (participation instanceof StudentParticipation studentParticipation) {
@@ -79,7 +80,7 @@ public class ProgrammingMessagingService {
     /**
      * Notifies editors and instructors about test case changes for the updated programming exercise
      *
-     * @param testCasesChanged whether tests have been changed or not
+     * @param testCasesChanged           whether tests have been changed or not
      * @param updatedProgrammingExercise the programming exercise for which tests have been changed
      */
     public void notifyUserAboutTestCaseChanged(boolean testCasesChanged, ProgrammingExercise updatedProgrammingExercise) {

@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
+import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601DateString;
+import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601TimeString;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -207,6 +210,10 @@ public class TutorialGroupResource {
 
         // persist first without schedule
         TutorialGroupSchedule tutorialGroupSchedule = tutorialGroup.getTutorialGroupSchedule();
+        if (tutorialGroupSchedule != null) {
+            checkScheduleDateAndTimeFormatAreValid(tutorialGroupSchedule);
+        }
+
         tutorialGroup.setTutorialGroupSchedule(null);
         TutorialGroup persistedTutorialGroup = tutorialGroupRepository.save(tutorialGroup);
 
@@ -281,6 +288,11 @@ public class TutorialGroupResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, oldTutorialGroup.getCourse(), responsibleUser);
 
         trimStringFields(updatedTutorialGroup);
+
+        if (updatedTutorialGroup.getTutorialGroupSchedule() != null) {
+            checkScheduleDateAndTimeFormatAreValid(updatedTutorialGroup.getTutorialGroupSchedule());
+        }
+
         if (!oldTutorialGroup.getTitle().equals(updatedTutorialGroup.getTitle())) {
             checkTitleIsValid(updatedTutorialGroup);
         }
@@ -379,7 +391,8 @@ public class TutorialGroupResource {
      * @param courseId        the id of the course to which the tutorial group belongs to
      * @param tutorialGroupId the id of the tutorial group to which the users should be registered to
      * @param studentDtos     the list of students who should be registered to the tutorial group
-     * @return the list of students who could not be registered for the tutorial group, because they could NOT be found in the Artemis database as students of the tutorial group course
+     * @return the list of students who could not be registered for the tutorial group, because they could NOT be found in the Artemis database as students of the tutorial group
+     *         course
      */
     @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple")
     @PreAuthorize("hasRole('INSTRUCTOR')")
@@ -425,6 +438,15 @@ public class TutorialGroupResource {
         }
         if (tutorialGroup.getCampus() != null) {
             tutorialGroup.setCampus(tutorialGroup.getCampus().trim());
+        }
+    }
+
+    private void checkScheduleDateAndTimeFormatAreValid(TutorialGroupSchedule schedule) {
+        if (!isIso8601DateString(schedule.getValidToInclusive()) || !isIso8601DateString(schedule.getValidFromInclusive())) {
+            throw new BadRequestException("Schedule valid to and from must be valid ISO 8601 date strings");
+        }
+        if (!isIso8601TimeString(schedule.getStartTime()) || !isIso8601TimeString(schedule.getEndTime())) {
+            throw new BadRequestException("Schedule start and end time must be valid ISO 8601 time strings");
         }
     }
 

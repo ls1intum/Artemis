@@ -76,7 +76,7 @@ public class PlagiarismCaseResource {
      * Retrieves all plagiarism cases related to an exam for the instructor view.
      *
      * @param courseId the course id to which the exam belongs
-     * @param examId the id of the exam
+     * @param examId   the id of the exam
      * @return all plagiarism cases of the course
      */
     @GetMapping("courses/{courseId}/exams/{examId}/plagiarism-cases/for-instructor")
@@ -100,7 +100,7 @@ public class PlagiarismCaseResource {
     /**
      * Retrieves the plagiarism case with the given ID for the instructor view.
      *
-     * @param courseId the id of the course
+     * @param courseId         the id of the course
      * @param plagiarismCaseId the id of the plagiarism case
      * @return all plagiarism cases of the course
      */
@@ -128,8 +128,8 @@ public class PlagiarismCaseResource {
     /**
      * Update the verdict of the plagiarism case with the given ID.
      *
-     * @param courseId the id of the course
-     * @param plagiarismCaseId the id of the plagiarism case
+     * @param courseId             the id of the course
+     * @param plagiarismCaseId     the id of the plagiarism case
      * @param plagiarismVerdictDTO the verdict of the plagiarism case
      * @return the updated plagiarism case
      */
@@ -149,7 +149,7 @@ public class PlagiarismCaseResource {
     /**
      * Retrieves the plagiarismCase related to an exercise for the student if the plagiarism comparison was confirmed and the student was notified
      *
-     * @param courseId the id of the course
+     * @param courseId   the id of the course
      * @param exerciseId the id of the exercise
      * @return the plagiarism case id for the exercise and student if and only if the comparison was confirmed and the student was notified
      */
@@ -181,7 +181,7 @@ public class PlagiarismCaseResource {
     /**
      * Retrieves plagiarismCases related to given exercise ids for the student for the exercises where the plagiarism comparison was confirmed and the student was notified
      *
-     * @param courseId the id of the course
+     * @param courseId    the id of the course
      * @param exerciseIds the ids of the exercises
      * @return a list of plagiarism case id and verdict values for the exercises only for the exercises where the comparison was confirmed and the student was notified
      */
@@ -227,7 +227,7 @@ public class PlagiarismCaseResource {
     /**
      * Retrieves the plagiarism case with the given ID for the student view.
      *
-     * @param courseId the id of the course
+     * @param courseId         the id of the course
      * @param plagiarismCaseId the id of the plagiarism case
      * @return all plagiarism cases of the course
      */

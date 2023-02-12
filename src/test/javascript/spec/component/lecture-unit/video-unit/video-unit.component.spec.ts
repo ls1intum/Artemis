@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
@@ -7,6 +7,8 @@ import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/vide
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { BrowserModule } from '@angular/platform-browser';
+import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('VideoUnitComponent', () => {
     const exampleName = 'Test';
@@ -23,7 +25,7 @@ describe('VideoUnitComponent', () => {
         videoUnit.source = exampleSource;
 
         TestBed.configureTestingModule({
-            imports: [BrowserModule],
+            imports: [BrowserModule, NgbCollapseMocksModule, MockDirective(NgbTooltip)],
             declarations: [VideoUnitComponent, SafeResourceUrlPipe, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
             providers: [{ provide: SafeResourceUrlPipe, useClass: SafeResourceUrlPipe }],
             schemas: [],
@@ -68,7 +70,7 @@ describe('VideoUnitComponent', () => {
         handleCollapseSpy.mockRestore();
     });
 
-    it('should call complete callback when uncollapsed after timeout', () => {
+    it('should call complete callback when expanded after timeout', () => {
         return new Promise<void>((done) => {
             jest.useFakeTimers();
             jest.spyOn(global, 'setTimeout');

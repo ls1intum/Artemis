@@ -1,4 +1,4 @@
-// tslint:disable:max-line-length
+// eslint-disable-next-line max-len
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
@@ -56,6 +56,7 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
                 });
 
                 getCourseSpy = jest.spyOn(courseManagementService, 'find').mockReturnValue(of(response));
+                fixture.detectChanges();
             });
     });
 
@@ -64,14 +65,12 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
         expect(getCourseSpy).toHaveBeenCalledWith(course.id!);
         expect(getCourseSpy).toHaveBeenCalledOnce();
     });
 
     it('should send POST request upon form submission and navigate', () => {
-        fixture.detectChanges();
         const exampleConfiguration = generateExampleTutorialGroupsConfiguration({});
         delete exampleConfiguration.id;
 

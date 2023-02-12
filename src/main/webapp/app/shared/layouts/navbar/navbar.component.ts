@@ -228,6 +228,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     breadcrumbTranslation = {
         new: 'global.generic.create',
+        process: 'artemisApp.attachmentUnit.createAttachmentUnits.pageTitle',
         create: 'global.generic.create',
         start: 'global.generic.start',
         edit: 'global.generic.edit',
@@ -334,7 +335,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         learning_goals: 'artemisApp.courseOverview.menu.learningGoals',
         statistics: 'artemisApp.courseOverview.menu.statistics',
         discussion: 'artemisApp.metis.communication.label',
-        messages: 'artemisApp.messages.label',
+        messages: 'artemisApp.conversationsLayout.breadCrumbLabel',
         code_editor: 'artemisApp.editor.breadCrumbTitle',
         participate: 'artemisApp.submission.detail.title',
         live: 'artemisApp.submission.detail.title',
@@ -383,7 +384,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.lastRouteUrlSegment = segment;
                 }
             }
-        } catch (e) {}
+        } catch (e) {
+            /* empty */
+        }
     }
 
     /**
@@ -441,6 +444,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'exercise-hints':
                 // obtain the exerciseId of the current path
                 // current path of form '/course-management/:courseId/exercises/:exerciseId/...
+
                 const exerciseId = currentPath.split('/')[4];
                 this.addResolvedTitleAsCrumb(EntityType.HINT, [Number(segment), Number(exerciseId)], currentPath, segment);
                 break;
@@ -449,6 +453,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 break;
             case 'lectures':
                 this.addResolvedTitleAsCrumb(EntityType.LECTURE, [Number(segment)], currentPath, segment);
+                break;
+            case 'learning-goals':
+                this.addResolvedTitleAsCrumb(EntityType.LEARNING_GOAL, [Number(segment)], currentPath, segment);
                 break;
             case 'exams':
                 this.routeExamId = Number(segment);

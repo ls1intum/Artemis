@@ -18,7 +18,7 @@ import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
-import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { AssessmentAfterComplaint, ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { SubmissionExerciseType, SubmissionType, getFirstResult, setLatestSubmissionResult } from 'app/entities/submission.model';
@@ -56,7 +56,7 @@ describe('FileUploadAssessmentComponent', () => {
     let submissionService: SubmissionService;
 
     const exercise = { id: 20, type: ExerciseType.FILE_UPLOAD, maxPoints: 100, bonusPoints: 0 } as FileUploadExercise;
-    const map1 = new Map<string, Object>().set('testRun', true).set('correction-round', 1);
+    const map1 = new Map<string, any>().set('testRun', true).set('correction-round', 1);
     const params1 = { exerciseId: 20, courseId: 123, submissionId: 7 };
     const params2 = { exerciseId: 20, courseId: 123, submissionId: 'new' };
 
@@ -212,7 +212,7 @@ describe('FileUploadAssessmentComponent', () => {
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(null));
             fixture.detectChanges();
-            expect(navigateByUrlStub).toHaveBeenCalledTimes(2);
+            expect(navigateByUrlStub).toHaveBeenCalledOnce();
             expect(comp.busy).toBeTrue();
         });
 
@@ -223,7 +223,7 @@ describe('FileUploadAssessmentComponent', () => {
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(() => ({ error: { errorKey: 'lockedSubmissionsLimitReached' } })));
             fixture.detectChanges();
-            expect(navigateByUrlStub).toHaveBeenCalledTimes(2);
+            expect(navigateByUrlStub).toHaveBeenCalledOnce();
             expect(comp.busy).toBeTrue();
         });
 
@@ -234,7 +234,7 @@ describe('FileUploadAssessmentComponent', () => {
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(() => ({ status: 403 })));
             fixture.detectChanges();
-            expect(navigateByUrlStub).toHaveBeenCalledOnce();
+            expect(navigateByUrlStub).not.toHaveBeenCalled();
             expect(comp.busy).toBeTrue();
         });
     });
@@ -395,11 +395,20 @@ describe('FileUploadAssessmentComponent', () => {
             setLatestSubmissionResult(comp.submission, initResult);
 
             fixture.detectChanges();
-            const complaintResponse = new ComplaintResponse();
-            comp.onUpdateAssessmentAfterComplaint(complaintResponse);
+            let onSuccessCalled = false;
+            let onErrorCalled = false;
+            const assessmentAfterComplaint: AssessmentAfterComplaint = {
+                complaintResponse: new ComplaintResponse(),
+                onSuccess: () => (onSuccessCalled = true),
+                onError: () => (onErrorCalled = true),
+            };
+
+            comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
             expect(comp.isLoading).toBeFalse();
             expect(comp.result).toEqual(changedResult);
             expect(comp.participation.results![0]).toEqual(changedResult);
+            expect(onSuccessCalled).toBeTrue();
+            expect(onErrorCalled).toBeFalse();
         });
 
         it('should not update assessment after complaint if already locked', () => {
@@ -430,10 +439,20 @@ describe('FileUploadAssessmentComponent', () => {
             setLatestSubmissionResult(comp.submission, initResult);
 
             fixture.detectChanges();
-            const complaintResponse = new ComplaintResponse();
-            comp.onUpdateAssessmentAfterComplaint(complaintResponse);
+
+            let onSuccessCalled = false;
+            let onErrorCalled = false;
+            const assessmentAfterComplaint: AssessmentAfterComplaint = {
+                complaintResponse: new ComplaintResponse(),
+                onSuccess: () => (onSuccessCalled = true),
+                onError: () => (onErrorCalled = true),
+            };
+
+            comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
             expect(comp.isLoading).toBeFalse();
             expect(alertServiceErrorSpy).toHaveBeenCalledWith('errormessage', []);
+            expect(onSuccessCalled).toBeFalse();
+            expect(onErrorCalled).toBeTrue();
         });
 
         it('should not update assessment after complaint', () => {
@@ -464,10 +483,47 @@ describe('FileUploadAssessmentComponent', () => {
             setLatestSubmissionResult(comp.submission, initResult);
 
             fixture.detectChanges();
-            const complaintResponse = new ComplaintResponse();
-            comp.onUpdateAssessmentAfterComplaint(complaintResponse);
+
+            let onSuccessCalled = false;
+            let onErrorCalled = false;
+            const assessmentAfterComplaint: AssessmentAfterComplaint = {
+                complaintResponse: new ComplaintResponse(),
+                onSuccess: () => (onSuccessCalled = true),
+                onError: () => (onErrorCalled = true),
+            };
+
+            comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
             expect(comp.isLoading).toBeFalse();
             expect(alertServiceErrorSpy).toHaveBeenCalledWith('artemisApp.assessment.messages.updateAfterComplaintFailed');
+            expect(onSuccessCalled).toBeFalse();
+            expect(onErrorCalled).toBeTrue();
+        });
+
+        it('should not update assessment after complaint if assessments are invalid', () => {
+            const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
+
+            let onSuccessCalled = false;
+            let onErrorCalled = false;
+            const assessmentAfterComplaint: AssessmentAfterComplaint = {
+                complaintResponse: new ComplaintResponse(),
+                onSuccess: () => (onSuccessCalled = true),
+                onError: () => (onErrorCalled = true),
+            };
+
+            const feedback = new Feedback();
+            feedback.credits = 10;
+            feedback.detailText = undefined;
+            feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+            comp.unreferencedFeedback = [feedback];
+            comp.isLoading = false;
+
+            comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+
+            expect(comp.isLoading).toBeFalse();
+            expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
+            expect(alertServiceErrorSpy).toHaveBeenCalledWith('artemisApp.fileUploadAssessment.error.invalidAssessments');
+            expect(onSuccessCalled).toBeFalse();
+            expect(onErrorCalled).toBeTrue();
         });
     });
 
@@ -600,7 +656,7 @@ describe('FileUploadAssessmentComponent', () => {
         comp.submission = createSubmission(exercise);
         navigateByUrlStub.mockReturnValue(Promise.resolve(true));
         comp.navigateBack();
-        expect(navigateByUrlStub).toHaveBeenCalledTimes(2);
+        expect(navigateByUrlStub).toHaveBeenCalledOnce();
     });
 });
 

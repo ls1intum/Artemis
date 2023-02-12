@@ -6,7 +6,6 @@ import static org.mockito.Mockito.*;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +17,8 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 
 class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "progexservice";
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -31,12 +32,12 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @BeforeEach
     void init() {
-        database.addUsers(0, 0, 0, 2);
-        database.addCourseWithOneProgrammingExercise();
-        database.addCourseWithOneProgrammingExercise();
+        database.addUsers(TEST_PREFIX, 0, 0, 0, 2);
+        var course1 = database.addCourseWithOneProgrammingExercise();
+        var course2 = database.addCourseWithOneProgrammingExercise();
 
-        programmingExercise1 = programmingExerciseRepository.findAll().get(0);
-        programmingExercise2 = programmingExerciseRepository.findAll().get(1);
+        programmingExercise1 = database.getFirstExerciseWithType(course1, ProgrammingExercise.class);
+        programmingExercise2 = database.getFirstExerciseWithType(course2, ProgrammingExercise.class);
 
         programmingExercise1.setReleaseDate(null);
         programmingExercise2.setReleaseDate(null);
@@ -44,13 +45,8 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
         programmingExerciseRepository.save(programmingExercise2);
     }
 
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
-
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldFindProgrammingExerciseWithBuildAndTestDateInFuture() {
         programmingExercise1.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(programmingExercise1);
@@ -59,8 +55,7 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
 
         List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllWithBuildAndTestAfterDueDateInFuture();
 
-        assertThat(programmingExercises).hasSize(1);
-        assertThat(programmingExercises.get(0)).isEqualTo(programmingExercise1);
+        assertThat(programmingExercises).contains(programmingExercise1).doesNotContain(programmingExercise2);
     }
 
     @Test
@@ -102,6 +97,16 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
         programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
         verify(instanceMessageSendService, times(2)).sendLockAllRepositoriesWithoutLaterIndividualDueDate(programmingExercise1.getId());
         verify(instanceMessageSendService, never()).sendUnlockAllRepositories(programmingExercise1.getId());
+    }
+
+    @Test
+    void shouldLockRepositoriesWhenDueDateIsSetInThePastAndNoDueDateBefore() {
+        programmingExercise1.setDueDate(null);
+        programmingExercise2.setDueDate(ZonedDateTime.now().minusHours(1));
+
+        programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
+
+        verify(instanceMessageSendService, times(1)).sendLockAllRepositoriesWithoutLaterIndividualDueDate(programmingExercise1.getId());
     }
 
     @Test

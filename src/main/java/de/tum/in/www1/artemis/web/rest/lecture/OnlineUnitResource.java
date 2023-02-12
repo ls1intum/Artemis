@@ -17,12 +17,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import com.google.common.net.InternetDomainName;
+
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.OnlineUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.OnlineUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.LearningGoalProgressService;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -39,17 +42,21 @@ public class OnlineUnitResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public OnlineUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, OnlineUnitRepository onlineUnitRepository) {
+    private final LearningGoalProgressService learningGoalProgressService;
+
+    public OnlineUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, OnlineUnitRepository onlineUnitRepository,
+            LearningGoalProgressService learningGoalProgressService) {
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.onlineUnitRepository = onlineUnitRepository;
+        this.learningGoalProgressService = learningGoalProgressService;
     }
 
     /**
      * GET lectures/:lectureId/online-units/:onlineUnitId: gets the online unit with the specified id
      *
      * @param onlineUnitId the id of the onlineUnit to retrieve
-     * @param lectureId the id of the lecture to which the unit belongs
+     * @param lectureId    the id of the lecture to which the unit belongs
      * @return the ResponseEntity with status 200 (OK) and with body the online unit, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/online-units/{onlineUnitId}")
@@ -57,12 +64,7 @@ public class OnlineUnitResource {
     public ResponseEntity<OnlineUnit> getOnlineUnit(@PathVariable Long onlineUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get onlineUnit : {}", onlineUnitId);
         var onlineUnit = onlineUnitRepository.findByIdElseThrow(onlineUnitId);
-        if (onlineUnit.getLecture() == null || onlineUnit.getLecture().getCourse() == null) {
-            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "onlineUnit", "lectureOrCourseMissing");
-        }
-        if (!onlineUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "onlineUnit", "lectureIdMismatch");
-        }
+        checkOnlineUnitCourseAndLecture(onlineUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, onlineUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok().body(onlineUnit);
     }
@@ -70,7 +72,7 @@ public class OnlineUnitResource {
     /**
      * PUT /lectures/:lectureId/online-units : Updates an existing online unit .
      *
-     * @param lectureId      the id of the lecture to which the online unit belongs to update
+     * @param lectureId  the id of the lecture to which the online unit belongs to update
      * @param onlineUnit the online unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated onlineUnit
      */
@@ -82,26 +84,20 @@ public class OnlineUnitResource {
             throw new BadRequestException();
         }
 
-        if (onlineUnit.getLecture() == null || onlineUnit.getLecture().getCourse() == null) {
-            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "onlineUnit", "lectureOrCourseMissing");
-        }
-
+        checkOnlineUnitCourseAndLecture(onlineUnit, lectureId);
         validateUrl(onlineUnit);
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, onlineUnit.getLecture().getCourse(), null);
 
-        if (!onlineUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "onlineUnit", "lectureIdMismatch");
-        }
-
         OnlineUnit result = onlineUnitRepository.save(onlineUnit);
+        learningGoalProgressService.updateProgressByLearningObjectAsync(result);
         return ResponseEntity.ok(result);
     }
 
     /**
      * POST /lectures/:lectureId/online-units : creates a new online unit.
      *
-     * @param lectureId      the id of the lecture to which the online unit should be added
+     * @param lectureId  the id of the lecture to which the online unit should be added
      * @param onlineUnit the online unit that should be created
      * @return the ResponseEntity with status 201 (Created) and with body the new online unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -130,6 +126,8 @@ public class OnlineUnitResource {
         lecture.addLectureUnit(persistedOnlineUnit);
         lectureRepository.save(lecture);
 
+        learningGoalProgressService.updateProgressByLearningObjectAsync(persistedOnlineUnit);
+
         return ResponseEntity.created(new URI("/api/online-units/" + persistedOnlineUnit.getId())).body(persistedOnlineUnit);
     }
 
@@ -145,6 +143,14 @@ public class OnlineUnitResource {
         try {
             // Ensure that the link is a correctly formed URL
             URL url = new URL(link);
+
+            if (!"http".equalsIgnoreCase(url.getProtocol()) && !"https".equalsIgnoreCase(url.getProtocol())) {
+                throw new BadRequestException("The specified link uses an unsupported protocol");
+            }
+
+            if (!InternetDomainName.isValid(url.getHost()) || "localhost".equalsIgnoreCase(url.getHost())) {
+                throw new BadRequestException("The specified link does not contain a valid domain");
+            }
 
             log.info("Requesting online resource at {}", url);
 
@@ -168,7 +174,7 @@ public class OnlineUnitResource {
      * Inspired by <a href="https://www.javachinna.com/generate-rich-link-preview-for-a-given-url-based-on-the-meta-tags-present-in-the-web-page-in-spring-boot/">...</a>
      *
      * @param document The Jsoup document to query
-     * @param tag The meta tag from which to fetch the content
+     * @param tag      The meta tag from which to fetch the content
      * @return The value of the content attribute of the specified tag
      */
     private String getMetaTagContent(Document document, String tag) {
@@ -185,6 +191,7 @@ public class OnlineUnitResource {
 
     /**
      * Validates the source url of an online unit.
+     *
      * @param onlineUnit The online unit to check the source URL for.
      */
     private void validateUrl(OnlineUnit onlineUnit) {
@@ -193,6 +200,21 @@ public class OnlineUnitResource {
         }
         catch (MalformedURLException exception) {
             throw new BadRequestException();
+        }
+    }
+
+    /**
+     * Checks that the online unit belongs to the specified lecture.
+     *
+     * @param onlineUnit The online unit to check
+     * @param lectureId  The id of the lecture to check against
+     */
+    private void checkOnlineUnitCourseAndLecture(OnlineUnit onlineUnit, Long lectureId) {
+        if (onlineUnit.getLecture() == null || onlineUnit.getLecture().getCourse() == null) {
+            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "onlineUnit", "lectureOrCourseMissing");
+        }
+        if (!onlineUnit.getLecture().getId().equals(lectureId)) {
+            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "onlineUnit", "lectureIdMismatch");
         }
     }
 }

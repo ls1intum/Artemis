@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { PieChartModule } from '@swimlane/ngx-charts';
+import { NgxChartsModule, PieChartModule } from '@swimlane/ngx-charts';
 import { ChartTitleComponent } from 'app/exam/monitoring/charts/chart-title.component';
 import { getColor } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -43,7 +43,7 @@ describe('Exercise Chart Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(PieChartModule), ArtemisSharedComponentModule],
+            imports: [ArtemisTestModule, MockModule(PieChartModule), ArtemisSharedComponentModule, MockModule(NgxChartsModule)],
             declarations: [ExerciseChartComponent, ChartTitleComponent, ExerciseTemplateChartComponent, ArtemisDatePipe, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },

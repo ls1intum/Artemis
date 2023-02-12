@@ -1,6 +1,27 @@
 {
     "artemisApp": {
         "exam": {
+            "examUsers": {
+                "uploadImage": "Upload images",
+                "uploadImageTooltip": "Upload images for the registered students",
+                "introText": "This dialog can be used to upload pdf file and extract images for registered students.",
+                "dialogText": "Each entry in the input file must contain a value for either matriculation number, login or email.\nValues for last and first name are optional.",
+                "pdfExampleText": "Example of a valid PDF file format:",
+                "pdfFile": {
+                    "label": "Select .pdf file",
+                    "tooltip": "Please select a .pdf file containing registered students image and matriculation number."
+                },
+                "dialogTitle": "Upload images",
+                "allImagesSaved": "All images were saved successfully.",
+                "plannedSeat": "Planned Seat",
+                "plannedRoom": "Planned Room",
+                "actualSeat": "Actual Seat",
+                "actualRoom": "Actual Room",
+                "room": "Room",
+                "seat": "Seat",
+                "saveImages": "Save Images",
+                "numberOfImagesSaved": "Images saved"
+            },
             "overview": {
                 "start": "Start: {{start}}",
                 "duration": "Working Time:",
@@ -47,6 +68,7 @@
                 "noCommitHash": "No commit was made",
                 "studentSubmissionTo": "{{studentName}}'s submission to {{examTitle}}",
                 "viewResult": " View Result",
+                "viewExampleSolution": " View Example Solution",
                 "missingResultNotice": "There is currently no result for this quiz exercise, although the results have already been published. Please inform your instructor.",
                 "points": {
                     "exercise": "Exercise",
@@ -93,6 +115,7 @@
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
             "studentReviewEnabled": "Review is open",
+            "exampleSolutionPublicationDate": "Example Solution Publication Date",
             "duration": "Duration",
             "nrOfStudents": "Registered Students",
             "created": "New exam created",
@@ -238,7 +261,9 @@
             "handInEarlyNotice": "You are about to hand in your submission before the end of the exam.\nAfter finishing the exam you cannot participate any longer.",
             "handInEarlyNoticeFirstSentence": "You are about to hand in your submission before the end of the exam.",
             "handInEarlyNoticeSecondSentence": "After finishing the exam you cannot participate any longer.",
-            "namePlaceholder": "Enter your full name here"
+            "namePlaceholder": "Enter your full name here",
+            "workingTimeIncreased": "The end of working time was extended until {{ date }}.",
+            "workingTimeDecreased": "The end of working time was shortened until {{ date }}."
         },
         "exerciseGroup": {
             "created": "New exercise group created",
@@ -329,8 +354,10 @@
                 "configuration": "Exam Configuration",
                 "conduction": "Exam Conduction",
                 "assessment": "Exam Assessment and Student Review",
+                "assessmentEmptyDates": "If you leave a date blank, this exam step will not take place",
                 "exercises": "Exam Exercises",
-                "text": "Exam Texts"
+                "text": "Exam Texts",
+                "examSolutions": "Exam Solutions"
             },
             "title": "Exam Management",
             "createExam": "Create a new exam",
@@ -355,6 +382,7 @@
             "courseName": "Course name",
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
+            "exampleSolutionPublicationDateTooltip": "Students can see the example solutions for all exercises in the exam from this time onwards if they participated in the exam. Leave blank to disable.",
             "maxPoints": {
                 "title": "Maximum number of points for exam",
                 "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value"
@@ -377,7 +405,7 @@
             "testExam": {
                 "realExam": "Exam",
                 "testExam": "Test Exam",
-                "examMode": "Exam Mode",
+                "examMode": "Mode",
                 "examModeTooltip": "Students can start working on a Test Exam once within the working window, the selected working time will be available during the conduction. Students recieve automated feedback after submitting. NOTE: This cannot be changed later on!",
                 "startDate": "Start of working window",
                 "endDate": "End of working window",

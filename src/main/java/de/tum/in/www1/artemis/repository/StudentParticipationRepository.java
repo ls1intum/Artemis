@@ -58,6 +58,15 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findByCourseIdAndStudentIdWithEagerRatedResults(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
 
     @Query("""
+            SELECT COUNT(p.id) > 0
+            FROM StudentParticipation p
+            LEFT JOIN p.team.students ts
+            WHERE p.exercise.course.id = :courseId
+                AND (p.student.id = :studentId OR ts.id = :studentId)
+             """)
+    boolean existsByCourseIdAndStudentId(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
+
+    @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
@@ -348,7 +357,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Find all participations of submissions that are submitted and do not already have a manual result and do not belong to test runs.
      * No manual result means that no user has started an assessment for the corresponding submission yet.
      * <p>
-     * If a student can have multiple submissions per exercise type, the latest not {@link de.tum.in.www1.artemis.domain.enumeration.SubmissionType#ILLEGAL} ILLEGAL submission (by id) will be returned.
+     * If a student can have multiple submissions per exercise type, the latest not {@link de.tum.in.www1.artemis.domain.enumeration.SubmissionType#ILLEGAL} ILLEGAL submission (by
+     * id) will be returned.
      *
      * @param correctionRound the correction round the fetched results should belong to
      * @param exerciseId      the exercise id the participations should belong to
@@ -389,7 +399,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.feedbacks
             WHERE p.exercise.id = :#{#exerciseId}
-            AND (p.individualDueDate IS NULL OR p.individualDueDate <= :#{#now})
+            AND (p.individualDueDate IS NULL OR p.individualDueDate <= :now)
             AND p.testRun = false
             AND NOT EXISTS
                 (SELECT prs FROM p.results prs
@@ -806,7 +816,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Get all participations for the given studentExam and exercises combined with their submissions, but without results and assessors.
      * Distinguishes between student exams and test runs and only loads the respective participations
      *
-     * @param studentExam  studentExam with exercises loaded
+     * @param studentExam studentExam with exercises loaded
      * @return student's participations with submissions and results
      */
     default List<StudentParticipation> findByStudentExamWithEagerSubmissions(StudentExam studentExam) {
@@ -927,7 +937,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN s.participation p
             WHERE
                 p.exercise.exerciseGroup.exam.id = :examId
-            GROUP BY s.id
+            GROUP BY s.id, p.id
             """)
     List<QuizSubmittedAnswerCount> findSubmittedAnswerCountForQuizzesInExam(@Param("examId") long examId);
 }

@@ -10,9 +10,9 @@
                 "linkLabel": "Neue Programmieraufgabe verlinken",
                 "createOrEditLabel": "Programmieraufgabe erstellen oder bearbeiten"
             },
-            "created": "Programmieraufgabe erstellt mit Title {{ param }}",
-            "updated": "Programmieraufgabe aktualisiert mit Title {{ param }}",
-            "deleted": "Programmieraufgabe gelöscht mit Title {{ param }}",
+            "created": "Programmieraufgabe erstellt mit Titel {{ param }}",
+            "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",
+            "deleted": "Programmieraufgabe gelöscht mit Titel {{ param }}",
             "delete": {
                 "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?",
                 "studentRepos": "Alle Studierenden-Repositories löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen, die Übung zuerst zu archivieren!",
@@ -125,7 +125,8 @@
             "problemStatement": {
                 "title": "Aufgabenstellung",
                 "taskCommand": "Aufgabe",
-                "testCaseCommand": "Testfall einfügen"
+                "testCaseCommand": "Testfall einfügen",
+                "tasksOfExercise": "Teilaufgaben:"
             },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",
@@ -174,7 +175,11 @@
                     "updated": "Die Kategorien wurden erfolgreich gespeichert.",
                     "couldNotBeUpdated": "Die folgenden Kategorien konnten nicht gespeichert werden: {{categories}}.",
                     "resetSuccessful": "Die Kategorien wurden erfolgreich zurückgesetzt.",
-                    "resetFailed": "Die Kategorien konnten nicht zurückgesetzt werden."
+                    "resetFailed": "Die Kategorien konnten nicht zurückgesetzt werden.",
+                    "import": "Konfiguration übernehmen",
+                    "importLabel": "Konfiguration einer Aufgabe übernehmen",
+                    "importSuccessful": "Die Kategorien von Aufgabe {{exercise}} wurden erfolgreich übernommen.",
+                    "importFailed": "Die Kategorien von Aufgabe {{exercise}} konnten nicht übernommen werden."
                 },
                 "charts": {
                     "title": "Diagramme",
@@ -265,7 +270,6 @@
             "resultETATooltip": "Zeigt an, wie lange eine laufende Abgabe auf ihr Ergebnis warten muss. Ist abhängig von der Auslastung des Build-Systems.",
             "titleTooltip": "Der Titel der Aufgabe kann jederzeit geändert werden. Er ist u.a. Teil des Namens des Projekts, welches im Rahmen der Aufgabe auf dem VCS Server erstellt wird",
             "shortNameTooltip": "Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Zusammen mit dem Kurs-Kurznamen wird er als eindeutiger Schlüssel für die Aufgabe in Artemis genutzt (inkl. Repositories und Build Pläne)",
-            "categoriesTooltip": "Es können bis zu zwei Kategorien pro Aufgabe definiert werden, welche frei gewählt werden können (Kategorie eingeben und ENTER drücken). Allerdings wird empfohlen, die gewählten Bezeichnungen konsistent zu nutzen, da sie auch für Studierenden sichtbar sind",
             "projectTypeTooltip": "Dieser Wert legt den Projekttypen von Vorlagen- und Lösungs-Repository fest.",
             "testRepositoryProjectTypeTooltip": "Dieser Wert legt den Projekttypen des Test-Repository fest.",
             "timeline": {

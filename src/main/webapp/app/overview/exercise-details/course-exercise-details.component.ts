@@ -16,9 +16,9 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExampleSolutionInfo, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -34,13 +34,8 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { UMLModel } from '@ls1intum/apollon';
-import { SafeHtml } from '@angular/platform-browser';
 import { faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
@@ -49,11 +44,13 @@ import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/Plagia
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
 import { Course } from 'app/entities/course.model';
+import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
     styleUrls: ['../course-overview.scss', '../tab-bar/tab-bar.scss'],
+    providers: [ExerciseCacheService],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;
@@ -73,7 +70,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public courseId: number;
     public course: Course;
     public exercise?: Exercise;
-    public programmingExercise?: ProgrammingExercise;
     public resultWithComplaint?: Result;
     public latestRatedResult?: Result;
     public complaint?: Complaint;
@@ -99,9 +95,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     availableExerciseHints: ExerciseHint[];
     activatedExerciseHints: ExerciseHint[];
 
-    public modelingExercise?: ModelingExercise;
-    public exampleSolution?: SafeHtml;
-    public exampleSolutionUML?: UMLModel;
+    exampleSolutionInfo?: ExampleSolutionInfo;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
@@ -185,8 +179,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     loadExercise() {
         this.exercise = undefined;
         this.studentParticipations = this.participationWebsocketService.getParticipationsForExercise(this.exerciseId);
-        this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, false);
-        this.practiceStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, true);
+        this.updateStudentParticipations();
         this.resultWithComplaint = getFirstResultWithComplaintFromResults(this.gradedStudentParticipation?.results);
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
@@ -202,7 +195,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
         this.filterUnfinishedResults(this.exercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
-        this.exercise.participationStatus = participationStatus(this.exercise, false);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exercise.categories || [];
         this.allowComplaintsForAutomaticAssessments = false;
@@ -245,31 +237,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * @param newExercise Exercise model that may have an exampleSolution.
      */
     showIfExampleSolutionPresent(newExercise: Exercise) {
-        // Clear fields below to avoid displaying old data if this method is called more than once.
-        this.modelingExercise = undefined;
-        this.exampleSolution = undefined;
-        this.exampleSolutionUML = undefined;
-
-        switch (newExercise.type) {
-            case ExerciseType.MODELING:
-                this.modelingExercise = newExercise as ModelingExercise;
-                if (this.modelingExercise.exampleSolutionModel) {
-                    this.exampleSolutionUML = JSON.parse(this.modelingExercise.exampleSolutionModel);
-                }
-                break;
-            case ExerciseType.TEXT:
-            case ExerciseType.FILE_UPLOAD:
-                const exercise = newExercise as TextExercise & FileUploadExercise;
-                if (exercise.exampleSolution) {
-                    this.exampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(exercise.exampleSolution);
-                }
-                break;
-            case ExerciseType.PROGRAMMING:
-                this.programmingExercise = newExercise as ProgrammingExercise;
-                break;
-        }
+        this.exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(newExercise, this.artemisMarkdown);
         // For TAs the example solution is collapsed on default to avoid spoiling, as the example solution is always shown to TAs
-        this.exampleSolutionCollapsed = !!this.exercise?.isAtLeastTutor;
+        this.exampleSolutionCollapsed = !!newExercise?.isAtLeastTutor;
     }
 
     /**
@@ -301,8 +271,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (this.exercise?.studentParticipations?.length) {
             this.studentParticipations = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
             this.exercise.studentParticipations = this.studentParticipations;
-            this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, false);
-            this.practiceStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, true);
+            this.updateStudentParticipations();
             this.sortResults();
             // Add exercise to studentParticipation, as the result component is dependent on its existence.
             this.studentParticipations.forEach((participation) => (participation.exercise = this.exercise));
@@ -332,6 +301,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     changedParticipation.exercise?.dueDate &&
                     hasExerciseDueDatePassed(changedParticipation.exercise, changedParticipation) &&
                     changedParticipation.id === this.gradedStudentParticipation?.id &&
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     changedParticipation.results?.length! > this.gradedStudentParticipation?.results?.length!
                 ) {
                     this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
@@ -343,6 +313,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 } else {
                     this.exercise.studentParticipations = [...this.studentParticipations, changedParticipation];
                 }
+                this.updateStudentParticipations();
                 this.mergeResultsAndSubmissionsForParticipations();
 
                 if (ExerciseType.PROGRAMMING === this.exercise?.type) {
@@ -367,6 +338,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
+    private updateStudentParticipations() {
+        this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, false);
+        this.practiceStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, true);
+    }
+
     /**
      * Receives team assignment changes and applies them if they belong to this exercise
      */
@@ -376,7 +352,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             .subscribe((teamAssignment) => {
                 this.exercise!.studentAssignedTeamId = teamAssignment.teamId;
                 this.exercise!.studentParticipations = teamAssignment.studentParticipations;
-                this.exercise!.participationStatus = participationStatus(this.exercise!, false);
             });
     }
 
@@ -386,6 +361,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     subscribeForNewSubmissions() {
         this.studentParticipations.forEach((participation) => {
             this.submissionSubscription = this.submissionService
+                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                 .getLatestPendingSubmissionByParticipationId(participation!.id!, this.exercise?.id!, true)
                 .subscribe(({ submission }) => {
                     // Notify about received late submission

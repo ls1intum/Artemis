@@ -50,7 +50,7 @@ public class ComplaintService {
      *
      * @param complaint the complaint to create
      * @param principal the current Principal
-     * @param examId the optional examId. This is only set if the exercise is an exam exercise
+     * @param examId    the optional examId. This is only set if the exercise is an exam exercise
      * @return the saved complaint
      */
     public Complaint createComplaint(Complaint complaint, OptionalLong examId, Principal principal) {
@@ -119,7 +119,7 @@ public class ComplaintService {
      * number of complaints for a student or team in a course. Requests for more feedback are not counted here.
      *
      * @param participant the participant (student or team)
-     * @param courseId  the id of the course
+     * @param courseId    the id of the course
      * @return the number of unaccepted complaints
      */
     public long countUnacceptedComplaintsByParticipantAndCourseId(Participant participant, long courseId) {
@@ -167,7 +167,7 @@ public class ComplaintService {
     /**
      * Calculates the number of unevaluated complaints and feedback requests for assessment dashboard participation graph
      *
-     * @param examMode should be set to ignore the test run submissions
+     * @param examMode  should be set to ignore the test run submissions
      * @param exercises the exercises for which the numbers of unevaluated complaints should be calculated
      */
     public void calculateNrOfOpenComplaints(Set<Exercise> exercises, boolean examMode) {
@@ -238,7 +238,8 @@ public class ComplaintService {
 
     /**
      * Returns the maximum allowed number of complaints per participant in a course (differentiates between individual and team complaints)
-     * @param course Course for which to evaluate
+     *
+     * @param course      Course for which to evaluate
      * @param participant Participant for which to evaluate
      * @return max complaints
      */
@@ -255,11 +256,11 @@ public class ComplaintService {
      * This is allowed within the corresponding number of days set in the course after the student received the result.
      * This starts from the latest of these three points in time: Completion date of result, due date, assessment due date of exercise
      *
-     * @param result the result for which a complaint should be filed
-     * @param exercise the exercise where the student wants to complain
+     * @param result               the result for which a complaint should be filed
+     * @param exercise             the exercise where the student wants to complain
      * @param studentParticipation StudentParticipation the participation which might contain an individual due date
-     * @param course the course specifying the number of available days for the complaint
-     * @param type specifies if this is an actual complaint or a more feedback request
+     * @param course               the course specifying the number of available days for the complaint
+     * @param type                 specifies if this is an actual complaint or a more feedback request
      */
     private static void validateTimeOfComplaintOrRequestMoreFeedback(Result result, Exercise exercise, StudentParticipation studentParticipation, Course course,
             ComplaintType type) {
@@ -297,9 +298,9 @@ public class ComplaintService {
      * <p>
      * Assumes the {@link Result#getCompletionDate()} to be present.
      *
-     * @param exercise The exercise for which complaints can be submitted.
+     * @param exercise             The exercise for which complaints can be submitted.
      * @param studentParticipation The participation for which a complaint should be submitted.
-     * @param result The result which the complaint is about.
+     * @param result               The result which the complaint is about.
      * @return The time from which submitting a complaint is possible.
      */
     private static ZonedDateTime getComplaintStartDate(final Exercise exercise, final StudentParticipation studentParticipation, final Result result) {

@@ -13,7 +13,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Complaint } from 'app/entities/complaint.model';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -36,6 +35,7 @@ import { SubmissionType, getLatestSubmissionResult } from 'app/entities/submissi
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
+import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -67,6 +67,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     assessmentsAreValid = false;
     complaint: Complaint;
     private cancelConfirmationText: string;
+    private acceptComplaintWithoutMoreScoreText: string;
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     loadingParticipation = false;
     participationCouldNotBeFetched = false;
@@ -84,6 +85,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
     automaticFeedback: Feedback[] = [];
+    totalScoreBeforeAssessment: number;
 
     isFirstAssessment = false;
     lockLimitReached = false;
@@ -97,7 +99,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // listener, will get notified upon loading of feedback
     @Output() onFeedbackLoaded = new EventEmitter();
     // function override, if set will be executed instead of going to the next submission page
-    @Input() overrideNextSubmission?: (submissionId: number) => {} = undefined;
+    @Input() overrideNextSubmission?: (submissionId: number) => any = undefined;
 
     // Icons
     faTimesCircle = faTimesCircle;
@@ -119,6 +121,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private programmingExerciseService: ProgrammingExerciseService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
+        translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
     }
 
     /**
@@ -388,17 +391,30 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
      * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
      *
-     * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
+     * @param assessmentAfterComplaint the response to the complaint that is sent to the server along with the assessment update along with onSuccess and onError callbacks
      */
-    onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
+    onUpdateAssessmentAfterComplaint(assessmentAfterComplaint: AssessmentAfterComplaint): void {
+        this.validateFeedback();
+        if (!this.assessmentsAreValid) {
+            this.alertService.error('artemisApp.programmingAssessment.invalidAssessments');
+            assessmentAfterComplaint.onError();
+            return;
+        }
+        if (!this.checkFeedbackChangeForAcceptedComplaint(assessmentAfterComplaint)) {
+            assessmentAfterComplaint.onError();
+            return;
+        }
+
         this.setFeedbacksForManualResult();
-        this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, complaintResponse, this.submission!.id!).subscribe({
+        this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, assessmentAfterComplaint.complaintResponse, this.submission!.id!).subscribe({
             next: (result: Result) => {
+                assessmentAfterComplaint.onSuccess();
                 this.participation.results![0] = this.manualResult = result;
                 this.alertService.closeAll();
                 this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
             },
             error: (httpErrorResponse: HttpErrorResponse) => {
+                assessmentAfterComplaint.onError();
                 this.alertService.closeAll();
                 const error = httpErrorResponse.error;
                 if (error && error.errorKey && error.errorKey === 'complaintLock') {
@@ -470,6 +486,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     validateFeedback(): void {
         this.calculateTotalScore();
+        if (this.exercise.allowComplaintsForAutomaticAssessments) {
+            // We don't need manual feedback here
+            this.assessmentsAreValid = true;
+            return;
+        }
         const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
         const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
@@ -525,6 +546,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private handleFeedback(): void {
         const feedbacks = this.manualResult?.feedbacks || [];
+        this.totalScoreBeforeAssessment = this.calculateTotalScoreOfFeedbacks(feedbacks);
         this.automaticFeedback = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC);
         // When manual result only contains automatic feedback elements (when assessing for the first time), no manual assessment was yet saved or submitted.
         if (feedbacks.length === this.automaticFeedback.length) {
@@ -534,6 +556,18 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
         this.onFeedbackLoaded.emit();
+    }
+
+    checkFeedbackChangeForAcceptedComplaint(assessmentAfterComplaint: AssessmentAfterComplaint) {
+        if (!assessmentAfterComplaint.complaintResponse.complaint?.accepted) {
+            return true;
+        }
+        const allNewFeedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
+        const newTotalScore = this.calculateTotalScoreOfFeedbacks(allNewFeedbacks);
+        if (this.totalScoreBeforeAssessment >= newTotalScore) {
+            return window.confirm(this.acceptComplaintWithoutMoreScoreText);
+        }
+        return true;
     }
 
     private setFeedbacksForManualResult() {
@@ -562,7 +596,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private calculateTotalScore() {
         const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
-        const maxPoints = this.exercise.maxPoints! + (this.exercise.bonusPoints! ?? 0.0);
+        const totalScore = this.calculateTotalScoreOfFeedbacks(feedbacks);
+        // Set attributes of manual result
+        this.setAttributesForManualResult(totalScore);
+    }
+
+    private calculateTotalScoreOfFeedbacks(feedbacks: Feedback[]): number {
+        const maxPoints = this.exercise.maxPoints! + (this.exercise.bonusPoints ?? 0.0);
         let totalScore = 0.0;
         let scoreAutomaticTests = 0.0;
         const gradingInstructions = {}; // { instructionId: noOfEncounters }
@@ -587,7 +627,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         totalScore += scoreAutomaticTests;
         totalScore = getPositiveAndCappedTotalScore(totalScore, maxPoints);
 
-        // Set attributes of manual result
-        this.setAttributesForManualResult(totalScore);
+        return totalScore;
     }
 }

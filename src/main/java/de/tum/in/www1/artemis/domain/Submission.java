@@ -187,8 +187,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     /**
      * Get the manual result by id of the submission
-     * @param resultId id of result
      *
+     * @param resultId id of result
      * @return a {@link Result} or null
      */
     @Nullable
@@ -299,6 +299,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     /**
      * determine whether a submission is empty, i.e. the student did not work properly on the corresponding exercise
+     *
      * @return whether the submission is empty (true) or not (false)
      */
     public abstract boolean isEmpty();
@@ -308,7 +309,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      * and he has not requested a specific result, remove any other results
      *
      * @param correctionRound for which not to remove results
-     * @param resultId specific resultId
+     * @param resultId        specific resultId
      */
     public void removeNotNeededResults(int correctionRound, Long resultId) {
         if (correctionRound == 0 && resultId == null && getResults().size() >= 2) {
@@ -320,6 +321,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     /**
      * Returns the result of a submission which has a complaint
+     *
      * @return the result which has a complaint or null if there is no result which has a complaint
      */
     @Nullable
@@ -330,8 +332,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     @Override
     public int compareTo(Submission other) {
-        if (getSubmissionDate() == null || other.getSubmissionDate() == null) {
-            // this case should not happen, but in the rare case we can compare the ids
+        if (getSubmissionDate() == null || other.getSubmissionDate() == null || Objects.equals(getSubmissionDate(), other.getSubmissionDate())) {
+            // this case should not happen, but in the rare case we can compare the ids (in tests, the submission dates might be identical as ms are not stored in the database)
             // newer ids are typically later
             return getId().compareTo(other.getId());
         }

@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationLifecycle;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -143,6 +144,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     /**
      * Checks if scheduled tasks have to be started for the given exercise.
+     *
      * @param exercise for which the check should be performed.
      * @return true, if the exercise needs to be scheduled.
      */
@@ -200,6 +202,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * - Due
      * - Build & Test after due date
      * - Assessment due date
+     *
      * @param exerciseId the id of the exercise for which the tasks should be cancelled
      */
     public void cancelAllScheduledTasks(Long exerciseId) {
@@ -289,8 +292,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * Schedules all necessary tasks for participations with individual due dates.
      *
      * Also removes schedules for individual participations of their individual due date no longer exists.
+     *
      * @param exercise the participations belong to.
-     * @param now the current time.
+     * @param now      the current time.
      */
     private void scheduleParticipationTasks(final ProgrammingExercise exercise, final ZonedDateTime now) {
         final boolean isScoreUpdateNeeded = isScoreUpdateAfterDueDateNeeded(exercise);
@@ -485,7 +489,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * Returns a runnable that, once executed, will (1) lock all student repositories and (2) stash all student changes in the online editor for manual assessments
      * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
      *
-     * @param exercise The exercise for which the repositories should be locked
+     * @param exercise  The exercise for which the repositories should be locked
      * @param condition a condition that determines whether the operation will be executed for a specific participation
      * @return a Runnable that will lock the repositories once it is executed
      */
@@ -538,6 +542,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     /**
      * Creates a runnable that will lock the Git repository of the given participation when run.
+     *
      * @param participation of which the Git repository will be locked.
      * @return a runnable that will lock the Git repository of the participation when run.
      */
@@ -559,7 +564,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * Tasks to unlock will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
      * NOTE: this will not immediately unlock the repositories as only a Runnable is returned!
      *
-     * @param exercise The exercise for which the repositories should be unlocked
+     * @param exercise  The exercise for which the repositories should be unlocked
      * @param condition a condition that determines whether the operation will be executed for a specific participation
      * @return a Runnable that will unlock the repositories once it is executed
      */
@@ -620,7 +625,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     /**
      * this method schedules individual lock tasks for programming exercises (mostly in the context of exams)
-     * @param exercise the programming exercise for which the lock is executed
+     *
+     * @param exercise           the programming exercise for which the lock is executed
      * @param individualDueDates these are the individual due dates for students taking individual workingTimes of student exams into account
      */
     private void scheduleIndividualRepositoryLockTasks(ProgrammingExercise exercise, Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates) {
@@ -628,14 +634,36 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         var participationsGroupedByDueDate = individualDueDates.stream().filter(tuple -> tuple.x() != null)
                 .collect(Collectors.groupingBy(Tuple::x, Collectors.mapping(Tuple::y, Collectors.toSet())));
         // 2. Transform those groups into lock-repository tasks with times
-        var tasks = participationsGroupedByDueDate.entrySet().stream().map(entry -> {
-            Predicate<ProgrammingExerciseStudentParticipation> lockingCondition = participation -> entry.getValue().contains(participation);
-            var groupDueDate = entry.getKey();
+        Set<Tuple<ZonedDateTime, Runnable>> tasks = participationsGroupedByDueDate.entrySet().stream().map(entry -> {
+            // Check that this participation is planed to be locked and has still the same due date
+            Predicate<ProgrammingExerciseStudentParticipation> lockingCondition = participation -> entry.getValue().contains(participation)
+                    && entry.getKey().equals(studentExamRepository.getIndividualDueDate(exercise, participation));
             var task = lockStudentRepositories(exercise, lockingCondition);
-            return new Tuple<>(groupDueDate, task);
+            return new Tuple<>(entry.getKey(), task);
         }).collect(Collectors.toSet());
         // 3. Schedule all tasks
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, tasks);
+    }
+
+    /**
+     * Reschedules all programming exercises in this student exam, since the working time was changed
+     *
+     * @param studentExamId the id of the student exam
+     */
+    public void rescheduleStudentExamDuringConduction(Long studentExamId) {
+        StudentExam studentExam = studentExamRepository.findWithExercisesParticipationsSubmissionsById(studentExamId, false).orElseThrow(NoSuchElementException::new);
+        List<ProgrammingExercise> programmingExercises = studentExam.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
+                .map(exercise -> (ProgrammingExercise) exercise).toList();
+
+        programmingExercises.forEach(programmingExercise -> {
+            Optional<StudentParticipation> participation = programmingExercise.getStudentParticipations().stream().findFirst();
+            if (participation.isEmpty() || !(participation.get() instanceof ProgrammingExerciseStudentParticipation programmingParticipation)) {
+                return;
+            }
+            ZonedDateTime dueDate = studentExamRepository.getIndividualDueDate(programmingExercise, programmingParticipation);
+
+            scheduleIndividualRepositoryLockTasks(programmingExercise, Set.of(new Tuple<>(dueDate, programmingParticipation)));
+        });
     }
 
     public static ZonedDateTime getExamProgrammingExerciseUnlockDate(ProgrammingExercise exercise) {
@@ -660,9 +688,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * <p>
      *
      * @param programmingExerciseId the programming exercise whose participations should be processed
-     * @param operation the operation to perform
-     * @param condition the condition that tests whether to invoke the operation on a participation
-     * @param operationName the name of the operation, this is only used for logging
+     * @param operation             the operation to perform
+     * @param condition             the condition that tests whether to invoke the operation on a participation
+     * @param operationName         the name of the operation, this is only used for logging
      * @return a list containing all participations for which the operation has failed with an exception
      * @throws EntityNotFoundException if the programming exercise can't be found.
      */

@@ -99,17 +99,17 @@ public class BambooBuildPlanService {
      * Creates a Build Plan for a Programming Exercise
      *
      * @param programmingExercise    programming exercise with the required
-     *                               information to create the base build plan
+     *                                   information to create the base build plan
      * @param planKey                the key of the build plan
      * @param repositoryName         the slug of the assignment repository (used to
-     *                               separate between exercise and solution), i.e.
-     *                               the unique identifier
+     *                                   separate between exercise and solution), i.e.
+     *                                   the unique identifier
      * @param testRepositoryName     the slug of the test repository, i.e. the
-     *                               unique identifier
+     *                                   unique identifier
      * @param solutionRepositoryName the slug of the solution repository, i.e. the
-     *                               unique identifier
+     *                                   unique identifier
      * @param auxiliaryRepositories  List of auxiliary repositories to be included in
-     *                               the build plan
+     *                                   the build plan
      */
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName, String solutionRepositoryName,
             List<AuxiliaryRepository.AuxRepoNameWithSlug> auxiliaryRepositories) {
@@ -132,8 +132,8 @@ public class BambooBuildPlanService {
      * Set Build Plan Permissions for admins, instructors, editors and teaching assistants.
      *
      * @param programmingExercise a programming exercise with the required
-     *                            information to set the needed build plan
-     *                            permissions
+     *                                information to set the needed build plan
+     *                                permissions
      * @param planKey             The name of the source plan
      */
     public void setBuildPlanPermissionsForExercise(ProgrammingExercise programmingExercise, String planKey) {
@@ -175,7 +175,7 @@ public class BambooBuildPlanService {
         // Do not run the builds in extra docker containers if the dev-profile is active
         // Xcode has no dockerfile, it only runs on agents (e.g. sb2-agent-0050562fddde)
         if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && !ProjectType.XCODE.equals(projectType)) {
-            defaultJob.dockerConfiguration(dockerConfigurationImageNameFor(programmingLanguage, Optional.ofNullable(projectType)));
+            defaultJob.dockerConfiguration(dockerConfigurationFor(programmingLanguage, Optional.ofNullable(projectType)));
         }
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
@@ -294,9 +294,10 @@ public class BambooBuildPlanService {
     /**
      * Modify the lists containing default tasks, final tasks and artifacts for executing a static code analysis for
      * Java and Kotlin exercises.
+     *
      * @param isMavenProject whether the project is a Maven build (or implicitly a Gradle build)
-     * @param finalTasks the list containing the final tasks for the build plan to be created
-     * @param artifacts the list containing all artifacts for the build plan to be created
+     * @param finalTasks     the list containing the final tasks for the build plan to be created
+     * @param artifacts      the list containing all artifacts for the build plan to be created
      */
     private void modifyBuildConfigurationForStaticCodeAnalysisForJavaAndKotlinExercise(boolean isMavenProject, List<Task<?, ?>> finalTasks, List<Artifact> artifacts) {
         // Create artifacts and a final task for the execution of static code analysis
@@ -316,11 +317,12 @@ public class BambooBuildPlanService {
 
     /**
      * Modify the lists containing default and final tasks for executing a non-sequential test run
-     * @param isMavenProject whether the project is a Maven project (or implicitly a Gradle project)
+     *
+     * @param isMavenProject         whether the project is a Maven project (or implicitly a Gradle project)
      * @param recordTestwiseCoverage whether the testwise coverage should be recorded
-     * @param defaultTasks the list containing the default tasks for the build plan to be created
-     * @param finalTasks the list containing the final tasks for the build plan to be created
-     * @param artifacts the list containing all artifacts for the build plan to be created
+     * @param defaultTasks           the list containing the default tasks for the build plan to be created
+     * @param finalTasks             the list containing the final tasks for the build plan to be created
+     * @param artifacts              the list containing all artifacts for the build plan to be created
      */
     private void modifyBuildConfigurationForRegularTestsForJavaAndKotlinExercise(boolean isMavenProject, boolean recordTestwiseCoverage, List<Task<?, ?>> defaultTasks,
             List<Task<?, ?>> finalTasks, List<Artifact> artifacts) {
@@ -356,9 +358,10 @@ public class BambooBuildPlanService {
 
     /**
      * Modify the lists containing default and final tasks for executing a sequential test run
+     *
      * @param isMavenProject whether the project is a Maven project (or implicitly a Gradle project)
-     * @param defaultTasks the list containing the default tasks for the build plan to be created
-     * @param finalTasks the list containing the final tasks for the build plan to be created
+     * @param defaultTasks   the list containing the default tasks for the build plan to be created
+     * @param finalTasks     the list containing the final tasks for the build plan to be created
      */
     private void modifyBuildConfigurationForSequentialTestsForJavaAndKotlinExercise(boolean isMavenProject, List<Task<?, ?>> defaultTasks, List<Task<?, ?>> finalTasks) {
         if (isMavenProject) {
@@ -500,8 +503,29 @@ public class BambooBuildPlanService {
         }
     }
 
-    private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType) {
-        var dockerImage = programmingLanguageConfiguration.getImage(programmingLanguage, projectType);
-        return new DockerConfiguration().image(dockerImage);
+    /**
+     * Assembles a bamboo docker configuration for a given programming exercise and project type
+     *
+     * @param programmingLanguage
+     * @param projectType
+     * @return bamboo docker configuration
+     */
+    private DockerConfiguration dockerConfigurationFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType) {
+        var dockerConfiguration = new DockerConfiguration();
+
+        dockerConfiguration.dockerRunArguments(getDefaultDockerRunArguments());
+        dockerConfiguration.image(programmingLanguageConfiguration.getImage(programmingLanguage, projectType));
+
+        return dockerConfiguration;
+    }
+
+    /**
+     * Get the docker run arguments for a Bamboo DockerConfiguration.
+     * The configuration is obtained from the programmingLanguageConfiguration.
+     *
+     * @return An array of string containing all the configured docker run argument key-value pairs prefixed with two dashes
+     */
+    private String[] getDefaultDockerRunArguments() {
+        return programmingLanguageConfiguration.getDefaultDockerFlags().toArray(new String[0]);
     }
 }

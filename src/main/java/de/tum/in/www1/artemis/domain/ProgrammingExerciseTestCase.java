@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType.DEFAULT;
+
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.annotation.Nonnull;
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -13,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.*;
 
@@ -31,8 +34,8 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     @Column(name = "weight")
     private Double weight;
 
-    @Column(name = "active")
-    private Boolean active;
+    @Column(name = "active", columnDefinition = "boolean DEFAULT false")
+    private Boolean active = false;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "visibility")
@@ -58,8 +61,8 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     private ProgrammingExercise exercise;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "test_case_type")
-    private ProgrammingExerciseTestCaseType type;
+    @Column(name = "test_case_type", nullable = false)
+    private ProgrammingExerciseTestCaseType type = DEFAULT;     // default value
 
     @OneToMany(mappedBy = "testCase", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("testCase")
@@ -96,7 +99,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         this.weight = weight;
     }
 
-    @Nonnull
+    @NotNull
     public Double getBonusMultiplier() {
         return bonusMultiplier != null ? bonusMultiplier : 1.0;
     }
@@ -110,7 +113,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         this.bonusMultiplier = bonusMultiplier;
     }
 
-    @Nonnull
+    @NotNull
     public Double getBonusPoints() {
         return bonusPoints != null ? bonusPoints : 0.0;
     }
@@ -219,6 +222,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
 
     /**
      * Checks for logical equality based on the name and the exercise
+     *
      * @param testCase another test case which should be checked for being the same
      * @return whether this and the other test case are the same based on name and exercise
      */
@@ -231,4 +235,29 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         return "ProgrammingExerciseTestCase{" + "id=" + getId() + ", testName='" + testName + '\'' + ", weight=" + weight + ", active=" + active + ", visibility=" + visibility
                 + ", bonusMultiplier=" + bonusMultiplier + ", bonusPoints=" + bonusPoints + '}';
     }
+
+    /**
+     * Check if the provided test was found in the result's feedbacks with positive = true.
+     *
+     * @param result of the build run.
+     * @return true if there is a positive feedback for a given test.
+     */
+    public boolean isSuccessful(Result result) {
+        return result.getFeedbacks().stream().anyMatch(feedback -> {
+            boolean testNameAreSame = feedback.getText() != null && feedback.getText().equalsIgnoreCase(this.getTestName());
+            return testNameAreSame && Boolean.TRUE.equals(feedback.isPositive());
+        });
+    }
+
+    /**
+     * Check if the provided test was not found in the result's feedbacks.
+     *
+     * @param result of the build run.
+     * @return true if there is no feedback for a given test.
+     */
+    public boolean wasNotExecuted(Result result) {
+        return result.getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC)
+                .noneMatch(feedback -> feedback.getText() != null && feedback.getText().equalsIgnoreCase(this.getTestName()));
+    }
+
 }

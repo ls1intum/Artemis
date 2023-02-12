@@ -1,4 +1,4 @@
-// tslint:disable:max-line-length
+// eslint-disable-next-line max-len
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
@@ -47,6 +47,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
                 component.course = course;
                 component.initialize();
                 tutorialGroupFreePeriodService = TestBed.inject(TutorialGroupFreePeriodService);
+                fixture.detectChanges();
             });
     });
 
@@ -55,12 +56,10 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
     it('should send POST request upon form submission and close modal', () => {
-        fixture.detectChanges();
         const exampleFreePeriod = generateExampleTutorialGroupFreePeriod({});
         delete exampleFreePeriod.id;
 

@@ -6,10 +6,9 @@ import static org.mockito.Mockito.*;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Objects;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -38,6 +37,8 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 
 class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "ltiintegrationtest";
+
     @Autowired
     private UserRepository userRepository;
 
@@ -65,7 +66,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
             &context_id=course-v1%3ATUMx%2BSEECx%2B1T2018\
             &oauth_signature_method=HMAC-SHA1\
             &oauth_timestamp=1572204884\
-            &lis_person_contact_email_primary=anh.montag%40tum.de\
+            &lis_person_contact_email_primary=__EMAIL__\
             &oauth_signature=GYXApaIv0x7k%2FOPT9%2FoU38IBQRc%3D\
             &context_title=Software+Engineering+Essentials\
             &lti_message_type=basic-lti-launch-request\
@@ -103,7 +104,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
             &lis_person_name_family=moodle\
             &lis_person_name_full=carlos+moodle\
             &ext_user_username=carlosmoodle\
-            &lis_person_contact_email_primary=carlosmoodle%40email.com\
+            &lis_person_contact_email_primary=__EMAIL__\
             &launch_presentation_locale=en\
             &ext_lms=moodle-2\
             &tool_consumer_info_product_family_code=moodle\
@@ -124,24 +125,29 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         /* We mock the following method because we don't have the OAuth secret for edx */
         doReturn(null).when(lti10Service).verifyRequest(any(), any());
 
-        database.addUsers(1, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").get();
+        user.setInternal(false);
+        userRepository.save(user);
 
         course = database.addCourseWithOneProgrammingExercise();
         course.setOnlineCourse(true);
         database.addOnlineCourseConfigurationToCourse(course);
 
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        programmingExercise = programmingExerciseRepository.findByIdElseThrow(course.getExercises().stream().findFirst().get().getId());
 
         jiraRequestMockProvider.enableMockingOfRequests();
     }
 
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
+    private String generateRandomEmail() {
+        return RandomStringUtils.random(12, true, true) + "@email.com";
     }
 
-    private void addJiraMocks(String requestBody, String existingUser) throws Exception {
-        String email = getEmailFromBody(requestBody);
+    private String replaceEmail(String requestBody, String email) {
+        return requestBody.replace("__EMAIL__", email);
+    }
+
+    private void addJiraMocks(String email, String existingUser) throws Exception {
 
         if (existingUser != null) {
             jiraRequestMockProvider.mockGetUsernameForEmail(email, email, existingUser);
@@ -153,20 +159,12 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         jiraRequestMockProvider.mockAddUserToGroup("tumuser", false);
     }
 
-    private String getEmailFromBody(String requestBody) {
-        if (Objects.equals(requestBody, EDX_REQUEST_BODY)) {
-            return "anh.montag@tum.de";
-        }
-        if (Objects.equals(requestBody, MOODLE_REQUEST_BODY)) {
-            return "carlosmoodle@email.com";
-        }
-        return "";
-    }
-
     @ParameterizedTest
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_noOnlineCourseConfigurationException(String requestBody) throws Exception {
+        requestBody = replaceEmail(requestBody, generateRandomEmail());
+
         course.setOnlineCourseConfiguration(null);
         courseRepository.save(course);
 
@@ -175,10 +173,12 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
+    @ValueSource(strings = { EDX_REQUEST_BODY }) // To be readded when LtiUserId is removed, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_WithoutExistingEmail(String requestBody) throws Exception {
-        addJiraMocks(requestBody, null);
+        String email = generateRandomEmail();
+        requestBody = replaceEmail(requestBody, email);
+        addJiraMocks(email, null);
 
         Long exerciseId = programmingExercise.getId();
         Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
@@ -193,7 +193,9 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_WithExistingEmail(String requestBody) throws Exception {
-        addJiraMocks(requestBody, "student1");
+        String email = generateRandomEmail();
+        requestBody = replaceEmail(requestBody, email);
+        addJiraMocks(email, TEST_PREFIX + "student1");
 
         Long exerciseId = programmingExercise.getId();
         Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
@@ -205,14 +207,18 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
+    @ValueSource(strings = { EDX_REQUEST_BODY }) // To be readded when LtiUserId is removed, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_RequireExistingUser(String requestBody) throws Exception {
+        String email = generateRandomEmail();
+        requestBody = replaceEmail(requestBody, email);
+
+        course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
         OnlineCourseConfiguration onlineCourseConfiguration = course.getOnlineCourseConfiguration();
         onlineCourseConfiguration.setRequireExistingUser(true);
         courseRepository.save(course);
 
-        jiraRequestMockProvider.mockGetUsernameForEmailEmptyResponse(getEmailFromBody(requestBody));
+        jiraRequestMockProvider.mockGetUsernameForEmailEmptyResponse(email);
 
         request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody.getBytes(), HttpStatus.BAD_REQUEST, new HttpHeaders(),
                 MediaType.APPLICATION_FORM_URLENCODED_VALUE);
@@ -222,6 +228,8 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_checkExceptions(String requestBody) throws Exception {
+        requestBody = replaceEmail(requestBody, generateRandomEmail());
+
         request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId() + 1, requestBody.getBytes(), HttpStatus.NOT_FOUND, new HttpHeaders(),
                 MediaType.APPLICATION_FORM_URLENCODED_VALUE);
 
@@ -240,11 +248,12 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @ParameterizedTest
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void launchAsRecentlyCreatedStudent(String requestBody) throws Exception {
         User user = userRepository.getUser();
-        user.setEmail(getEmailFromBody(requestBody));
         userRepository.save(user);
+
+        requestBody = replaceEmail(requestBody, user.getEmail());
 
         Long exerciseId = programmingExercise.getId();
         Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
@@ -257,11 +266,12 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @ParameterizedTest
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void launchAsExistingStudent(String requestBody) throws Exception {
         User user = userRepository.getUser();
-        user.setEmail(getEmailFromBody(requestBody));
         userRepository.save(user);
+
+        requestBody = replaceEmail(requestBody, user.getEmail());
 
         var nowIn20Minutes = ZonedDateTime.now().plus(20, ChronoUnit.MINUTES);
 
@@ -280,7 +290,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @Test
-    @WithMockUser(username = "student", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void dynamicRegistrationFailsAsStudent() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("openid_configuration", "configurationUrl");
@@ -289,15 +299,16 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void dynamicRegistrationFailsWithoutOpenIdConfiguration() throws Exception {
         request.postWithoutResponseBody("/api/lti13/dynamic-registration/" + course.getId(), HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void dynamicRegistrationFailsForNonOnlineCourse() throws Exception {
         course.setOnlineCourse(false);
+        course.setOnlineCourseConfiguration(null);
         courseRepository.save(course);
 
         var params = new LinkedMultiValueMap<String, String>();

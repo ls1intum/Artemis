@@ -66,7 +66,7 @@ export class ExerciseDetailCurrentChartComponent extends ChartComponent implemen
         }
         this.reached = currentUser;
         this.ngxData.push({ name: 'Current user', value: currentUser } as NgxChartsSingleSeriesDataEntry);
-        this.ngxData.push({ name: 'Missing', value: (this.exam.numberOfRegisteredUsers ?? 0) - currentUser } as NgxChartsSingleSeriesDataEntry);
+        this.ngxData.push({ name: 'Missing', value: (this.exam.numberOfExamUsers ?? 0) - currentUser } as NgxChartsSingleSeriesDataEntry);
         // Re-trigger change detection
         this.ngxData = [...this.ngxData];
     }

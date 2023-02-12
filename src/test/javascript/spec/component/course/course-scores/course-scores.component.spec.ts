@@ -18,7 +18,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -34,12 +34,17 @@ import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrin
 import { ExportButtonComponent } from 'app/shared/export/export-button.component';
 import { CommonSpreadsheetCellObject } from 'app/shared/export/excel-export-row-builder';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
     let component: CourseScoresComponent;
     let courseService: CourseManagementService;
     let gradingSystemService: GradingSystemService;
+    let plagiarismCasesService: PlagiarismCasesService;
 
     const exerciseWithFutureReleaseDate = {
         title: 'exercise with future release date',
@@ -210,6 +215,19 @@ describe('CourseScoresComponent', () => {
     const pointsOfStudent1 = new ExerciseTypeStatisticsMap();
     const pointsOfStudent2 = new ExerciseTypeStatisticsMap();
 
+    const gradeStep: GradeStep = {
+        gradeName: 'A',
+        lowerBoundInclusive: true,
+        lowerBoundPercentage: 0,
+        upperBoundInclusive: true,
+        upperBoundPercentage: 100,
+        isPassingGrade: true,
+    };
+    const gradingScale: GradingScale = {
+        gradeType: GradeType.GRADE,
+        gradeSteps: [gradeStep],
+    };
+
     beforeEach(() => {
         exerciseMaxPointsPerType.setValue(ExerciseType.QUIZ, quizIncludedWith10Points0BonusPoints, 10);
         exerciseMaxPointsPerType.setValue(ExerciseType.FILE_UPLOAD, fileBonusWith10Points0BonusPoints, 10);
@@ -230,7 +248,7 @@ describe('CourseScoresComponent', () => {
         pointsOfStudent2.setValue(ExerciseType.TEXT, textIncludedWith10Points10BonusPoints, Number.NaN);
 
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
             declarations: [
                 CourseScoresComponent,
                 MockComponent(ParticipantScoresDistributionComponent),
@@ -270,6 +288,7 @@ describe('CourseScoresComponent', () => {
                 component = fixture.componentInstance;
                 courseService = fixture.debugElement.injector.get(CourseManagementService);
                 gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
+                plagiarismCasesService = fixture.debugElement.injector.get(PlagiarismCasesService);
                 const participationScoreService = fixture.debugElement.injector.get(ParticipantScoresService);
                 findCourseScoresSpy = jest
                     .spyOn(participationScoreService, 'findCourseScores')
@@ -300,6 +319,7 @@ describe('CourseScoresComponent', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         findCourseScoresSpy.mockReturnValue(of(new HttpResponse({ body: [] })));
         const errorSpy = jest.spyOn(component, 'logErrorOnSentry');
         fixture.detectChanges();
@@ -310,6 +330,7 @@ describe('CourseScoresComponent', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         const cs1 = new ScoresDTO();
         cs1.studentId = user1.id;
         cs1.pointsAchieved = 99;
@@ -330,6 +351,7 @@ describe('CourseScoresComponent', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         const cs1 = new ScoresDTO();
         cs1.studentId = user1.id;
         cs1.pointsAchieved = 40;
@@ -368,6 +390,7 @@ describe('CourseScoresComponent', () => {
     it('should group exercises and calculate exercise max score', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();
 
         expect(component.allParticipationsOfCourse).toEqual(participations);
@@ -378,6 +401,7 @@ describe('CourseScoresComponent', () => {
     it('should calculate per student score', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();
 
         expect(component.students[0].pointsPerExerciseType).toEqual(pointsOfStudent1);
@@ -393,9 +417,49 @@ describe('CourseScoresComponent', () => {
         expect(component.exportReady).toBeTrue();
     });
 
+    it('should omit student statistics with no participations', () => {
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of([]));
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
+
+        fixture.detectChanges();
+
+        expect(component.students).toBeEmpty();
+    });
+
+    it('should assign plagiarism grade if there is a PLAGIARISM verdict', () => {
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: { ...gradingScale } })));
+        jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue(gradingScale.gradeSteps);
+        const matchingGradeStep = gradingScale.gradeSteps[0];
+        jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(matchingGradeStep);
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(
+            of(
+                new HttpResponse<PlagiarismCase[]>({
+                    body: [
+                        {
+                            id: 10,
+                            exercise: participation1.exercise,
+                            student: participation1.student,
+                            verdict: PlagiarismVerdict.PLAGIARISM,
+                        },
+                    ],
+                }),
+            ),
+        );
+
+        fixture.detectChanges();
+
+        expect(component.students[0].gradeStep?.gradeName).toEqual(GradingScale.DEFAULT_PLAGIARISM_GRADE);
+        expect(component.students[1].gradeStep?.gradeName).toEqual(matchingGradeStep.gradeName);
+        expect(component.averageGrade).toEqual(matchingGradeStep.gradeName);
+    });
+
     it('should generate excel row correctly', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();
         const exportAsExcelStub = jest.spyOn(component, 'exportAsExcel').mockImplementation();
         component.exportResults();
@@ -443,6 +507,7 @@ describe('CourseScoresComponent', () => {
     it('should generate csv correctly', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();
         const exportAsCsvStub = jest.spyOn(component, 'exportAsCsv').mockImplementation();
         const testOptions: CsvExportOptions = {
@@ -477,18 +542,6 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should set grading scale properties correctly', () => {
-        const gradeStep: GradeStep = {
-            gradeName: 'A',
-            lowerBoundInclusive: true,
-            lowerBoundPercentage: 0,
-            upperBoundInclusive: true,
-            upperBoundPercentage: 100,
-            isPassingGrade: true,
-        };
-        const gradingScale: GradingScale = {
-            gradeType: GradeType.GRADE,
-            gradeSteps: [gradeStep],
-        };
         jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue([gradeStep]);
         jest.spyOn(gradingSystemService, 'maxGrade').mockReturnValue('A');
         jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(gradeStep);

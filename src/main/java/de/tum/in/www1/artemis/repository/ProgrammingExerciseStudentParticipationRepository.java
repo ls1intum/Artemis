@@ -78,7 +78,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     /**
      * Will return the participations matching the provided participation ids, but only if they belong to the given exercise.
      *
-     * @param exerciseId is used as a filter for the found participations.
+     * @param exerciseId       is used as a filter for the found participations.
      * @param participationIds the participations to retrieve.
      * @return filtered list of participations.
      */
@@ -98,6 +98,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                 AND p.individualDueDate IS NOT null
             """)
     List<ProgrammingExerciseStudentParticipation> findWithIndividualDueDateByExerciseId(@Param("exerciseId") Long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = "results")
+    ProgrammingExerciseStudentParticipation findWithResultsById(Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "student")
     Optional<ProgrammingExerciseStudentParticipation> findWithStudentById(Long participationId);

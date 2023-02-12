@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 
-import java.util.Objects;
 import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -22,9 +21,9 @@ public class SingleUserNotificationFactory {
     /**
      * Creates an instance of SingleUserNotification.
      *
-     * @param post which is answered
+     * @param post             which is answered
      * @param notificationType type of the notification that should be created
-     * @param course that the post belongs to
+     * @param course           that the post belongs to
      * @return an instance of SingleUserNotification
      */
     public static SingleUserNotification createNotification(Post post, NotificationType notificationType, Course course) {
@@ -55,9 +54,9 @@ public class SingleUserNotificationFactory {
     /**
      * Creates an instance of SingleUserNotification.
      *
-     * @param exercise for which a notification should be created
+     * @param exercise         for which a notification should be created
      * @param notificationType type of the notification that should be created
-     * @param recipient who should be notified
+     * @param recipient        who should be notified
      * @return an instance of SingleUserNotification
      */
     public static SingleUserNotification createNotification(Exercise exercise, NotificationType notificationType, User recipient) {
@@ -84,10 +83,10 @@ public class SingleUserNotificationFactory {
     /**
      * Creates an instance of SingleUserNotification based on plagiarisms.
      *
-     * @param plagiarismCase that hold the major information for the plagiarism case
+     * @param plagiarismCase   that hold the major information for the plagiarism case
      * @param notificationType type of the notification that should be created
-     * @param student who should be notified or is the author (depends if the student or instructor should be notified)
-     * @param instructor who should be notified or is the author
+     * @param student          who should be notified or is the author (depends if the student or instructor should be notified)
+     * @param instructor       who should be notified or is the author
      * @return an instance of SingleUserNotification
      */
     public static SingleUserNotification createNotification(PlagiarismCase plagiarismCase, NotificationType notificationType, User student, User instructor) {
@@ -149,7 +148,7 @@ public class SingleUserNotificationFactory {
                 notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), false, true));
             }
             case TUTORIAL_GROUP_REGISTRATION_TUTOR -> {
-                if (Objects.isNull(tutorialGroup.getTeachingAssistant())) {
+                if (tutorialGroup.getTeachingAssistant() == null) {
                     throw new IllegalArgumentException("The tutorial group " + tutorialGroup.getTitle() + " does not have a tutor to which a notification could be sent.");
                 }
                 var student = users.stream().findAny();
@@ -160,7 +159,7 @@ public class SingleUserNotificationFactory {
                 notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true, true));
             }
             case TUTORIAL_GROUP_DEREGISTRATION_TUTOR -> {
-                if (Objects.isNull(tutorialGroup.getTeachingAssistant())) {
+                if (tutorialGroup.getTeachingAssistant() == null) {
                     throw new IllegalArgumentException("The tutorial group " + tutorialGroup.getTitle() + " does not have a tutor to which a notification could be sent.");
                 }
 
@@ -172,7 +171,7 @@ public class SingleUserNotificationFactory {
                 notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true, true));
             }
             case TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR -> {
-                if (Objects.isNull(tutorialGroup.getTeachingAssistant())) {
+                if (tutorialGroup.getTeachingAssistant() == null) {
                     throw new IllegalArgumentException("The tutorial group " + tutorialGroup.getTitle() + " does not have a tutor to which a notification could be sent.");
                 }
                 notification = new SingleUserNotification(tutorialGroup.getTeachingAssistant(), title,

@@ -33,7 +33,7 @@
                 <ng-container *ngIf="exercise && exercise.studentParticipations && exercise.studentParticipations[0]">
                     <ng-container *ngIf="pageComponentVisited[i]">
                         <ng-container [ngSwitch]="exercise.type">
-                            <div [hidden]="i !== activePageIndex">
+                            <div [hidden]="i !== activePageIndex" [id]="'exercise-' + exercise.id">
                                 <jhi-quiz-submission-exam
                                     *ngSwitchCase="QUIZ"
                                     [exercise]="exercise"

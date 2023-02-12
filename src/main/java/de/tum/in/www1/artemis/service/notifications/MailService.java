@@ -104,15 +104,15 @@ public class MailService implements InstantNotificationService {
     /**
      * Sends an e-mail to the specified sender
      *
-     * @param recipient who should be contacted.
-     * @param subject The mail subject
-     * @param content The content of the mail. Can be enriched with HTML tags
+     * @param recipient   who should be contacted.
+     * @param subject     The mail subject
+     * @param content     The content of the mail. Can be enriched with HTML tags
      * @param isMultipart Whether to create a multipart that supports alternative texts, inline elements
-     * @param isHtml Whether the mail should support HTML tags
+     * @param isHtml      Whether the mail should support HTML tags
      */
     @Async
     public void sendEmail(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
-        log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}' and content={}", isMultipart, isHtml, recipient, subject, content);
+        log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}'", isMultipart, isHtml, recipient, subject);
 
         // Prepare message using a Spring helper
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
@@ -134,9 +134,9 @@ public class MailService implements InstantNotificationService {
     /**
      * Sends a predefined mail based on a template
      *
-     * @param user The receiver of the mail
+     * @param user         The receiver of the mail
      * @param templateName The name of the template
-     * @param titleKey The key mapping the title for the subject of the mail
+     * @param titleKey     The key mapping the title for the subject of the mail
      */
     public void sendEmailFromTemplate(User user, String templateName, String titleKey) {
         Locale locale = Locale.forLanguageTag(user.getLangKey());
@@ -167,9 +167,10 @@ public class MailService implements InstantNotificationService {
 
     /**
      * Sets the context and subject for the case that the notificationSubject is a Post
-     * @param context that is modified
+     *
+     * @param context             that is modified
      * @param notificationSubject which has to be a Post
-     * @param locale used for translations
+     * @param locale              used for translations
      * @return the modified subject of the email
      */
     private String setPostContextAndSubject(Context context, Object notificationSubject, Locale locale) {
@@ -184,8 +185,9 @@ public class MailService implements InstantNotificationService {
     @Override
     /**
      * Sends a notification based email to one user
-     * @param notification which properties are used to create the email
-     * @param user who should be contacted
+     *
+     * @param notification        which properties are used to create the email
+     * @param user                who should be contacted
      * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
      */
     public void sendNotification(Notification notification, User user, Object notificationSubject) {
@@ -296,8 +298,8 @@ public class MailService implements InstantNotificationService {
      * Auxiliary method for EXERCISE_SUBMISSION_ASSESSED case to load the needed score property to use it in the template.
      *
      * @param notificationType that needs to be EXERCISE_SUBMISSION_ASSESSED
-     * @param context that should be updated with the score property
-     * @param exercise that holds the needed information: exercise -> studentParticipation -> results (this information was loaded in previous steps)
+     * @param context          that should be updated with the score property
+     * @param exercise         that holds the needed information: exercise -> studentParticipation -> results (this information was loaded in previous steps)
      * @param recipientStudent who will receive the email
      * @return the updated context
      */
@@ -321,7 +323,7 @@ public class MailService implements InstantNotificationService {
     /**
      * Sends an email based on a weekly summary
      *
-     * @param user who is the recipient
+     * @param user      who is the recipient
      * @param exercises that will be used in the weekly summary
      */
     @Async

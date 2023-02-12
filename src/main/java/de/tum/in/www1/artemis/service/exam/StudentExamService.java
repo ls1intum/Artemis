@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.service.exam;
 import static de.tum.in.www1.artemis.config.Constants.EXAM_EXERCISE_START_STATUS;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -14,10 +16,12 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -35,6 +39,7 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.SubmissionVersionService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -48,6 +53,8 @@ public class StudentExamService {
 
     private static final String EXAM_EXERCISE_START_STATUS_TOPIC = "/topic/exams/%s/exercise-start-status";
 
+    private static final String WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC = "/topic/studentExams/%s/working-time-change-during-conduction";
+
     private final Logger log = LoggerFactory.getLogger(StudentExamService.class);
 
     private final ParticipationService participationService;
@@ -55,6 +62,8 @@ public class StudentExamService {
     private final UserRepository userRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingTriggerService programmingTriggerService;
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
@@ -82,11 +91,14 @@ public class StudentExamService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final TaskScheduler scheduler;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository, CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository,
+            CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate, @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -100,9 +112,11 @@ public class StudentExamService {
         this.examQuizService = examQuizService;
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingTriggerService = programmingTriggerService;
         this.examRepository = examRepository;
         this.cacheManager = cacheManager;
         this.messagingTemplate = messagingTemplate;
+        this.scheduler = scheduler;
     }
 
     /**
@@ -128,12 +142,6 @@ public class StudentExamService {
             log.error("saveSubmissions threw an exception", e);
         }
 
-        // NOTE: only for test runs and test exams, the quizzes should be evaluated automatically
-        if (studentExam.isTestRun() || studentExam.getExam().isTestExam()) {
-            // immediately evaluate quiz participations for test runs and test exams
-            examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExam);
-        }
-
         // NOTE: only for real exams and test exams, the student repositories need to be locked
         // For test runs, this is not needed, because instructors have admin permissions on the VCS project (which contains the repository) anyway
         if (!studentExam.isTestRun()) {
@@ -143,6 +151,22 @@ public class StudentExamService {
             }
             catch (Exception e) {
                 log.error("lockStudentRepositories threw an exception", e);
+            }
+        }
+
+        // NOTE: only for test runs and test exams, the quizzes should be evaluated automatically
+        if (studentExam.isTestRun() || studentExam.getExam().isTestExam()) {
+            // immediately evaluate quiz participations for test runs and test exams
+            examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExam);
+
+            // Trigger build for all programing participations
+            var currentStudentParticipations = studentExam.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
+                    .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(exercise.getId(), currentUser.getId()).stream())
+                    .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
+
+            if (!currentStudentParticipations.isEmpty()) {
+                // Delay to ensure that "Building and testing" is shown in the client
+                scheduler.schedule(() -> programmingTriggerService.triggerBuildForParticipations(currentStudentParticipations), Instant.now().plus(3, ChronoUnit.SECONDS));
             }
         }
 
@@ -289,7 +313,8 @@ public class StudentExamService {
      *
      * @param exam                the exam
      * @param assessor            the assessor should be the instructor making the call
-     * @param excludeStudentExams studentExams which should be excluded. This is used to exclude unsubmitted student exams because they are already assessed, see {@link StudentExamService#assessUnsubmittedStudentExams}
+     * @param excludeStudentExams studentExams which should be excluded. This is used to exclude unsubmitted student exams because they are already assessed, see
+     *                                {@link StudentExamService#assessUnsubmittedStudentExams}
      * @return returns the set of StudentExams of which the empty submissions were assessed
      */
     public Set<StudentExam> assessEmptySubmissionsOfStudentExams(final Exam exam, final User assessor, final Set<StudentExam> excludeStudentExams) {
@@ -513,7 +538,7 @@ public class StudentExamService {
                         .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(),
                                 generatedParticipations.size(), startedAt, lock))
                         .exceptionally(throwable -> {
-                            log.error("Exception while preparing exercises for student exam " + studentExam.getId(), throwable);
+                            log.error("Exception while preparing exercises for student exam {}", studentExam.getId(), throwable);
                             sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(),
                                     generatedParticipations.size(), startedAt, lock);
                             return null;
@@ -623,7 +648,7 @@ public class StudentExamService {
     /**
      * Generates a new test exam for the student and stores it in the database
      *
-     * @param exam  the exam with loaded exercie groups and exercise for which the StudentExam should be  created
+     * @param exam    the exam with loaded exercie groups and exercise for which the StudentExam should be created
      * @param student the corresponding student
      * @return a StudentExam for the student and exam
      */
@@ -653,5 +678,9 @@ public class StudentExamService {
         HashSet<User> userHashSet = new HashSet<>();
         userHashSet.add(student);
         return studentExamRepository.createRandomStudentExams(exam, userHashSet).get(0);
+    }
+
+    public void notifyStudentAboutWorkingTimeChangeDuringConduction(StudentExam studentExam) {
+        messagingTemplate.convertAndSend(WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(studentExam.getId()), studentExam.getWorkingTime());
     }
 }

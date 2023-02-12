@@ -4,12 +4,15 @@ import static de.tum.in.www1.artemis.repository.specs.PostSpecs.*;
 
 import java.util.List;
 
+import javax.transaction.Transactional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -29,11 +32,12 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
 
     /**
      * Generates SQL Query via specifications to filter and sort Posts
+     *
      * @param postContextFilter filtering and sorting properties for Posts
      * @param userId            id of the user performing the call, needed on certain filters
      * @param pagingEnabled     whether a page of posts or all posts will be fetched
      * @param pageable          paging object which contains the page number and number of records to fetch
-     * @return  returns a Page of Posts or all Posts within a Page, which is treated as a List by the client.
+     * @return returns a Page of Posts or all Posts within a Page, which is treated as a List by the client.
      */
     default Page<Post> findPosts(PostContextFilter postContextFilter, Long userId, boolean pagingEnabled, Pageable pageable) {
         Specification<Post> specification = Specification.where(distinct())
@@ -52,6 +56,11 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
             return new PageImpl<>(findAll(specification));
         }
     }
+
+    @Transactional
+    @Modifying
+    // ok because of delete
+    void deleteAllByConversationId(Long conversationId);
 
     @Query("""
             SELECT DISTINCT tag FROM Post post
@@ -76,4 +85,5 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     default Post findPostOrMessagePostByIdElseThrow(Long postId) throws EntityNotFoundException {
         return findById(postId).orElseThrow(() -> new EntityNotFoundException("Post", postId));
     }
+
 }
