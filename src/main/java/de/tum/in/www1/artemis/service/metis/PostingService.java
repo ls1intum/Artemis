@@ -207,6 +207,7 @@ public abstract class PostingService {
 
     /**
      * helper method that assigns authorRoles of postings in accordance to user groups and authorities
+     *
      * @param posting       posting to assign authorRole
      * @param postingCourse course that the post belongs to, must be explicitly fetched and provided to handle new post creation case
      */

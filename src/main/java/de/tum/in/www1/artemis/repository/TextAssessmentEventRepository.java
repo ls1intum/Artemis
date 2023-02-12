@@ -40,7 +40,8 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
     /**
      * Query and find all events which do not have the respective fields empty. These fields are specifically needed non-empty
      * for the tutor effort estimation process
-     * @param courseId the id of the course to check for
+     *
+     * @param courseId       the id of the course to check for
      * @param textExerciseId the id of the text exercise to check for
      * @return a list of text assessment events
      */
@@ -58,7 +59,8 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
 
     /**
      * Finds the number of submissions assessed for each tutor listed in the assessment event list
-     * @param courseId the id of the course to check for
+     *
+     * @param courseId       the id of the course to check for
      * @param textExerciseId the id of the text exercise to check for
      * @return a TutorAssessedSubmissionsCount interface representing user id and number of submissions involved
      */
@@ -87,7 +89,8 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
 
     /**
      * Calculates number of submissions each tutor is involved with
-     * @param courseId course to check
+     *
+     * @param courseId       course to check
      * @param textExerciseId text exercise id to check
      * @return Map containing user id and respective number of submissions affected
      */

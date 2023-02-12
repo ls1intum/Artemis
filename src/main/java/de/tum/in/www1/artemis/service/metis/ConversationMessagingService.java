@@ -105,7 +105,7 @@ public class ConversationMessagingService extends PostingService {
         conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
         // ToDo: Optimization Idea: Maybe we can save this websocket call and instead get the last message date from the conversation object in the post somehow?
         // send conversation with updated last message date to participants. This is necessary to show the unread messages badge in the client
-        conversationService.notifyAllConversationMembersAboutNewMessage(conversation);
+        conversationService.notifyAllConversationMembersAboutNewMessage(conversation, author);
         return createdMessage;
     }
 

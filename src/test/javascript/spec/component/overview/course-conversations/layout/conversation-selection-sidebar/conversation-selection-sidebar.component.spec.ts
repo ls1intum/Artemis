@@ -306,23 +306,24 @@ examples.forEach((activeConversation) => {
             expect(refreshSpy).toHaveBeenCalledOnce();
         }));
 
-        it('should expand and collapse all sections', fakeAsync(() => {
+        it('should run conversations update when hidden status is changed', fakeAsync(() => {
             fixture.detectChanges();
             tick(301);
-            const conversationSideBarSections = component.sidebarSections;
+            const onConversationsUpdateSpy = jest.spyOn(component, 'onConversationsUpdate');
+            component.onConversationHiddenStatusChange();
+            tick(301);
+            expect(onConversationsUpdateSpy).toHaveBeenCalledOnce();
+            expect(onConversationsUpdateSpy).toHaveBeenCalledWith(component.allConversations);
+        }));
 
-            expect(conversationSideBarSections).toHaveLength(4);
-            conversationSideBarSections.forEach((section) => {
-                expect(section.isCollapsed).toBeFalse();
-            });
-            component.collapseAll();
-            conversationSideBarSections.forEach((section) => {
-                expect(section.isCollapsed).toBeTrue();
-            });
-            component.expandAll();
-            conversationSideBarSections.forEach((section) => {
-                expect(section.isCollapsed).toBeFalse();
-            });
+        it('should run conversations update when favorite status is changed', fakeAsync(() => {
+            fixture.detectChanges();
+            tick(301);
+            const onConversationsUpdateSpy = jest.spyOn(component, 'onConversationsUpdate');
+            component.onConversationFavoriteStatusChange();
+            tick(301);
+            expect(onConversationsUpdateSpy).toHaveBeenCalledOnce();
+            expect(onConversationsUpdateSpy).toHaveBeenCalledWith(component.allConversations);
         }));
 
         function createConversationDialogTest(modalReturnValue: any, dialog: Type<AbstractDialogComponent>, buttonId: string) {

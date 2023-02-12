@@ -155,7 +155,7 @@ public class GroupNotificationFactory {
     /**
      * Creates an instance of GroupNotification based on the passed parameters.
      *
-     * @param post              for which a notification should be created
+     * @param post                  for which a notification should be created
      * @param author                of the notification
      * @param groupNotificationType user group type the notification should target
      * @param notificationType      type of the notification that should be created

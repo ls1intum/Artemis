@@ -1,5 +1,5 @@
 <div>
-    <h2>
+    <h2 id="exam-title">
         <ng-container *ngIf="!instructorView">
             {{ 'artemisApp.exam.examSummary.yourSubmissionTo' | artemisTranslate : { examTitle: studentExam?.exam?.title, studentName: studentExam?.user?.name } }}
         </ng-container>
@@ -27,7 +27,7 @@
     <fa-icon [icon]="faInfoCircle" class="info-icon"></fa-icon>
     {{ 'artemisApp.exam.resultInformation' | artemisTranslate }}
 </div>
-<div *ngFor="let exercise of studentExam?.exercises; let i = index">
+<div *ngFor="let exercise of studentExam?.exercises; let i = index" [id]="'exercise-' + exercise.id">
     <div class="question card">
         <div class="question-options card-header question-card-header">
             <h5>
@@ -38,7 +38,7 @@
                 <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
             </div>
             <div *ngIf="resultsPublished && exercise.studentParticipations?.length">
-                <jhi-result [participation]="exercise.studentParticipations![0]" [exercise]="exercise"> </jhi-result>
+                <jhi-updating-result [participation]="exercise.studentParticipations![0]" [exercise]="exercise" />
             </div>
             <button
                 id="{{ 'toggleCollapseExerciseButton-' + i }}"
@@ -85,11 +85,12 @@
                             *ngIf="exercise.type === PROGRAMMING"
                             class="ms-2 float-end"
                             [exerciseId]="exercise.id!"
+                            [title]="'artemisApp.programmingExercise.export.downloadExampleSolution'"
                         ></jhi-programming-exercise-example-solution-repo-download>
                     </ng-container>
                 </span>
                 <!-- prettier-ignore -->
-                <h5>{{ exercise.title }}
+                <h5 class="exercise-title">{{ exercise.title }}
                 [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
                         *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
                     <jhi-included-in-score-badge

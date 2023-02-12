@@ -139,7 +139,7 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     }
 
     /**
-     * @param e a specific exception
+     * @param e       a specific exception
      * @param request the request
      * @return the exception wrapped into a http entity
      */
@@ -158,7 +158,7 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     }
 
     /**
-     * @param e a specific exception
+     * @param e       a specific exception
      * @param request the request
      * @return the exception wrapped into a http entity
      */

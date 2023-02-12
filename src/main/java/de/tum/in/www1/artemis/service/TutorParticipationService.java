@@ -237,7 +237,7 @@ public class TutorParticipationService {
      * @param tutorExampleSubmission - the example submission to add
      * @param user                   - the user who invokes this request
      * @return the updated tutor participation
-     * @throws EntityNotFoundException if example submission or tutor participation is not found
+     * @throws EntityNotFoundException  if example submission or tutor participation is not found
      * @throws BadRequestAlertException if tutor didn't review the instructions before assessing example submissions
      */
     public TutorParticipation addExampleSubmission(Exercise exercise, ExampleSubmission tutorExampleSubmission, User user)
@@ -304,8 +304,9 @@ public class TutorParticipationService {
 
     /**
      * This method removes the tutor participation for the example submission of an exercise
-     * @param exercise  the exercise to which the example submission and tutor participation are linked to
-     * @param user  the user for which the tutor participation should be removed
+     *
+     * @param exercise the exercise to which the example submission and tutor participation are linked to
+     * @param user     the user for which the tutor participation should be removed
      */
     public void removeTutorParticipations(Exercise exercise, User user) {
         if (!tutorParticipationRepository.existsByAssessedExerciseIdAndTutorId(exercise.getId(), user.getId())) {

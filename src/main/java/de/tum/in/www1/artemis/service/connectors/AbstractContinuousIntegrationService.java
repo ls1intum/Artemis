@@ -132,7 +132,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      * Find the ZonedDateTime of the first BuildLogEntry that contains the searchString in the log message.
      *
      * @param buildLogEntries the BuildLogEntries that should be searched
-     * @param searchString the text that must be contained in the log message
+     * @param searchString    the text that must be contained in the log message
      * @return the ZonedDateTime of the found BuildLogEntry, or null if none was found
      */
     protected ZonedDateTime getTimestampForLogEntry(List<BuildLogEntry> buildLogEntries, String searchString) {
@@ -144,8 +144,8 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      * This method does not return the first entry that matches the searchString but skips skipEntries matching BuildLogEntries.
      *
      * @param buildLogEntries the BuildLogEntries that should be searched
-     * @param searchString the text that must be contained in the log message
-     * @param skipEntries the number of matching BuildLogEntries that should be skipped
+     * @param searchString    the text that must be contained in the log message
+     * @param skipEntries     the number of matching BuildLogEntries that should be skipped
      * @return the ZonedDateTime of the found BuildLogEntry, or null if none was found
      */
     protected ZonedDateTime getTimestampForLogEntry(List<BuildLogEntry> buildLogEntries, String searchString, int skipEntries) {
@@ -155,7 +155,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
     /**
      * Find the ZonedDateTime of the first BuildLogEntry that matches the given predicate.
      *
-     * @param buildLogEntries the BuildLogEntries that should be searched
+     * @param buildLogEntries   the BuildLogEntries that should be searched
      * @param matchingPredicate the predicate that must be true for the BuildLogEntry
      * @return the ZonedDateTime of the found BuildLogEntry, or null if none was found
      */
@@ -167,9 +167,9 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      * Find the ZonedDateTime of the nth BuildLogEntry that matches the given predicate.
      * This method does not return the first entry that matches the given predicate but skips skipEntries matching BuildLogEntries.
      *
-     * @param buildLogEntries the BuildLogEntries that should be searched
+     * @param buildLogEntries   the BuildLogEntries that should be searched
      * @param matchingPredicate the predicate that must be true for the BuildLogEntry
-     * @param skipEntries the number of matching BuildLogEntries that should be skipped
+     * @param skipEntries       the number of matching BuildLogEntries that should be skipped
      * @return the ZonedDateTime of the found BuildLogEntry, or null if none was found
      */
     protected ZonedDateTime getTimestampForLogEntry(List<BuildLogEntry> buildLogEntries, Predicate<BuildLogEntry> matchingPredicate, int skipEntries) {
@@ -180,7 +180,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      * Count the number of log entries that contain the searchString in the log message.
      *
      * @param buildLogEntries the BuildLogEntries that should be searched
-     * @param searchString the text that must be contained in the log message
+     * @param searchString    the text that must be contained in the log message
      * @return the number of matching log entries
      */
     protected Integer countMatchingLogs(List<BuildLogEntry> buildLogEntries, String searchString) {

@@ -97,11 +97,8 @@ export class TextExerciseComponent extends ExerciseComponent {
     openImportModal() {
         const modalRef = this.modalService.open(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseType = ExerciseType.TEXT;
-        modalRef.result.then(
-            (result: TextExercise) => {
-                this.router.navigate(['course-management', this.courseId, 'text-exercises', result.id, 'import']);
-            },
-            () => {},
-        );
+        modalRef.result.then((result: TextExercise) => {
+            this.router.navigate(['course-management', this.courseId, 'text-exercises', result.id, 'import']);
+        });
     }
 }

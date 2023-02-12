@@ -17,7 +17,6 @@ import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.User;
 
 @Entity
 @Table(name = "exam")
@@ -100,7 +99,7 @@ public class Exam extends DomainObject {
 
     /**
      * From all exercise groups connected to the exam, this number of exercises is randomly
-     * chosen when generating the specific exam for the {@link #registeredUsers}
+     * chosen when generating the specific exam for the {@link #examUsers}
      */
     @Column(name = "number_of_exercises_in_exam")
     private Integer numberOfExercisesInExam;
@@ -139,21 +138,20 @@ public class Exam extends DomainObject {
     @Column(name = "exam_archive_path")
     private String examArchivePath;
 
-    // Unidirectional
-    @ManyToMany
+    @OneToMany(mappedBy = "exam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JoinTable(name = "exam_user", joinColumns = @JoinColumn(name = "exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id"))
-    private Set<User> registeredUsers = new HashSet<>();
+    @JsonIgnoreProperties("exam")
+    private Set<ExamUser> examUsers = new HashSet<>();
 
     @Transient
-    private Long numberOfRegisteredUsersTransient;
+    private Long numberOfExamUsersTransient;
 
     public String getTitle() {
         return title;
     }
 
     public void setTitle(String title) {
-        this.title = title;
+        this.title = title != null ? title.strip() : null;
     }
 
     public boolean isTestExam() {
@@ -371,28 +369,30 @@ public class Exam extends DomainObject {
         studentExam.setExam(null);
     }
 
-    public Set<User> getRegisteredUsers() {
-        return registeredUsers;
+    public Set<ExamUser> getExamUsers() {
+        return examUsers;
     }
 
-    public void setRegisteredUsers(Set<User> registeredUsers) {
-        this.registeredUsers = registeredUsers;
+    public void setExamUsers(Set<ExamUser> examUsers) {
+        this.examUsers = examUsers;
     }
 
-    public void addRegisteredUser(User user) {
-        this.registeredUsers.add(user);
+    public void addExamUser(ExamUser examUser) {
+        this.examUsers.add(examUser);
+        examUser.setExam(this);
     }
 
-    public void removeRegisteredUser(User user) {
-        this.registeredUsers.remove(user);
+    public void removeExamUser(ExamUser examUser) {
+        this.examUsers.remove(examUser);
+        examUser.setExam(null);
     }
 
-    public Long getNumberOfRegisteredUsers() {
-        return this.numberOfRegisteredUsersTransient;
+    public Long getNumberOfExamUsers() {
+        return this.numberOfExamUsersTransient;
     }
 
-    public void setNumberOfRegisteredUsers(Long numberOfRegisteredUsers) {
-        this.numberOfRegisteredUsersTransient = numberOfRegisteredUsers;
+    public void setNumberOfExamUsers(Long numberOfExamUsersTransient) {
+        this.numberOfExamUsersTransient = numberOfExamUsersTransient;
     }
 
     public String getExamArchivePath() {
