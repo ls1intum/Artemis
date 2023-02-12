@@ -34,6 +34,11 @@ public class ApplePushNotificationService extends PushNotificationService<AppleP
 
     public ApplePushNotificationService(PushNotificationDeviceConfigurationRepository repository) {
         super(repository);
+
+        if (apnsUrl.isEmpty() || apnsToken.isEmpty() || apnsUrl.get().isEmpty() || apnsToken.get().isEmpty()) {
+            log.debug("Could not load APNS config");
+        }
+
     }
 
     @Override
@@ -43,7 +48,7 @@ public class ApplePushNotificationService extends PushNotificationService<AppleP
 
     @Override
     void sendNotificationRequestsToEndpoint(List<ApplePushNotificationRequest> requests) {
-        if (apnsToken.isPresent() && apnsUrl.isPresent()) {
+        if (apnsToken.isPresent() && !apnsToken.get().isEmpty() && apnsUrl.isPresent() && !apnsUrl.get().isEmpty()) {
             RestTemplateConfiguration restTemplateConfiguration = new RestTemplateConfiguration();
             RestTemplate restTemplate = restTemplateConfiguration.restTemplate();
 

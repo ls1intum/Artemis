@@ -36,9 +36,10 @@ artemis:
         batch-waiting-time: 30000   # in ms = 30s
     push-notification:
         firebase:
-            path:
+            path: ""
         apns:
-            path:
+            token: ""
+            url: ""
     continuous-integration:
         # Defines the used docker images for certain programming languages.
         # For each language at least the `default` image has to be defined.
