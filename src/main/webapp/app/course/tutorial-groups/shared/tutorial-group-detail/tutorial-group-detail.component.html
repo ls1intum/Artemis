@@ -46,7 +46,7 @@
         <dd>
             <ng-container *ngIf="tutorialGroup.averageAttendance !== undefined && tutorialGroup.capacity !== undefined; else noUtilization">
                 <jhi-vertical-progress-bar
-                    [fillLevelInPercent]="math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100)"
+                    [fillLevelInPercent]="Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100)"
                     [widthInPixels]="20"
                     [heightInPixels]="50"
                 >
@@ -63,7 +63,7 @@
         </dt>
         <dd>
             <ng-container *ngIf="tutorialGroup.averageAttendance !== undefined; else noAverageAttendance">
-                <span>{{ math.round(tutorialGroup.averageAttendance) }}</span>
+                <span>{{ Math.round(tutorialGroup.averageAttendance) }}</span>
             </ng-container>
             <ng-template #noAverageAttendance>
                 <span>{{ '' }}</span>

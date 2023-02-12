@@ -12,7 +12,7 @@ import { Course, Language } from 'app/entities/course.model';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupRowComponent {
-    math = Math;
+    readonly Math = Math;
     @HostBinding('class') class = 'tutorial-group-row';
 
     @Input()

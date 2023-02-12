@@ -34,7 +34,7 @@ export class TutorialGroupDetailComponent implements OnChanges {
     getDayTranslationKey = getDayTranslationKey;
 
     faQuestionCircle = faQuestionCircle;
-    math = Math;
+    readonly Math = Math;
 
     sessions: TutorialGroupSession[] = [];
 
