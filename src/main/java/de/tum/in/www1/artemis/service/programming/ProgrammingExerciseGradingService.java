@@ -914,9 +914,9 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Calculates the total penalty over all static code analysis issues
-     * Also updates the credits of each SCA feedback item.
-     * This allows other parts of Artemis a more simplified score calculation by just summing up all feedback points
+     * Calculates the total penalty over all static code analysis issues.
+     * Also updates the credits of each SCA feedback item as a side effect.
+     * This allows other parts of Artemis a more simplified score calculation by just summing up all feedback points.
      *
      * @param staticCodeAnalysisFeedback The list of static code analysis feedback
      * @param programmingExercise        The current exercise
