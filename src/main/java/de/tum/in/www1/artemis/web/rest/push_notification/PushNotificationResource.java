@@ -14,10 +14,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfigurationId;
-import de.tum.in.www1.artemis.repository.PushNotificationRepository;
+import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import io.jsonwebtoken.*;
 
@@ -25,25 +26,23 @@ import io.jsonwebtoken.*;
 @RequestMapping("/api/push_notification")
 public class PushNotificationResource {
 
-    private static String algorithm = "AES/CBC/PKCS5Padding";
-
     private static KeyGenerator aesKeyGenerator;
 
     static {
         try {
-            aesKeyGenerator = KeyGenerator.getInstance(algorithm);
+            aesKeyGenerator = KeyGenerator.getInstance(Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM);
         }
         catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private PushNotificationRepository pushNotificationRepository;
+    private PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository;
 
     private UserRepository userRepository;
 
-    public PushNotificationResource(PushNotificationRepository pushNotificationRepository, UserRepository userRepository) {
-        this.pushNotificationRepository = pushNotificationRepository;
+    public PushNotificationResource(PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository, UserRepository userRepository) {
+        this.pushNotificationDeviceConfigurationRepository = pushNotificationDeviceConfigurationRepository;
         this.userRepository = userRepository;
     }
 
@@ -69,12 +68,12 @@ public class PushNotificationResource {
         User user = userRepository.getUser();
 
         // DB CALL INSERT OR UPDATE
-        pushNotificationRepository.save(new PushNotificationDeviceConfiguration(pushNotificationRegisterBody.getToken(), pushNotificationRegisterBody.getDeviceType(),
-                expirationDate, newKey.getEncoded(), user));
+        pushNotificationDeviceConfigurationRepository.save(new PushNotificationDeviceConfiguration(pushNotificationRegisterBody.getToken(),
+                pushNotificationRegisterBody.getDeviceType(), expirationDate, newKey.getEncoded(), user));
 
         var encodedKey = Base64.getEncoder().encodeToString(newKey.getEncoded());
 
-        return ResponseEntity.ok(new PushNotificationRegisterDTO(encodedKey, algorithm));
+        return ResponseEntity.ok(new PushNotificationRegisterDTO(encodedKey, Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM));
     }
 
     @DeleteMapping("unregister")
@@ -82,11 +81,11 @@ public class PushNotificationResource {
     public ResponseEntity<Void> unregister(@Valid @RequestBody PushNotificationUnregisterRequest body) {
         final var id = new PushNotificationDeviceConfigurationId(userRepository.getUser(), body.getToken(), body.getDeviceType());
 
-        if (!pushNotificationRepository.existsById(id)) {
+        if (!pushNotificationDeviceConfigurationRepository.existsById(id)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
-        pushNotificationRepository.deleteById(id);
+        pushNotificationDeviceConfigurationRepository.deleteById(id);
 
         return ResponseEntity.ok().build();
     }

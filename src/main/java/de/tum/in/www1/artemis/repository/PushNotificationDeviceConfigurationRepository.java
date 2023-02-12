@@ -12,8 +12,9 @@ import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceCon
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfigurationId;
 
 @Repository
-public interface PushNotificationRepository extends JpaRepository<PushNotificationDeviceConfiguration, PushNotificationDeviceConfigurationId> {
+public interface PushNotificationDeviceConfigurationRepository extends JpaRepository<PushNotificationDeviceConfiguration, PushNotificationDeviceConfigurationId> {
 
     @Query("SELECT * FROM pushNotificationDeviceConfiguration WHERE expiration_date < now() AND user IN #{#userList}")
     List<PushNotificationDeviceConfiguration> findByUserIn(@Param("userList") List<User> userList);
+
 }
