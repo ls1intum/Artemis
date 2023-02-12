@@ -1,6 +1,27 @@
 {
     "artemisApp": {
         "exam": {
+            "examUsers": {
+                "uploadImage": "Bilder hochladen",
+                "uploadImageTooltip": "Hochladen von Bildern für die registrierten Studenten",
+                "introText": "Dieser Dialog kann zum Hochladen von PDF-Dateien und zum Extrahieren von Bildern für registrierte Studenten verwendet werden.",
+                "dialogText": "Jeder Eintrag in der Eingabedatei muss entweder einen Wert für die Matrikelnummer, das Login oder die E-Mail enthalten.\nDie Angaben zu Name und Vorname sind optional.",
+                "pdfExampleText": "Beispiel für ein gültiges PDF-Dateiformat:",
+                "pdfFile": {
+                    "label": ".pdf-Datei auswählen",
+                    "tooltip": "Bitte wählen Sie eine .pdf-Datei aus, die das Bild des registrierten Studenten und seine Matrikelnummer enthält."
+                },
+                "dialogTitle": "Bilder hochladen",
+                "allImagesSaved": "Alle Bilder wurden erfolgreich gespeichert.",
+                "plannedSeat": "Geplanter Sitz",
+                "plannedRoom": "Geplanter Raum",
+                "actualSeat": "Tatsächlicher Sitzplatz",
+                "actualRoom": "Tatsächlicher Raum",
+                "room": "Raum",
+                "seat": "Sitz",
+                "saveImages": "Bilder speichern",
+                "numberOfImagesSaved": "Gespeicherte Bilder"
+            },
             "overview": {
                 "start": "Beginn: {{start}}",
                 "duration": "Arbeitszeit:",
