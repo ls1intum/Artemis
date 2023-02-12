@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { ExamUserDTO } from 'app/entities/exam-user-dto.mode';
 import { filter, map, tap } from 'rxjs/operators';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -205,7 +206,7 @@ export class ExamManagementService {
      * @param studentDtos Student DTOs of student to add to the exam
      * @return studentDtos of students that were not found in the system
      */
-    addStudentsToExam(courseId: number, examId: number, studentDtos: StudentDTO[]): Observable<HttpResponse<StudentDTO[]>> {
+    addStudentsToExam(courseId: number, examId: number, studentDtos: ExamUserDTO[]): Observable<HttpResponse<StudentDTO[]>> {
         return this.http.post<StudentDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, studentDtos, { observe: 'response' });
     }
 
@@ -217,6 +218,17 @@ export class ExamManagementService {
      */
     addAllStudentsOfCourseToExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
         return this.http.post<HttpResponse<void>>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, { observe: 'response' });
+    }
+
+    /**
+     * Parse pdf file with student images and save them
+     * @param courseId
+     * @param examId
+     * @param formData
+     * @return matriculation number of students that were not found in the system
+     */
+    saveImages(courseId: number, examId: number, formData: FormData): Observable<HttpResponse<any[]>> {
+        return this.http.post<any[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users-save-images`, formData, { observe: 'response' });
     }
 
     /**

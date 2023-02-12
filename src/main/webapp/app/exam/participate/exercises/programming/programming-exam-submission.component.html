@@ -19,6 +19,7 @@
         [participation]="studentParticipation"
         [showEditorInstructions]="showEditorInstructions"
         [course]="getCourseFromExercise(exercise)"
+        [disableAutoSave]="true"
         (onCommitStateChange)="onCommitStateChange($event)"
         (onFileChanged)="onFileChanged()"
     >
