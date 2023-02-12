@@ -37,20 +37,20 @@ export class VerticalProgressBarComponent implements OnInit {
         this.setFillColor();
     }
 
-    private fillLevelInPercentInternal = 0;
-    private lowerBorderInternal = 60;
-    private upperBorderInternal = 90;
+    fillLevelInPercentInternal = 0;
+    lowerBorderInternal = 60;
+    upperBorderInternal = 90;
 
     @Input()
     set lowerBorder(border: number) {
-        this.lowerBorderInternal = Math.min(Math.round(border), 0);
+        this.lowerBorderInternal = Math.round(Math.max(border, 0));
         this.setFillColor();
         this.cdr.markForCheck;
     }
 
     @Input()
     set upperBorder(border: number) {
-        this.upperBorderInternal = Math.max(Math.round(border), 100);
+        this.upperBorderInternal = Math.round(Math.min(border, 100));
         this.setFillColor();
         this.cdr.markForCheck;
     }
