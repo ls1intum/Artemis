@@ -214,6 +214,7 @@ public class ResultService {
      * @param result the result for which the feedback elements should be returned
      * @return the list of filtered feedbacks
      */
+    // TODO improve naming (more like prepareFeedbackForClient)
     public List<Feedback> getFeedbacksForResult(Result result) {
         this.filterSensitiveInformationIfNecessary(result.getParticipation(), result);
 

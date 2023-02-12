@@ -355,13 +355,13 @@ public class ResultResource {
         }
 
         // The permission check depends on the participation type (normal participations vs. programming exercise participations).
-        if (participation instanceof StudentParticipation) {
-            if (!authCheckService.canAccessParticipation((StudentParticipation) participation)) {
+        if (participation instanceof StudentParticipation studentParticipation) {
+            if (!authCheckService.canAccessParticipation(studentParticipation)) {
                 throw new AccessForbiddenException("participation", participationId);
             }
         }
-        else if (participation instanceof ProgrammingExerciseParticipation) {
-            if (!programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
+        else if (participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation) {
+            if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
                 throw new AccessForbiddenException("participation", participationId);
             }
         }
