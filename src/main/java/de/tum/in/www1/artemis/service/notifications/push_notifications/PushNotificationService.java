@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.notifications.push_notifications;
 
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.util.Base64;
 import java.util.Collections;
@@ -31,13 +32,10 @@ public abstract class PushNotificationService<NOTIFICATION_REQUEST> implements I
 
     private static SecureRandom random = new SecureRandom();
 
-    private static KeyFactory keyFactory;
-
     private static Cipher cipher;
 
     static {
         try {
-            keyFactory = KeyFactory.getInstance(Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM);
             cipher = Cipher.getInstance(Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM);
         }
         catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
@@ -123,7 +121,7 @@ public abstract class PushNotificationService<NOTIFICATION_REQUEST> implements I
         try {
             cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(iv));
 
-            return Optional.of(Base64.getEncoder().encodeToString(cipher.doFinal(payload.getBytes())));
+            return Optional.of(Base64.getEncoder().encodeToString(cipher.doFinal(payload.getBytes(StandardCharsets.UTF_8))));
         }
         catch (InvalidKeyException | InvalidAlgorithmParameterException | javax.crypto.IllegalBlockSizeException | javax.crypto.BadPaddingException e) {
             log.error("Error encrypting push notification payload!", e);

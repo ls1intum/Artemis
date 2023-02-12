@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.domain.User;
 
 // TODO: write migration script
 @Entity
-@Table(name = "pushNotificationDeviceConfiguration")
+@Table(name = "push_notification_device_configuration")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @IdClass(PushNotificationDeviceConfigurationId.class)
 public class PushNotificationDeviceConfiguration {
@@ -32,6 +32,7 @@ public class PushNotificationDeviceConfiguration {
 
     @Id
     @ManyToOne
+    @JoinColumn(name = "user_id")
     private User owner;
 
     public PushNotificationDeviceConfiguration(String token, PushNotificationDeviceType deviceType, Date expirationDate, byte[] secretKey, User owner) {

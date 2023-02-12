@@ -60,6 +60,7 @@ public class FirebasePushNotificationService extends PushNotificationService<Mes
     void sendNotificationRequestsToEndpoint(List<Message> messages) {
         // If the firebase app is not present, we do not have to do anything
         if (firebaseApp.isPresent()) {
+            // A maximum of 500 requests can be sent as per firebase specification.
             List<List<Message>> batches = Lists.partition(messages, 500);
             for (List<Message> batch : batches) {
                 scheduleSendBatch(batch, firebaseApp.get());

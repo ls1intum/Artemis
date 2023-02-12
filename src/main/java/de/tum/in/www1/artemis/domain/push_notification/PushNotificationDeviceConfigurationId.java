@@ -7,14 +7,14 @@ import de.tum.in.www1.artemis.domain.User;
 
 public class PushNotificationDeviceConfigurationId implements Serializable {
 
-    private User user;
+    private User owner;
 
     private String token;
 
     private PushNotificationDeviceType deviceType;
 
-    public PushNotificationDeviceConfigurationId(User user, String token, PushNotificationDeviceType deviceType) {
-        this.user = user;
+    public PushNotificationDeviceConfigurationId(User owner, String token, PushNotificationDeviceType deviceType) {
+        this.owner = owner;
         this.token = token;
         this.deviceType = deviceType;
     }
@@ -26,11 +26,11 @@ public class PushNotificationDeviceConfigurationId implements Serializable {
         if (o == null || getClass() != o.getClass())
             return false;
         PushNotificationDeviceConfigurationId that = (PushNotificationDeviceConfigurationId) o;
-        return user.equals(that.user) && token.equals(that.token) && deviceType == that.deviceType;
+        return owner.equals(that.owner) && token.equals(that.token) && deviceType == that.deviceType;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(user, token, deviceType);
+        return Objects.hash(owner, token, deviceType);
     }
 }
