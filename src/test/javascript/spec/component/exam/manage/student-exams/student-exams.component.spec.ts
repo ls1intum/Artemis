@@ -184,7 +184,7 @@ describe('StudentExamsComponent', () => {
         exam = new Exam();
         exam.course = course;
         exam.id = 1;
-        exam.registeredUsers = [studentOne, studentTwo];
+        exam.examUsers = [studentOne, studentTwo];
         exam.endDate = dayjs();
         exam.startDate = exam.endDate.subtract(60, 'seconds');
 

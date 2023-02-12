@@ -67,6 +67,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     assessmentsAreValid = false;
     complaint: Complaint;
     private cancelConfirmationText: string;
+    private acceptComplaintWithoutMoreScoreText: string;
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     loadingParticipation = false;
     participationCouldNotBeFetched = false;
@@ -84,6 +85,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
     automaticFeedback: Feedback[] = [];
+    totalScoreBeforeAssessment: number;
 
     isFirstAssessment = false;
     lockLimitReached = false;
@@ -119,6 +121,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private programmingExerciseService: ProgrammingExerciseService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
+        translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
     }
 
     /**
@@ -397,6 +400,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             assessmentAfterComplaint.onError();
             return;
         }
+        if (!this.checkFeedbackChangeForAcceptedComplaint(assessmentAfterComplaint)) {
+            assessmentAfterComplaint.onError();
+            return;
+        }
+
         this.setFeedbacksForManualResult();
         this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, assessmentAfterComplaint.complaintResponse, this.submission!.id!).subscribe({
             next: (result: Result) => {
@@ -478,6 +486,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     validateFeedback(): void {
         this.calculateTotalScore();
+        if (this.exercise.allowComplaintsForAutomaticAssessments) {
+            // We don't need manual feedback here
+            this.assessmentsAreValid = true;
+            return;
+        }
         const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
         const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
@@ -533,6 +546,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private handleFeedback(): void {
         const feedbacks = this.manualResult?.feedbacks || [];
+        this.totalScoreBeforeAssessment = this.calculateTotalScoreOfFeedbacks(feedbacks);
         this.automaticFeedback = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC);
         // When manual result only contains automatic feedback elements (when assessing for the first time), no manual assessment was yet saved or submitted.
         if (feedbacks.length === this.automaticFeedback.length) {
@@ -542,6 +556,18 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
         this.onFeedbackLoaded.emit();
+    }
+
+    checkFeedbackChangeForAcceptedComplaint(assessmentAfterComplaint: AssessmentAfterComplaint) {
+        if (!assessmentAfterComplaint.complaintResponse.complaint?.accepted) {
+            return true;
+        }
+        const allNewFeedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
+        const newTotalScore = this.calculateTotalScoreOfFeedbacks(allNewFeedbacks);
+        if (this.totalScoreBeforeAssessment >= newTotalScore) {
+            return window.confirm(this.acceptComplaintWithoutMoreScoreText);
+        }
+        return true;
     }
 
     private setFeedbacksForManualResult() {
@@ -570,7 +596,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private calculateTotalScore() {
         const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
-        const maxPoints = this.exercise.maxPoints! + (this.exercise.bonusPoints! ?? 0.0);
+        const totalScore = this.calculateTotalScoreOfFeedbacks(feedbacks);
+        // Set attributes of manual result
+        this.setAttributesForManualResult(totalScore);
+    }
+
+    private calculateTotalScoreOfFeedbacks(feedbacks: Feedback[]): number {
+        const maxPoints = this.exercise.maxPoints! + (this.exercise.bonusPoints ?? 0.0);
         let totalScore = 0.0;
         let scoreAutomaticTests = 0.0;
         const gradingInstructions = {}; // { instructionId: noOfEncounters }
@@ -595,7 +627,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         totalScore += scoreAutomaticTests;
         totalScore = getPositiveAndCappedTotalScore(totalScore, maxPoints);
 
-        // Set attributes of manual result
-        this.setAttributesForManualResult(totalScore);
+        return totalScore;
     }
 }
