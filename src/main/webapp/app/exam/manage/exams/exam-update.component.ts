@@ -312,7 +312,7 @@ export class ExamUpdateComponent implements OnInit {
         this.exam.publishResultsDate = undefined;
         this.exam.examStudentReviewStart = undefined;
         this.exam.examStudentReviewEnd = undefined;
-        this.exam.registeredUsers = undefined;
+        this.exam.examUsers = undefined;
         this.exam.studentExams = undefined;
     }
 }

@@ -20,7 +20,7 @@ import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.util.StringUtils;
+import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.MigrationChangelog;
 import de.tum.in.www1.artemis.repository.MigrationChangeRepository;

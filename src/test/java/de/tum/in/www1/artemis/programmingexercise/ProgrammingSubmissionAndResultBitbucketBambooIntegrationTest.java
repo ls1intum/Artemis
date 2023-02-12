@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -83,6 +84,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -741,7 +745,12 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var exam = database.addActiveExamWithRegisteredUser(course, user);
         exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
         exam.setEndDate(ZonedDateTime.now().minusMinutes(1));
-        exam.addRegisteredUser(user);
+        exam = examRepository.save(exam);
+        var examUser5 = new ExamUser();
+        examUser5.setExam(exam);
+        examUser5.setUser(user);
+        examUser5 = examUserRepository.save(examUser5);
+        exam.addExamUser(examUser5);
         exam.setGracePeriod(gracePeriod);
         exam = examRepository.save(exam);
 
