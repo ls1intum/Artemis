@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -137,6 +138,9 @@ public class CourseTestService {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
 
     private static final int numberOfStudents = 8;
 
@@ -700,11 +704,18 @@ public class CourseTestService {
                 examUnregistered.setVisibleDate(ZonedDateTime.now().plusHours(1));
                 testExam.setVisibleDate(ZonedDateTime.now().plusHours(1));
             }
-            if (i < 2) {
-                examRegistered.addRegisteredUser(customUser);
-            }
-            examRegistered.addRegisteredUser(student);
             examRepo.saveAll(List.of(examRegistered, examUnregistered, testExam));
+
+            if (i < 2) {
+                ExamUser registeredCustomUser = new ExamUser();
+                registeredCustomUser.setUser(customUser);
+                registeredCustomUser.setExam(examRegistered);
+                examRegistered.addExamUser(examUserRepository.save(registeredCustomUser));
+            }
+            ExamUser registeredStudent = new ExamUser();
+            registeredStudent.setUser(student);
+            registeredStudent.setExam(examRegistered);
+            examRegistered.addExamUser(examUserRepository.save(registeredStudent));
 
             Course receivedCourse = request.get("/api/courses/" + courses[i].getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK, Course.class);
             assertThat(receivedCourse).isNotNull();

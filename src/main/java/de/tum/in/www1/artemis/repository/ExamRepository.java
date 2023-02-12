@@ -52,10 +52,10 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("""
             SELECT e
             FROM Exam e
-                LEFT JOIN e.registeredUsers registeredUsers
+                LEFT JOIN e.examUsers registeredUsers
             WHERE e.course.id IN :courseIds
                 AND e.visibleDate <= :now
-                AND (registeredUsers.id = :userId
+                AND (registeredUsers.user.id = :userId
                     OR e.course.teachingAssistantGroupName IN :groupNames
                     OR e.course.editorGroupName IN :groupNames
                     OR e.course.instructorGroupName IN :groupNames
