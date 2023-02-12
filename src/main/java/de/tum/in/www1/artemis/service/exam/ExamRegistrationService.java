@@ -190,7 +190,7 @@ public class ExamRegistrationService {
 
         ExamUser registeredExamUser = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
 
-        if (!exam.getExamUsers().contains(registeredExamUser)) {
+        if (registeredExamUser == null || !exam.getExamUsers().contains(registeredExamUser)) {
             registeredExamUser = new ExamUser();
             registeredExamUser.setUser(student);
             registeredExamUser.setExam(exam);
@@ -226,6 +226,12 @@ public class ExamRegistrationService {
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
         ExamUser registeredExamUser = examUserRepository.findByExamIdAndUserId(exam.getId(), currentUser.getId());
+
+        if (registeredExamUser == null) {
+            registeredExamUser = new ExamUser();
+            registeredExamUser.setExam(exam);
+            registeredExamUser.setUser(currentUser);
+        }
 
         // We only need to update the registered exam users, if the user is not yet registered for the test exam
         if (!exam.getExamUsers().contains(registeredExamUser)) {
