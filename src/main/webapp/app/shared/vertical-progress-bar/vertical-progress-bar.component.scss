@@ -14,10 +14,11 @@
     height: max-content;
 
     .progress-bar {
+        background-color: white;
         margin: auto;
         display: block;
         transform: rotate(180deg);
-        border: 1px solid black;
+        border: 1px solid var(--artemis-pre-color);
         border-radius: var(--border-radius);
         height: var(--progress-bar-height);
         width: var(--progress-bar-width);
