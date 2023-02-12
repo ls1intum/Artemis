@@ -22,7 +22,6 @@ import { ExamParticipationComponent } from 'app/exam/participate/exam-participat
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
-import { ExamParticipantScoresComponent } from 'app/exam/manage/exam-participant-scores/exam-participant-scores.component';
 import { ParticipationSubmissionComponent } from 'app/exercises/shared/participation-submission/participation-submission.component';
 import { FileUploadAssessmentComponent } from 'app/exercises/file-upload/assess/file-upload-assessment.component';
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
@@ -128,15 +127,6 @@ export const examManagementRoute: Routes = [
     {
         path: ':examId/monitoring',
         loadChildren: () => import('../monitoring/exam-monitoring.module').then((m) => m.ArtemisExamMonitoringModule),
-    },
-    {
-        path: ':examId/participant-scores',
-        component: ExamParticipantScoresComponent,
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.participantScores.pageTitle',
-        },
-        canActivate: [UserRouteAccessService],
     },
     {
         path: ':examId/exercise-groups',
