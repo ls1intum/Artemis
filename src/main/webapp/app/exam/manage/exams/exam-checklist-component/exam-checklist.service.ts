@@ -16,7 +16,7 @@ export class ExamChecklistService {
      * @param examChecklist the examChecklist for the exam
      */
     checkAllExamsGenerated(exam: Exam, examChecklist: ExamChecklist): boolean {
-        return examChecklist.numberOfGeneratedStudentExams === exam.numberOfRegisteredUsers;
+        return examChecklist.numberOfGeneratedStudentExams === exam.numberOfExamUsers;
     }
 
     /**
@@ -151,7 +151,7 @@ export class ExamChecklistService {
      * @param exam the corresponding exam
      */
     checkAtLeastOneRegisteredStudent(exam: Exam): boolean {
-        return !!exam.numberOfRegisteredUsers && exam.numberOfRegisteredUsers > 0;
+        return !!exam.numberOfExamUsers && exam.numberOfExamUsers > 0;
     }
 
     /**
