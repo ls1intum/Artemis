@@ -3,7 +3,7 @@
                    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
                    xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.6.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet author="tim (generated)" id="1676222355322-179">
+    <changeSet author="tim+sven" id="1676222355322-179">
         <createTable tableName="push_notification_device_configuration">
             <column name="device_type" type="INT">
                 <constraints nullable="false"/>
@@ -18,8 +18,7 @@
             </column>
         </createTable>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="push_notification_device_configuration" constraintName="FKbkorhj5lm1jf4ogh2cgxo2v6k" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-    </changeSet>
-    <changeSet author="tim (generated)" id="1676222355322-180">
+
         <addColumn tableName="notification_setting">
             <column defaultValueBoolean="false" name="push" type="boolean">
                 <constraints nullable="false"/>
