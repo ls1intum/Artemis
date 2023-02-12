@@ -544,7 +544,7 @@ public class StudentExamResource {
     public ResponseEntity<Void> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
+        final Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Start exercises is only allowed for real exams", "StudentExam", "startExerciseOnlyForRealExams");
@@ -630,9 +630,6 @@ public class StudentExamResource {
 
         // Create new exam session
         createNewExamSession(request, studentExam);
-
-        // Remove not needed objects
-        studentExam.getExam().setCourse(null);
     }
 
     /**

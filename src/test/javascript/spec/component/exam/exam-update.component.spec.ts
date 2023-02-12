@@ -461,9 +461,9 @@ describe('Exam Update Component', () => {
         examForImport.confirmationStartText = '111';
         examForImport.confirmationEndText = '222';
         examForImport.course = course2;
-        examForImport.numberOfRegisteredUsers = 1;
+        examForImport.numberOfExamUsers = 1;
         examForImport.exerciseGroups = [exerciseGroup1];
-        examForImport.registeredUsers = [new User(5)];
+        examForImport.examUsers = [new User(5)];
         examForImport.studentExams = [new StudentExam()];
 
         beforeEach(() => {
@@ -574,8 +574,8 @@ describe('Exam Update Component', () => {
             expect(component.exam.confirmationStartText).toBe('111');
             expect(component.exam.confirmationEndText).toBe('222');
             expect(component.exam.course).toEqual(course);
-            expect(component.exam.numberOfRegisteredUsers).toBe(1);
-            expect(component.exam.registeredUsers).toBeUndefined();
+            expect(component.exam.numberOfExamUsers).toBe(1);
+            expect(component.exam.examUsers).toBeUndefined();
             expect(component.exam.studentExams).toBeUndefined();
         });
 
