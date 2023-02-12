@@ -112,6 +112,12 @@ public class TutorialGroupSchedule extends DomainObject {
                 && Objects.equals(this.validToInclusive, other.validToInclusive) && Objects.equals(this.location, other.location);
     }
 
+    public boolean onlyLocationChanged(TutorialGroupSchedule other) {
+        return Objects.equals(this.dayOfWeek, other.dayOfWeek) && Objects.equals(this.startTime, other.startTime) && Objects.equals(this.endTime, other.endTime)
+                && Objects.equals(this.repetitionFrequency, other.repetitionFrequency) && Objects.equals(this.validFromInclusive, other.validFromInclusive)
+                && Objects.equals(this.validToInclusive, other.validToInclusive) && !Objects.equals(this.location, other.location);
+    }
+
     public List<TutorialGroupSession> getTutorialGroupSessions() {
         return tutorialGroupSessions;
     }
