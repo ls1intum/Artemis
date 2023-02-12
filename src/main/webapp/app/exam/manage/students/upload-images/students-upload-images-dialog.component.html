@@ -27,23 +27,23 @@
         </div>
     </div>
     <div class="modal-footer justify-content-between">
-        <div *ngIf="(notFoundUsers && notFoundUsers.numberOfUsersNotFound > 0) || notFoundUsers.numberOfImagesSaved === 0" class="flex-shrink-0 me-2 d-flex">
+        <div *ngIf="(notFoundUsers?.numberOfUsersNotFound ?? 0 > 0) || notFoundUsers?.numberOfImagesSaved === 0" class="flex-shrink-0 me-2 d-flex">
             <div *ngIf="hasParsed">
                 <div class="ms-2">
                     <strong>{{ 'artemisApp.importUsers.numberOfUsersNotImported' | artemisTranslate }}</strong>
                     <span
-                        ><b style="color: red">{{ notFoundUsers.numberOfUsersNotFound }}</b></span
+                        ><b style="color: red">{{ notFoundUsers?.numberOfUsersNotFound }}</b></span
                     >
                 </div>
                 <div class="ms-2">
                     <strong>{{ 'artemisApp.exam.examUsers.numberOfImagesSaved' | artemisTranslate }}:</strong>
                     <span
-                        ><b style="color: green">{{ notFoundUsers.numberOfImagesSaved }}</b></span
+                        ><b style="color: green">{{ notFoundUsers?.numberOfImagesSaved }}</b></span
                     >
                 </div>
             </div>
         </div>
-        <div *ngIf="notFoundUsers.numberOfImagesSaved > 0 && notFoundUsers.numberOfUsersNotFound === 0" class="flex-shrink-0 me-2 d-flex">
+        <div *ngIf="(notFoundUsers?.numberOfImagesSaved ?? 0 > 0) && notFoundUsers?.numberOfUsersNotFound === 0" class="flex-shrink-0 me-2 d-flex">
             <div *ngIf="hasParsed">
                 <div class="ms-2">
                     <strong style="color: green" jhiTranslate="artemisApp.exam.examUsers.allImagesSaved"></strong>
@@ -68,7 +68,7 @@
                 <fa-icon class="ms-1" [hidden]="!isParsing" [spin]="true" [icon]="faCircleNotch"></fa-icon>
             </button>
             <ng-template #buttonAfterParse>
-                <button [ngClass]="hasParsed && notFoundUsers.numberOfUsersNotFound === 0 ? 'btn btn-success' : 'btn btn-danger'" id="finish-button" (click)="onFinish()">
+                <button [ngClass]="hasParsed && notFoundUsers?.numberOfUsersNotFound === 0 ? 'btn btn-success' : 'btn btn-danger'" id="finish-button" (click)="onFinish()">
                     <fa-icon [icon]="faCheck" class="me-2"></fa-icon>
                     <span jhiTranslate="entity.action.finish">Finish</span>
                 </button>
