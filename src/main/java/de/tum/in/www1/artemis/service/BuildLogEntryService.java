@@ -60,8 +60,8 @@ public class BuildLogEntryService {
                 .orElseGet(Collections::emptyList);
     }
 
-    private static final Set<String> ILLEGAL_REFLECTION_LOGS = Set.of("An illegal reflective access operation has occurred", "WARNING: Illegal reflective access by",
-            "WARNING: Please consider reporting this to the maintainers of", "to enable warnings of further illegal reflective access operations",
+    private static final Set<String> ILLEGAL_REFLECTION_LOGS = Set.of("An illegal reflective access operation has occurred", "Illegal reflective access by",
+            "Please consider reporting this to the maintainers of", "to enable warnings of further illegal reflective access operations",
             "All illegal access operations will be denied in a future release");
 
     /**
@@ -90,7 +90,7 @@ public class BuildLogEntryService {
             return isUnnecessaryJavaLog(logString);
         }
         else if (programmingLanguage == ProgrammingLanguage.SWIFT || programmingLanguage == ProgrammingLanguage.C) {
-            return isUnnecessarySwiftLog(logString);
+            return isUnnecessaryCOrSwiftLog(logString);
         }
         return false;
     }
@@ -101,10 +101,10 @@ public class BuildLogEntryService {
         return isMavenErrorLog(log) || isGradleErrorLog(log) || isGradleInfoLog(log) || UNNECESSARY_JAVA_LOGS.stream().anyMatch(log::startsWith);
     }
 
-    private static final Set<String> UNNECESSARY_SWIFT_LOGS = Set.of("Unable to find image", ": Already exists", ": Pull", ": Waiting", ": Verifying", ": Download");
+    private static final Set<String> UNNECESSARY_C_SWIFT_LOGS = Set.of("Unable to find image", ": Already exists", ": Pull", ": Waiting", ": Verifying", ": Download");
 
-    private boolean isUnnecessarySwiftLog(String log) {
-        return UNNECESSARY_SWIFT_LOGS.stream().anyMatch(log::contains) || log.startsWith("Digest:") || log.startsWith("Status:") || log.contains("github.com");
+    private boolean isUnnecessaryCOrSwiftLog(String log) {
+        return UNNECESSARY_C_SWIFT_LOGS.stream().anyMatch(log::contains) || log.startsWith("Digest:") || log.startsWith("Status:") || log.contains("github.com");
     }
 
     private boolean isInfoLog(String log) {
