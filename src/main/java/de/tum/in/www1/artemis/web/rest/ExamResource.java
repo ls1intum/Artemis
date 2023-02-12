@@ -9,8 +9,7 @@ import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.time.Duration;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -22,10 +21,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -47,6 +51,8 @@ import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringS
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.swagger.annotations.ApiParam;
+import tech.jhipster.web.util.PaginationUtil;
 
 /**
  * REST controller for managing Exam.
@@ -186,7 +192,7 @@ public class ExamResource {
         // NOTE: Make sure that all references are preserved here
         updatedExam.setExerciseGroups(originalExam.getExerciseGroups());
         updatedExam.setStudentExams(originalExam.getStudentExams());
-        updatedExam.setRegisteredUsers(originalExam.getRegisteredUsers());
+        updatedExam.setExamUsers(originalExam.getExamUsers());
 
         Exam result = examRepository.save(updatedExam);
 
@@ -357,6 +363,22 @@ public class ExamResource {
     }
 
     /**
+     * GET /exams/active : Find all active exams the user is allowed to access.
+     * Exams that are active have visibilityDate for the previous and upcoming seven days.
+     *
+     * @param pageable pageable parameters
+     * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
+     */
+    @GetMapping("exams/active")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<List<Exam>> getAllActiveExams(@ApiParam Pageable pageable) {
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        Page<Exam> page = examService.getAllActiveExams(pageable, user);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
      * GET /exams : Find all exams the user is allowed to access
      *
      * @param withExercises if only exams with at least one exercise Groups should be considered
@@ -416,7 +438,7 @@ public class ExamResource {
         if (withExerciseGroups) {
             Exam exam;
             if (withStudents) {
-                exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
+                exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
             }
             else {
                 exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
@@ -425,8 +447,8 @@ public class ExamResource {
             return ResponseEntity.ok(exam);
         }
 
-        Exam exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
-        exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
+        Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
+        exam.getExamUsers().forEach(examUser -> examUser.getUser().setVisibleRegistrationNumber(examUser.getUser().getRegistrationNumber()));
 
         return ResponseEntity.ok(exam);
     }
@@ -461,7 +483,7 @@ public class ExamResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var isInstructorInCourse = authCheckService.isAtLeastInstructorInCourse(course, null);
 
-        Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
+        Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
         ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam, isInstructorInCourse);
 
         return ResponseEntity.ok(examChecklistDTO);
@@ -580,7 +602,7 @@ public class ExamResource {
         examAccessService.checkCourseAccessForTeachingAssistantElseThrow(courseId);
         // We need the exercise groups and exercises for the exam status now
         List<Exam> exams = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId);
-        examRepository.setNumberOfRegisteredUsersForExams(exams);
+        examRepository.setNumberOfExamUsersForExams(exams);
         return ResponseEntity.ok(exams);
     }
 
@@ -680,7 +702,7 @@ public class ExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         var course = courseRepository.findByIdElseThrow(courseId);
-        var exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
+        var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Add student to exam is only allowed for real exams", ENTITY_NAME, "addStudentOnlyForRealExams");
@@ -733,7 +755,7 @@ public class ExamResource {
 
     @NotNull
     private Exam checkAccessForStudentExamGenerationAndLogAuditEvent(Long courseId, Long examId, String auditEventAction) {
-        final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
+        final Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Generate student exams is only allowed for real exams", ENTITY_NAME, "generateStudentExamsOnlyForRealExams");
@@ -779,7 +801,7 @@ public class ExamResource {
 
     private static void breakCyclesForSerialization(List<StudentExam> studentExams) {
         for (StudentExam studentExam : studentExams) {
-            studentExam.getExam().setRegisteredUsers(null);
+            studentExam.getExam().setExamUsers(null);
             studentExam.getExam().setExerciseGroups(null);
             studentExam.getExam().setStudentExams(null);
         }
@@ -872,12 +894,12 @@ public class ExamResource {
      */
     @PostMapping("courses/{courseId}/exams/{examId}/students")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<StudentDTO>> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<StudentDTO> studentDtos) {
+    public ResponseEntity<List<ExamUserDTO>> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExamUserDTO> studentDtos) {
         log.debug("REST request to add {} as students to exam {}", studentDtos, examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        List<StudentDTO> notFoundStudentsDtos = examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos);
+        List<ExamUserDTO> notFoundStudentsDtos = examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
     }
 
@@ -896,7 +918,7 @@ public class ExamResource {
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        var exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
+        var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Registration of course students is only allowed for real exams", ENTITY_NAME, "AddCourseStudentsOnlyForRealExams");
@@ -930,7 +952,7 @@ public class ExamResource {
             throw new EntityNotFoundException("user", studentLogin);
         }
 
-        var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Deletion of users is only allowed for real exams", ENTITY_NAME, "unregisterStudentsOnlyForRealExams");
@@ -958,7 +980,7 @@ public class ExamResource {
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Deregister students is only allowed for real exams", ENTITY_NAME, "unregisterAllOnlyForRealExams");
