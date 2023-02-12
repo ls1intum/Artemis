@@ -941,10 +941,9 @@ public class ProgrammingExerciseGradingService {
                 categoryPenaltyPoints = category.getMaxPenalty();
             }
 
-            // Cap at the maximum allowed penalty for this exercise (maxStaticCodeAnalysisPenalty is in percent) The max penalty is applied to the maxScore. If no max penalty was
-            // supplied, the value defaults to 100 percent. If for example maxScore is 6, maxBonus is 4 and the penalty is 50 percent, then a student can only lose 3 (0.5 *
-            // maxScore)
-            // points due to static code analysis issues.
+            // Cap at the maximum allowed penalty for this exercise (maxStaticCodeAnalysisPenalty is in percent) The max penalty is applied to the maxScore. If no max penalty
+            // was supplied, the value defaults to 100 percent. If for example maxScore is 6, maxBonus is 4 and the penalty is 50 percent, then a student can only lose
+            // 3 (0.5 * maxScore) points due to static code analysis issues.
             if (codeAnalysisPenaltyPoints + categoryPenaltyPoints > maxExercisePenaltyPoints) {
                 categoryPenaltyPoints = maxExercisePenaltyPoints - codeAnalysisPenaltyPoints;
             }
