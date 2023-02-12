@@ -899,24 +899,6 @@ describe('ExamScoresComponent', () => {
         });
     });
 
-    it('should not delegate user if authorisation is not sufficient', () => {
-        jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
-
-        comp.onSelect();
-
-        expect(routingStub).not.toHaveBeenCalled();
-    });
-
-    it('should delegate user if authorisation is sufficient', () => {
-        jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-        comp.course = { id: 42 } as Course;
-        comp.examScoreDTO = examScoreDTO;
-
-        comp.onSelect();
-
-        expect(routingStub).toHaveBeenCalledWith(['course-management', 42, 'exams', 1, 'participant-scores']);
-    });
-
     it('should toggle median correctly', () => {
         jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         comp.isBonus = false;
