@@ -15,6 +15,8 @@ import { Course } from 'app/entities/course.model';
 import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
+import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { VerticalProgressBarComponent } from 'app/shared/vertical-progress-bar/vertical-progress-bar.component';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {
@@ -59,6 +61,7 @@ describe('TutorialGroupTableWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [NgbTooltipMocksModule],
             declarations: [
                 TutorialGroupsTableComponent,
                 TutorialGroupRowStubComponent,
@@ -70,6 +73,8 @@ describe('TutorialGroupTableWrapperTest', () => {
                 MockRouterLinkDirective,
                 MockDirective(SortDirective),
                 MockDirective(SortByDirective),
+                MockComponent(FaIconComponent),
+                MockComponent(VerticalProgressBarComponent),
             ],
             providers: [MockProvider(SortService)],
         })
@@ -115,6 +120,7 @@ describe('TutorialGroupsTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [NgbTooltipMocksModule],
             declarations: [
                 TutorialGroupsTableComponent,
                 TutorialGroupRowStubComponent,
@@ -124,6 +130,8 @@ describe('TutorialGroupsTableComponent', () => {
                 MockRouterLinkDirective,
                 MockDirective(SortDirective),
                 MockDirective(SortByDirective),
+                MockComponent(VerticalProgressBarComponent),
+                MockComponent(FaIconComponent),
             ],
             providers: [MockProvider(SortService)],
         })
