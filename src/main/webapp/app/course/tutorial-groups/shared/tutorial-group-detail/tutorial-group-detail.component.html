@@ -38,6 +38,37 @@
                 <span>{{ 'artemisApp.pages.tutorialGroupDetail.teachingAssistantNotSet' | artemisTranslate }}</span>
             </ng-template>
         </dd>
+        <!-- Utilization -->
+        <dt>
+            <span>{{ 'artemisApp.entities.tutorialGroup.utilization' | artemisTranslate }}</span>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.utilizationHelp' | artemisTranslate }}"></fa-icon>
+        </dt>
+        <dd>
+            <ng-container *ngIf="tutorialGroup.averageAttendance !== undefined && tutorialGroup.capacity !== undefined; else noUtilization">
+                <jhi-vertical-progress-bar
+                    [fillLevelInPercent]="math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100)"
+                    [widthInPixels]="20"
+                    [heightInPixels]="50"
+                >
+                </jhi-vertical-progress-bar>
+            </ng-container>
+            <ng-template #noUtilization>
+                <span>{{ '' }}</span>
+            </ng-template>
+        </dd>
+        <!-- Average Attendance -->
+        <dt>
+            <span>{{ 'artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate }}</span>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.averageAttendanceHelp' | artemisTranslate }}"></fa-icon>
+        </dt>
+        <dd>
+            <ng-container *ngIf="tutorialGroup.averageAttendance !== undefined; else noAverageAttendance">
+                <span>{{ math.round(tutorialGroup.averageAttendance) }}</span>
+            </ng-container>
+            <ng-template #noAverageAttendance>
+                <span>{{ '' }}</span>
+            </ng-template>
+        </dd>
         <!-- Capacity -->
         <dt>
             <span>{{ 'artemisApp.entities.tutorialGroup.capacity' | artemisTranslate }}</span>

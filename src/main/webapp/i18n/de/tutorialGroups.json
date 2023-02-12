@@ -5,6 +5,7 @@
             "sessionOverlapsWithSession": "Die Sitzung überschneidet sich mit folgenden Sitzungen: {{ sessions }}"
         },
         "generic": {
+            "unknown": "Nicht bekannt",
             "more": "Mehr...",
             "offline": "Offline",
             "online": "Online",
@@ -36,7 +37,11 @@
                 "registrations": "Registrierungen",
                 "schedule": "Sitzungsplan",
                 "sessions": "Sitzungen",
-                "nextSession": "Nächste Sitzung"
+                "nextSession": "Nächste Sitzung",
+                "utilization": "Auslastung",
+                "utilizationHelp": "Durchschnittliche Anwesenheit geteilt durch Kapazität",
+                "averageAttendance": "Durchschnittliche Anwesenheit",
+                "averageAttendanceHelp": "Durchschnittliche Anwesenheit in den letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt."
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Wochentag",

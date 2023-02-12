@@ -17,8 +17,29 @@
             <span class="d-inline-block text-truncate title"> {{ tutorialGroup.title }} </span>
         </ng-template>
     </td>
-    <td>{{ tutorialGroup.isUserTutor ? ('global.generic.you' | artemisTranslate) : tutorialGroup.teachingAssistantName }}</td>
+    <td>
+        <ng-container *ngIf="tutorialGroup.averageAttendance !== undefined && tutorialGroup.capacity !== undefined; else noUtilization">
+            <jhi-vertical-progress-bar
+                [fillLevelInPercent]="math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100)"
+                [widthInPixels]="20"
+                [heightInPixels]="50"
+            >
+            </jhi-vertical-progress-bar>
+        </ng-container>
+        <ng-template #noUtilization>
+            <span>{{ '' }}</span>
+        </ng-template>
+    </td>
+    <td>
+        <ng-container *ngIf="tutorialGroup.averageAttendance !== undefined; else noAverageAttendance">
+            <span>{{ math.round(tutorialGroup.averageAttendance) }}</span>
+        </ng-container>
+        <ng-template #noAverageAttendance>
+            <span>{{ '' }}</span>
+        </ng-template>
+    </td>
     <td>{{ tutorialGroup.capacity }}</td>
+    <td>{{ tutorialGroup.isUserTutor ? ('global.generic.you' | artemisTranslate) : tutorialGroup.teachingAssistantName }}</td>
     <td>{{ tutorialGroup.tutorialGroupSchedule ? (getDayTranslationKey(tutorialGroup.tutorialGroupSchedule?.dayOfWeek) | artemisTranslate) : '' }}</td>
     <td>
         <span *ngIf="tutorialGroup.tutorialGroupSchedule; else no_schedule">

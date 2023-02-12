@@ -5,6 +5,7 @@
             "sessionOverlapsWithSession": "The session overlaps with the following sessions: {{ sessions }}"
         },
         "generic": {
+            "unknown": "Unknown",
             "more": "More...",
             "offline": "Offline",
             "online": "Online",
@@ -36,7 +37,11 @@
                 "registrations": "Registrations",
                 "schedule": "Schedule",
                 "sessions": "Sessions",
-                "nextSession": "Next Session"
+                "nextSession": "Next Session",
+                "utilization": "Utilization",
+                "utilizationHelp": "Average attendance divided by capacity",
+                "averageAttendance": "Average Attendance",
+                "averageAttendanceHelp": "Average attendance in the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session."
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Day of Week",

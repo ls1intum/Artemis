@@ -26,4 +26,5 @@ export class TutorialGroup implements BaseEntity {
     public teachingAssistantName?: string;
     public courseTitle?: string;
     public nextSession?: TutorialGroupSession;
+    public averageAttendance?: number;
 }
