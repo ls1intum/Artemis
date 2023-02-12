@@ -22,7 +22,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
-import { faCodeBranch, faDownload, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faCodeBranch, faDownload, faFilter, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
@@ -32,16 +32,17 @@ import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cac
  * Filter properties for a result
  */
 export enum FilterProp {
-    ALL = 'all',
-    BUILD_FAILED = 'build-failed',
-    MANUAL = 'manual',
-    AUTOMATIC = 'automatic',
-    LOCKED = 'locked',
+    ALL = 'All',
+    SUCCESSFUL = 'Successful',
+    UNSUCCESSFUL = 'Unsuccessful',
+    BUILD_FAILED = 'BuildFailed',
+    MANUAL = 'Manual',
+    AUTOMATIC = 'Automatic',
+    LOCKED = 'Locked',
 }
 
 @Component({
     selector: 'jhi-exercise-scores',
-    styleUrls: ['./exercise-scores.component.scss'],
     templateUrl: './exercise-scores.component.html',
     providers: [ExerciseCacheService],
     encapsulation: ViewEncapsulation.None,
@@ -89,6 +90,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     faListAlt = faListAlt;
     faCodeBranch = faCodeBranch;
     farFileCode = faFileCode;
+    faFilter = faFilter;
 
     constructor(
         private route: ActivatedRoute,
@@ -185,6 +187,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      */
     filterParticipationsByProp = (participation: Participation): boolean => {
         switch (this.resultCriteria.filterProp) {
+            case FilterProp.SUCCESSFUL:
+                return !!participation.results?.[0]?.successful;
+            case FilterProp.UNSUCCESSFUL:
+                return !participation.results?.[0]?.successful;
             case FilterProp.BUILD_FAILED:
                 return !!(participation.results?.[0]?.submission && (participation.results?.[0]?.submission as ProgrammingSubmission).buildFailed);
             case FilterProp.MANUAL:
@@ -216,7 +222,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Returns the link to the repository of a participation
-     * @param participation Üarticipation for which to get the link for
+     * @param participation Participation for which to get the link for
      */
     getRepositoryLink(participation: Participation) {
         return (participation! as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUrl;

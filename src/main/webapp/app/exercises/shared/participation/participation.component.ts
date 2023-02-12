@@ -8,7 +8,6 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.utils';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
@@ -46,7 +45,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     eventSubscriber: Subscription;
     paramSub: Subscription;
     exercise: Exercise;
-    newManualResultAllowed: boolean;
     hasLoadedPendingSubmissions = false;
     presentationScoreEnabled = false;
 
@@ -119,7 +117,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             if (this.exercise.type === ExerciseType.PROGRAMMING) {
                 this.loadSubmissions(exerciseId);
             }
-            this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
             this.presentationScoreEnabled = this.checkPresentationScoreConfig();
         });
     }

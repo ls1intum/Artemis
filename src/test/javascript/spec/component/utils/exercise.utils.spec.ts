@@ -2,6 +2,7 @@ import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import {
+    areManualResultsAllowed,
     getExerciseDueDate,
     hasExerciseDueDatePassed,
     isResumeExerciseAvailable,
@@ -142,5 +143,29 @@ describe('ExerciseUtils', () => {
         [{ dueDate: dayjs().subtract(1, 'hour') } as Exercise, { testRun: true }, true],
     ])('should correctly determine if resuming an exercise is available', (exercise: Exercise, participation: StudentParticipation | undefined, expected: boolean) => {
         expect(isResumeExerciseAvailable(exercise, participation)).toBe(expected);
+    });
+
+    it.each([
+        [{ type: ExerciseType.MODELING } as Exercise, true],
+        [{ type: ExerciseType.MODELING, dueDate: dayjs().subtract(1, 'hour') } as Exercise, true],
+        [{ type: ExerciseType.MODELING, dueDate: dayjs().add(1, 'hour') } as Exercise, false],
+        [{ type: ExerciseType.PROGRAMMING } as Exercise, false],
+        [{ type: ExerciseType.PROGRAMMING, dueDate: dayjs().subtract(1, 'hour') } as Exercise, true],
+        [{ type: ExerciseType.PROGRAMMING, dueDate: dayjs().add(1, 'hour') } as Exercise, false],
+        [
+            {
+                type: ExerciseType.PROGRAMMING,
+                dueDate: dayjs().subtract(2, 'hours'),
+                buildAndTestStudentSubmissionsAfterDueDate: dayjs().subtract(1, 'hour'),
+            } as ProgrammingExercise,
+            true,
+        ],
+        [
+            { type: ExerciseType.PROGRAMMING, dueDate: dayjs().subtract(2, 'hours'), buildAndTestStudentSubmissionsAfterDueDate: dayjs().add(1, 'hour') } as ProgrammingExercise,
+            false,
+        ],
+        [{ type: ExerciseType.QUIZ, dueDate: dayjs().subtract(1, 'hour') } as Exercise, false],
+    ])('should correctly determine if manual results are allowed', (exercise: Exercise, expected: boolean) => {
+        expect(areManualResultsAllowed(exercise)).toBe(expected);
     });
 });

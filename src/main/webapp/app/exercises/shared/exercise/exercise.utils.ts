@@ -5,7 +5,7 @@ import { InitializationState, Participation } from 'app/entities/participation/p
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Observable, from, of } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseServicable } from 'app/exercises/shared/exercise/exercise.service';
@@ -178,19 +178,19 @@ export const isStartPracticeAvailable = (exercise: Exercise, participation?: Stu
 
 /**
  * Checks whether the given exercise is eligible for receiving manual results.
- * This is the case if the user is at least a tutor and the exercise itself is a programming
- * exercise for which manual reviews have been enabled. The due date also has to be in the past.
+ * If it is a programming exercise, the due date also has to be in the past.
  *
  * @param exercise
  */
-export const areManualResultsAllowed = (exercise: Exercise) => {
-    if (exercise.type !== ExerciseType.PROGRAMMING) {
+export const areManualResultsAllowed = (exercise: Exercise): boolean => {
+    if (exercise.type === ExerciseType.QUIZ) {
         return false;
+    } else if (exercise.type !== ExerciseType.PROGRAMMING) {
+        return !exercise.dueDate || dayjs().isAfter(exercise.dueDate);
+    } else {
+        const relevantDueDate = (exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate ?? exercise.dueDate;
+        return exercise.assessmentType !== AssessmentType.AUTOMATIC && !!relevantDueDate && dayjs().isAfter(relevantDueDate);
     }
-    // Only allow new results if manual reviews are activated and the due date/after due date has passed
-    const progEx = exercise as ProgrammingExercise;
-    const relevantDueDate = progEx.buildAndTestStudentSubmissionsAfterDueDate ?? progEx.dueDate;
-    return !!exercise.isAtLeastTutor && progEx.assessmentType === AssessmentType.SEMI_AUTOMATIC && (!relevantDueDate || dayjs(relevantDueDate).isBefore(dayjs()));
 };
 
 /**

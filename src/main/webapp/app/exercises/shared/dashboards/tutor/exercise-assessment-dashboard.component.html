@@ -67,20 +67,11 @@
                         {{ 'artemisApp.assessmentDashboard.submissions' | artemisTranslate }}
                     </div>
                     <div class="col-5">
-                        <div *ngIf="exercise.isAtLeastInstructor">
-                            <span class="text-success">{{ numberOfSubmissions.inTime }}</span>
-                            <span *ngIf="numberOfSubmissions.late > 0"> - </span>
-                            <span *ngIf="numberOfSubmissions.late > 0" class="text-danger">{{ numberOfSubmissions.late }}</span>
-                            |
-                            {{ numberOfTutorAssessments }} ({{ tutorAssessmentPercentage }}%)
-                        </div>
-                        <div *ngIf="!exercise.isAtLeastInstructor">
-                            <span class="text-success">{{ numberOfSubmissions.inTime }}</span>
-                            <span *ngIf="numberOfSubmissions.late > 0"> - </span>
-                            <span *ngIf="numberOfSubmissions.late > 0" class="text-danger">{{ numberOfSubmissions.late }}</span>
-                            |
-                            {{ numberOfTutorAssessments }} ({{ tutorAssessmentPercentage }}%)
-                        </div>
+                        <span class="text-success">{{ numberOfSubmissions.inTime }}</span>
+                        <span *ngIf="numberOfSubmissions.late > 0"> - </span>
+                        <span *ngIf="numberOfSubmissions.late > 0" class="text-danger">{{ numberOfSubmissions.late }}</span>
+                        |
+                        {{ numberOfTutorAssessments }} ({{ tutorAssessmentPercentage }}%)
                     </div>
                 </div>
 
