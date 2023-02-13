@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -198,5 +199,16 @@ public class BuildLogEntryService {
         List<BuildLogEntry> buildLogs = removeUnnecessaryLogs(buildLogEntries, programmingLanguage);
         // Replace some unnecessary information and hide complex details to make it easier to read the important information
         return buildLogs.stream().peek(buildLog -> buildLog.setLog(ContinuousIntegrationService.ASSIGNMENT_PATH.matcher(buildLog.getLog()).replaceAll(""))).toList();
+    }
+
+    /**
+     * Delete the build log entries for the given programming submission
+     *
+     * @param programmingSubmission the programming submission for which the build logs should be deleted
+     */
+    public void deleteBuildLogEntriesForProgrammingSubmission(ProgrammingSubmission programmingSubmission) {
+        programmingSubmission.setBuildLogEntries(Collections.emptyList());
+        programmingSubmissionRepository.save(programmingSubmission);
+        buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
     }
 }

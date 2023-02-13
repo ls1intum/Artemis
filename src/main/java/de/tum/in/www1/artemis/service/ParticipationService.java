@@ -37,6 +37,8 @@ public class ParticipationService {
 
     private final Optional<VersionControlService> versionControlService;
 
+    private final BuildLogEntryService buildLogEntryService;
+
     private final ParticipationRepository participationRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -64,7 +66,7 @@ public class ParticipationService {
     private final TeamScoreRepository teamScoreRepository;
 
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
+            BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService, ResultService resultService,
             CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
@@ -72,6 +74,7 @@ public class ParticipationService {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
+        this.buildLogEntryService = buildLogEntryService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -769,8 +772,11 @@ public class ParticipationService {
         resultsToBeDeleted.forEach(result -> resultService.deleteResult(result, false));
         // Delete all submissions for this participation
         submissions.forEach(submission -> {
-            if (submission instanceof ProgrammingSubmission) {
+            // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
+            submission.setResults(Collections.emptyList());
+            if (submission instanceof ProgrammingSubmission programmingSubmission) {
                 coverageReportRepository.deleteBySubmissionId(submission.getId());
+                buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
                 buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
             }
             submissionRepository.deleteById(submission.getId());
