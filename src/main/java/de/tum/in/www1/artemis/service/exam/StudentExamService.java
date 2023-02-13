@@ -379,17 +379,17 @@ public class StudentExamService {
         return latestSubmission;
     }
 
-    private void lockStudentRepositories(User currentUser, StudentExam existingStudentExam) {
-        // Only lock programming exercises when the student submitted early. Otherwise, the lock operations were already scheduled/executed.
-        if (existingStudentExam.getIndividualEndDate() != null && ZonedDateTime.now().isBefore(existingStudentExam.getIndividualEndDate())) {
+    private void lockStudentRepositories(User currentUser, StudentExam studentExam) {
+        // Only lock programming exercises when the student submitted early in real exams. Otherwise, the lock operations were already scheduled/executed.
+        // Always lock test exams since there is no locking operation scheduled (also see StudentExamService:457)
+        if (studentExam.getExam().isTestExam() || (studentExam.getIndividualEndDate() != null && ZonedDateTime.now().isBefore(studentExam.getIndividualEndDate()))) {
             // Use the programming exercises in the DB to lock the repositories (for safety)
-            for (Exercise exercise : existingStudentExam.getExercises()) {
-                if (exercise instanceof ProgrammingExercise) {
+            for (Exercise exercise : studentExam.getExercises()) {
+                if (exercise instanceof ProgrammingExercise programmingExercise) {
                     try {
                         log.debug("lock student repositories for {}", currentUser);
-                        ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise,
-                                currentUser.getLogin());
-                        programmingExerciseParticipationService.lockStudentRepository((ProgrammingExercise) exercise, participation);
+                        var participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise, currentUser.getLogin());
+                        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
                     }
                     catch (Exception e) {
                         log.error("Locking programming exercise {} submitted manually by {} failed", exercise.getId(), currentUser.getLogin(), e);
@@ -648,7 +648,7 @@ public class StudentExamService {
     /**
      * Generates a new test exam for the student and stores it in the database
      *
-     * @param exam    the exam with loaded exercie groups and exercise for which the StudentExam should be created
+     * @param exam    the exam with loaded exercise groups and exercises for which the StudentExam should be created
      * @param student the corresponding student
      * @return a StudentExam for the student and exam
      */
@@ -663,7 +663,6 @@ public class StudentExamService {
         log.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), exam.getId());
 
         return studentExam;
-
     }
 
     /**

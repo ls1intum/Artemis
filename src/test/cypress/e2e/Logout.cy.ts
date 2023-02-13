@@ -1,25 +1,19 @@
-import { artemis } from '../support/ArtemisTesting';
 import { Course } from '../../../main/webapp/app/entities/course.model';
 import { ModelingExercise } from '../../../main/webapp/app/entities/modeling-exercise.model';
+import { courseManagementRequest, courseOverview, modelingExerciseEditor } from '../support/artemis';
 import { convertCourseAfterMultiPart } from '../support/requests/CourseManagementRequests';
-
-const courseRequests = artemis.requests.courseManagement;
-const users = artemis.users;
-const courseOverview = artemis.pageobjects.course.overview;
-const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
+import { admin, studentOne } from '../support/users';
 
 describe('Logout tests', () => {
     let course: Course;
     let modelingExercise: ModelingExercise;
-    const studentOne = users.getStudentOne();
-    const admin = users.getAdmin();
 
     before('Login as admin and create a course with a modeling exercise', () => {
         cy.login(admin);
 
-        courseRequests.createCourse(true).then((response) => {
+        courseManagementRequest.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseRequests.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
+            courseManagementRequest.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
                 modelingExercise = resp.body;
             });
         });
@@ -27,8 +21,8 @@ describe('Logout tests', () => {
 
     after(() => {
         if (course) {
-            cy.login(users.getAdmin());
-            courseRequests.deleteCourse(course.id!);
+            cy.login(admin);
+            courseManagementRequest.deleteCourse(course.id!);
         }
     });
 
@@ -37,8 +31,8 @@ describe('Logout tests', () => {
         cy.visit(`/courses/${course.id}/exercises`);
         courseOverview.startExercise(modelingExercise.id!);
         courseOverview.openRunningExercise(modelingExercise.id!);
-        modelingEditor.addComponentToModel(modelingExercise.id!, 1);
-        modelingEditor.addComponentToModel(modelingExercise.id!, 2);
+        modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 1);
+        modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 2);
         cy.get('#account-menu').click().get('#logout').click();
     };
 

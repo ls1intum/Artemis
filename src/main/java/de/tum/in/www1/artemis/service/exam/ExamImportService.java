@@ -306,7 +306,7 @@ public class ExamImportService {
      */
     private Exam createCopyOfExamWithoutConductionSpecificAttributes(Exam examToCopy, Course targetCourse) {
         examToCopy.setExerciseGroups(new ArrayList<>());
-        examToCopy.setRegisteredUsers(new HashSet<>());
+        examToCopy.setExamUsers(new HashSet<>());
         examToCopy.setStudentExams(new HashSet<>());
         examToCopy.setId(null);
         examToCopy.setCourse(targetCourse);

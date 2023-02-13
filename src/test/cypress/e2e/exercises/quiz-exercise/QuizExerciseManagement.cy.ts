@@ -1,21 +1,12 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { artemis } from '../../../support/ArtemisTesting';
 import { generateUUID } from '../../../support/utils';
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { DELETE } from '../../../support/constants';
+import { courseManagement, courseManagementRequest, quizExerciseCreation } from '../../../support/artemis';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-
-// Accounts
-const admin = artemis.users.getAdmin();
-
-// Requests
-const courseManagementRequest = artemis.requests.courseManagement;
-
-// PageObjects
-const courseManagement = artemis.pageobjects.course.management;
-const quizCreation = artemis.pageobjects.exercise.quiz.creation;
+import { admin } from '../../../support/users';
 
 // Common primitives
 let course: Course;
@@ -38,22 +29,22 @@ describe('Quiz Exercise Management', () => {
             cy.login(admin, '/course-management/');
             courseManagement.openExercisesOfCourse(course.shortName!);
             cy.get('#create-quiz-button').click();
-            quizCreation.setTitle('Cypress Quiz Exercise ' + generateUUID());
+            quizExerciseCreation.setTitle('Cypress Quiz Exercise ' + generateUUID());
         });
 
         it('Creates a Quiz with Multiple Choice', () => {
-            quizCreation.addMultipleChoiceQuestion(quizQuestionTitle);
+            quizExerciseCreation.addMultipleChoiceQuestion(quizQuestionTitle);
             saveAndVerifyQuizCreation();
         });
 
         it('Creates a Quiz with Short Answer', () => {
-            quizCreation.addShortAnswerQuestion(quizQuestionTitle);
+            quizExerciseCreation.addShortAnswerQuestion(quizQuestionTitle);
             saveAndVerifyQuizCreation();
         });
 
         // TODO: Fix the drag and drop
         it.skip('Creates a Quiz with Drag and Drop', () => {
-            quizCreation.addDragAndDropQuestion(quizQuestionTitle);
+            quizExerciseCreation.addDragAndDropQuestion(quizQuestionTitle);
             saveAndVerifyQuizCreation();
         });
     });
@@ -82,7 +73,7 @@ describe('Quiz Exercise Management', () => {
     });
 
     function saveAndVerifyQuizCreation() {
-        quizCreation.saveQuiz().then((quizResponse: Interception) => {
+        quizExerciseCreation.saveQuiz().then((quizResponse: Interception) => {
             cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizResponse.response!.body.id + '/preview');
             cy.contains(quizQuestionTitle).should('be.visible');
         });

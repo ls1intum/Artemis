@@ -1,0 +1,78 @@
+<form id="userImportDialogForm" name="importForm" role="form" novalidate>
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span [jhiTranslate]="'artemisApp.exam.examUsers.dialogTitle'"> Upload images for registered students: </span>
+        </h4>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+            <p class="intro-text" jhiTranslate="artemisApp.exam.examUsers.introText">This dialog can be used to upload pdf file and extract images for registered students.</p>
+            <p class="intro-text" jhiTranslate="artemisApp.exam.examUsers.pdfExampleText"></p>
+        </div>
+        <div class="d-flex justify-content-center align-items-center">
+            <img class="border" width="300" src="/content/images/upload_student_images_pdf_example_img.png" />
+        </div>
+        <div class="form-group">
+            <div class="d-flex align-items-end">
+                <div>
+                    <label for="importPDF" class="label-narrow font-weight-bold" jhiTranslate="artemisApp.exam.examUsers.pdfFile.label">Select .pdf file</label>
+                    <jhi-help-icon text="artemisApp.exam.examUsers.pdfFile.tooltip" class="me-1"></jhi-help-icon>
+                </div>
+                <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" [spin]="true" *ngIf="isParsing"></fa-icon>
+            </div>
+            <div class="mt-2">
+                <input id="importPDF" type="file" accept=".pdf" (change)="onPDFFileSelect($event)" />
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer justify-content-between">
+        <div *ngIf="(notFoundUsers?.numberOfUsersNotFound ?? 0 > 0) || notFoundUsers?.numberOfImagesSaved === 0" class="flex-shrink-0 me-2 d-flex">
+            <div *ngIf="hasParsed">
+                <div class="ms-2">
+                    <strong>{{ 'artemisApp.importUsers.numberOfUsersNotImported' | artemisTranslate }}</strong>
+                    <span
+                        ><b style="color: red">{{ notFoundUsers?.numberOfUsersNotFound }}</b></span
+                    >
+                </div>
+                <div class="ms-2">
+                    <strong>{{ 'artemisApp.exam.examUsers.numberOfImagesSaved' | artemisTranslate }}:</strong>
+                    <span
+                        ><b style="color: green">{{ notFoundUsers?.numberOfImagesSaved }}</b></span
+                    >
+                </div>
+            </div>
+        </div>
+        <div *ngIf="(notFoundUsers?.numberOfImagesSaved ?? 0 > 0) && notFoundUsers?.numberOfUsersNotFound === 0" class="flex-shrink-0 me-2 d-flex">
+            <div *ngIf="hasParsed">
+                <div class="ms-2">
+                    <strong style="color: green" jhiTranslate="artemisApp.exam.examUsers.allImagesSaved"></strong>
+                </div>
+            </div>
+        </div>
+        <div class="flex-grow-1 d-flex justify-content-end">
+            <button *ngIf="!hasParsed" type="button" class="btn btn-default cancel me-2" data-dismiss="modal" (click)="clear()">
+                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            </button>
+            <button
+                *ngIf="!hasParsed; else buttonAfterParse"
+                type="submit"
+                id="import"
+                name="importButton"
+                class="btn btn-primary"
+                [disabled]="!file || isParsing"
+                (click)="parsePDFFile()"
+            >
+                <fa-icon [icon]="faUpload" class="me-2"></fa-icon>
+                <span jhiTranslate="artemisApp.exam.examUsers.saveImages">Save Images</span>
+                <fa-icon class="ms-1" [hidden]="!isParsing" [spin]="true" [icon]="faCircleNotch"></fa-icon>
+            </button>
+            <ng-template #buttonAfterParse>
+                <button [ngClass]="hasParsed && notFoundUsers?.numberOfUsersNotFound === 0 ? 'btn btn-success' : 'btn btn-danger'" id="finish-button" (click)="onFinish()">
+                    <fa-icon [icon]="faCheck" class="me-2"></fa-icon>
+                    <span jhiTranslate="entity.action.finish">Finish</span>
+                </button>
+            </ng-template>
+        </div>
+    </div>
+</form>

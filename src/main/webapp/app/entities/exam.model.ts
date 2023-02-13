@@ -1,9 +1,9 @@
+import { ExamUser } from 'app/entities/exam-user.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { User } from 'app/core/user/user.model';
 
 export class Exam implements BaseEntity {
     public id?: number;
@@ -35,9 +35,9 @@ export class Exam implements BaseEntity {
     public course?: Course;
     public exerciseGroups?: ExerciseGroup[];
     public studentExams?: StudentExam[];
-    public registeredUsers?: User[];
+    public examUsers?: ExamUser[];
 
-    public numberOfRegisteredUsers?: number; // transient
+    public numberOfExamUsers?: number; // transient
 
     // helper attributes
     public visible?: boolean;

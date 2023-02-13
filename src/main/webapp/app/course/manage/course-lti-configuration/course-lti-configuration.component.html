@@ -112,11 +112,35 @@
                 </dd>
 
                 <dt>
+                    <span>{{ 'artemisApp.lti.toolUrl' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ getToolUrl() }}</span>
+                    <jhi-copy-icon-button [copyText]="getToolUrl()"></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
                     <span>{{ 'artemisApp.lti.keysetUrl' | artemisTranslate }}</span>
                 </dt>
                 <dd>
                     <span>{{ getKeysetUrl() }}</span>
                     <jhi-copy-icon-button [copyText]="getKeysetUrl()"></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.initiateLoginUrl' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ getInitiateLoginUrl() }}</span>
+                    <jhi-copy-icon-button [copyText]="getInitiateLoginUrl()"></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.redirectUri' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ getRedirectUri() }}</span>
+                    <jhi-copy-icon-button [copyText]="getRedirectUri()"></jhi-copy-icon-button>
                 </dd>
 
                 <dt>
