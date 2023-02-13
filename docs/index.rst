@@ -29,6 +29,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    user/communication
    user/plagiarism-check
    user/learning-analytics
+   user/lti
    user/notifications
    user/user-experience
    user/grading
