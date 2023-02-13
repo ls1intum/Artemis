@@ -71,6 +71,10 @@ public class StudentExam extends AbstractAuditingEntity {
         return Boolean.TRUE.equals(testRun);
     }
 
+    public boolean isTestExam() {
+        return exam.isTestExam();
+    }
+
     public void setTestRun(boolean testRun) {
         this.testRun = testRun;
     }
