@@ -129,7 +129,8 @@ public class NotificationSettingsService {
     private static final Set<NotificationType> NOTIFICATION_TYPES_WITH_INSTANT_NOTIFICATION_SUPPORT = Set.of(EXERCISE_RELEASED, EXERCISE_PRACTICE, ATTACHMENT_CHANGE,
             NEW_ANNOUNCEMENT_POST, FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE, NEW_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT,
             TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_STUDENT,
-            TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED);
+            TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED, NEW_EXERCISE_POST,
+            NEW_REPLY_FOR_EXERCISE_POST, NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST);
 
     public NotificationSettingsService(NotificationSettingRepository notificationSettingRepository) {
         this.notificationSettingRepository = notificationSettingRepository;
@@ -216,6 +217,7 @@ public class NotificationSettingsService {
             switch (communicationChannel) {
                 case WEBAPP -> Arrays.stream(tmpNotificationTypes).forEach(type -> resultingMap.put(type, setting.isWebapp()));
                 case EMAIL -> Arrays.stream(tmpNotificationTypes).forEach(type -> resultingMap.put(type, setting.isEmail()));
+                case PUSH -> Arrays.stream(tmpNotificationTypes).forEach(type -> resultingMap.put(type, setting.isPush()));
             }
         }
         return resultingMap;

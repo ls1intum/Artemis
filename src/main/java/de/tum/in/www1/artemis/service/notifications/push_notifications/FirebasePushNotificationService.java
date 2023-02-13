@@ -18,7 +18,6 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.Lists;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
@@ -78,14 +77,7 @@ public class FirebasePushNotificationService extends PushNotificationService<Mes
 
         try {
             template.execute((RetryCallback<Void, FirebaseMessagingException>) context -> {
-                try {
-                    BatchResponse response = FirebaseMessaging.getInstance(firebaseApp).sendAll(batch);
-                    System.out.println(response);
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                    throw e;
-                }
+                FirebaseMessaging.getInstance(firebaseApp).sendAll(batch);
 
                 return null;
             });

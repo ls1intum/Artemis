@@ -346,7 +346,7 @@ public class GroupNotificationService {
     }
 
     /**
-     * Prepares sending an email based on a GroupNotification by finding the relevant users
+     * Prepares sending an instant notification based on a GroupNotification by finding the relevant users
      *
      * @param notification which information should also be propagated via email
      */

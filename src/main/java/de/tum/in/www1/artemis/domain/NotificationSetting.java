@@ -93,7 +93,7 @@ public class NotificationSetting extends DomainObject {
         this.push = push;
     }
 
-    public boolean getPush() {
+    public boolean isPush() {
         return push;
     }
 
