@@ -72,6 +72,8 @@ export const EXAM_ARCHIVE_FAILED_TITLE = 'Exam archival failed';
 
 export const PROGRAMMING_TEST_CASES_CHANGED_TITLE = 'Test cases for programming exercise changed';
 
+export const NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE = 'New possible plagiarism case';
+
 export const PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE = 'Final state for plagiarism case';
 
 export const TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE = 'You have been registered to a tutorial group';

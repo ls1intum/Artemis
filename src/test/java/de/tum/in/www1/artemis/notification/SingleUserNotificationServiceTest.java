@@ -270,6 +270,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         plagiarismCase.setPost(new Post());
         singleUserNotificationService.notifyUserAboutNewPlagiarismCase(plagiarismCase, user);
         verifyRepositoryCallWithCorrectNotification(NEW_PLAGIARISM_CASE_STUDENT_TITLE);
+        verifyEmail();
     }
 
     /**

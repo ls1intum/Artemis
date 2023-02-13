@@ -231,29 +231,18 @@ public class NotificationTargetFactory {
     /**
      * Extracts a viable URL from the provided notification and baseUrl
      *
-     * @param target  the target property that is used for creating the URL
-     * @param baseUrl the prefix (depends on current set up (e.g. "http://localhost:9000/courses"))
-     * @return viable URL to the notification related page
-     */
-    public static String extractNotificationUrl(NotificationTarget target, String baseUrl) {
-        var mainPage = target.getMainPage() != null ? target.getMainPage() : "";
-        var entity = target.getEntity() != null ? target.getEntity() : "";
-        var identifier = (target.getIdentifier() != null) ? String.valueOf(target.getIdentifier()) : "";
-        var courseId = (target.getCourseId() != null) ? String.valueOf(target.getCourseId()) : "";
-
-        return baseUrl + "/" + mainPage + "/" + courseId + "/" + entity + "/" + identifier;
-    }
-
-    /**
-     * Extracts a viable URL from the provided notification and baseUrl
-     *
      * @param notification which transient target property will be used for creating the URL
      * @param baseUrl      the prefix (depends on current set up (e.g. "http://localhost:9000/courses"))
      * @return viable URL to the notification related page
      */
     public static String extractNotificationUrl(Notification notification, String baseUrl) {
         NotificationTarget target = notification.getTargetTransient();
-        return extractNotificationUrl(target, baseUrl);
+        var mainPage = target.getMainPage() != null ? target.getMainPage() : "";
+        var entity = target.getEntity() != null ? target.getEntity() : "";
+        var identifier = (target.getIdentifier() != null) ? String.valueOf(target.getIdentifier()) : "";
+        var courseId = (target.getCourseId() != null) ? String.valueOf(target.getCourseId()) : "";
+
+        return baseUrl + "/" + mainPage + "/" + courseId + "/" + entity + "/" + identifier;
     }
 
     /**
