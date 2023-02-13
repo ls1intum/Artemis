@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXERCISE_SUBMISSION_ASSESSED;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.extractNotificationUrl;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.NEW_PLAGIARISM_CASE_STUDENT_TITLE;
 
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -215,7 +214,8 @@ public class MailService {
             checkAndPrepareExerciseSubmissionAssessedCase(notificationType, context, exercise, user);
         }
         if (notificationSubject instanceof PlagiarismCase plagiarismCase) {
-            if (NEW_PLAGIARISM_CASE_STUDENT_TITLE.equals(notification.getTitle())) {
+            NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
+            if (type == NotificationType.NEW_PLAGIARISM_CASE_STUDENT) {
                 Exercise exercise = plagiarismCase.getExercise();
                 Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
                 subject = messageSource.getMessage("email.plagiarism.title", new Object[] { exercise.getTitle(), course.getTitle() }, context.getLocale());
