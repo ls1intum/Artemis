@@ -1283,6 +1283,42 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(comp.quizExercise.dueDateError).toBeFalsy();
                 expect(comp.quizExercise.dueDate).toBeUndefined();
             });
+
+            it('should not be valid if question point is not in valid range', () => {
+                let { question } = createValidMCQuestion();
+                question.points = 10000;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeFalse();
+                question = createValidDnDQuestion().question;
+                question.points = 0;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeFalse();
+                question = createValidSAQuestion().question;
+                question.points = -1;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeFalse();
+            });
+
+            it('should not be valid if question point is in valid range', () => {
+                let { question } = createValidMCQuestion();
+                question.points = 9999;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeTrue();
+                question = createValidDnDQuestion().question;
+                question.points = 100;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeTrue();
+                question = createValidSAQuestion().question;
+                question.points = 1;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeTrue();
+            });
         });
 
         describe('saving', () => {
@@ -1732,9 +1768,19 @@ describe('QuizExercise Management Detail Component', () => {
                     comp.quizExercise.quizQuestions = [question];
                 });
 
+                it('should put reason for undefined score', () => {
+                    question.points = undefined;
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionScore');
+                });
+
                 it('should put reason for negative score', () => {
                     question.points = -1;
-                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionScore');
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionScoreInvalid');
+                });
+
+                it('should put reason for score in invalid range', () => {
+                    question.points = 99999999999;
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionScoreInvalid');
                 });
 
                 it('should put reason for no title', () => {
