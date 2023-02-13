@@ -24,6 +24,8 @@
             "firstName": "Vorname",
             "lastName": "Nachname",
             "registrationNumber": "Matrikelnummer",
+            "room": "Raum",
+            "seat": "Sitz",
             "email": "E-Mail"
         }
     }
