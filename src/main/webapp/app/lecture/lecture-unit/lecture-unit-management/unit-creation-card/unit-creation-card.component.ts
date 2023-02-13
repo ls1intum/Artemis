@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faCheck, faFileUpload, faLink, faScroll, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
@@ -9,6 +10,8 @@ import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
     templateUrl: './unit-creation-card.component.html',
 })
 export class UnitCreationCardComponent {
+    documentationType = DocumentationType.Units;
+
     @Input() emitEvents = false;
 
     @Output()

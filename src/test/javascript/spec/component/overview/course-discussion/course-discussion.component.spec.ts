@@ -42,6 +42,7 @@ import {
 } from '../../../helpers/sample/metis-sample-data';
 import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
@@ -73,6 +74,7 @@ describe('CourseDiscussionComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ButtonComponent),
                 MockComponent(ItemCountComponent),
+                MockComponent(DocumentationButtonComponent),
             ],
             providers: [
                 FormBuilder,
