@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.domain.lti;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
@@ -43,7 +45,7 @@ public class Lti13ClientRegistration {
     }
 
     public Lti13ClientRegistration(String serverUrl, Course course, String clientRegistrationId) {
-        this.setGrantTypes(List.of("implicit"));
+        this.setGrantTypes(List.of(AuthorizationGrantType.AUTHORIZATION_CODE.getValue()));
         this.setResponseTypes(List.of("id_token"));
         this.setClientName("Artemis - " + course.getShortName());
         this.setTokenEndpointAuthMethod("private_key_jwt");
