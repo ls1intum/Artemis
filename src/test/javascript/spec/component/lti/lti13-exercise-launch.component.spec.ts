@@ -18,8 +18,6 @@ describe('Lti13ExerciseLaunchComponent', () => {
             snapshot: { queryParamMap: convertToParamMap({ state: 'state', id_token: 'id_token' }) },
         } as ActivatedRoute;
 
-        window.sessionStorage.setItem('state', 'state');
-
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule],
             providers: [
@@ -37,7 +35,6 @@ describe('Lti13ExerciseLaunchComponent', () => {
     });
 
     afterEach(() => {
-        window.sessionStorage.clear();
         jest.restoreAllMocks();
     });
 
@@ -65,20 +62,6 @@ describe('Lti13ExerciseLaunchComponent', () => {
 
         expect(consoleSpy).toHaveBeenCalledOnce();
         expect(consoleSpy).toHaveBeenCalledWith('Required parameter for LTI launch missing');
-        expect(comp.isLaunching).toBeFalse();
-        expect(httpStub).not.toHaveBeenCalled();
-    });
-
-    it('onInit state does not match', () => {
-        const httpStub = jest.spyOn(http, 'post');
-        const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-
-        window.sessionStorage.setItem('state', 'notMatch');
-
-        comp.ngOnInit();
-
-        expect(consoleSpy).toHaveBeenCalledOnce();
-        expect(consoleSpy).toHaveBeenCalledWith('LTI launch state mismatch');
         expect(comp.isLaunching).toBeFalse();
         expect(httpStub).not.toHaveBeenCalled();
     });

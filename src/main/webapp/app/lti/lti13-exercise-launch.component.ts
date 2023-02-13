@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 
 @Component({
@@ -9,7 +9,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 export class Lti13ExerciseLaunchComponent implements OnInit {
     isLaunching: boolean;
 
-    constructor(private route: ActivatedRoute, private http: HttpClient, private router: Router) {
+    constructor(private route: ActivatedRoute, private http: HttpClient) {
         this.isLaunching = true;
     }
 
@@ -26,16 +26,6 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
             return;
         }
 
-        // 'state' was manually written into session storage by spring-security-lti13
-        // because of that it needs to be manually retrieved from there
-        const storedState = window.sessionStorage.getItem('state');
-
-        if (storedState !== state) {
-            console.error('LTI launch state mismatch');
-            this.isLaunching = false;
-            return;
-        }
-
         const requestBody = new HttpParams().set('state', state).set('id_token', idToken);
 
         this.http
@@ -45,18 +35,16 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
             .subscribe({
                 next: (data) => {
                     const targetLinkUri = data['targetLinkUri'];
-                    window.sessionStorage.removeItem('state');
 
                     if (targetLinkUri) {
-                        this.router.navigateByUrl(targetLinkUri);
+                        window.location.replace(targetLinkUri);
                         return;
+                    } else {
+                        this.isLaunching = false;
+                        console.error('No LTI targetLinkUri received for a successful launch');
                     }
-
-                    this.isLaunching = false;
-                    console.error('No LTI targetLinkUri received for a successful launch');
                 },
                 error: () => {
-                    window.sessionStorage.removeItem('state');
                     this.isLaunching = false;
                 },
             });
