@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.push_notification;
 
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Date;
 
@@ -30,7 +31,8 @@ public class PushNotificationResource {
 
     static {
         try {
-            aesKeyGenerator = KeyGenerator.getInstance(Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM);
+            aesKeyGenerator = KeyGenerator.getInstance("AES");
+            aesKeyGenerator.init(256, new SecureRandom());
         }
         catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
@@ -53,11 +55,13 @@ public class PushNotificationResource {
 
         String token = getToken();
 
+        String jwtWithoutSignature = token.substring(0, token.lastIndexOf('.') + 1);
+
         Jwt<Header, Claims> headerClaimsJwt;
 
         // This cannot throw an error as it must have been valid to even call this method
         try {
-            headerClaimsJwt = Jwts.parserBuilder().build().parseClaimsJwt(token);
+            headerClaimsJwt = Jwts.parserBuilder().build().parseClaimsJwt(jwtWithoutSignature);
         }
         catch (ExpiredJwtException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

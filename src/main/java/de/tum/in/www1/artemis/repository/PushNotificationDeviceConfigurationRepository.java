@@ -10,11 +10,11 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfigurationId;
+import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
 
 @Repository
 public interface PushNotificationDeviceConfigurationRepository extends JpaRepository<PushNotificationDeviceConfiguration, PushNotificationDeviceConfigurationId> {
 
-    @Query("SELECT * FROM pushNotificationDeviceConfiguration WHERE expiration_date < now() AND user IN #{#userList}")
-    List<PushNotificationDeviceConfiguration> findByUserIn(@Param("userList") List<User> userList);
-
+    @Query("SELECT p FROM PushNotificationDeviceConfiguration p WHERE p.expirationDate > now() AND p.owner IN :userList AND p.deviceType = :deviceType")
+    List<PushNotificationDeviceConfiguration> findByUserIn(@Param("userList") List<User> userList, PushNotificationDeviceType deviceType);
 }

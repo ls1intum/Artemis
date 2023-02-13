@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.notifications.push_notifications;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,26 +18,27 @@ import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 
 import de.tum.in.www1.artemis.config.RestTemplateConfiguration;
+import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
 import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
 
 @Service
 public class ApplePushNotificationService extends PushNotificationService<ApplePushNotificationRequest> {
 
-    @Value("${artemis.push-notification.apns.token}")
-    private Optional<String> apnsToken;
+    private final PushNotificationDeviceConfigurationRepository repository;
 
-    @Value("${artemis.push-notification.apns.url}")
-    private Optional<String> apnsUrl;
+    @Value("${artemis.push-notification.apns.token:#{null}}")
+    private String apnsToken;
+
+    @Value("${artemis.push-notification.apns.url:#{null}}")
+    private String apnsUrl;
 
     private final Logger log = LoggerFactory.getLogger(FirebasePushNotificationService.class);
 
     public ApplePushNotificationService(PushNotificationDeviceConfigurationRepository repository) {
-        super(repository);
-
-        if (apnsUrl.isEmpty() || apnsToken.isEmpty() || apnsUrl.get().isEmpty() || apnsToken.get().isEmpty()) {
+        this.repository = repository;
+        if (apnsUrl == null || apnsUrl.isEmpty() || apnsToken == null || apnsToken.isEmpty()) {
             log.debug("Could not load APNS config");
         }
-
     }
 
     @Override
@@ -48,7 +48,7 @@ public class ApplePushNotificationService extends PushNotificationService<AppleP
 
     @Override
     void sendNotificationRequestsToEndpoint(List<ApplePushNotificationRequest> requests) {
-        if (apnsToken.isPresent() && !apnsToken.get().isEmpty() && apnsUrl.isPresent() && !apnsUrl.get().isEmpty()) {
+        if (apnsToken != null && !apnsToken.isEmpty() && apnsUrl != null && !apnsUrl.isEmpty()) {
             RestTemplateConfiguration restTemplateConfiguration = new RestTemplateConfiguration();
             RestTemplate restTemplate = restTemplateConfiguration.restTemplate();
 
@@ -66,11 +66,11 @@ public class ApplePushNotificationService extends PushNotificationService<AppleP
             template.execute((RetryCallback<Void, RestClientException>) context -> {
                 HttpHeaders httpHeaders = new HttpHeaders();
                 httpHeaders.add("path", "/3/device/" + request.token());
-                httpHeaders.setBearerAuth(apnsToken.get());
+                httpHeaders.setBearerAuth(apnsToken);
                 httpHeaders.add("apns-push-type", "alert");
 
                 HttpEntity<String> httpEntity = new HttpEntity<>(request.getApnsBody(), httpHeaders);
-                restTemplate.postForObject(apnsUrl.get(), httpEntity, String.class);
+                restTemplate.postForObject(apnsUrl, httpEntity, String.class);
 
                 return null;
             });
@@ -78,6 +78,16 @@ public class ApplePushNotificationService extends PushNotificationService<AppleP
         catch (RestClientException e) {
             log.error("Could not send APNS notifications", e);
         }
+    }
+
+    @Override
+    public PushNotificationDeviceConfigurationRepository getRepository() {
+        return repository;
+    }
+
+    @Override
+    PushNotificationDeviceType getDeviceType() {
+        return PushNotificationDeviceType.APNS;
     }
 }
 

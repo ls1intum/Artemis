@@ -18,10 +18,12 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.Lists;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
+import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 
+import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
 import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
 
 @Service
@@ -29,17 +31,19 @@ public class FirebasePushNotificationService extends PushNotificationService<Mes
 
     private final Logger log = LoggerFactory.getLogger(FirebasePushNotificationService.class);
 
-    @Value("${artemis.push-notification.firebase.path}")
-    private Optional<String> credentialsPath;
+    private final PushNotificationDeviceConfigurationRepository repository;
+
+    @Value("${artemis.push-notification.firebase.path:}")
+    private String credentialsPath;
 
     private Optional<FirebaseApp> firebaseApp = Optional.empty();
 
     public FirebasePushNotificationService(PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository) {
-        super(pushNotificationDeviceConfigurationRepository);
+        repository = pushNotificationDeviceConfigurationRepository;
 
-        if (credentialsPath.isPresent()) {
+        if (credentialsPath != null && !credentialsPath.isEmpty()) {
             try {
-                final var credentials = GoogleCredentials.fromStream(Files.newInputStream(Path.of(credentialsPath.get())));
+                final var credentials = GoogleCredentials.fromStream(Files.newInputStream(Path.of(credentialsPath)));
 
                 final FirebaseOptions options = FirebaseOptions.builder().setCredentials(credentials).build();
 
@@ -74,7 +78,14 @@ public class FirebasePushNotificationService extends PushNotificationService<Mes
 
         try {
             template.execute((RetryCallback<Void, FirebaseMessagingException>) context -> {
-                FirebaseMessaging.getInstance(firebaseApp).sendAll(batch);
+                try {
+                    BatchResponse response = FirebaseMessaging.getInstance(firebaseApp).sendAll(batch);
+                    System.out.println(response);
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                    throw e;
+                }
 
                 return null;
             });
@@ -82,5 +93,15 @@ public class FirebasePushNotificationService extends PushNotificationService<Mes
         catch (FirebaseMessagingException e) {
             log.error("Could not send FIREBASE notifications", e);
         }
+    }
+
+    @Override
+    public PushNotificationDeviceConfigurationRepository getRepository() {
+        return repository;
+    }
+
+    @Override
+    PushNotificationDeviceType getDeviceType() {
+        return PushNotificationDeviceType.FIREBASE;
     }
 }

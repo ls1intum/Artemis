@@ -16,15 +16,13 @@ import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebaseP
 @Service
 public class GeneralInstantNotificationService implements InstantNotificationService {
 
-    private ApplePushNotificationService applePushNotificationService;
+    private final ApplePushNotificationService applePushNotificationService;
 
-    private FirebasePushNotificationService firebasePushNotificationService;
+    private final FirebasePushNotificationService firebasePushNotificationService;
 
-    private MailService mailService;
+    private final MailService mailService;
 
-    private NotificationSettingsService notificationSettingsService;
-
-    private List<InstantNotificationService> instantNotificationServices;
+    private final NotificationSettingsService notificationSettingsService;
 
     public GeneralInstantNotificationService(ApplePushNotificationService applePushNotificationService, FirebasePushNotificationService firebasePushNotificationService,
             MailService mailService, NotificationSettingsService notificationSettingsService) {
@@ -32,8 +30,6 @@ public class GeneralInstantNotificationService implements InstantNotificationSer
         this.firebasePushNotificationService = firebasePushNotificationService;
         this.mailService = mailService;
         this.notificationSettingsService = notificationSettingsService;
-
-        instantNotificationServices = List.of(applePushNotificationService, firebasePushNotificationService, mailService);
     }
 
     /**

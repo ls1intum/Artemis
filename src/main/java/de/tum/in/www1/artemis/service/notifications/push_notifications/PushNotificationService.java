@@ -16,6 +16,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 import com.google.gson.Gson;
 
@@ -25,9 +26,11 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
+import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
 import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.in.www1.artemis.service.notifications.InstantNotificationService;
 
+@Service
 public abstract class PushNotificationService<NOTIFICATION_REQUEST> implements InstantNotificationService {
 
     private static SecureRandom random = new SecureRandom();
@@ -43,15 +46,9 @@ public abstract class PushNotificationService<NOTIFICATION_REQUEST> implements I
         }
     }
 
-    private final PushNotificationDeviceConfigurationRepository repository;
-
     private static final Logger log = LoggerFactory.getLogger(PushNotificationService.class);
 
-    private final Gson gson = new Gson();
-
-    public PushNotificationService(PushNotificationDeviceConfigurationRepository repository) {
-        this.repository = repository;
-    }
+    private static final Gson gson = new Gson();
 
     /**
      * Build a send request using the given data that can be sent to the endpoint.
@@ -79,8 +76,8 @@ public abstract class PushNotificationService<NOTIFICATION_REQUEST> implements I
     public final void sendNotification(Notification notification, List<User> users, Object notificationSubject) {
         NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
 
-        List<PushNotificationDeviceConfiguration> userDeviceConfigurations = repository.findByUserIn(users);
-        if (!userDeviceConfigurations.isEmpty())
+        List<PushNotificationDeviceConfiguration> userDeviceConfigurations = getRepository().findByUserIn(users, getDeviceType());
+        if (userDeviceConfigurations.isEmpty())
             return;
 
         String payload = gson.toJson(new PushNotificationData(notification.getTitle(), notification.getText(), notification.getTarget(), type.name()));
@@ -90,7 +87,7 @@ public abstract class PushNotificationService<NOTIFICATION_REQUEST> implements I
         List<NOTIFICATION_REQUEST> notificationRequests = userDeviceConfigurations.stream().flatMap(deviceConfiguration -> {
             random.nextBytes(iv);
 
-            SecretKey key = new SecretKeySpec(deviceConfiguration.getSecretKey(), Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM);
+            SecretKey key = new SecretKeySpec(deviceConfiguration.getSecretKey(), "AES");
 
             String ivAsString = Base64.getEncoder().encodeToString(iv);
             Optional<String> payloadCiphertext = encrypt(payload, key, iv);
@@ -105,6 +102,10 @@ public abstract class PushNotificationService<NOTIFICATION_REQUEST> implements I
 
         sendNotificationRequestsToEndpoint(notificationRequests);
     }
+
+    abstract PushNotificationDeviceConfigurationRepository getRepository();
+
+    abstract PushNotificationDeviceType getDeviceType();
 
     record PushNotificationData(String title, String body, String target, String type) {
     }
