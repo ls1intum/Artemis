@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
+import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
@@ -1079,12 +1080,42 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         double[] expectedScores = { 4.8, 40.5, 0, 26.2, 60 };
         int[] expectedFeedbackSize = { 5, 7, 10, 9, 14 };
 
+        testResultScores(participations, expectedScores, expectedFeedbackSize);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldCalculateScoreWithStaticCodeAnalysisPenalties_cappedByExerciseMaxPenalty() {
+        programmingExerciseSCAEnabled.setMaxStaticCodeAnalysisPenalty(20);
+        programmingExerciseSCAEnabled = exerciseRepository.save(programmingExerciseSCAEnabled);
+
+        activateAllTestCases(false);
+
+        var participations = createTestParticipationsWithResults();
+
+        // Exercise max points: 42, 0.2 * 42 = 8.4P max penalty
+        // Participation 1: Testcases: 7P; Penalty: 5; Score: (int) ((7-5) / 42) = 4.8
+        // Participation 2: Testcases: 28P; Penalty: 11 -> 8.4; Score: (int) ((28-8.4) / 42)) = 46.7
+        // Participation 3: 0 points
+        // Participation 4: Testcases: 21P; Penalty: 10 -> 8.4; Score: (int) ((21-8.4) / 42)) = 30
+        // Participation 4: Testcases: 42P; Penalty 8.4; Score: (int) ((42-8.4) / 42)) = 80
+        double[] expectedScores = { 4.8, 46.7, 0, 30, 80 };
+        int[] expectedFeedbackSize = { 5, 7, 10, 9, 14 };
+
+        testResultScores(participations, expectedScores, expectedFeedbackSize);
+    }
+
+    private void testResultScores(List<Participation> participations, double[] expectedScores, int[] expectedFeedbackSize) {
+        testResultScores(participations, expectedScores, expectedFeedbackSize, AssessmentType.AUTOMATIC);
+    }
+
+    private void testResultScores(List<Participation> participations, double[] expectedScores, int[] expectedFeedbackSize, AssessmentType assessmentType) {
         for (int i = 0; i < participations.size(); i++) {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participations.get(i).getId()).get();
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, expectedScores[i], expectedFeedbackSize[i], AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, expectedScores[i], expectedFeedbackSize[i], assessmentType);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
     }
@@ -1243,6 +1274,11 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         assertThat(result.getScore()).isEqualTo(score, Offset.offset(offsetByTenThousandth));
         assertThat(result.getFeedbacks()).hasSize(feedbackSize);
         assertThat(result.getAssessmentType()).isEqualTo(assessmentType);
+
+        Exercise exercise = result.getParticipation().getExercise();
+        double calculatedScore = result.calculateTotalPointsForProgrammingExercises() / exercise.getMaxPoints() * 100.;
+        calculatedScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(calculatedScore, exercise.getCourseViaExerciseGroupOrCourseMember());
+        assertThat(calculatedScore).isEqualTo(score);
     }
 
     private void updateAndSaveAutomaticResult(Result result, boolean test1Passes, boolean test2Passes, boolean test3Passes, int issuesCategory1, int issuesCategory2) {
