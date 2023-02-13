@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXERCISE_SUBMISSION_ASSESSED;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.extractNotificationUrl;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.NEW_PLAGIARISM_CASE_STUDENT_TITLE;
 
 import java.net.URL;
