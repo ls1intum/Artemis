@@ -648,7 +648,7 @@ public class StudentExamService {
     /**
      * Generates a new test exam for the student and stores it in the database
      *
-     * @param exam    the exam with loaded exercie groups and exercise for which the StudentExam should be created
+     * @param exam    the exam with loaded exercise groups and exercises for which the StudentExam should be created
      * @param student the corresponding student
      * @return a StudentExam for the student and exam
      */
@@ -663,7 +663,6 @@ public class StudentExamService {
         log.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), exam.getId());
 
         return studentExam;
-
     }
 
     /**
