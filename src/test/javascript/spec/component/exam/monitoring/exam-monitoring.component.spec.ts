@@ -34,7 +34,7 @@ describe('Exam Monitoring Component', () => {
     exam.title = 'Test Exam';
     exam.startDate = dayjs();
     exam.endDate = dayjs().add(1, 'hour');
-    exam.numberOfRegisteredUsers = 2;
+    exam.numberOfExamUsers = 2;
     exam.exerciseGroups = [];
 
     let comp: ExamMonitoringComponent;
@@ -111,7 +111,7 @@ describe('Exam Monitoring Component', () => {
             new TableContent('title', exam.title),
             new TableContent('start', pipe.transform(exam.startDate)),
             new TableContent('end', pipe.transform(exam.endDate)),
-            new TableContent('students', exam.numberOfRegisteredUsers),
+            new TableContent('students', exam.numberOfExamUsers),
             new TableContent('exercises', 0),
             new TableContent('exerciseGroups', exam.exerciseGroups?.length),
         ];
@@ -134,7 +134,7 @@ describe('Exam Monitoring Component', () => {
             new TableContent('title', exam.title),
             new TableContent('start', pipe.transform(exam.startDate)),
             new TableContent('end', pipe.transform(exam.endDate)),
-            new TableContent('students', exam.numberOfRegisteredUsers),
+            new TableContent('students', exam.numberOfExamUsers),
             new TableContent('exercises', 0),
             new TableContent('exerciseGroups', 0),
         ];
@@ -159,7 +159,7 @@ describe('Exam Monitoring Component', () => {
             new TableContent('title', exam.title),
             new TableContent('start', pipe.transform(exam.startDate)),
             new TableContent('end', pipe.transform(exam.endDate)),
-            new TableContent('students', exam.numberOfRegisteredUsers),
+            new TableContent('students', exam.numberOfExamUsers),
             new TableContent('exercises', 3),
             new TableContent('exerciseGroups', 1),
         ];
@@ -184,7 +184,7 @@ describe('Exam Monitoring Component', () => {
             new TableContent('title', exam.title),
             new TableContent('start', pipe.transform(exam.startDate)),
             new TableContent('end', pipe.transform(exam.endDate)),
-            new TableContent('students', exam.numberOfRegisteredUsers),
+            new TableContent('students', exam.numberOfExamUsers),
             new TableContent('exercises', 0),
             new TableContent('exerciseGroups', 1),
         ];
