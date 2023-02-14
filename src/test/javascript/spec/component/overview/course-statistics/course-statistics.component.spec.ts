@@ -28,6 +28,7 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
 import { Result } from 'app/entities/result.model';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -332,6 +333,7 @@ describe('CourseStatisticsComponent', () => {
                 CourseStatisticsComponent,
                 MockComponent(CourseLearningGoalsComponent),
                 MockComponent(ExerciseScoresChartComponent),
+                MockComponent(DocumentationButtonComponent),
                 MockTranslateValuesDirective,
                 ArtemisTranslatePipe,
             ],

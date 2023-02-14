@@ -24,6 +24,7 @@ import { ScoresStorageService } from 'app/course/course-scores/scores-storage.se
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -54,6 +55,8 @@ enum ChartBarTitle {
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
+    documentationType = DocumentationType.Statistics;
+
     courseId: number;
     private courseExercises: Exercise[];
     private paramSubscription?: Subscription;

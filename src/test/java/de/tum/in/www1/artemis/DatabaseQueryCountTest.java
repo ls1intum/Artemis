@@ -40,8 +40,9 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
             return userCourses;
         }).hasBeenCalledAtMostTimes(16);
         // 1 DB call to get the user from the DB
-        // 1 DB call to get the course with exercise, lectures, exams
+        // 1 DB call to get the course with exercise, lectures
         // 1 DB call to load all exercises
+        // 1 DB call to load all exams
         // 10 DB calls to get the quiz batches for active quiz exercises
         // 1 DB call to get all individual student participations with submissions and results
         // 1 DB call to get all team student participations with submissions and results
@@ -57,6 +58,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
         // 1 DB call to get the user from the DB
         // 1 DB call to get the course with exercise, lectures, exams
         // 1 DB call to load all exercises
+        // 1 DB call to load all exams
         // 1 DB call to load all learning goals
         // 1 DB call to load all prerequisite
         // 1 DB call to load all tutorial groups

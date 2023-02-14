@@ -175,8 +175,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam.exam!.course.id = this.courseId;
                         this.exam = studentExam.exam!;
                         this.testExam = this.exam.testExam!;
-                        this.testStartTime = dayjs();
-                        this.initIndividualEndDates(this.testStartTime);
                         this.loadingExam = false;
                     },
                     error: () => (this.loadingExam = false),
@@ -187,11 +185,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam = studentExam;
                         this.exam = studentExam.exam!;
                         this.testExam = this.exam.testExam!;
-                        if (this.exam.testExam) {
-                            // For TestExams, we either set the StartTime to the current time or the startedDate of the studentExam, if existent
-                            this.testStartTime = this.studentExam.startedDate ? this.studentExam.startedDate! : dayjs();
-                            this.initIndividualEndDates(this.testStartTime);
-                        } else {
+                        if (!this.exam.testExam) {
                             this.initIndividualEndDates(this.exam.startDate!);
                         }
 
@@ -308,7 +302,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.examParticipationService.setExamExerciseIds(exerciseIds);
             // set endDate with workingTime
             if (!!this.testRunId || this.testExam) {
-                this.individualStudentEndDate = this.testStartTime!.add(this.studentExam.workingTime!, 'seconds');
+                this.testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
+                this.initIndividualEndDates(this.testStartTime);
+                this.individualStudentEndDate = this.testStartTime.add(this.studentExam.workingTime!, 'seconds');
             } else {
                 this.individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
             }
