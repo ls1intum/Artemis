@@ -78,6 +78,10 @@ export class ExamParticipation {
         examStartEnd.startExam();
     }
 
+    clickSaveAndContinue() {
+        cy.get('#save').click();
+    }
+
     openExercise(index: number) {
         examNavigation.openExerciseAtIndex(index);
     }

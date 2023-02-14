@@ -5,65 +5,111 @@ import submission from '../../fixtures/programming_exercise_submissions/all_succ
 import { Course } from 'app/entities/course.model';
 import { generateUUID } from '../../support/utils';
 import { EXERCISE_TYPE } from '../../support/constants';
-import { courseManagementRequest, examExerciseGroupCreation, examParticipation } from '../../support/artemis';
+import { courseManagementRequest, examExerciseGroupCreation, examParticipation, examStartEnd } from '../../support/artemis';
 import { AdditionalData, Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
-import { admin, studentOne } from '../../support/users';
+import { Interception } from 'cypress/types/net-stubbing';
+import { admin, studentOne, studentTwo } from '../../support/users';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
-const examTitle = 'exam' + generateUUID();
-
-const exerciseArray: Array<Exercise> = [];
+let exerciseArray: Array<Exercise> = [];
 
 describe('Exam participation', () => {
     let course: Course;
-    let exam: Exam;
 
-    before(() => {
-        cy.login(admin);
-        courseManagementRequest.createCourse(true).then((response) => {
-            course = convertCourseAfterMultiPart(response);
+    describe('Early Hand-in', () => {
+        let exam: Exam;
+        const examTitle = 'exam' + generateUUID();
+
+        before(() => {
+            cy.login(admin);
+            courseManagementRequest.createCourse(true).then((response) => {
+                course = convertCourseAfterMultiPart(response);
+                const examContent = new CypressExamBuilder(course)
+                    .title(examTitle)
+                    .visibleDate(dayjs().subtract(3, 'minutes'))
+                    .startDate(dayjs().subtract(2, 'minutes'))
+                    .endDate(dayjs().add(1, 'hour'))
+                    .examMaxPoints(40)
+                    .numberOfExercises(4)
+                    .build();
+                courseManagementRequest.createExam(examContent).then((examResponse) => {
+                    exam = examResponse.body;
+                    addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture });
+
+                    addGroupWithExercise(exam, EXERCISE_TYPE.Programming, { submission });
+
+                    addGroupWithExercise(exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 });
+
+                    addGroupWithExercise(exam, EXERCISE_TYPE.Modeling);
+
+                    courseManagementRequest.registerStudentForExam(exam, studentOne);
+                    courseManagementRequest.registerStudentForExam(exam, studentTwo);
+                    courseManagementRequest.generateMissingIndividualExams(exam);
+                    courseManagementRequest.prepareExerciseStartForExam(exam);
+                });
+            });
+        });
+
+        it('Participates as a student in a registered exam', () => {
+            examParticipation.startParticipation(studentOne, course, exam);
+            for (let j = 0; j < exerciseArray.length; j++) {
+                const exercise = exerciseArray[j];
+                examParticipation.openExercise(j);
+                examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
+            }
+            examParticipation.handInEarly();
+            for (let j = 0; j < exerciseArray.length; j++) {
+                const exercise = exerciseArray[j];
+                examParticipation.verifyExerciseTitleOnFinalPage(exercise.id, exercise.title);
+                if (exercise.type === EXERCISE_TYPE.Text) {
+                    examParticipation.verifyTextExerciseOnFinalPage(exercise.additionalData!.textFixture!);
+                }
+            }
+            examParticipation.checkExamTitle(examTitle);
+        });
+    });
+
+    describe('Normal Hand-in', () => {
+        let exam: Exam;
+        const examTitle = 'exam' + generateUUID();
+
+        before(() => {
+            exerciseArray = [];
+
+            cy.login(admin);
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
-                .visibleDate(dayjs().subtract(3, 'days'))
-                .startDate(dayjs().subtract(2, 'days'))
-                .endDate(dayjs().add(3, 'days'))
-                .examMaxPoints(40)
-                .numberOfExercises(4)
+                .visibleDate(dayjs().subtract(3, 'minutes'))
+                .startDate(dayjs().subtract(2, 'minutes'))
+                .endDate(dayjs().add(20, 'seconds'))
+                .examMaxPoints(10)
+                .numberOfExercises(1)
                 .build();
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
                 addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture });
-
-                addGroupWithExercise(exam, EXERCISE_TYPE.Programming, { submission });
-
-                addGroupWithExercise(exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 });
-
-                addGroupWithExercise(exam, EXERCISE_TYPE.Modeling);
 
                 courseManagementRequest.registerStudentForExam(exam, studentOne);
                 courseManagementRequest.generateMissingIndividualExams(exam);
                 courseManagementRequest.prepareExerciseStartForExam(exam);
             });
         });
-    });
 
-    it('Participates as a student in a registered exam', () => {
-        examParticipation.startParticipation(studentOne, course, exam);
-        for (let j = 0; j < exerciseArray.length; j++) {
-            const exercise = exerciseArray[j];
-            examParticipation.openExercise(j);
-            examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
-        }
-        examParticipation.handInEarly();
-        for (let j = 0; j < exerciseArray.length; j++) {
-            const exercise = exerciseArray[j];
-            examParticipation.verifyExerciseTitleOnFinalPage(exercise.id, exercise.title);
-            if (exercise.type === EXERCISE_TYPE.Text) {
-                examParticipation.verifyTextExerciseOnFinalPage(exercise.additionalData!.textFixture!);
-            }
-        }
-        examParticipation.checkExamTitle(examTitle);
+        it('Participates as a student in a registered exam', () => {
+            examParticipation.startParticipation(studentTwo, course, exam);
+            const textExerciseIndex = 0;
+            const textExercise = exerciseArray[textExerciseIndex];
+            examParticipation.openExercise(textExerciseIndex);
+            examParticipation.makeSubmission(textExercise.id, textExercise.type, textExercise.additionalData);
+            examParticipation.clickSaveAndContinue();
+            cy.get('#fullname', { timeout: 20000 }).should('be.visible');
+            examStartEnd.finishExam().then((request: Interception) => {
+                expect(request.response!.statusCode).to.eq(200);
+            });
+            examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
+            examParticipation.checkExamTitle(examTitle);
+        });
     });
 
     after(() => {
@@ -79,10 +125,10 @@ function addGroupWithExercise(exam: Exam, exerciseType: EXERCISE_TYPE, additiona
         if (exerciseType == EXERCISE_TYPE.Quiz) {
             additionalData!.quizExerciseID = response.body.quizQuestions![0].id;
         }
-        addExerciseToArray(exerciseArray, exerciseType, response, additionalData);
+        addExerciseToArray(exerciseType, response, additionalData);
     });
 }
 
-function addExerciseToArray(exerciseArray: Array<Exercise>, type: EXERCISE_TYPE, response: any, additionalData?: AdditionalData) {
+function addExerciseToArray(type: EXERCISE_TYPE, response: any, additionalData?: AdditionalData) {
     exerciseArray.push({ title: response.body.title, type, id: response.body.id, additionalData });
 }
