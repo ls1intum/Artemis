@@ -67,11 +67,10 @@ public class ParticipationService {
     private final TeamScoreRepository teamScoreRepository;
 
     public ParticipationService(Environment environment, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService,
-            BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService, ResultService resultService,
-            CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
+            Optional<VersionControlService> versionControlService, BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository,
+            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService,
+            ResultService resultService, CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository) {
         this.environment = environment;
         this.gitService = gitService;
