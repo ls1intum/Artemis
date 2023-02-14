@@ -214,13 +214,7 @@ public class MailService {
             checkAndPrepareExerciseSubmissionAssessedCase(notificationType, context, exercise, user);
         }
         if (notificationSubject instanceof PlagiarismCase plagiarismCase) {
-            NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
-            if (type == NotificationType.NEW_PLAGIARISM_CASE_STUDENT) {
-                Exercise exercise = plagiarismCase.getExercise();
-                Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-                subject = messageSource.getMessage("email.plagiarism.title", new Object[] { exercise.getTitle(), course.getTitle() }, context.getLocale());
-            }
-            context.setVariable(PLAGIARISM_VERDICT, plagiarismCase.getVerdict());
+            subject = setPlagiarismContextAndSubject(context, notificationType, notification, plagiarismCase);
         }
 
         if (notificationSubject instanceof SingleUserNotificationService.TutorialGroupNotificationSubject tutorialGroupNotificationSubject) {
@@ -240,6 +234,18 @@ public class MailService {
         String content = createContentForNotificationEmailByType(notificationType, context);
 
         sendEmail(user, subject, content, false, true);
+    }
+
+    private String setPlagiarismContextAndSubject(Context context, NotificationType notificationType, Notification notification, PlagiarismCase plagiarismCase) {
+        if (notificationType == NotificationType.NEW_PLAGIARISM_CASE_STUDENT) {
+            Exercise exercise = plagiarismCase.getExercise();
+            Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            return messageSource.getMessage("email.plagiarism.title", new Object[] { exercise.getTitle(), course.getTitle() }, context.getLocale());
+        }
+        else {
+            context.setVariable(PLAGIARISM_VERDICT, plagiarismCase.getVerdict());
+            return notification.getTitle();
+        }
     }
 
     private void setContextForTutorialGroupNotifications(Context context, NotificationType notificationType,
