@@ -238,8 +238,8 @@ export class ExamManagementService {
      * @param examId
      * @return matriculation number of students that were not found in the system
      */
-    verifyExamUserAttendanceCheck(courseId: number, examId: number): Observable<HttpResponse<ExamUserAttendanceCheck[]>> {
-        return this.http.get<ExamUserAttendanceCheck[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users-verify`, { observe: 'response' });
+    verifyExamUserAttendance(courseId: number, examId: number): Observable<HttpResponse<ExamUserAttendanceCheck[]>> {
+        return this.http.get<ExamUserAttendanceCheck[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/verify-exam-users`, { observe: 'response' });
     }
 
     /**

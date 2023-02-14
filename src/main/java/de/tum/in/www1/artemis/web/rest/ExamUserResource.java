@@ -113,7 +113,7 @@ public class ExamUserResource {
      * @param examId   the id of the exam
      * @return list of students who did not sign ResponseEntity with status 200 (OK)
      */
-    @GetMapping("courses/{courseId}/exams/{examId}/exam-users-verify")
+    @GetMapping("courses/{courseId}/exams/{examId}/verify-exam-users")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<ExamUserAttendanceCheckDTO>> getAllWhoDidNotSign(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all students who did not sign for exam with id: {}", examId);

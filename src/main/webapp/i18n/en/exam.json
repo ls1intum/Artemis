@@ -470,7 +470,7 @@
                 "verifyAttendanceTooltip": "Verify the attendance check of the students",
                 "verifyAttendanceBtn": "Verify Attendance",
                 "examNotStarted": "The exam has not started yet",
-                "verifyChecks": "Verify Attendance Checks",
+                "verifyChecks": "Verify Attendance",
                 "removeFromExam": {
                     "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?",
                     "deleteParticipationsAndSubmission": "Additionally delete this student's participation and submissions in the associated exam? This action can NOT be undone!",
