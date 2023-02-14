@@ -78,7 +78,8 @@ public class ProgrammingExerciseRepositoryService {
     }
 
     /**
-     * Set up the exercise template by determining the files needed for the template and copying them. Commit and push the changes to all repositories for this programming exercise.
+     * Set up the exercise template by determining the files needed for the template and copying them. Commit and push the changes to all repositories for this programming
+     * exercise.
      *
      * @param programmingExercise the programming exercise that should be set up
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
@@ -98,7 +99,7 @@ public class ProgrammingExerciseRepositoryService {
      * Collects all the required resources to fill the initial repository for a new exercise.
      *
      * @param programmingExercise The exercise for which the repository is set up.
-     * @param repositoryType The type of the repository which is set up.
+     * @param repositoryType      The type of the repository which is set up.
      * @return All required information about the required resources to set up the repository.
      * @throws GitAPIException Thrown in case cloning the initial empty repository fails.
      */
@@ -147,10 +148,10 @@ public class ProgrammingExerciseRepositoryService {
      * Sets up the three initial repositories for a new exercise.
      *
      * @param programmingExercise The exercise that should be set up.
-     * @param exerciseCreator The user that wants to create the exercise
-     * @param exerciseResources The resources for the template repository.
-     * @param solutionResources The resources for the solution repository.
-     * @param testResources The resources for the repository containing the tests.
+     * @param exerciseCreator     The user that wants to create the exercise
+     * @param exerciseResources   The resources for the template repository.
+     * @param solutionResources   The resources for the solution repository.
+     * @param testResources       The resources for the repository containing the tests.
      * @throws GitAPIException Thrown in case pushing a repository fails.
      */
     private void setupRepositories(final ProgrammingExercise programmingExercise, final User exerciseCreator, final RepositoryResources exerciseResources,
@@ -208,9 +209,9 @@ public class ProgrammingExerciseRepositoryService {
     /**
      * Copy template and push, if no file is currently in the repository.
      *
-     * @param templateName         The name of the template
-     * @param programmingExercise  the programming exercise
-     * @param user                 The user that triggered the action (used as Git commit author)
+     * @param templateName        The name of the template
+     * @param programmingExercise the programming exercise
+     * @param user                The user that triggered the action (used as Git commit author)
      * @throws IOException     Thrown in case resources could be copied into the local repository.
      * @throws GitAPIException Thrown in case pushing to the version control system failed.
      */
@@ -261,10 +262,10 @@ public class ProgrammingExerciseRepositoryService {
     /**
      * Sets up the test repository for a programming exercise using a JVM-based programming language.
      *
-     * @param resources The resources the repository should be filled with.
+     * @param resources           The resources the repository should be filled with.
      * @param programmingExercise The programming exercise the new repository belongs to.
-     * @param user The user that is creating the exercise.
-     * @throws IOException Thrown in case copying files fails.
+     * @param user                The user that is creating the exercise.
+     * @throws IOException     Thrown in case copying files fails.
      * @throws GitAPIException Thrown in case pushing the updates to the version control system fails.
      */
     private void setupJVMTestTemplateAndPush(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final User user)
@@ -314,9 +315,9 @@ public class ProgrammingExerciseRepositoryService {
     /**
      * Copies project type specific resources into the test repository.
      *
-     * @param resources The resources for the test repository.
+     * @param resources           The resources for the test repository.
      * @param programmingExercise The programming exercise the repository belongs to.
-     * @param repoLocalPath The local path where the repository can be found.
+     * @param repoLocalPath       The local path where the repository can be found.
      * @throws IOException Thrown in case copying the resources to the repository fails.
      */
     private void setupJVMTestTemplateProjectTypeResources(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final Path repoLocalPath)
@@ -338,10 +339,10 @@ public class ProgrammingExerciseRepositoryService {
     /**
      * Sets up the test repository for an exercise using regular (= non-sequential) test runs.
      *
-     * @param resources The resources for the test repository.
+     * @param resources           The resources for the test repository.
      * @param programmingExercise The programming exercise the repository belongs to.
-     * @param templatePath The local path in which the templates files can be found.
-     * @param sectionsMap Defines which parts of the template files should be copied based on the chosen exercise features.
+     * @param templatePath        The local path in which the templates files can be found.
+     * @param sectionsMap         Defines which parts of the template files should be copied based on the chosen exercise features.
      * @throws IOException Thrown in case copying some resource to the local repo fails.
      */
     private void setupTestTemplateRegularTestRuns(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final Path templatePath,
@@ -407,11 +408,11 @@ public class ProgrammingExerciseRepositoryService {
     /**
      * Sets up the test repository for an exercise using sequential test runs.
      *
-     * @param resources The resources for the test repository.
-     * @param templatePath The local path in which the templates files can be found.
+     * @param resources           The resources for the test repository.
+     * @param templatePath        The local path in which the templates files can be found.
      * @param projectTemplatePath The local path in which the project type specific templates files can be found.
-     * @param projectType The project type of the exercise.
-     * @param sectionsMap Defines which parts of the template files should be copied based on the chosen exercise features.
+     * @param projectType         The project type of the exercise.
+     * @param sectionsMap         Defines which parts of the template files should be copied based on the chosen exercise features.
      * @throws IOException Thrown in case copying some resource to the local repo fails.
      */
     private void setupTestTemplateSequentialTestRuns(final RepositoryResources resources, final Path templatePath, final Path projectTemplatePath, final ProjectType projectType,
@@ -515,9 +516,9 @@ public class ProgrammingExerciseRepositoryService {
     /**
      * Replaces Swift specific placeholders in repository files.
      *
-     * @param replacements A set of known replacements that can be reused in other files.
+     * @param replacements        A set of known replacements that can be reused in other files.
      * @param programmingExercise The exercise for which the replacements are performed.
-     * @param repository The repository in which the replacements are performed.
+     * @param repository          The repository in which the replacements are performed.
      * @throws IOException Thrown if accessing repository files fails.
      */
     private void replaceSwiftPlaceholders(final Map<String, String> replacements, final ProgrammingExercise programmingExercise, final Repository repository) throws IOException {
@@ -560,8 +561,9 @@ public class ProgrammingExerciseRepositoryService {
     /**
      * Locks or unlocks the repository if necessary due to the changes in the programming exercise.
      * Notice: isAllowOfflineIde() == null means that the offline IDE is allowed
+     *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
-     * @param updatedProgrammingExercise the updated exercise with new values
+     * @param updatedProgrammingExercise      the updated exercise with new values
      */
     public void handleRepoAccessRightChanges(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
         if (!programmingExerciseBeforeUpdate.isReleased()) {
@@ -589,8 +591,9 @@ public class ProgrammingExerciseRepositoryService {
 
     /**
      * Checks if the repos have to be locked/unlocked based on the new due date. Individual due dates are considered, so not all repositories might get locked/unlocked
+     *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
-     * @param updatedProgrammingExercise the updated exercise with new values
+     * @param updatedProgrammingExercise      the updated exercise with new values
      * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
      */
     private boolean handleRepoAccessRightChangesDueDates(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
@@ -615,8 +618,9 @@ public class ProgrammingExerciseRepositoryService {
 
     /**
      * Checks if the repos have to be locked/unlocked based on the allowance of offline IDEs. The read access in the VCS is only necessary when working with an offline IDE
+     *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
-     * @param updatedProgrammingExercise the updated exercise with new values
+     * @param updatedProgrammingExercise      the updated exercise with new values
      * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
      */
     private boolean handleRepoAccessRightChangesChangesOfflineIDE(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
@@ -631,5 +635,62 @@ public class ProgrammingExerciseRepositoryService {
             }
         }
         return false;
+    }
+
+    /**
+     * Deletes all repositories belonging to the exercise on the version control system.
+     *
+     * @param programmingExercise The programming exercise for which the repositories should be deleted.
+     */
+    void deleteRepositories(final ProgrammingExercise programmingExercise) {
+        if (programmingExercise.getTemplateRepositoryUrl() != null) {
+            final var templateRepositoryUrlAsUrl = programmingExercise.getVcsTemplateRepositoryUrl();
+            versionControlService.get().deleteRepository(templateRepositoryUrlAsUrl);
+        }
+        if (programmingExercise.getSolutionRepositoryUrl() != null) {
+            final var solutionRepositoryUrlAsUrl = programmingExercise.getVcsSolutionRepositoryUrl();
+            versionControlService.get().deleteRepository(solutionRepositoryUrlAsUrl);
+        }
+        if (programmingExercise.getTestRepositoryUrl() != null) {
+            final var testRepositoryUrlAsUrl = programmingExercise.getVcsTestRepositoryUrl();
+            versionControlService.get().deleteRepository(testRepositoryUrlAsUrl);
+        }
+
+        // We also want to delete any auxiliary repositories
+        programmingExercise.getAuxiliaryRepositories().forEach(repo -> {
+            if (repo.getRepositoryUrl() != null) {
+                versionControlService.get().deleteRepository(repo.getVcsRepositoryUrl());
+            }
+        });
+
+        versionControlService.get().deleteProject(programmingExercise.getProjectKey());
+    }
+
+    /**
+     * Deletes the local clones of the exercise template, test, and solution repos.
+     * <p>
+     * Does <emph>not</emph> change the repositories on the version control system.
+     * <p>
+     * Always delete the local copies of the repository when deleting an exercise because they can (in theory) be
+     * restored by cloning again, but they block the creation of new programming exercises with the same short name as
+     * a deleted one. The instructors might have missed selecting deleteBaseReposBuildPlans, and delete those manually later
+     * This however leaves no chance to remove the Artemis-local repositories on the server.
+     * In summary, they should and can always be deleted.
+     *
+     * @param programmingExercise The exercise for which the local repository copies should be deleted.
+     */
+    void deleteLocalRepoCopies(final ProgrammingExercise programmingExercise) {
+        if (programmingExercise.getTemplateRepositoryUrl() != null) {
+            final var templateRepositoryUrlAsUrl = programmingExercise.getVcsTemplateRepositoryUrl();
+            gitService.deleteLocalRepository(templateRepositoryUrlAsUrl);
+        }
+        if (programmingExercise.getSolutionRepositoryUrl() != null) {
+            final var solutionRepositoryUrlAsUrl = programmingExercise.getVcsSolutionRepositoryUrl();
+            gitService.deleteLocalRepository(solutionRepositoryUrlAsUrl);
+        }
+        if (programmingExercise.getTestRepositoryUrl() != null) {
+            final var testRepositoryUrlAsUrl = programmingExercise.getVcsTestRepositoryUrl();
+            gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
+        }
     }
 }

@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -37,6 +36,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
+import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -98,17 +98,16 @@ public class ProgrammingExerciseService {
 
     private final ExerciseSpecificationService exerciseSpecificationService;
 
-
-    public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService,
-                                      Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-                                      TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-                                      SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
-                                      ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository,
-                                      GroupNotificationService groupNotificationService, GroupNotificationScheduleService groupNotificationScheduleService,
-                                      InstanceMessageSendService instanceMessageSendService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-                                      ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
-                                      ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
-                                      ExerciseSpecificationService exerciseSpecificationService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService) {
+    public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
+            ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, GroupNotificationService groupNotificationService,
+            GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+            ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository, ExerciseSpecificationService exerciseSpecificationService,
+            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -206,7 +205,7 @@ public class ProgrammingExerciseService {
      * 3. Configure CI permissions
      *
      * @param programmingExercise Programming exercise for the build plans should be generated. The programming
-     *                            exercise should contain a fully initialized template and solution participation.
+     *                                exercise should contain a fully initialized template and solution participation.
      */
     public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
@@ -470,9 +469,6 @@ public class ProgrammingExerciseService {
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
-        final var templateRepositoryUrlAsUrl = programmingExercise.getVcsTemplateRepositoryUrl();
-        final var solutionRepositoryUrlAsUrl = programmingExercise.getVcsSolutionRepositoryUrl();
-        final var testRepositoryUrlAsUrl = programmingExercise.getVcsTestRepositoryUrl();
 
         // The delete operation cancels scheduled tasks (like locking/unlocking repositories)
         // As the programming exercise might already be deleted once the scheduling node receives the message, only the
@@ -481,15 +477,9 @@ public class ProgrammingExerciseService {
 
         if (deleteBaseReposBuildPlans) {
             deleteBuildPlans(programmingExercise);
-            deleteRepositories(programmingExercise, templateRepositoryUrlAsUrl, solutionRepositoryUrlAsUrl, testRepositoryUrlAsUrl);
+            programmingExerciseRepositoryService.deleteRepositories(programmingExercise);
         }
-
-        /*
-         * Always delete the local copies of the repository because they can (in theory) be restored by cloning again, but they block the creation of new programming exercises with
-         * the same short name as a deleted one. The instructors might have missed selecting deleteBaseReposBuildPlans, and delete those manually later. This however leaves no
-         * chance to remove the Artemis-local repositories on the server. In summary, they should and can always be deleted.
-         */
-        deleteLocalRepoCopies(programmingExercise, templateRepositoryUrlAsUrl, solutionRepositoryUrlAsUrl, testRepositoryUrlAsUrl);
+        programmingExerciseRepositoryService.deleteLocalRepoCopies(programmingExercise);
 
         programmingExerciseGitDiffReportRepository.deleteByProgrammingExerciseId(programmingExerciseId);
 
@@ -509,7 +499,6 @@ public class ProgrammingExerciseService {
         programmingExerciseRepository.deleteById(programmingExerciseId);
     }
 
-
     private void deleteBuildPlans(ProgrammingExercise programmingExercise) {
         final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
         if (templateBuildPlanId != null) {
@@ -520,39 +509,6 @@ public class ProgrammingExerciseService {
             continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
         }
         continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
-    }
-
-    private void deleteRepositories(ProgrammingExercise programmingExercise, VcsRepositoryUrl templateRepositoryUrlAsUrl, VcsRepositoryUrl solutionRepositoryUrlAsUrl, VcsRepositoryUrl testRepositoryUrlAsUrl) {
-        if (programmingExercise.getTemplateRepositoryUrl() != null) {
-            versionControlService.get().deleteRepository(templateRepositoryUrlAsUrl);
-        }
-        if (programmingExercise.getSolutionRepositoryUrl() != null) {
-            versionControlService.get().deleteRepository(solutionRepositoryUrlAsUrl);
-        }
-        if (programmingExercise.getTestRepositoryUrl() != null) {
-            versionControlService.get().deleteRepository(testRepositoryUrlAsUrl);
-        }
-
-        // We also want to delete any auxiliary repositories
-        programmingExercise.getAuxiliaryRepositories().forEach(repo -> {
-            if (repo.getRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(repo.getVcsRepositoryUrl());
-            }
-        });
-
-        versionControlService.get().deleteProject(programmingExercise.getProjectKey());
-    }
-
-    private void deleteLocalRepoCopies(ProgrammingExercise programmingExercise, VcsRepositoryUrl templateRepositoryUrlAsUrl, VcsRepositoryUrl solutionRepositoryUrlAsUrl, VcsRepositoryUrl testRepositoryUrlAsUrl) {
-        if (programmingExercise.getTemplateRepositoryUrl() != null) {
-            gitService.deleteLocalRepository(templateRepositoryUrlAsUrl);
-        }
-        if (programmingExercise.getSolutionRepositoryUrl() != null) {
-            gitService.deleteLocalRepository(solutionRepositoryUrlAsUrl);
-        }
-        if (programmingExercise.getTestRepositoryUrl() != null) {
-            gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
-        }
     }
 
     public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {
