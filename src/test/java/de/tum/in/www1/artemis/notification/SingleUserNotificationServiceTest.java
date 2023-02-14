@@ -265,7 +265,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         List<Notification> sentNotifications = notificationRepository.findAll();
 
         assertThat(sentNotifications).as("Only one notification should have been created (for the user with a valid participation, submission, and manual result)").hasSize(1);
-        assertThat(sentNotifications.get(0)).isOfAnyClassIn(SingleUserNotification.class);
+        assertThat(sentNotifications.get(0)).isInstanceOf(SingleUserNotification.class);
         assertThat(((SingleUserNotification) sentNotifications.get(0)).getRecipient()).isEqualTo(studentWithParticipationAndSubmissionAndManualResult);
     }
 
