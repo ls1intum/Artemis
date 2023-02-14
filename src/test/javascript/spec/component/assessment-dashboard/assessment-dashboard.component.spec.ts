@@ -40,6 +40,7 @@ import { User } from 'app/core/user/user.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ExamAssessmentButtonsComponent } from 'app/course/dashboards/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('AssessmentDashboardInformationComponent', () => {
     let comp: AssessmentDashboardComponent;
@@ -155,6 +156,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                 MockPipe(ArtemisTimeAgoPipe),
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockComponent(ExamAssessmentButtonsComponent),
+                MockComponent(DocumentationButtonComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
