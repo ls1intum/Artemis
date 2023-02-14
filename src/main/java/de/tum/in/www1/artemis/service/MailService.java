@@ -236,6 +236,15 @@ public class MailService {
         sendEmail(user, subject, content, false, true);
     }
 
+    /**
+     * Sets the context and subject for the case that the notificationSubject is a PlagiarismCase
+     *
+     * @param context          the context of the email template
+     * @param notificationType the notification type of which the email to be sent
+     * @param notification     the object which contains the notification title
+     * @param plagiarismCase   the plagiarism case for which the email to be sent
+     * @return the modified subject of the email
+     */
     private String setPlagiarismContextAndSubject(Context context, NotificationType notificationType, Notification notification, PlagiarismCase plagiarismCase) {
         if (notificationType == NotificationType.NEW_PLAGIARISM_CASE_STUDENT) {
             Exercise exercise = plagiarismCase.getExercise();
