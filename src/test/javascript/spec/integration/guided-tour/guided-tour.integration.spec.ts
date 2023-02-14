@@ -42,6 +42,7 @@ import { PieChartModule } from '@swimlane/ngx-charts';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('Guided tour integration', () => {
     const user = { id: 1 } as User;
@@ -85,6 +86,7 @@ describe('Guided tour integration', () => {
                 MockComponent(SecuredImageComponent),
                 MockComponent(SystemNotificationComponent),
                 MockComponent(ThemeSwitchComponent),
+                MockComponent(DocumentationButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTimeAgoPipe),

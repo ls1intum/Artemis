@@ -1,6 +1,7 @@
 <div *ngIf="course">
-    <div class="d-flex flex-wrap">
+    <div class="d-flex flex-wrap align-items-center">
         <h4 id="course-page-heading" jhiTranslate="artemisApp.examManagement.title">Exams</h4>
+        <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
         <div class="ms-auto text-truncate justify-content-end" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
             <a class="btn btn-primary me-1" *ngIf="course.isAtLeastInstructor" (click)="openImportModal()">
                 <fa-icon [icon]="faPlus"></fa-icon>

@@ -231,6 +231,7 @@ public class ExamRegistrationService {
             registeredExamUser = new ExamUser();
             registeredExamUser.setExam(exam);
             registeredExamUser.setUser(currentUser);
+            registeredExamUser = examUserRepository.save(registeredExamUser);
         }
 
         // We only need to update the registered exam users, if the user is not yet registered for the test exam
