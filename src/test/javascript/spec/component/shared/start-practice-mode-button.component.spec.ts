@@ -27,7 +27,8 @@ describe('JhiStartPracticeModeButtonComponent', () => {
     let courseExerciseService: CourseExerciseService;
     let startPracticeStub: jest.SpyInstance;
     let alertService: AlertService;
-    let alertServiceStub: jest.SpyInstance;
+    let alertServiceSuccessStub: jest.SpyInstance;
+    let alertServiceErrorStub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -46,7 +47,8 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         alertService = TestBed.inject(AlertService);
 
         startPracticeStub = jest.spyOn(courseExerciseService, 'startPractice');
-        alertServiceStub = jest.spyOn(alertService, 'success');
+        alertServiceSuccessStub = jest.spyOn(alertService, 'success');
+        alertServiceErrorStub = jest.spyOn(alertService, 'error');
     });
 
     afterEach(() => {
@@ -76,8 +78,8 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(alertServiceStub).toHaveBeenCalledOnce();
-        expect(alertServiceStub).toHaveBeenCalledWith('artemisApp.exercise.personalRepositoryOnline');
+        expect(alertServiceErrorStub).toHaveBeenCalledOnce();
+        expect(alertServiceErrorStub).toHaveBeenCalledWith('artemisApp.exercise.startError');
         expect(startPracticeStub).toHaveBeenCalledOnce();
 
         comp.exercise.studentParticipations = [];
@@ -86,8 +88,8 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(alertServiceStub).toHaveBeenCalledTimes(2);
-        expect(alertServiceStub).toHaveBeenCalledWith('artemisApp.exercise.personalRepositoryOnline');
+        expect(alertServiceSuccessStub).toHaveBeenCalledOnce();
+        expect(alertServiceSuccessStub).toHaveBeenCalledWith('artemisApp.exercise.personalRepositoryOnline');
 
         fixture.destroy();
         flush();
@@ -119,8 +121,8 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(alertServiceStub).toHaveBeenCalledOnce();
-        expect(alertServiceStub).toHaveBeenCalledWith('artemisApp.exercise.personalRepositoryClone');
+        expect(alertServiceErrorStub).toHaveBeenCalledOnce();
+        expect(alertServiceErrorStub).toHaveBeenCalledWith('artemisApp.exercise.startError');
         expect(startPracticeStub).toHaveBeenCalledOnce();
 
         participationSubject.next(initPart);
@@ -128,8 +130,8 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(alertServiceStub).toHaveBeenCalledTimes(2);
-        expect(alertServiceStub).toHaveBeenCalledWith('artemisApp.exercise.personalRepositoryClone');
+        expect(alertServiceSuccessStub).toHaveBeenCalledOnce();
+        expect(alertServiceSuccessStub).toHaveBeenCalledWith('artemisApp.exercise.personalRepositoryClone');
 
         fixture.destroy();
         flush();

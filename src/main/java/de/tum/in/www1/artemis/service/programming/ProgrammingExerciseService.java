@@ -12,12 +12,15 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
+import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +37,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -70,8 +72,6 @@ public class ProgrammingExerciseService {
 
     private final UserRepository userRepository;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final GroupNotificationService groupNotificationService;
 
     private final GroupNotificationScheduleService groupNotificationScheduleService;
@@ -96,16 +96,19 @@ public class ProgrammingExerciseService {
 
     private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
-    public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
-            ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            GroupNotificationService groupNotificationService, GroupNotificationScheduleService groupNotificationScheduleService,
-            InstanceMessageSendService instanceMessageSendService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
-            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService) {
+    private final ExerciseSpecificationService exerciseSpecificationService;
+
+
+    public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService,
+                                      Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+                                      TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+                                      SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
+                                      ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository,
+                                      GroupNotificationService groupNotificationService, GroupNotificationScheduleService groupNotificationScheduleService,
+                                      InstanceMessageSendService instanceMessageSendService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+                                      ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
+                                      ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
+                                      ExerciseSpecificationService exerciseSpecificationService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -116,7 +119,6 @@ public class ProgrammingExerciseService {
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.userRepository = userRepository;
-        this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.instanceMessageSendService = instanceMessageSendService;
@@ -125,32 +127,33 @@ public class ProgrammingExerciseService {
         this.programmingExerciseSolutionEntryRepository = programmingExerciseSolutionEntryRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
+        this.exerciseSpecificationService = exerciseSpecificationService;
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
     }
 
     /**
      * Setups the context of a new programming exercise. This includes:
      * <ul>
-     *     <li>The VCS project</li>
-     *     <li>All repositories (test, exercise, solution)</li>
-     *     <li>The template and solution participation</li>
-     *     <li>VCS webhooks</li>
-     *     <li>Bamboo build plans</li>
+     * <li>The VCS project</li>
+     * <li>All repositories (test, exercise, solution)</li>
+     * <li>The template and solution participation</li>
+     * <li>VCS webhooks</li>
+     * <li>Bamboo build plans</li>
      * </ul>
      *
      * The exercise gets set up in the following order:
      * <ol>
-     *     <li>Create all repositories for the new exercise</li>
-     *     <li>Setup template and push it to the repositories</li>
-     *     <li>Setup new build plans for exercise</li>
-     *     <li>Add all webhooks</li>
-     *     <li>Init scheduled jobs for exercise maintenance</li>
+     * <li>Create all repositories for the new exercise</li>
+     * <li>Setup template and push it to the repositories</li>
+     * <li>Setup new build plans for exercise</li>
+     * <li>Add all webhooks</li>
+     * <li>Init scheduled jobs for exercise maintenance</li>
      * </ol>
      *
      * @param programmingExercise The programmingExercise that should be setup
      * @return The new setup exercise
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
-     * @throws IOException If the template files couldn't be read
+     * @throws IOException     If the template files couldn't be read
      */
     @Transactional // TODO: apply the transaction on a smaller scope
     // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
@@ -286,8 +289,8 @@ public class ProgrammingExerciseService {
 
     /**
      * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
-     * @param updatedProgrammingExercise the changed programming exercise with its new values
-     * @param notificationText    optional text about the changes for a notification
+     * @param updatedProgrammingExercise      the changed programming exercise with its new values
+     * @param notificationText                optional text about the changes for a notification
      * @return the updates programming exercise from the database
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise,
@@ -392,7 +395,7 @@ public class ProgrammingExerciseService {
      * @param testsPath       The path to the tests' folder, e.g. the path inside the repository where the structure oracle file will be saved in.
      * @param user            The user who has initiated the action
      * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
-     * @throws IOException If the URLs cannot be converted to actual {@link Path paths}
+     * @throws IOException     If the URLs cannot be converted to actual {@link Path paths}
      * @throws GitAPIException If the checkout fails
      */
     public boolean generateStructureOracleFile(VcsRepositoryUrl solutionRepoURL, VcsRepositoryUrl exerciseRepoURL, VcsRepositoryUrl testRepoURL, String testsPath, User user)
@@ -477,49 +480,16 @@ public class ProgrammingExerciseService {
         cancelScheduledOperations(programmingExercise.getId());
 
         if (deleteBaseReposBuildPlans) {
-            final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
-            if (templateBuildPlanId != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
-            }
-            final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
-            if (solutionBuildPlanId != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
-            }
-            continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
-
-            if (programmingExercise.getTemplateRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(templateRepositoryUrlAsUrl);
-            }
-            if (programmingExercise.getSolutionRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(solutionRepositoryUrlAsUrl);
-            }
-            if (programmingExercise.getTestRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(testRepositoryUrlAsUrl);
-            }
-
-            // We also want to delete any auxiliary repositories
-            programmingExercise.getAuxiliaryRepositories().forEach(repo -> {
-                if (repo.getRepositoryUrl() != null) {
-                    versionControlService.get().deleteRepository(repo.getVcsRepositoryUrl());
-                }
-            });
-
-            versionControlService.get().deleteProject(programmingExercise.getProjectKey());
+            deleteBuildPlans(programmingExercise);
+            deleteRepositories(programmingExercise, templateRepositoryUrlAsUrl, solutionRepositoryUrlAsUrl, testRepositoryUrlAsUrl);
         }
+
         /*
          * Always delete the local copies of the repository because they can (in theory) be restored by cloning again, but they block the creation of new programming exercises with
          * the same short name as a deleted one. The instructors might have missed selecting deleteBaseReposBuildPlans, and delete those manually later. This however leaves no
          * chance to remove the Artemis-local repositories on the server. In summary, they should and can always be deleted.
          */
-        if (programmingExercise.getTemplateRepositoryUrl() != null) {
-            gitService.deleteLocalRepository(templateRepositoryUrlAsUrl);
-        }
-        if (programmingExercise.getSolutionRepositoryUrl() != null) {
-            gitService.deleteLocalRepository(solutionRepositoryUrlAsUrl);
-        }
-        if (programmingExercise.getTestRepositoryUrl() != null) {
-            gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
-        }
+        deleteLocalRepoCopies(programmingExercise, templateRepositoryUrlAsUrl, solutionRepositoryUrlAsUrl, testRepositoryUrlAsUrl);
 
         programmingExerciseGitDiffReportRepository.deleteByProgrammingExerciseId(programmingExerciseId);
 
@@ -537,6 +507,52 @@ public class ProgrammingExerciseService {
         log.debug("Delete programming exercises with student participations: {}", programmingExercise.getStudentParticipations());
         // This will also delete the template & solution participation: we explicitly use deleteById to avoid potential Hibernate issues during deletion
         programmingExerciseRepository.deleteById(programmingExerciseId);
+    }
+
+
+    private void deleteBuildPlans(ProgrammingExercise programmingExercise) {
+        final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
+        if (templateBuildPlanId != null) {
+            continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
+        }
+        final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
+        if (solutionBuildPlanId != null) {
+            continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
+        }
+        continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
+    }
+
+    private void deleteRepositories(ProgrammingExercise programmingExercise, VcsRepositoryUrl templateRepositoryUrlAsUrl, VcsRepositoryUrl solutionRepositoryUrlAsUrl, VcsRepositoryUrl testRepositoryUrlAsUrl) {
+        if (programmingExercise.getTemplateRepositoryUrl() != null) {
+            versionControlService.get().deleteRepository(templateRepositoryUrlAsUrl);
+        }
+        if (programmingExercise.getSolutionRepositoryUrl() != null) {
+            versionControlService.get().deleteRepository(solutionRepositoryUrlAsUrl);
+        }
+        if (programmingExercise.getTestRepositoryUrl() != null) {
+            versionControlService.get().deleteRepository(testRepositoryUrlAsUrl);
+        }
+
+        // We also want to delete any auxiliary repositories
+        programmingExercise.getAuxiliaryRepositories().forEach(repo -> {
+            if (repo.getRepositoryUrl() != null) {
+                versionControlService.get().deleteRepository(repo.getVcsRepositoryUrl());
+            }
+        });
+
+        versionControlService.get().deleteProject(programmingExercise.getProjectKey());
+    }
+
+    private void deleteLocalRepoCopies(ProgrammingExercise programmingExercise, VcsRepositoryUrl templateRepositoryUrlAsUrl, VcsRepositoryUrl solutionRepositoryUrlAsUrl, VcsRepositoryUrl testRepositoryUrlAsUrl) {
+        if (programmingExercise.getTemplateRepositoryUrl() != null) {
+            gitService.deleteLocalRepository(templateRepositoryUrlAsUrl);
+        }
+        if (programmingExercise.getSolutionRepositoryUrl() != null) {
+            gitService.deleteLocalRepository(solutionRepositoryUrlAsUrl);
+        }
+        if (programmingExercise.getTestRepositoryUrl() != null) {
+            gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
+        }
     }
 
     public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {
@@ -562,31 +578,39 @@ public class ProgrammingExerciseService {
      */
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final boolean isCourseFilter, final boolean isExamFilter,
             final User user) {
-        final var pageable = PageUtil.createExercisePageRequest(search);
-        final var searchTerm = search.getSearchTerm();
-        Page<ProgrammingExercise> exercisePage = Page.empty();
-        if (authCheckService.isAdmin(user)) {
-            if (isCourseFilter && isExamFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesAndExams(searchTerm, pageable);
-            }
-            else if (isCourseFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCourses(searchTerm, pageable);
-            }
-            else if (isExamFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllExams(searchTerm, pageable);
-            }
+        if (!isCourseFilter && !isExamFilter) {
+            return new SearchResultPageDTO<>(Collections.emptyList(), 0);
         }
-        else {
-            if (isCourseFilter && isExamFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
-            else if (isCourseFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
-            else if (isExamFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
+        String searchTerm = search.getSearchTerm();
+        PageRequest pageable = PageUtil.createExercisePageRequest(search);
+        Specification<ProgrammingExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
+        return getAllOnPageForSpecification(pageable, specification);
+    }
+
+    /**
+     * Search for all programming exercises with SCA enabled and with a specific programming language.
+     *
+     * @param search              The search query defining the search term and the size of the returned page
+     * @param isCourseFilter      Whether to search in the courses for exercises
+     * @param isExamFilter        Whether to search in the groups for exercises
+     * @param user                The user for whom to fetch all available exercises
+     * @param programmingLanguage The result will only include exercises in this language
+     * @return A wrapper object containing a list of all found exercises and the total number of pages
+     */
+    public SearchResultPageDTO<ProgrammingExercise> getAllWithSCAOnPageWithSize(PageableSearchDTO<String> search, boolean isCourseFilter, boolean isExamFilter,
+            ProgrammingLanguage programmingLanguage, User user) {
+        if (!isCourseFilter && !isExamFilter) {
+            return new SearchResultPageDTO<>(Collections.emptyList(), 0);
         }
+        String searchTerm = search.getSearchTerm();
+        PageRequest pageable = PageUtil.createExercisePageRequest(search);
+        Specification<ProgrammingExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
+        specification = specification.and(exerciseSpecificationService.createSCAFilter(programmingLanguage));
+        return getAllOnPageForSpecification(pageable, specification);
+    }
+
+    private SearchResultPageDTO<ProgrammingExercise> getAllOnPageForSpecification(PageRequest pageable, Specification<ProgrammingExercise> specification) {
+        Page<ProgrammingExercise> exercisePage = programmingExerciseRepository.findAll(specification, pageable);
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 
@@ -642,7 +666,7 @@ public class ProgrammingExerciseService {
      * The check is done based on a generated project key (course short name + exercise short name) and the project name (course short name + exercise title).
      *
      * @param programmingExercise a typically new programming exercise for which the corresponding VCS and CIS projects should not yet exist.
-     * @param courseShortName the shortName of the course the programming exercise should be imported in
+     * @param courseShortName     the shortName of the course the programming exercise should be imported in
      * @return TRUE if a project with the same ProjectKey or ProjectName already exists, otherwise false
      */
     public boolean preCheckProjectExistsOnVCSOrCI(ProgrammingExercise programmingExercise, String courseShortName) {

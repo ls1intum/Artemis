@@ -3,6 +3,7 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { Exercise, ExerciseMode, ExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
@@ -17,6 +18,7 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
+import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
@@ -31,8 +33,6 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -207,11 +207,39 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         flush();
     }));
 
+    it('should correctly show the clone repository button for exam test runs', fakeAsync(() => {
+        const testRunParticipation = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation;
+        const exercise = {
+            id: 45,
+            type: ExerciseType.PROGRAMMING,
+            allowOfflineIde: true,
+            studentParticipations: [testRunParticipation],
+            exerciseGroup: {},
+        } as ProgrammingExercise;
+
+        comp.examMode = true;
+        comp.exercise = exercise;
+        comp.practiceParticipation = testRunParticipation;
+
+        fixture.detectChanges();
+        tick();
+
+        const startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
+        expect(startPracticeButton).toBeNull();
+
+        const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
+        expect(cloneRepositoryButton).not.toBeNull();
+
+        fixture.destroy();
+        flush();
+    }));
+
     it('should correctly resume programming participation', () => {
         const inactiveParticipation: ProgrammingExerciseStudentParticipation = { id: 1, initializationState: InitializationState.INACTIVE };
         const activeParticipation: ProgrammingExerciseStudentParticipation = { id: 1, initializationState: InitializationState.INITIALIZED };
         const practiceParticipation: ProgrammingExerciseStudentParticipation = { id: 2, testRun: true, initializationState: InitializationState.INACTIVE };
         comp.exercise = { id: 3, studentParticipations: [inactiveParticipation, practiceParticipation] } as ProgrammingExercise;
+        comp.updateParticipations();
 
         resumeStub.mockReturnValue(of(activeParticipation));
 
@@ -251,6 +279,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
         comp.exercise = exercise;
         comp.examMode = true;
+        comp.updateParticipations();
 
         fixture.detectChanges();
         tick();

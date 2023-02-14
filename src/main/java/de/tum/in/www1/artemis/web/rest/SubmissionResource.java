@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -41,6 +43,8 @@ public class SubmissionResource {
 
     private final SubmissionService submissionService;
 
+    private final BuildLogEntryService buildLogEntryService;
+
     private final ResultService resultService;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -53,11 +57,12 @@ public class SubmissionResource {
 
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
-    public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, ResultService resultService,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
+    public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, BuildLogEntryService buildLogEntryService,
+            ResultService resultService, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
             ExerciseRepository exerciseRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
+        this.buildLogEntryService = buildLogEntryService;
         this.resultService = resultService;
         this.exerciseRepository = exerciseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -89,6 +94,11 @@ public class SubmissionResource {
         for (Result result : results) {
             resultService.deleteResult(result, true);
         }
+        // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
+        submission.get().setResults(Collections.emptyList());
+        if (submission.get() instanceof ProgrammingSubmission programmingSubmission) {
+            buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
+        }
         buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.get().getId());
         submissionRepository.deleteById(id);
 
@@ -100,7 +110,7 @@ public class SubmissionResource {
      *
      * Only returns the users test run submission for a specific exercise
      *
-     * @param exerciseId exerciseID  for which all submissions should be returned
+     * @param exerciseId exerciseID for which all submissions should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of the latest test run submission in body
      */
     @GetMapping("/exercises/{exerciseId}/test-run-submissions")

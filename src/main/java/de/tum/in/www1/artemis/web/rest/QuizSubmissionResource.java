@@ -205,9 +205,9 @@ public class QuizSubmissionResource {
     /**
      * PUT /exercises/:exerciseId/submissions/exam : Update a QuizSubmission for exam mode
      *
-     * @param exerciseId        the id of the exercise for which to update the submission
-     * @param quizSubmission    the quizSubmission to update
-     * @return                  the ResponseEntity with status 200 and body the result or the appropriate error code.
+     * @param exerciseId     the id of the exercise for which to update the submission
+     * @param quizSubmission the quizSubmission to update
+     * @return the ResponseEntity with status 200 and body the result or the appropriate error code.
      */
     @PutMapping("exercises/{exerciseId}/submissions/exam")
     @PreAuthorize("hasRole('USER')")

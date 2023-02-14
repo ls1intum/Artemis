@@ -107,9 +107,9 @@ public class ExerciseGroupResource {
     /**
      * PUT /courses/{courseId}/exams/{examId}/exerciseGroups : Update an existing exercise group.
      *
-     * @param courseId              the course to which the exercise group belongs to
-     * @param examId                the exam to which the exercise group belongs to
-     * @param updatedExerciseGroup  the exercise group to update
+     * @param courseId             the course to which the exercise group belongs to
+     * @param examId               the exam to which the exercise group belongs to
+     * @param updatedExerciseGroup the exercise group to update
      * @return the ResponseEntity with status 200 (OK) and with the body of the updated exercise group
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -135,8 +135,8 @@ public class ExerciseGroupResource {
     /**
      * POST /courses/{courseId}/exams/{examId}/import-exercise-group : Imports exercise groups to the specified exam
      *
-     * @param courseId         the course to which the exam belongs
-     * @param examId the exam to which the exercise groups should be added
+     * @param courseId             the course to which the exam belongs
+     * @param examId               the exam to which the exercise groups should be added
      * @param updatedExerciseGroup the list of Exercise Groups to be imported
      * @return the ResponseEntity with status 201 (Created) and with body the newly imported exercise groups, or with status 400 (Bad Request)
      */
@@ -155,9 +155,9 @@ public class ExerciseGroupResource {
     /**
      * GET /courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId} : Find an exercise group by id.
      *
-     * @param courseId          the course to which the exercise group belongs to
-     * @param examId            the exam to which the exercise group belongs to
-     * @param exerciseGroupId   the id of the exercise group to find
+     * @param courseId        the course to which the exercise group belongs to
+     * @param examId          the exam to which the exercise group belongs to
+     * @param exerciseGroupId the id of the exercise group to find
      * @return the ResponseEntity with status 200 (OK) and with the found exercise group as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
@@ -174,8 +174,8 @@ public class ExerciseGroupResource {
     /**
      * GET courses/{courseId}/exams/{examId}/exerciseGroups : Get all exercise groups of the given exam
      *
-     * @param courseId  the course to which the exercise groups belong to
-     * @param examId    the exam to which the exercise groups belong to
+     * @param courseId the course to which the exercise groups belong to
+     * @param examId   the exam to which the exercise groups belong to
      * @return the ResponseEntity with status 200 (OK) and a list of exercise groups. The list can be empty
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exerciseGroups")
@@ -192,11 +192,11 @@ public class ExerciseGroupResource {
     /**
      * DELETE /courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId} : Delete the exercise group with the given id.
      *
-     * @param courseId          the course to which the exercise group belongs to
-     * @param examId            the exam to which the exercise group belongs to
-     * @param exerciseGroupId   the id of the exercise group to delete
+     * @param courseId                     the course to which the exercise group belongs to
+     * @param examId                       the exam to which the exercise group belongs to
+     * @param exerciseGroupId              the id of the exercise group to delete
      * @param deleteStudentReposBuildPlans boolean which states whether the corresponding student build plans should be deleted
-     * @param deleteBaseReposBuildPlans boolean which states whether the corresponding base build plans should be deleted
+     * @param deleteBaseReposBuildPlans    boolean which states whether the corresponding base build plans should be deleted
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")

@@ -45,7 +45,7 @@ public class UMLMethod extends UMLElement implements Serializable {
     /**
      * Get the parent element of this method, i.e. the UML class that contains it.
      *
-     * @return  the UML class that contains this method
+     * @return the UML class that contains this method
      */
     @NotNull
     public UMLElement getParentElement() {

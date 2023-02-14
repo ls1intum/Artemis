@@ -167,7 +167,7 @@
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
                     [overwriteDisabled]="isBeforeStartDateAndStudent"
-                    *ngIf="!gradedParticipation && isStartExerciseAvailable() && (!exercise.teamMode || exercise.studentAssignedTeamId)"
+                    *ngIf="(!exercise.teamMode || exercise.studentAssignedTeamId) && isStartExerciseAvailable()"
                     (click)="startExercise()"
                 ></button>
             </span>
@@ -176,7 +176,8 @@
                 class="start-practice"
                 [smallButtons]="smallButtons"
                 [exercise]="exercise"
-                *ngIf="!practiceParticipation && isStartPracticeAvailable() && (!exercise.teamMode || exercise.studentAssignedTeamId)"
+                (practiceModeStarted)="receiveNewParticipation($event)"
+                *ngIf="(!exercise.teamMode || exercise.studentAssignedTeamId) && isStartPracticeAvailable()"
             ></jhi-start-practice-mode-button>
 
             <!-- TODO: Exam mode reuses the whole component at the moment. We need the clone repo button but not the open
@@ -188,7 +189,7 @@
                         [smallButtons]="smallButtons"
                         [participations]="exercise.studentParticipations!"
                         [courseAndExerciseNavigationUrlSegment]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor']"
-                        [exerciseId]="exercise.id!"
+                        [exercise]="exercise"
                         *ngIf="!examMode && programmingExercise?.allowOnlineEditor"
                     >
                     </jhi-open-code-editor-button>
@@ -197,6 +198,7 @@
                         [loading]="!!exercise.loading"
                         [smallButtons]="smallButtons"
                         [participations]="exercise.studentParticipations!"
+                        [exercise]="exercise"
                         *ngIf="programmingExercise?.allowOfflineIde"
                     >
                     </jhi-clone-repo-button>
@@ -226,7 +228,10 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="gradedParticipation?.initializationState === InitializationState.INACTIVE && isResumeExerciseAvailable()"
+                *ngIf="
+                    (gradedParticipation?.initializationState === InitializationState.INACTIVE || gradedParticipation?.initializationState === InitializationState.FINISHED) &&
+                    isResumeExerciseAvailable(gradedParticipation)
+                "
                 (click)="resumeProgrammingExercise(false)"
             ></button>
             <button
@@ -238,7 +243,10 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="practiceParticipation?.initializationState === InitializationState.INACTIVE"
+                *ngIf="
+                    (practiceParticipation?.initializationState === InitializationState.INACTIVE || practiceParticipation?.initializationState === InitializationState.FINISHED) &&
+                    isResumeExerciseAvailable(practiceParticipation)
+                "
                 (click)="resumeProgrammingExercise(true)"
             ></button>
             <a
@@ -248,7 +256,7 @@
                 target="_blank"
                 rel="noreferrer"
                 href="{{ buildPlanUrl(gradedParticipation!) }}"
-                *ngIf="programmingExercise?.publishBuildPlanUrl && exercise?.studentParticipations?.[0]?.initializationState !== InitializationState.INACTIVE"
+                *ngIf="programmingExercise?.publishBuildPlanUrl && gradedParticipation && gradedParticipation.initializationState !== InitializationState.INACTIVE"
             >
                 <fa-icon [icon]="faExternalLinkAlt" [fixedWidth]="true"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.goToBuildPlan">Go to build plan</span>

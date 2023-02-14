@@ -1,20 +1,10 @@
 import { Lecture } from 'app/entities/lecture.model';
 import { Course } from 'app/entities/course.model';
-import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
 import dayjs from 'dayjs/esm';
 import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
-
-// Requests
-const courseManagementRequests = artemis.requests.courseManagement;
-
-// User management
-const admin = artemis.users.getAdmin();
-const instructor = artemis.users.getInstructor();
-
-// Pageobjects
-const lectureManagement = artemis.pageobjects.lecture.management;
-const lectureCreation = artemis.pageobjects.lecture.creation;
+import { courseManagementRequest, lectureCreation, lectureManagement } from '../../support/artemis';
+import { admin, instructor } from '../../support/users';
 
 describe('Lecture management', () => {
     let course: Course;
@@ -22,22 +12,22 @@ describe('Lecture management', () => {
 
     before(() => {
         cy.login(admin);
-        courseManagementRequests.createCourse().then((response) => {
+        courseManagementRequest.createCourse().then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addInstructorToCourse(course, instructor);
+            courseManagementRequest.addInstructorToCourse(course, instructor);
         });
     });
 
     after(() => {
         if (course) {
             cy.login(admin);
-            courseManagementRequests.deleteCourse(course.id!);
+            courseManagementRequest.deleteCourse(course.id!);
         }
     });
 
     afterEach('Delete lecture', () => {
         if (lecture) {
-            courseManagementRequests.deleteLecture(lecture.id!);
+            courseManagementRequest.deleteLecture(lecture.id!);
         }
     });
 
@@ -61,7 +51,7 @@ describe('Lecture management', () => {
     describe('Handle existing lecture', () => {
         beforeEach('Create a lecture', () => {
             cy.login(instructor, '/course-management/' + course.id + '/lectures');
-            courseManagementRequests.createLecture(course).then((lectureResponse) => {
+            courseManagementRequest.createLecture(course).then((lectureResponse) => {
                 lecture = lectureResponse.body;
             });
         });
@@ -83,7 +73,7 @@ describe('Lecture management', () => {
         });
 
         it('Adds a exercise unit to the lecture', () => {
-            courseManagementRequests.createModelingExercise({ course }).then((model) => {
+            courseManagementRequest.createModelingExercise({ course }).then((model) => {
                 const exercise = model.body;
                 lectureManagement.openUnitsPage(0);
                 lectureManagement.addExerciseUnit(exercise.id!);

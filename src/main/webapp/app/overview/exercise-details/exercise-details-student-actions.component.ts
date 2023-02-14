@@ -79,6 +79,20 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     }
 
     ngOnChanges() {
+        this.updateParticipations();
+    }
+
+    receiveNewParticipation(newParticipation: StudentParticipation) {
+        const studentParticipations = this.exercise.studentParticipations ?? [];
+        if (studentParticipations.map((participation) => participation.id).includes(newParticipation.id)) {
+            this.exercise.studentParticipations = studentParticipations.map((participation) => (participation.id === newParticipation.id ? newParticipation : participation));
+        } else {
+            this.exercise.studentParticipations = [...studentParticipations, newParticipation];
+        }
+        this.updateParticipations();
+    }
+
+    updateParticipations() {
         const studentParticipations = this.exercise.studentParticipations ?? [];
         this.gradedParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, false);
         this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);
@@ -88,21 +102,21 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * Starting an exercise is not possible in the exam, otherwise see exercise.utils -> isStartExerciseAvailable
      */
     isStartExerciseAvailable(): boolean {
-        return !this.examMode && isStartExerciseAvailable(this.exercise);
+        return !this.examMode && isStartExerciseAvailable(this.exercise, this.gradedParticipation);
     }
 
     /**
      * Resuming an exercise is not possible in the exam, otherwise see exercise.utils -> isResumeExerciseAvailable
      */
-    isResumeExerciseAvailable(): boolean {
-        return !this.examMode && isResumeExerciseAvailable(this.exercise, this.gradedParticipation);
+    isResumeExerciseAvailable(participation?: StudentParticipation): boolean {
+        return !this.examMode && isResumeExerciseAvailable(this.exercise, participation);
     }
 
     /**
      * Practicing an exercise is not possible in the exam, otherwise see exercise.utils -> isStartPracticeAvailable
      */
     isStartPracticeAvailable(): boolean {
-        return !this.examMode && isStartPracticeAvailable(this.exercise);
+        return !this.examMode && isStartPracticeAvailable(this.exercise, this.practiceParticipation);
     }
 
     startExercise() {
@@ -117,19 +131,22 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             .subscribe({
                 next: (participation) => {
                     if (participation) {
-                        this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
-                        this.gradedParticipation = participation;
+                        this.receiveNewParticipation(participation);
                     }
                     if (this.programmingExercise) {
-                        if (this.programmingExercise.allowOfflineIde) {
-                            this.alertService.success('artemisApp.exercise.personalRepositoryClone');
+                        if (participation?.initializationState === InitializationState.INITIALIZED) {
+                            if (this.programmingExercise.allowOfflineIde) {
+                                this.alertService.success('artemisApp.exercise.personalRepositoryClone');
+                            } else {
+                                this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
+                            }
                         } else {
-                            this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
+                            this.alertService.error('artemisApp.exercise.startError');
                         }
                     }
                 },
                 error: () => {
-                    this.alertService.warning('artemisApp.exercise.startError');
+                    this.alertService.error('artemisApp.exercise.startError');
                 },
             });
     }
@@ -139,7 +156,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      */
     resumeProgrammingExercise(testRun: boolean) {
         this.exercise.loading = true;
-        const participation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations!, testRun);
+        const participation = testRun ? this.practiceParticipation : this.gradedParticipation;
         this.courseExerciseService
             .resumeProgrammingExercise(this.exercise.id!, participation!.id!)
             .pipe(finalize(() => (this.exercise.loading = false)))
@@ -150,6 +167,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
                         resumedParticipation.results = participation ? participation.results : [];
                         const replacedIndex = this.exercise.studentParticipations!.indexOf(participation!);
                         this.exercise.studentParticipations![replacedIndex] = resumedParticipation;
+                        this.updateParticipations();
                         this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                     }
                 },
@@ -198,16 +216,20 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * Display the 'open code editor' or 'clone repo' buttons if
      * - the participation is initialized (build plan exists, this is always the case during an exam), or
      * - the participation is inactive (build plan cleaned up), but can not be resumed (e.g. because we're after the due date)
+     *
+     * For course exercises, an initialized practice participation should only be displayed if it's not possible to start a new graded participation.
+     * For exam exercises, only one active participation can exist, so this should be shown.
      */
     public shouldDisplayIDEButtons(): boolean {
-        return !!this.exercise.studentParticipations?.some((participation) => {
-            const startExerciseNotAvailable = !isStartExerciseAvailable(this.exercise) && !participation.testRun;
-            const startPracticeNotAvailable = !isStartPracticeAvailable(this.exercise) && participation.testRun;
-            return (
-                participation.initializationState === InitializationState.INITIALIZED ||
-                (participation.initializationState === InitializationState.INACTIVE && (startExerciseNotAvailable || startPracticeNotAvailable))
-            );
-        });
+        const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise);
+        const activePracticeParticipation = this.practiceParticipation?.initializationState === InitializationState.INITIALIZED && (shouldPreferPractice || this.examMode);
+        const activeGradedParticipation = this.gradedParticipation?.initializationState === InitializationState.INITIALIZED;
+        const inactiveGradedParticipation =
+            !!this.gradedParticipation?.initializationState &&
+            [InitializationState.INACTIVE, InitializationState.FINISHED].includes(this.gradedParticipation.initializationState) &&
+            !isStartExerciseAvailable(this.exercise, this.gradedParticipation);
+
+        return activePracticeParticipation || activeGradedParticipation || inactiveGradedParticipation;
     }
 
     /**
