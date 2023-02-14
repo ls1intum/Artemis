@@ -2046,7 +2046,8 @@ public class DatabaseUtilService {
             new Feedback().detailText("automatic").type(FeedbackType.AUTOMATIC)
         ));
 
-        return resultRepo.save(result.feedbacks(feedbacks));
+        result.addFeedbacks(feedbacks);
+        return resultRepo.save(result);
     }
 
     public Result addVariousVisibilityFeedbackToResult(Result result) {
@@ -2056,7 +2057,8 @@ public class DatabaseUtilService {
             new Feedback().detailText("always1").visibility(Visibility.ALWAYS)
         ));
 
-        return resultRepo.save(result.feedbacks(feedbacks));
+        result.addFeedbacks(feedbacks);
+        return resultRepo.save(result);
     }
     // @formatter:on
 
