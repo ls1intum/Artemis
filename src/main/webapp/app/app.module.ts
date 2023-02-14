@@ -25,6 +25,7 @@ import { LoadingNotificationComponent } from 'app/shared/notification/loading-no
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
 import { UserSettingsModule } from 'app/shared/user-settings/user-settings.module';
 import { ThemeModule } from 'app/core/theme/theme.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 // NOTE: this module should only include the most important modules for normal users, all course management, admin and account functionality should be lazy loaded if possible
 @NgModule({
@@ -45,6 +46,7 @@ import { ThemeModule } from 'app/core/theme/theme.module';
         ArtemisHeaderExercisePageWithDetailsModule,
         UserSettingsModule,
         ThemeModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [
         JhiMainComponent,

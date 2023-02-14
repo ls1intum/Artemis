@@ -676,11 +676,11 @@ public class BambooService extends AbstractContinuousIntegrationService {
             var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, BambooBuildResultDTO.class);
 
             if (response.getBody() != null && response.getBody().getLogEntries() != null) {
-
+                // Note: This code is duplicated in the bamboo-notification-plugin: ServerNotificationTransport:createLogEntryJSONObject
                 for (var logEntry : response.getBody().getLogEntries().getLogEntry()) {
                     String logString = logEntry.getUnstyledLog();
                     // The log is provided in two attributes: with unescaped characters in unstyledLog and with escaped characters in log
-                    // We want to have unescaped characters but fail back to the escaped characters in case no unescaped characters are present
+                    // We want to have unescaped characters but fall back to the escaped characters in case no unescaped characters are present
                     if (logString == null) {
                         logString = logEntry.getLog();
                     }

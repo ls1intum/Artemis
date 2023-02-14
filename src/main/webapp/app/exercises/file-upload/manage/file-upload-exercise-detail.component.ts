@@ -13,12 +13,15 @@ import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',
     templateUrl: './file-upload-exercise-detail.component.html',
 })
 export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
+    documentationType = DocumentationType.FileUpload;
+
     readonly dayjs = dayjs;
     fileUploadExercise: FileUploadExercise;
     isExamExercise: boolean;

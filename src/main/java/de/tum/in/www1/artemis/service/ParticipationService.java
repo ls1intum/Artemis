@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
-
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,6 +38,8 @@ public class ParticipationService {
 
     private final Optional<VersionControlService> versionControlService;
 
+    private final BuildLogEntryService buildLogEntryService;
+
     private final ParticipationRepository participationRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -67,7 +67,8 @@ public class ParticipationService {
     private final TeamScoreRepository teamScoreRepository;
 
     public ParticipationService(Environment environment, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
+            Optional<VersionControlService> versionControlService,
+            BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService, ResultService resultService,
             CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
@@ -76,6 +77,7 @@ public class ParticipationService {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
+        this.buildLogEntryService = buildLogEntryService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -123,7 +125,7 @@ public class ParticipationService {
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
         if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isTestRun() && exercise.isCourseExercise()) {
             // In case there is already a practice participation, set it to inactive
-            optionalStudentParticipation.get().setInitializationState(INACTIVE);
+            optionalStudentParticipation.get().setInitializationState(InitializationState.INACTIVE);
             studentParticipationRepository.saveAndFlush(optionalStudentParticipation.get());
 
             optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
@@ -145,11 +147,11 @@ public class ParticipationService {
             participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, initializationDate == null);
         }
         else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
-            if (participation.getInitializationState() == null || participation.getInitializationState() == UNINITIALIZED
-                    || participation.getInitializationState() == FINISHED && !(exercise instanceof QuizExercise)) {
+            if (participation.getInitializationState() == null || participation.getInitializationState() == InitializationState.UNINITIALIZED
+                    || participation.getInitializationState() == InitializationState.FINISHED && !(exercise instanceof QuizExercise)) {
                 // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side.
                 // Only for quiz exercises, the participation status FINISHED should not be overwritten since the user must not change his submission once submitted
-                participation.setInitializationState(INITIALIZED);
+                participation.setInitializationState(InitializationState.INITIALIZED);
             }
 
             if (Optional.ofNullable(participation.getInitializationDate()).isEmpty()) {
@@ -185,7 +187,7 @@ public class ParticipationService {
         else {
             participation = new StudentParticipation();
         }
-        participation.setInitializationState(UNINITIALIZED);
+        participation.setInitializationState(InitializationState.UNINITIALIZED);
         participation.setExercise(exercise);
         participation.setParticipant(participant);
         // StartedDate is used to link a Participation to a test exam exercise
@@ -253,7 +255,7 @@ public class ParticipationService {
         // Step 3) configure the web hook of the student repository
         participation = configureRepositoryWebHook(participation);
         // Step 4a) Set the InitializationState to initialized to indicate, the programming exercise is ready
-        participation.setInitializationState(INITIALIZED);
+        participation.setInitializationState(InitializationState.INITIALIZED);
         // Step 4b) Set the InitializationDate to the current time
         if (setInitializationDate) {
             // Note: For test exams, the InitializationDate is set to the StudentExam: startedDate in {#link #startExerciseWithInitializationDate}
@@ -280,7 +282,7 @@ public class ParticipationService {
         }
 
         optionalGradedStudentParticipation.ifPresent(participation -> {
-            participation.setInitializationState(FINISHED);
+            participation.setInitializationState(InitializationState.FINISHED);
             participationRepository.save(participation);
         });
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, true);
@@ -288,7 +290,7 @@ public class ParticipationService {
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
             participation = new ProgrammingExerciseStudentParticipation(versionControlService.get().getDefaultBranchOfArtemis());
-            participation.setInitializationState(UNINITIALIZED);
+            participation.setInitializationState(InitializationState.UNINITIALIZED);
             participation.setExercise(exercise);
             participation.setParticipant(participant);
             participation.setTestRun(true);
@@ -328,7 +330,7 @@ public class ParticipationService {
             else {
                 participation = new StudentParticipation();
             }
-            participation.setInitializationState(UNINITIALIZED);
+            participation.setInitializationState(InitializationState.UNINITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
             participation.setExercise(exercise);
             participation.setParticipant(participant);
@@ -365,7 +367,7 @@ public class ParticipationService {
             }
         }
 
-        participation.setInitializationState(FINISHED);
+        participation.setInitializationState(InitializationState.FINISHED);
         participation = studentParticipationRepository.saveAndFlush(participation);
 
         // Take the latest submission or initialize a new empty submission
@@ -404,10 +406,10 @@ public class ParticipationService {
         // If a graded participation gets reset after the deadline set the state back to finished. Otherwise, the participation is initialized
         var dueDate = ExerciseDateService.getDueDate(participation);
         if (!participation.isTestRun() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
-            participation.setInitializationState(FINISHED);
+            participation.setInitializationState(InitializationState.FINISHED);
         }
         else {
-            participation.setInitializationState(INITIALIZED);
+            participation.setInitializationState(InitializationState.INITIALIZED);
         }
         participation = programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
         if (participation.getInitializationDate() == null) {
@@ -434,7 +436,7 @@ public class ParticipationService {
                 newRepoUrl = newRepoUrl.withUser(participation.getParticipantIdentifier());
             }
             participation.setRepositoryUrl(newRepoUrl.toString());
-            participation.setInitializationState(REPO_COPIED);
+            participation.setInitializationState(InitializationState.REPO_COPIED);
 
             return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
         }
@@ -652,7 +654,15 @@ public class ParticipationService {
         if (participation.getBuildPlanId() != null) {
             final var projectKey = ((ProgrammingExercise) participation.getExercise()).getProjectKey();
             continuousIntegrationService.get().deleteBuildPlan(projectKey, participation.getBuildPlanId());
-            participation.setInitializationState(INACTIVE);
+
+            // If a graded participation gets cleaned up after the deadline set the state back to finished. Otherwise, the participation is initialized
+            var dueDate = ExerciseDateService.getDueDate(participation);
+            if (!participation.isTestRun() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
+                participation.setInitializationState(InitializationState.FINISHED);
+            }
+            else {
+                participation.setInitializationState(InitializationState.INACTIVE);
+            }
             participation.setBuildPlanId(null);
             programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
         }
@@ -677,7 +687,7 @@ public class ParticipationService {
 
     /**
      * Updates the individual due date for each given participation.
-     * <p>
+     *
      * Only sets individual due dates if the exercise has a due date and the
      * individual due date is after this regular due date.
      *
@@ -781,8 +791,11 @@ public class ParticipationService {
         resultsToBeDeleted.forEach(result -> resultService.deleteResult(result, false));
         // Delete all submissions for this participation
         submissions.forEach(submission -> {
-            if (submission instanceof ProgrammingSubmission) {
+            // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
+            submission.setResults(Collections.emptyList());
+            if (submission instanceof ProgrammingSubmission programmingSubmission) {
                 coverageReportRepository.deleteBySubmissionId(submission.getId());
+                buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
                 buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
             }
             submissionRepository.deleteById(submission.getId());

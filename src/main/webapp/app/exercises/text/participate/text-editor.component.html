@@ -40,7 +40,7 @@
                     </span>
                 </div>
 
-                <ng-container *ngIf="!result; else hasFeedback">
+                <ng-container *ngIf="!result; else hasResult">
                     <textarea
                         id="text-editor"
                         #textEditor
@@ -61,6 +61,17 @@
                     ></jhi-team-submission-sync>
                 </ng-container>
 
+                <ng-template #hasResult>
+                    <div *ngIf="!result.feedbacks?.length; else hasFeedback" class="row">
+                        <div class="col-md-12 col-lg-10 col-xl-8">
+                            <b [jhiTranslate]="'artemisApp.textExercise.submission'">Submission:</b>
+                            <hr />
+                            <jhi-text-result [result]="result" [course]="course"></jhi-text-result>
+                            <hr />
+                            <i [jhiTranslate]="'artemisApp.textExercise.assessmentPending'">Assessment pending</i>
+                        </div>
+                    </div>
+                </ng-template>
                 <ng-template #hasFeedback>
                     <div class="row">
                         <div class="col-md-12 col-lg-10 col-xl-8">
