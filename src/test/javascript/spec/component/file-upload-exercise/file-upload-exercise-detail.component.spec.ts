@@ -23,6 +23,7 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import { ExerciseDetailsComponent } from 'app/exercises/shared/exercise/exercise-details/exercise-details.component';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('FileUploadExercise Management Detail Component', () => {
     let comp: FileUploadExerciseDetailComponent;
@@ -67,6 +68,7 @@ describe('FileUploadExercise Management Detail Component', () => {
                 MockComponent(NonProgrammingExerciseDetailCommonActionsComponent),
                 MockComponent(ExerciseDetailStatisticsComponent),
                 MockComponent(ExerciseDetailsComponent),
+                MockComponent(DocumentationButtonComponent),
             ],
             providers: [
                 JhiLanguageHelper,

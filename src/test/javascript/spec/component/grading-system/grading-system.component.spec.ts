@@ -10,6 +10,7 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
 import { BaseGradingSystemComponent } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { RouterTestingModule } from '@angular/router/testing';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('Grading System Component', () => {
     let comp: GradingSystemComponent;
@@ -21,7 +22,13 @@ describe('Grading System Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule],
-            declarations: [GradingSystemComponent, MockDirective(NgModel), MockComponent(GradingSystemInfoModalComponent), MockPipe(ArtemisTranslatePipe)],
+            declarations: [
+                GradingSystemComponent,
+                MockDirective(NgModel),
+                MockComponent(DocumentationButtonComponent),
+                MockComponent(GradingSystemInfoModalComponent),
+                MockPipe(ArtemisTranslatePipe),
+            ],
             providers: [{ provide: ActivatedRoute, useValue: route }],
         })
             .compileComponents()

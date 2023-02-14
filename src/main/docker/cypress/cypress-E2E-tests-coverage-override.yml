@@ -1,0 +1,21 @@
+version: '2.4'
+services:
+    artemis-app:
+        build:
+            dockerfile: src/main/docker/cypress/coverage.Dockerfile
+        ports:
+            - "6300:6300" # JaCoCo agent port
+
+    artemis-cypress:
+        build:
+            context: .
+            dockerfile: cypress.Dockerfile
+            args:
+                - CYPRESS_BROWSER=node18.12.0-chrome107
+        environment:
+            BAMBOO_PLAN_KEY: "${bamboo_planKey}"
+            BAMBOO_BUILD_NUMBER: "${bamboo_buildNumber}"
+            BAMBOO_TOKEN: "${bamboo_BAMBOO_PERSONAL_SECRET}"
+            CYPRESS_COLLECT_COVERAGE: "true"
+        # Wait up to 5 minutes until Artemis has booted
+        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:run || npm run detect:flakies"
