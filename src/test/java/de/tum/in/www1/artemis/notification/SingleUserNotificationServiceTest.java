@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 
 import javax.mail.internet.MimeMessage;
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
@@ -260,8 +262,11 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
         singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(testExercise);
 
-        assertThat(notificationRepository.findAll()).as("Only one notification should have been created (for the user with a valid participation, submission, and manual result)")
-                .hasSize(1);
+        List<Notification> sentNotifications = notificationRepository.findAll();
+
+        assertThat(sentNotifications).as("Only one notification should have been created (for the user with a valid participation, submission, and manual result)").hasSize(1);
+        assertThat(sentNotifications.get(0)).isOfAnyClassIn(SingleUserNotification.class);
+        assertThat(((SingleUserNotification) sentNotifications.get(0)).getRecipient()).isEqualTo(studentWithParticipationAndSubmissionAndManualResult);
     }
 
     // Plagiarism related
