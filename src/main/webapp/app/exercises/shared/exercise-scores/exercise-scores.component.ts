@@ -22,11 +22,16 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
-import { faCodeBranch, faDownload, faFilter, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCodeBranch, faDownload, faFilter, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
+import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 
 /**
  * Filter properties for a result
@@ -83,7 +88,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     afterDueDate = false;
 
+    cancelConfirmationText: string;
+
     // Icons
+    faBan = faBan;
     faDownload = faDownload;
     faSync = faSync;
     faFolderOpen = faFolderOpen;
@@ -101,7 +109,14 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         private profileService: ProfileService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private participationService: ParticipationService,
-    ) {}
+        private translateService: TranslateService,
+        private programmingAssessmentManualResultService: ProgrammingAssessmentManualResultService,
+        private modelingAssessmentService: ModelingAssessmentService,
+        private textAssessmentService: TextAssessmentService,
+        private fileUploadAssessmentService: FileUploadAssessmentService,
+    ) {
+        translateService.get('artemisApp.programmingAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
+    }
 
     /**
      * Fetches the course and exercise from the server
@@ -331,5 +346,33 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         this.rangeFilter = undefined;
         this.filteredParticipations = this.participations;
         this.resultCriteria.filterProp = FilterProp.ALL;
+    }
+
+    /**
+     * Cancel the current assessment and reload the submissions to reflect the change.
+     */
+    cancelAssessment(result: Result) {
+        const confirmCancel = window.confirm(this.cancelConfirmationText);
+
+        if (confirmCancel && result.submission?.id) {
+            let cancelSubscription;
+            switch (this.exercise.type) {
+                case ExerciseType.PROGRAMMING:
+                    cancelSubscription = this.programmingAssessmentManualResultService.cancelAssessment(result.submission.id);
+                    break;
+                case ExerciseType.MODELING:
+                    cancelSubscription = this.modelingAssessmentService.cancelAssessment(result.submission.id);
+                    break;
+                case ExerciseType.TEXT:
+                    cancelSubscription = this.textAssessmentService.cancelAssessment(result.participation!.id!, result.submission.id);
+                    break;
+                case ExerciseType.FILE_UPLOAD:
+                    cancelSubscription = this.fileUploadAssessmentService.cancelAssessment(result.submission.id);
+                    break;
+            }
+            cancelSubscription?.subscribe(() => {
+                this.refresh();
+            });
+        }
     }
 }

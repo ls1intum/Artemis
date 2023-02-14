@@ -106,7 +106,7 @@
                 <jhi-exercise-submission-export
                     *ngIf="
                         exercise.isAtLeastInstructor &&
-                        (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING || exercise.type == ExerciseType.FILE_UPLOAD)
+                        (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.FILE_UPLOAD)
                     "
                     [exerciseId]="exercise.id!"
                     [exerciseType]="exercise.type"
@@ -340,6 +340,14 @@
                                     <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                                     {{ 'artemisApp.programmingSubmission.view' | artemisTranslate }}
                                 </a>
+                                <button
+                                    (click)="cancelAssessment(value.results[0].submission)"
+                                    *ngIf="value.results[0] && !value.results[0].completionDate && value.results[0].assessmentType !== AssessmentType.AUTOMATIC"
+                                    [disabled]="isLoading"
+                                    class="btn btn-danger btn-sm mb-1"
+                                >
+                                    <fa-icon [fixedWidth]="true" [icon]="faBan"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | artemisTranslate }}
+                                </button>
                             </div>
                         </div>
                     </ng-template>
