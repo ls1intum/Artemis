@@ -23,7 +23,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
         Iterator<ReceiveCommand> iterator = commands.iterator();
 
         if (!iterator.hasNext()) {
-            throw new LocalVCBadRequestException();
+            return;
         }
 
         ReceiveCommand command = iterator.next();

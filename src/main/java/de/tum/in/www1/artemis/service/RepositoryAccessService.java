@@ -42,6 +42,8 @@ public class RepositoryAccessService {
         this.examSubmissionService = examSubmissionService;
     }
 
+    // TODO: Dedicated exceptions for forbidden and authentication errors.
+
     public void checkAccessRepositoryElseThrow(Participation participation, ProgrammingExercise programmingExercise, User user, RepositoryActionType repositoryActionType) {
 
         // Error case 1: The participation is not from a programming exercise.
@@ -58,6 +60,7 @@ public class RepositoryAccessService {
 
         // Error case 3: The user's participation repository is locked.
         boolean lockRepositoryPolicyEnforced = false;
+        // TODO: Get exercises with submissions before calling this method.
         if (programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy() instanceof LockRepositoryPolicy policy) {
             lockRepositoryPolicyEnforced = submissionPolicyService.isParticipationLocked(policy, participation);
         }
@@ -65,7 +68,7 @@ public class RepositoryAccessService {
             throw new AccessForbiddenException();
         }
 
-        boolean isStudent = !authorizationCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise);
+        boolean isStudent = !authorizationCheckService.isAtLeastTeachingAssistantInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
         // Error case 4: The student can reset the repository only before and a tutor/instructor only after the due date has passed.
         if (repositoryActionType == RepositoryActionType.RESET) {
