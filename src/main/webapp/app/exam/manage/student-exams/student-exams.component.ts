@@ -132,8 +132,8 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
             // Calculate hasStudentsWithoutExam only when both observables emitted
             forkJoin([studentExamObservable, examObservable]).subscribe(() => {
                 this.isLoading = false;
-                if (this.exam.registeredUsers) {
-                    this.hasStudentsWithoutExam = this.studentExams.length < this.exam.registeredUsers.length;
+                if (this.exam.examUsers) {
+                    this.hasStudentsWithoutExam = this.studentExams.length < this.exam.examUsers.length;
                 }
             });
         });

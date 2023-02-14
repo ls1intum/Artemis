@@ -1,7 +1,10 @@
-<h2>
-    {{ isExam ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }}
-    {{ isExam ? childComponent?.exam?.title : childComponent?.course?.title }}
-</h2>
+<div class="d-flex align-items-center">
+    <h2>
+        {{ isExam ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }}
+        {{ isExam ? childComponent?.exam?.title : childComponent?.course?.title }}
+    </h2>
+    <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+</div>
 <div *ngIf="childComponent" class="course-body-container">
     <div class="d-flex">
         <button (click)="childComponent.generateDefaultGradingScale()" class="btn btn-primary me-1 mb-1" type="button">

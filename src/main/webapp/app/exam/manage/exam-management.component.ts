@@ -16,6 +16,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { faClipboard, faEye, faListAlt, faPlus, faSort, faThList, faTimes, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -23,6 +24,8 @@ import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-impo
     styleUrls: ['./exam-management.component.scss'],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
+    documentationType = DocumentationType.Exams;
+
     course: Course;
     exams: Exam[];
     predicate: string;

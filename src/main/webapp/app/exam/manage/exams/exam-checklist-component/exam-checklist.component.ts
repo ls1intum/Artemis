@@ -59,7 +59,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         this.examChecklistService.getExamStatistics(this.exam).subscribe((examStats) => {
             this.examChecklist = examStats;
             this.allExamsGenerated =
-                !!this.exam.numberOfRegisteredUsers && this.exam.numberOfRegisteredUsers > 0 && this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist);
+                !!this.exam.numberOfExamUsers && this.exam.numberOfExamUsers > 0 && this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist);
             this.numberOfStarted = this.examChecklist.numberOfExamsStarted;
             this.numberOfSubmitted = this.examChecklist.numberOfExamsSubmitted;
         });

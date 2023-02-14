@@ -13,6 +13,7 @@ import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.i
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
+import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
@@ -58,6 +59,8 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
     faQuestionCircle = faQuestionCircle;
+
+    readonly maxPoints = MAX_QUIZ_QUESTION_POINTS;
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private modalService: NgbModal, private changeDetector: ChangeDetectorRef) {}
 
