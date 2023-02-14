@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
+import de.tum.in.www1.artemis.web.rest.dto.ExamUserAttendanceCheckDTO;
 
 @Repository
 public interface ExamUserRepository extends JpaRepository<ExamUser, Long> {
@@ -20,5 +21,22 @@ public interface ExamUserRepository extends JpaRepository<ExamUser, Long> {
             """)
     ExamUser findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
-    List<ExamUser> findAllByExamId(long examId);
+    List<ExamUser> findAllByExamId(@Param("examId") long examId);
+
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.ExamUserAttendanceCheckDTO(examUser.id, examUser.studentImagePath, examUser.user.login,
+            examUser.user.registrationNumber, examUser.signingImagePath,
+            studentExams.started, studentExams.submitted)
+            FROM ExamUser examUser
+            LEFT JOIN examUser.exam exam
+            LEFT JOIN exam.studentExams studentExams ON studentExams.user.id = examUser.user.id
+            WHERE (exam.id = :#{#examId})
+            AND studentExams.started = true
+            AND examUser.signingImagePath IS NULL OR examUser.signingImagePath = ''
+            AND (examUser.didCheckImage = false
+                    OR examUser.didCheckLogin = false
+                    OR examUser.didCheckRegistrationNumber = false
+                    OR examUser.didCheckName = false)
+            """)
+    List<ExamUserAttendanceCheckDTO> findAllExamUsersWhoDidNotSign(@Param("examId") long examId);
 }

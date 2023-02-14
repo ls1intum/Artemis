@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { ExamUserDTO } from 'app/entities/exam-user-dto.mode';
+import { ExamUserAttendanceCheck } from 'app/entities/exam-users-attendance-check.model';
 import { filter, map, tap } from 'rxjs/operators';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -229,6 +230,16 @@ export class ExamManagementService {
      */
     saveImages(courseId: number, examId: number, formData: FormData): Observable<HttpResponse<any[]>> {
         return this.http.post<any[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users-save-images`, formData, { observe: 'response' });
+    }
+
+    /**
+     * Verify exam user attendance check. It will return exam users that started the exam but did not sign.
+     * @param courseId
+     * @param examId
+     * @return matriculation number of students that were not found in the system
+     */
+    verifyExamUserAttendanceCheck(courseId: number, examId: number): Observable<HttpResponse<ExamUserAttendanceCheck[]>> {
+        return this.http.get<ExamUserAttendanceCheck[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users-verify`, { observe: 'response' });
     }
 
     /**

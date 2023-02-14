@@ -15,7 +15,8 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faInfoCircle, faPlus, faUpload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faInfoCircle, faPlus, faUpload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -49,6 +50,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     isLoading = false;
+    hasExamStarted = false;
     isSearching = false;
     searchFailed = false;
     searchNoResults = false;
@@ -62,6 +64,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     faUserSlash = faUserSlash;
     faInfoCircle = faInfoCircle;
     faUpload = faUpload;
+    faCheck = faCheck;
 
     constructor(
         private router: Router,
@@ -79,6 +82,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.isAdmin = this.accountService.isAdmin();
         this.route.data.subscribe(({ exam }: { exam: Exam }) => {
             this.exam = exam;
+            this.hasExamStarted = exam.startDate?.isBefore(dayjs()) || false;
             this.allRegisteredUsers =
                 exam.examUsers?.map((examUser) => {
                     return {
@@ -95,6 +99,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.isLoading = true;
         this.examManagementService.find(this.courseId, this.exam.id!, true).subscribe((examResponse: HttpResponse<Exam>) => {
             this.exam = examResponse.body!;
+            this.hasExamStarted = this.exam.startDate?.isBefore(dayjs()) || false;
             this.allRegisteredUsers =
                 this.exam.examUsers?.map((examUser) => {
                     return {

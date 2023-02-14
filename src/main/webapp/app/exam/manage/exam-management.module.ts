@@ -12,6 +12,7 @@ import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.co
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
 import { StudentsUploadImagesModule } from 'app/exam/manage/students/upload-images/students-upload-images.module';
+import { ExamStudentsAttendanceCheckComponent } from 'app/exam/manage/students/verify-attendance-check/exam-students-attendance-check.component';
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
 import { ArtemisFileUploadExerciseManagementModule } from 'app/exercises/file-upload/manage/file-upload-exercise-management.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
@@ -54,12 +55,14 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
+import { NgOptimizedImage } from '@angular/common';
 
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
     // TODO: For better modularization we could define an exercise module with the corresponding exam routes
     imports: [
+        NgOptimizedImage,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTextExerciseModule,
         ArtemisExamScoresModule,
@@ -97,6 +100,7 @@ const ENTITY_STATES = [...examManagementState];
         ExerciseGroupUpdateComponent,
         ExamExerciseRowButtonsComponent,
         ExamStudentsComponent,
+        ExamStudentsAttendanceCheckComponent,
         StudentExamStatusComponent,
         StudentExamsComponent,
         TestRunManagementComponent,
