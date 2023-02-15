@@ -55,6 +55,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { NgbAlertsMocksModule } from '../../helpers/mocks/directive/ngbAlertsMocks.module';
 import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -98,6 +99,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 MockComponent(GradingInstructionsDetailsComponent),
                 MockComponent(ButtonComponent),
                 MockComponent(LearningGoalSelectionComponent),
+                MockComponent(DocumentationButtonComponent),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(CustomMinDirective),

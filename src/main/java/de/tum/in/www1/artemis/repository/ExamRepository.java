@@ -40,6 +40,30 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") long courseId);
 
+    /**
+     * Find all exams for multiple courses that are already visible to the user (either registered, at least tutor or the exam is a test exam)
+     *
+     * @param courseIds  set of courseIds that the exams should be retreived
+     * @param userId     the id of the user requesting the exams
+     * @param groupNames the groups of the user requesting the exams
+     * @param now        the current date, typically ZonedDateTime.now()
+     * @return a set of all visible exams for the user in the provided courses
+     */
+    @Query("""
+            SELECT e
+            FROM Exam e
+                LEFT JOIN e.examUsers registeredUsers
+            WHERE e.course.id IN :courseIds
+                AND e.visibleDate <= :now
+                AND (registeredUsers.user.id = :userId
+                    OR e.course.teachingAssistantGroupName IN :groupNames
+                    OR e.course.editorGroupName IN :groupNames
+                    OR e.course.instructorGroupName IN :groupNames
+                    OR e.testExam = true)
+            """)
+    Set<Exam> findByCourseIdsForUser(@Param("courseIds") Set<Long> courseIds, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames,
+            @Param("now") ZonedDateTime now);
+
     @Query("""
             SELECT exam
             FROM Exam exam
@@ -166,7 +190,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     // @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises", "studentExams.exercises.participations" })
 
     @Query("""
-            SELECT DISTINCT exam
+            SELECT exam
             FROM Exam exam
                 LEFT JOIN FETCH exam.studentExams studentExams
                 LEFT JOIN FETCH exam.exerciseGroups exerciseGroups

@@ -26,6 +26,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -329,6 +330,7 @@ describe('CourseStatisticsComponent', () => {
                 CourseStatisticsComponent,
                 MockComponent(CourseLearningGoalsComponent),
                 MockComponent(ExerciseScoresChartComponent),
+                MockComponent(DocumentationButtonComponent),
                 MockTranslateValuesDirective,
                 ArtemisTranslatePipe,
             ],
