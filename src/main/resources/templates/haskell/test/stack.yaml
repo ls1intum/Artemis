@@ -1,4 +1,4 @@
-resolver: lts-19.30
+resolver: lts-19.33
 
 packages:
 - .
