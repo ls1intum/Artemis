@@ -107,7 +107,7 @@ public class ExamUserResource {
     }
 
     /**
-     * POST courses/{courseId}/exams/{examId}/exam-users-verify : Retrieves a list of students who started the exam but did not sign
+     * POST courses/{courseId}/exams/{examId}/verify-exam-users : Retrieves a list of students who started the exam but did not sign
      *
      * @param courseId the id of the course
      * @param examId   the id of the exam

@@ -45,7 +45,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     searchFailed = false;
     searchNoResults = false;
     isTransitioning = false;
-    rowClass: string | undefined = undefined;
+    rowClass?: string;
 
     // Icons
     faPlus = faPlus;
