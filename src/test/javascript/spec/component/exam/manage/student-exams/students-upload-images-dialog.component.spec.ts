@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
+import { ExamUserAttendanceCheck } from 'app/entities/exam-users-attendance-check.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { StudentsUploadImagesDialogComponent } from 'app/exam/manage/students/upload-images/students-upload-images-dialog.component';
@@ -15,6 +16,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Router } from '@angular/router';
+import { of } from 'rxjs';
 
 describe('StudentsUploadImagesDialogComponent', () => {
     let fixture: ComponentFixture<StudentsUploadImagesDialogComponent>;
@@ -61,14 +63,29 @@ describe('StudentsUploadImagesDialogComponent', () => {
     });
 
     it('should reset dialog when selecting pdf file', async () => {
-        // todo: implement test
+        component.notFoundUsers = { numberOfUsersNotFound: 1, numberOfImagesSaved: 10, listOfExamUserRegistrationNumbers: ['12345678'] };
+        component.hasParsed = true;
+
+        const event = { target: { files: [{ file: new File([''], 'testFile.pdf', { type: 'application/pdf' }), fileName: 'testFile' }] } };
+        await component.onPDFFileSelect(event);
+
+        expect(component.notFoundUsers).toStrictEqual({});
     });
 
     it('should upload and save images correctly', () => {
-        // todo: implement test
-    });
+        fixture.detectChanges();
+        const response: any = {
+            numberOfUsersNotFound: 1,
+            numberOfImagesSaved: 10,
+            listOfExamUserRegistrationNumbers: ['12345678'],
+        };
+        const examServiceStub = jest.spyOn(examManagementService, 'saveImages').mockReturnValue(of(new HttpResponse({ body: response })));
+        component.parsePDFFile();
 
-    it('should invoke REST call on "Upload images" but not on "Finish"', () => {
-        // todo: implement test
+        expect(examServiceStub).toHaveBeenCalledOnce();
+        expect(component.isParsing).toBeFalse();
+        expect(component.hasParsed).toBeTrue();
+        expect(component.notFoundUsers).toBeDefined();
+        expect(component.notFoundUsers.numberOfUsersNotFound).toBe(1);
     });
 });

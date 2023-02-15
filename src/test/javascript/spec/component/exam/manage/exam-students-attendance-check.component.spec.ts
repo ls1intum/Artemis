@@ -13,7 +13,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { Observable } from 'rxjs';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
@@ -21,7 +21,6 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs';
 
 describe('ExamStudentsAttendanceCheckComponent', () => {

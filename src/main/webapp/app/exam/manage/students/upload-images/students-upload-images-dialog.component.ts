@@ -24,7 +24,7 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
     readonly ActionType = ActionType;
 
     @ViewChild('importForm', { static: false }) importForm: NgForm;
-    notFoundUsers?: NotFoundExamUserType;
+    notFoundUsers: NotFoundExamUserType;
     file: File;
 
     @Input() courseId: number;
@@ -60,7 +60,7 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
 
     private resetDialog() {
         this.isParsing = false;
-        this.notFoundUsers = undefined;
+        this.notFoundUsers = {} as NotFoundExamUserType;
         this.hasParsed = false;
     }
 
@@ -99,12 +99,5 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
                 },
             });
         }
-    }
-
-    /**
-     * Number of images which could not be saved
-     */
-    get numberOfImagesNotSaved(): number {
-        return !this.hasParsed ? 0 : this.notFoundUsers?.numberOfUsersNotFound ?? 0;
     }
 }
