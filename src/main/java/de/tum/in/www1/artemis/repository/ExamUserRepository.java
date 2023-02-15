@@ -28,9 +28,9 @@ public interface ExamUserRepository extends JpaRepository<ExamUser, Long> {
             examUser.user.registrationNumber, examUser.signingImagePath,
             studentExams.started, studentExams.submitted)
             FROM ExamUser examUser
-            LEFT JOIN examUser.exam exam
-            LEFT JOIN exam.studentExams studentExams ON studentExams.user.id = examUser.user.id
-            WHERE (exam.id = :#{#examId})
+                LEFT JOIN examUser.exam exam
+                LEFT JOIN exam.studentExams studentExams ON studentExams.user.id = examUser.user.id
+            WHERE (exam.id = :examId)
             AND studentExams.started = true
             AND examUser.signingImagePath IS NULL OR examUser.signingImagePath = ''
             AND (examUser.didCheckImage = false
