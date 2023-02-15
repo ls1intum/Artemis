@@ -55,14 +55,12 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
-import { NgOptimizedImage } from '@angular/common';
 
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
     // TODO: For better modularization we could define an exercise module with the corresponding exam routes
     imports: [
-        NgOptimizedImage,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTextExerciseModule,
         ArtemisExamScoresModule,
