@@ -46,7 +46,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      * This constant determines how many seconds after the exercise due dates submissions will stil be considered valid
      * (rated will be set to true)
      *
-     * @see Result#setRatedIfNotAfterDueDate(ZonedDateTime, ZonedDateTime)
+     * @see Result#setRatedIfNotAfterDueDate(ZonedDateTime, Submission)
      */
     private static final int GRACE_PERIOD_SECONDS = 15;
 
