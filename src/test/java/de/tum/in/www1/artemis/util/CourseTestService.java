@@ -719,7 +719,9 @@ public class CourseTestService {
             registeredStudent.setExam(examRegistered);
             examRegistered.addExamUser(examUserRepository.save(registeredStudent));
 
-            Course receivedCourse = request.get("/api/courses/" + courses[i].getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK, Course.class);
+            CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/courses/" + courses[i].getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
+                    CourseForDashboardDTO.class);
+            Course receivedCourse = receivedCourseForDashboard.course();
             assertThat(receivedCourse).isNotNull();
             if (i == 0) {
                 assertThat(receivedCourse.getExams()).isEmpty();
@@ -731,7 +733,8 @@ public class CourseTestService {
                 assertThat(receivedCourse.getExams()).containsExactlyInAnyOrder(examUnregistered, examRegistered, testExam);
             }
         }
-        List<Course> receivedCourses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        List<CourseForDashboardDTO> receivedCoursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        List<Course> receivedCourses = receivedCoursesForDashboard.stream().map(CourseForDashboardDTO::course).toList();
         for (int i = 0; i < courses.length; i++) {
             Course receivedCourse = null;
             for (Course course : receivedCourses) {
