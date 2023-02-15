@@ -22,7 +22,6 @@ import com.google.common.base.Strings;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -50,17 +49,15 @@ public class ProgrammingExerciseGradingService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final ProgrammingExerciseTestCaseService testCaseService;
+    private final ProgrammingExerciseFeedbackService programmingExerciseFeedbackService;
 
-    private final ProgrammingTriggerService programmingTriggerService;
+    private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
     private final ResultRepository resultRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
-
-    private final StaticCodeAnalysisService staticCodeAnalysisService;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
@@ -84,22 +81,21 @@ public class ProgrammingExerciseGradingService {
 
     private final TestwiseCoverageService testwiseCoverageService;
 
-    public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, StudentParticipationRepository studentParticipationRepository,
-            ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ProgrammingTriggerService programmingTriggerService, SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService,
+    public ProgrammingExerciseGradingService(ProgrammingExerciseFeedbackService programmingExerciseFeedbackService, ProgrammingExerciseTestCaseRepository testCaseRepository,
+            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<VersionControlService> versionControlService, SimpMessageSendingOperations messagingTemplate,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
             TestwiseCoverageService testwiseCoverageService) {
-        this.testCaseService = testCaseService;
+        this.programmingExerciseFeedbackService = programmingExerciseFeedbackService;
+        this.testCaseRepository = testCaseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationService = continuousIntegrationService;
         this.resultRepository = resultRepository;
         this.versionControlService = versionControlService;
-        this.programmingTriggerService = programmingTriggerService;
         this.messagingTemplate = messagingTemplate;
-        this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -139,6 +135,7 @@ public class ProgrammingExerciseGradingService {
             latestSubmission.setBuildArtifact(buildResult.hasArtifact());
 
             if (buildResult.hasLogs()) {
+                // TODO: Check for whether this works with local CI once logs are returned by local CI.
                 var programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
                 var projectType = participation.getProgrammingExercise().getProjectType();
                 var buildLogs = buildResult.extractBuildLogs(programmingLanguage);
@@ -356,7 +353,8 @@ public class ProgrammingExerciseGradingService {
             return;
         }
         try {
-            programmingTriggerService.triggerTemplateBuildAndNotifyUser(programmingExerciseId, submission.getCommitHash(), SubmissionType.TEST);
+            // TODO: Uncomment and find way to not run into a circular dependency because of this.
+            // programmingTriggerService.triggerTemplateBuildAndNotifyUser(programmingExerciseId, submission.getCommitHash(), SubmissionType.TEST);
         }
         catch (EntityNotFoundException ex) {
             // If for some reason the programming exercise does not have a template participation, we can only log and abort.
@@ -374,10 +372,10 @@ public class ProgrammingExerciseGradingService {
      * @param result   from which to extract the test cases.
      */
     private void extractTestCasesFromResult(ProgrammingExercise exercise, Result result) {
-        boolean haveTestCasesChanged = testCaseService.generateTestCasesFromFeedbacks(result.getFeedbacks(), exercise);
+        boolean haveTestCasesChanged = programmingExerciseFeedbackService.generateTestCasesFromFeedbacks(result.getFeedbacks(), exercise);
         if (haveTestCasesChanged) {
             // Notify the client about the updated testCases
-            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(exercise.getId());
+            Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId());
             messagingTemplate.convertAndSend("/topic/programming-exercises/" + exercise.getId() + "/test-cases", testCases);
         }
     }
@@ -396,7 +394,7 @@ public class ProgrammingExerciseGradingService {
      * @return Result with updated feedbacks and score
      */
     public Result calculateScoreForResult(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
-        Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
         var relevantTestCases = testCases;
 
         // We don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
@@ -425,7 +423,7 @@ public class ProgrammingExerciseGradingService {
      * @return the results of the exercise that have been updated.
      */
     public List<Result> updateAllResults(final ProgrammingExercise exercise) {
-        final Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+        final Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
 
         final Stream<Result> updatedTemplateAndSolutionResult = updateTemplateAndSolutionResults(exercise, testCases);
 
@@ -449,7 +447,7 @@ public class ProgrammingExerciseGradingService {
      * @return the results of the exercise that have been updated.
      */
     public List<Result> updateResultsOnlyRegularDueDateParticipations(final ProgrammingExercise exercise) {
-        final Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+        final Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
 
         final Stream<Result> updatedTemplateAndSolutionResult = updateTemplateAndSolutionResults(exercise, testCases);
 
@@ -474,7 +472,7 @@ public class ProgrammingExerciseGradingService {
      */
     public List<Result> updateParticipationResults(final ProgrammingExerciseStudentParticipation participation) {
         final ProgrammingExercise exercise = participation.getProgrammingExercise();
-        final Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+        final Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
         final Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate = filterTestCasesForStudents(testCases, true);
         final Set<ProgrammingExerciseTestCase> testCasesAfterDueDate = filterTestCasesForStudents(testCases, false);
 
@@ -636,7 +634,7 @@ public class ProgrammingExerciseGradingService {
         }
 
         // Remove feedback that is in an invisible SCA category
-        staticCodeAnalysisFeedback = staticCodeAnalysisService.categorizeScaFeedback(result, staticCodeAnalysisFeedback, exercise);
+        staticCodeAnalysisFeedback = List.of();// staticCodeAnalysisService.categorizeScaFeedback(result, staticCodeAnalysisFeedback, exercise);
 
         if (applySubmissionPolicy) {
             SubmissionPolicy submissionPolicy = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exercise.getId()).getSubmissionPolicy();
@@ -924,30 +922,30 @@ public class ProgrammingExerciseGradingService {
         final var feedbackByCategory = staticCodeAnalysisFeedback.stream().collect(Collectors.groupingBy(Feedback::getStaticCodeAnalysisCategory));
         double codeAnalysisPenaltyPoints = 0;
 
-        for (var category : staticCodeAnalysisService.findByExerciseId(programmingExercise.getId())) {
-            if (!category.getState().equals(CategoryState.GRADED)) {
-                continue;
-            }
-
-            // get all feedback in this category
-            List<Feedback> categoryFeedback = feedbackByCategory.getOrDefault(category.getName(), List.of());
-
-            // calculate the sum of all per-feedback penalties
-            double categoryPenaltyPoints = categoryFeedback.size() * category.getPenalty();
-
-            // cap at the maximum allowed penalty for this category
-            if (category.getMaxPenalty() != null && categoryPenaltyPoints > category.getMaxPenalty()) {
-                categoryPenaltyPoints = category.getMaxPenalty();
-            }
-
-            // update credits of feedbacks in category
-            if (!categoryFeedback.isEmpty()) {
-                double perFeedbackPenalty = categoryPenaltyPoints / categoryFeedback.size();
-                categoryFeedback.forEach(feedback -> feedback.setCredits(-perFeedbackPenalty));
-            }
-
-            codeAnalysisPenaltyPoints += categoryPenaltyPoints;
-        }
+        // for (var category : staticCodeAnalysisService.findByExerciseId(programmingExercise.getId())) {
+        // if (!category.getState().equals(CategoryState.GRADED)) {
+        // continue;
+        // }
+        //
+        // // get all feedback in this category
+        // List<Feedback> categoryFeedback = feedbackByCategory.getOrDefault(category.getName(), List.of());
+        //
+        // // calculate the sum of all per-feedback penalties
+        // double categoryPenaltyPoints = categoryFeedback.size() * category.getPenalty();
+        //
+        // // cap at the maximum allowed penalty for this category
+        // if (category.getMaxPenalty() != null && categoryPenaltyPoints > category.getMaxPenalty()) {
+        // categoryPenaltyPoints = category.getMaxPenalty();
+        // }
+        //
+        // // update credits of feedbacks in category
+        // if (!categoryFeedback.isEmpty()) {
+        // double perFeedbackPenalty = categoryPenaltyPoints / categoryFeedback.size();
+        // categoryFeedback.forEach(feedback -> feedback.setCredits(-perFeedbackPenalty));
+        // }
+        //
+        // codeAnalysisPenaltyPoints += categoryPenaltyPoints;
+        // }
 
         /*
          * Cap at the maximum allowed penalty for this exercise (maxStaticCodeAnalysisPenalty is in percent) The max penalty is applied to the maxScore. If no max penalty was
@@ -984,14 +982,14 @@ public class ProgrammingExerciseGradingService {
      */
     public ProgrammingExerciseGradingStatisticsDTO generateGradingStatistics(Long exerciseId) {
         // number of passed and failed tests per test case
-        final var testCases = testCaseService.findByExerciseId(exerciseId);
+        final var testCases = testCaseRepository.findByExerciseId(exerciseId);
         final var testCaseStatsMap = new HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats>();
         for (ProgrammingExerciseTestCase testCase : testCases) {
             testCaseStatsMap.put(testCase.getTestName(), new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(0, 0));
         }
 
         // number of students per amount of detected issues per category
-        final var categories = staticCodeAnalysisService.findByExerciseId(exerciseId);
+        final Set<StaticCodeAnalysisCategory> categories = Collections.emptySet();// staticCodeAnalysisService.findByExerciseId(exerciseId);
         final var categoryIssuesStudentsMap = new HashMap<String, Map<Integer, Integer>>();
         for (StaticCodeAnalysisCategory category : categories) {
             categoryIssuesStudentsMap.put(category.getName(), new HashMap<>());

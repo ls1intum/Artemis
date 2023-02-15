@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
@@ -41,6 +42,9 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
 
     @Autowired
     private ProgrammingExerciseTestCaseService testCaseService;
+
+    @Autowired
+    private ProgrammingExerciseFeedbackService programmingExerciseFeedbackService;
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -66,7 +70,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
     @Test
     void shouldSetAllTestCasesToInactiveIfFeedbackListIsEmpty() {
         List<Feedback> feedbacks = new ArrayList<>();
-        testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
+        programmingExerciseFeedbackService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(3);
@@ -81,7 +85,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
         feedbacks.add(new Feedback().text("test2"));
         feedbacks.add(new Feedback().text("test4"));
         feedbacks.add(new Feedback().text("test5"));
-        testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
+        programmingExerciseFeedbackService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(5);
@@ -104,7 +108,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1"));
         feedbacks.add(new Feedback().text("test2"));
-        testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
+        programmingExerciseFeedbackService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(2);
@@ -118,7 +122,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
         testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
 
         List<Feedback> feedbackList = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
-        testCaseService.generateTestCasesFromFeedbacks(feedbackList, programmingExercise);
+        programmingExerciseFeedbackService.generateTestCasesFromFeedbacks(feedbackList, programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).isEmpty();
@@ -134,7 +138,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
         feedbacks.add(new Feedback().text("generateTestsForAllClasses"));
         feedbacks.add(new Feedback().text("generateTestsForAllClasses"));
         feedbacks.add(new Feedback().text("generateTestsForAllClasses"));
-        testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
+        programmingExerciseFeedbackService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(2);
@@ -216,7 +220,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
         feedbacks.add(new Feedback().text("test1"));
         feedbacks.add(new Feedback().text("test2"));
         feedbacks.add(new Feedback().text("test3"));
-        testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
+        programmingExerciseFeedbackService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         Set<ProgrammingExerciseTestCaseDTO> testCaseDTOs = testCases.stream().map(testCase -> {
@@ -247,7 +251,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
                 new ProgrammingExerciseTestCase().testName("testMethods[Context]").exercise(programmingExercise),
                 new ProgrammingExerciseTestCase().testName("testAttributes[Starter]").exercise(programmingExercise));
 
-        testCaseService.setTestCaseType(structuralTestCases, ProgrammingLanguage.JAVA);
+        programmingExerciseFeedbackService.setTestCaseType(structuralTestCases, ProgrammingLanguage.JAVA);
         assertThat(structuralTestCases).allMatch(testCase -> testCase.getType() == ProgrammingExerciseTestCaseType.STRUCTURAL);
     }
 
@@ -258,7 +262,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
                 new ProgrammingExerciseTestCase().testName("test13412").exercise(programmingExercise),
                 new ProgrammingExerciseTestCase().testName("HiddenRandomTest").exercise(programmingExercise));
 
-        testCaseService.setTestCaseType(behavioralTestCases, ProgrammingLanguage.JAVA);
+        programmingExerciseFeedbackService.setTestCaseType(behavioralTestCases, ProgrammingLanguage.JAVA);
         assertThat(behavioralTestCases).allMatch(testCase -> testCase.getType() == ProgrammingExerciseTestCaseType.BEHAVIORAL);
     }
 
@@ -274,7 +278,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
                     new ProgrammingExerciseTestCase().testName("testMergeSort").exercise(programmingExercise),
                     new ProgrammingExerciseTestCase().testName("test13412").exercise(programmingExercise),
                     new ProgrammingExerciseTestCase().testName("HiddenRandomTest").exercise(programmingExercise));
-            testCaseService.setTestCaseType(testCases, language);
+            programmingExerciseFeedbackService.setTestCaseType(testCases, language);
             assertThat(testCases).allMatch(testCase -> testCase.getType() == ProgrammingExerciseTestCaseType.DEFAULT);
         }
     }

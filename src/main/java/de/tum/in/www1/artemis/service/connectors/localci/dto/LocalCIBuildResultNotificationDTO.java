@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
@@ -191,7 +190,7 @@ public class LocalCIBuildResultNotificationDTO extends AbstractBuildResultNotifi
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record LocalCIJobDTO(int id, List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
-            List<TestwiseCoverageReportDTO> testwiseCoverageReport, List<BambooBuildLogDTO> logs) implements BuildJobDTOInterface {
+            List<TestwiseCoverageReportDTO> testwiseCoverageReport, List<LocalCIBuildLogDTO> logs) implements BuildJobDTOInterface {
 
         // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
         @JsonCreator
@@ -199,7 +198,7 @@ public class LocalCIBuildResultNotificationDTO extends AbstractBuildResultNotifi
                 @JsonProperty("successfulTests") @JsonSetter(nulls = Nulls.AS_EMPTY) List<LocalCITestJobDTO> successfulTests,
                 @JsonProperty("staticCodeAnalysisReports") @JsonSetter(nulls = Nulls.AS_EMPTY) List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
                 @JsonProperty("testwiseCoverageReport") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestwiseCoverageReportDTO> testwiseCoverageReport,
-                @JsonProperty("logs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooBuildLogDTO> logs) {
+                @JsonProperty("logs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<LocalCIBuildLogDTO> logs) {
             this.id = id;
             this.failedTests = failedTests;
             this.successfulTests = successfulTests;

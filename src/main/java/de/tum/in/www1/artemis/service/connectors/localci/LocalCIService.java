@@ -1,15 +1,10 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -27,10 +22,8 @@ import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResultNotificationDTO;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 
 @Service
 @Profile("localci")
@@ -38,19 +31,9 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
-    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
-
-    @Value("${artemis.version-control.url}")
-    private URL localVCServerUrl;
-
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCPath;
-
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
-            ProgrammingExerciseGradingService programmingExerciseGradingService) {
+            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
-        this.programmingExerciseGradingService = programmingExerciseGradingService;
     }
 
     @Override
@@ -92,31 +75,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws LocalCIException {
-        // Create a new build job and run it. TODO: outsource execution to an ExecutorService.
-        String assignmentRepositoryUrlString = participation.getRepositoryUrl();
-        LocalVCRepositoryUrl assignmentRepositoryUrl = new LocalVCRepositoryUrl(localVCServerUrl, assignmentRepositoryUrlString);
-        Path assignmentRepositoryPath = assignmentRepositoryUrl.getLocalPath(localVCPath);
-
-        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        String testRepositoryUrlString = programmingExercise.getTestRepositoryUrl();
-        LocalVCRepositoryUrl testRepositoryUrl = new LocalVCRepositoryUrl(localVCServerUrl, testRepositoryUrlString);
-        Path testRepositoryPath = testRepositoryUrl.getLocalPath(localVCPath);
-
-        ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
-
-        if (programmingLanguage != ProgrammingLanguage.JAVA) {
-            throw new LocalCIException("Programming language " + programmingLanguage + " is not supported by local CI.");
-        }
-
-        Path scriptPath = Paths.get("src", "main", "resources", "templates", "localci", "java", "build_and_run_tests.sh");// .toAbsolutePath();
-        try {
-            LocalCIBuildJob localCIBuildJob = new LocalCIBuildJob(programmingExercise.getProjectType(), assignmentRepositoryPath, testRepositoryPath, scriptPath);
-            LocalCIBuildResultNotificationDTO buildResult = localCIBuildJob.runBuildJob(); // TODO: run in separate thread and notify LocalCIService about the result.
-            programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
-        }
-        catch (IllegalArgumentException | IOException e) {
-            throw new LocalCIException("Error while running build job: " + e.getMessage());
-        }
+        // Use LocalCITriggerService instead to not run into circular dependency LocalCIService -> ProgrammingExerciseGradingService -> LocalCIService.
     }
 
     @Override

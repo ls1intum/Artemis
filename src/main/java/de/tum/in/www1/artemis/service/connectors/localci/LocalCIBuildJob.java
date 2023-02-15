@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -135,8 +138,32 @@ public class LocalCIBuildJob {
                 throw new IllegalStateException("Unknown build tool: " + projectType);
             }
 
+            // Get an input stream of the file in .git folder of the assignment repository and the test repository that contains the current commit hash of branch main.
+            TarArchiveInputStream assignmentRepoTarInputStream = new TarArchiveInputStream(
+                    dockerClient.copyArchiveFromContainerCmd(container.getId(), "/repositories/assignment-repository/.git/refs/heads/main").exec());
+            assignmentRepoTarInputStream.getNextTarEntry();
+            String assignmentRepoCommitHash = IOUtils.toString(assignmentRepoTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
+            assignmentRepoTarInputStream.close();
+
+            TarArchiveInputStream testRepoTarInputStream = new TarArchiveInputStream(
+                    dockerClient.copyArchiveFromContainerCmd(container.getId(), "/repositories/test-repository/.git/refs/heads/main").exec());
+            testRepoTarInputStream.getNextTarEntry();
+            String testRepoCommitHash = IOUtils.toString(testRepoTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
+            testRepoTarInputStream.close();
+
+            LocalCIBuildResultNotificationDTO.LocalCIVCSDTO assignmentVC = new LocalCIBuildResultNotificationDTO.LocalCIVCSDTO(assignmentRepoCommitHash, ASSIGNMENT_REPO_NAME,
+                    "main", List.of()); // TODO: Take default branch name from the participation.
+            LocalCIBuildResultNotificationDTO.LocalCIVCSDTO testVC = new LocalCIBuildResultNotificationDTO.LocalCIVCSDTO(testRepoCommitHash, TEST_REPO_NAME, "main", List.of()); // TODO:
+                                                                                                                                                                                 // Take
+                                                                                                                                                                                 // default
+                                                                                                                                                                                 // branch
+                                                                                                                                                                                 // name
+                                                                                                                                                                                 // from
+                                                                                                                                                                                 // the
+                                                                                                                                                                                 // participation.
+
             // Get an input stream of the test result files.
-            TarArchiveInputStream tarInputStream = new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(container.getId(), testResultsPath).exec());
+            TarArchiveInputStream testResultsTarInputStream = new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(container.getId(), testResultsPath).exec());
 
             List<LocalCIBuildResultNotificationDTO.LocalCITestJobDTO> failedTests = new ArrayList<>();
             List<LocalCIBuildResultNotificationDTO.LocalCITestJobDTO> successfulTests = new ArrayList<>();
@@ -145,11 +172,11 @@ public class LocalCIBuildJob {
 
             XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
             TarArchiveEntry tarEntry;
-            while ((tarEntry = tarInputStream.getNextTarEntry()) != null) {
+            while ((tarEntry = testResultsTarInputStream.getNextTarEntry()) != null) {
                 if (!tarEntry.isDirectory() && tarEntry.getName().startsWith(projectType.isGradle() ? "test" : "surefire-reports" + "/TEST-")
                         && tarEntry.getName().endsWith(".xml")) {
                     // Read the contents of the tar entry as a string.
-                    String xmlString = IOUtils.toString(tarInputStream, StandardCharsets.UTF_8);
+                    String xmlString = IOUtils.toString(testResultsTarInputStream, StandardCharsets.UTF_8);
 
                     // Create an XML stream reader for the string.
                     XMLStreamReader xmlStreamReader = xmlInputFactory.createXMLStreamReader(new StringReader(xmlString));
@@ -193,14 +220,14 @@ public class LocalCIBuildJob {
                                 String error = xmlStreamReader.getAttributeValue(null, "message");
 
                                 // Add the failed test to the list of failed tests.
-                                failedTests.add(new LocalCIBuildResultNotificationDTO.LocalCITestJobDTO(name, methodName, className, error != null ? List.of(error) : null));
+                                failedTests.add(new LocalCIBuildResultNotificationDTO.LocalCITestJobDTO(name, methodName, className, error != null ? List.of(error) : List.of()));
 
                                 // If there is at least one test case with a failure node, the build is not successful.
                                 isBuildSuccessful = false;
                             }
                             else {
                                 // Add the successful test to the list of successful tests.
-                                successfulTests.add(new LocalCIBuildResultNotificationDTO.LocalCITestJobDTO(name, methodName, className, null));
+                                successfulTests.add(new LocalCIBuildResultNotificationDTO.LocalCITestJobDTO(name, methodName, className, List.of()));
                             }
                         }
                     }
@@ -209,20 +236,15 @@ public class LocalCIBuildJob {
                 }
             }
 
-            // The commit hash of the assignment repository is located in /repositories/assignment-repository/.git/refs/heads/main.
-            // String commitHashAssignmentRepository = null;
-
-            // The commit hash of the test repository is located in /repositories/test-repository/.git/refs/heads/main.
-            // String commitHashTestRepository = null;
-
-            LocalCIBuildResultNotificationDTO.LocalCIJobDTO job = new LocalCIBuildResultNotificationDTO.LocalCIJobDTO(id, failedTests, successfulTests, null, null, null);
+            LocalCIBuildResultNotificationDTO.LocalCIJobDTO job = new LocalCIBuildResultNotificationDTO.LocalCIJobDTO(id, failedTests, successfulTests, List.of(), List.of(),
+                    List.of());
 
             LocalCIBuildResultNotificationDTO.LocalCITestSummaryDTO testSummary = new LocalCIBuildResultNotificationDTO.LocalCITestSummaryDTO(
                     (int) ChronoUnit.SECONDS.between(buildStartedDate, buildCompletedDate), 0, failedTests.size(), 0, 0, successfulTests.size(), "some description", 0, 0,
                     failedTests.size() + successfulTests.size(), 0);
 
             LocalCIBuildResultNotificationDTO.LocalCIBuildDTO build = new LocalCIBuildResultNotificationDTO.LocalCIBuildDTO(false, 0, "Some reason for this build",
-                    buildCompletedDate, isBuildSuccessful, testSummary, List.of(), List.of(job));
+                    buildCompletedDate, isBuildSuccessful, testSummary, List.of(assignmentVC, testVC), List.of(job));
 
             buildResult = new LocalCIBuildResultNotificationDTO(null, null, null, build);
         }

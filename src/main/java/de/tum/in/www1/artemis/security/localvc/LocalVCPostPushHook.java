@@ -22,6 +22,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
     public void onPostReceive(ReceivePack rp, Collection<ReceiveCommand> commands) throws LocalVCBadRequestException {
         Iterator<ReceiveCommand> iterator = commands.iterator();
 
+        // There should at least be one command.
         if (!iterator.hasNext()) {
             return;
         }
@@ -31,9 +32,11 @@ public class LocalVCPostPushHook implements PostReceiveHook {
         // There should only be one command.
         if (iterator.hasNext()) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "There should only be one command.");
+            return;
         }
 
         if (command.getType() != ReceiveCommand.Type.UPDATE) {
+            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "Only update commands are allowed.");
             return;
         }
 
