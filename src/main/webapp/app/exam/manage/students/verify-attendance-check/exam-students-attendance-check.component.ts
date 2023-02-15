@@ -31,7 +31,6 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     exam: Exam;
     predicate = 'id';
     ascending = true;
-    file: File;
     isTestExam: boolean;
     allExamUsersAttendanceCheck: ExamUserAttendanceCheck[] = [];
     filteredUsersSize = 0;

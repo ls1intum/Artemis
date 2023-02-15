@@ -40,7 +40,6 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
 
     courseId: number;
     exam: Exam;
-    file: File;
     isTestExam: boolean;
     allRegisteredUsers: ExamUser[] = [];
     filteredUsersSize = 0;
