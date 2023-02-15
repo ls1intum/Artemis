@@ -13,6 +13,7 @@ import { cloneDeep } from 'lodash-es';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { captureException } from '@sentry/browser';
 
 export type ButtonTooltipType = 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 
@@ -185,6 +186,11 @@ export class ExamParticipationService {
                     if (participation.results) {
                         for (const result of participation.results) {
                             delete result.participation;
+                            if (result.feedbacks) {
+                                for (const feedback of result.feedbacks) {
+                                    delete feedback.result;
+                                }
+                            }
                         }
                     }
                     if (participation.submissions) {
@@ -211,9 +217,14 @@ export class ExamParticipationService {
      * @param studentExam
      */
     public saveStudentExamToLocalStorage(courseId: number, examId: number, studentExam: StudentExam): void {
-        const studentExamCopy = cloneDeep(studentExam);
-        ExamParticipationService.breakCircularDependency(studentExamCopy);
-        this.localStorageService.store(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(studentExamCopy));
+        // if the following code fails, this should never affect the exam
+        try {
+            const studentExamCopy = cloneDeep(studentExam);
+            ExamParticipationService.breakCircularDependency(studentExamCopy);
+            this.localStorageService.store(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(studentExamCopy));
+        } catch (error) {
+            captureException(error);
+        }
     }
 
     /**
