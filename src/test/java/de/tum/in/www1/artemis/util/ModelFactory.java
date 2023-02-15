@@ -74,6 +74,7 @@ public class ModelFactory {
             attachment.setUploadDate(date);
         }
         attachment.setName("TestAttachment");
+        attachment.setVersion(1);
         return attachment;
     }
 
@@ -1051,9 +1052,9 @@ public class ModelFactory {
      * Then adds a new {@link TestSuiteDTO} with name "CustomFeedbacks" to it.
      * This Testsuite has four {@link TestCaseDTO TestCaseDTOs}:
      * <ul>
-     *     <li>CustomSuccessMessage: successful test with a message</li>
-     *     <li>CustomSuccessNoMessage: successful test without message</li>
-     *     <li>CustomFailedMessage: failed test with a message</li>
+     * <li>CustomSuccessMessage: successful test with a message</li>
+     * <li>CustomSuccessNoMessage: successful test without message</li>
+     * <li>CustomFailedMessage: failed test with a message</li>
      * </ul>
      *
      * @param repoName                    name of the repository
@@ -1356,8 +1357,8 @@ public class ModelFactory {
     /**
      * Generates a Bonus instance with given arguments.
      *
-     * @param bonusStrategy       of bonus
-     * @param weight              of bonus
+     * @param bonusStrategy         of bonus
+     * @param weight                of bonus
      * @param sourceGradingScaleId  of sourceGradingScale of bonus
      * @param bonusToGradingScaleId of bonusToGradingScale bonus
      * @return a new Bonus instance associated with the gradins scales corresonding to ids bonusToGradingScaleId and bonusToGradingScaleId.

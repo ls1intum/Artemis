@@ -101,13 +101,17 @@ public class UserService {
 
     private final TutorialGroupRepository tutorialGroupRepository;
 
+    private final SingleUserNotificationRepository singleUserNotificationRepository;
+
+    private final NotificationRepository notificationRepository;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository,
             LearningGoalProgressRepository learningGoalProgressRepository, InstanceMessageSendService instanceMessageSendService,
             ExerciseHintActivationRepository exerciseHintActivationRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            TutorialGroupRepository tutorialGroupRepository) {
+            TutorialGroupRepository tutorialGroupRepository, SingleUserNotificationRepository singleUserNotificationRepository, NotificationRepository notificationRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -125,6 +129,8 @@ public class UserService {
         this.exerciseHintActivationRepository = exerciseHintActivationRepository;
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
+        this.singleUserNotificationRepository = singleUserNotificationRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     /**
@@ -324,9 +330,9 @@ public class UserService {
      * Handles the case where a user registers a new account but a user with the same login already
      * exists in Artemis.
      *
-     * @param newUser the new user
+     * @param newUser      the new user
      * @param existingUser the existing user
-     * @param password the entered raw password
+     * @param password     the entered raw password
      * @return the existing non-activated user in Artemis.
      */
     private User handleRegisterUserWithSameLoginAsExistingUser(User newUser, User existingUser, String password) {
@@ -447,7 +453,7 @@ public class UserService {
     protected void deleteUser(User user) {
         // TODO: before we can delete the user, we need to make sure that all associated objects are deleted as well (or the connection to user is set to null)
         // 1) All participation connected to the user (as student)
-        // 2) All notifications connected to the user
+        // 2) All notifications connected to the user (as author)
         // 3) All results connected to the user (as assessor)
         // 4) All complaints and complaints responses associated to the user
         // 5) All student exams associated to the user
@@ -459,6 +465,8 @@ public class UserService {
         // 11) All tutorial group registrations of the student
         // 12) Set teaching assistant to null for all tutorial groups taught by the user
 
+        singleUserNotificationRepository.deleteByRecipientId(user.getId());
+        notificationRepository.removeAuthor(user.getId());
         studentScoreRepository.deleteAllByUserId(user.getId());
         learningGoalProgressRepository.deleteAllByUserId(user.getId());
         exerciseHintActivationRepository.deleteAllByUser(user);
@@ -499,6 +507,7 @@ public class UserService {
 
     /**
      * Check the username and password for validity. Throws Exception if invalid.
+     *
      * @param username The username to check
      * @param password The password to check
      */
@@ -517,8 +526,11 @@ public class UserService {
     }
 
     /**
-     * <p>The password can be null, then a random one will be generated ({@code Create}) or it won't be changed ({@code Update}).
-     * <p>If the password is not null, its length has to be at least {@code PASSWORD_MIN_LENGTH}.
+     * <p>
+     * The password can be null, then a random one will be generated ({@code Create}) or it won't be changed ({@code Update}).
+     * <p>
+     * If the password is not null, its length has to be at least {@code PASSWORD_MIN_LENGTH}.
+     *
      * @param password The password to check
      */
     private void checkNullablePasswordOrThrow(String password) {
@@ -605,7 +617,7 @@ public class UserService {
      *
      * @param user  the user
      * @param group the group
-     * @param role the role
+     * @param role  the role
      */
     public void addUserToGroup(User user, String group, Role role) {
         addUserToGroupInternal(user, group); // internal Artemis database
@@ -671,19 +683,19 @@ public class UserService {
      *
      * Steps:
      *
-     *  1) we use the registration number and try to find the student in the Artemis user database
-     *  2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential external user management system
-     *  3) if we cannot find the user in the (TUM) LDAP or the registration number was not set properly, try again using the login
-     *  4) if we still cannot find the user, we try again using the email
+     * 1) we use the registration number and try to find the student in the Artemis user database
+     * 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential external user
+     * management system
+     * 3) if we cannot find the user in the (TUM) LDAP or the registration number was not set properly, try again using the login
+     * 4) if we still cannot find the user, we try again using the email
      *
-     *       @param registrationNumber     the registration number of the user
-     *       @param courseGroupName        the courseGroup the user has to be added to
-     *       @param courseGroupRole        the courseGroupRole enum
-     *       @param login                  the login of the user
-     *       @param email                  the email of the user
-     *       @return the found student, otherwise returns an empty optional
-     *
-     * */
+     * @param registrationNumber the registration number of the user
+     * @param courseGroupName    the courseGroup the user has to be added to
+     * @param courseGroupRole    the courseGroupRole enum
+     * @param login              the login of the user
+     * @param email              the email of the user
+     * @return the found student, otherwise returns an empty optional
+     */
     public Optional<User> findUserAndAddToCourse(String registrationNumber, String courseGroupName, Role courseGroupRole, String login, String email) {
         try {
             var optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);

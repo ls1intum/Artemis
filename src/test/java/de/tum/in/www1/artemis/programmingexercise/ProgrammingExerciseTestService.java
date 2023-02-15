@@ -274,15 +274,15 @@ public class ProgrammingExerciseTestService {
     /**
      * Mocks the access and interaction with repository mocks on the local file system.
      *
-     * @param projectKey the unique short identifier of the exercise in the CI system
+     * @param projectKey         the unique short identifier of the exercise in the CI system
      * @param exerciseRepository represents exercise template code repository
-     * @param exerciseRepoName the name of the exercise repository
+     * @param exerciseRepoName   the name of the exercise repository
      * @param solutionRepository represents exercise solution code repository
-     * @param solutionRepoName the name of the solution repository
-     * @param testRepository represents exercise test code repository
-     * @param testRepoName the name of the test repository
-     * @param auxRepository represents an arbitrary template code repository
-     * @param auxRepoName the name of the auxiliary repository
+     * @param solutionRepoName   the name of the solution repository
+     * @param testRepository     represents exercise test code repository
+     * @param testRepoName       the name of the test repository
+     * @param auxRepository      represents an arbitrary template code repository
+     * @param auxRepoName        the name of the auxiliary repository
      * @throws Exception in case any repository url is malformed or the GitService fails
      */
     public void setupRepositoryMocks(String projectKey, LocalRepository exerciseRepository, String exerciseRepoName, LocalRepository solutionRepository, String solutionRepoName,
@@ -877,6 +877,26 @@ public class ProgrammingExerciseTestService {
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
 
+    void startProgrammingExercise(Boolean offlineIde) throws Exception {
+        exercise.setAllowOnlineEditor(true);
+        exercise.setAllowOfflineIde(offlineIde);
+        exercise = programmingExerciseRepository.save(exercise);
+
+        startProgrammingExercise_correctInitializationState(INDIVIDUAL);
+
+        final VersionControlService.RepositoryPermissions permissions;
+        if (offlineIde == null || Boolean.TRUE.equals(offlineIde)) {
+            permissions = VersionControlService.RepositoryPermissions.READ_WRITE;
+        }
+        else {
+            permissions = VersionControlService.RepositoryPermissions.READ_ONLY;
+        }
+
+        final User participant = userRepo.getUserByLoginElseThrow(userPrefix + studentLogin);
+
+        verify(versionControlService).addMemberToRepository(any(), eq(participant), eq(permissions));
+    }
+
     private Course setupCourseWithProgrammingExercise(ExerciseMode exerciseMode) {
         final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         exercise.setMode(exerciseMode);
@@ -1299,8 +1319,8 @@ public class ProgrammingExerciseTestService {
      * without pushing it.
      *
      * @param localRepository the repository
-     * @param filename the file to create
-     * @throws IOException when the file cannot be created
+     * @param filename        the file to create
+     * @throws IOException     when the file cannot be created
      * @throws GitAPIException when git can't add or commit the file
      */
     private void createAndCommitDummyFileInLocalRepository(LocalRepository localRepository, String filename) throws IOException, GitAPIException {

@@ -21,6 +21,7 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -187,12 +188,12 @@ public class ExamService {
      * Fetches the exam and eagerly loads all required elements and deletes all elements associated with the
      * exam including:
      * <ul>
-     *     <li>The Exam</li>
-     *     <li>All ExerciseGroups</li>
-     *     <li>All Exercises including:
-     *     Submissions, Participations, Results, Repositories and build plans, see {@link ExerciseDeletionService#delete}</li>
-     *     <li>All StudentExams</li>
-     *     <li>The exam Grading Scale if such exists</li>
+     * <li>The Exam</li>
+     * <li>All ExerciseGroups</li>
+     * <li>All Exercises including:
+     * Submissions, Participations, Results, Repositories and build plans, see {@link ExerciseDeletionService#delete}</li>
+     * <li>All StudentExams</li>
+     * <li>The exam Grading Scale if such exists</li>
      * </ul>
      * Note: StudentExams and ExerciseGroups are not explicitly deleted as the delete operation of the exam is cascaded by the database.
      *
@@ -227,8 +228,8 @@ public class ExamService {
      * <p>
      * The deleted elements are:
      * <ul>
-     *     <li>All StudentExams</li>
-     *     <li>Everything that has been submitted by students to the exercises that are part of the exam,
+     * <li>All StudentExams</li>
+     * <li>Everything that has been submitted by students to the exercises that are part of the exam,
      * but not the exercises themself. See {@link ExerciseDeletionService#reset}</li>
      * </ul>
      *
@@ -280,7 +281,6 @@ public class ExamService {
      *
      * @param examId the id of the exam
      * @return return ExamScoresDTO with students, scores, exerciseGroups, bonus and related plagiarism verdicts for the exam
-     *
      */
     public ExamScoresDTO calculateExamScores(Long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
@@ -360,7 +360,8 @@ public class ExamService {
     /**
      * Calculates max points, max bonus points and achieved points per exercise if the given studentExam is assessed.
      * Includes the corresponding grade and grade type as well if a GradingScale is set for the relevant exam.
-     * @param studentExam a StudentExam instance that will have its points and grades calculated if it is assessed
+     *
+     * @param studentExam             a StudentExam instance that will have its points and grades calculated if it is assessed
      * @param participationsOfStudent StudentParticipation list for the given studentExam
      * @return Student Exam results with exam grade calculated if applicable
      */
@@ -462,7 +463,7 @@ public class ExamService {
      *
      * See {@link StudentExamWithGradeDTO} for more explanation.
      *
-     * @param targetUser the user who submitted the studentExam
+     * @param targetUser  the user who submitted the studentExam
      * @param studentExam the student exam to be evaluated
      * @return the student exam result with points and grade
      */
@@ -595,8 +596,9 @@ public class ExamService {
      * We also attach the result if the results are already published for the exam.
      * If no suitable Result is found for StudentParticipation, an empty Result set is assigned to prevent LazyInitializationException on future reads.
      * See {@link StudentExam#areResultsPublishedYet}
-     * @param studentExam the given studentExam
-     * @param participation the given participation of the student
+     *
+     * @param studentExam         the given studentExam
+     * @param participation       the given participation of the student
      * @param isAtLeastInstructor flag for instructor access privileges
      */
     private static void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, boolean isAtLeastInstructor) {
@@ -746,7 +748,7 @@ public class ExamService {
      * First rounds max points for each exercise according to their {@link IncludedInOverallScore} value and sums them up.
      *
      * @param exercises exercises to sum their max points, intended use case is passing all exercises in a {@link StudentExam}
-     * @param course supplies the rounding accuracy of scores
+     * @param course    supplies the rounding accuracy of scores
      * @return sum of rounded max points if exercises are given, else 0.0
      */
     private double calculateMaxPointsSum(List<Exercise> exercises, Course course) {
@@ -761,7 +763,7 @@ public class ExamService {
      * First rounds max bonus points for each exercise according to their {@link IncludedInOverallScore} value and sums them up.
      *
      * @param exercises exercises to sum their bonus points, intended use case is passing all exercises in a {@link StudentExam}
-     * @param course supplies the rounding accuracy of scores
+     * @param course    supplies the rounding accuracy of scores
      * @return sum of rounded max bonus points if exercises are given, else 0.0
      */
     private double calculateMaxBonusPointsSum(List<Exercise> exercises, Course course) {
@@ -797,9 +799,10 @@ public class ExamService {
      * In the client, these are now displayed rounded as 1.1 points.
      * If the student adds up the displayed points, they get a total of 5.5 points.
      * In order to get the same total result as the student, we have to round before summing.
+     *
      * @param exercise the relevant exercise
-     * @param result the result for the given exercise
-     * @param course course to specify number of decimal places to round
+     * @param result   the result for the given exercise
+     * @param course   course to specify number of decimal places to round
      * @return the rounded points according to the student's achieved score and max points of the exercise
      */
     private double calculateAchievedPoints(Exercise exercise, Result result, Course course, double plagiarismPointDeductionPercentage) {
@@ -972,24 +975,31 @@ public class ExamService {
             // number of complaints open
             numberOfComplaintsOpenByExercise.add(complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exercise.getId(), ComplaintType.COMPLAINT));
 
-            log.debug("StatsTimeLog: number of complaints open done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+            if (log.isDebugEnabled()) {
+                log.debug("StatsTimeLog: number of complaints open done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+            }
             // number of complaints finished
             numberOfComplaintResponsesByExercise
                     .add(complaintResponseRepository.countComplaintResponseByExerciseIdAndComplaintTypeAndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT));
 
-            log.debug("StatsTimeLog: number of complaints finished done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+            if (log.isDebugEnabled()) {
+                log.debug("StatsTimeLog: number of complaints finished done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+            }
             // number of assessments done
             if (numberOfCorrectionRoundsInExam > 0) {
                 numberOfAssessmentsFinishedOfCorrectionRoundsByExercise
                         .add(resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRoundsInExam));
 
-                log.debug("StatsTimeLog: number of assessments done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+                if (log.isDebugEnabled()) {
+                    log.debug("StatsTimeLog: number of assessments done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+                }
             }
 
             // get number of all generated participations
             numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsByExerciseIdAndTestRun(exercise.getId(), false));
-
-            log.debug("StatsTimeLog: number of generated participations in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+            if (log.isDebugEnabled()) {
+                log.debug("StatsTimeLog: number of generated participations in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+            }
             if (!(exercise instanceof QuizExercise || AssessmentType.AUTOMATIC == exercise.getAssessmentType())) {
                 numberOfParticipationsForAssessmentGeneratedByExercise.add(submissionRepository.countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exercise.getId()));
             }
@@ -1035,13 +1045,16 @@ public class ExamService {
             long numberOfGeneratedStudentExams = examRepository.countGeneratedStudentExamsByExamWithoutTestRuns(exam.getId());
             examChecklistDTO.setNumberOfGeneratedStudentExams(numberOfGeneratedStudentExams);
 
-            log.debug("StatsTimeLog: number of generated student exams done in {}", TimeLogUtil.formatDurationFrom(start));
+            if (log.isDebugEnabled()) {
+                log.debug("StatsTimeLog: number of generated student exams done in {}", TimeLogUtil.formatDurationFrom(start));
+            }
 
             // set number of test runs
             long numberOfTestRuns = studentExamRepository.countTestRunsByExamId(exam.getId());
             examChecklistDTO.setNumberOfTestRuns(numberOfTestRuns);
-
-            log.debug("StatsTimeLog: number of test runs done in {}", TimeLogUtil.formatDurationFrom(start));
+            if (log.isDebugEnabled()) {
+                log.debug("StatsTimeLog: number of test runs done in {}", TimeLogUtil.formatDurationFrom(start));
+            }
 
             // check if all exercises have been prepared for all students;
             boolean exercisesPrepared = numberOfGeneratedStudentExams != 0
@@ -1050,9 +1063,13 @@ public class ExamService {
 
             // set started and submitted exam properties
             long numberOfStudentExamsStarted = studentExamRepository.countStudentExamsStartedByExamIdIgnoreTestRuns(exam.getId());
-            log.debug("StatsTimeLog: number of student exams started done in {}", TimeLogUtil.formatDurationFrom(start));
+            if (log.isDebugEnabled()) {
+                log.debug("StatsTimeLog: number of student exams started done in {}", TimeLogUtil.formatDurationFrom(start));
+            }
             long numberOfStudentExamsSubmitted = studentExamRepository.countStudentExamsSubmittedByExamIdIgnoreTestRuns(exam.getId());
-            log.debug("StatsTimeLog: number of student exams submitted done in {}", TimeLogUtil.formatDurationFrom(start));
+            if (log.isDebugEnabled()) {
+                log.debug("StatsTimeLog: number of student exams submitted done in {}", TimeLogUtil.formatDurationFrom(start));
+            }
 
             examChecklistDTO.setNumberOfExamsStarted(numberOfStudentExamsStarted);
             examChecklistDTO.setNumberOfExamsSubmitted(numberOfStudentExamsSubmitted);
@@ -1080,11 +1097,12 @@ public class ExamService {
         }
 
         long start = System.nanoTime();
-        log.info("Evaluating {} quiz exercises in exam {}", quizExercises.size(), exam.getId());
+        log.debug("Evaluating {} quiz exercises in exam {}", quizExercises.size(), exam.getId());
         // Evaluate all quizzes for that exercise
         quizExercises.forEach(quiz -> examQuizService.evaluateQuizAndUpdateStatistics(quiz.getId()));
-        log.info("Evaluated {} quiz exercises in exam {} in {}", quizExercises.size(), exam.getId(), TimeLogUtil.formatDurationFrom(start));
-
+        if (log.isDebugEnabled()) {
+            log.debug("Evaluated {} quiz exercises in exam {} in {}", quizExercises.size(), exam.getId(), TimeLogUtil.formatDurationFrom(start));
+        }
         return quizExercises.size();
     }
 
@@ -1154,7 +1172,7 @@ public class ExamService {
             studentParticipationRepository.addNumberOfExamExerciseParticipations(exerciseGroup);
         });
         // set transient number of registered users
-        examRepository.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
+        examRepository.setNumberOfExamUsersForExams(Collections.singletonList(exam));
     }
 
     /**
@@ -1305,6 +1323,20 @@ public class ExamService {
             }
         }
         return new SearchResultPageDTO<>(examPage.getContent(), examPage.getTotalPages());
+    }
+
+    /**
+     * Get all exams of the user. The result is paged
+     *
+     * @param pageable The search query defining the search term and the size of the returned page
+     * @param user     The user for whom to fetch all available exercises
+     * @return exam page
+     */
+    public Page<Exam> getAllActiveExams(Pageable pageable, final User user) {
+        final Page<Exam> examPage;
+        // active exam means that exam has visible date in the past 7 days or next 7 days.
+        examPage = examRepository.findAllActiveExamsInCoursesWhereInstructor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(7), ZonedDateTime.now().plusDays(7));
+        return examPage;
     }
 
     /**

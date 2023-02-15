@@ -78,6 +78,7 @@ public class NotificationScheduleService {
 
     /**
      * updateScheduling method for the notificationType EXERCISE_RELEASED
+     *
      * @param exercise that should trigger a notification when it is released
      */
     public void updateSchedulingForReleasedExercises(Exercise exercise) {
@@ -93,6 +94,7 @@ public class NotificationScheduleService {
 
     /**
      * The place where the actual tasks/methods are called/scheduled that should be run at the exercise release time
+     *
      * @param exercise which will be announced by a notifications at release date
      */
     private void scheduleNotificationForReleasedExercise(Exercise exercise) {
@@ -116,6 +118,7 @@ public class NotificationScheduleService {
 
     /**
      * updateScheduling method for the notificationType EXERCISE_SUBMISSION_ASSESSED
+     *
      * @param exercise that should trigger a notification when the assessment due date is over
      */
     public void updateSchedulingForAssessedExercisesSubmissions(Exercise exercise) {
@@ -132,6 +135,7 @@ public class NotificationScheduleService {
 
     /**
      * The place where the actual tasks/methods are called/scheduled that should be run when at the assessment due date of the exercise
+     *
      * @param exercise which will be announced by a notifications at release date
      */
     private void scheduleNotificationForAssessedExercisesSubmissions(Exercise exercise) {

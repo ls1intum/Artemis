@@ -61,4 +61,51 @@ export class ExamManagementPage {
     openAssessmentDashboard(examId: number, timeout: number) {
         cy.get('#exercises-button-' + examId, { timeout }).click();
     }
+
+    /**
+     * helper methods to get information of course
+     * */
+    getExamTitle() {
+        return cy.get('#exam-detail-title');
+    }
+
+    getExamVisibleDate() {
+        return cy.get('#exam-visible-date');
+    }
+
+    getExamStartDate() {
+        return cy.get('#exam-start-date');
+    }
+
+    getExamEndDate() {
+        return cy.get('#exam-end-date');
+    }
+
+    getExamNumberOfExercises() {
+        return cy.get('#exam-number-of-exercises');
+    }
+
+    getExamMaxPoints() {
+        return cy.get('#exam-max-points');
+    }
+
+    getExamStartText() {
+        return cy.get('#exam-start-text');
+    }
+
+    getExamEndText() {
+        return cy.get('#exam-end-text');
+    }
+
+    getExamConfirmationStartText() {
+        return cy.get('#exam-confirmation-start-text');
+    }
+
+    getExamConfirmationEndText() {
+        return cy.get('#exam-confirmation-end-text');
+    }
+
+    getExamWorkingTime() {
+        return cy.get('#exam-working-time');
+    }
 }

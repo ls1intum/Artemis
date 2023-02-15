@@ -440,7 +440,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Opens the modal.
      */
     open(content: any) {
-        this.modalService.open(content).result.then();
+        this.modalService.open(content);
     }
 
     /**

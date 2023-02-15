@@ -1,5 +1,5 @@
-<div *ngIf="course">
-    <div *ngIf="!collapsed; else collapsedConversations" class="expanded-conversations">
+<div *ngIf="course" class="selection-sidebar">
+    <div [hidden]="collapsed" class="expanded-conversations">
         <div class="card">
             <!-- header -->
             <div
@@ -17,25 +17,22 @@
             </div>
             <!-- body -->
             <div class="card-body">
-                <div class="input-group p-1">
-                    <span class="input-group-text">
-                        <fa-icon [icon]="faMagnifyingGlass" size="xs"></fa-icon>
+                <div class="input-group border-0" [class.filter-active]="!!searchTerm">
+                    <input
+                        (input)="onSearchQueryInput($event)"
+                        class="form-control border-start-0 border-end-0 border-top-0"
+                        id="searchQuery"
+                        type="text"
+                        [placeholder]="'artemisApp.conversationsLayout.conversationSelectionSideBar.filterConversationPlaceholder' | artemisTranslate"
+                    />
+                    <span class="input-group-text border-start-0 border-end-0 border-top-0">
+                        <span [hidden]="!searchTerm">({{ numberOfConversationsPassingFilter }})</span>
+                        <fa-icon [icon]="faFilter" size="xs"></fa-icon>
                     </span>
-                    <input (input)="onSearchQueryInput($event)" class="form-control" id="searchQuery" type="text" />
-                </div>
-                <div class="text-center my-1">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="expandAll()">
-                        <fa-icon [icon]="faExpand"></fa-icon>
-                        <span>{{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.expandAll' | artemisTranslate }}</span>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="collapseAll()">
-                        <fa-icon [icon]="faCompress"></fa-icon>
-                        <span>{{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.collapseAll' | artemisTranslate }}</span>
-                    </button>
                 </div>
                 <div class="scrollbar wrapper-scroll-y">
                     <!-- Starred -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedStarredConversations?.length">
+                    <div [hidden]="!displayedStarredConversations?.length" class="mb-2">
                         <jhi-conversation-sidebar-section
                             [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.favorites' | artemisTranslate"
                             [headerKey]="'favorites'"
@@ -44,12 +41,13 @@
                             (conversationSelected)="onConversationSelected($event)"
                             [course]="course"
                             (settingsChanged)="onSettingsChanged()"
+                            (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
+                            (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
                         >
                         </jhi-conversation-sidebar-section>
-                        <hr class="m-0" />
                     </div>
                     <!-- Channels -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedChannelConversations?.length">
+                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedChannelConversations?.length" class="mb-2">
                         <jhi-conversation-sidebar-section
                             [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.channels' | artemisTranslate"
                             [headerKey]="'channels'"
@@ -57,12 +55,14 @@
                             [activeConversation]="activeConversation"
                             (conversationSelected)="onConversationSelected($event)"
                             (settingsChanged)="onSettingsChanged()"
+                            (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
+                            (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
                             [course]="course"
                         >
                             <ng-template>
                                 <div ngbDropdown container="body" class="d-inline-block">
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" ngbDropdownToggle>
-                                        <fa-icon [icon]="faPlus" size="xs"></fa-icon>
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
+                                        <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                     </button>
                                     <div ngbDropdownMenu>
                                         <button id="channelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event)">
@@ -75,10 +75,9 @@
                                 </div>
                             </ng-template>
                         </jhi-conversation-sidebar-section>
-                        <hr class="m-0" />
                     </div>
                     <!-- Group Chats -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedGroupChats?.length">
+                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedGroupChats?.length" class="mb-2">
                         <jhi-conversation-sidebar-section
                             [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.groupChats' | artemisTranslate"
                             [headerKey]="'groupChats'"
@@ -86,20 +85,21 @@
                             [activeConversation]="activeConversation"
                             (conversationSelected)="onConversationSelected($event)"
                             (settingsChanged)="onSettingsChanged()"
+                            (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
+                            (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
                             [course]="course"
                         >
                             <ng-template>
                                 <div class="d-inline-block">
-                                    <button id="createGroupChat" class="btn btn-sm btn-outline-secondary" type="button" (click)="openCreateGroupChatDialog($event)">
-                                        <fa-icon [icon]="faPlus" size="xs"></fa-icon>
+                                    <button id="createGroupChat" class="btn btn-sm btn-outline-secondary sidebar-button" type="button" (click)="openCreateGroupChatDialog($event)">
+                                        <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                     </button>
                                 </div>
                             </ng-template>
                         </jhi-conversation-sidebar-section>
-                        <hr class="m-0" />
                     </div>
                     <!-- Direct Messages -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedOneToOneChats?.length">
+                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedOneToOneChats?.length" class="mb-2">
                         <jhi-conversation-sidebar-section
                             [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.oneToOneChats' | artemisTranslate"
                             [headerKey]="'directMessages'"
@@ -107,12 +107,19 @@
                             [activeConversation]="activeConversation"
                             (conversationSelected)="onConversationSelected($event)"
                             (settingsChanged)="onSettingsChanged()"
+                            (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
+                            (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
                             [course]="course"
                         >
                             <ng-template>
                                 <div class="d-inline-block">
-                                    <button id="createOneToOne" class="btn btn-sm btn-outline-secondary" type="button" (click)="openCreateOneToOneChatDialog($event)">
-                                        <fa-icon [icon]="faPlus" size="xs"></fa-icon>
+                                    <button
+                                        id="createOneToOne"
+                                        class="btn btn-sm btn-outline-secondary sidebar-button"
+                                        type="button"
+                                        (click)="openCreateOneToOneChatDialog($event)"
+                                    >
+                                        <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                     </button>
                                 </div>
                             </ng-template>
@@ -126,16 +133,15 @@
         </div>
     </div>
     <!-- collapsed conversations -->
-    <ng-template #collapsedConversations>
-        <div
-            class="collapsed-conversations bg-primary text-white"
-            (click)="collapsed = false"
-            [ngbTooltip]="'artemisApp.conversationsLayout.conversationSelectionSideBar.show' | artemisTranslate"
-        >
-            <fa-icon class="expand-conversations-icon" [icon]="faChevronRight"></fa-icon>
-            <span jhiTranslate="artemisApp.conversationsLayout.conversationSelectionSideBar.header">Conversation</span>
-            <fa-icon class="fa-rotate-270" [icon]="faConversation"></fa-icon>
-            <fa-icon class="expand-conversations-icon" [icon]="faChevronRight"></fa-icon>
-        </div>
-    </ng-template>
+    <div
+        [hidden]="!collapsed"
+        class="collapsed-conversations bg-primary text-white"
+        (click)="collapsed = false"
+        [ngbTooltip]="'artemisApp.conversationsLayout.conversationSelectionSideBar.show' | artemisTranslate"
+    >
+        <fa-icon class="expand-conversations-icon" [icon]="faChevronRight"></fa-icon>
+        <span jhiTranslate="artemisApp.conversationsLayout.conversationSelectionSideBar.header">Conversation</span>
+        <fa-icon class="fa-rotate-270" [icon]="faConversation"></fa-icon>
+        <fa-icon class="expand-conversations-icon" [icon]="faChevronRight"></fa-icon>
+    </div>
 </div>

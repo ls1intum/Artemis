@@ -16,7 +16,12 @@
             "archived": "Archived",
             "sendMessage": "Send",
             "conversationMessages": {
-                "searchBarPlaceholder": "Search for a message within the current conversation"
+                "searchLabel": "Search messages",
+                "clearSearch": "Clear search",
+                "searchBarPlaceholder": "Search for messages within the current conversation",
+                "searchResultsMultiple": "{{ count }} messages found",
+                "searchResultsSingle": "1 message found",
+                "searchResultsNone": "No messages found"
             },
             "threadSideBar": {
                 "label": "Thread",
@@ -32,10 +37,9 @@
                 "channels": "Channels",
                 "createChannel": "Create channel",
                 "browseChannels": "Browse channels",
-                "expandAll": "Expand all",
-                "collapseAll": "Collapse all",
                 "groupChats": "Group Chats",
                 "oneToOneChats": "Direct Messages",
+                "filterConversationPlaceholder": "Filter conversations",
                 "sideBarSection": {
                     "shown": "shown",
                     "hidden": "hidden",
@@ -67,7 +71,7 @@
             "grantChannelModerator": {
                 "title": "Make {{ userName }} an moderator of {{ channelName }} ?",
                 "question": "Do you really want to make {{ userName }} an moderator of {{ channelName }} ?",
-                "description": "This will allow {{ userName }} to manage the channel and its members. He or she can also edit and delete messages in the channel.",
+                "description": "This will allow {{ userName }} to manage the channel and its members. They can also edit and delete messages in the channel.",
                 "confirmButton": "Grant Moderator Role"
             },
             "revokeChannelModerator": {
@@ -79,19 +83,19 @@
             "removeUserPrivateChannel": {
                 "title": "Remove user from private channel?",
                 "question": "Remove {{ userName }} from private channel {{ channelName }} ?",
-                "warning": "This member will not be able to access this channel anymore unless he/she is invited again.",
+                "warning": "This member will not be able to access this channel anymore unless they are invited again.",
                 "remove": "Remove user"
             },
             "removeUserPublicChannel": {
                 "title": "Remove user from public channel?",
                 "question": "Remove {{ userName }} from public channel {{ channelName }} ?",
-                "warning": "This member will not be able to access this channel anymore unless he/she joins again.",
+                "warning": "This member will not be able to access this channel anymore unless they join again.",
                 "remove": "Remove user"
             },
             "removeUserGroupChat": {
                 "title": "Remove user from group chat?",
                 "question": "Remove {{ userName }} from group chat?",
-                "warning": "This member will not be able to access this group chat anymore unless he/she is invited again.",
+                "warning": "This member will not be able to access this group chat anymore unless they are invited again.",
                 "remove": "Remove user"
             },
             "conversationSettings": {

@@ -15,7 +15,7 @@
                     <label for="name">{{ 'artemisApp.dialogs.conversationDetail.infoTab.name' | artemisTranslate }}</label>
 
                     <button
-                        class="action-button right btn btn-outline-primary btn-sm"
+                        class="action-button right btn btn-link btn-sm"
                         (click)="openEditNameModal($event)"
                         *ngIf="
                             (isChannel(channelOrGroupChat) && canChangeChannelProperties(channelOrGroupChat)) ||
@@ -32,7 +32,7 @@
             <div id="topic-section" class="col-12 info-section" [class.interactive]="!readOnlyMode">
                 <div class="form-floating">
                     <textarea
-                        class="form-control"
+                        class="form-control large"
                         readonly
                         placeholder="dummyPlaceholder"
                         id="topic"
@@ -40,7 +40,7 @@
                     >
                     </textarea>
                     <label for="topic">{{ 'artemisApp.dialogs.conversationDetail.infoTab.topic' | artemisTranslate }}</label>
-                    <button class="action-button right btn btn-outline-primary btn-sm" (click)="openEditTopicModal($event)" *ngIf="canChangeChannelProperties(channel)">
+                    <button class="action-button right btn btn-link btn-sm" (click)="openEditTopicModal($event)" *ngIf="canChangeChannelProperties(channel)">
                         {{ 'artemisApp.dialogs.conversationDetail.infoTab.editTopic' | artemisTranslate }}
                     </button>
                 </div>
@@ -51,7 +51,7 @@
             <div id="description-section" class="col-12 info-section" [class.interactive]="!readOnlyMode">
                 <div class="form-floating">
                     <textarea
-                        class="form-control"
+                        class="form-control large"
                         readonly
                         placeholder="dummyPlaceholder"
                         id="description"
@@ -59,7 +59,7 @@
                     >
                     </textarea>
                     <label for="description">{{ 'artemisApp.dialogs.conversationDetail.infoTab.description' | artemisTranslate }}</label>
-                    <button class="action-button right btn btn-outline-primary btn-sm" (click)="openDescriptionTopicModal($event)" *ngIf="canChangeChannelProperties(channel)">
+                    <button class="action-button right btn btn-link btn-sm" (click)="openDescriptionTopicModal($event)" *ngIf="canChangeChannelProperties(channel)">
                         {{ 'artemisApp.dialogs.conversationDetail.infoTab.editDescription' | artemisTranslate }}
                     </button>
                 </div>
@@ -79,7 +79,6 @@
                     {{ 'artemisApp.dialogs.conversationDetail.infoTab.createdOn' | artemisTranslate }}:
                     {{ activeConversation.creationDate ? (activeConversation.creationDate | artemisDate) : '' }}
                 </li>
-                <li>Id: {{ activeConversation.id ?? '' }}</li>
             </ul>
         </div>
     </div>

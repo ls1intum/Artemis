@@ -115,6 +115,35 @@ describe('MetisConversationService', () => {
         });
     });
 
+    it('should set active conversation by id', () => {
+        return new Promise((done) => {
+            metisConversationService.setUpConversationService(1).subscribe({
+                complete: () => {
+                    metisConversationService.setActiveConversation(groupChat.id);
+                    metisConversationService.activeConversation$.subscribe((activeConversation) => {
+                        expect(activeConversation).toEqual(groupChat);
+                        done({});
+                    });
+                },
+            });
+        });
+    });
+
+    it('should set has unread messages to true', () => {
+        groupChat.unreadMessagesCount = 1;
+        return new Promise((done) => {
+            metisConversationService.setUpConversationService(1).subscribe({
+                complete: () => {
+                    metisConversationService.setActiveConversation(groupChat);
+                    metisConversationService.hasUnreadMessages$.pipe().subscribe((hasUnreadMessages) => {
+                        expect(hasUnreadMessages).toBeTrue();
+                        done({});
+                    });
+                },
+            });
+        });
+    });
+
     it('should get conversations of users again if force refresh is called', () => {
         return new Promise((done) => {
             metisConversationService.setUpConversationService(1).subscribe({

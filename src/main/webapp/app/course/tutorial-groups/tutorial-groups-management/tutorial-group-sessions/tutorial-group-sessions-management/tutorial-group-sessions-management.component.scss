@@ -9,3 +9,9 @@
         display: block;
     }
 }
+
+.session-management-dialog {
+    .modal-dialog {
+        max-width: 2000px;
+    }
+}

@@ -262,33 +262,62 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createTextExercise_InvalidMaxScore() throws Exception {
+    void updateTextExercise_InvalidMaxScore() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         textExercise.setMaxPoints(0.0);
-        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createTextExercise_IncludedAsBonusInvalidBonusPoints() throws Exception {
+    void updateTextExercise_IncludedAsBonusInvalidBonusPoints() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(1.0);
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
-        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createTextExercise_NotIncludedInvalidBonusPoints() throws Exception {
+    void updateTextExercise_NotIncludedInvalidBonusPoints() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(1.0);
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateTextExercise_WithStructuredGradingInstructions() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+
+        GradingCriterion criterion = new GradingCriterion();
+        criterion.setTitle("Test");
+
+        GradingInstruction gradingInstruction = new GradingInstruction();
+        gradingInstruction.setCredits(2);
+        gradingInstruction.setGradingScale("Good");
+        gradingInstruction.setInstructionDescription("Use this Feedback to test functionality");
+        gradingInstruction.setFeedback("This is a test!");
+        gradingInstruction.setUsageCount(5);
+
+        criterion.addStructuredGradingInstruction(gradingInstruction);
+        textExercise.setGradingCriteria(List.of(criterion));
+        TextExercise actualExercise = request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+
+        assertThat(actualExercise.getGradingCriteria()).hasSize(1);
+        assertThat(actualExercise.getGradingCriteria().get(0).getTitle()).isEqualTo("Test");
+        assertThat(actualExercise.getGradingCriteria().get(0).getStructuredGradingInstructions())
+                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "gradingCriterion").containsExactly(gradingInstruction);
+        assertThat(actualExercise.getGradingCriteria().get(0).getExercise().getId()).isEqualTo(actualExercise.getId());
+        assertThat(actualExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0).getGradingCriterion().getId())
+                .isEqualTo(actualExercise.getGradingCriteria().get(0).getId());
     }
 
     @Test
@@ -766,15 +795,16 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor() throws Exception {
-        String randomString = UUID.randomUUID().toString();
-        database.addCourseWithOneReleasedTextExercise(randomString);
-        database.addCourseExamExerciseGroupWithOneTextExercise(randomString + "-Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/text-exercises", randomString);
+        testCourseAndExamFilters();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCourseAndExamFiltersAsAdmin() throws Exception {
+        testCourseAndExamFilters();
+    }
+
+    private void testCourseAndExamFilters() throws Exception {
         String randomString = UUID.randomUUID().toString();
         database.addCourseWithOneReleasedTextExercise(randomString);
         database.addCourseExamExerciseGroupWithOneTextExercise(randomString + "-Morpork");
