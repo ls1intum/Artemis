@@ -29,8 +29,8 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
 
     courseId: number;
     exam: Exam;
-    predicate: string;
-    ascending: boolean;
+    predicate = 'id';
+    ascending = true;
     file: File;
     isTestExam: boolean;
     allExamUsersAttendanceCheck: ExamUserAttendanceCheck[] = [];
@@ -66,10 +66,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
         private userService: UserService,
         private accountService: AccountService,
         private sortService: SortService,
-    ) {
-        this.predicate = 'id';
-        this.ascending = true;
-    }
+    ) {}
 
     ngOnInit() {
         this.isLoading = true;
@@ -80,7 +77,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
             this.isTestExam = this.exam.testExam!;
             this.isLoading = false;
         });
-        this.examManagementService.verifyExamUserAttendanceCheck(this.courseId, this.exam.id!).subscribe({
+        this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!).subscribe({
             next: (res: HttpResponse<ExamUserAttendanceCheck[]>) => {
                 this.allExamUsersAttendanceCheck = res.body!;
             },
