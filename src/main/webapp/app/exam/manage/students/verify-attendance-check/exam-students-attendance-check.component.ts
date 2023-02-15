@@ -76,12 +76,14 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
             this.isTestExam = this.exam.testExam!;
             this.isLoading = false;
         });
-        this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!).subscribe({
-            next: (res: HttpResponse<ExamUserAttendanceCheck[]>) => {
-                this.allExamUsersAttendanceCheck = res.body!;
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
+        if (this.hasExamStarted) {
+            this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!).subscribe({
+                next: (res: HttpResponse<ExamUserAttendanceCheck[]>) => {
+                    this.allExamUsersAttendanceCheck = res.body!;
+                },
+                error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+            });
+        }
     }
 
     ngOnDestroy() {

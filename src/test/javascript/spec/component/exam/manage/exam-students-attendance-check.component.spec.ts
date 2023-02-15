@@ -2,33 +2,34 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { User } from 'app/core/user/user.model';
-import { UserService } from 'app/core/user/user.service';
 import { Course } from 'app/entities/course.model';
+import { ExamUserAttendanceCheck } from 'app/entities/exam-users-attendance-check.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamStudentsAttendanceCheckComponent } from 'app/exam/manage/students/verify-attendance-check/exam-students-attendance-check.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SortService } from 'app/shared/service/sort.service';
 import { SortDirective } from 'app/shared/sort/sort.directive';
+import { HttpResponse } from '@angular/common/http';
+import { of } from 'rxjs';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Observable } from 'rxjs';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import dayjs from 'dayjs';
 
 describe('ExamStudentsAttendanceCheckComponent', () => {
     const course = { id: 1 } as Course;
     const user1 = { id: 1, name: 'name', login: 'login' } as User;
     const user2 = { id: 2, login: 'user2' } as User;
-    const examWithCourse: Exam = { course, id: 2, examUsers: [{ user: user1 }, { user: user2 }] } as Exam;
+    const dateTime = dayjs().subtract(1, 'hour');
+    const examWithCourse: Exam = { course, id: 2, examUsers: [{ user: user1 }, { user: user2 }], startDate: dateTime } as Exam;
 
     const route = {
         snapshot: { paramMap: convertToParamMap({ courseId: course.id }) },
@@ -39,23 +40,13 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
     let component: ExamStudentsAttendanceCheckComponent;
     let fixture: ComponentFixture<ExamStudentsAttendanceCheckComponent>;
     let examManagementService: ExamManagementService;
-    let userService: UserService;
+    let sortService: SortService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, RouterTestingModule],
-            declarations: [
-                ExamStudentsAttendanceCheckComponent,
-                MockComponent(DataTableComponent),
-                MockDirective(TranslateDirective),
-                MockDirective(DeleteButtonDirective),
-                MockDirective(SortDirective),
-                MockPipe(ArtemisTranslatePipe),
-            ],
+            imports: [ArtemisTestModule, RouterTestingModule],
+            declarations: [ExamStudentsAttendanceCheckComponent, MockDirective(TranslateDirective), MockDirective(SortDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: Router, useClass: MockRouter },
@@ -66,7 +57,7 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         fixture = TestBed.createComponent(ExamStudentsAttendanceCheckComponent);
         component = fixture.componentInstance;
         examManagementService = TestBed.inject(ExamManagementService);
-        userService = TestBed.inject(UserService);
+        sortService = TestBed.inject(SortService);
     });
 
     afterEach(() => {
@@ -87,5 +78,33 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         expect(component.isTransitioning).toBeFalse();
     });
 
-    // todo: write useful tests
+    it('should test on sort', () => {
+        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
+
+        fixture.detectChanges();
+        component.sortRows();
+        expect(sortServiceSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should call exam management service', () => {
+        const response: ExamUserAttendanceCheck[] = [
+            {
+                id: 1,
+                studentImagePath: 'studentImagePath',
+                login: 'student1',
+                registrationNumber: '12345678',
+                signingImagePath: 'signingImagePath',
+                started: true,
+                submitted: false,
+            },
+        ];
+        const examServiceStub = jest.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: response })));
+
+        fixture.detectChanges();
+
+        expect(examServiceStub).toHaveBeenCalledOnce();
+        expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id);
+        expect(component.allExamUsersAttendanceCheck).toEqual(response);
+        expect(component.allExamUsersAttendanceCheck).toHaveLength(1);
+    });
 });
