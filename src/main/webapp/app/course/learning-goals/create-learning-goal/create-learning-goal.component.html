@@ -5,7 +5,10 @@
 </div>
 
 <div *ngIf="!isLoading" class="container">
-    <h3>{{ 'artemisApp.learningGoal.createLearningGoal.title' | artemisTranslate }}</h3>
+    <div class="d-flex align-items-center">
+        <h3>{{ 'artemisApp.learningGoal.createLearningGoal.title' | artemisTranslate }}</h3>
+        <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+    </div>
     <jhi-learning-goal-form
         [isEditMode]="false"
         (formSubmitted)="createLearningGoal($event)"

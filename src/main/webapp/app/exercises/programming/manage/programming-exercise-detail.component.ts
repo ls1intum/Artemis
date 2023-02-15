@@ -48,6 +48,7 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -64,6 +65,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly ButtonSize = ButtonSize;
     readonly AssessmentType = AssessmentType;
+
+    documentationType = DocumentationType.Programming;
+
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;
     supportsAuxiliaryRepositories: boolean;

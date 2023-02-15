@@ -79,6 +79,15 @@ export class CypressUserManagement {
     }
 }
 
+// Users
+export const users = new CypressUserManagement();
+export const admin = users.getAdmin();
+export const instructor = users.getInstructor();
+export const tutor = users.getTutor();
+export const studentOne = users.getStudentOne();
+export const studentTwo = users.getStudentTwo();
+export const studentThree = users.getStudentThree();
+
 /**
  * Container class for user credentials.
  */
