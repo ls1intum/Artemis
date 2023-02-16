@@ -27,6 +27,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -67,9 +69,16 @@ public class FileResource {
 
     private final UserRepository userRepository;
 
-    public FileResource(FileService fileService, ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository,
-            FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository, AttachmentRepository attachmentRepository,
-            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository) {
+    private final ExamUserRepository examUserRepository;
+
+    private final ExamRepository examRepository;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
+    public FileResource(AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
+            LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
+            AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
+            ExamUserRepository examUserRepository, ExamRepository examRepository) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -79,6 +88,9 @@ public class FileResource {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
+        this.authorizationCheckService = authorizationCheckService;
+        this.examRepository = examRepository;
+        this.examUserRepository = examUserRepository;
     }
 
     /**
@@ -262,6 +274,40 @@ public class FileResource {
     public ResponseEntity<byte[]> getCourseIcon(@PathVariable Long courseId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         return responseEntityForFilePath(FilePathService.getCourseIconFilePath(), filename);
+    }
+
+    /**
+     * GET /files/exam-user/signatures/:examUserId/:filename : Get the exam user signature
+     *
+     * @param examUserId ID of the exam user, the image belongs to
+     * @param filename   the filename of the file
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/exam-user/signatures/{examUserId}/{filename:.+}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId, @PathVariable String filename) {
+        log.debug("REST request to get file : {}", filename);
+        ExamUser examUser = examUserRepository.findById(examUserId).orElseThrow();
+        Exam exam = examRepository.findById(examUser.getExam().getId()).orElseThrow();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, exam.getCourse(), null);
+        return buildFileResponse(Path.of(FilePathService.getExamUserSignatureFilePath()).toString(), filename);
+    }
+
+    /**
+     * GET /files/exam-user/:examUserId/:filename : Get the image of exam user
+     *
+     * @param examUserId ID of the exam user, the image belongs to
+     * @param filename   the filename of the file
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/exam-user/{examUserId}/{filename:.+}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<byte[]> getExamUserImage(@PathVariable Long examUserId, @PathVariable String filename) {
+        log.debug("REST request to get file : {}", filename);
+        ExamUser examUser = examUserRepository.findById(examUserId).orElseThrow();
+        Exam exam = examRepository.findById(examUser.getExam().getId()).orElseThrow();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, exam.getCourse(), null);
+        return buildFileResponse(Path.of(FilePathService.getStudentImageFilePath()).toString(), filename);
     }
 
     /**

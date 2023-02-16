@@ -1,5 +1,5 @@
 import { DELETE } from '../../../constants';
-import { artemis } from '../../../ArtemisTesting';
+import { courseList, courseOverview } from '../../../artemis';
 import { BASE_API, GET, POST } from '../../../constants';
 import { CypressCredentials } from '../../../users';
 import { getExercise } from '../../../utils';
@@ -151,43 +151,35 @@ export class OnlineEditorPage {
     toggleCompressFileTree(exerciseID: number) {
         return getExercise(exerciseID).find('#compress_tree').click();
     }
-}
 
-/**
- * General method for entering, submitting and verifying something in the online editor.
- */
-export function makeSubmissionAndVerifyResults(
-    exerciseID: number,
-    editorPage: OnlineEditorPage,
-    packageName: string,
-    submission: ProgrammingExerciseSubmission,
-    verifyOutput: () => void,
-) {
-    // Decompress the file tree to access the parent folder
-    editorPage.toggleCompressFileTree(exerciseID);
-    // We delete all existing files, so we can create new files and don't have to delete their already existing content
-    editorPage.deleteFile(exerciseID, 'Client.java');
-    editorPage.deleteFile(exerciseID, 'BubbleSort.java');
-    editorPage.deleteFile(exerciseID, 'MergeSort.java');
-    editorPage.typeSubmission(exerciseID, submission, packageName);
-    editorPage.submit(exerciseID);
-    verifyOutput();
-}
+    /**
+     * General method for entering, submitting and verifying something in the online editor.
+     */
+    makeSubmissionAndVerifyResults(exerciseID: number, packageName: string, submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
+        // Decompress the file tree to access the parent folder
+        this.toggleCompressFileTree(exerciseID);
+        // We delete all existing files, so we can create new files and don't have to delete their already existing content
+        this.deleteFile(exerciseID, 'Client.java');
+        this.deleteFile(exerciseID, 'BubbleSort.java');
+        this.deleteFile(exerciseID, 'MergeSort.java');
+        this.typeSubmission(exerciseID, submission, packageName);
+        this.submit(exerciseID);
+        verifyOutput();
+    }
 
-/**
- * Starts the participation in the test programming exercise.
- */
-export function startParticipationInProgrammingExercise(courseId: number, exerciseId: number, credentials: CypressCredentials) {
-    const courseOverview = artemis.pageobjects.course.overview;
-    const courses = artemis.pageobjects.course.list;
-    cy.login(credentials, '/');
-    cy.url().should('include', '/courses');
-    cy.log('Participating in the programming exercise as a student...');
-    courses.openCourse(courseId!);
-    cy.url().should('include', '/exercises');
-    courseOverview.startExercise(exerciseId);
-    cy.reloadUntilFound('#open-exercise-' + exerciseId);
-    courseOverview.openRunningProgrammingExercise(exerciseId);
+    /**
+     * Starts the participation in the test programming exercise.
+     */
+    startParticipation(courseId: number, exerciseId: number, credentials: CypressCredentials) {
+        cy.login(credentials, '/');
+        cy.url().should('include', '/courses');
+        cy.log('Participating in the programming exercise as a student...');
+        courseList.openCourse(courseId!);
+        cy.url().should('include', '/exercises');
+        courseOverview.startExercise(exerciseId);
+        cy.reloadUntilFound('#open-exercise-' + exerciseId);
+        courseOverview.openRunningProgrammingExercise(exerciseId);
+    }
 }
 
 /**

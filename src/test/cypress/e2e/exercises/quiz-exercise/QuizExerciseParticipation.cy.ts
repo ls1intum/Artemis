@@ -1,23 +1,17 @@
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { artemis } from '../../../support/ArtemisTesting';
 import multipleChoiceQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/shortAnswerQuiz_template.json';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-
-// Accounts
-const admin = artemis.users.getAdmin();
-const student = artemis.users.getStudentOne();
-
-// Requests
-const courseManagementRequest = artemis.requests.courseManagement;
-
-// Page objects
-const multipleChoiceQuiz = artemis.pageobjects.exercise.quiz.multipleChoice;
-const shortAnswerQuiz = artemis.pageobjects.exercise.quiz.shortAnswer;
-const quizCreation = artemis.pageobjects.exercise.quiz.creation;
-const dragAndDropQuiz = artemis.pageobjects.exercise.quiz.dragAndDrop;
-const courseOverview = artemis.pageobjects.course.overview;
+import {
+    courseManagementRequest,
+    courseOverview,
+    quizExerciseCreation,
+    quizExerciseDragAndDropQuiz,
+    quizExerciseMultipleChoice,
+    quizExerciseShortAnswerQuiz,
+} from '../../../support/artemis';
+import { admin, studentOne } from '../../../support/users';
 
 // Common primitives
 let course: Course;
@@ -28,7 +22,7 @@ describe('Quiz Exercise Participation', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, student);
+            courseManagementRequest.addStudentToCourse(course, studentOne);
         });
     });
 
@@ -46,14 +40,14 @@ describe('Quiz Exercise Participation', () => {
         });
 
         it('Student cannot see hidden quiz', () => {
-            cy.login(student, '/courses/' + course.id);
+            cy.login(studentOne, '/courses/' + course.id);
             cy.contains('No exercises available for the course.').should('be.visible');
         });
 
         it('Student can see a visible quiz', () => {
             cy.login(admin);
             courseManagementRequest.setQuizVisible(quizExercise.id!);
-            cy.login(student, '/courses/' + course.id);
+            cy.login(studentOne, '/courses/' + course.id);
             courseOverview.openRunningExercise(quizExercise.id!);
         });
 
@@ -61,11 +55,11 @@ describe('Quiz Exercise Participation', () => {
             cy.login(admin);
             courseManagementRequest.setQuizVisible(quizExercise.id!);
             courseManagementRequest.startQuizNow(quizExercise.id!);
-            cy.login(student, '/courses/' + course.id);
+            cy.login(studentOne, '/courses/' + course.id);
             courseOverview.startExercise(quizExercise.id!);
-            multipleChoiceQuiz.tickAnswerOption(quizExercise.id!, 0);
-            multipleChoiceQuiz.tickAnswerOption(quizExercise.id!, 2);
-            multipleChoiceQuiz.submit();
+            quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 0);
+            quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 2);
+            quizExerciseMultipleChoice.submit();
         });
     });
 
@@ -81,15 +75,15 @@ describe('Quiz Exercise Participation', () => {
 
         it('Student can participate in SA quiz', () => {
             const quizQuestionId = quizExercise.quizQuestions![0].id!;
-            cy.login(student, '/courses/' + course.id);
+            cy.login(studentOne, '/courses/' + course.id);
             courseOverview.startExercise(quizExercise.id!);
-            shortAnswerQuiz.typeAnswer(0, 1, quizQuestionId, 'give');
-            shortAnswerQuiz.typeAnswer(1, 1, quizQuestionId, 'let');
-            shortAnswerQuiz.typeAnswer(2, 1, quizQuestionId, 'run');
-            shortAnswerQuiz.typeAnswer(2, 3, quizQuestionId, 'desert');
-            shortAnswerQuiz.typeAnswer(3, 1, quizQuestionId, 'cry');
-            shortAnswerQuiz.typeAnswer(4, 1, quizQuestionId, 'goodbye');
-            shortAnswerQuiz.submit();
+            quizExerciseShortAnswerQuiz.typeAnswer(0, 1, quizQuestionId, 'give');
+            quizExerciseShortAnswerQuiz.typeAnswer(1, 1, quizQuestionId, 'let');
+            quizExerciseShortAnswerQuiz.typeAnswer(2, 1, quizQuestionId, 'run');
+            quizExerciseShortAnswerQuiz.typeAnswer(2, 3, quizQuestionId, 'desert');
+            quizExerciseShortAnswerQuiz.typeAnswer(3, 1, quizQuestionId, 'cry');
+            quizExerciseShortAnswerQuiz.typeAnswer(4, 1, quizQuestionId, 'goodbye');
+            quizExerciseShortAnswerQuiz.submit();
         });
     });
 
@@ -98,9 +92,9 @@ describe('Quiz Exercise Participation', () => {
         before('Create DND quiz', () => {
             cy.login(admin, '/course-management/' + course.id + '/exercises');
             cy.get('#create-quiz-button').should('be.visible').click();
-            quizCreation.setTitle('Cypress Quiz');
-            quizCreation.addDragAndDropQuestion('DnD Quiz');
-            quizCreation.saveQuiz().then((quizResponse) => {
+            quizExerciseCreation.setTitle('Cypress Quiz');
+            quizExerciseCreation.addDragAndDropQuestion('DnD Quiz');
+            quizExerciseCreation.saveQuiz().then((quizResponse) => {
                 quizExercise = quizResponse.response?.body;
                 courseManagementRequest.setQuizVisible(quizExercise.id!);
                 courseManagementRequest.startQuizNow(quizExercise.id!);
@@ -108,10 +102,10 @@ describe('Quiz Exercise Participation', () => {
         });
 
         it('Student can participate in DnD Quiz', () => {
-            cy.login(student, '/courses/' + course.id);
+            cy.login(studentOne, '/courses/' + course.id);
             courseOverview.startExercise(quizExercise.id!);
-            dragAndDropQuiz.dragItemIntoDragArea(0);
-            dragAndDropQuiz.submit();
+            quizExerciseDragAndDropQuiz.dragItemIntoDragArea(0);
+            quizExerciseDragAndDropQuiz.submit();
         });
     });
 });

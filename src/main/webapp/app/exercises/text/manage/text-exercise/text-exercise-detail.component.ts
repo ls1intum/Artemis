@@ -13,12 +13,15 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-text-exercise-detail',
     templateUrl: './text-exercise-detail.component.html',
 })
 export class TextExerciseDetailComponent implements OnInit, OnDestroy {
+    documentationType = DocumentationType.Text;
+
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
     readonly dayjs = dayjs;

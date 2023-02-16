@@ -17,8 +17,7 @@ import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-upda
 import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
 import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { switchMap, tap } from 'rxjs/operators';
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -41,6 +40,11 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     domainCommandsSampleSolution = [new KatexCommand()];
     isImport: boolean;
     examCourseId?: number;
+
+    saveCommand: SaveExerciseCommand<FileUploadExercise>;
+
+    documentationType = DocumentationType.FileUpload;
+
     // Icons
     faQuestionCircle = faQuestionCircle;
     faBan = faBan;
@@ -172,7 +176,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     validateDate() {
         this.exerciseService.validateDate(this.fileUploadExercise);
     }
-
     /**
      * Updates categories for file upload exercise
      * @param categories list of exercise categories

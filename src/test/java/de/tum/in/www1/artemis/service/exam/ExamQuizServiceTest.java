@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -34,6 +36,9 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
@@ -140,10 +145,16 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void evaluateQuiz() throws Exception {
+        Set<ExamUser> examUsers = new HashSet<>();
         for (int i = 0; i < numberOfParticipants; i++) {
-            exam.addRegisteredUser(database.getUserByLogin(TEST_PREFIX + "student" + (i + 1)));
+            var student = database.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
+            var examUser = new ExamUser();
+            examUser.setExam(exam);
+            examUser.setUser(student);
+            examUserRepository.save(examUser);
+            examUsers.add(examUser);
         }
-
+        exam.setExamUsers(examUsers);
         exam = examRepository.save(exam);
         exerciseGroup.setExam(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
@@ -188,10 +199,16 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void evaluateQuizWithNoSubmissions() throws Exception {
+        Set<ExamUser> examUsers = new HashSet<>();
         for (int i = 0; i < numberOfParticipants; i++) {
-            exam.addRegisteredUser(database.getUserByLogin(TEST_PREFIX + "student" + (i + 1)));
+            var student = database.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
+            var examUser = new ExamUser();
+            examUser.setExam(exam);
+            examUser.setUser(student);
+            examUserRepository.save(examUser);
+            examUsers.add(examUser);
         }
-
+        exam.setExamUsers(examUsers);
         exam = examRepository.save(exam);
         exerciseGroup.setExam(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
@@ -242,9 +259,16 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void evaluateQuizWithMultipleSubmissions() throws Exception {
+        Set<ExamUser> examUsers = new HashSet<>();
         for (int i = 0; i < numberOfParticipants; i++) {
-            exam.addRegisteredUser(database.getUserByLogin(TEST_PREFIX + "student" + (i + 1)));
+            var student = database.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
+            var examUser = new ExamUser();
+            examUser.setExam(exam);
+            examUser.setUser(student);
+            examUserRepository.save(examUser);
+            examUsers.add(examUser);
         }
+        exam.setExamUsers(examUsers);
 
         exam = examRepository.save(exam);
         exerciseGroup.setExam(exam);
@@ -297,9 +321,16 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void evaluateQuiz_twice() throws Exception {
+        Set<ExamUser> examUsers = new HashSet<>();
         for (int i = 0; i < numberOfParticipants; i++) {
-            exam.addRegisteredUser(database.getUserByLogin(TEST_PREFIX + "student" + (i + 1)));
+            var student = database.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
+            var examUser = new ExamUser();
+            examUser.setExam(exam);
+            examUser.setUser(student);
+            examUserRepository.save(examUser);
+            examUsers.add(examUser);
         }
+        exam.setExamUsers(examUsers);
 
         exam = examRepository.save(exam);
         exerciseGroup.setExam(exam);
