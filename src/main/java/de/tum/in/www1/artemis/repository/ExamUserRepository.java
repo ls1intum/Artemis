@@ -21,7 +21,7 @@ public interface ExamUserRepository extends JpaRepository<ExamUser, Long> {
             """)
     ExamUser findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
-    List<ExamUser> findAllByExamId(@Param("examId") long examId);
+    List<ExamUser> findAllByExamId(long examId);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.ExamUserAttendanceCheckDTO(examUser.id, examUser.studentImagePath, examUser.user.login,

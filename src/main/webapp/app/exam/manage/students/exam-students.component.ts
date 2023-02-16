@@ -82,13 +82,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.route.data.subscribe(({ exam }: { exam: Exam }) => {
             this.exam = exam;
             this.hasExamStarted = exam.startDate?.isBefore(dayjs()) || false;
-            this.allRegisteredUsers =
-                exam.examUsers?.map((examUser) => {
-                    return {
-                        ...examUser.user!,
-                        ...examUser,
-                    };
-                }) || [];
+            this.allRegisteredUsers = this.getExamUsersForExam(this.exam) || [];
             this.isTestExam = this.exam.testExam!;
             this.isLoading = false;
         });
@@ -99,14 +93,17 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.examManagementService.find(this.courseId, this.exam.id!, true).subscribe((examResponse: HttpResponse<Exam>) => {
             this.exam = examResponse.body!;
             this.hasExamStarted = this.exam.startDate?.isBefore(dayjs()) || false;
-            this.allRegisteredUsers =
-                this.exam.examUsers?.map((examUser) => {
-                    return {
-                        ...examUser.user!,
-                        ...examUser,
-                    };
-                }) || [];
+            this.allRegisteredUsers = this.getExamUsersForExam(this.exam) || [];
             this.isLoading = false;
+        });
+    }
+
+    private getExamUsersForExam(exam: Exam) {
+        return exam.examUsers?.map((examUser) => {
+            return {
+                ...examUser.user!,
+                ...examUser,
+            };
         });
     }
 

@@ -1,8 +1,8 @@
-import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUserAttendanceCheck } from 'app/entities/exam-users-attendance-check.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { Subject, Subscription, of } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { UserService } from 'app/core/user/user.service';

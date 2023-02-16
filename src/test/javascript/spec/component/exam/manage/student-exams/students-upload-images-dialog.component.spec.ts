@@ -68,7 +68,7 @@ describe('StudentsUploadImagesDialogComponent', () => {
         const event = { target: { files: [{ file: new File([''], 'testFile.pdf', { type: 'application/pdf' }), fileName: 'testFile' }] } };
         await component.onPDFFileSelect(event);
 
-        expect(component.notFoundUsers).toStrictEqual({});
+        expect(component.notFoundUsers).toBeUndefined();
     });
 
     it('should upload and save images correctly', () => {
@@ -85,6 +85,6 @@ describe('StudentsUploadImagesDialogComponent', () => {
         expect(component.isParsing).toBeFalse();
         expect(component.hasParsed).toBeTrue();
         expect(component.notFoundUsers).toBeDefined();
-        expect(component.notFoundUsers.numberOfUsersNotFound).toBe(1);
+        expect(component.notFoundUsers?.numberOfUsersNotFound).toBe(1);
     });
 });
