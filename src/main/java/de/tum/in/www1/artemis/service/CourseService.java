@@ -216,7 +216,7 @@ public class CourseService {
      * @return the course including exercises, lectures, exams, learning goals and tutorial groups (filtered for given user)
      */
     public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(Long courseId, User user, boolean refresh) {
-        Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
+        Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException();
         }
@@ -224,6 +224,7 @@ public class CourseService {
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
         course.setExercises(exerciseService.filterExercisesForCourse(course, user));
         exerciseService.loadExerciseDetailsIfNecessary(course, user);
+        course.setExams(examRepository.findByCourseIdsForUser(Set.of(course.getId()), user.getId(), user.getGroups(), ZonedDateTime.now()));
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
         course.setLearningGoals(learningGoalService.findAllForCourse(course, user, refresh));
         course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
@@ -242,8 +243,7 @@ public class CourseService {
      * @return an unmodifiable list of all courses for the user
      */
     public List<Course> findAllActiveForUser(User user) {
-        return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()))
-                .filter(course -> isCourseVisibleForUser(user, course)).toList();
+        return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> isCourseVisibleForUser(user, course)).toList();
     }
 
     /**
@@ -254,11 +254,7 @@ public class CourseService {
      */
     public List<Course> findAllActiveWithExercisesAndLecturesAndExamsForUser(User user) {
         long start = System.nanoTime();
-        var userVisibleCourses = courseRepository.findAllActiveWithLecturesAndExams().stream()
-                // remove old courses that have already finished
-                .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()))
-                // remove courses the user should not be able to see
-                .filter(course -> isCourseVisibleForUser(user, course)).toList();
+        var userVisibleCourses = courseRepository.findAllActiveWithLectures().stream().filter(course -> isCourseVisibleForUser(user, course)).toList();
 
         if (log.isDebugEnabled()) {
             log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));
@@ -266,8 +262,10 @@ public class CourseService {
         long startFindAllExercises = System.nanoTime();
         var courseIds = userVisibleCourses.stream().map(DomainObject::getId).collect(Collectors.toSet());
         Set<Exercise> allExercises = exerciseRepository.findByCourseIdsWithCategories(courseIds);
+        Set<Exam> allExams = examRepository.findByCourseIdsForUser(courseIds, user.getId(), user.getGroups(), ZonedDateTime.now());
         if (log.isDebugEnabled()) {
-            log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises after {}", allExercises.size(), TimeLogUtil.formatDurationFrom(startFindAllExercises));
+            log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises and {} exams after {}", allExercises.size(), allExams.size(),
+                    TimeLogUtil.formatDurationFrom(startFindAllExercises));
         }
 
         long startFilterAll = System.nanoTime();
@@ -276,10 +274,8 @@ public class CourseService {
             course.setExercises(allExercises.stream().filter(ex -> ex.getCourseViaExerciseGroupOrCourseMember().getId().equals(course.getId())).collect(Collectors.toSet()));
             course.setExercises(exerciseService.filterExercisesForCourse(course, user));
             exerciseService.loadExerciseDetailsIfNecessary(course, user);
+            course.setExams(allExams.stream().filter(ex -> ex.getCourse().getId().equals(course.getId())).collect(Collectors.toSet()));
             course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
-            if (authCheckService.isOnlyStudentInCourse(course, user)) {
-                course.setExams(examRepository.filterVisibleExams(course.getExams()));
-            }
         }).toList();
 
         if (log.isDebugEnabled()) {

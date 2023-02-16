@@ -338,7 +338,7 @@ public class StudentExamService {
                     wasEmptyProgrammingParticipation = true;
                     latestSubmission = prepareProgrammingSubmission(latestSubmission, studentParticipation);
                 }
-                if ((latestSubmission.isPresent() && latestSubmission.get().isEmpty()) || wasEmptyProgrammingParticipation) {
+                if (latestSubmission.isPresent() && (latestSubmission.get().isEmpty() || wasEmptyProgrammingParticipation)) {
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
                         // required so that the submission is counted in the assessment dashboard
                         latestSubmission.get().submitted(true);
@@ -371,8 +371,7 @@ public class StudentExamService {
      * @return the latestSubmission
      */
     public Optional<Submission> prepareProgrammingSubmission(Optional<Submission> latestSubmission, StudentParticipation studentParticipation) {
-        if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise
-                && ((ProgrammingExercise) studentParticipation.getExercise()).areManualResultsAllowed()) {
+        if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise programmingExercise && programmingExercise.areManualResultsAllowed()) {
             submissionService.addEmptyProgrammingSubmissionToParticipation(studentParticipation);
             return studentParticipation.findLatestSubmission();
         }
@@ -648,7 +647,7 @@ public class StudentExamService {
     /**
      * Generates a new test exam for the student and stores it in the database
      *
-     * @param exam    the exam with loaded exercie groups and exercise for which the StudentExam should be created
+     * @param exam    the exam with loaded exercise groups and exercises for which the StudentExam should be created
      * @param student the corresponding student
      * @return a StudentExam for the student and exam
      */
@@ -663,7 +662,6 @@ public class StudentExamService {
         log.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), exam.getId());
 
         return studentExam;
-
     }
 
     /**
