@@ -1,51 +1,42 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { artemis } from '../../../support/ArtemisTesting';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-
-// The user management object
-const users = artemis.users;
-
-// Requests
-const courseManagement = artemis.requests.courseManagement;
-
-// PageObjects
-const textEditor = artemis.pageobjects.exercise.text.editor;
-const courseOverview = artemis.pageobjects.course.overview;
+import { courseManagementRequest, courseOverview, textExerciseEditor } from '../../../support/artemis';
+import { admin, studentOne } from '../../../support/users';
 
 describe('Text exercise participation', () => {
     let course: Course;
     let exercise: TextExercise;
 
     before(() => {
-        cy.login(users.getAdmin());
-        courseManagement.createCourse().then((response) => {
+        cy.login(admin);
+        courseManagementRequest.createCourse().then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagement.addStudentToCourse(course, users.getStudentOne());
-            courseManagement.createTextExercise({ course }).then((exerciseResponse: Cypress.Response<TextExercise>) => {
+            courseManagementRequest.addStudentToCourse(course, studentOne);
+            courseManagementRequest.createTextExercise({ course }).then((exerciseResponse: Cypress.Response<TextExercise>) => {
                 exercise = exerciseResponse.body;
             });
         });
     });
 
     it('Creates a text exercise in the UI', () => {
-        cy.login(users.getStudentOne(), `/courses/${course.id}/exercises`);
+        cy.login(studentOne, `/courses/${course.id}/exercises`);
         courseOverview.startExercise(exercise.id!);
         courseOverview.openRunningExercise(exercise.id!);
 
         // Verify the initial state of the text editor
-        textEditor.shouldShowExerciseTitleInHeader(exercise.title!);
-        textEditor.shouldShowProblemStatement();
+        textExerciseEditor.shouldShowExerciseTitleInHeader(exercise.title!);
+        textExerciseEditor.shouldShowProblemStatement();
 
         // Make a submission
         cy.fixture('loremIpsum.txt').then((submission) => {
-            textEditor.shouldShowNumberOfWords(0);
-            textEditor.shouldShowNumberOfCharacters(0);
-            textEditor.typeSubmission(exercise.id!, submission);
-            textEditor.shouldShowNumberOfWords(100);
-            textEditor.shouldShowNumberOfCharacters(591);
-            textEditor.submit().then((request: Interception) => {
+            textExerciseEditor.shouldShowNumberOfWords(0);
+            textExerciseEditor.shouldShowNumberOfCharacters(0);
+            textExerciseEditor.typeSubmission(exercise.id!, submission);
+            textExerciseEditor.shouldShowNumberOfWords(100);
+            textExerciseEditor.shouldShowNumberOfCharacters(591);
+            textExerciseEditor.submit().then((request: Interception) => {
                 expect(request.response!.body.text).to.eq(submission);
                 expect(request.response!.body.submitted).to.eq(true);
                 expect(request.response!.statusCode).to.eq(200);
@@ -55,8 +46,8 @@ describe('Text exercise participation', () => {
 
     after(() => {
         if (course) {
-            cy.login(users.getAdmin());
-            courseManagement.deleteCourse(course.id!);
+            cy.login(admin);
+            courseManagementRequest.deleteCourse(course.id!);
         }
     });
 });

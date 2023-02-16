@@ -1,5 +1,0 @@
-ARG CYPRESS_BROWSER=node18.6.0-chrome105-ff104
-FROM docker.io/cypress/browsers:${CYPRESS_BROWSER}
-RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt update && \
-        apt -y install openjdk-17-jdk

@@ -51,7 +51,7 @@ describe('ExamChecklistService', () => {
         // reset exam
         exam.id = 1;
         exam.title = 'Example Exam';
-        exam.numberOfRegisteredUsers = 3;
+        exam.numberOfExamUsers = 3;
         exam.examMaxPoints = 100;
         exam.course = new Course();
         exam.course.id = 2;
@@ -250,7 +250,7 @@ describe('ExamChecklistService', () => {
         });
 
         it('should return false if no student is registered', () => {
-            exam.numberOfRegisteredUsers = 0;
+            exam.numberOfExamUsers = 0;
 
             result = service.checkAtLeastOneRegisteredStudent(exam);
 

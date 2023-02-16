@@ -39,9 +39,6 @@ public class ExamSession extends AbstractAuditingEntity {
     @Transient
     private boolean isInitialSessionTransient;
 
-    public ExamSession() {
-    }
-
     public StudentExam getStudentExam() {
         return studentExam;
     }

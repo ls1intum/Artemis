@@ -72,10 +72,31 @@ export class CourseLtiConfigurationComponent implements OnInit {
     }
 
     /**
+     * Gets the tool url
+     */
+    getToolUrl(): string {
+        return `${location.origin}/courses/${this.course.id}`; // Needs to match url in CustomLti13Configurer
+    }
+
+    /**
      * Gets the keyset url
      */
     getKeysetUrl(): string {
         return `${location.origin}/.well-known/jwks.json`; // Needs to match url in CustomLti13Configurer
+    }
+
+    /**
+     * Gets the initiate login url
+     */
+    getInitiateLoginUrl(): string {
+        return `${location.origin}/api/lti13/initiate-login/${this.onlineCourseConfiguration?.registrationId}`; // Needs to match uri in CustomLti13Configurer
+    }
+
+    /**
+     * Gets the redirect uri
+     */
+    getRedirectUri(): string {
+        return `${location.origin}/api/lti13/auth-callback`; // Needs to match uri in CustomLti13Configurer
     }
 
     /**

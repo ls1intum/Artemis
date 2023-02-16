@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -44,11 +45,14 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.opencsv.CSVReader;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
@@ -68,6 +72,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.domain.tutorialgroups.*;
+import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
@@ -252,6 +257,9 @@ public class DatabaseUtilService {
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
@@ -1531,8 +1539,16 @@ public class DatabaseUtilService {
         var student3 = getUserByLogin(userPrefix + "student3");
         var student4 = getUserByLogin(userPrefix + "student4");
         var registeredUsers = Set.of(student1, student2, student3, student4);
-
-        exam.setRegisteredUsers(registeredUsers);
+        Set<ExamUser> registeredExamUsers = new HashSet<>();
+        for (var user : registeredUsers) {
+            var registeredExamUser = new ExamUser();
+            registeredExamUser.setUser(user);
+            registeredExamUser.setExam(exam);
+            registeredExamUser = examUserRepository.save(registeredExamUser);
+            exam.addExamUser(registeredExamUser);
+            registeredExamUsers.add(registeredExamUser);
+        }
+        exam.setExamUsers(registeredExamUsers);
         exam = examRepository.save(exam);
         return exam;
     }
@@ -1549,16 +1565,24 @@ public class DatabaseUtilService {
 
     public Exam addTestExamWithRegisteredUser(Course course, User user) {
         Exam exam = ModelFactory.generateTestExam(course);
-        HashSet<User> userHashSet = new HashSet<>();
-        userHashSet.add(user);
-        exam.setRegisteredUsers(userHashSet);
+        exam = examRepository.save(exam);
+        var registeredExamUser = new ExamUser();
+        registeredExamUser.setUser(user);
+        registeredExamUser.setExam(exam);
+        registeredExamUser = examUserRepository.save(registeredExamUser);
+        exam.addExamUser(registeredExamUser);
         examRepository.save(exam);
         return exam;
     }
 
     public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ModelFactory.generateExam(course);
-        exam.addRegisteredUser(user);
+        exam = examRepository.save(exam);
+        var registeredExamUser = new ExamUser();
+        registeredExamUser.setUser(user);
+        registeredExamUser.setExam(exam);
+        registeredExamUser = examUserRepository.save(registeredExamUser);
+        exam.addExamUser(registeredExamUser);
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
@@ -1609,7 +1633,12 @@ public class DatabaseUtilService {
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
         exam.setWorkingTime(2 * 60 * 60);
-        exam.addRegisteredUser(user);
+        exam = examRepository.save(exam);
+        var registeredExamUser = new ExamUser();
+        registeredExamUser.setUser(user);
+        registeredExamUser.setExam(exam);
+        registeredExamUser = examUserRepository.save(registeredExamUser);
+        exam.addExamUser(registeredExamUser);
         exam.setTestExam(false);
         examRepository.save(exam);
         var studentExam = new StudentExam();
@@ -1626,7 +1655,12 @@ public class DatabaseUtilService {
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
         exam.setWorkingTime(2 * 60 * 60);
-        exam.addRegisteredUser(user);
+        exam = examRepository.save(exam);
+        var registeredExamUser = new ExamUser();
+        registeredExamUser.setUser(user);
+        registeredExamUser.setExam(exam);
+        registeredExamUser = examUserRepository.save(registeredExamUser);
+        exam.addExamUser(registeredExamUser);
         examRepository.save(exam);
         return exam;
     }
@@ -4651,5 +4685,70 @@ public class DatabaseUtilService {
             user.setGroups(Set.of(userPrefix + "instructor" + userSuffix));
             userRepo.save(user);
         }
+    }
+
+    public List<StudentExam> prepareStudentExamsForConduction(String testPrefix, AbstractSpringIntegrationBambooBitbucketJiraTest integrationTest,
+            BitbucketRequestMockProvider bitbucketRequestMockProvider, ProgrammingExerciseTestService programmingExerciseTestService, RequestUtilService request,
+            ZonedDateTime examVisibleDate, ZonedDateTime examStartDate, ZonedDateTime examEndDate, Set<User> registeredStudents, List<LocalRepository> studentRepos)
+            throws Exception {
+
+        for (int i = 1; i <= registeredStudents.size(); i++) {
+            bitbucketRequestMockProvider.mockUserExists(testPrefix + "student" + i);
+        }
+
+        final var course = this.addEmptyCourse();
+        var exam = this.addExam(course, examVisibleDate, examStartDate, examEndDate);
+        exam = this.addExerciseGroupsAndExercisesToExam(exam, true);
+
+        // register users
+        Set<ExamUser> registeredExamUsers = new HashSet<>();
+        exam = examRepository.save(exam);
+        for (var user : registeredStudents) {
+            var registeredExamUser = new ExamUser();
+            registeredExamUser.setUser(user);
+            registeredExamUser.setExam(exam);
+            registeredExamUser = examUserRepository.save(registeredExamUser);
+            exam.addExamUser(registeredExamUser);
+            registeredExamUsers.add(registeredExamUser);
+        }
+        exam.setExamUsers(registeredExamUsers);
+        exam.setNumberOfExercisesInExam(exam.getExerciseGroups().size());
+        exam.setRandomizeExerciseOrder(false);
+        exam.setNumberOfCorrectionRoundsInExam(2);
+        exam = examRepository.save(exam);
+
+        // generate individual student exams
+        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
+                StudentExam.class, HttpStatus.OK);
+        assertThat(studentExams).hasSize(exam.getExamUsers().size());
+        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(registeredStudents.size());
+
+        // start exercises
+        List<ProgrammingExercise> programmingExercises = new ArrayList<>();
+        for (var exercise : exam.getExerciseGroups().get(6).getExercises()) {
+            var programmingExercise = (ProgrammingExercise) exercise;
+            programmingExercises.add(programmingExercise);
+
+            programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
+            for (var examUser : exam.getExamUsers()) {
+                var repo = new LocalRepository(integrationTest.getDefaultBranch());
+                repo.configureRepos("studentRepo", "studentOriginRepo");
+                programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, examUser.getUser().getLogin(), repo);
+                studentRepos.add(repo);
+            }
+        }
+
+        for (var programmingExercise : programmingExercises) {
+            for (var user : registeredStudents) {
+                integrationTest.mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
+            }
+        }
+
+        int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
+        assertThat(noGeneratedParticipations).isEqualTo(registeredStudents.size() * exam.getExerciseGroups().size());
+
+        bitbucketRequestMockProvider.reset();
+
+        return studentExams;
     }
 }

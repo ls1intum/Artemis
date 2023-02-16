@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED;
 import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
@@ -29,6 +28,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.config.GuidedTourConfiguration;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -274,6 +274,20 @@ public class ParticipationResource {
         checkAccessPermissionOwner(participation, user);
         if (!isAllowedToParticipateInProgrammingExercise(programmingExercise, participation)) {
             throw new AccessForbiddenException("You are not allowed to resume that participation.");
+        }
+
+        // There is a second participation of that student in the exericse that is inactive/finished now
+        Optional<StudentParticipation> optionalOtherStudentParticipation = participationService.findOneByExerciseAndParticipantAnyStateAndTestRun(programmingExercise, user,
+                !participation.isTestRun());
+        if (optionalOtherStudentParticipation.isPresent()) {
+            StudentParticipation otherParticipation = optionalOtherStudentParticipation.get();
+            if (participation.getInitializationState() == InitializationState.INACTIVE) {
+                otherParticipation.setInitializationState(InitializationState.FINISHED);
+            }
+            else {
+                otherParticipation.setInitializationState(InitializationState.INACTIVE);
+            }
+            studentParticipationRepository.saveAndFlush(otherParticipation);
         }
 
         participation = participationService.resumeProgrammingExercise(participation);
@@ -888,7 +902,7 @@ public class ParticipationResource {
 
         // construct participation
         participation = new StudentParticipation();
-        participation.setInitializationState(INITIALIZED);
+        participation.setInitializationState(InitializationState.INITIALIZED);
         participation.setExercise(quizExercise);
         participation.addResult(result);
         return participation;
