@@ -17,38 +17,41 @@ let exerciseArray: Array<Exercise> = [];
 describe('Exam participation', () => {
     let course: Course;
 
+    before('Create course', () => {
+        courseManagementRequest.createCourse(true).then((response) => {
+            course = convertCourseAfterMultiPart(response);
+        });
+    });
+
     describe('Early Hand-in', () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
-        before(() => {
+        before('Create exam', () => {
             cy.login(admin);
-            courseManagementRequest.createCourse(true).then((response) => {
-                course = convertCourseAfterMultiPart(response);
-                const examContent = new CypressExamBuilder(course)
-                    .title(examTitle)
-                    .visibleDate(dayjs().subtract(3, 'minutes'))
-                    .startDate(dayjs().subtract(2, 'minutes'))
-                    .endDate(dayjs().add(1, 'hour'))
-                    .examMaxPoints(40)
-                    .numberOfExercises(4)
-                    .build();
-                courseManagementRequest.createExam(examContent).then((examResponse) => {
-                    exam = examResponse.body;
-                    addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture });
+            const examContent = new CypressExamBuilder(course)
+                .title(examTitle)
+                .visibleDate(dayjs().subtract(3, 'minutes'))
+                .startDate(dayjs().subtract(2, 'minutes'))
+                .endDate(dayjs().add(1, 'hour'))
+                .examMaxPoints(40)
+                .numberOfExercises(4)
+                .build();
+            courseManagementRequest.createExam(examContent).then((examResponse) => {
+                exam = examResponse.body;
+                addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture });
 
-                    addGroupWithExercise(exam, EXERCISE_TYPE.Programming, { submission });
+                addGroupWithExercise(exam, EXERCISE_TYPE.Programming, { submission });
 
-                    addGroupWithExercise(exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 });
+                addGroupWithExercise(exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 });
 
-                    addGroupWithExercise(exam, EXERCISE_TYPE.Modeling);
+                addGroupWithExercise(exam, EXERCISE_TYPE.Modeling);
 
-                    courseManagementRequest.registerStudentForExam(exam, studentOne);
-                    courseManagementRequest.registerStudentForExam(exam, studentTwo);
-                    courseManagementRequest.registerStudentForExam(exam, studentThree);
-                    courseManagementRequest.generateMissingIndividualExams(exam);
-                    courseManagementRequest.prepareExerciseStartForExam(exam);
-                });
+                courseManagementRequest.registerStudentForExam(exam, studentOne);
+                courseManagementRequest.registerStudentForExam(exam, studentTwo);
+                courseManagementRequest.registerStudentForExam(exam, studentThree);
+                courseManagementRequest.generateMissingIndividualExams(exam);
+                courseManagementRequest.prepareExerciseStartForExam(exam);
             });
         });
 
@@ -109,7 +112,7 @@ describe('Exam participation', () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
-        before(() => {
+        before('Create exam', () => {
             exerciseArray = [];
 
             cy.login(admin);
@@ -147,7 +150,7 @@ describe('Exam participation', () => {
         });
     });
 
-    after(() => {
+    after('Delete course', () => {
         if (course) {
             cy.login(admin);
             courseManagementRequest.deleteCourse(course.id!);
