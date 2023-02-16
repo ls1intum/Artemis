@@ -46,7 +46,6 @@
 
         .answer-option {
             cursor: pointer;
-
             user-select: none;
             -webkit-touch-callout: none; /* iOS Safari */
             -webkit-user-select: none; /* Safari */
@@ -58,7 +57,6 @@
             &:not(.click-disabled).selected {
                 animation: on-select 0.6s ease;
                 animation-fill-mode: forwards;
-
                 background: var(--mc-question-answer-option-selected-background);
 
                 @keyframes on-select {
@@ -66,6 +64,7 @@
                     100% {
                         transform: scale(1);
                     }
+
                     33% {
                         transform: scale(1.012);
                     }
