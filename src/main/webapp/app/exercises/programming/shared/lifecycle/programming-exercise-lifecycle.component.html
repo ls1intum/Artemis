@@ -119,7 +119,7 @@
             class="form-check-input"
             name="allowComplaintsForAutomaticAssessment"
             [checked]="exercise.allowComplaintsForAutomaticAssessments"
-            [disabled]="exercise.assessmentType !== assessmentType.AUTOMATIC || !exercise.dueDate || readOnly"
+            [disabled]="exercise.assessmentType !== assessmentType.AUTOMATIC || (!isExamMode && !exercise.dueDate) || readOnly"
             id="allowComplaintsForAutomaticAssessment"
             (change)="toggleComplaintsType()"
         />
