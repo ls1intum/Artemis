@@ -18,6 +18,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
 import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { switchMap, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -91,6 +93,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
             }
         });
         this.activatedRoute.url
+            .pipe(tap())
             .pipe(
                 tap(
                     (segments) =>
