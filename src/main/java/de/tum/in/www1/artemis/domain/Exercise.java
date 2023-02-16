@@ -932,7 +932,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     private void validateExamExerciseIncludedInScoreCompletely() {
-        if (isExamExercise() && includedInOverallScore != IncludedInOverallScore.INCLUDED_COMPLETELY) {
+        if (isExamExercise() && includedInOverallScore == IncludedInOverallScore.NOT_INCLUDED) {
             throw new BadRequestAlertException("An exam exercise must be included in the score.", getTitle(), "examExerciseNotIncludedInScore");
         }
     }
