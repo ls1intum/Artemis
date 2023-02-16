@@ -1,8 +1,25 @@
-import { loginPage } from '../support/artemis';
-import { studentOne } from '../support/users';
+import { Course } from 'app/entities/course.model';
+import { courseManagementRequest, loginPage, navigationBar } from '../support/artemis';
+import { convertCourseAfterMultiPart } from '../support/requests/CourseManagementRequests';
+import { admin, instructor, studentOne, studentThree, studentTwo, tutor, users } from '../support/users';
 
 describe('Login page tests', () => {
+    let course: Course;
+
+    before('Login as admin and create a course', () => {
+        cy.login(admin);
+        courseManagementRequest.createCourse(true).then((response) => {
+            course = convertCourseAfterMultiPart(response);
+            courseManagementRequest.addInstructorToCourse(course, instructor);
+            courseManagementRequest.addTutorToCourse(course, tutor);
+            courseManagementRequest.addStudentToCourse(course, studentOne);
+            courseManagementRequest.addStudentToCourse(course, studentTwo);
+            courseManagementRequest.addStudentToCourse(course, studentThree);
+        });
+    });
+
     it('Logs in via the UI', () => {
+        cy.clearAllCookies();
         cy.visit('/');
         loginPage.login(studentOne);
         cy.url().should('include', '/courses');
@@ -35,6 +52,45 @@ describe('Login page tests', () => {
         cy.location('pathname').should('eq', '/');
     });
 
+    it('Checks if students have correct permissions', () => {
+        const students = [studentOne, studentTwo, studentThree];
+        students.forEach((student) => {
+            cy.login(student, '/courses');
+            navigationBar.checkCourseManagementMenuItem().should('not.exist');
+            navigationBar.checkServerAdministrationMenuItem().should('not.exist');
+            users.getAccountInfo((response) => {
+                expect(response.authorities).to.have.members(['ROLE_USER']);
+            });
+        });
+    });
+
+    it('Checks if tutor has correct permissions', () => {
+        cy.login(tutor, '/courses');
+        navigationBar.checkCourseManagementMenuItem().should('exist');
+        navigationBar.checkServerAdministrationMenuItem().should('not.exist');
+        users.getAccountInfo((response) => {
+            expect(response.authorities).to.have.members(['ROLE_USER', 'ROLE_TA']);
+        });
+    });
+
+    it('Checks if instructor has correct permissions', () => {
+        cy.login(instructor, '/courses');
+        navigationBar.checkCourseManagementMenuItem().should('exist');
+        navigationBar.checkServerAdministrationMenuItem().should('not.exist');
+        users.getAccountInfo((response) => {
+            expect(response.authorities).to.have.members(['ROLE_USER', 'ROLE_INSTRUCTOR']);
+        });
+    });
+
+    it('Checks if admin has correct permissions', () => {
+        cy.login(admin, '/courses');
+        navigationBar.checkCourseManagementMenuItem().should('exist');
+        navigationBar.checkServerAdministrationMenuItem().should('exist');
+        users.getAccountInfo((response) => {
+            expect(response.authorities).to.have.members(['ROLE_USER', 'ROLE_ADMIN']);
+        });
+    });
+
     it('Verify footer content', () => {
         cy.visit('/');
         loginPage.shouldShowFooter();
@@ -43,5 +99,12 @@ describe('Login page tests', () => {
         loginPage.shouldShowReleaseNotesInFooter();
         loginPage.shouldShowPrivacyStatementInFooter();
         loginPage.shouldShowImprintInFooter();
+    });
+
+    after('Delete course', () => {
+        if (course) {
+            cy.login(admin);
+            courseManagementRequest.deleteCourse(course.id!);
+        }
     });
 });

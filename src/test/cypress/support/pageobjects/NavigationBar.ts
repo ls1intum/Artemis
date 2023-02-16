@@ -14,4 +14,12 @@ export class NavigationBar {
         cy.wait('@courseManagementQuery', { timeout: 30000 });
         cy.url().should('include', '/course-management');
     }
+
+    checkCourseManagementMenuItem() {
+        return cy.get('#course-admin-menu');
+    }
+
+    checkServerAdministrationMenuItem() {
+        return cy.get('#admin-menu');
+    }
 }
