@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -38,5 +39,5 @@ public interface ExamUserRepository extends JpaRepository<ExamUser, Long> {
                     OR examUser.didCheckRegistrationNumber = false
                     OR examUser.didCheckName = false)
             """)
-    List<ExamUserAttendanceCheckDTO> findAllExamUsersWhoDidNotSign(@Param("examId") long examId);
+    Set<ExamUserAttendanceCheckDTO> findAllExamUsersWhoDidNotSign(@Param("examId") long examId);
 }

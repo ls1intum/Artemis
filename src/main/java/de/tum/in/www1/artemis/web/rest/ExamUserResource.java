@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,7 +115,7 @@ public class ExamUserResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/verify-exam-users")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<ExamUserAttendanceCheckDTO>> getAllWhoDidNotSign(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<Set<ExamUserAttendanceCheckDTO>> getAllWhoDidNotSign(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all students who did not sign for exam with id: {}", examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         return ResponseEntity.ok().body(examUserRepository.findAllExamUsersWhoDidNotSign(examId));
