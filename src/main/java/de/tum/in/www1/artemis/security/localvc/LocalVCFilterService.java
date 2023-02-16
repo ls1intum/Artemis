@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.AccessUnauthorizedException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
@@ -174,7 +175,7 @@ public class LocalVCFilterService {
                 repositoryAccessService.checkAccessTestRepositoryElseThrow(false, exercise, user);
             }
             catch (AccessForbiddenException e) {
-                throw new LocalVCForbiddenException();
+                throw new LocalVCAuthException();
             }
             return;
         }
@@ -200,6 +201,9 @@ public class LocalVCFilterService {
 
         try {
             repositoryAccessService.checkAccessRepositoryElseThrow(participation, exercise, user, repositoryActionType);
+        }
+        catch (AccessUnauthorizedException e) {
+            throw new LocalVCAuthException();
         }
         catch (AccessForbiddenException e) {
             throw new LocalVCForbiddenException();

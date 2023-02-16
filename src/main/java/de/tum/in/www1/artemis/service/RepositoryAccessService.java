@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.AccessUnauthorizedException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
 @Service
@@ -42,8 +43,6 @@ public class RepositoryAccessService {
         this.examSubmissionService = examSubmissionService;
     }
 
-    // TODO: Dedicated exceptions for forbidden and authentication errors.
-
     public void checkAccessRepositoryElseThrow(Participation participation, ProgrammingExercise programmingExercise, User user, RepositoryActionType repositoryActionType) {
 
         // Error case 1: The participation is not from a programming exercise.
@@ -55,7 +54,7 @@ public class RepositoryAccessService {
         boolean hasPermissions = programmingExerciseParticipationService.canAccessParticipation(programmingParticipation, user);
         boolean wasUserNotifiedAboutPlagiarismCase = plagiarismService.wasUserNotifiedByInstructor(participation.getId(), user.getLogin());
         if (!hasPermissions && !wasUserNotifiedAboutPlagiarismCase) {
-            throw new AccessForbiddenException();
+            throw new AccessUnauthorizedException();
         }
 
         // Error case 3: The user's participation repository is locked.
