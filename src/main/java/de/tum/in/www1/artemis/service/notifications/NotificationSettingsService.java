@@ -45,6 +45,8 @@ public class NotificationSettingsService {
 
     public static final String NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL = "notification.exercise-notification.file-submission-successful";
 
+    public static final String NOTIFICATION__EXERCISE_NOTIFICATION__QUIZ_START_REMINDER = "notification.exercise-notification.quiz_start_reminder";
+
     // lecture notification settings group
     public static final String NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES = "notification.lecture-notification.attachment-changes";
 
@@ -84,6 +86,7 @@ public class NotificationSettingsService {
             new NotificationSetting(false, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL),
             new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST),
             new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST),
+            new NotificationSetting(false, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__QUIZ_START_REMINDER),
             // lecture notification settings group
             new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES),
             new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST),
@@ -110,6 +113,7 @@ public class NotificationSettingsService {
             Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST, new NotificationType[] { NEW_EXERCISE_POST }),
             Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST, new NotificationType[] { NEW_REPLY_FOR_EXERCISE_POST }),
             Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL, new NotificationType[] { FILE_SUBMISSION_SUCCESSFUL }),
+            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__QUIZ_START_REMINDER, new NotificationType[] { QUIZ_EXERCISE_STARTED }),
             Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES, new NotificationType[] { ATTACHMENT_CHANGE }),
             Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST, new NotificationType[] { NEW_LECTURE_POST }),
             Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST, new NotificationType[] { NEW_REPLY_FOR_LECTURE_POST }),
@@ -130,7 +134,7 @@ public class NotificationSettingsService {
             NEW_ANNOUNCEMENT_POST, FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE, NEW_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT,
             TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_STUDENT,
             TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED, NEW_EXERCISE_POST,
-            NEW_REPLY_FOR_EXERCISE_POST, NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST);
+            NEW_REPLY_FOR_EXERCISE_POST, NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, QUIZ_EXERCISE_STARTED);
 
     public NotificationSettingsService(NotificationSettingRepository notificationSettingRepository) {
         this.notificationSettingRepository = notificationSettingRepository;
