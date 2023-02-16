@@ -7,10 +7,6 @@
     position: relative;
     width: 100%;
 
-    .answer-options {
-        margin-top: 20px;
-    }
-
     .answer-option {
         display: flex;
         align-items: center;
@@ -43,15 +39,45 @@
             }
         }
 
-        &:hover {
-            background: var(--mc-question-answer-option-hover-background);
-        }
+    }
 
-        &.click-disabled {
-            cursor: not-allowed;
+    /* Used when the student can work on the exercise. See answer-options-result class for result display. */
+    .answer-options {
+        margin-top: 20px;
+
+        .answer-option {
+            cursor: pointer;
+
+            user-select: none;
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Safari */
 
             &:hover {
-                background: inherit;
+                background: var(--mc-question-answer-option-hover-background);
+            }
+
+            &:not(.click-disabled).selected {
+                animation: on-select 0.6s ease;
+                animation-fill-mode: forwards;
+
+                background: var(--mc-question-answer-option-selected-background);
+
+                @keyframes on-select {
+                    0%, 100% {
+                        transform: scale(1);
+                    }
+                    33% {
+                        transform: scale(1.012);
+                    }
+                }
+            }
+
+            &.click-disabled {
+                cursor: not-allowed;
+
+                &:hover {
+                    background: inherit;
+                }
             }
         }
     }
