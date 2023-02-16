@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExamUserAttendanceCheck } from 'app/entities/exam-users-attendance-check.model';
+import { ExamUserAttendanceCheckDTO } from 'app/entities/exam-users-attendance-check-dto.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Subject, Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -32,7 +32,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     predicate = 'id';
     ascending = true;
     isTestExam: boolean;
-    allExamUsersAttendanceCheck: ExamUserAttendanceCheck[] = [];
+    allExamUsersAttendanceCheck: ExamUserAttendanceCheckDTO[] = [];
     filteredUsersSize = 0;
     paramSub: Subscription;
 
@@ -78,7 +78,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
         });
         if (this.hasExamStarted) {
             this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!).subscribe({
-                next: (res: HttpResponse<ExamUserAttendanceCheck[]>) => {
+                next: (res: HttpResponse<ExamUserAttendanceCheckDTO[]>) => {
                     this.allExamUsersAttendanceCheck = res.body!;
                 },
                 error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),

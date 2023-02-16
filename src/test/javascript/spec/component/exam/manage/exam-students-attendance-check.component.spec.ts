@@ -4,7 +4,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
-import { ExamUserAttendanceCheck } from 'app/entities/exam-users-attendance-check.model';
+import { ExamUserAttendanceCheckDTO } from 'app/entities/exam-users-attendance-check-dto.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamStudentsAttendanceCheckComponent } from 'app/exam/manage/students/verify-attendance-check/exam-students-attendance-check.component';
@@ -86,7 +86,7 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
     });
 
     it('should call exam management service', () => {
-        const response: ExamUserAttendanceCheck[] = [
+        const response: ExamUserAttendanceCheckDTO[] = [
             {
                 id: 1,
                 studentImagePath: 'studentImagePath',

@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 
-export class ExamUserAttendanceCheck implements BaseEntity {
+export class ExamUserAttendanceCheckDTO implements BaseEntity {
     id?: number;
     studentImagePath: string;
     login: string;
