@@ -671,6 +671,12 @@ Getting Started with Docker Compose
 Other Docker Compose Setups
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. figure:: setup/artemis-docker-file-structure.drawio.png
+   :align: center
+   :target: ../_images/artemis-docker-file-structure.drawio.png
+
+   Overview of the Artemis Docker / Docker Compose structure
+
 The easiest way to configure a local deployment via Docker is a deployment with a *docker compose* file.
 In the directory ``src/main/docker/`` you can find the following *docker compose* files for different **setups**:
 
@@ -684,6 +690,7 @@ In the directory ``src/main/docker/`` you can find the following *docker compose
   (see `Gitlab Server Quickstart Guide <#gitlab-server-quickstart>`__ for the configuration of this setup)
 * ``monitoring.yml``: **Prometheus-Grafana** Setup containing a Prometheus and Grafana instance
 * ``mysql.yml``: **MySQL** Setup containing a MySQL DB instance
+* ``postgresql.yml``: **PostgreSQL** Setup containing a PostgreSQL DB instance
 
 Two example commands to run such setups:
 
@@ -701,6 +708,7 @@ is defined in the following files:
 
 * ``artemis/artemis.yml``: **Artemis Service**
 * ``mysql.yml``: **MySQL DB Service**
+* ``postgresql.yml``: **PostgreSQL DB Service**
 * ``gitlab/gitlab.yml``: **GitLab Service**
 * ``jenkins/jenkins.yml``: **Jenkins Service**
 

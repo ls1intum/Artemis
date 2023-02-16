@@ -78,7 +78,7 @@ under ``localhost:7990``.
     - Choose the H2 database
     - Select the evaluation/internal/test/dev setups if you are asked
     - Put the admin username and password into ``application-local.yml`` at ``artemis.version-control.user``
-   and ``artemis.continuous-integration.user``.
+      and ``artemis.continuous-integration.user``.
 
    - Jira:
 
