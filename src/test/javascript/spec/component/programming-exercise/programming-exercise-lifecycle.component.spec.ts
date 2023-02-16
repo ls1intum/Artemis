@@ -245,6 +245,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(alertSpy).toHaveBeenCalledTimes(nthCall + 1);
         expect(alertSpy).toHaveBeenNthCalledWith(++nthCall, 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
     });
+
     it.each([true, false])('should enable checkbox for complaints on automatic assessments for automatically assessed exercises', (examMode: boolean) => {
         comp.exercise = exercise;
         comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
