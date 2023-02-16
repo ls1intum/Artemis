@@ -22,4 +22,8 @@ export class NavigationBar {
     checkServerAdministrationMenuItem() {
         return cy.get('#admin-menu');
     }
+
+    logout() {
+        cy.get('#account-menu').click().get('#logout').click();
+    }
 }

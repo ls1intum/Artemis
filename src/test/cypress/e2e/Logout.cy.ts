@@ -1,6 +1,6 @@
-import { Course } from '../../../main/webapp/app/entities/course.model';
-import { ModelingExercise } from '../../../main/webapp/app/entities/modeling-exercise.model';
-import { courseManagementRequest, courseOverview, modelingExerciseEditor } from '../support/artemis';
+import { Course } from 'app/entities/course.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { courseManagementRequest, courseOverview, modelingExerciseEditor, navigationBar } from '../support/artemis';
 import { convertCourseAfterMultiPart } from '../support/requests/CourseManagementRequests';
 import { admin, studentOne, studentTwo } from '../support/users';
 
@@ -56,5 +56,5 @@ const startExerciseAndMakeChanges = (course: Course, modelingExercise: ModelingE
     courseOverview.openRunningExercise(exerciseID);
     modelingExerciseEditor.addComponentToModel(exerciseID, 1);
     modelingExerciseEditor.addComponentToModel(exerciseID, 2);
-    cy.get('#account-menu').click().get('#logout').click();
+    navigationBar.logout();
 };
