@@ -271,6 +271,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowComplaintsForAutomaticAssessment');
         expectElementToBeDisabled(checkbox);
     });
+
     it('should disable checkbox for complaints on automatic assessments for automatically assessed course exercises without due date', () => {
         comp.exercise = exercise;
         comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
