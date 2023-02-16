@@ -3,11 +3,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -22,6 +23,8 @@ import { Exercise } from 'app/entities/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 
 describe('ExerciseScoresExportButtonComponent', () => {
     let component: ExerciseScoresExportButtonComponent;
@@ -124,10 +127,35 @@ describe('ExerciseScoresExportButtonComponent', () => {
         },
     ];
 
+    const expectedColumnsWithTestCases = ['Name', 'Username', 'Score', 'Points', 'Repo Link', 'TestName1', 'TestName2'];
+    const expectedRowsWithTestCases = [
+        {
+            Name: 'Student B',
+            Username: 'studentB',
+            Score: 2,
+            Points: 4,
+            'Repo Link': 'https://www.gitlab.local/studentB',
+            TestName1: 'Passed',
+            TestName2: 'Failed',
+        },
+    ];
+
+    const expectedRowsWithTestCasesAndFeedback = [
+        {
+            Name: 'Student B',
+            Username: 'studentB',
+            Score: 2,
+            Points: 4,
+            'Repo Link': 'https://www.gitlab.local/studentB',
+            TestName1: 'Passed',
+            TestName2: 'Failed: "Detailed text with \nnewlines and \nsymbols ;.\'~""',
+        },
+    ];
+
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [ExerciseScoresExportButtonComponent, MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
+            imports: [MockDirective(NgbTooltip)],
+            declarations: [ExerciseScoresExportButtonComponent, MockComponent(FaIconComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(AlertService), { provide: ResultService, useClass: MockResultService }, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -147,7 +175,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         component.exercise = exercise1;
 
         // WHEN
-        component.exportResults();
+        component.exportResults(false, false);
         fixture.detectChanges();
 
         // THEN
@@ -205,7 +233,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         component.exercises = [exercise1, exercise2];
 
         // WHEN
-        component.exportResults();
+        component.exportResults(false, false);
         fixture.detectChanges();
 
         // THEN
@@ -215,7 +243,37 @@ describe('ExerciseScoresExportButtonComponent', () => {
         expect(exportAsCsvStub).toHaveBeenNthCalledWith(2, 'Exercise_title_with_spaces-results-scores', expectedColumnsNoCriteria, expectedRowsNoCriteria);
     });
 
-    function testCsvExport(exercise: Exercise, results: ResultWithPointsPerGradingCriterion[], expectedCsvFilename: string, expectedCsvColumns: string[], expectedCsvRows: any[]) {
+    it('should export results with test cases', () => {
+        const resultWithPointsAndTestCases = Object.assign({}, resultWithPoints2);
+
+        resultWithPointsAndTestCases.result.feedbacks = createFeedbacks();
+        testCsvExport(exercise2, [resultWithPointsAndTestCases], 'Exercise_title_with_spaces-results-scores', expectedColumnsWithTestCases, expectedRowsWithTestCases, true);
+    });
+
+    it('should export results with test cases and feedback', () => {
+        const resultWithPointsAndTestCases = Object.assign({}, resultWithPoints2);
+
+        resultWithPointsAndTestCases.result.feedbacks = createFeedbacks();
+        testCsvExport(
+            exercise2,
+            [resultWithPointsAndTestCases],
+            'Exercise_title_with_spaces-results-scores',
+            expectedColumnsWithTestCases,
+            expectedRowsWithTestCasesAndFeedback,
+            true,
+            true,
+        );
+    });
+
+    function testCsvExport(
+        exercise: Exercise,
+        results: ResultWithPointsPerGradingCriterion[],
+        expectedCsvFilename: string,
+        expectedCsvColumns: string[],
+        expectedCsvRows: any[],
+        withTestCases = false,
+        withFeedback = false,
+    ) {
         // GIVEN
         // @ts-ignore (stubbing a private method)
         const exportAsCsvStub = jest.spyOn(ExerciseScoresExportButtonComponent, 'exportAsCsv').mockImplementation();
@@ -223,13 +281,17 @@ describe('ExerciseScoresExportButtonComponent', () => {
         component.exercise = exercise;
 
         // WHEN
-        component.exportResults();
+        component.exportResults(withTestCases, withFeedback);
         fixture.detectChanges();
 
         // THEN
         expect(getResultsStub).toHaveBeenCalledOnce();
         expect(exportAsCsvStub).toHaveBeenCalledOnce();
-        expect(exportAsCsvStub).toHaveBeenCalledWith(expectedCsvFilename, expectedCsvColumns, expectedCsvRows);
+        if (withFeedback) {
+            expect(exportAsCsvStub).toHaveBeenCalledWith(expectedCsvFilename, expectedCsvColumns, expectedCsvRows, ',');
+        } else {
+            expect(exportAsCsvStub).toHaveBeenCalledWith(expectedCsvFilename, expectedCsvColumns, expectedCsvRows);
+        }
     }
 
     function setupParticipation(studentLogin: string, studentName: string, isProgramming: boolean): StudentParticipation {
@@ -253,5 +315,30 @@ describe('ExerciseScoresExportButtonComponent', () => {
             users.push(user);
         }
         return users;
+    }
+
+    function createFeedbacks(): Feedback[] {
+        const feedbacks: Feedback[] = [];
+
+        const feedback1 = new Feedback();
+        feedback1.text = 'TestName1';
+        feedback1.positive = true;
+        feedback1.type = FeedbackType.AUTOMATIC;
+
+        const feedback2 = new Feedback();
+        feedback2.text = 'TestName2';
+        feedback2.positive = false;
+        feedback2.detailText = 'Detailed text with \nnewlines and \nsymbols ;.\'~"';
+        feedback2.type = FeedbackType.AUTOMATIC;
+
+        const feedback3 = new Feedback();
+        feedback3.text = 'File src/test/exercise/Main.java at line 123';
+        feedback3.positive = false;
+        feedback3.detailText = 'This is a manual feedback';
+        feedback3.type = FeedbackType.MANUAL;
+
+        feedbacks.push(feedback1, feedback2, feedback3);
+
+        return feedbacks;
     }
 });

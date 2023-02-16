@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { BaseGradingSystemComponent } from 'app/grading-system/base-grading-system/base-grading-system.component';
 
@@ -15,6 +16,8 @@ export class GradingSystemComponent implements OnInit {
     examId?: number;
     isExam = false;
     childComponent?: BaseGradingSystemComponent;
+
+    documentationType = DocumentationType.Grading;
 
     constructor(private route: ActivatedRoute) {}
 
