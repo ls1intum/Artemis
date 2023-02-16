@@ -100,7 +100,7 @@ public class GroupNotificationService {
                         (String) typeSpecificInformation);
                 default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
             };
-            saveAndSend(resultingGroupNotification, notificationSubject);
+            saveAndSend(resultingGroupNotification, notificationSubject, author);
         }
     }
 
@@ -308,8 +308,9 @@ public class GroupNotificationService {
      *
      * @param notification        that should be saved and sent
      * @param notificationSubject which information will be extracted to create the email
+     * @param author              the author, if set, will not be notified via instant notification.
      */
-    private void saveAndSend(GroupNotification notification, Object notificationSubject) {
+    private void saveAndSend(GroupNotification notification, Object notificationSubject, User author) {
         if (LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
             saveExamNotification(notification);
             messagingTemplate.convertAndSend(notification.getTopic(), notification);
@@ -323,7 +324,7 @@ public class GroupNotificationService {
 
         // checks if this notification type has email support
         if (notificationSettingsService.checkNotificationTypeForInstantNotificationSupport(type)) {
-            List<User> groupNotificationReceivers = findGroupNotificationReceivers(notification);
+            List<User> groupNotificationReceivers = findGroupNotificationReceivers(notification, author);
 
             if (!groupNotificationReceivers.isEmpty()) {
                 notificationService.sendNotification(notification, groupNotificationReceivers, notificationSubject);
@@ -349,8 +350,9 @@ public class GroupNotificationService {
      * Prepares sending an instant notification based on a GroupNotification by finding the relevant users
      *
      * @param notification which information should also be propagated via email
+     * @param author       the author will be excluded if not null
      */
-    private List<User> findGroupNotificationReceivers(GroupNotification notification) {
+    private List<User> findGroupNotificationReceivers(GroupNotification notification, User author) {
         Course course = notification.getCourse();
         GroupNotificationType groupType = notification.getType();
         List<User> foundUsers;
@@ -362,6 +364,11 @@ public class GroupNotificationService {
             default -> foundUsers = Collections.emptyList();
         }
 
-        return foundUsers;
+        if (author == null) {
+            return foundUsers;
+        }
+        else {
+            return foundUsers.stream().filter((user) -> user.getId() != author.getId()).toList();
+        }
     }
 }
