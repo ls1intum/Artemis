@@ -49,7 +49,7 @@
             *ngFor="let answerOption of question.answerOptions; let i = index"
             id="answer-option-{{ i }}"
             class="answer-option"
-            [ngClass]="{ 'click-disabled': clickDisabled, 'selected': isAnswerOptionSelected(answerOption) }"
+            [ngClass]="{ 'click-disabled': clickDisabled, selected: isAnswerOptionSelected(answerOption) }"
             (click)="toggleSelection(answerOption)"
         >
             <div class="content">

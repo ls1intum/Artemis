@@ -38,7 +38,6 @@
                 font-size: 18px;
             }
         }
-
     }
 
     /* Used when the student can work on the exercise. See answer-options-result class for result display. */
@@ -63,7 +62,8 @@
                 background: var(--mc-question-answer-option-selected-background);
 
                 @keyframes on-select {
-                    0%, 100% {
+                    0%,
+                    100% {
                         transform: scale(1);
                     }
                     33% {
