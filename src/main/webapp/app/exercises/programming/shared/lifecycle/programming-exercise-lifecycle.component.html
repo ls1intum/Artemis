@@ -124,7 +124,7 @@
             (change)="toggleComplaintsType()"
         />
         <label
-            [ngStyle]="exercise.assessmentType !== assessmentType.AUTOMATIC || !exercise.dueDate ? { color: 'grey' } : {}"
+            [ngStyle]="exercise.assessmentType !== assessmentType.AUTOMATIC || (!isExamMode && !exercise.dueDate) ? { color: 'grey' } : {}"
             class="form-control-label"
             for="allowComplaintsForAutomaticAssessment"
             jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"
