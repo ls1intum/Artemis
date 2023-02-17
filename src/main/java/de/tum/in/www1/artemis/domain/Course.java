@@ -828,13 +828,4 @@ public class Course extends DomainObject {
         this.courseInformationSharingConfiguration = courseInformationSharingConfiguration;
     }
 
-    public boolean isCommunicationFeatureEnabled() {
-        return courseInformationSharingConfiguration == CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING
-                || courseInformationSharingConfiguration == CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
-    }
-
-    public boolean isMessagingEnabled() {
-        return courseInformationSharingConfiguration == CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING
-                || courseInformationSharingConfiguration == CourseInformationSharingConfiguration.MESSAGING_ONLY;
-    }
 }
