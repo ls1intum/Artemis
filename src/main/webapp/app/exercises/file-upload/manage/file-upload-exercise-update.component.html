@@ -1,10 +1,12 @@
 <form name="editForm" role="form" novalidate #editForm="ngForm">
     <div class="d-flex align-items-center">
-        <h4 *ngIf="fileUploadExercise.id" id="jhi-file-upload-exercise-heading-edit" jhiTranslate="artemisApp.fileUploadExercise.home.editLabel">Edit a File Upload Exercise</h4>
+        <h4 *ngIf="fileUploadExercise.id && !isImport" id="jhi-file-upload-exercise-heading-edit" jhiTranslate="artemisApp.fileUploadExercise.home.editLabel">
+            Edit a File Upload Exercise
+        </h4>
         <h4 *ngIf="!fileUploadExercise.id" id="jhi-file-upload-exercise-heading-create" jhiTranslate="artemisApp.fileUploadExercise.home.createLabel">
             Create a new File Upload Exercise
         </h4>
-        <h4 *ngIf="isImport" id="jhi-file-upload-exercise-heading-import" jhiTranslate="artemisApp.fileUploadExercise.home.importLabel">Import File Upload Exercise</h4>
+        <h4 *ngIf="isImport" id="jhi-file-upload-exercise-heading-import" jhiTranslate="artemisApp.fileUploadExercise.home.importLabel">Import a File Upload Exercise</h4>
         <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
     </div>
     <div>
