@@ -5,22 +5,20 @@ package de.tum.in.www1.artemis.domain.enumeration;
  */
 public enum CourseInformationSharingConfiguration {
     /**
-     * Both Communication and Messaging are disabled
+     * Both Communication and Messaging are disabled VALUE = 0
      */
     DISABLED,
 
     /**
-     * Both Communication and Messaging are enabled
-     * <p>
-     * Note: If changed you need update the migration sql in 20230217110200_changelog.xml
+     * Both Communication and Messaging are enabled VALUE = 1
      */
     COMMUNICATION_AND_MESSAGING,
     /**
-     * Only Communication is enabled
+     * Only Communication is enabled VALUE = 2
      */
     COMMUNICATION_ONLY,
     /**
-     * Only Messaging is enabled
+     * Only Messaging is enabled VALUE = 3
      */
     MESSAGING_ONLY,
 }
