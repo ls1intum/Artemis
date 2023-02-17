@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -22,6 +23,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.LtiNewResultService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResultNotificationDTO;
@@ -63,6 +65,7 @@ public class LocalCITriggerService {
      *
      * @param participation the participation with the id of the build plan that should be triggered.
      */
+    @Async
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws LocalCIException {
         // Create a new build job and run it. TODO: outsource execution to an ExecutorService.
         String assignmentRepositoryUrlString = participation.getRepositoryUrl();
@@ -99,6 +102,10 @@ public class LocalCITriggerService {
 
             LocalCIBuildResultNotificationDTO buildResult = localCIBuildJob.runBuildJob(); // TODO: run in separate thread and notify LocalCIService about the result.
             log.info("buildResult: {}", buildResult);
+
+            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+            // Therefore, a mock auth object has to be created.
+            SecurityUtils.setAuthorizationObject();
             Optional<Result> optResult = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
 
             // Only notify the user about the new result if the result was created successfully.
