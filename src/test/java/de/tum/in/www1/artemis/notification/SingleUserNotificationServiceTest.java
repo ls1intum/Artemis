@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 
 import javax.mail.internet.MimeMessage;
@@ -16,8 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
@@ -28,6 +31,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -47,6 +51,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private ExerciseRepository exerciseRepository;
+
+    @Autowired
+    private ResultRepository resultRepository;
 
     private User user;
 
@@ -241,18 +248,25 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         Course testCourse = database.addCourseWithFileUploadExercise();
         Exercise testExercise = testCourse.getExercises().iterator().next();
 
-        User studentWithParticipationAndSubmissionAndResult = database.getUserByLogin(TEST_PREFIX + "student1");
-        User studentWithParticipationButWithoutSubmission = database.getUserByLogin(TEST_PREFIX + "student2");
+        User studentWithParticipationAndSubmissionAndAutomaticResult = database.getUserByLogin(TEST_PREFIX + "student1");
+        User studentWithParticipationAndSubmissionAndManualResult = database.getUserByLogin(TEST_PREFIX + "student2");
+        User studentWithParticipationButWithoutSubmission = database.getUserByLogin(TEST_PREFIX + "student3");
 
-        database.createParticipationSubmissionAndResult(testExercise.getId(), studentWithParticipationAndSubmissionAndResult, 10.0, 10.0, 50, true);
+        database.createParticipationSubmissionAndResult(testExercise.getId(), studentWithParticipationAndSubmissionAndAutomaticResult, 10.0, 10.0, 50, true);
+        Result manualResult = database.createParticipationSubmissionAndResult(testExercise.getId(), studentWithParticipationAndSubmissionAndManualResult, 10.0, 10.0, 50, true);
+        manualResult.setAssessmentType(AssessmentType.MANUAL);
+        resultRepository.save(manualResult);
         database.createAndSaveParticipationForExercise(testExercise, studentWithParticipationButWithoutSubmission.getLogin());
 
         testExercise = exerciseRepository.findAllExercisesByCourseId(testCourse.getId()).iterator().next();
 
         singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(testExercise);
 
-        assertThat(notificationRepository.findAll()).as("Only one notification should have been created (for the user with a valid participation, submission, and result)")
-                .hasSize(1);
+        List<Notification> sentNotifications = notificationRepository.findAll();
+
+        assertThat(sentNotifications).as("Only one notification should have been created (for the user with a valid participation, submission, and manual result)").hasSize(1);
+        assertThat(sentNotifications.get(0)).isInstanceOf(SingleUserNotification.class);
+        assertThat(((SingleUserNotification) sentNotifications.get(0)).getRecipient()).isEqualTo(studentWithParticipationAndSubmissionAndManualResult);
     }
 
     // Plagiarism related
