@@ -5,7 +5,7 @@ import submission from '../../fixtures/programming_exercise_submissions/all_succ
 import { Course } from 'app/entities/course.model';
 import { generateUUID } from '../../support/utils';
 import { EXERCISE_TYPE } from '../../support/constants';
-import { courseManagementRequest, examExerciseGroupCreation, examParticipation } from '../../support/artemis';
+import { courseManagementRequest, examExerciseGroupCreation, examNavigation, examParticipation } from '../../support/artemis';
 import { AdditionalData, Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
 import { admin, studentOne } from '../../support/users';
 
@@ -52,7 +52,7 @@ describe('Exam participation', () => {
         examParticipation.startParticipation(studentOne, course, exam);
         for (let j = 0; j < exerciseArray.length; j++) {
             const exercise = exerciseArray[j];
-            examParticipation.openExercise(j);
+            examNavigation.openExerciseAtIndex(j);
             examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
         }
         examParticipation.handInEarly();

@@ -547,6 +547,11 @@ export class CypressExamBuilder {
         return this;
     }
 
+    workingTime(workingTime: number) {
+        this.template.workingTime = workingTime;
+        return this;
+    }
+
     /**
      * @param randomize if the exercise order should be randomized
      */
