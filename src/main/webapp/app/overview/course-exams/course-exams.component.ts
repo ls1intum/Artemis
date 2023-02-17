@@ -60,14 +60,14 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
                 this.studentExams = response!;
             });
 
-        if (this.course!.exams) {
+        if (this.course?.exams) {
             // The Map is ued to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
             this.expandAttemptsMap = new Map(this.course!.exams!.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id!, false]));
 
             // Loading the exams from the course
-            this.realExamsOfCourse = this.course!.exams!.filter((exam) => this.isVisible(exam) && !exam.testExam).sort((se1, se2) => this.sortExamsByStartDate(se1, se2));
-
-            this.testExamsOfCourse = this.course!.exams!.filter((exam) => this.isVisible(exam) && exam.testExam).sort((se1, se2) => this.sortExamsByStartDate(se1, se2));
+            const exams = this.course.exams.filter((exam) => this.isVisible(exam)).sort((se1, se2) => this.sortExamsByStartDate(se1, se2));
+            this.realExamsOfCourse = exams.filter((exam) => !exam.testExam);
+            this.testExamsOfCourse = exams.filter((exam) => exam.testExam);
         }
     }
 

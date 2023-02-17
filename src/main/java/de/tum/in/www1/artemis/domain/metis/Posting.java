@@ -37,6 +37,7 @@ public abstract class Posting extends DomainObject {
     @Column(name = "creation_date", updatable = false)
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
+    // Note: this number should be the same as in posting-create-edit.directive.ts
     @Size(max = 5000)
     @Column(name = "content", length = 5000)
     private String content;

@@ -6,6 +6,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { PostingEditType } from 'app/shared/metis/metis.util';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 
+// Note: this number should be the same as in Posting.java
 const MAX_CONTENT_LENGTH = 5000;
 
 @Directive()

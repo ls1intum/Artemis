@@ -1,6 +1,27 @@
 {
     "artemisApp": {
         "exam": {
+            "examUsers": {
+                "uploadImage": "Upload images",
+                "uploadImageTooltip": "Upload images for the registered students",
+                "introText": "This dialog can be used to upload pdf file and extract images for registered students.",
+                "dialogText": "Each entry in the input file must contain a value for either matriculation number, login or email.\nValues for last and first name are optional.",
+                "pdfExampleText": "Example of a valid PDF file format:",
+                "pdfFile": {
+                    "label": "Select .pdf file",
+                    "tooltip": "Please select a .pdf file containing registered students image and matriculation number."
+                },
+                "dialogTitle": "Upload images",
+                "allImagesSaved": "All images were saved successfully.",
+                "plannedSeat": "Planned Seat",
+                "plannedRoom": "Planned Room",
+                "actualSeat": "Actual Seat",
+                "actualRoom": "Actual Room",
+                "room": "Room",
+                "seat": "Seat",
+                "saveImages": "Save Images",
+                "numberOfImagesSaved": "Images saved"
+            },
             "overview": {
                 "start": "Start: {{start}}",
                 "duration": "Working Time:",
@@ -419,11 +440,24 @@
                 }
             },
             "examStudents": {
+                "imageChecked": "Image was checked successfully",
+                "imageNotChecked": "Image was not checked",
+                "loginChecked": "Login was checked successfully",
+                "loginNotChecked": "Login was not checked",
+                "nameChecked": "Name was checked successfully",
+                "nameNotChecked": "Name was not checked",
+                "registrationNumberChecked": "Registration number was checked successfully",
+                "registrationNumberNotChecked": "Registration number was not checked",
+                "noSignature": "No signature",
                 "registeredStudents": "Registered students",
+                "notCheckedStudents": "Not checked students",
                 "searchResults": "search results",
                 "usersPerPage": "{{number}} students per page",
                 "showAllUsers": "Show all students",
                 "searchForUsers": "Register a student for this exam by searching for login or name",
+                "checks": "Checks",
+                "signingImagePath": "Signature",
+                "searchStudents": "Search students by name or login",
                 "searchNoResults": "No students found",
                 "login": "Login",
                 "name": "Name",
@@ -433,6 +467,10 @@
                 "registrationNumber": "Matriculation number",
                 "registerAllFromCourse": "Register course students",
                 "registerAllFromCourseTooltip": "Register all students enrolled in this course",
+                "verifyAttendanceTooltip": "Verify the attendance check of the students",
+                "verifyAttendanceBtn": "Verify Attendance",
+                "examNotStarted": "The exam has not started yet",
+                "verifyChecks": "Verify Attendance",
                 "removeFromExam": {
                     "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?",
                     "deleteParticipationsAndSubmission": "Additionally delete this student's participation and submissions in the associated exam? This action can NOT be undone!",
