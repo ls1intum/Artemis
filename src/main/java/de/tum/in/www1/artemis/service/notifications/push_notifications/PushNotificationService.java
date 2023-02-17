@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepo
 import de.tum.in.www1.artemis.service.notifications.InstantNotificationService;
 
 @Service
-public abstract class PushNotificationService<NOTIFICATION_REQUEST> implements InstantNotificationService {
+public abstract class PushNotificationService implements InstantNotificationService {
 
     private static SecureRandom random = new SecureRandom();
 
@@ -51,21 +51,12 @@ public abstract class PushNotificationService<NOTIFICATION_REQUEST> implements I
     private static final Gson gson = new Gson();
 
     /**
-     * Build a send request using the given data that can be sent to the endpoint.
-     *
-     * @param initializationVector the iv needed to encrypt the payloadCiphertext on the client
-     * @param payloadCiphertext    the encrypted payload
-     * @param token                the endpoint specific token for the endpoint for one device
-     * @return the send request
-     */
-    abstract NOTIFICATION_REQUEST buildSendRequest(String initializationVector, String payloadCiphertext, String token);
-
-    /**
      * Send all the notifications requests to the endpoint. Potentially, optimize the sending using a batched request.
      *
-     * @param requests the requests previously built using buildSendRequest
+     * @param requests     the requests previously built using buildSendRequest
+     * @param relayBaseUrl the url of the relay
      */
-    abstract void sendNotificationRequestsToEndpoint(List<NOTIFICATION_REQUEST> requests);
+    abstract void sendNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayBaseUrl);
 
     @Override
     public final void sendNotification(Notification notification, User user, Object notificationSubject) {
@@ -74,6 +65,11 @@ public abstract class PushNotificationService<NOTIFICATION_REQUEST> implements I
 
     @Override
     public final void sendNotification(Notification notification, List<User> users, Object notificationSubject) {
+        final Optional<String> relayServerBaseUrl = getRelayBaseUrl();
+
+        if (relayServerBaseUrl.isEmpty())
+            return;
+
         NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
 
         List<PushNotificationDeviceConfiguration> userDeviceConfigurations = getRepository().findByUserIn(users, getDeviceType());
@@ -84,7 +80,7 @@ public abstract class PushNotificationService<NOTIFICATION_REQUEST> implements I
 
         final byte[] iv = new byte[16];
 
-        List<NOTIFICATION_REQUEST> notificationRequests = userDeviceConfigurations.stream().flatMap(deviceConfiguration -> {
+        List<RelayNotificationRequest> notificationRequests = userDeviceConfigurations.stream().flatMap(deviceConfiguration -> {
             random.nextBytes(iv);
 
             SecretKey key = new SecretKeySpec(deviceConfiguration.getSecretKey(), "AES");
@@ -93,19 +89,21 @@ public abstract class PushNotificationService<NOTIFICATION_REQUEST> implements I
             Optional<String> payloadCiphertext = encrypt(payload, key, iv);
 
             if (payloadCiphertext.isPresent()) {
-                return Stream.of(buildSendRequest(ivAsString, payloadCiphertext.get(), deviceConfiguration.getToken()));
+                return Stream.of(new RelayNotificationRequest(ivAsString, payloadCiphertext.get(), deviceConfiguration.getToken()));
             }
             else {
                 return Stream.empty();
             }
         }).toList();
 
-        sendNotificationRequestsToEndpoint(notificationRequests);
+        sendNotificationRequestsToEndpoint(notificationRequests, relayServerBaseUrl.get());
     }
 
     abstract PushNotificationDeviceConfigurationRepository getRepository();
 
     abstract PushNotificationDeviceType getDeviceType();
+
+    abstract Optional<String> getRelayBaseUrl();
 
     record PushNotificationData(String title, String body, String target, String type) {
     }
