@@ -19,6 +19,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -109,9 +110,9 @@ public class Course extends DomainObject {
     @JoinColumn(name = "online_course_configuration_id")
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "course_communication_configuration_id")
-    private CourseCommunicationConfiguration courseCommunicationConfiguration;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "info_sharing_config")
+    private CourseInformationSharingConfiguration courseInformationSharingConfiguration;
 
     @Column(name = "max_complaints", nullable = false)
     @JsonView(QuizView.Before.class)
@@ -819,11 +820,21 @@ public class Course extends DomainObject {
         this.tutorialGroupsConfiguration = tutorialGroupsConfiguration;
     }
 
-    public CourseCommunicationConfiguration getCourseCommunicationConfiguration() {
-        return courseCommunicationConfiguration;
+    public CourseInformationSharingConfiguration getCourseInformationSharingConfiguration() {
+        return courseInformationSharingConfiguration;
     }
 
-    public void setCourseCommunicationConfiguration(CourseCommunicationConfiguration courseCommunicationConfiguration) {
-        this.courseCommunicationConfiguration = courseCommunicationConfiguration;
+    public void setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
+        this.courseInformationSharingConfiguration = courseInformationSharingConfiguration;
+    }
+
+    public boolean isCommunicationFeatureEnabled() {
+        return courseInformationSharingConfiguration == CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING
+                || courseInformationSharingConfiguration == CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+    }
+
+    public boolean isMessagingEnabled() {
+        return courseInformationSharingConfiguration == CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING
+                || courseInformationSharingConfiguration == CourseInformationSharingConfiguration.MESSAGING_ONLY;
     }
 }

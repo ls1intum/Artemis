@@ -3,71 +3,18 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
     <changeSet author="swaldhauser" id="20230126111151">
-        <createTable tableName="course_communication_configuration">
-            <column name="id" type="bigint" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="questions_and_answers_enabled" type="boolean" defaultValueBoolean="true">
-                <constraints nullable="false"/>
-            </column>
-            <column name="channel_messaging_enabled" type="boolean" defaultValueBoolean="true">
-                <constraints nullable="false"/>
-            </column>
-            <column name="group_messaging_enabled" type="boolean" defaultValueBoolean="true">
-                <constraints nullable="false"/>
-            </column>
-            <column name="one_to_one_messaging_enabled" type="boolean" defaultValueBoolean="true">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
         <addColumn tableName="course">
-            <column name="course_communication_configuration_id" type="bigint"/>
+            <column name="info_sharing_config" type="VARCHAR(255)" defaultValue="DISABLED">
+                <constraints nullable="false"/>
+            </column>
         </addColumn>
-        <addForeignKeyConstraint baseColumnNames="course_communication_configuration_id" baseTableName="course" constraintName="FK_course_communication_configuration" deferrable="false"
-                                 initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course_communication_configuration"
-                                 validate="true"/>
-        <createIndex indexName="IX_course_communication_configuration" tableName="course" unique="true">
-            <column name="course_communication_configuration_id"/>
-        </createIndex>
-        <!-- START: Create one configuration per course -->
-        <addColumn tableName="course_communication_configuration">
-            <column name="temp_course_id" type="bigint"/>
-        </addColumn>
-        <sql>
-            INSERT INTO course_communication_configuration (questions_and_answers_enabled, channel_messaging_enabled, group_messaging_enabled, one_to_one_messaging_enabled, temp_course_id)
-            SELECT false, false, false, false, id FROM course;
-        </sql>
-        <sql>
-            UPDATE course
-            SET course_communication_configuration_id =
-                    (SELECT id FROM course_communication_configuration WHERE temp_course_id = course.id)
-            WHERE course_communication_configuration_id IS NULL;
-        </sql>
-        <dropColumn tableName="course_communication_configuration" columnName="temp_course_id"/>
-        <!-- END: Create one configuration per course -->
-        <!-- Update the course configuration to match the old postEnabledValue -->
+        <!-- Update the info_sharing_config to match the old postEnabledValue -->
         <sql>
             UPDATE
-                course_communication_configuration
-            SET questions_and_answers_enabled = (
-                SELECT posts_enabled FROM course WHERE course.course_communication_configuration_id = course_communication_configuration.id
-            ),
-                channel_messaging_enabled = (
-                    SELECT posts_enabled FROM course WHERE course.course_communication_configuration_id = course_communication_configuration.id
-                ),
-                group_messaging_enabled = (
-                    SELECT posts_enabled FROM course WHERE course.course_communication_configuration_id = course_communication_configuration.id
-                ),
-                one_to_one_messaging_enabled = (
-                    SELECT posts_enabled FROM course WHERE course.course_communication_configuration_id = course_communication_configuration.id
-                )
-            WHERE TRUE;
+                course
+            SET info_sharing_config = 'COMMUNICATION_AND_MESSAGING'
+            WHERE posts_enabled = true;
         </sql>
-<!--        <dropColumn tableName="course" columnName="posts_enabled"/>-->
-        <addNotNullConstraint
-                              columnDataType="bigint"
-                              columnName="course_communication_configuration_id"
-                              tableName="course"/>
-
+        <!--        <dropColumn tableName="course" columnName="posts_enabled"/>-->
     </changeSet>
 </databaseChangeLog>
