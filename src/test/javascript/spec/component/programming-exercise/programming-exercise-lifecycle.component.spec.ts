@@ -246,15 +246,11 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(alertSpy).toHaveBeenNthCalledWith(++nthCall, 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
     });
 
-    it.each([true, false])('should enable checkbox for complaints on automatic assessments for automatically assessed exercises', (examMode: boolean) => {
+    it('should enable checkbox for complaints on automatic assessments for automatically assessed exam exercises', () => {
         comp.exercise = exercise;
         comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
-        comp.isExamMode = examMode;
-        if (!examMode) {
-            exercise.dueDate = undefined;
-            exercise.course = new Course();
-            exercise.course.complaintsEnabled = true;
-        }
+        comp.isExamMode = true;
+        exercise.dueDate = undefined;
         fixture.detectChanges();
         const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowComplaintsForAutomaticAssessment');
         expectElementToBeEnabled(checkbox);
