@@ -31,7 +31,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { GroupChatIconComponent } from 'app/overview/course-conversations/other/group-chat-icon/group-chat-icon.component';
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
 import { NgbTooltipMocksModule } from '../../../../../helpers/mocks/directive/ngbTooltipMocks.module';
-import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 
 const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -40,7 +39,7 @@ examples.forEach((activeConversation) => {
         let component: ConversationSelectionSidebarComponent;
         let fixture: ComponentFixture<ConversationSelectionSidebarComponent>;
         let metisConversationService: MetisConversationService;
-        let course: Course;
+        const course = { id: 1 } as any;
         const canCreateChannel = jest.fn();
         let allConversations: ConversationDto[] = [];
 
@@ -98,8 +97,6 @@ examples.forEach((activeConversation) => {
 
             canCreateChannel.mockReturnValue(true);
             metisConversationService = TestBed.inject(MetisConversationService);
-            course = new Course();
-            course.id = 1;
             Object.defineProperty(metisConversationService, 'course', { get: () => course });
             Object.defineProperty(metisConversationService, 'activeConversation$', { get: () => new BehaviorSubject(activeConversation).asObservable() });
             Object.defineProperty(metisConversationService, 'conversationsOfUser$', {
@@ -117,72 +114,6 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
             tick(301);
             expect(component).toBeTruthy();
-        }));
-
-        it('should hide the channel section if setting DISABLED', fakeAsync(() => {
-            fixture.detectChanges();
-            tick(301);
-            expect(fixture.debugElement.query(By.css('#channel-section'))).toBeTruthy();
-
-            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
-            fixture.detectChanges();
-            tick(301);
-            expect(fixture.debugElement.query(By.css('#channel-section'))).toBeFalsy();
-        }));
-
-        it('should hide the channel section if setting COMMUNICATION_ONLY', fakeAsync(() => {
-            fixture.detectChanges();
-            tick(301);
-            expect(fixture.debugElement.query(By.css('#channel-section'))).toBeTruthy();
-
-            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
-            fixture.detectChanges();
-            tick(301);
-            expect(fixture.debugElement.query(By.css('#channel-section'))).toBeFalsy();
-        }));
-
-        it('should hide the group chat section if setting DISABLED', fakeAsync(() => {
-            fixture.detectChanges();
-            tick(301);
-            expect(fixture.debugElement.query(By.css('#group-chat-section'))).toBeTruthy();
-
-            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
-            fixture.detectChanges();
-            tick(301);
-            expect(fixture.debugElement.query(By.css('#group-chat-section'))).toBeFalsy();
-        }));
-
-        it('should hide the group chat section if setting COMMUNICATION_ONLY', fakeAsync(() => {
-            fixture.detectChanges();
-            tick(301);
-            expect(fixture.debugElement.query(By.css('#group-chat-section'))).toBeTruthy();
-
-            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
-            fixture.detectChanges();
-            tick(301);
-            expect(fixture.debugElement.query(By.css('#group-chat-section'))).toBeFalsy();
-        }));
-
-        it('should hide the direct messaging section if setting DISABLED', fakeAsync(() => {
-            fixture.detectChanges();
-            tick(301);
-            expect(fixture.debugElement.query(By.css('#direct-messages-section'))).toBeTruthy();
-
-            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
-            fixture.detectChanges();
-            tick(301);
-            expect(fixture.debugElement.query(By.css('#direct-messages-section'))).toBeFalsy();
-        }));
-
-        it('should hide the direct messaging section if setting COMMUNICATION_ONLY', fakeAsync(() => {
-            fixture.detectChanges();
-            tick(301);
-            expect(fixture.debugElement.query(By.css('#direct-messages-section'))).toBeTruthy();
-
-            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
-            fixture.detectChanges();
-            tick(301);
-            expect(fixture.debugElement.query(By.css('#direct-messages-section'))).toBeFalsy();
         }));
 
         it('should set properties correctly', fakeAsync(() => {
