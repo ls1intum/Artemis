@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
-    <changeSet author="swaldhauser" id="20230126111151">
+    <changeSet author="swaldhauser" id="20230217110200">
         <addColumn tableName="course">
             <column name="info_sharing_config" type="VARCHAR(255)" defaultValue="DISABLED">
                 <constraints nullable="false"/>
