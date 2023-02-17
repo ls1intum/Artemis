@@ -2,14 +2,14 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltipModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { LoadedImage } from 'app/shared/image-cropper/interfaces/loaded-image.interface';
 import { LoadImageService } from 'app/shared/image-cropper/services/load-image.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
-import { Course } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
@@ -30,7 +30,6 @@ import dayjs from 'dayjs/esm';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -71,10 +70,7 @@ describe('Course Management Update Component', () => {
         course.maxComplaintTextLimit = 500;
         course.maxComplaintResponseTextLimit = 1000;
         course.maxRequestMoreFeedbackTimeDays = 15;
-        course.courseCommunicationConfiguration!.oneToOneMessagingEnabled = true;
-        course.courseCommunicationConfiguration!.groupMessagingEnabled = true;
-        course.courseCommunicationConfiguration!.channelMessagingEnabled = true;
-        course.courseCommunicationConfiguration!.questionsAndAnswersEnabled = true;
+        course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
         course.registrationEnabled = true;
         course.registrationConfirmationMessage = 'testRegistrationConfirmationMessage';
         course.presentationScore = 16;
@@ -171,18 +167,8 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['maxComplaintTextLimit'])?.value).toBe(course.maxComplaintTextLimit);
             expect(comp.courseForm.get(['maxComplaintResponseTextLimit'])?.value).toBe(course.maxComplaintResponseTextLimit);
             expect(comp.courseForm.get(['maxRequestMoreFeedbackTimeDays'])?.value).toBe(course.maxRequestMoreFeedbackTimeDays);
-            expect(comp.courseForm.get(['courseCommunicationConfiguration'])!.get(['questionsAndAnswersEnabled'])?.value).toBe(
-                course.courseCommunicationConfiguration!.questionsAndAnswersEnabled,
-            );
-            expect(comp.courseForm.get(['courseCommunicationConfiguration'])!.get(['channelMessagingEnabled'])?.value).toBe(
-                course.courseCommunicationConfiguration!.channelMessagingEnabled,
-            );
-            expect(comp.courseForm.get(['courseCommunicationConfiguration'])!.get(['groupMessagingEnabled'])?.value).toBe(
-                course.courseCommunicationConfiguration!.groupMessagingEnabled,
-            );
-            expect(comp.courseForm.get(['courseCommunicationConfiguration'])!.get(['oneToOneMessagingEnabled'])?.value).toBe(
-                course.courseCommunicationConfiguration!.oneToOneMessagingEnabled,
-            );
+            expect(comp.courseForm.get(['informationSharingSettings'])!.get(['communicationEnabled'])?.value).toBe(isCommunicationEnabled(course));
+            expect(comp.courseForm.get(['informationSharingSettings'])!.get(['messagingEnabled'])?.value).toBe(isMessagingEnabled(course));
 
             expect(comp.courseForm.get(['registrationEnabled'])?.value).toBe(course.registrationEnabled);
             expect(comp.courseForm.get(['registrationConfirmationMessage'])?.value).toBe(course.registrationConfirmationMessage);
@@ -211,11 +197,9 @@ describe('Course Management Update Component', () => {
                 maxComplaintTextLimit: new FormControl(entity.maxComplaintTextLimit),
                 maxComplaintResponseTextLimit: new FormControl(entity.maxComplaintResponseTextLimit),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
-                courseCommunicationConfiguration: new FormGroup({
-                    questionsAndAnswersEnabled: new FormControl(entity.courseCommunicationConfiguration!.questionsAndAnswersEnabled),
-                    channelMessagingEnabled: new FormControl(entity.courseCommunicationConfiguration!.channelMessagingEnabled),
-                    groupMessagingEnabled: new FormControl(entity.courseCommunicationConfiguration!.groupMessagingEnabled),
-                    oneToOneMessagingEnabled: new FormControl(entity.courseCommunicationConfiguration!.oneToOneMessagingEnabled),
+                informationSharingSettings: new FormGroup({
+                    communicationEnabled: new FormControl(isCommunicationEnabled(course)),
+                    messagingEnabled: new FormControl(isMessagingEnabled(course)),
                 }),
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
                 maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
@@ -249,11 +233,9 @@ describe('Course Management Update Component', () => {
                 maxComplaintTextLimit: new FormControl(entity.maxComplaintTextLimit),
                 maxComplaintResponseTextLimit: new FormControl(entity.maxComplaintResponseTextLimit),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
-                courseCommunicationConfiguration: new FormGroup({
-                    questionsAndAnswersEnabled: new FormControl(entity.courseCommunicationConfiguration!.questionsAndAnswersEnabled),
-                    channelMessagingEnabled: new FormControl(entity.courseCommunicationConfiguration!.channelMessagingEnabled),
-                    groupMessagingEnabled: new FormControl(entity.courseCommunicationConfiguration!.groupMessagingEnabled),
-                    oneToOneMessagingEnabled: new FormControl(entity.courseCommunicationConfiguration!.oneToOneMessagingEnabled),
+                informationSharingSettings: new FormGroup({
+                    communicationEnabled: new FormControl(isCommunicationEnabled(course)),
+                    messagingEnabled: new FormControl(isMessagingEnabled(course)),
                 }),
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
                 maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),

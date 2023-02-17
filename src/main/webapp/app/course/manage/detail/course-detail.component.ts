@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
-import { Course } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from '../course-management.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared/components/button.component';
@@ -76,6 +76,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     faGraduationCap = faGraduationCap;
     faHeartBroken = faHeartBroken;
     faPersonChalkboard = faPersonChalkboard;
+
+    readonly isCommunicationEnabled = isCommunicationEnabled;
 
     constructor(
         private eventManager: EventManager,

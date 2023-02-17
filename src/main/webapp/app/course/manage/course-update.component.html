@@ -304,41 +304,23 @@
                     />
                 </div>
 
-                <div class="form-group" formGroupName="courseCommunicationConfiguration">
+                <div class="form-group" formGroupName="informationSharingSettings">
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" formControlName="questionsAndAnswersEnabled" />
-                        <label class="form-check-label">{{ 'artemisApp.course.courseCommunicationConfiguration.questionAndAnswers.label' | artemisTranslate }}</label>
+                        <input class="form-check-input" type="checkbox" formControlName="communicationEnabled" />
+                        <label class="form-check-label">{{ 'artemisApp.course.courseCommunicationSetting.communicationEnabled.label' | artemisTranslate }}</label>
                         <fa-icon
                             [icon]="faQuestionCircle"
                             class="text-secondary"
-                            ngbTooltip="{{ 'artemisApp.course.courseCommunicationConfiguration.questionAndAnswers.tooltip' | artemisTranslate }}"
+                            ngbTooltip="{{ 'artemisApp.course.courseCommunicationSetting.communicationEnabled.tooltip' | artemisTranslate }}"
                         ></fa-icon>
                     </div>
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" formControlName="channelMessagingEnabled" />
-                        <label class="form-check-label">{{ 'artemisApp.course.courseCommunicationConfiguration.channelMessaging.label' | artemisTranslate }}</label>
+                        <input class="form-check-input" type="checkbox" formControlName="messagingEnabled" />
+                        <label class="form-check-label">{{ 'artemisApp.course.courseCommunicationSetting.messagingEnabled.label' | artemisTranslate }}</label>
                         <fa-icon
                             [icon]="faQuestionCircle"
                             class="text-secondary"
-                            ngbTooltip="{{ 'artemisApp.course.courseCommunicationConfiguration.channelMessaging.tooltip' | artemisTranslate }}"
-                        ></fa-icon>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" formControlName="groupMessagingEnabled" />
-                        <label class="form-check-label">{{ 'artemisApp.course.courseCommunicationConfiguration.groupMessaging.label' | artemisTranslate }}</label>
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            class="text-secondary"
-                            ngbTooltip="{{ 'artemisApp.course.courseCommunicationConfiguration.groupMessaging.tooltip' | artemisTranslate }}"
-                        ></fa-icon>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" formControlName="oneToOneMessagingEnabled" />
-                        <label class="form-check-label">{{ 'artemisApp.course.courseCommunicationConfiguration.oneToOneMessaging.label' | artemisTranslate }}</label>
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            class="text-secondary"
-                            ngbTooltip="{{ 'artemisApp.course.courseCommunicationConfiguration.oneToOneMessaging.tooltip' | artemisTranslate }}"
+                            ngbTooltip="{{ 'artemisApp.course.courseCommunicationSetting.messagingEnabled.tooltip' | artemisTranslate }}"
                         ></fa-icon>
                     </div>
                 </div>

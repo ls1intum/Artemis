@@ -31,7 +31,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { GroupChatIconComponent } from 'app/overview/course-conversations/other/group-chat-icon/group-chat-icon.component';
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
 import { NgbTooltipMocksModule } from '../../../../../helpers/mocks/directive/ngbTooltipMocks.module';
-import { Course } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 
 const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -119,73 +119,70 @@ examples.forEach((activeConversation) => {
             expect(component).toBeTruthy();
         }));
 
-        it('should hide the channel section if not enabled in the course', fakeAsync(() => {
+        it('should hide the channel section if setting DISABLED', fakeAsync(() => {
             fixture.detectChanges();
             tick(301);
             expect(fixture.debugElement.query(By.css('#channel-section'))).toBeTruthy();
 
-            course.courseCommunicationConfiguration!.channelMessagingEnabled = false;
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
             fixture.detectChanges();
             tick(301);
             expect(fixture.debugElement.query(By.css('#channel-section'))).toBeFalsy();
         }));
 
-        it('should hide the group chat section if not enabled in the course', fakeAsync(() => {
+        it('should hide the channel section if setting COMMUNICATION_ONLY', fakeAsync(() => {
+            fixture.detectChanges();
+            tick(301);
+            expect(fixture.debugElement.query(By.css('#channel-section'))).toBeTruthy();
+
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+            fixture.detectChanges();
+            tick(301);
+            expect(fixture.debugElement.query(By.css('#channel-section'))).toBeFalsy();
+        }));
+
+        it('should hide the group chat section if setting DISABLED', fakeAsync(() => {
             fixture.detectChanges();
             tick(301);
             expect(fixture.debugElement.query(By.css('#group-chat-section'))).toBeTruthy();
 
-            course.courseCommunicationConfiguration!.groupMessagingEnabled = false;
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
             fixture.detectChanges();
             tick(301);
             expect(fixture.debugElement.query(By.css('#group-chat-section'))).toBeFalsy();
         }));
 
-        it('should hide the direct messaging section if not enabled in the course', fakeAsync(() => {
+        it('should hide the group chat section if setting COMMUNICATION_ONLY', fakeAsync(() => {
+            fixture.detectChanges();
+            tick(301);
+            expect(fixture.debugElement.query(By.css('#group-chat-section'))).toBeTruthy();
+
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+            fixture.detectChanges();
+            tick(301);
+            expect(fixture.debugElement.query(By.css('#group-chat-section'))).toBeFalsy();
+        }));
+
+        it('should hide the direct messaging section if setting DISABLED', fakeAsync(() => {
             fixture.detectChanges();
             tick(301);
             expect(fixture.debugElement.query(By.css('#direct-messages-section'))).toBeTruthy();
 
-            course.courseCommunicationConfiguration!.oneToOneMessagingEnabled = false;
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
             fixture.detectChanges();
             tick(301);
             expect(fixture.debugElement.query(By.css('#direct-messages-section'))).toBeFalsy();
         }));
 
-        it('should not include channels in the starred section if not enabled in the course', fakeAsync(() => {
-            course.courseCommunicationConfiguration!.channelMessagingEnabled = false;
-            course.courseCommunicationConfiguration!.groupMessagingEnabled = true;
-            course.courseCommunicationConfiguration!.oneToOneMessagingEnabled = true;
-
+        it('should hide the direct messaging section if setting COMMUNICATION_ONLY', fakeAsync(() => {
             fixture.detectChanges();
             tick(301);
-            expect(component.starredConversations).toHaveLength(2);
-            expect(component.starredConversations).toContain(favoriteGroupChat);
-            expect(component.starredConversations).toContain(favoriteOneToOneChat);
-        }));
+            expect(fixture.debugElement.query(By.css('#direct-messages-section'))).toBeTruthy();
 
-        it('should not include group chats in the starred section if not enabled in the course', fakeAsync(() => {
-            course.courseCommunicationConfiguration!.channelMessagingEnabled = true;
-            course.courseCommunicationConfiguration!.groupMessagingEnabled = false;
-            course.courseCommunicationConfiguration!.oneToOneMessagingEnabled = true;
-
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
             fixture.detectChanges();
             tick(301);
-            expect(component.starredConversations).toHaveLength(2);
-            expect(component.starredConversations).toContain(favoriteChannel);
-            expect(component.starredConversations).toContain(favoriteOneToOneChat);
-        }));
-
-        it('should not include one to one chats in the starred section if not enabled in the course', fakeAsync(() => {
-            course.courseCommunicationConfiguration!.channelMessagingEnabled = true;
-            course.courseCommunicationConfiguration!.groupMessagingEnabled = true;
-            course.courseCommunicationConfiguration!.oneToOneMessagingEnabled = false;
-
-            fixture.detectChanges();
-            tick(301);
-            expect(component.starredConversations).toHaveLength(2);
-            expect(component.starredConversations).toContain(favoriteChannel);
-            expect(component.starredConversations).toContain(favoriteGroupChat);
+            expect(fixture.debugElement.query(By.css('#direct-messages-section'))).toBeFalsy();
         }));
 
         it('should set properties correctly', fakeAsync(() => {

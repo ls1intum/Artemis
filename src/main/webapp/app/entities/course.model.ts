@@ -11,7 +11,29 @@ import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { CourseCommunicationConfiguration } from 'app/entities/course-communication-configuration.model';
+
+export enum CourseInformationSharingConfiguration {
+    COMMUNICATION_AND_MESSAGING = 'COMMUNICATION_AND_MESSAGING',
+    COMMUNICATION_ONLY = 'COMMUNICATION_ONLY',
+    MESSAGING_ONLY = 'MESSAGING_ONLY',
+    DISABLED = 'DISABLED',
+}
+
+/**
+ * Note: Keep in sync with method in CourseInformationSharingConfiguration.java
+ */
+export function isCommunicationEnabled(course: Course | undefined) {
+    const config = course?.courseInformationSharingConfiguration;
+    return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING || config === CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+}
+
+/**
+ * Note: Keep in sync with method in CourseInformationSharingConfiguration.java
+ */
+export function isMessagingEnabled(course: Course | undefined) {
+    const config = course?.courseInformationSharingConfiguration;
+    return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING || config === CourseInformationSharingConfiguration.MESSAGING_ONLY;
+}
 
 export const enum Language {
     ENGLISH = 'ENGLISH',
@@ -67,7 +89,7 @@ export class Course implements BaseEntity {
     public organizations?: Organization[];
     public tutorialGroups?: TutorialGroup[];
     public onlineCourseConfiguration?: OnlineCourseConfiguration;
-    public courseCommunicationConfiguration?: CourseCommunicationConfiguration;
+    public courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
 
     // helper attributes
     public isAtLeastTutor?: boolean;
@@ -96,12 +118,7 @@ export class Course implements BaseEntity {
         this.requestMoreFeedbackEnabled = true; // default value
         this.maxRequestMoreFeedbackTimeDays = 7; // default value
         this.accuracyOfScores = 1; // default value
-        this.courseCommunicationConfiguration = {
-            questionsAndAnswersEnabled: true,
-            channelMessagingEnabled: true,
-            groupMessagingEnabled: true,
-            oneToOneMessagingEnabled: true,
-        } as CourseCommunicationConfiguration; // default value
+        this.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED; // default value
     }
 
     /**

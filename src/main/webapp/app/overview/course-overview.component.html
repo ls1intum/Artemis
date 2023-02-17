@@ -35,7 +35,7 @@
                         <div jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</div>
                     </div>
                     <div
-                        *ngIf="course.courseCommunicationConfiguration!.questionsAndAnswersEnabled"
+                        *ngIf="isCommunicationEnabled(course)"
                         jhiOrionFilter
                         [showInOrionWindow]="false"
                         class="tab-item discussion"
@@ -44,18 +44,7 @@
                     >
                         <div jhiTranslate="artemisApp.courseOverview.menu.communication">Communication</div>
                     </div>
-                    <div
-                        *ngIf="
-                            course.courseCommunicationConfiguration!.channelMessagingEnabled ||
-                            course.courseCommunicationConfiguration!.groupMessagingEnabled ||
-                            course.courseCommunicationConfiguration!.oneToOneMessagingEnabled
-                        "
-                        jhiOrionFilter
-                        [showInOrionWindow]="false"
-                        class="tab-item discussion"
-                        routerLink="messages"
-                        routerLinkActive="active"
-                    >
+                    <div *ngIf="isMessagingEnabled(course)" jhiOrionFilter [showInOrionWindow]="false" class="tab-item discussion" routerLink="messages" routerLinkActive="active">
                         <div class="d-flex align-items-center position-relative">
                             <div jhiTranslate="artemisApp.courseOverview.menu.messages" class="d-inline-block me-1">Messages</div>
                             <span

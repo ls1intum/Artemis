@@ -153,9 +153,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     }
 
     onConversationsUpdate(conversations: ConversationDto[]) {
-        this.allConversations = (conversations ?? []).filter((conversation) => {
-            return this.messagingForConversationTypeEnabled(conversation);
-        });
+        this.allConversations = conversations ?? [];
 
         this.starredConversations = this.allConversations
             .filter((conversation) => conversation.isFavorite)
@@ -194,18 +192,6 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
             searchTerm: this.searchTerm,
             force: true,
         });
-    }
-
-    private messagingForConversationTypeEnabled(conversation: ConversationDto) {
-        if (isChannelDto(conversation)) {
-            return !!this.course?.courseCommunicationConfiguration!.channelMessagingEnabled;
-        } else if (isGroupChatDto(conversation)) {
-            return !!this.course?.courseCommunicationConfiguration!.groupMessagingEnabled;
-        } else if (isOneToOneChatDto(conversation)) {
-            return !!this.course?.courseCommunicationConfiguration!.oneToOneMessagingEnabled;
-        } else {
-            throw new Error('Conversation type not supported');
-        }
     }
 
     ngAfterViewInit(): void {

@@ -5,7 +5,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
-import { Course } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
@@ -132,6 +132,9 @@ export class CourseUpdateComponent implements OnInit {
             }
         });
 
+        const communicationEnabled = isCommunicationEnabled(this.course);
+        const messagingEnabled = isMessagingEnabled(this.course);
+
         this.courseForm = new FormGroup(
             {
                 id: new FormControl(this.course.id),
@@ -180,11 +183,9 @@ export class CourseUpdateComponent implements OnInit {
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                courseCommunicationConfiguration: this.fb.group({
-                    questionsAndAnswersEnabled: [this.course.courseCommunicationConfiguration!.questionsAndAnswersEnabled],
-                    channelMessagingEnabled: [this.course.courseCommunicationConfiguration!.channelMessagingEnabled],
-                    groupMessagingEnabled: [this.course.courseCommunicationConfiguration!.groupMessagingEnabled],
-                    oneToOneMessagingEnabled: [this.course.courseCommunicationConfiguration!.oneToOneMessagingEnabled],
+                informationSharingSettings: this.fb.group({
+                    communicationEnabled: [communicationEnabled],
+                    messagingEnabled: [messagingEnabled],
                 }),
                 registrationEnabled: new FormControl(this.course.registrationEnabled),
                 registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
@@ -258,6 +259,20 @@ export class CourseUpdateComponent implements OnInit {
         }
 
         const course = this.courseForm.getRawValue();
+        const communicationEnabled = !!this.courseForm.get('informationSharingSettings.communicationEnabled')?.value;
+        const messagingEnabled = !!this.courseForm.get('informationSharingSettings.messagingEnabled')?.value;
+
+        if (communicationEnabled && messagingEnabled) {
+            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+        } else if (communicationEnabled && !messagingEnabled) {
+            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+        } else if (!communicationEnabled && messagingEnabled) {
+            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.MESSAGING_ONLY;
+        } else {
+            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.DISABLED;
+        }
+        delete course['informationSharingSettings'];
+
         if (this.course.id !== undefined) {
             this.subscribeToSaveResponse(this.courseManagementService.update(this.course.id, course, file));
         } else {

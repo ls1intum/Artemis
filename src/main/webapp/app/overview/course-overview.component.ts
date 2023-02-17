@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy, OnInit, QueryList, TemplateRef, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
-import { Course } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
@@ -60,6 +60,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faMessage = faMessage;
     faCircleNotch = faCircleNotch;
     FeatureToggle = FeatureToggle;
+
+    readonly isMessagingEnabled = isMessagingEnabled;
+    readonly isCommunicationEnabled = isCommunicationEnabled;
 
     constructor(
         private courseService: CourseManagementService,
