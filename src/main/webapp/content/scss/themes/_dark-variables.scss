@@ -359,8 +359,9 @@ $sa-question-input-wrong-background: $danger;
 $sa-question-input-correct-background: $warning;
 $sa-question-input-completely-correct-background: $success;
 
-$mc-question-answer-option-border: transparentize(#fff, 0.8);
-$mc-question-answer-option-hover-background: transparentize(#fff, 0.97);
+$mc-question-answer-option-border: $neutral-dark-l-10;
+$mc-question-answer-option-hover-background: $neutral-dark-l-5;
+$mc-question-answer-option-selected-background: transparentize($primary, 0.7);
 
 // Programming Exercises
 $programming-exercise-instruction-step-wizard-card-header-background: $neutral-dark-l-5;
