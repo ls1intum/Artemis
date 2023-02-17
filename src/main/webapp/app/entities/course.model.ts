@@ -20,7 +20,7 @@ export enum CourseInformationSharingConfiguration {
 }
 
 /**
- * Note: Keep in sync with method in CourseInformationSharingConfiguration.java
+ * Note: Keep in sync with method in CourseRepository.java
  */
 export function isCommunicationEnabled(course: Course | undefined) {
     const config = course?.courseInformationSharingConfiguration;
@@ -28,7 +28,7 @@ export function isCommunicationEnabled(course: Course | undefined) {
 }
 
 /**
- * Note: Keep in sync with method in CourseInformationSharingConfiguration.java
+ * Note: Keep in sync with method in CourseRepository.java
  */
 export function isMessagingEnabled(course: Course | undefined) {
     const config = course?.courseInformationSharingConfiguration;
