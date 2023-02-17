@@ -23,6 +23,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('Course LTI Configuration Component', () => {
     let comp: CourseLtiConfigurationComponent;
@@ -65,6 +66,7 @@ describe('Course LTI Configuration Component', () => {
                 MockDirective(SortByDirective),
                 MockComponent(HelpIconComponent),
                 MockComponent(CopyIconButtonComponent),
+                MockComponent(DocumentationButtonComponent),
                 MockRouterLinkDirective,
             ],
             providers: [

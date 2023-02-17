@@ -6,6 +6,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Exercise } from 'app/entities/exercise.model';
 import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { SortService } from 'app/shared/service/sort.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-course-lti-configuration',
@@ -20,6 +21,8 @@ export class CourseLtiConfigurationComponent implements OnInit {
 
     predicate = 'type';
     reverse = false;
+
+    documentationType = DocumentationType.lti;
 
     // Icons
     faSort = faSort;

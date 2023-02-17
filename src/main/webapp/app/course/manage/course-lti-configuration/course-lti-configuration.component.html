@@ -1,8 +1,11 @@
 <form name="editForm" role="form" novalidate>
     <div class="modal-header">
-        <h4 class="modal-title" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.configurationForCourse" [translateValues]="{ title: course?.title }">
-            LTI Configuration for course {{ course?.title }}
-        </h4>
+        <div class="col-sm d-flex align-items-center">
+            <h4 class="fw-medium" id="course-lti-configuration-page-heading" jhiTranslate="artemisApp.lti.configurationForCourse" [translateValues]="{ title: course?.title }">
+                LTI Configuration for course {{ course?.title }}
+            </h4>
+            <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+        </div>
 
         <a
             *ngIf="course.isAtLeastInstructor"
