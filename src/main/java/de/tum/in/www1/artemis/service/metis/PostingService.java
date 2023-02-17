@@ -12,7 +12,6 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Posting;
@@ -143,7 +142,7 @@ public abstract class PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         // check if the course has posts enabled
-        if (!CourseInformationSharingConfiguration.isCommunicationEnabled(course)) {
+        if (!courseRepository.isCommunicationEnabled(courseId)) {
             throw new BadRequestAlertException("Communication feature is not enabled for this course", getEntityName(), "400", true);
         }
         return course;
@@ -154,7 +153,7 @@ public abstract class PostingService {
         // user has to be at least student in the course
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        if (!CourseInformationSharingConfiguration.isMessagingEnabled(course)) {
+        if (!courseRepository.isMessagingEnabled(course.getId())) {
             throw new BadRequestAlertException("Messaging is not enabled for this course", getEntityName(), "400", true);
         }
         return course;

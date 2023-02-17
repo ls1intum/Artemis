@@ -11,9 +11,11 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -70,6 +72,9 @@ public class GroupChatResource {
     public ResponseEntity<GroupChatDTO> startGroupChat(@PathVariable Long courseId, @RequestBody List<String> otherChatParticipantsLogins) throws URISyntaxException {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to create group chat in course {} between: {} and : {}", courseId, requestingUser.getLogin(), otherChatParticipantsLogins);
+        if (!(courseRepository.isMessagingEnabled(courseId))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
+        }
         var course = courseRepository.findByIdElseThrow(courseId);
         groupChatAuthorizationService.isAllowedToCreateGroupChat(course, requestingUser);
 
@@ -101,6 +106,9 @@ public class GroupChatResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<GroupChatDTO> updateGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody GroupChatDTO groupChatDTO) {
         log.debug("REST request to update groupChat {} with properties : {}", groupChatId, groupChatDTO);
+        if (!(courseRepository.isMessagingEnabled(courseId))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
+        }
 
         var originalGroupChat = groupChatRepository.findByIdElseThrow(groupChatId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -127,6 +135,9 @@ public class GroupChatResource {
             throw new BadRequestAlertException("No user logins provided", GROUP_CHAT_ENTITY_NAME, "userLoginsEmpty");
         }
         log.debug("REST request to register {} users to group chat: {}", userLogins.size(), groupChatId);
+        if (!(courseRepository.isMessagingEnabled(courseId))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
+        }
         var course = courseRepository.findByIdElseThrow(courseId);
         var groupChatFromDatabase = groupChatRepository.findByIdElseThrow(groupChatId);
         checkEntityIdMatchesPathIds(groupChatFromDatabase, Optional.of(courseId), Optional.of(groupChatId));
@@ -152,6 +163,9 @@ public class GroupChatResource {
             throw new BadRequestAlertException("No user logins provided", GROUP_CHAT_ENTITY_NAME, "userLoginsEmpty");
         }
         log.debug("REST request to deregister {} users from the group chat : {}", userLogins.size(), groupChatId);
+        if (!(courseRepository.isMessagingEnabled(courseId))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
+        }
         var course = courseRepository.findByIdElseThrow(courseId);
 
         var groupChatFromDatabase = groupChatRepository.findByIdElseThrow(groupChatId);

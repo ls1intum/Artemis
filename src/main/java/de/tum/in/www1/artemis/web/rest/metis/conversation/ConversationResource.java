@@ -64,6 +64,10 @@ public class ConversationResource {
     @GetMapping("/{courseId}/conversations")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<ConversationDTO>> getConversationsOfUser(@PathVariable Long courseId) {
+        if (!(courseRepository.isMessagingEnabled(courseId))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
+        }
+
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         var conversations = conversationService.getConversationsOfUser(courseId, requestingUser);
@@ -81,6 +85,9 @@ public class ConversationResource {
     @PostMapping("/{courseId}/conversations/{conversationId}/favorite")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> changeFavoriteStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isFavorite) {
+        if (!(courseRepository.isMessagingEnabled(courseId))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
+        }
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         conversationService.switchFavoriteStatus(conversationId, requestingUser, isFavorite);
@@ -98,6 +105,9 @@ public class ConversationResource {
     @PostMapping("/{courseId}/conversations/{conversationId}/hidden")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> switchHiddenStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isHidden) {
+        if (!(courseRepository.isMessagingEnabled(courseId))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
+        }
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         conversationService.switchHiddenStatus(conversationId, requestingUser, isHidden);
@@ -121,6 +131,9 @@ public class ConversationResource {
         log.debug("REST request to get members of conversation : {} with login or name : {} in course: {}", conversationId, loginOrName, courseId);
         if (pageable.getPageSize() > 20) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The page size must not be greater than 20");
+        }
+        if (!(courseRepository.isMessagingEnabled(courseId))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
         }
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
