@@ -112,6 +112,7 @@ public class Course extends DomainObject {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "info_sharing_config")
+    @JsonView(QuizView.Before.class)
     private CourseInformationSharingConfiguration courseInformationSharingConfiguration;
 
     @Column(name = "max_complaints", nullable = false)
@@ -137,10 +138,6 @@ public class Course extends DomainObject {
     @Column(name = "max_complaint_response_text_limit")
     @JsonView(QuizView.Before.class)
     private int maxComplaintResponseTextLimit = 2000;
-
-    @Column(name = "posts_enabled")
-    @JsonView(QuizView.Before.class)
-    private boolean postsEnabled;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -418,14 +415,6 @@ public class Course extends DomainObject {
         // and then either maxComplaints, maxTeamComplaints is larger than zero
         // See CourseResource for more details on the validation
         return this.maxComplaintTimeDays > 0;
-    }
-
-    public boolean getPostsEnabled() {
-        return postsEnabled;
-    }
-
-    public void setPostsEnabled(boolean postsEnabled) {
-        this.postsEnabled = postsEnabled;
     }
 
     public Set<Post> getPosts() {
