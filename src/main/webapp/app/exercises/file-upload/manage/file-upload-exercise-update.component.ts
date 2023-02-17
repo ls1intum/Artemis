@@ -93,7 +93,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
             }
         });
         this.activatedRoute.url
-            .pipe(tap())
             .pipe(
                 tap(
                     (segments) =>
