@@ -218,7 +218,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     @Query("""
             select
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                e.endDate, sum(size(e.registeredUsers))
+                e.endDate, sum(size(e.examUsers))
                 )
             from Exam e
             where e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate} and e.course.testCourse = false
@@ -230,7 +230,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     @Query("""
             select
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                e.endDate, sum(size(e.registeredUsers))
+                e.endDate, sum(size(e.examUsers))
                 )
             from Exam e
             where e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate} and e.course.id = :#{#courseId}

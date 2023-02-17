@@ -19,6 +19,7 @@
         [participation]="studentParticipation"
         [showEditorInstructions]="showEditorInstructions"
         [course]="getCourseFromExercise(exercise)"
+        [disableAutoSave]="true"
         (onCommitStateChange)="onCommitStateChange($event)"
         (onFileChanged)="onFileChanged()"
     >
@@ -78,7 +79,6 @@
             class="me-2"
         ></jhi-updating-result>
     </div>
-    <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" [showBadge]="true"></jhi-submission-result-status>
     <jhi-programming-exercise-instructions
         *ngIf="exercise"
         [exercise]="exercise"

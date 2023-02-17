@@ -1,7 +1,7 @@
 <div class="course-info-bar">
     <div class="row justify-content-between">
         <div class="col-md-8">
-            <h2>
+            <div class="d-flex align-items-center">
                 <h2 *ngIf="!isExamMode">{{ 'artemisApp.assessmentDashboard.pageHeader' | artemisTranslate }} {{ course?.title }}</h2>
                 <h2 *ngIf="isExamMode">
                     {{
@@ -11,7 +11,8 @@
                     }}
                     {{ exam?.title }}
                 </h2>
-            </h2>
+                <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+            </div>
         </div>
     </div>
     <div *ngIf="isExamMode && !isTestRun" class="row justify-content-between">

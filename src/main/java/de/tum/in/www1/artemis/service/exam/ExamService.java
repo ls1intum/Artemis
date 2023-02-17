@@ -21,6 +21,7 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -1171,7 +1172,7 @@ public class ExamService {
             studentParticipationRepository.addNumberOfExamExerciseParticipations(exerciseGroup);
         });
         // set transient number of registered users
-        examRepository.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
+        examRepository.setNumberOfExamUsersForExams(Collections.singletonList(exam));
     }
 
     /**
@@ -1322,6 +1323,20 @@ public class ExamService {
             }
         }
         return new SearchResultPageDTO<>(examPage.getContent(), examPage.getTotalPages());
+    }
+
+    /**
+     * Get all exams of the user. The result is paged
+     *
+     * @param pageable The search query defining the search term and the size of the returned page
+     * @param user     The user for whom to fetch all available exercises
+     * @return exam page
+     */
+    public Page<Exam> getAllActiveExams(Pageable pageable, final User user) {
+        final Page<Exam> examPage;
+        // active exam means that exam has visible date in the past 7 days or next 7 days.
+        examPage = examRepository.findAllActiveExamsInCoursesWhereInstructor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(7), ZonedDateTime.now().plusDays(7));
+        return examPage;
     }
 
     /**
