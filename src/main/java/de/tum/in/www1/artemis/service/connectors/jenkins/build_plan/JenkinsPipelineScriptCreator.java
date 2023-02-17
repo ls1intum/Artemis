@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.jenkins;
+package de.tum.in.www1.artemis.service.connectors.jenkins.build_plan;
 
 import java.io.IOException;
 import java.nio.file.Files;

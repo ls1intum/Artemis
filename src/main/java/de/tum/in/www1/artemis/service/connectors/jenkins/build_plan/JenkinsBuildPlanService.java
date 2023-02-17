@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.jenkins;
+package de.tum.in.www1.artemis.service.connectors.jenkins.build_plan;
 
 import java.io.IOException;
 import java.net.URI;
@@ -42,6 +42,9 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsEndpoints;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsInternalUrlService;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlConfigBuilder;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
@@ -97,7 +100,7 @@ public class JenkinsBuildPlanService {
      * @param planKey       the name of the plan
      * @param repositoryURL the url of the vcs repository
      */
-    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL) {
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL) {
         final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUrls = getInternalRepositoryUrls(exercise, repositoryURL);
 
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();

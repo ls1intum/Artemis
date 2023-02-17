@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.jenkins;
+package de.tum.in.www1.artemis.service.connectors.jenkins.build_plan;
 
 import java.net.URL;
 
@@ -15,11 +15,11 @@ import de.tum.in.www1.artemis.config.Constants;
 public class JenkinsBuildPlanLinkInfoContributor implements InfoContributor {
 
     @Value("${artemis.continuous-integration.url}")
-    private URL JENKINS_SERVER_URL;
+    private URL jenkinsServerUrl;
 
     @Override
     public void contribute(Info.Builder builder) {
-        final var buildPlanURLTemplate = JENKINS_SERVER_URL + "/job/{projectKey}/job/{buildPlanId}";
+        final var buildPlanURLTemplate = jenkinsServerUrl + "/job/{projectKey}/job/{buildPlanId}";
         builder.withDetail(Constants.INFO_BUILD_PLAN_URL_DETAIL, buildPlanURLTemplate);
     }
 }
