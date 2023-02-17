@@ -39,7 +39,7 @@
                 <span class="context-information" *ngIf="!contextInformation.routerLinkComponents">{{ contextInformation.displayName }}:</span>
             </span>
             <!-- post title not shown in course messages page -->
-            <span *ngIf="pageType !== PageType.PLAGIARISM_CASE && !isCourseMessagesPage" class="col-auto">
+            <span *ngIf="pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT && !isCourseMessagesPage" class="col-auto">
                 <a
                     class="post-title"
                     [routerLink]="metisService.getLinkForPost(posting)"
@@ -61,9 +61,10 @@
 </div>
 <jhi-message-inline-input *ngIf="displayInlineInput && !readOnlyMode" [posting]="posting" (isModalOpen)="displayInlineInput = false"> </jhi-message-inline-input>
 <jhi-post-footer
+    #postFooter
     [readOnlyMode]="readOnlyMode"
     [modalRef]="modalRef"
-    [previewMode]="previewMode"
+    [previewMode]="previewMode || pageType === PageType.PLAGIARISM_CASE_STUDENT"
     [posting]="posting"
     [showAnswers]="showAnswers"
     [isCourseMessagesPage]="isCourseMessagesPage"

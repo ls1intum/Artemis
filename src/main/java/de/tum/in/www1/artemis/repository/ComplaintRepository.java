@@ -55,9 +55,9 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     /**
      * This magic method counts the number of complaints by complaint type associated to an exam id
      *
-     * @param examId      - the id of the exam we want to filter by
+     * @param examId        - the id of the exam we want to filter by
      * @param complaintType - type of complaint we want to filter by
-     * @return number of complaints  associated to course examId
+     * @return number of complaints associated to course examId
      */
     long countByResult_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(Long examId, ComplaintType complaintType);
 
@@ -92,7 +92,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * of complaints for a team in a course. Requests for more feedback are not counted here.
      *
      * @param teamShortName the short name of the team
-     * @param courseId  the id of the course
+     * @param courseId      the id of the course
      * @return the number of unaccepted complaints
      */
     @Query("""
@@ -119,7 +119,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     /**
      * This method counts the number of complaints by complaint type associated to an exercise id
      *
-     * @param exerciseIds    - the id of the course we want to filter by
+     * @param exerciseIds   - the id of the course we want to filter by
      * @param complaintType - complaint type we want to filter by
      * @return number of complaints associated to exercise exerciseId
      */
@@ -139,7 +139,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     /**
      * This method counts the number of complaints by complaint type associated to an exercise id
      *
-     * @param exerciseIds    - the id of the course we want to filter by
+     * @param exerciseIds   - the id of the course we want to filter by
      * @param complaintType - complaint type we want to filter by
      * @return number of complaints associated to exercise exerciseId
      */
@@ -161,9 +161,10 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     /**
      * Similar to {@link ComplaintRepository#countComplaintsByExerciseIdAndComplaintType}
      * but ignores test run submissions
-     * @param exerciseId - the id of the exercise we want to filter by
+     *
+     * @param exerciseId    - the id of the exercise we want to filter by
      * @param complaintType - complaint type we want to filter by
-     * @return  number of complaints associated to exercise exerciseId without test runs
+     * @return number of complaints associated to exercise exerciseId without test runs
      */
     @Query("""
             SELECT count(c) FROM Complaint c
@@ -175,6 +176,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
 
     /**
      * Delete all complaints that belong to the given result
+     *
      * @param resultId the id of the result where the complaints should be deleted
      */
     @Transactional // ok because of delete
@@ -240,7 +242,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     /**
      * Get the number of Complaints for all tutors of a course
      *
-     * @param courseId  - id of the course
+     * @param courseId - id of the course
      * @return list of TutorLeaderboardComplaints
      */
     @Query("""
@@ -290,7 +292,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     /**
      * Get the number of Complaints for all tutors of an exam
      *
-     * @param examId     - id of the exercise
+     * @param examId - id of the exercise
      * @return list of TutorLeaderboardComplaints
      */
     @Query("""
@@ -315,7 +317,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     /**
      * Get the number of complaintResponses for all tutors assessments of a course
      *
-     * @param courseId   - id of the exercise
+     * @param courseId - id of the exercise
      * @return list of TutorLeaderboardComplaintResponses
      */
     @Query("""
@@ -363,7 +365,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     /**
      * Get the number of complaintResponses for all tutors assessments of an exam
      *
-     * @param examId     - id of the exam
+     * @param examId - id of the exam
      * @return list of TutorLeaderboardComplaintResponses
      */
     @Query("""
@@ -387,7 +389,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     /**
      * Get the number of Feedback Requests for all tutors assessments of a course
      *
-     * @param courseId   - id of the exercise
+     * @param courseId - id of the exercise
      * @return list of TutorLeaderboardMoreFeedbackRequests
      */
     @Query("""
@@ -435,7 +437,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     /**
      * Get the number of Feedback Request Responses for all tutors assessments of a course
      *
-     * @param courseId   - id of the course
+     * @param courseId - id of the course
      * @return list of TutorLeaderboardAnsweredMoreFeedbackRequests
      */
     @Query("""

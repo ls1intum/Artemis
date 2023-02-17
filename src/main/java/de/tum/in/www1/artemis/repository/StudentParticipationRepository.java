@@ -207,6 +207,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.exercise.id = :#{#exerciseId}
                 AND p.testRun = :#{#testRun}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+                AND r.assessmentType <> 'AUTOMATIC'
                 AND r.id = (
                     SELECT max(id)
                     FROM p.results
@@ -357,7 +358,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Find all participations of submissions that are submitted and do not already have a manual result and do not belong to test runs.
      * No manual result means that no user has started an assessment for the corresponding submission yet.
      * <p>
-     * If a student can have multiple submissions per exercise type, the latest not {@link de.tum.in.www1.artemis.domain.enumeration.SubmissionType#ILLEGAL} ILLEGAL submission (by id) will be returned.
+     * If a student can have multiple submissions per exercise type, the latest not {@link de.tum.in.www1.artemis.domain.enumeration.SubmissionType#ILLEGAL} ILLEGAL submission (by
+     * id) will be returned.
      *
      * @param correctionRound the correction round the fetched results should belong to
      * @param exerciseId      the exercise id the participations should belong to
@@ -815,7 +817,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Get all participations for the given studentExam and exercises combined with their submissions, but without results and assessors.
      * Distinguishes between student exams and test runs and only loads the respective participations
      *
-     * @param studentExam  studentExam with exercises loaded
+     * @param studentExam studentExam with exercises loaded
      * @return student's participations with submissions and results
      */
     default List<StudentParticipation> findByStudentExamWithEagerSubmissions(StudentExam studentExam) {

@@ -169,8 +169,9 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     /**
      * Auxiliary method that checks if the groupNotificationRepository was called successfully with the correct notification (type)
-     * @param numberOfGroupsAndCalls indicates the expected number of notifications created/saved.
-     * This number depends on the number of different groups. For each different group one separate call is needed.
+     *
+     * @param numberOfGroupsAndCalls    indicates the expected number of notifications created/saved.
+     *                                      This number depends on the number of different groups. For each different group one separate call is needed.
      * @param expectedNotificationTitle is the title (NotificationTitleTypeConstants) of the expected notification
      */
     private void verifyRepositoryCallWithCorrectNotification(int numberOfGroupsAndCalls, String expectedNotificationTitle) {
@@ -320,7 +321,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     /**
      * Auxiliary method that creates and saves the needed notification setting for email testing
      *
-     * @param user who should be notified / receive an email
+     * @param user                          who should be notified / receive an email
      * @param notificationSettingIdentifier of the corresponding notification type
      */
     private void prepareNotificationSettingForTest(User user, String notificationSettingIdentifier) {
@@ -330,6 +331,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     /**
      * Checks if an email was created and send
+     *
      * @param times how often the email should have been sent
      */
     private void verifyEmail(int times) {

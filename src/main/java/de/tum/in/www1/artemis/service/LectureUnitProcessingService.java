@@ -1,25 +1,20 @@
 package de.tum.in.www1.artemis.service;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.fileupload.*;
-import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.text.PDFTextStripper;
-import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
@@ -34,10 +29,17 @@ public class LectureUnitProcessingService {
 
     private final Logger log = LoggerFactory.getLogger(LectureUnitProcessingService.class);
 
+    private final FileService fileService;
+
+    public LectureUnitProcessingService(FileService fileService) {
+        this.fileService = fileService;
+    }
+
     /**
      * Split units from given file according to given split information.
+     *
      * @param lectureUnitInformationDTO The split information
-     * @param file The file (lecture slide) to be split
+     * @param file                      The file (lecture slide) to be split
      * @return The prepared units to be saved
      */
     public List<LectureUnitDTO> splitUnits(LectureUnitInformationDTO lectureUnitInformationDTO, MultipartFile file) throws IOException {
@@ -70,7 +72,7 @@ public class LectureUnitProcessingService {
                 attachment.setReleaseDate(lectureUnit.releaseDate());
                 attachment.setUploadDate(ZonedDateTime.now());
 
-                MultipartFile multipartFile = convertByteArrayToMultipart(lectureUnit.unitName(), outputStream.toByteArray());
+                MultipartFile multipartFile = fileService.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
 
                 LectureUnitDTO lectureUnitsDTO = new LectureUnitDTO(attachmentUnit, attachment, multipartFile);
                 units.add(lectureUnitsDTO);
@@ -83,7 +85,8 @@ public class LectureUnitProcessingService {
 
     /**
      * Removes the break slides from the given document.
-     * @param document         document to remove break slides from
+     *
+     * @param document document to remove break slides from
      */
     private void removeBreakSlides(PDDocument document) {
 
@@ -116,26 +119,8 @@ public class LectureUnitProcessingService {
     }
 
     /**
-     * Convert byte[] to MultipartFile by using CommonsMultipartFile
-     * @param unitName         unit name to set file name
-     * @param streamByteArray  byte array to save to the temp file
-     * @return multipartFile
-     */
-    private MultipartFile convertByteArrayToMultipart(String unitName, byte[] streamByteArray) throws IOException {
-        Path tempPath = Path.of(FilePathService.getTempFilePath(), unitName + ".pdf");
-        Files.write(tempPath, streamByteArray);
-        File outputFile = Path.of(tempPath.toString()).toFile();
-        FileItem fileItem = new DiskFileItem("mainUnitFile", Files.probeContentType(outputFile.toPath()), false, outputFile.getName(), (int) outputFile.length(),
-                outputFile.getParentFile());
-
-        try (InputStream input = new FileInputStream(outputFile); OutputStream fileItemOutputStream = fileItem.getOutputStream()) {
-            IOUtils.copy(input, fileItemOutputStream);
-        }
-        return new CommonsMultipartFile(fileItem);
-    }
-
-    /**
      * Prepare information of split units for client
+     *
      * @param file The file (lecture slide) to be split
      * @return The prepared information of split units LectureUnitInformationDTO
      */

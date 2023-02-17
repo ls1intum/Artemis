@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
@@ -14,6 +14,7 @@ import { HttpResponse } from '@angular/common/http';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { By } from '@angular/platform-browser';
 import { LearningGoalFormStubComponent } from './learning-goal-form-stub.component';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('CreateLearningGoal', () => {
     let createLearningGoalComponentFixture: ComponentFixture<CreateLearningGoalComponent>;
@@ -22,7 +23,7 @@ describe('CreateLearningGoal', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [LearningGoalFormStubComponent, CreateLearningGoalComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [LearningGoalFormStubComponent, CreateLearningGoalComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DocumentationButtonComponent)],
             providers: [
                 MockProvider(LearningGoalService),
                 MockProvider(LectureService),

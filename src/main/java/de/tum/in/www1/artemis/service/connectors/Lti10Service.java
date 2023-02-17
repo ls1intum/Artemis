@@ -22,9 +22,9 @@ import org.imsglobal.pox.IMSPOXRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.thymeleaf.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -65,7 +65,7 @@ public class Lti10Service {
     /**
      * Checks if an LTI request is correctly signed via OAuth with the secret
      *
-     * @param request The request to check
+     * @param request                   The request to check
      * @param onlineCourseConfiguration The configuration containing the secret used to verify the request
      * @return null if the request is valid, otherwise an error message which indicates the reason why the verification failed
      */
@@ -99,18 +99,17 @@ public class Lti10Service {
      * Performs an LTI 1.0 exercise launch with the LTI parameters contained in launchRequest.
      * If the launch was successful the user is added to the target exercise group (e.g. the course).
      *
-     * @param launchRequest the launch request
-     * @param exercise the target exercise for the launch request
+     * @param launchRequest             the launch request
+     * @param exercise                  the target exercise for the launch request
      * @param onlineCourseConfiguration the online configuration for the course the exercise belongs to
      */
     public void performLaunch(LtiLaunchRequestDTO launchRequest, Exercise exercise, OnlineCourseConfiguration onlineCourseConfiguration) {
         String username = createUsernameFromLaunchRequest(launchRequest, onlineCourseConfiguration);
         String firstName = getUserFirstNameFromLaunchRequest(launchRequest);
         String lastName = getUserLastNameFromLaunchRequest(launchRequest);
-        ltiService.authenticateLtiUser(launchRequest.getLis_person_contact_email_primary(), launchRequest.getUser_id(), username, firstName, lastName,
-                onlineCourseConfiguration.isRequireExistingUser());
+        ltiService.authenticateLtiUser(launchRequest.getLis_person_contact_email_primary(), username, firstName, lastName, onlineCourseConfiguration.isRequireExistingUser());
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        ltiService.onSuccessfulLtiAuthentication(user, launchRequest.getUser_id(), exercise);
+        ltiService.onSuccessfulLtiAuthentication(user, exercise);
         saveLtiOutcomeUrl(user, exercise, launchRequest.getLis_outcome_service_url(), launchRequest.getLis_result_sourcedid());
     }
 
@@ -197,7 +196,7 @@ public class Lti10Service {
      * Build the response for the LTI launch.
      *
      * @param uriComponentsBuilder the uri builder to add the query params to
-     * @param response the response to add the JWT cookie to
+     * @param response             the response to add the JWT cookie to
      */
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         ltiService.buildLtiResponse(uriComponentsBuilder, response);

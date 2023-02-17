@@ -25,7 +25,7 @@ Prerequisites
 
     - **Java IDE with JDK 17**
 
-        **Recommendation:** IntelliJ IDEA 2022.1.3 or Eclipse IDE 2022-06.
+        **Recommendation:** IntelliJ IDEA 2022.3.2 or Eclipse IDE 2022-12.
 
     - **Git Client**
 
@@ -343,7 +343,7 @@ Example Solutions
 
    Example Solutions
 
-- For programming exercises, clicking ``Download Repo`` button will download the solution repository.
+- For programming exercises, clicking ``Download Example Solution`` button will download the solution repository.
 
 .. figure:: student/exam_example_solution_programming.png
    :alt: Example Solution for a Programming Exercise

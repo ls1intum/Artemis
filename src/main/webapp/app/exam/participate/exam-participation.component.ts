@@ -177,8 +177,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam.exam!.course.id = this.courseId;
                         this.exam = studentExam.exam!;
                         this.testExam = this.exam.testExam!;
-                        this.testStartTime = dayjs();
-                        this.initIndividualEndDates(this.testStartTime);
                         this.loadingExam = false;
                     },
                     error: () => (this.loadingExam = false),
@@ -189,11 +187,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam = studentExam;
                         this.exam = studentExam.exam!;
                         this.testExam = this.exam.testExam!;
-                        if (this.exam.testExam) {
-                            // For TestExams, we either set the StartTime to the current time or the startedDate of the studentExam, if existent
-                            this.testStartTime = this.studentExam.startedDate ? this.studentExam.startedDate! : dayjs();
-                            this.initIndividualEndDates(this.testStartTime);
-                        } else {
+                        if (!this.exam.testExam) {
                             this.initIndividualEndDates(this.exam.startDate!);
                         }
 
@@ -310,7 +304,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.examParticipationService.setExamExerciseIds(exerciseIds);
             // set endDate with workingTime
             if (!!this.testRunId || this.testExam) {
-                this.individualStudentEndDate = this.testStartTime!.add(this.studentExam.workingTime!, 'seconds');
+                this.testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
+                this.initIndividualEndDates(this.testStartTime);
+                this.individualStudentEndDate = this.testStartTime.add(this.studentExam.workingTime!, 'seconds');
             } else {
                 this.individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
             }
@@ -487,7 +483,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // update local studentExam for later sync with server if the student wants to hand in early
             this.updateLocalStudentExam();
             try {
-                this.triggerSave(true, false);
+                this.triggerSave(false, false);
             } catch (error) {
                 captureException(error);
             }
@@ -720,9 +716,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // in the case saving is forced, we mark the current exercise as not synced, so it will definitely be saved
         if ((activeComponent && forceSave) || (activeComponent as ExamSubmissionComponent)?.hasUnsavedChanges()) {
             const activeSubmission = (activeComponent as ExamSubmissionComponent)?.getSubmission();
+            const activeExercise = (activeComponent as ExamSubmissionComponent)?.getExercise();
             if (activeSubmission) {
                 // this will lead to a save below, because isSynced will be set to false
-                activeSubmission.isSynced = false;
+                // it only makes sense to set "isSynced" to false for quiz, text and modeling
+                if (activeExercise?.type !== ExerciseType.PROGRAMMING && activeExercise?.type !== ExerciseType.FILE_UPLOAD) {
+                    activeSubmission.isSynced = false;
+                }
             }
             (activeComponent as ExamSubmissionComponent).updateSubmissionFromView();
         }

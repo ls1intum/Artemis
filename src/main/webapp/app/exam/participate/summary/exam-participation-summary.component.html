@@ -38,7 +38,7 @@
                 <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
             </div>
             <div *ngIf="resultsPublished && exercise.studentParticipations?.length">
-                <jhi-result [participation]="exercise.studentParticipations![0]" [exercise]="exercise"> </jhi-result>
+                <jhi-updating-result [participation]="exercise.studentParticipations![0]" [exercise]="exercise" />
             </div>
             <button
                 id="{{ 'toggleCollapseExerciseButton-' + i }}"
@@ -85,6 +85,7 @@
                             *ngIf="exercise.type === PROGRAMMING"
                             class="ms-2 float-end"
                             [exerciseId]="exercise.id!"
+                            [title]="'artemisApp.programmingExercise.export.downloadExampleSolution'"
                         ></jhi-programming-exercise-example-solution-repo-download>
                     </ng-container>
                 </span>

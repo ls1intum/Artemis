@@ -15,6 +15,7 @@ import { tap } from 'rxjs/operators';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -34,6 +35,8 @@ export class ExamUpdateComponent implements OnInit {
     exerciseType = ExerciseType;
     // Link to the component enabling the selection of exercise groups and exercises for import
     @ViewChild(ExamExerciseImportComponent) examExerciseImportComponent: ExamExerciseImportComponent;
+
+    documentationType = DocumentationType.Exams;
 
     // Icons
     faSave = faSave;
@@ -312,7 +315,7 @@ export class ExamUpdateComponent implements OnInit {
         this.exam.publishResultsDate = undefined;
         this.exam.examStudentReviewStart = undefined;
         this.exam.examStudentReviewEnd = undefined;
-        this.exam.registeredUsers = undefined;
+        this.exam.examUsers = undefined;
         this.exam.studentExams = undefined;
     }
 }

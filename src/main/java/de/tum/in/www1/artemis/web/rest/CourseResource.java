@@ -130,9 +130,9 @@ public class CourseResource {
     /**
      * PUT /courses/:courseId : Updates an existing updatedCourse.
      *
-     * @param courseId the id of the course to update
+     * @param courseId     the id of the course to update
      * @param courseUpdate the course to update
-     * @param file the optional course icon file
+     * @param file         the optional course icon file
      * @return the ResponseEntity with status 200 (OK) and with body the updated course
      */
     @PutMapping(value = "courses/{courseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -234,7 +234,7 @@ public class CourseResource {
     /**
      * PUT courses/:courseId/onlineCourseConfiguration : Updates the onlineCourseConfiguration for the given cours.
      *
-     * @param courseId the id of the course to update
+     * @param courseId                  the id of the course to update
      * @param onlineCourseConfiguration the online course configuration to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated online course configuration
      */
@@ -408,7 +408,7 @@ public class CourseResource {
      * GET /courses/{courseId}/for-dashboard
      *
      * @param courseId the courseId for which exercises, lectures, exams and learning goals should be fetched
-     * @param refresh if true, this request was initiated by the user clicking on a refresh button
+     * @param refresh  if true, this request was initiated by the user clicking on a refresh button
      * @return a course with all exercises, lectures, exams, learning goals, etc. visible to the user
      */
     // TODO: we should rename this into courses/{courseId}/details
@@ -447,8 +447,9 @@ public class CourseResource {
             Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
             int noOfIndividualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of()).size();
             int noOfTeamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of()).size();
-            log.info("/courses/for-dashboard finished in {} for {} courses with {} individual exercises and {} team exercises for user {}",
-                    TimeLogUtil.formatDurationFrom(timeNanoStart), courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
+            int noOfExams = courses.stream().mapToInt(course -> course.getExams().size()).sum();
+            log.info("/courses/for-dashboard finished in {} for {} courses with {} individual exercise(s), {} team exercise(s), and {} exam(s) for user {}",
+                    TimeLogUtil.formatDurationFrom(timeNanoStart), courses.size(), noOfIndividualExercises, noOfTeamExercises, noOfExams, user.getLogin());
         }
     }
 

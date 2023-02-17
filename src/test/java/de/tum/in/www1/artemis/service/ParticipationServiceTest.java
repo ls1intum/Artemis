@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -24,7 +25,9 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
 class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
@@ -39,6 +42,15 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private BuildLogEntryService buildLogEntryService;
+
+    @Autowired
+    private BuildLogEntryRepository buildLogEntryRepository;
+
+    @Autowired
+    private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private ProgrammingExercise programmingExercise;
 
@@ -159,6 +171,48 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         assertTrue(ZonedDateTime.now().minusSeconds(10).isBefore(studentParticipationReceived.getInitializationDate()));
         assertTrue(ZonedDateTime.now().plusSeconds(10).isAfter(studentParticipationReceived.getInitializationDate()));
         assertEquals(InitializationState.INITIALIZED, studentParticipationReceived.getInitializationState());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDeleteParticipation_removesBuildLogEntries() {
+        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        var programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+
+        // Setup: Create participation, submission and build log entries for template, solution and student
+        var templateParticipation = database.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
+        var templateSubmission = database.createProgrammingSubmission(templateParticipation, true);
+        BuildLogEntry buildLogEntryTemplate = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
+        var templateSavedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntryTemplate), templateSubmission);
+        templateSubmission.setBuildLogEntries(templateSavedBuildLogs);
+        programmingSubmissionRepository.save(templateSubmission);
+
+        var solutionParticipation = database.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
+        var solutionSubmission = database.createProgrammingSubmission(solutionParticipation, true);
+        BuildLogEntry buildLogEntrySolution = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
+        var solutionSavedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntrySolution), solutionSubmission);
+        solutionSubmission.setBuildLogEntries(solutionSavedBuildLogs);
+        programmingSubmissionRepository.save(solutionSubmission);
+
+        var studentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var studentSubmission = database.createProgrammingSubmission(studentParticipation, true);
+        BuildLogEntry buildLogEntryStudent = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
+        var studentSavedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntryStudent), studentSubmission);
+        studentSubmission.setBuildLogEntries(studentSavedBuildLogs);
+        programmingSubmissionRepository.save(studentSubmission);
+
+        // Delete and assert removal
+        assertThat(buildLogEntryRepository.findById(templateSavedBuildLogs.get(0).getId())).isPresent();
+        participationService.deleteResultsAndSubmissionsOfParticipation(templateParticipation.getId(), true);
+        assertThat(buildLogEntryRepository.findById(templateSavedBuildLogs.get(0).getId())).isEmpty();
+
+        assertThat(buildLogEntryRepository.findById(solutionSavedBuildLogs.get(0).getId())).isPresent();
+        participationService.deleteResultsAndSubmissionsOfParticipation(solutionParticipation.getId(), true);
+        assertThat(buildLogEntryRepository.findById(solutionSavedBuildLogs.get(0).getId())).isEmpty();
+
+        assertThat(buildLogEntryRepository.findById(studentSavedBuildLogs.get(0).getId())).isPresent();
+        participationService.deleteResultsAndSubmissionsOfParticipation(studentParticipation.getId(), true);
+        assertThat(buildLogEntryRepository.findById(studentSavedBuildLogs.get(0).getId())).isEmpty();
     }
 
     private void mockCreationOfExerciseParticipation(boolean useGradedParticipationOfResult, Result gradedResult) throws URISyntaxException {

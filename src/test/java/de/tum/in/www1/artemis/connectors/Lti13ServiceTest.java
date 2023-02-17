@@ -123,8 +123,8 @@ class Lti13ServiceTest {
 
         User user = new User();
         doReturn(user).when(userRepository).getUserWithGroupsAndAuthorities();
-        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), any(), anyBoolean());
-        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any(), any());
+        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
+        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
 
         lti13Service.performLaunch(oidcIdToken, clientRegistrationId);
 
@@ -151,8 +151,8 @@ class Lti13ServiceTest {
 
         User user = new User();
         doReturn(user).when(userRepository).getUserWithGroupsAndAuthorities();
-        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), any(), anyBoolean());
-        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any(), any());
+        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
+        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
 
         assertThrows(IllegalArgumentException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
 
@@ -508,8 +508,8 @@ class Lti13ServiceTest {
     }
 
     /**
-         * A wrapper for Entities that are related to each other.
-         */
+     * A wrapper for Entities that are related to each other.
+     */
     private record State(LtiResourceLaunch ltiResourceLaunch, Exercise exercise, User user, StudentParticipation participation, Result result,
             ClientRegistration clientRegistration) {
     }

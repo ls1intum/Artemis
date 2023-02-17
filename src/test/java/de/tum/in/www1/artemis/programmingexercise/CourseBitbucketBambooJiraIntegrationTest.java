@@ -10,6 +10,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -207,16 +209,18 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
         courseTestService.testGetCoursesWithQuizExercises();
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCourseForDashboard() throws Exception {
-        courseTestService.testGetCourseForDashboard(false);
+    @ValueSource(booleans = { true, false })
+    void testGetCourseForDashboard(boolean userRefresh) throws Exception {
+        courseTestService.testGetCourseForDashboard(userRefresh);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCourseForDashboard_userRefresh() throws Exception {
-        courseTestService.testGetCourseForDashboard(true);
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "custom1", roles = { "USER", "TA", "EDITOR", "INSTRUCTOR" })
+    @ValueSource(booleans = { true, false })
+    void testGetAllCoursesForDashboardExams(boolean userRefresh) throws Exception {
+        courseTestService.testGetAllCoursesForDashboardExams(userRefresh);
     }
 
     @Test

@@ -14,6 +14,7 @@ import { StatisticsService } from 'app/shared/statistics-graph/statistics.servic
 import { of } from 'rxjs';
 import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('CourseManagementStatisticsComponent', () => {
     let fixture: ComponentFixture<CourseManagementStatisticsComponent>;
@@ -35,6 +36,7 @@ describe('CourseManagementStatisticsComponent', () => {
                 CourseManagementStatisticsComponent,
                 MockComponent(StatisticsGraphComponent),
                 MockComponent(StatisticsAverageScoreGraphComponent),
+                MockComponent(DocumentationButtonComponent),
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
