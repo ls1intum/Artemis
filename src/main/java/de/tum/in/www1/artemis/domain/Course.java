@@ -110,7 +110,7 @@ public class Course extends DomainObject {
     @JoinColumn(name = "online_course_configuration_id")
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.ORDINAL)
     @Column(name = "info_sharing_config")
     @JsonView(QuizView.Before.class)
     private CourseInformationSharingConfiguration courseInformationSharingConfiguration;
