@@ -78,13 +78,14 @@ public class LocalCIBuildJob {
 
         // Create the container from the "ls1tum/artemis-maven-template:java17-13" image with the local paths to the Git repositories and the shell script bound to it.
         CreateContainerResponse container = dockerClient.createContainerCmd("ls1tum/artemis-maven-template:java17-13").withHostConfig(hostConfig)
-                .withEnv("ARTEMIS_BUILD_TOOL=" + (projectType.isMaven() ? "maven" : "gradle"), "ARTEMIS_DEFAULT_BRANCH=main") // TODO: Replace with default branch for
-                                                                                                                              // participation.
+                // TODO: Replace with default branch for participation.
+                .withEnv("ARTEMIS_BUILD_TOOL=" + (projectType.isMaven() ? "maven" : "gradle"), "ARTEMIS_DEFAULT_BRANCH=main")
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
-                // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, which is running in the background and indicates termination
-                // by creating a file "script_completed.txt" in the root directory.
-                .withCmd("sh", "-c", "while [ ! -f /script_completed.txt ]; do sleep 0.5; done")
+                // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
+                // by
+                // the creation of a file "results_extracted.txt" in the container's root directory.
+                .withCmd("sh", "-c", "while [ ! -f /results_extracted.txt ]; do sleep 0.5; done")
                 // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
                 // "docker exec -it <container-id> /bin/bash".
                 .exec();
@@ -92,20 +93,18 @@ public class LocalCIBuildJob {
         LocalCIBuildResultNotificationDTO buildResult = null;
 
         try {
+            ZonedDateTime buildStartedDate = ZonedDateTime.now();
+
             // Start the container.
             dockerClient.startContainerCmd(container.getId()).exec();
 
             // The "sh script.sh" command specified here is run inside the container as an additional process. This command runs in the background, independent of the container's
             // main process. The execution command can run concurrently with the main process.
-            // Creates a script_completed file in the container's root directory when the script finishes. The main process is waiting for this file to appear and then stops the
-            // main process, thus stopping the container.
-            ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(container.getId()).withAttachStdout(true).withAttachStderr(true)
-                    .withCmd("sh", "-c", "sh script.sh; touch /script_completed.txt").exec();
+            ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(container.getId()).withAttachStdout(true).withAttachStderr(true).withCmd("sh", "script.sh")
+                    .exec();
 
             // Start the command and wait for it to complete.
             final CountDownLatch latch = new CountDownLatch(1);
-
-            ZonedDateTime buildStartedDate = ZonedDateTime.now();
 
             dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(new ResultCallback.Adapter<>() {
 
@@ -125,19 +124,6 @@ public class LocalCIBuildJob {
 
             ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 
-            // When Gradle is used as the build tool, the test results are located in /repositories/test-repository/build/test-resuls/test/TEST-*.xml.
-            // When Maven is used as the build tool, the test results are located in /repositories/test-repository/target/surefire-reports/TEST-*.xml.
-            String testResultsPath;
-            if (projectType.isGradle()) {
-                testResultsPath = "/repositories/test-repository/build/test-results/test";
-            }
-            else if (projectType.isMaven()) {
-                testResultsPath = "/repositories/test-repository/target/surefire-reports";
-            }
-            else {
-                throw new IllegalStateException("Unknown build tool: " + projectType);
-            }
-
             // Get an input stream of the file in .git folder of the assignment repository and the test repository that contains the current commit hash of branch main.
             TarArchiveInputStream assignmentRepoTarInputStream = new TarArchiveInputStream(
                     dockerClient.copyArchiveFromContainerCmd(container.getId(), "/repositories/assignment-repository/.git/refs/heads/main").exec());
@@ -151,22 +137,35 @@ public class LocalCIBuildJob {
             String testRepoCommitHash = IOUtils.toString(testRepoTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
             testRepoTarInputStream.close();
 
+            // TODO: Take default branch name from the participation.
             LocalCIBuildResultNotificationDTO.LocalCIVCSDTO assignmentVC = new LocalCIBuildResultNotificationDTO.LocalCIVCSDTO(assignmentRepoCommitHash, ASSIGNMENT_REPO_NAME,
-                    "main", List.of()); // TODO: Take default branch name from the participation.
-            LocalCIBuildResultNotificationDTO.LocalCIVCSDTO testVC = new LocalCIBuildResultNotificationDTO.LocalCIVCSDTO(testRepoCommitHash, TEST_REPO_NAME, "main", List.of()); // TODO:
-                                                                                                                                                                                 // Take
-                                                                                                                                                                                 // default
-                                                                                                                                                                                 // branch
-                                                                                                                                                                                 // name
-                                                                                                                                                                                 // from
-                                                                                                                                                                                 // the
-                                                                                                                                                                                 // participation.
+                    "main", List.of());
+            LocalCIBuildResultNotificationDTO.LocalCIVCSDTO testVC = new LocalCIBuildResultNotificationDTO.LocalCIVCSDTO(testRepoCommitHash, TEST_REPO_NAME, "main", List.of());
+
+            // When Gradle is used as the build tool, the test results are located in /repositories/test-repository/build/test-resuls/test/TEST-*.xml.
+            // When Maven is used as the build tool, the test results are located in /repositories/test-repository/target/surefire-reports/TEST-*.xml.
+            String testResultsPath;
+            if (projectType.isGradle()) {
+                testResultsPath = "/repositories/test-repository/build/test-results/test";
+            }
+            else if (projectType.isMaven()) {
+                testResultsPath = "/repositories/test-repository/target/surefire-reports";
+            }
+            else {
+                throw new IllegalStateException("Unknown build tool: " + projectType);
+            }
 
             // Get an input stream of the test result files.
             TarArchiveInputStream testResultsTarInputStream = new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(container.getId(), testResultsPath).exec());
 
             List<LocalCIBuildResultNotificationDTO.LocalCITestJobDTO> failedTests = new ArrayList<>();
             List<LocalCIBuildResultNotificationDTO.LocalCITestJobDTO> successfulTests = new ArrayList<>();
+
+            // Create a file "results_extracted.txt" in the root directory of the container to indicate that the test results have been extracted. The container's main process is
+            // waiting for this file to appear and then stops the main process, thus stopping and removing the container.
+            ExecCreateCmdResponse createResultsExtractedFileCmdResponse = dockerClient.execCreateCmd(container.getId()).withCmd("touch", "results_extracted.txt").exec();
+            dockerClient.execStartCmd(createResultsExtractedFileCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
+
             // List<String> timestamps = new ArrayList<>();
             boolean isBuildSuccessful = true;
 

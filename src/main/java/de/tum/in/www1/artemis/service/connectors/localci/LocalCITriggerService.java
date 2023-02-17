@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -78,11 +80,25 @@ public class LocalCITriggerService {
             throw new LocalCIException("Programming language " + programmingLanguage + " is not supported by local CI.");
         }
 
-        Path scriptPath = Paths.get("src", "main", "resources", "templates", "localci", "java", "build_and_run_tests.sh").toAbsolutePath();// .toAbsolutePath();
+        // Get script file out of resources. TODO: Check if there is an easier way to do this and if not find out why this is necessary.
+        InputStream scriptInputStream = getClass().getResourceAsStream("/templates/localci/java/build_and_run_tests.sh");
+        if (scriptInputStream == null) {
+            throw new LocalCIException("Could not find build script for local CI.");
+        }
+        Path scriptPath;
+        try {
+            scriptPath = Files.createTempFile("build_and_run_tests", ".sh");
+            Files.copy(scriptInputStream, scriptPath, StandardCopyOption.REPLACE_EXISTING);
+        }
+        catch (IOException e) {
+            throw new LocalCIException("Could not create temporary file for build script.");
+        }
+
         try {
             LocalCIBuildJob localCIBuildJob = new LocalCIBuildJob(programmingExercise.getProjectType(), assignmentRepositoryPath, testRepositoryPath, scriptPath);
 
             LocalCIBuildResultNotificationDTO buildResult = localCIBuildJob.runBuildJob(); // TODO: run in separate thread and notify LocalCIService about the result.
+            log.info("buildResult: {}", buildResult);
             Optional<Result> optResult = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
 
             // Only notify the user about the new result if the result was created successfully.

@@ -217,6 +217,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
+        log.info("Request body: {}", requestBody);
         if (!(requestBody instanceof LocalCIBuildResultNotificationDTO localCIBuildResult)) {
             throw new LocalCIException("The request body is not of type LocalCIBuildResultNotificationDTO");
         }
