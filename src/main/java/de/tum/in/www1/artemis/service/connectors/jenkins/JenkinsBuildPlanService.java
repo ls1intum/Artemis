@@ -64,7 +64,7 @@ public class JenkinsBuildPlanService {
 
     private final JenkinsBuildPlanCreator jenkinsBuildPlanCreator;
 
-    private final PipelineGroovyBuildPlanCreator pipelineGroovyBuildPlanCreator;
+    private final JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator;
 
     private final JenkinsJobService jenkinsJobService;
 
@@ -78,7 +78,7 @@ public class JenkinsBuildPlanService {
 
     public JenkinsBuildPlanService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, JenkinsBuildPlanCreator jenkinsBuildPlanCreator,
             JenkinsJobService jenkinsJobService, JenkinsJobPermissionsService jenkinsJobPermissionsService, JenkinsInternalUrlService jenkinsInternalUrlService,
-            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, PipelineGroovyBuildPlanCreator pipelineGroovyBuildPlanCreator) {
+            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator) {
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
@@ -87,7 +87,7 @@ public class JenkinsBuildPlanService {
         this.jenkinsJobPermissionsService = jenkinsJobPermissionsService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.jenkinsInternalUrlService = jenkinsInternalUrlService;
-        this.pipelineGroovyBuildPlanCreator = pipelineGroovyBuildPlanCreator;
+        this.jenkinsPipelineScriptCreator = jenkinsPipelineScriptCreator;
     }
 
     /**
@@ -104,7 +104,7 @@ public class JenkinsBuildPlanService {
         final boolean isSolutionPlan = planKey.equals(BuildPlanType.SOLUTION.getName());
 
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
-        final String buildPlanUrl = pipelineGroovyBuildPlanCreator.generateBuildPlanURL(exercise);
+        final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
         final boolean checkoutSolution = exercise.getCheckoutSolutionRepository();
         Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, checkoutSolution,
                 buildPlanUrl);
@@ -114,7 +114,7 @@ public class JenkinsBuildPlanService {
         jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
         givePlanPermissions(exercise, planKey);
 
-        pipelineGroovyBuildPlanCreator.createBuildPlanForExercise(exercise);
+        jenkinsPipelineScriptCreator.createBuildPlanForExercise(exercise);
 
         triggerBuild(jobFolder, job);
     }

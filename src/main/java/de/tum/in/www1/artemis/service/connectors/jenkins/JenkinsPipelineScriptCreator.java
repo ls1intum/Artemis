@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.AbstractBuildPlanCreator;
 
 @Component
-public class PipelineGroovyBuildPlanCreator extends AbstractBuildPlanCreator {
+public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
 
     private static final String STATIC_CODE_ANALYSIS_REPORT_DIR = "staticCodeAnalysisReports";
 
@@ -44,7 +44,7 @@ public class PipelineGroovyBuildPlanCreator extends AbstractBuildPlanCreator {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
-    public PipelineGroovyBuildPlanCreator(BuildPlanRepository buildPlanRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+    public JenkinsPipelineScriptCreator(BuildPlanRepository buildPlanRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ResourceLoaderService resourceLoaderService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         super(buildPlanRepository, programmingExerciseRepository);
 
