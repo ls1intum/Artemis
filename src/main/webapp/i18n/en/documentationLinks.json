@@ -17,7 +17,8 @@
             "grading": "Go to the documentation for grading.",
             "units": "Go to the documentation for lecture units.",
             "assessment": "Go to the documentation for assessments.",
-            "statistics": "Go to the documentation for statistics."
+            "statistics": "Go to the documentation for statistics.",
+            "lti": "Go to the documentation for LTI."
         }
     }
 }

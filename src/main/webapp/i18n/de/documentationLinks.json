@@ -17,7 +17,8 @@
             "grading": "Gehe zur Dokumentation für die Benotung.",
             "units": "Gehe zur Dokumentation für Lerneinheiten.",
             "assessment": "Gehe zur Dokumentation für Bewertungen.",
-            "statistics": "Gehe zur Dokumentation für Statistiken."
+            "statistics": "Gehe zur Dokumentation für Statistiken.",
+            "lti": "Gehe zur Dokumentation für LTI."
         }
     }
 }
