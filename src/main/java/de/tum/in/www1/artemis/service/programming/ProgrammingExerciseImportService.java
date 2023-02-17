@@ -150,14 +150,14 @@ public class ProgrammingExerciseImportService {
                 templateExercise.getSolutionRepositoryUrl(), templateExercise.getTestRepositoryUrl(), templateExercise.getAuxiliaryRepositoriesForBuildPlan());
 
         try {
-            if (Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
-                localCITriggerService.triggerBuild(templateParticipation);
-                localCITriggerService.triggerBuild(solutionParticipation);
-            }
-            else {
-                continuousIntegrationService.get().triggerBuild(templateParticipation);
-                continuousIntegrationService.get().triggerBuild(solutionParticipation);
-            }
+            // if (Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
+            // localCITriggerService.triggerBuild(templateParticipation);
+            // localCITriggerService.triggerBuild(solutionParticipation);
+            // }
+            // else {
+            continuousIntegrationService.get().triggerBuild(templateParticipation);
+            continuousIntegrationService.get().triggerBuild(solutionParticipation);
+            // }
         }
         catch (ContinuousIntegrationException e) {
             log.error("Unable to trigger imported build plans", e);

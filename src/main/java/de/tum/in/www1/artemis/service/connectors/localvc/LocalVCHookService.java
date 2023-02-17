@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.localvc;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -22,6 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
@@ -52,11 +54,14 @@ public class LocalVCHookService {
 
     private final LocalCITriggerService localCITriggerService;
 
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+
     public LocalVCHookService(ProgrammingExerciseService programmingExerciseService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, LocalCITriggerService localCITriggerService) {
+            ProgrammingMessagingService programmingMessagingService, LocalCITriggerService localCITriggerService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.programmingExerciseService = programmingExerciseService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -64,6 +69,7 @@ public class LocalVCHookService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.localCITriggerService = localCITriggerService;
+        this.continuousIntegrationService = continuousIntegrationService;
     }
 
     /**
@@ -127,7 +133,7 @@ public class LocalVCHookService {
             // Programming exercise was removed from the participation by the notifyUserAboutSubmission method.
             participation.setProgrammingExercise(exercise);
             // Trigger the build for the new submission on the local CI system.
-            localCITriggerService.triggerBuild(participation);
+            continuousIntegrationService.get().triggerBuild(participation);
         }
         catch (Exception ex) {
             log.error("Exception encountered when trying to create a new submission for participation {} with the following commit: {}", participation.getId(), commit, ex);

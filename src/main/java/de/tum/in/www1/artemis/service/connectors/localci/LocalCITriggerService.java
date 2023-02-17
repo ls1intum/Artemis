@@ -62,6 +62,7 @@ public class LocalCITriggerService {
 
     /**
      * Triggers a build for given participation.
+     * Note: not used right now, can be used to prevent a circular dependency LocalCIService -> ProgrammingExercisesGradingService -> LocalCIService.
      *
      * @param participation the participation with the id of the build plan that should be triggered.
      */

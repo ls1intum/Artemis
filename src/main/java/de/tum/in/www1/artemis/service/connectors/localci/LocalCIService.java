@@ -1,29 +1,44 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 
 @Service
 @Profile("localci")
@@ -31,9 +46,25 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
+    @Value("${artemis.version-control.url}")
+    private URL localVCServerUrl;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private String localVCPath;
+
+    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
+
+    private final WebsocketMessagingService messagingService;
+
+    private final LtiNewResultService ltiNewResultService;
+
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
+            ProgrammingExerciseGradingService programmingExerciseGradingService, WebsocketMessagingService messagingService, LtiNewResultService ltiNewResultService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
+        this.programmingExerciseGradingService = programmingExerciseGradingService;
+        this.messagingService = messagingService;
+        this.ltiNewResultService = ltiNewResultService;
     }
 
     @Override
@@ -74,8 +105,65 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      * @param participation the participation with the id of the build plan that should be triggered.
      */
     @Override
+    @Async
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws LocalCIException {
-        // Use LocalCITriggerService instead to not run into circular dependency LocalCIService -> ProgrammingExerciseGradingService -> LocalCIService.
+        // Create a new build job and run it. TODO: outsource execution to an ExecutorService.
+        String assignmentRepositoryUrlString = participation.getRepositoryUrl();
+        LocalVCRepositoryUrl assignmentRepositoryUrl = new LocalVCRepositoryUrl(localVCServerUrl, assignmentRepositoryUrlString);
+        Path assignmentRepositoryPath = assignmentRepositoryUrl.getLocalPath(localVCPath).toAbsolutePath();
+
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+        String testRepositoryUrlString = programmingExercise.getTestRepositoryUrl();
+        LocalVCRepositoryUrl testRepositoryUrl = new LocalVCRepositoryUrl(localVCServerUrl, testRepositoryUrlString);
+        Path testRepositoryPath = testRepositoryUrl.getLocalPath(localVCPath).toAbsolutePath();
+
+        ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
+
+        if (programmingLanguage != ProgrammingLanguage.JAVA) {
+            throw new LocalCIException("Programming language " + programmingLanguage + " is not supported by local CI.");
+        }
+
+        // Get script file out of resources. TODO: Check if there is an easier way to do this and if not find out why this is necessary.
+        InputStream scriptInputStream = getClass().getResourceAsStream("/templates/localci/java/build_and_run_tests.sh");
+        if (scriptInputStream == null) {
+            throw new LocalCIException("Could not find build script for local CI.");
+        }
+        Path scriptPath;
+        try {
+            scriptPath = Files.createTempFile("build_and_run_tests", ".sh");
+            Files.copy(scriptInputStream, scriptPath, StandardCopyOption.REPLACE_EXISTING);
+        }
+        catch (IOException e) {
+            throw new LocalCIException("Could not create temporary file for build script.");
+        }
+
+        try {
+            LocalCIBuildJob localCIBuildJob = new LocalCIBuildJob(programmingExercise.getProjectType(), assignmentRepositoryPath, testRepositoryPath, scriptPath);
+
+            LocalCIBuildResultNotificationDTO buildResult = localCIBuildJob.runBuildJob(); // TODO: run in separate thread and notify LocalCIService about the result.
+            log.info("buildResult: {}", buildResult);
+
+            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+            // Therefore, a mock auth object has to be created.
+            SecurityUtils.setAuthorizationObject();
+            Optional<Result> optResult = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
+
+            // Only notify the user about the new result if the result was created successfully.
+            if (optResult.isPresent()) {
+                Result result = optResult.get();
+                log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
+                // notify user via websocket
+                messagingService.broadcastNewResult((Participation) participation, result);
+                if (participation instanceof StudentParticipation) {
+                    // do not try to report results for template or solution participations
+                    ltiNewResultService.onNewResult((ProgrammingExerciseStudentParticipation) participation);
+                }
+                log.info("The new result for repository {} was saved successfully", assignmentRepositoryUrlString);
+            }
+        }
+        catch (IllegalArgumentException | IOException e) {
+            throw new LocalCIException("Error while creating and running build job: " + e.getMessage());
+        }
     }
 
     @Override
