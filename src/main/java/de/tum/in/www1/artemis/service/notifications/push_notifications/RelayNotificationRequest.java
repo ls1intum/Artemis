@@ -8,9 +8,9 @@ public class RelayNotificationRequest {
 
     private final String token;
 
-    public RelayNotificationRequest(String initializationVector, String payloadCiphertext, String token) {
+    public RelayNotificationRequest(String initializationVector, String payloadCipherText, String token) {
         this.initializationVector = initializationVector;
-        this.payloadCipherText = payloadCiphertext;
+        this.payloadCipherText = payloadCipherText;
         this.token = token;
     }
 
