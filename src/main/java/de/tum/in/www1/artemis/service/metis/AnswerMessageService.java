@@ -69,7 +69,7 @@ public class AnswerMessageService extends PostingService {
 
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
         Conversation conversation = conversationService.mayInteractWithConversationElseThrow(answerMessage.getPost().getConversation().getId(), user);
-        var course = preCheckUserAndCourseForConversation(user, conversation, courseId);
+        var course = preCheckUserAndCourseForMessaging(user, courseId);
 
         if (conversation instanceof Channel channel) {
             channelAuthorizationService.isAllowedToCreateNewAnswerPostInChannel(channel, user);
@@ -111,7 +111,7 @@ public class AnswerMessageService extends PostingService {
 
         // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
         Conversation conversation = mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
-        var course = preCheckUserAndCourseForConversation(user, conversation, courseId);
+        var course = preCheckUserAndCourseForMessaging(user, courseId);
         // only the content of the message can be updated
         existingAnswerMessage.setContent(answerMessage.getContent());
 
@@ -144,7 +144,7 @@ public class AnswerMessageService extends PostingService {
         // checks
         AnswerPost answerMessage = this.findById(answerMessageId);
         Conversation conversation = mayUpdateOrDeleteAnswerMessageElseThrow(answerMessage, user);
-        var course = preCheckUserAndCourseForConversation(user, conversation, courseId);
+        var course = preCheckUserAndCourseForMessaging(user, courseId);
 
         // delete
         answerPostRepository.deleteById(answerMessageId);

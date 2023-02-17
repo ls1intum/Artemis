@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Posting;
 import de.tum.in.www1.artemis.domain.metis.UserRole;
-import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -136,7 +135,7 @@ public abstract class PostingService {
         }
     }
 
-    Course preCheckUserAndCourse(User user, Long courseId) {
+    Course preCheckUserAndCourseForCommunication(User user, Long courseId) {
         final Course course = courseRepository.findByIdElseThrow(courseId);
         // user has to be at least student in the course
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
@@ -148,7 +147,7 @@ public abstract class PostingService {
         return course;
     }
 
-    Course preCheckUserAndCourseForConversation(User user, Conversation conversation, Long courseId) {
+    Course preCheckUserAndCourseForMessaging(User user, Long courseId) {
         final Course course = courseRepository.findByIdElseThrow(courseId);
         // user has to be at least student in the course
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);

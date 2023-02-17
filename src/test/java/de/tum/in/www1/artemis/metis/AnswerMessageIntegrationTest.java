@@ -15,8 +15,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
@@ -26,6 +28,9 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private AnswerPostRepository answerPostRepository;
+
+    @Autowired
+    private CourseRepository courseRepository;
 
     private List<Post> existingConversationPostsWithAnswers;
 
@@ -79,6 +84,40 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         // both conversation participants should be notified
         verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testMessagingNotAllowedIfCommunicationOnlySetting() throws Exception {
+        messagingFeatureDisabledTest(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testMessagingNotAllowedIfDisabledSetting() throws Exception {
+        messagingFeatureDisabledTest(CourseInformationSharingConfiguration.DISABLED);
+    }
+
+    private void messagingFeatureDisabledTest(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        var persistedCourse = courseRepository.findByIdElseThrow(courseId);
+        persistedCourse.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        persistedCourse = courseRepository.saveAndFlush(persistedCourse);
+        assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
+
+        var countBefore = answerPostRepository.count();
+        AnswerPost postToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
+
+        AnswerPost notCreatedAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-messages", postToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(notCreatedAnswerPost).isNull();
+        assertThat(answerPostRepository.count()).isEqualTo(countBefore);
+
+        // conversation participants should not be notified
+        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+
+        // active messaging again
+        persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        courseRepository.saveAndFlush(persistedCourse);
     }
 
     @Test

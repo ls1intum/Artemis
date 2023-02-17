@@ -37,11 +37,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
@@ -67,6 +69,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private CourseRepository courseRepository;
 
     private List<Post> existingPostsAndConversationPosts;
 
@@ -138,6 +143,43 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         // both conversation participants should be notified
         verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMessagingNotAllowedIfCommunicationOnlySetting() throws Exception {
+        messagingFeatureDisabledTest(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMessagingNotAllowedIfDisabledSetting() throws Exception {
+        messagingFeatureDisabledTest(CourseInformationSharingConfiguration.DISABLED);
+    }
+
+    private void messagingFeatureDisabledTest(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        var persistedCourse = courseRepository.findByIdElseThrow(courseId);
+        persistedCourse.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        persistedCourse = courseRepository.saveAndFlush(persistedCourse);
+        assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
+
+        Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
+
+        PostContextFilter postContextFilter = new PostContextFilter();
+        postContextFilter.setConversationId(postToSave.getConversation().getId());
+        var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged()).getSize();
+
+        Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(notCreatedPost).isNull();
+        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged())).hasSize(numberOfPostsBefore);
+
+        // conversation participants should not be notified
+        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+
+        // active messaging again
+        persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        courseRepository.saveAndFlush(persistedCourse);
     }
 
     @Test

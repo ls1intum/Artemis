@@ -75,7 +75,7 @@ public class ConversationMessagingService extends PostingService {
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
         var conversation = conversationService.mayInteractWithConversationElseThrow(newMessage.getConversation().getId(), author);
-        var course = preCheckUserAndCourseForConversation(author, conversation, courseId);
+        var course = preCheckUserAndCourseForMessaging(author, courseId);
 
         // extra checks for channels
         if (conversation instanceof Channel channel) {
@@ -157,7 +157,7 @@ public class ConversationMessagingService extends PostingService {
 
         Post existingMessage = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
-        var course = preCheckUserAndCourseForConversation(user, conversation, courseId);
+        var course = preCheckUserAndCourseForMessaging(user, courseId);
 
         // ToDo: find a cleaner way to do this instead of making the string here in the server
 
@@ -194,7 +194,7 @@ public class ConversationMessagingService extends PostingService {
         // checks
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         var conversation = mayUpdateOrDeleteMessageElseThrow(post, user);
-        var course = preCheckUserAndCourseForConversation(user, conversation, courseId);
+        var course = preCheckUserAndCourseForMessaging(user, courseId);
         post.setConversation(conversation);
 
         // delete
