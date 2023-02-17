@@ -18,6 +18,7 @@ describe('Exam participation', () => {
     let course: Course;
 
     before('Create course', () => {
+        cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
         });
