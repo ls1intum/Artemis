@@ -9,7 +9,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import de.tum.in.www1.artemis.domain.User;
 
-// TODO: write migration script
+/**
+ * Model for saving PushNotification DeviceTokens for native clients
+ */
 @Entity
 @Table(name = "push_notification_device_configuration")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -41,9 +43,6 @@ public class PushNotificationDeviceConfiguration {
         this.expirationDate = expirationDate;
         this.secretKey = secretKey;
         this.owner = owner;
-    }
-
-    public PushNotificationDeviceConfiguration() {
     }
 
     public String getToken() {

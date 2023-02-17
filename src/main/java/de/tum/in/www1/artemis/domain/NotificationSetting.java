@@ -29,7 +29,6 @@ public class NotificationSetting extends DomainObject {
     @Column(name = "email", columnDefinition = "boolean default false", nullable = false)
     private boolean email = false;
 
-    // TODO: write migration query
     @Column(name = "push", columnDefinition = "boolean default false", nullable = false)
     private boolean push = false;
 

@@ -23,6 +23,9 @@ import de.tum.in.www1.artemis.config.RestTemplateConfiguration;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
 import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
 
+/**
+ * Handles the sending of Android Notifications to the Relay Service
+ */
 @Service
 public class FirebasePushNotificationService extends PushNotificationService {
 

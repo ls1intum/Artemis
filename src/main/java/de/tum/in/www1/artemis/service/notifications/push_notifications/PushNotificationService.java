@@ -30,6 +30,10 @@ import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceTyp
 import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.in.www1.artemis.service.notifications.InstantNotificationService;
 
+/**
+ * Wraps the sending of iOS and Android Notifications to the Relay Service
+ * Implements the encryption of the payload
+ */
 @Service
 public abstract class PushNotificationService implements InstantNotificationService {
 

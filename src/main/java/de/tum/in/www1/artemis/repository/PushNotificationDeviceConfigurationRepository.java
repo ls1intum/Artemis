@@ -12,9 +12,15 @@ import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceCon
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfigurationId;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
 
+/**
+ * The Repository used for PushNotificationDeviceConfiguration
+ */
 @Repository
 public interface PushNotificationDeviceConfigurationRepository extends JpaRepository<PushNotificationDeviceConfiguration, PushNotificationDeviceConfigurationId> {
 
+    /**
+     * Finds all the deviceTokens for a specific deviceType for a list of users.
+     */
     @Query("SELECT p FROM PushNotificationDeviceConfiguration p WHERE p.expirationDate > now() AND p.owner IN :userList AND p.deviceType = :deviceType")
     List<PushNotificationDeviceConfiguration> findByUserIn(@Param("userList") List<User> userList, PushNotificationDeviceType deviceType);
 }

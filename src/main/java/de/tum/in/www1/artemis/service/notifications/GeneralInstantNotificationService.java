@@ -15,6 +15,10 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebasePushNotificationService;
 
+/**
+ * A Handler for InstantNotifications such as MailService and PushNotifications.
+ * Handles the sending of Notifications via this channels.
+ */
 @Service
 public class GeneralInstantNotificationService implements InstantNotificationService {
 

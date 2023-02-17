@@ -5,6 +5,9 @@ import java.util.Objects;
 
 import de.tum.in.www1.artemis.domain.User;
 
+/**
+ * The PrimaryKey used for PushNotificationDeviceConfiguration
+ */
 public class PushNotificationDeviceConfigurationId implements Serializable {
 
     private Long owner;
@@ -24,10 +27,12 @@ public class PushNotificationDeviceConfigurationId implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (o == null || getClass() != o.getClass()) {
             return false;
+        }
         PushNotificationDeviceConfigurationId that = (PushNotificationDeviceConfigurationId) o;
         return owner.equals(that.owner) && token.equals(that.token) && deviceType == that.deviceType;
     }
