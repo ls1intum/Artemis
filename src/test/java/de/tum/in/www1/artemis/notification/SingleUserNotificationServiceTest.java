@@ -9,10 +9,12 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
+import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -275,29 +277,33 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
      * Test for notifyUserAboutNewPossiblePlagiarismCase method
      */
     @Test
-    void testNotifyUserAboutNewPossiblePlagiarismCase() {
+    void testNotifyUserAboutNewPossiblePlagiarismCase() throws MessagingException {
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         database.changeUser(TEST_PREFIX + "student1");
-        Post post = new Post();
-        post.setPlagiarismCase(new PlagiarismCase());
-        post.setContent("You plagiarized!");
-        plagiarismCase.setPost(new Post());
+        String exerciseTitle = "Test New Plagiarism";
+        exercise.setTitle(exerciseTitle);
+        post.setPlagiarismCase(plagiarismCase);
+        plagiarismCase.setPost(post);
         singleUserNotificationService.notifyUserAboutNewPlagiarismCase(plagiarismCase, user);
         verifyRepositoryCallWithCorrectNotification(NEW_PLAGIARISM_CASE_STUDENT_TITLE);
-        verifyEmail();
+        ArgumentCaptor<MimeMessage> mimeMessageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
+        verify(javaMailSender, timeout(1000).times(1)).send(mimeMessageCaptor.capture());
+        assertThat(mimeMessageCaptor.getValue().getSubject()).isEqualTo("New Plagiarism Case: Exercise \"" + exerciseTitle + "\" in the course \"" + course.getTitle() + "\"");
     }
 
     /**
      * Test for notifyUserAboutFinalPlagiarismState method
      */
     @Test
-    void testNotifyUserAboutFinalPlagiarismState() {
+    void testNotifyUserAboutFinalPlagiarismState() throws MessagingException {
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         database.changeUser(TEST_PREFIX + "student1");
         plagiarismCase.setVerdict(PlagiarismVerdict.NO_PLAGIARISM);
         singleUserNotificationService.notifyUserAboutPlagiarismCaseVerdict(plagiarismCase, user);
         verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);
-        verifyEmail();
+        ArgumentCaptor<MimeMessage> mimeMessageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
+        verify(javaMailSender, timeout(1000).times(1)).send(mimeMessageCaptor.capture());
+        assertThat(mimeMessageCaptor.getValue().getSubject()).isEqualTo(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);
     }
 
     // Tutorial Group related
