@@ -21,7 +21,7 @@ public enum CourseInformationSharingConfiguration {
      */
     DISABLED;
 
-    public static boolean isCommunicationFeatureEnabled(Course course) {
+    public static boolean isCommunicationEnabled(Course course) {
         var config = course.getCourseInformationSharingConfiguration();
         return config == COMMUNICATION_AND_MESSAGING || config == COMMUNICATION_ONLY;
     }

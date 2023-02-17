@@ -143,7 +143,7 @@ public abstract class PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         // check if the course has posts enabled
-        if (!CourseInformationSharingConfiguration.isCommunicationFeatureEnabled(course)) {
+        if (!CourseInformationSharingConfiguration.isCommunicationEnabled(course)) {
             throw new BadRequestAlertException("Communication feature is not enabled for this course", getEntityName(), "400", true);
         }
         return course;
