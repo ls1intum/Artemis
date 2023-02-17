@@ -15,6 +15,6 @@
             SET info_sharing_config = 'COMMUNICATION_AND_MESSAGING'
             WHERE posts_enabled = true;
         </sql>
-        <!--        <dropColumn tableName="course" columnName="posts_enabled"/>-->
+        <dropColumn tableName="course" columnName="posts_enabled"/>
     </changeSet>
 </databaseChangeLog>
