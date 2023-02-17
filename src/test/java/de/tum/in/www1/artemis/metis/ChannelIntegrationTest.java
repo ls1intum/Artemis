@@ -371,6 +371,27 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     }
 
     @ParameterizedTest
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void archiveAndUnarchiveChannel_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration)
+            throws Exception {
+        archival_messagingDeactivated(courseInformationSharingConfiguration);
+
+    }
+
+    void archival_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        var channel = createChannel(true);
+        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+
+        // given
+        expectArchivalChangeForbidden(channel, true, true);
+        expectArchivalChangeForbidden(channel, true, false);
+
+        // active messaging again
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+    }
+
+    @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void archiveAndUnarchiveChannel_asUserWithChannelModerationRights_shouldArchiveChannel(boolean isPublicChannel) throws Exception {
@@ -391,6 +412,28 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void grantRevokeChannelModeratorRole_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration)
+            throws Exception {
+        grantRevokeChannelModeratorRole_messagingDeactivated(courseInformationSharingConfiguration);
+
+    }
+
+    void grantRevokeChannelModeratorRole_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        var channel = createChannel(true);
+
+        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+
+        // given
+        expectGrantRevokeChannelModeratorRoleForbidden(channel, true);
+        expectGrantRevokeChannelModeratorRoleForbidden(channel, false);
+
+        // active messaging again
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
     }
 
     @ParameterizedTest
@@ -447,6 +490,27 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void registerDeregisterUsersToChannel_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration)
+            throws Exception {
+        registerUsersToChannel_messagingDeactivated(courseInformationSharingConfiguration);
+
+    }
+
+    void registerUsersToChannel_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+
+        // given
+        var channel = createChannel(true);
+        expectRegisterDeregisterForbidden(channel, true);
+        expectRegisterDeregisterForbidden(channel, false);
+
+        // active messaging again
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
     }
 
     @ParameterizedTest

@@ -6,15 +6,15 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
-import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
-import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationUserDTO;
-import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.*;
 
 class ConversationIntegrationTest extends AbstractConversationTest {
 
@@ -32,6 +32,23 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @Override
     String getTestPrefix() {
         return TEST_PREFIX;
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getConversationsOfUser_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        getConversationsOfUser_messagingDeactivated(courseInformationSharingConfiguration);
+
+    }
+
+    void getConversationsOfUser_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+
+        request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.FORBIDDEN, ConversationDTO.class);
+
+        // active messaging again
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
     }
 
     @Test
@@ -113,6 +130,30 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(channel.getId());
     }
 
+    @ParameterizedTest
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void switchFavoriteStatus_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        switchFavoriteStatus_messagingDeactivated(courseInformationSharingConfiguration);
+
+    }
+
+    void switchFavoriteStatus_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        // given
+        var channel = createChannel(false);
+
+        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+
+        var trueParams = new LinkedMultiValueMap<String, String>();
+        trueParams.add("isFavorite", String.valueOf(true));
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/favorite", HttpStatus.FORBIDDEN, trueParams);
+
+        // active messaging again
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void switchHiddenStatus_shouldSwitchHiddenStatus() throws Exception {
@@ -130,6 +171,58 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/hidden", HttpStatus.OK, falseParams);
         this.assertHiddenStatus(channel.getId(), "tutor1", false);
 
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void switchHiddenStatus_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        switchHiddenStatus_messagingDeactivated(courseInformationSharingConfiguration);
+
+    }
+
+    void switchHiddenStatus_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        // given
+        var channel = createChannel(false);
+
+        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+
+        var trueParams = new LinkedMultiValueMap<String, String>();
+        trueParams.add("isHidden", String.valueOf(true));
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/hidden", HttpStatus.FORBIDDEN, trueParams);
+
+        // active messaging again
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchConversationMembers_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        searchConversationMembers_messagingDeactivated(courseInformationSharingConfiguration);
+
+    }
+
+    void searchConversationMembers_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        // given
+        var channel = createChannel(false);
+
+        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("loginOrName", "");
+        params.add("sort", "firstName,asc");
+        params.add("sort", "lastName,asc");
+        params.add("page", "0");
+        params.add("size", "20");
+        request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.FORBIDDEN, ConversationUserDTO.class, params);
+
+        // active messaging again
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
         // cleanup
         conversationRepository.deleteById(channel.getId());
     }

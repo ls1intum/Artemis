@@ -159,13 +159,13 @@ public class GroupChatResource {
     @PostMapping("/{courseId}/group-chats/{groupChatId}/deregister")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deregisterUsersFromGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody List<String> userLogins) {
+        if (!(courseRepository.isMessagingEnabled(courseId))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
+        }
         if (userLogins == null || userLogins.isEmpty()) {
             throw new BadRequestAlertException("No user logins provided", GROUP_CHAT_ENTITY_NAME, "userLoginsEmpty");
         }
         log.debug("REST request to deregister {} users from the group chat : {}", userLogins.size(), groupChatId);
-        if (!(courseRepository.isMessagingEnabled(courseId))) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
-        }
         var course = courseRepository.findByIdElseThrow(courseId);
 
         var groupChatFromDatabase = groupChatRepository.findByIdElseThrow(groupChatId);
