@@ -25,7 +25,7 @@ services:
     command: sh -c "npm install && npm run start-docker"
     depends_on:
       - artemis-server
-    image: node:18.12.1-alpine
+    image: node:18.14.0-alpine
     networks:
       - artemis
     ports:
@@ -40,7 +40,7 @@ services:
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
       - MYSQL_ROOT_PASSWORD=
       - MYSQL_DATABASE=Artemis
-    image: mysql:8.0.31
+    image: mysql:8.0.32
     networks:
       - artemis
     ports:
