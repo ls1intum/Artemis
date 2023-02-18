@@ -1,6 +1,9 @@
 <div>
     <div class="row mb-5">
-        <h2 class="col-md-2" id="statistics-page-heading" jhiTranslate="statistics.course_statistics_title">Course statistics</h2>
+        <div class="d-flex align-items-center col-md-2">
+            <h2 id="statistics-page-heading" jhiTranslate="statistics.course_statistics_title">Course statistics</h2>
+            <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+        </div>
     </div>
 
     <jhi-statistics-average-score-graph

@@ -8,6 +8,7 @@ import { ExerciseGroupUpdateComponent } from 'app/exam/manage/exercise-groups/ex
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
+import { ExamStudentsAttendanceCheckComponent } from 'app/exam/manage/students/verify-attendance-check/exam-students-attendance-check.component';
 import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
 import { TextExerciseResolver } from 'app/exercises/text/manage/text-exercise/text-exercise.route';
 import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
@@ -189,6 +190,18 @@ export const examManagementRoute: Routes = [
             requestOptions: {
                 withStudents: true,
             },
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/students/verify-attendance',
+        component: ExamStudentsAttendanceCheckComponent,
+        resolve: {
+            exam: ExamResolve,
+        },
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
     },

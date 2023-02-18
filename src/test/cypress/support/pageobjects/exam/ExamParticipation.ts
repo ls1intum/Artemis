@@ -2,9 +2,18 @@ import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { EXERCISE_TYPE } from '../../constants';
 import { getExercise } from '../../utils';
-import { artemis } from '../../ArtemisTesting';
+import {
+    courseList,
+    courseOverview,
+    examNavigation,
+    examStartEnd,
+    modelingExerciseEditor,
+    programmingExerciseEditor,
+    quizExerciseMultipleChoice,
+    textExerciseEditor,
+} from '../../artemis';
 import { Interception } from 'cypress/types/net-stubbing';
-import { CypressCredentials } from 'src/test/cypress/support/users';
+import { CypressCredentials } from '../../../support/users';
 import { ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEditorPage';
 
 /**
@@ -33,52 +42,48 @@ export class ExamParticipation {
     }
 
     makeTextExerciseSubmission(exerciseID: number, textFixture: string) {
-        const textEditor = artemis.pageobjects.exercise.text.editor;
         cy.fixture(textFixture).then((submissionText) => {
-            textEditor.typeSubmission(exerciseID, submissionText);
+            textExerciseEditor.typeSubmission(exerciseID, submissionText);
         });
         cy.wait(1000);
     }
 
     private makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission) {
-        const onlineEditor = artemis.pageobjects.exercise.programming.editor;
-        onlineEditor.toggleCompressFileTree(exerciseID);
-        onlineEditor.deleteFile(exerciseID, 'Client.java');
-        onlineEditor.deleteFile(exerciseID, 'BubbleSort.java');
-        onlineEditor.deleteFile(exerciseID, 'MergeSort.java');
-        onlineEditor.typeSubmission(exerciseID, submission, 'de.test');
-        onlineEditor.submit(exerciseID);
-        onlineEditor.getResultScoreFromExercise(exerciseID).contains(submission.expectedResult).and('be.visible');
+        programmingExerciseEditor.toggleCompressFileTree(exerciseID);
+        programmingExerciseEditor.deleteFile(exerciseID, 'Client.java');
+        programmingExerciseEditor.deleteFile(exerciseID, 'BubbleSort.java');
+        programmingExerciseEditor.deleteFile(exerciseID, 'MergeSort.java');
+        programmingExerciseEditor.typeSubmission(exerciseID, submission, 'de.test');
+        programmingExerciseEditor.submit(exerciseID);
+        programmingExerciseEditor.getResultScoreFromExercise(exerciseID).contains(submission.expectedResult).and('be.visible');
     }
 
     makeModelingExerciseSubmission(exerciseID: number) {
-        const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
-        modelingEditor.addComponentToModel(exerciseID, 1, false);
-        modelingEditor.addComponentToModel(exerciseID, 2, false);
-        modelingEditor.addComponentToModel(exerciseID, 3, false);
+        modelingExerciseEditor.addComponentToModel(exerciseID, 1, false);
+        modelingExerciseEditor.addComponentToModel(exerciseID, 2, false);
+        modelingExerciseEditor.addComponentToModel(exerciseID, 3, false);
     }
 
     makeQuizExerciseSubmission(exerciseID: number, quizExerciseID: number) {
-        const multipleChoiceQuiz = artemis.pageobjects.exercise.quiz.multipleChoice;
-        multipleChoiceQuiz.tickAnswerOption(exerciseID, 0, quizExerciseID);
-        multipleChoiceQuiz.tickAnswerOption(exerciseID, 2, quizExerciseID);
+        quizExerciseMultipleChoice.tickAnswerOption(exerciseID, 0, quizExerciseID);
+        quizExerciseMultipleChoice.tickAnswerOption(exerciseID, 2, quizExerciseID);
     }
 
     startParticipation(student: CypressCredentials, course: Course, exam: Exam) {
-        const courses = artemis.pageobjects.course.list;
-        const courseOverview = artemis.pageobjects.course.overview;
-        const examStartEnd = artemis.pageobjects.exam.startEnd;
         cy.login(student, '/');
-        courses.openCourse(course.id!);
+        courseList.openCourse(course.id!);
         courseOverview.openExamsTab();
         courseOverview.openExam(exam.id!);
         cy.url().should('contain', `/exams/${exam.id}`);
         examStartEnd.startExam();
     }
 
-    openExercise(index: number) {
-        const examNavigation = artemis.pageobjects.exam.navigationBar;
-        examNavigation.openExerciseAtIndex(index);
+    selectExerciseOnOverview(index: number) {
+        cy.get(`.exercise-table tr:nth-child(${index}) a`).click();
+    }
+
+    clickSaveAndContinue() {
+        cy.get('#save').click();
     }
 
     checkExerciseTitle(exerciseID: number, title: string) {
@@ -90,8 +95,6 @@ export class ExamParticipation {
     }
 
     handInEarly() {
-        const examNavigation = artemis.pageobjects.exam.navigationBar;
-        const examStartEnd = artemis.pageobjects.exam.startEnd;
         examNavigation.handInEarly();
         examStartEnd.finishExam().then((request: Interception) => {
             expect(request.response!.statusCode).to.eq(200);
