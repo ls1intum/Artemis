@@ -24,21 +24,32 @@ public abstract class AbstractBuildPlanCreator {
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
+    /**
+     * Generates a default build plan for the given programming exercise.
+     *
+     * @param programmingExercise The programming exercise for which a build plan is generated.
+     * @return The default build plan for the given exercise as a String.
+     */
     protected abstract String generateDefaultBuildPlan(ProgrammingExercise programmingExercise);
 
-    public void addBuildPlanToProgrammingExerciseIfUnset(final ProgrammingExercise programmingExercise) {
-        Optional<BuildPlan> optionalBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId());
-        if (optionalBuildPlan.isEmpty()) {
-            var defaultBuildPlan = generateDefaultBuildPlan(programmingExercise);
-            buildPlanRepository.setBuildPlanForExercise(defaultBuildPlan, programmingExercise);
-        }
-    }
-
+    /**
+     * Generates the URL required to access the build plan for the given exercise.
+     *
+     * @param exercise The exercise for which the URL of its build plan is generated.
+     * @return The build plan URL.
+     */
     public String generateBuildPlanURL(ProgrammingExercise exercise) {
         programmingExerciseRepository.generateBuildPlanAccessSecretIfNotExists(exercise);
         return String.format("%s/api/programming-exercises/%s/build-plan?secret=%s", artemisServerUrl, exercise.getId(), exercise.getBuildPlanAccessSecret());
     }
 
+    /**
+     * Creates a build plan for the given exercise. In case a build plan for this exercise already exists, it is
+     * disconnected from the exercise and replaced with a new one. Saving it afterwards ensures that the foreign-key
+     * relation to the changed set of connected exercises is properly updated after disconnecting the existing one.
+     *
+     * @param exercise The exercise for which a new build plan is created.
+     */
     public void createBuildPlanForExercise(ProgrammingExercise exercise) {
         Optional<BuildPlan> optionalBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(exercise.getId());
         if (optionalBuildPlan.isPresent()) {
