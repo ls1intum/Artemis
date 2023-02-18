@@ -54,12 +54,12 @@ artemis:
             images:
                 java:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-14"
+                    default: "ls1tum/artemis-maven-template:java17-15"
                 kotlin:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-14"
+                    default: "ls1tum/artemis-maven-template:java17-15"
                 empty:
-                    default: "ls1tum/artemis-maven-template:java17-14"
+                    default: "ls1tum/artemis-maven-template:java17-15"
                 python:
                     default: "ls1tum/artemis-python-docker:latest"
                 c:
@@ -67,7 +67,7 @@ artemis:
                     default: "ls1tum/artemis-c-docker:latest"
                     fact: "sharingcodeability/fact:latest"
                 haskell:
-                    default: "ghcr.io/uni-passau-artemis/artemis-haskell:v19.30.0"
+                    default: "ghcr.io/uni-passau-artemis/artemis-haskell:v19.33.0"
                 vhdl:
                     default: "tizianleonhardt/era-artemis-vhdl:latest"
                 assembler:

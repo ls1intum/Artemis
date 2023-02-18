@@ -275,8 +275,9 @@ $sa-question-input-wrong-backgroud: red;
 $sa-question-input-correct-backgroud: orange;
 $sa-question-input-completely-correct-backgroud: lightgreen;
 
-$mc-question-answer-option-border: lightgrey;
-$mc-question-answer-option-hover-background: #fafafa;
+$mc-question-answer-option-border: $gray-300;
+$mc-question-answer-option-hover-background: $gray-200;
+$mc-question-answer-option-selected-background: transparentize($primary, 0.7);
 
 // Programming Exercises
 $programming-exercise-instruction-step-wizard-card-header-background: #f5f5f5;
