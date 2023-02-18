@@ -28,6 +28,8 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -40,10 +42,11 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import net.sourceforge.plantuml.Log;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private static final String TEST_PREFIX = "progextemplate";
 
@@ -213,7 +216,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         }
         catch (Exception e) {
             // printing the cause because this contains the relevant error message (and not a generic one from the connector)
-            Log.error("Error occurred while executing Gradle build: " + e.getCause());
+            log.error("Error occurred while executing Gradle build: " + e.getCause());
             return -1;
         }
         return 0;
