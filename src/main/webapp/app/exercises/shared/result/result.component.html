@@ -40,7 +40,7 @@
     </ng-container>
     <ng-container *ngSwitchCase="ResultTemplateStatus.LATE">
         <span [ngClass]="textColorClass">
-            <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>g
+            <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
             <span class="score"> {{ resultString }}, </span>
             <span class="text-muted">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateFeedback' | artemisTranslate }}</span>
         </span>
