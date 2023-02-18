@@ -67,7 +67,7 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
     @ParameterizedTest
     @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void startOneToOneChat_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         startOneToOneChat_messagingDeactivated(courseInformationSharingConfiguration);
 

@@ -502,10 +502,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     }
 
     void registerUsersToChannel_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
-        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
-
-        // given
         var channel = createChannel(true);
+        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        // given
         expectRegisterDeregisterForbidden(channel, true);
         expectRegisterDeregisterForbidden(channel, false);
 

@@ -282,6 +282,9 @@ public class ChannelResource {
     public ResponseEntity<Void> registerUsersToChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody(required = false) List<String> userLogins,
             @RequestParam(defaultValue = "false") Boolean addAllStudents, @RequestParam(defaultValue = "false") Boolean addAllTutors,
             @RequestParam(defaultValue = "false") Boolean addAllInstructors) {
+        if (!(courseRepository.isMessagingEnabled(courseId))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
+        }
         List<String> usersLoginsToRegister = new ArrayList<>();
         if (userLogins != null) {
             usersLoginsToRegister.addAll(userLogins);
@@ -318,6 +321,9 @@ public class ChannelResource {
     @PostMapping("/{courseId}/channels/{channelId}/deregister")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deregisterUsers(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
+        if (!(courseRepository.isMessagingEnabled(courseId))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
+        }
         if (userLogins == null || userLogins.isEmpty()) {
             throw new BadRequestAlertException("No user logins provided", CHANNEL_ENTITY_NAME, "userLoginsEmpty");
         }
