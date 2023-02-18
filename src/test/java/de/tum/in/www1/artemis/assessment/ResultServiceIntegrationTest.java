@@ -190,7 +190,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void shouldReturnTheResultDetailsForAnInstructorWithoutSensitiveInformationFiltered() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
-        result = database.addVariousVisibilityFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResult(result);
 
         // Set programming exercise due date in future.
         database.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().plusHours(10));
