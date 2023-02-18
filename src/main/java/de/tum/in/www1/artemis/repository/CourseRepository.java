@@ -364,9 +364,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     /**
-     * Utility method to check if the messaging feature is enabled for a course.
-     * <p>
-     * Keep in sync with the implementation in {@link CourseInformationSharingConfiguration}
+     * Checks if the messaging feature is enabled for a course.
      *
      * @param courseId the id of the course
      * @return true if the messaging feature is enabled for the course, false otherwise
