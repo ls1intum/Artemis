@@ -720,6 +720,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
         CompletableFuture<ProgrammingExerciseStudentParticipation>[] futures = parallelExecutorService.runForAll(programmingExercise.getStudentParticipations(),
                 studentParticipation -> {
+                    SecurityUtils.setAuthorizationObject();
                     ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
                     if (condition.test(programmingExerciseStudentParticipation)) {
                         operation.accept(programmingExercise, programmingExerciseStudentParticipation);
