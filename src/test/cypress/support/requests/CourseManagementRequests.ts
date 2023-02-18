@@ -6,19 +6,19 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { BASE_API, DELETE, GET, POST, PUT } from '../constants';
-import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
+import programmingExerciseTemplate from '../../fixtures/exercise/programming/template.json';
 import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject } from '../utils';
-import examTemplate from '../../fixtures/requests/exam_template.json';
+import examTemplate from '../../fixtures/exam/template.json';
 import day from 'dayjs/esm';
 import { CypressCredentials } from '../users';
-import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
-import modelingExerciseTemplate from '../../fixtures/requests/modelingExercise_template.json';
-import assessment_submission from '../../fixtures/programming_exercise_submissions/assessment/submission.json';
-import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
-import multipleChoiceSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceSubmission_template.json';
-import shortAnswerSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerSubmission_template.json';
-import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling_exercise/modelingSubmission_template.json';
-import lectureTemplate from '../../fixtures/lecture/lecture_template.json';
+import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
+import modelingExerciseTemplate from '../../fixtures/exercise/modeling/template.json';
+import assessment_submission from '../../fixtures/exercise/programming/assessment/submission.json';
+import quizTemplate from '../../fixtures/exercise/quiz/template.json';
+import multipleChoiceSubmissionTemplate from '../../fixtures/exercise/quiz/multiple_choice/submission.json';
+import shortAnswerSubmissionTemplate from '../../fixtures/exercise/quiz/short_answer/submission.json';
+import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling/submission.json';
+import lectureTemplate from '../../fixtures/lecture/template.json';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 export const COURSE_BASE = BASE_API + 'courses/';
@@ -544,6 +544,11 @@ export class CypressExamBuilder {
     testExam() {
         this.template.testExam = true;
         this.template.numberOfCorrectionRoundsInExam = 0;
+        return this;
+    }
+
+    workingTime(workingTime: number) {
+        this.template.workingTime = workingTime;
         return this;
     }
 
