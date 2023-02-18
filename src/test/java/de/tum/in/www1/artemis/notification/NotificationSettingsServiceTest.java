@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.notification;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.PUSH;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -56,12 +57,12 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
 
         NotificationSetting unsavedNotificationSettingA = new NotificationSetting(false, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
         NotificationSetting unsavedNotificationSettingB = new NotificationSetting(true, true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
-        NotificationSetting unsavedNotificationSettingC = new NotificationSetting(false, false, true, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
+        NotificationSetting unsavedNotificationSettingC = new NotificationSetting(false, false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
         unsavedNotificationSettings = new NotificationSetting[] { unsavedNotificationSettingA, unsavedNotificationSettingB, unsavedNotificationSettingC };
 
         completeNotificationSettingA = new NotificationSetting(student1, false, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
         NotificationSetting completeNotificationSettingB = new NotificationSetting(student1, true, true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
-        NotificationSetting completeNotificationSettingC = new NotificationSetting(student1, false, false, true,
+        NotificationSetting completeNotificationSettingC = new NotificationSetting(student1, false, false, false,
                 NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
         savedNotificationSettings = new NotificationSetting[] { completeNotificationSettingA, completeNotificationSettingB, completeNotificationSettingC };
 
@@ -115,7 +116,7 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
      * Checks if the given user should receive an email based on the specific notification (type) or not based on the user's notification settings
      */
     @Test
-    void testCheckIfNotificationEmailIsAllowedBySettingsForGivenUser() {
+    void testCheckIfNotificationEmailAndPushIsAllowedBySettingsForGivenUser() {
         notification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(ATTACHMENT_CHANGE));
         assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, EMAIL))
                 .as("Emails with type ATTACHMENT_CHANGE should be allowed for the given user").isTrue();
@@ -127,6 +128,17 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
         notification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXAM_ARCHIVE_STARTED));
         assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, EMAIL))
                 .as("Emails with type EXAM_ARCHIVE_STARTED should not be allowed for the given user").isFalse();
+
+        assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, PUSH))
+                .as("Pushs with type ATTACHMENT_CHANGE should be allowed for the given user").isTrue();
+
+        notification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXERCISE_PRACTICE));
+        assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, PUSH))
+                .as("Pushs with type EXERCISE_PRACTICE should be allowed for the given user").isTrue();
+
+        notification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXAM_ARCHIVE_STARTED));
+        assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, PUSH))
+                .as("Pushs with type EXAM_ARCHIVE_STARTED should not be allowed for the given user").isFalse();
     }
 
     /**

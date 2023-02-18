@@ -4,6 +4,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -44,9 +45,11 @@ public class GeneralInstantNotificationServiceTest {
     void setUp() {
         MockitoAnnotations.initMocks(this);
         student1 = new User();
-        student1.setId(555L);
+        student1.setId(1L);
+        student1.setLogin("1");
         student2 = new User();
-        student2.setId(555L);
+        student2.setId(2L);
+        student2.setLogin("2");
 
         notification = new GroupNotification(null, "test", "test", student1, GroupNotificationType.STUDENT);
 
@@ -129,5 +132,45 @@ public class GeneralInstantNotificationServiceTest {
         verify(mailService, times(1)).sendNotification(notification, studentList, null);
     }
 
-    // TODO: add 2 more cases with filtering
+    @Test
+    void testSendEmailOnlyToOneUser() {
+        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1,
+                NotificationSettingsCommunicationChannel.EMAIL)).thenReturn(true);
+        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1,
+                NotificationSettingsCommunicationChannel.PUSH)).thenReturn(true);
+        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student2,
+                NotificationSettingsCommunicationChannel.EMAIL)).thenReturn(false);
+        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student2,
+                NotificationSettingsCommunicationChannel.PUSH)).thenReturn(true);
+
+        List<User> studentList = new ArrayList<>();
+        studentList.add(student1);
+        studentList.add(student2);
+        generalInstantNotificationService.sendNotification(notification, studentList, null);
+
+        verify(applePushNotificationService, times(1)).sendNotification(notification, studentList, null);
+        verify(firebasePushNotificationService, times(1)).sendNotification(notification, studentList, null);
+        verify(mailService, times(1)).sendNotification(notification, Collections.singletonList(student1), null);
+    }
+
+    @Test
+    void testSendPushOnlyToOneUser() {
+        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1,
+                NotificationSettingsCommunicationChannel.EMAIL)).thenReturn(true);
+        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1,
+                NotificationSettingsCommunicationChannel.PUSH)).thenReturn(true);
+        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student2,
+                NotificationSettingsCommunicationChannel.EMAIL)).thenReturn(true);
+        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student2,
+                NotificationSettingsCommunicationChannel.PUSH)).thenReturn(false);
+
+        List<User> studentList = new ArrayList<>();
+        studentList.add(student1);
+        studentList.add(student2);
+        generalInstantNotificationService.sendNotification(notification, studentList, null);
+
+        verify(applePushNotificationService, times(1)).sendNotification(notification, Collections.singletonList(student1), null);
+        verify(firebasePushNotificationService, times(1)).sendNotification(notification, Collections.singletonList(student1), null);
+        verify(mailService, times(1)).sendNotification(notification, studentList, null);
+    }
 }

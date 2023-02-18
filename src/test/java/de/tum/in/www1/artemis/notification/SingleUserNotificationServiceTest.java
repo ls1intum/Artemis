@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 
 import javax.mail.internet.MimeMessage;
@@ -345,6 +346,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(tutorialGroup, tutorialGroup.getTeachingAssistant(), userThree);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_ASSIGNED_TITLE);
         verifyEmail();
+        verifyPush(1);
+
     }
 
     @Test
@@ -355,6 +358,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(tutorialGroup, tutorialGroup.getTeachingAssistant(), userThree);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_UNASSIGNED_TITLE);
         verifyEmail();
+        verifyPush(1);
     }
 
     /**
@@ -362,5 +366,15 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
      */
     private void verifyEmail() {
         verify(javaMailSender, timeout(1000).times(1)).send(any(MimeMessage.class));
+    }
+
+    /**
+     * Checks if a push to android and iOS was created and send
+     *
+     * @param times how often the email should have been sent
+     */
+    private void verifyPush(int times) {
+        verify(applePushNotificationService, timeout(1500).times(times)).sendNotification(any(Notification.class), any(List.class), any(Object.class));
+        verify(firebasePushNotificationService, timeout(1500).times(times)).sendNotification(any(Notification.class), any(List.class), any(Object.class));
     }
 }

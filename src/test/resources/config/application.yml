@@ -23,6 +23,7 @@ artemis:
     external-system-request:
         batch-size: 1  # wait the time below after 1 requests (make it easier to test the corresponding code)
         batch-waiting-time: 5   # 5ms (make the tests faster)
+    push-notification-relay: "~~invalid~~"
     continuous-integration:
     # Defines the used docker images for certain programming languages
         build:

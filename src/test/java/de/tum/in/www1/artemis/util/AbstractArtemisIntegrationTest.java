@@ -1,24 +1,34 @@
 package de.tum.in.www1.artemis.util;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
+
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Stream;
 
 import javax.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
+import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.Lti10Service;
@@ -28,6 +38,8 @@ import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.notifications.MailService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.notifications.TutorialGroupNotificationService;
+import de.tum.in.www1.artemis.service.notifications.push_notifications.ApplePushNotificationService;
+import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebasePushNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
@@ -76,6 +88,12 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected MailService mailService;
 
     @SpyBean
+    protected FirebasePushNotificationService firebasePushNotificationService;
+
+    @SpyBean
+    protected ApplePushNotificationService applePushNotificationService;
+
+    @SpyBean
     protected WebsocketMessagingService websocketMessagingService;
 
     @SpyBean
@@ -117,6 +135,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @SpyBean
     protected ExerciseRepository exerciseRepository;
 
+    @SpyBean
+    protected PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository;
+
     @Autowired
     protected QuizScheduleService quizScheduleService;
 
@@ -136,6 +157,33 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @BeforeEach
     void mockMailService() {
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
+    }
+
+    @BeforeEach
+    void mockApplePushNotificationService() {
+        doNothing().when(applePushNotificationService).sendNotification(any(Notification.class), anyList(), any());
+    }
+
+    @BeforeEach
+    void mockFirebasePushNotificationService() {
+        doNothing().when(firebasePushNotificationService).sendNotification(any(Notification.class), anyList(), any());
+    }
+
+    @BeforeEach
+    void mockPushNotificationDeviceConfigurationRepository() {
+        when(pushNotificationDeviceConfigurationRepository.findByUserIn(anyList(), any(PushNotificationDeviceType.class))).thenAnswer(new Answer() {
+
+            public Object answer(InvocationOnMock invocation) {
+                List<User> userList = (List<User>) invocation.getArguments()[0];
+                List<PushNotificationDeviceConfiguration> appleList = userList.stream().map(user -> {
+                    return new PushNotificationDeviceConfiguration("Test", PushNotificationDeviceType.APNS, new Date(), "someSecret".getBytes(), user);
+                }).toList();
+                List<PushNotificationDeviceConfiguration> firebaseList = userList.stream().map(user -> {
+                    return new PushNotificationDeviceConfiguration("Test", PushNotificationDeviceType.FIREBASE, new Date(), "someSecret".getBytes(), user);
+                }).toList();
+                return Stream.concat(appleList.stream(), firebaseList.stream()).toList();
+            }
+        });
     }
 
     @AfterEach()
