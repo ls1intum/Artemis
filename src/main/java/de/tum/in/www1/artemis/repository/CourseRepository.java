@@ -51,8 +51,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Course findCourseByStudentGroupName(@Param("name") String name);
 
     @Query("""
-            SELECT CASE WHEN (count(c) > 0)  THEN true ELSE false END
-            FROM Course c WHERE c.id = :#{#courseId} AND c.courseInformationSharingConfiguration IN :#{#values}""")
+            SELECT CASE WHEN (count(c) > 0) THEN true ELSE false END
+            FROM Course c
+            WHERE c.id = :#{#courseId}
+                AND c.courseInformationSharingConfiguration IN :#{#values}
+            """)
     boolean informationSharingConfigurationIsOneOf(@Param("courseId") long courseId, @Param("values") Set<CourseInformationSharingConfiguration> values);
 
     @Query("""
