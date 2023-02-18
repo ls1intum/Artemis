@@ -62,6 +62,9 @@ export class CourseUpdateComponent implements OnInit {
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
 
+    communicationEnabled = false;
+    messagingEnabled = false;
+
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
     // This is the maximum value allowed in our database. These values must be the same as in Constants.java
     // Currently set to 65535 as this is the limit of TEXT
@@ -132,8 +135,8 @@ export class CourseUpdateComponent implements OnInit {
             }
         });
 
-        const communicationEnabled = isCommunicationEnabled(this.course);
-        const messagingEnabled = isMessagingEnabled(this.course);
+        this.communicationEnabled = isCommunicationEnabled(this.course);
+        this.messagingEnabled = isMessagingEnabled(this.course);
 
         this.courseForm = new FormGroup(
             {
@@ -182,10 +185,6 @@ export class CourseUpdateComponent implements OnInit {
                 }),
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
-                }),
-                informationSharingSettings: this.fb.group({
-                    communicationEnabled: [communicationEnabled],
-                    messagingEnabled: [messagingEnabled],
                 }),
                 registrationEnabled: new FormControl(this.course.registrationEnabled),
                 registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
@@ -259,19 +258,16 @@ export class CourseUpdateComponent implements OnInit {
         }
 
         const course = this.courseForm.getRawValue();
-        const communicationEnabled = !!this.courseForm.get('informationSharingSettings.communicationEnabled')?.value;
-        const messagingEnabled = !!this.courseForm.get('informationSharingSettings.messagingEnabled')?.value;
 
-        if (communicationEnabled && messagingEnabled) {
+        if (this.communicationEnabled && this.messagingEnabled) {
             course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
-        } else if (communicationEnabled && !messagingEnabled) {
+        } else if (this.communicationEnabled && !this.messagingEnabled) {
             course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
-        } else if (!communicationEnabled && messagingEnabled) {
+        } else if (!this.communicationEnabled && this.messagingEnabled) {
             course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.MESSAGING_ONLY;
         } else {
             course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.DISABLED;
         }
-        delete course['informationSharingSettings'];
 
         if (this.course.id !== undefined) {
             this.subscribeToSaveResponse(this.courseManagementService.update(this.course.id, course, file));

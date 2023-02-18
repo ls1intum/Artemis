@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbTooltipModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
@@ -83,7 +83,7 @@ describe('Course Management Update Component', () => {
         } as any as ActivatedRoute;
         const route = { parent: parentRoute } as any as ActivatedRoute;
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), ImageCropperModule, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperModule, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -167,9 +167,8 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['maxComplaintTextLimit'])?.value).toBe(course.maxComplaintTextLimit);
             expect(comp.courseForm.get(['maxComplaintResponseTextLimit'])?.value).toBe(course.maxComplaintResponseTextLimit);
             expect(comp.courseForm.get(['maxRequestMoreFeedbackTimeDays'])?.value).toBe(course.maxRequestMoreFeedbackTimeDays);
-            expect(comp.courseForm.get(['informationSharingSettings'])!.get(['communicationEnabled'])?.value).toBe(isCommunicationEnabled(course));
-            expect(comp.courseForm.get(['informationSharingSettings'])!.get(['messagingEnabled'])?.value).toBe(isMessagingEnabled(course));
-
+            expect(comp.messagingEnabled).toBe(isMessagingEnabled(course));
+            expect(comp.communicationEnabled).toBe(isCommunicationEnabled(course));
             expect(comp.courseForm.get(['registrationEnabled'])?.value).toBe(course.registrationEnabled);
             expect(comp.courseForm.get(['registrationConfirmationMessage'])?.value).toBe(course.registrationConfirmationMessage);
             expect(comp.courseForm.get(['presentationScore'])?.value).toBe(course.presentationScore);
@@ -182,7 +181,7 @@ describe('Course Management Update Component', () => {
         it('should call update service on save for existing entity', fakeAsync(() => {
             // GIVEN
             const entity = new Course();
-            entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+            entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
             entity.id = 123;
             const updateStub = jest.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
@@ -198,10 +197,6 @@ describe('Course Management Update Component', () => {
                 maxComplaintTextLimit: new FormControl(entity.maxComplaintTextLimit),
                 maxComplaintResponseTextLimit: new FormControl(entity.maxComplaintResponseTextLimit),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
-                informationSharingSettings: new FormGroup({
-                    communicationEnabled: new FormControl(isCommunicationEnabled(course)),
-                    messagingEnabled: new FormControl(isMessagingEnabled(course)),
-                }),
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
                 maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
@@ -221,7 +216,7 @@ describe('Course Management Update Component', () => {
         it('should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
             const entity = new Course();
-            entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+            entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
             const createStub = jest.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
@@ -235,10 +230,6 @@ describe('Course Management Update Component', () => {
                 maxComplaintTextLimit: new FormControl(entity.maxComplaintTextLimit),
                 maxComplaintResponseTextLimit: new FormControl(entity.maxComplaintResponseTextLimit),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
-                informationSharingSettings: new FormGroup({
-                    communicationEnabled: new FormControl(isCommunicationEnabled(course)),
-                    messagingEnabled: new FormControl(isMessagingEnabled(course)),
-                }),
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
                 maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
