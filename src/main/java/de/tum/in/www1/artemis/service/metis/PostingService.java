@@ -149,7 +149,6 @@ public abstract class PostingService {
 
     Course preCheckUserAndCourseForMessaging(User user, Long courseId) {
         final Course course = courseRepository.findByIdElseThrow(courseId);
-        // user has to be at least student in the course
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         if (!courseRepository.isMessagingEnabled(course.getId())) {
