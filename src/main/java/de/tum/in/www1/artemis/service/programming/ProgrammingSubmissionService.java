@@ -35,6 +35,13 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ProgrammingSubmissionService extends SubmissionService {
 
+    /**
+     * This constant determines how many seconds after the exercise due dates submissions will stil be considered valid.
+     *
+     * @see ProgrammingSubmissionService#isAllowedToSubmit(ProgrammingExerciseStudentParticipation, User)
+     */
+    private static final int GRACE_PERIOD_SECONDS = 60;
+
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
 
     @Value("${artemis.git.name}")
@@ -166,8 +173,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         programmingSubmission.setSubmissionDate(submissionDate);
         programmingSubmission.setType(SubmissionType.MANUAL);
 
-        // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
-        checkForIllegalExamSubmission(programmingExerciseParticipation, programmingSubmission);
+        // Students are not allowed to submit a programming exercise after the due date, if this happens we set the Submission to ILLEGAL
+        checkForIllegalSubmission(programmingExerciseParticipation, programmingSubmission);
         programmingExerciseParticipation.addSubmission(programmingSubmission);
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
         updateGitDiffReport(programmingExerciseParticipation);
@@ -200,23 +207,43 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param programmingExerciseParticipation current participation of the exam exercise
      * @param programmingSubmission            new created submission of the repository commit
      */
-    private void checkForIllegalExamSubmission(ProgrammingExerciseParticipation programmingExerciseParticipation, ProgrammingSubmission programmingSubmission) {
+    private void checkForIllegalSubmission(ProgrammingExerciseParticipation programmingExerciseParticipation, ProgrammingSubmission programmingSubmission) {
         ProgrammingExercise programmingExercise = programmingExerciseParticipation.getProgrammingExercise();
-        boolean isExamExercise = programmingExercise.isExamExercise();
-        // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
-        if (isExamExercise && programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation) {
-            var optionalStudent = ((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation).getStudent();
-            Optional<User> optionalStudentWithGroups = optionalStudent.isPresent() ? userRepository.findOneWithGroupsAndAuthoritiesByLogin(optionalStudent.get().getLogin())
-                    : Optional.empty();
-            if (optionalStudentWithGroups.isPresent() && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optionalStudentWithGroups.get(), true)) {
-                final String message = "The student " + optionalStudentWithGroups.get().getLogin()
+        // Students are not allowed to submit a programming exercise after the due date, if this happens we set the Submission to ILLEGAL
+        if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+            var optionalStudent = studentParticipation.getStudent();
+            Optional<User> optionalStudentWithGroups = optionalStudent.flatMap(student -> userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()));
+            if (optionalStudentWithGroups.isEmpty()) {
+                return;
+            }
+            User student = optionalStudentWithGroups.get();
+            if (!isAllowedToSubmit(studentParticipation, student)) {
+                final String message = "The student " + student.getLogin()
                         + " just illegally submitted code after the allowed individual due date (including the grace period) in the participation "
-                        + programmingExerciseParticipation.getId() + " for the exam programming exercise " + programmingExercise.getId();
+                        + programmingExerciseParticipation.getId() + " for the programming exercise " + programmingExercise.getId();
                 programmingSubmission.setType(SubmissionType.ILLEGAL);
                 programmingMessagingService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
                 log.warn(message);
             }
         }
+    }
+
+    public boolean isAllowedToSubmit(ProgrammingExerciseStudentParticipation participation, User studentWithGroups) {
+        ProgrammingExercise exercise = participation.getProgrammingExercise();
+        if (exercise.isExamExercise()) {
+            return examSubmissionService.isAllowedToSubmitDuringExam(exercise, studentWithGroups, true);
+        }
+        else {
+            return isAllowedToSubmitForCourseExercise(participation);
+        }
+    }
+
+    private boolean isAllowedToSubmitForCourseExercise(ProgrammingExerciseStudentParticipation participation) {
+        var dueDate = ExerciseDateService.getDueDate(participation);
+        if (dueDate.isEmpty()) {
+            return true;
+        }
+        return dueDate.get().plusSeconds(GRACE_PERIOD_SECONDS).isAfter(ZonedDateTime.now());
     }
 
     /**

@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.*;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import javax.annotation.Nullable;
@@ -41,14 +40,6 @@ import de.tum.in.www1.artemis.service.listeners.ResultListener;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Result extends DomainObject implements Comparable<Result> {
-
-    /**
-     * This constant determines how many seconds after the exercise due dates submissions will stil be considered valid
-     * (rated will be set to true)
-     *
-     * @see Result#setRatedIfNotAfterDueDate(ZonedDateTime, Submission)
-     */
-    private static final int GRACE_PERIOD_SECONDS = 15;
 
     @Column(name = "completion_date")
     @JsonView(QuizView.Before.class)
@@ -221,25 +212,8 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.rated = rated;
     }
 
-    /**
-     * Set the rated attribute according to the time of the submission and the due date of the exercise.
-     * A result is rated if the submission was done before the due date. A small grace period of
-     * {GRACE_PERIOD_SECONDS} seconds gets applied
-     *
-     * @param dueDate         The due date of the corresponding exercise or the individual due date if applicable
-     * @param submissionDate  the date of the corresponding submission
-     * @param withGracePeriod true if a grace period of {{@link Result#GRACE_PERIOD_SECONDS}} should be applied
-     */
-    private void setRatedIfNotAfterDueDate(@Nullable ZonedDateTime dueDate, @NotNull ZonedDateTime submissionDate, boolean withGracePeriod) {
-        if (dueDate == null) {
-            this.rated = true;
-        }
-        else {
-            if (withGracePeriod) {
-                dueDate = dueDate.plus(GRACE_PERIOD_SECONDS, ChronoUnit.SECONDS);
-            }
-            this.rated = submissionDate.isBefore(dueDate) || submissionDate.isEqual(dueDate);
-        }
+    public void setRatedIfNotAfterDueDate(@Nullable ZonedDateTime exerciseDueDate, @NotNull ZonedDateTime submissionDate) {
+        this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate) || submissionDate.isEqual(exerciseDueDate);
     }
 
     /**
@@ -259,12 +233,7 @@ public class Result extends DomainObject implements Comparable<Result> {
             this.rated = false;
         }
         else {
-            Exercise exercise = submission.getParticipation().getExercise();
-            boolean withGracePeriod = false;
-            if (exercise instanceof ProgrammingExercise programmingExercise) {
-                withGracePeriod = !programmingExercise.isExamExercise() && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null;
-            }
-            setRatedIfNotAfterDueDate(dueDate, submission.getSubmissionDate(), withGracePeriod);
+            setRatedIfNotAfterDueDate(dueDate, submission.getSubmissionDate());
         }
     }
 
@@ -288,7 +257,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      */
     public void setRatedIfNotAfterDueDate(@NotNull ZonedDateTime submissionDate) {
         ZonedDateTime dueDate = ExerciseDateService.getDueDate(getParticipation()).orElse(null);
-        setRatedIfNotAfterDueDate(dueDate, submissionDate, false);
+        setRatedIfNotAfterDueDate(dueDate, submissionDate);
     }
 
     public Submission getSubmission() {
