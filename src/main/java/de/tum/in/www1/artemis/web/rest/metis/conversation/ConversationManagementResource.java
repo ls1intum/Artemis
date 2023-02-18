@@ -9,11 +9,11 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 
-public abstract class AbstractConversationResource {
+public class ConversationManagementResource {
 
     final CourseRepository courseRepository;
 
-    public AbstractConversationResource(CourseRepository courseRepository) {
+    public ConversationManagementResource(CourseRepository courseRepository) {
         this.courseRepository = courseRepository;
     }
 

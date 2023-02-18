@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 
 @RestController
 @RequestMapping("/api/courses")
-public class ChannelResource extends AbstractConversationResource {
+public class ChannelResource extends ConversationManagementResource {
 
     private final Logger log = LoggerFactory.getLogger(ChannelResource.class);
 
