@@ -747,7 +747,8 @@
             "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert.",
             "toggleSuccessful": "Der Abgabestatus wurde erfolgreich geändert.",
             "togglefailed": "Der Abgabestatus konnte nicht geändert werden!",
-            "hasComplaint": "Beschwerde existiert"
+            "hasComplaint": "Beschwerde existiert",
+            "noSessions": "Keine Sitzungen"
         },
         "studentExam": {
             "submitSuccessful": "Deine Klausur wurde erfolgreich abgegeben. Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden. Halte dich an die Klausuranweisungen deiner Lehrenden.",

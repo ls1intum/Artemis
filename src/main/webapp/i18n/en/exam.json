@@ -748,7 +748,8 @@
             "saveWorkingTimeSuccessful": "The working time was saved successfully.",
             "toggleSuccessful": "The submitted status was changed successfully.",
             "togglefailed": "The submitted status could not be changed!",
-            "hasComplaint": "Has Complaint"
+            "hasComplaint": "Has Complaint",
+            "noSessions": "No Sessions"
         },
         "studentExam": {
             "submitSuccessful": "Your exam was submitted successfully. Artemis does not require further action, the window can be closed. Be sure to follow your instructor's exam protocol.",
