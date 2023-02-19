@@ -869,7 +869,7 @@ public class ProgrammingExerciseTestService {
         if (exerciseMode == TEAM) {
             participant = setupTeam(user);
         }
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true, HttpStatus.CREATED);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
         final var path = "/api/exercises/{exerciseId}/participations".replace("{exerciseId}", String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
@@ -886,7 +886,7 @@ public class ProgrammingExerciseTestService {
         user = userRepo.save(user);
         Participant participant = user;
 
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true, HttpStatus.CREATED);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
 
         final var path = "/api/exercises/{exerciseId}/participations".replace("{exerciseId}", String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
@@ -1368,7 +1368,7 @@ public class ProgrammingExerciseTestService {
 
         for (var programmingExercise : programmingExercises) {
             for (var user : registeredStudents) {
-                mockDelegate.mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
+                mockDelegate.mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true);
             }
         }
 
@@ -1472,7 +1472,7 @@ public class ProgrammingExerciseTestService {
     void startProgrammingExerciseStudentSubmissionFailedWithBuildlog() throws Exception {
         persistProgrammingExercise();
         User user = userRepo.findOneByLogin(userPrefix + studentLogin).orElseThrow();
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true);
         final var participation = createUserParticipation();
 
         // create a submission which fails
@@ -1505,7 +1505,7 @@ public class ProgrammingExerciseTestService {
     void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
         persistProgrammingExercise();
         User user = userRepo.findOneByLogin(userPrefix + studentLogin).orElseThrow();
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true);
 
         final var participation = createUserParticipation();
 
@@ -1533,7 +1533,7 @@ public class ProgrammingExerciseTestService {
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents).hasSameSizeAs(students);
 
         // Set up mockRetrieveArtifacts requests for start participation
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true, HttpStatus.CREATED);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true);
 
         // Add a new student to the team
         User newStudent = database
@@ -1564,7 +1564,7 @@ public class ProgrammingExerciseTestService {
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents).hasSameSizeAs(students);
 
         // Set up mockRetrieveArtifacts requests for start participation
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true, HttpStatus.CREATED);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true);
 
         // Remove the first student from the team
         User firstStudent = students.iterator().next();
@@ -1597,7 +1597,7 @@ public class ProgrammingExerciseTestService {
 
         // Set up mock requests for start participation and that a lti user is not existent
         final boolean ltiUserExists = false;
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), ltiUserExists, HttpStatus.CREATED);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), ltiUserExists);
 
         // Start participation with original team
         assertThrows(GitLabException.class, () -> participationService.startExercise(exercise, team, false));
@@ -1659,7 +1659,7 @@ public class ProgrammingExerciseTestService {
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
 
         // test for Conflict exception
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true, HttpStatus.CONFLICT);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true);
 
         // Start participation
         participationService.startExercise(exercise, team, false);

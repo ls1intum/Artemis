@@ -500,11 +500,12 @@ public class StudentExamService {
                         // Note: only unlock the programming exercise student repository for the affected user (Important: Do NOT invoke unlockAll)
                         programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
                     }
-                    log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(), student.getId());
+                    log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(),
+                            student.getParticipantIdentifier());
                 }
                 catch (Exception ex) {
-                    log.warn("FAILED: Start exercise for student exam {} and exercise {} and student {} with exception: {}", studentExam.getId(), exercise.getId(), student.getId(),
-                            ex.getMessage(), ex);
+                    log.warn("FAILED: Start exercise for student exam {} and exercise {} and student {} with exception: {}", studentExam.getId(), exercise.getId(),
+                            student.getParticipantIdentifier(), ex.getMessage(), ex);
                 }
             }
         }

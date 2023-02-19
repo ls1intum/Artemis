@@ -86,6 +86,10 @@ public class ExamDeletionService {
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
 
+        // first delete test runs to avoid issues later
+        List<StudentExam> testRuns = studentExamRepository.findAllTestRunsByExamId(examId);
+        testRuns.forEach(testRun -> deleteTestRun(testRun.getId()));
+
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             if (exerciseGroup != null) {
                 for (Exercise exercise : exerciseGroup.getExercises()) {
@@ -95,7 +99,9 @@ public class ExamDeletionService {
         }
 
         deleteGradingScaleOfExam(exam);
-        examRepository.deleteById(exam.getId());
+        // fetch the exam again to allow Hibernate to delete it properly
+        exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
+        examRepository.delete(exam);
     }
 
     private void deleteGradingScaleOfExam(Exam exam) {
@@ -195,6 +201,7 @@ public class ExamDeletionService {
         }
 
         // Delete the test run student exam
+        log.info("Request to delete Test Run {}", testRunId);
         studentExamRepository.deleteById(testRunId);
     }
 }

@@ -58,14 +58,12 @@ public class ExerciseDeletionService {
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
-    private final LearningGoalRepository learningGoalRepository;
-
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
             LectureUnitService lectureUnitService, TextExerciseRepository textExerciseRepository, PlagiarismResultRepository plagiarismResultRepository,
             TextAssessmentKnowledgeService textAssessmentKnowledgeService, ModelingExerciseRepository modelingExerciseRepository,
-            ModelAssessmentKnowledgeService modelAssessmentKnowledgeService, LearningGoalRepository learningGoalRepository) {
+            ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -81,7 +79,6 @@ public class ExerciseDeletionService {
         this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
         this.textExerciseRepository = textExerciseRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
-        this.learningGoalRepository = learningGoalRepository;
     }
 
     /**
