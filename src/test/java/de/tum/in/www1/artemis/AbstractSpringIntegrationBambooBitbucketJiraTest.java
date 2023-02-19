@@ -379,7 +379,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
         final var buildPlanId = participation.getBuildPlanId();
         final var repositoryUrl = participation.getVcsRepositoryUrl();
-        final var projectKey = buildPlanId.split("-")[0];
         final var planKey = participation.getBuildPlanId();
         final var repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         bambooRequestMockProvider.mockUpdatePlanRepository(planKey, ASSIGNMENT_REPO_NAME, repoProjectName, defaultBranch);
@@ -464,7 +463,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception {
+    public void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) {
         // Not needed here
     }
 
@@ -484,7 +483,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup,
-            boolean failToAddUsers, boolean failToRemoveUsers) throws Exception {
+            boolean failToAddUsers, boolean failToRemoveUsers) {
         // Not needed here
     }
 
@@ -519,7 +518,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) throws Exception {
+    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) {
         jiraRequestMockProvider.mockAddUserToGroup(group, failInCi);
     }
 
@@ -618,12 +617,16 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bambooRequestMockProvider.verifyMocks();
     }
 
+    @Override
+    public void mockUserExists(String username) throws Exception {
+        bitbucketRequestMockProvider.mockUserExists(username);
+    }
+
     /**
      * Configures the mock requests needed to delete a programming exercise in an exam.
      *
-     * @param programmingExerciseTestService required dependency to setup repo mocks
-     * @param programmingExercise            the programming exercise to delete
-     * @param registeredUsers                the users registered to the exam (users with repos)
+     * @param programmingExercise the programming exercise to delete
+     * @param registeredUsers     the users registered to the exam (users with repos)
      * @throws Exception exception
      */
     public void mockDeleteProgrammingExercise(ProgrammingExercise programmingExercise, Set<User> registeredUsers) throws Exception {

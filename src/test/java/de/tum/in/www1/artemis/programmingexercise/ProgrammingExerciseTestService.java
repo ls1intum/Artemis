@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
-import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.*;
+import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.INDIVIDUAL;
+import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
-import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService.*;
+import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX;
+import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -41,8 +43,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.connector.BambooRequestMockProvider;
-import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -160,11 +160,14 @@ public class ProgrammingExerciseTestService {
     @Autowired
     private UrlService urlService;
 
-    @Autowired
-    protected BambooRequestMockProvider bambooRequestMockProvider;
+    @Autowired // can be used as SpyBean
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
-    protected BitbucketRequestMockProvider bitbucketRequestMockProvider;
+    private StudentExamRepository studentExamRepository;
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
 
     public Course course;
 
@@ -203,28 +206,22 @@ public class ProgrammingExerciseTestService {
     public LocalRepository studentTeamRepo;
 
     // Injected in the constructor
-    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private VersionControlService versionControlService;
 
     // Injected in the constructor
-    private VersionControlService versionControlService;
+    @SuppressWarnings("unused") // might be used in the future and is here for consistency reasons
+    private ContinuousIntegrationService continuousIntegrationService;
 
     private MockDelegate mockDelegate;
 
     private String userPrefix;
-
-    @Autowired
-    private StudentExamRepository studentExamRepository;
-
-    @Autowired
-    private ExamUserRepository examUserRepository;
 
     public void setupTestUsers(String userPrefix, int additionalStudents, int additionalTutors, int additionalEditors, int additionalInstructors) {
         this.userPrefix = userPrefix;
         database.addUsers(userPrefix, numberOfStudents + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
     }
 
-    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) throws Exception {
+    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws Exception {
         mockDelegate.resetMockProvider();
         exerciseRepo = new LocalRepository(defaultBranch);
         testRepo = new LocalRepository(defaultBranch);
@@ -238,7 +235,7 @@ public class ProgrammingExerciseTestService {
         studentTeamRepo = new LocalRepository(defaultBranch);
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.continuousIntegrationService = continuousIntegrationService;
 
         course = database.addEmptyCourse();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
@@ -1321,7 +1318,7 @@ public class ProgrammingExerciseTestService {
             Set<User> registeredStudents, List<LocalRepository> studentRepos) throws Exception {
 
         for (int i = 1; i <= registeredStudents.size(); i++) {
-            bitbucketRequestMockProvider.mockUserExists(testPrefix + "student" + i);
+            mockDelegate.mockUserExists(testPrefix + "student" + i);
         }
 
         final var course = database.addEmptyCourse();
@@ -1375,7 +1372,7 @@ public class ProgrammingExerciseTestService {
         int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
         assertThat(noGeneratedParticipations).isEqualTo(registeredStudents.size() * exam.getExerciseGroups().size());
 
-        bitbucketRequestMockProvider.reset();
+        mockDelegate.resetMockProvider();
 
         return studentExams;
     }

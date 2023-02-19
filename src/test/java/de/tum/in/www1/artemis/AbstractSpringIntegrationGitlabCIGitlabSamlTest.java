@@ -393,4 +393,9 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     public void verifyMocks() {
         gitlabRequestMockProvider.verifyMocks();
     }
+
+    @Override
+    public void mockUserExists(String username) throws Exception {
+        gitlabRequestMockProvider.mockUserExists(username, true);
+    }
 }

@@ -119,7 +119,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
 
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService, programmingExerciseStudentParticipationRepository);
+        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
     }
 
     @AfterEach

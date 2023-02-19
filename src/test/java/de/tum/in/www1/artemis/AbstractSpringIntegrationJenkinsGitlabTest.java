@@ -283,7 +283,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) throws URISyntaxException {
+    public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) {
         // Not needed here
     }
 
@@ -404,7 +404,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) throws Exception {
+    public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
         // Not needed here
     }
 
@@ -464,11 +464,13 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    /**
-     * Verify that the mocked REST-calls were called
-     */
     public void verifyMocks() {
         gitlabRequestMockProvider.verifyMocks();
         jenkinsRequestMockProvider.verifyMocks();
+    }
+
+    @Override
+    public void mockUserExists(String username) throws Exception {
+        gitlabRequestMockProvider.mockUserExists(username, true);
     }
 }

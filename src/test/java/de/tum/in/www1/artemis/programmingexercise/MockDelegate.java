@@ -129,4 +129,6 @@ public interface MockDelegate {
     void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) throws Exception;
 
     void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException, GitLabApiException;
+
+    void mockUserExists(String username) throws Exception;
 }

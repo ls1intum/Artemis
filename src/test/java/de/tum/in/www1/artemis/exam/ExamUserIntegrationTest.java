@@ -102,7 +102,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         exam1 = database.addExerciseGroupsAndExercisesToExam(exam1, false);
         exam1 = examRepository.save(exam1);
 
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService, programmingExerciseStudentParticipationRepository);
+        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.enableMockingOfRequests(true);
     }
