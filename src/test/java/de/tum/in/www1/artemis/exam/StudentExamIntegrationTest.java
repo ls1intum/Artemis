@@ -179,7 +179,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.createAndSaveUser(TEST_PREFIX + "student42");
 
         // TODO: all parts using programmingExerciseTestService should also be provided for Gitlab+Jenkins
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService, programmingExerciseStudentParticipationRepository);
+        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.enableMockingOfRequests(true);
     }
@@ -263,30 +263,74 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExams).hasSize(2);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteExamWithMultipleTestRuns() throws Exception {
+        prepareStudentExamsForConduction(false, true);
+
+        assertThat(studentExamRepository.findByExamId(exam2.getId())).hasSize(NUMBER_OF_STUDENTS);
+
+        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        exam2 = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam2.getId());
+        var usersOfExam = exam2.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
+        usersOfExam.add(instructor);
+
+        var programmingExercise = database.getFirstExerciseWithType(exam2, ProgrammingExercise.class);
+
+        bitbucketRequestMockProvider.reset();
+        bambooRequestMockProvider.reset();
+
+        // the empty commit is not necessary for this test
+        mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getParticipantIdentifier(), Set.of(instructor), true);
+        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
+        mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getParticipantIdentifier(), Set.of(instructor), true);
+        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
+        mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getParticipantIdentifier(), Set.of(instructor), true);
+        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
+
+        // create multiple test runs for the same user (i.e. instructor1), login again because "createTestRun" invokes a server method with changes the authorization
+        createTestRun(exam2);
+        database.changeUser(TEST_PREFIX + "instructor1");
+        createTestRun(exam2);
+        database.changeUser(TEST_PREFIX + "instructor1");
+        createTestRun(exam2);
+        database.changeUser(TEST_PREFIX + "instructor1");
+
+        assertThat(studentExamRepository.findAllTestRunsByExamId(exam2.getId())).hasSize(3);
+
+        bitbucketRequestMockProvider.reset();
+        bambooRequestMockProvider.reset();
+        mockDeleteProgrammingExercise(programmingExercise, usersOfExam);
+
+        request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
+
+        assertThat(studentExamRepository.findAllTestRunsByExamId(exam2.getId())).hasSize(0);
+        assertThat(studentExamRepository.findByExamId(exam2.getId())).hasSize(0);
+    }
+
     private List<StudentExam> prepareStudentExamsForConduction(boolean early, boolean setFields) throws Exception {
         for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
             bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + "student" + i);
         }
 
-        ZonedDateTime examVisibleDate;
-        ZonedDateTime examStartDate;
-        ZonedDateTime examEndDate;
+        ZonedDateTime visibleDate;
+        ZonedDateTime startDate;
+        ZonedDateTime endDate;
         if (early) {
-            examStartDate = ZonedDateTime.now().plusHours(1);
-            examEndDate = ZonedDateTime.now().plusHours(3);
+            startDate = ZonedDateTime.now().plusHours(1);
+            endDate = ZonedDateTime.now().plusHours(3);
         }
         else {
             // If the exam is prepared only 5 minutes before the release date, the repositories of the students are unlocked as well.
-            examStartDate = ZonedDateTime.now().plusMinutes(6);
-            examEndDate = ZonedDateTime.now().plusMinutes(8);
+            startDate = ZonedDateTime.now().plusMinutes(6);
+            endDate = ZonedDateTime.now().plusMinutes(8);
         }
 
-        examVisibleDate = ZonedDateTime.now().minusMinutes(15);
+        visibleDate = ZonedDateTime.now().minusMinutes(15);
         // --> 2 min = 120s working time
 
         Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
-        List<StudentExam> studentExams = database.prepareStudentExamsForConduction(TEST_PREFIX, this, bitbucketRequestMockProvider, programmingExerciseTestService, request,
-                examVisibleDate, examStartDate, examEndDate, registeredStudents, studentRepos);
+        var studentExams = programmingExerciseTestService.prepareStudentExamsForConduction(TEST_PREFIX, visibleDate, startDate, endDate, registeredStudents, studentRepos);
         Exam exam = examRepository.findByIdElseThrow(studentExams.get(0).getExam().getId());
         Course course = exam.getCourse();
 
@@ -373,7 +417,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var repo = new LocalRepository(defaultBranch);
         repo.configureRepos("studentRepo", "studentOriginRepo");
         programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, student1.getLogin(), repo);
-        mockConnectorRequestsForStartParticipation(programmingExercise, student1.getLogin(), Set.of(student1), true, HttpStatus.CREATED);
+        mockConnectorRequestsForStartParticipation(programmingExercise, student1.getLogin(), Set.of(student1), true);
 
         // the programming exercise in the test exam is automatically unlocked so we need to mock again protect branches
         final var projectKey = programmingExercise.getProjectKey();
@@ -1894,7 +1938,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         Set<User> users = exam2.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
-        mockDeleteProgrammingExercise(programmingExerciseTestService, programmingExercise, users);
+        mockDeleteProgrammingExercise(programmingExercise, users);
 
         request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam2.getId())).as("Exam was deleted").isEmpty();
@@ -1986,24 +2030,31 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
      * @throws Exception if errors occur
      */
     private StudentExam createTestRun() throws Exception {
-        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        StudentExam testRun = new StudentExam();
-        testRun.setExercises(new ArrayList<>());
         testRunExam = database.addExam(course1);
         testRunExam = database.addTextModelingProgrammingExercisesToExam(testRunExam, false, true);
-        testRunExam.getExerciseGroups().forEach(exerciseGroup -> testRun.getExercises().add(exerciseGroup.getExercises().iterator().next()));
-        testRun.setExam(testRunExam);
+        return createTestRun(testRunExam);
+    }
+
+    private StudentExam createTestRun(Exam exam) throws Exception {
+        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+
+        StudentExam testRun = new StudentExam();
+        testRun.setExercises(new ArrayList<>());
+
+        exam.getExerciseGroups().forEach(exerciseGroup -> testRun.getExercises().add(exerciseGroup.getExercises().iterator().next()));
+        testRun.setExam(exam);
         testRun.setWorkingTime(6000);
         testRun.setUser(instructor);
 
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-run", testRun, StudentExam.class, HttpStatus.OK);
-        var testRunsInDb = studentExamRepository.findAllByExamId_AndTestRunIsTrue(testRunExam.getId());
-        assertThat(testRunsInDb).hasSize(1);
-        var testRunInDb = testRunsInDb.get(0);
-        assertThat(testRunInDb.isTestRun()).isTrue();
-        assertThat(testRunInDb.getWorkingTime()).isEqualTo(6000);
-        assertThat(testRunInDb.getUser()).isEqualTo(instructor);
-        return testRunInDb;
+        var testRunsInDbBefore = studentExamRepository.findAllByExamId_AndTestRunIsTrue(exam.getId());
+        var newTestRun = request.postWithResponseBody("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run", testRun, StudentExam.class,
+                HttpStatus.OK);
+        var testRunsInDbAfter = studentExamRepository.findAllByExamId_AndTestRunIsTrue(exam.getId());
+        assertThat(testRunsInDbAfter).hasSize(testRunsInDbBefore.size() + 1);
+        assertThat(newTestRun.isTestRun()).isTrue();
+        assertThat(newTestRun.getWorkingTime()).isEqualTo(6000);
+        assertThat(newTestRun.getUser()).isEqualTo(instructor);
+        return newTestRun;
     }
 
     @Test

@@ -61,15 +61,6 @@ export class NotificationService {
     }
 
     /**
-     * Delete notification by id.
-     * @param {number} notificationId
-     * @return Observable<HttpResponse<any>>
-     */
-    delete(notificationId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${notificationId}`, { observe: 'response' });
-    }
-
-    /**
      * Navigate to notification target or build router components and params for post related notifications
      * @param {GroupNotification} notification
      */
