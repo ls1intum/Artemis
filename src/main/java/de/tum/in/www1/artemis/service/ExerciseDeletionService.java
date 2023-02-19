@@ -133,7 +133,7 @@ public class ExerciseDeletionService {
         // delete all exercise units linking to the exercise
         List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithLearningGoalsBidirectional(exerciseId);
         for (ExerciseUnit exerciseUnit : exerciseUnits) {
-            this.lectureUnitService.removeLectureUnit(exerciseUnit);
+            lectureUnitService.removeLectureUnit(exerciseUnit);
         }
 
         // delete all plagiarism results belonging to this exercise
@@ -190,7 +190,10 @@ public class ExerciseDeletionService {
                     modelAssessmentKnowledgeService.deleteKnowledgeIfUnused(knowledgeId);
                 }
             }
-            exerciseRepository.deleteById(exercise.getId());
+
+            // fetch the exercise again to allow Hibernate to delete it properly
+            exercise = exerciseRepository.findByIdWithStudentParticipationsElseThrow(exerciseId);
+            exerciseRepository.delete(exercise);
         }
     }
 

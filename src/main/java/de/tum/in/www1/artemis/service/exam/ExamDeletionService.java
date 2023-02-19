@@ -90,6 +90,9 @@ public class ExamDeletionService {
         List<StudentExam> testRuns = studentExamRepository.findAllTestRunsByExamId(examId);
         testRuns.forEach(testRun -> deleteTestRun(testRun.getId()));
 
+        // fetch the exam again to allow Hibernate to delete the exercises properly
+        exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
+
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             if (exerciseGroup != null) {
                 for (Exercise exercise : exerciseGroup.getExercises()) {

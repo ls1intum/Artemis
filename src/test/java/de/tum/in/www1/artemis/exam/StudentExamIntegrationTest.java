@@ -279,6 +279,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
+
+        // the empty commit is not necessary for this test
         mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getParticipantIdentifier(), Set.of(instructor), true);
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
         mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getParticipantIdentifier(), Set.of(instructor), true);
@@ -286,10 +288,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getParticipantIdentifier(), Set.of(instructor), true);
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
 
-        // create multiple test runs for the same user (i.e. instructor1)
+        // create multiple test runs for the same user (i.e. instructor1), login again because "createTestRun" invokes a server method with changes the authorization
         createTestRun(exam2);
+        database.changeUser(TEST_PREFIX + "instructor1");
         createTestRun(exam2);
+        database.changeUser(TEST_PREFIX + "instructor1");
         createTestRun(exam2);
+        database.changeUser(TEST_PREFIX + "instructor1");
 
         assertThat(studentExamRepository.findAllTestRunsByExamId(exam2.getId())).hasSize(3);
 
@@ -2041,14 +2046,15 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         testRun.setWorkingTime(6000);
         testRun.setUser(instructor);
 
-        request.postWithResponseBody("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run", testRun, StudentExam.class, HttpStatus.OK);
-        var testRunsInDb = studentExamRepository.findAllByExamId_AndTestRunIsTrue(exam.getId());
-        assertThat(testRunsInDb).hasSize(1);
-        var testRunInDb = testRunsInDb.get(0);
-        assertThat(testRunInDb.isTestRun()).isTrue();
-        assertThat(testRunInDb.getWorkingTime()).isEqualTo(6000);
-        assertThat(testRunInDb.getUser()).isEqualTo(instructor);
-        return testRunInDb;
+        var testRunsInDbBefore = studentExamRepository.findAllByExamId_AndTestRunIsTrue(exam.getId());
+        var newTestRun = request.postWithResponseBody("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run", testRun, StudentExam.class,
+                HttpStatus.OK);
+        var testRunsInDbAfter = studentExamRepository.findAllByExamId_AndTestRunIsTrue(exam.getId());
+        assertThat(testRunsInDbAfter).hasSize(testRunsInDbBefore.size() + 1);
+        assertThat(newTestRun.isTestRun()).isTrue();
+        assertThat(newTestRun.getWorkingTime()).isEqualTo(6000);
+        assertThat(newTestRun.getUser()).isEqualTo(instructor);
+        return newTestRun;
     }
 
     @Test
