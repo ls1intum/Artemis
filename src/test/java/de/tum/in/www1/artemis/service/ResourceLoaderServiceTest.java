@@ -1,10 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -12,6 +16,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 
@@ -24,6 +29,8 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
 
     private final Path jenkinsPath = Path.of("templates", "jenkins", "jenkins.txt");
 
+    private final List<Path> jenkinsFilesystemPaths = List.of(Path.of("templates", "jenkins", "p1.txt"), Path.of("templates", "jenkins", "p2.txt"));
+
     @AfterEach
     void cleanup() throws IOException {
         Files.deleteIfExists(javaPath);
@@ -31,9 +38,21 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
+    void testShouldNotAllowAbsolutePathsSingleResource() {
+        final Path path = javaPath.toAbsolutePath();
+        assertThatThrownBy(() -> resourceLoaderService.getResource(path)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void testShouldNotAllowAbsolutePathsMultipleResources() {
+        final Path path = javaPath.toAbsolutePath();
+        assertThatThrownBy(() -> resourceLoaderService.getResources(path)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void testShouldLoadJavaFileFromClasspath() throws IOException {
         FileUtils.writeStringToFile(javaPath.toFile(), "filesystem", Charset.defaultCharset());
-        try (InputStream inputStream = resourceLoaderService.getResource(javaPath.toString()).getInputStream()) {
+        try (InputStream inputStream = resourceLoaderService.getResource(javaPath).getInputStream()) {
             String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
 
             Assertions.assertEquals("classpath", fileContent.trim());
@@ -43,7 +62,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     void testShouldLoadJenkinsFileFromFilesystem() throws IOException {
         FileUtils.writeStringToFile(jenkinsPath.toFile(), "filesystem", Charset.defaultCharset());
-        try (InputStream inputStream = resourceLoaderService.getResource(jenkinsPath.toString()).getInputStream()) {
+        try (InputStream inputStream = resourceLoaderService.getResource(jenkinsPath).getInputStream()) {
             String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
 
             Assertions.assertEquals("filesystem", fileContent.trim());
@@ -51,11 +70,53 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    void testShouldLoadJenkinsFileFromClasspath_IfNotPresentInFileSystem() throws IOException {
-        try (InputStream inputStream = resourceLoaderService.getResource(jenkinsPath.toString()).getInputStream()) {
+    void testShouldLoadJenkinsFileFromClasspathIfNotPresentInFileSystem() throws IOException {
+        try (InputStream inputStream = resourceLoaderService.getResource(jenkinsPath).getInputStream()) {
             String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
 
             Assertions.assertEquals("classpath", fileContent.trim());
+        }
+    }
+
+    @Test
+    void testLoadMultipleResourcesFromFilesystem() throws IOException {
+        final String content = "filesystem";
+        setupJavaFiles(content);
+
+        Resource[] resources = resourceLoaderService.getResources(jenkinsFilesystemPaths.get(0).getParent().resolve("*.txt"));
+        assertThat(resources).hasSize(2);
+
+        for (final Resource resource : resources) {
+            final String actualContent = Files.readString(resource.getFile().toPath());
+            assertThat(actualContent).isEqualTo(content);
+        }
+    }
+
+    @Test
+    void testLoadMultipleResourcesNonOverridable() throws IOException {
+        final String content = "filesystem";
+
+        final Path path1 = Path.of("templates", "java", "p1.txt");
+        FileUtils.writeStringToFile(path1.toFile(), content, Charset.defaultCharset());
+        final Path path2 = Path.of("templates", "java", "p2.txt");
+        FileUtils.writeStringToFile(path2.toFile(), content, Charset.defaultCharset());
+
+        Resource[] resources = resourceLoaderService.getResources(Path.of("templates", "java", "*.txt"));
+        assertThat(resources).hasSize(1);
+
+        final String actualContent = Files.readString(resources[0].getFile().toPath());
+        assertThat(actualContent.trim()).isEqualTo("classpath");
+    }
+
+    @Test
+    void testLoadNonExistingResources() {
+        Resource[] resources = resourceLoaderService.getResources(Path.of("non", "existing", "*"));
+        assertThat(resources).isNotNull().isEmpty();
+    }
+
+    private void setupJavaFiles(final String content) throws IOException {
+        for (Path javaFilesystemPath : jenkinsFilesystemPaths) {
+            FileUtils.writeStringToFile(javaFilesystemPath.toFile(), content, Charset.defaultCharset());
         }
     }
 }
