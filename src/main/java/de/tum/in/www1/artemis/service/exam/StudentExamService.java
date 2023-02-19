@@ -601,50 +601,6 @@ public class StudentExamService {
     }
 
     /**
-     * Deletes a test run.
-     * In case the participation is not referenced by other test runs, the participation, submission, build plans and repositories are deleted as well.
-     *
-     * @param testRunId the id of the test run
-     * @return the deleted test run
-     */
-    public StudentExam deleteTestRun(Long testRunId) {
-        var testRun = studentExamRepository.findByIdWithExercisesElseThrow(testRunId);
-        User instructor = testRun.getUser();
-        var participations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructor.getId(),
-                testRun.getExercises());
-        testRun.getExercises().forEach(exercise -> {
-            var relevantParticipation = exercise.findParticipation(participations);
-            if (relevantParticipation != null) {
-                exercise.setStudentParticipations(Set.of(relevantParticipation));
-            }
-            else {
-                exercise.setStudentParticipations(new HashSet<>());
-            }
-        });
-
-        List<StudentExam> otherTestRunsOfInstructor = studentExamRepository.findAllTestRunsWithExercisesByExamIdForUser(testRun.getExam().getId(), instructor.getId()).stream()
-                .filter(studentExam -> !studentExam.getId().equals(testRunId)).toList();
-
-        // We cannot delete participations which are referenced by other test runs. (an instructor is free to create as many test runs as he likes)
-        var testRunExercises = testRun.getExercises();
-        // Collect all distinct exercises of other instructor test runs
-        var allInstructorTestRunExercises = otherTestRunsOfInstructor.stream().flatMap(tr -> tr.getExercises().stream()).distinct().toList();
-        // Collect exercises which are not referenced by other test runs. Their participations can be safely deleted
-        var exercisesToBeDeleted = testRunExercises.stream().filter(exercise -> !allInstructorTestRunExercises.contains(exercise)).toList();
-
-        for (final Exercise exercise : exercisesToBeDeleted) {
-            // Only delete participations that exist (and were not deleted in some other way)
-            if (!exercise.getStudentParticipations().isEmpty()) {
-                participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true, true);
-            }
-        }
-
-        // Delete the test run student exam
-        studentExamRepository.deleteById(testRunId);
-        return testRun;
-    }
-
-    /**
      * Generates a new test exam for the student and stores it in the database
      *
      * @param exam    the exam with loaded exercise groups and exercises for which the StudentExam should be created

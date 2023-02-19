@@ -1489,12 +1489,38 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testDeleteExamWithOneTestRun() throws Exception {
+    void testDeleteExamWithOneTestRuns() throws Exception {
         var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
         var exam = database.addExam(course1);
         exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteExamWithMultipleTestRuns() throws Exception {
+        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        var exam = database.addExam(course1);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        assertThat(studentExamRepository.findAllTestRunsByExamId(exam.getId())).hasSize(3);
+        request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteCourseWithMultipleTestRuns() throws Exception {
+        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        var exam = database.addExam(course1);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        assertThat(studentExamRepository.findAllTestRunsByExamId(exam.getId())).hasSize(3);
+        request.delete("/api/courses/" + exam.getCourse().getId(), HttpStatus.OK);
     }
 
     @Test

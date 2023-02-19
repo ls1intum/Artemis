@@ -263,7 +263,7 @@ public class LectureResource {
             else {
                 return authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
             }
-        }).map(lectureUnit -> {
+        }).peek(lectureUnit -> {
             lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
 
             if (lectureUnit instanceof ExerciseUnit) {
@@ -273,7 +273,6 @@ public class LectureResource {
                 // re-add the learning goals already loaded with the exercise unit
                 ((ExerciseUnit) lectureUnit).getExercise().setLearningGoals(exercise.getLearningGoals());
             }
-            return lectureUnit;
         }).collect(Collectors.toCollection(ArrayList::new));
 
         lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
@@ -281,15 +280,15 @@ public class LectureResource {
     }
 
     /**
-     * DELETE /lectures/:id : delete the "id" lecture.
+     * DELETE /lectures/:lectureId : delete the "id" lecture.
      *
-     * @param id the id of the lecture to delete
+     * @param lectureId the id of the lecture to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/lectures/{id}")
+    @DeleteMapping("/lectures/{lectureId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
-        Lecture lecture = lectureRepository.findByIdElseThrow(id);
+    public ResponseEntity<Void> deleteLecture(@PathVariable Long lectureId) {
+        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
 
         Course course = lecture.getCourse();
         if (course == null) {
@@ -298,8 +297,8 @@ public class LectureResource {
 
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
-        log.debug("REST request to delete Lecture : {}", id);
+        log.debug("REST request to delete Lecture : {}", lectureId);
         lectureService.delete(lecture);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
     }
 }
