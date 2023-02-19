@@ -263,30 +263,55 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExams).hasSize(2);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteExamWithMultipleTestRuns() throws Exception {
+        prepareStudentExamsForConduction(false, true);
+
+        assertThat(studentExamRepository.findByExamId(exam2.getId())).hasSize(NUMBER_OF_STUDENTS);
+
+        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        exam2 = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam2.getId());
+        var usersOfExam = exam2.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
+        usersOfExam.add(instructor);
+
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam2, instructor, exam2.getExerciseGroups());
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam2, instructor, exam2.getExerciseGroups());
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam2, instructor, exam2.getExerciseGroups());
+        assertThat(studentExamRepository.findAllTestRunsByExamId(exam2.getId())).hasSize(3);
+
+        bitbucketRequestMockProvider.reset();
+        bambooRequestMockProvider.reset();
+        mockDeleteProgrammingExercise(database.getFirstExerciseWithType(exam2, ProgrammingExercise.class), usersOfExam);
+
+        request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
+
+        assertThat(studentExamRepository.findAllTestRunsByExamId(exam2.getId())).hasSize(0);
+    }
+
     private List<StudentExam> prepareStudentExamsForConduction(boolean early, boolean setFields) throws Exception {
         for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
             bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + "student" + i);
         }
 
-        ZonedDateTime examVisibleDate;
-        ZonedDateTime examStartDate;
-        ZonedDateTime examEndDate;
+        ZonedDateTime visibleDate;
+        ZonedDateTime startDate;
+        ZonedDateTime endDate;
         if (early) {
-            examStartDate = ZonedDateTime.now().plusHours(1);
-            examEndDate = ZonedDateTime.now().plusHours(3);
+            startDate = ZonedDateTime.now().plusHours(1);
+            endDate = ZonedDateTime.now().plusHours(3);
         }
         else {
             // If the exam is prepared only 5 minutes before the release date, the repositories of the students are unlocked as well.
-            examStartDate = ZonedDateTime.now().plusMinutes(6);
-            examEndDate = ZonedDateTime.now().plusMinutes(8);
+            startDate = ZonedDateTime.now().plusMinutes(6);
+            endDate = ZonedDateTime.now().plusMinutes(8);
         }
 
-        examVisibleDate = ZonedDateTime.now().minusMinutes(15);
+        visibleDate = ZonedDateTime.now().minusMinutes(15);
         // --> 2 min = 120s working time
 
         Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
-        List<StudentExam> studentExams = database.prepareStudentExamsForConduction(TEST_PREFIX, this, bitbucketRequestMockProvider, programmingExerciseTestService, request,
-                examVisibleDate, examStartDate, examEndDate, registeredStudents, studentRepos);
+        var studentExams = programmingExerciseTestService.prepareStudentExamsForConduction(TEST_PREFIX, visibleDate, startDate, endDate, registeredStudents, studentRepos);
         Exam exam = examRepository.findByIdElseThrow(studentExams.get(0).getExam().getId());
         Course course = exam.getCourse();
 
@@ -1894,7 +1919,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         Set<User> users = exam2.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
-        mockDeleteProgrammingExercise(programmingExerciseTestService, programmingExercise, users);
+        mockDeleteProgrammingExercise(programmingExercise, users);
 
         request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam2.getId())).as("Exam was deleted").isEmpty();

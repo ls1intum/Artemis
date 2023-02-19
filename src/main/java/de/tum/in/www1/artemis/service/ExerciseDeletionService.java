@@ -124,6 +124,7 @@ public class ExerciseDeletionService {
      */
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findByIdWithLearningGoalsElseThrow(exerciseId);
+        log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
         if (exercise instanceof ModelingExercise modelingExercise) {
             log.info("Deleting clusters, elements and cancel scheduled operations of exercise {}", exercise.getId());

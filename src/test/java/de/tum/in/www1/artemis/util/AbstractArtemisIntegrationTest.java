@@ -128,10 +128,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Autowired
     protected HibernateQueryInterceptor queryInterceptor;
 
-    public String getDefaultBranch() {
-        return defaultBranch;
-    }
-
     @BeforeEach
     void mockMailService() {
         doNothing().when(javaMailSender).send(any(MimeMessage.class));

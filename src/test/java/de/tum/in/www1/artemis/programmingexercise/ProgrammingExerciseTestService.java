@@ -41,10 +41,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.connector.BambooRequestMockProvider;
+import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participant;
@@ -79,6 +83,9 @@ import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
  */
 @Service
 public class ProgrammingExerciseTestService {
+
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
 
     @Autowired
     private DatabaseUtilService database;
@@ -135,9 +142,6 @@ public class ProgrammingExerciseTestService {
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
-    @Value("${artemis.version-control.default-branch:main}")
-    private String defaultBranch;
-
     @Autowired
     private CourseExamExportService courseExamExportService;
 
@@ -155,6 +159,12 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private UrlService urlService;
+
+    @Autowired
+    protected BambooRequestMockProvider bambooRequestMockProvider;
+
+    @Autowired
+    protected BitbucketRequestMockProvider bitbucketRequestMockProvider;
 
     public Course course;
 
@@ -201,6 +211,12 @@ public class ProgrammingExerciseTestService {
     private MockDelegate mockDelegate;
 
     private String userPrefix;
+
+    @Autowired
+    private StudentExamRepository studentExamRepository;
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
 
     public void setupTestUsers(String userPrefix, int additionalStudents, int additionalTutors, int additionalEditors, int additionalInstructors) {
         this.userPrefix = userPrefix;
@@ -1299,7 +1315,69 @@ public class ProgrammingExerciseTestService {
         disableAutoGC(testsRepository);
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
         doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
+    }
 
+    public List<StudentExam> prepareStudentExamsForConduction(String testPrefix, ZonedDateTime examVisibleDate, ZonedDateTime examStartDate, ZonedDateTime examEndDate,
+            Set<User> registeredStudents, List<LocalRepository> studentRepos) throws Exception {
+
+        for (int i = 1; i <= registeredStudents.size(); i++) {
+            bitbucketRequestMockProvider.mockUserExists(testPrefix + "student" + i);
+        }
+
+        final var course = database.addEmptyCourse();
+        var exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
+
+        // register users
+        Set<ExamUser> registeredExamUsers = new HashSet<>();
+        exam = examRepository.save(exam);
+        for (var user : registeredStudents) {
+            var registeredExamUser = new ExamUser();
+            registeredExamUser.setUser(user);
+            registeredExamUser.setExam(exam);
+            registeredExamUser = examUserRepository.save(registeredExamUser);
+            exam.addExamUser(registeredExamUser);
+            registeredExamUsers.add(registeredExamUser);
+        }
+        exam.setExamUsers(registeredExamUsers);
+        exam.setNumberOfExercisesInExam(exam.getExerciseGroups().size());
+        exam.setRandomizeExerciseOrder(false);
+        exam.setNumberOfCorrectionRoundsInExam(2);
+        exam = examRepository.save(exam);
+
+        // generate individual student exams
+        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
+                StudentExam.class, HttpStatus.OK);
+        assertThat(studentExams).hasSize(exam.getExamUsers().size());
+        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(registeredStudents.size());
+
+        // start exercises
+        List<ProgrammingExercise> programmingExercises = new ArrayList<>();
+        for (var exercise : exam.getExerciseGroups().get(6).getExercises()) {
+            var programmingExercise = (ProgrammingExercise) exercise;
+            programmingExercises.add(programmingExercise);
+
+            setupRepositoryMocks(programmingExercise);
+            for (var examUser : exam.getExamUsers()) {
+                var repo = new LocalRepository(defaultBranch);
+                repo.configureRepos("studentRepo", "studentOriginRepo");
+                setupRepositoryMocksParticipant(programmingExercise, examUser.getUser().getLogin(), repo);
+                studentRepos.add(repo);
+            }
+        }
+
+        for (var programmingExercise : programmingExercises) {
+            for (var user : registeredStudents) {
+                mockDelegate.mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
+            }
+        }
+
+        int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
+        assertThat(noGeneratedParticipations).isEqualTo(registeredStudents.size() * exam.getExerciseGroups().size());
+
+        bitbucketRequestMockProvider.reset();
+
+        return studentExams;
     }
 
     /**

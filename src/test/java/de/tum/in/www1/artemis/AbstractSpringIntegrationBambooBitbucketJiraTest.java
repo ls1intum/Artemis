@@ -40,7 +40,6 @@ import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerci
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.service.TimeService;
 import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
@@ -614,9 +613,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    /**
-     * Verify that the mocked REST-calls were called
-     */
     public void verifyMocks() {
         bitbucketRequestMockProvider.verifyMocks();
         bambooRequestMockProvider.verifyMocks();
@@ -630,10 +626,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
      * @param registeredUsers                the users registered to the exam (users with repos)
      * @throws Exception exception
      */
-    public void mockDeleteProgrammingExercise(ProgrammingExerciseTestService programmingExerciseTestService, ProgrammingExercise programmingExercise, Set<User> registeredUsers)
-            throws Exception {
+    public void mockDeleteProgrammingExercise(ProgrammingExercise programmingExercise, Set<User> registeredUsers) throws Exception {
         final String projectKey = programmingExercise.getProjectKey();
-        programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
 
         List<String> studentLogins = new ArrayList<>();
         for (final User user : registeredUsers) {
