@@ -914,7 +914,9 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Calculates the total penalty over all static code analysis issues
+     * Calculates the total penalty over all static code analysis issues.
+     * Also updates the credits of each SCA feedback item as a side effect.
+     * This allows other parts of Artemis a more simplified score calculation by just summing up all feedback points.
      *
      * @param staticCodeAnalysisFeedback The list of static code analysis feedback
      * @param programmingExercise        The current exercise
@@ -922,7 +924,8 @@ public class ProgrammingExerciseGradingService {
      */
     private double calculateStaticCodeAnalysisPenalty(final List<Feedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise) {
         final var feedbackByCategory = staticCodeAnalysisFeedback.stream().collect(Collectors.groupingBy(Feedback::getStaticCodeAnalysisCategory));
-        double codeAnalysisPenaltyPoints = 0;
+        final double maxExercisePenaltyPoints = Objects.requireNonNullElse(programmingExercise.getMaxStaticCodeAnalysisPenalty(), 100) / 100.0 * programmingExercise.getMaxPoints();
+        double overallPenaltyPoints = 0;
 
         for (var category : staticCodeAnalysisService.findByExerciseId(programmingExercise.getId())) {
             if (!category.getState().equals(CategoryState.GRADED)) {
@@ -940,26 +943,22 @@ public class ProgrammingExerciseGradingService {
                 categoryPenaltyPoints = category.getMaxPenalty();
             }
 
+            // Cap at the maximum allowed penalty for this exercise (maxStaticCodeAnalysisPenalty is in percent) The max penalty is applied to the maxScore. If no max penalty
+            // was supplied, the value defaults to 100 percent. If for example maxScore is 6, maxBonus is 4 and the penalty is 50 percent, then a student can only lose
+            // 3 (0.5 * maxScore) points due to static code analysis issues.
+            if (overallPenaltyPoints + categoryPenaltyPoints > maxExercisePenaltyPoints) {
+                categoryPenaltyPoints = maxExercisePenaltyPoints - overallPenaltyPoints;
+            }
+            overallPenaltyPoints += categoryPenaltyPoints;
+
             // update credits of feedbacks in category
             if (!categoryFeedback.isEmpty()) {
                 double perFeedbackPenalty = categoryPenaltyPoints / categoryFeedback.size();
                 categoryFeedback.forEach(feedback -> feedback.setCredits(-perFeedbackPenalty));
             }
-
-            codeAnalysisPenaltyPoints += categoryPenaltyPoints;
         }
 
-        /*
-         * Cap at the maximum allowed penalty for this exercise (maxStaticCodeAnalysisPenalty is in percent) The max penalty is applied to the maxScore. If no max penalty was
-         * supplied, the value defaults to 100 percent. If for example maxScore is 6, maxBonus is 4 and the penalty is 50 percent, then a student can only lose 3 (0.5 * maxScore)
-         * points due to static code analysis issues.
-         */
-        final var maxExercisePenaltyPoints = Objects.requireNonNullElse(programmingExercise.getMaxStaticCodeAnalysisPenalty(), 100) / 100.0 * programmingExercise.getMaxPoints();
-        if (codeAnalysisPenaltyPoints > maxExercisePenaltyPoints) {
-            codeAnalysisPenaltyPoints = maxExercisePenaltyPoints;
-        }
-
-        return codeAnalysisPenaltyPoints;
+        return overallPenaltyPoints;
     }
 
     /**

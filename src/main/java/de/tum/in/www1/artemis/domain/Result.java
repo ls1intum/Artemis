@@ -529,10 +529,8 @@ public class Result extends DomainObject implements Comparable<Result> {
                 totalPoints = feedback.computeTotalScore(totalPoints, gradingInstructions);
             }
             else {
-                /*
-                 * In case no structured grading instruction was applied on the assessment model we just sum the feedback credit. We differentiate between automatic test and
-                 * automatic SCA feedback (automatic test feedback has to be capped)
-                 */
+                // In case no structured grading instruction was applied on the assessment model we just sum the feedback credit. We differentiate between automatic test and
+                // automatic SCA feedback (automatic test feedback has to be capped)
                 if (feedback.getType() == FeedbackType.AUTOMATIC && !feedback.isStaticCodeAnalysisFeedback()) {
                     scoreAutomaticTests += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
                 }
