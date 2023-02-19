@@ -15,6 +15,8 @@ import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils
 import { Exercise } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
+import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
+import { TestCaseResult } from 'app/entities/test-case-result.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -288,3 +290,66 @@ export const isBuildFailed = (submission?: Submission) => {
 export const isManualResult = (result?: Result) => {
     return result?.assessmentType !== AssessmentType.AUTOMATIC;
 };
+
+/**
+ * Retrieves a list of test cases names contained in a result's feedback list.
+ *
+ * @param results list of results to extract the test case names from
+ * @return list of extracted test case names
+ * @private
+ */
+export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingCriterion[]): string[] {
+    const testCasesNames: Set<string> = new Set();
+    results.forEach((result) => {
+        if (!result.result.feedbacks) {
+            return [];
+        }
+        result.result.feedbacks.map((f) => {
+            if (Feedback.isTestCaseFeedback(f)) {
+                testCasesNames.add(f.text ?? 'Test ' + result.result.feedbacks?.indexOf(f) + 1);
+            }
+        });
+    });
+    return Array.from(testCasesNames);
+}
+
+/**
+ * Extracts test case results from a given result and returns them.
+ * If no feedback is found in the result an empty array is returned
+ * @param result from which the test case results should be extracted
+ * @param testCaseNames list containing the test names
+ * @param withFeedback if true, the feedback's full text is included in case of failed test case
+ * @private
+ */
+export function getTestCaseResults(result: ResultWithPointsPerGradingCriterion, testCaseNames: string[], withFeedback?: boolean): TestCaseResult[] {
+    const testCaseResults: TestCaseResult[] = [];
+
+    testCaseNames.forEach((testName) => {
+        const feedback = getFeedbackByTestCase(testName, result.result.feedbacks);
+
+        let resultText;
+        if (feedback?.positive) {
+            resultText = 'Passed';
+        } else {
+            resultText = !!withFeedback && feedback?.detailText ? `Failed: "${feedback.detailText}"` : 'Failed';
+        }
+        testCaseResults.push({ testName, testResult: resultText } as TestCaseResult);
+    });
+    return testCaseResults;
+}
+
+/**
+ * Retrieves a feedback object from a result's feedback list by a given test case name.
+ *
+ * If no feedback is found for the given test case name, null is returned.
+ * @param feedbacks the list of result feedbacks to search in
+ * @param testCase the name of the test case to search for
+ * @private
+ */
+export function getFeedbackByTestCase(testCase: string, feedbacks?: Feedback[]): Feedback | null {
+    if (!feedbacks) {
+        return null;
+    }
+    const i = feedbacks.findIndex((feedback) => feedback.text?.localeCompare(testCase) === 0);
+    return i !== -1 ? feedbacks[i] : null;
+}

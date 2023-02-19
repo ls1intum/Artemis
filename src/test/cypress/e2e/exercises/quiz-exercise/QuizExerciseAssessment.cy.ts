@@ -1,17 +1,10 @@
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { artemis } from '../../../support/ArtemisTesting';
-import shortAnswerQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/shortAnswerQuiz_template.json';
-import multipleChoiceQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
+import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
+import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-
-// Accounts
-const admin = artemis.users.getAdmin();
-const tutor = artemis.users.getTutor();
-const student = artemis.users.getStudentOne();
-
-// Requests
-const courseManagementRequest = artemis.requests.courseManagement;
+import { courseManagementRequest } from '../../../support/artemis';
+import { admin, studentOne, tutor } from '../../../support/users';
 
 // Common primitives
 let course: Course;
@@ -24,7 +17,7 @@ describe('Quiz Exercise Assessment', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, student);
+            courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.addTutorToCourse(course, tutor);
         });
     });
@@ -44,7 +37,7 @@ describe('Quiz Exercise Assessment', () => {
         });
 
         it('Assesses a mc quiz submission automatically', () => {
-            cy.login(student);
+            cy.login(studentOne);
             courseManagementRequest.startExerciseParticipation(quizExercise.id!);
             courseManagementRequest.createMultipleChoiceSubmission(quizExercise, [0, 2]);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
@@ -59,7 +52,7 @@ describe('Quiz Exercise Assessment', () => {
         });
 
         it('Assesses a sa quiz submission automatically', () => {
-            cy.login(student);
+            cy.login(studentOne);
             courseManagementRequest.startExerciseParticipation(quizExercise.id!);
             courseManagementRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert']);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
