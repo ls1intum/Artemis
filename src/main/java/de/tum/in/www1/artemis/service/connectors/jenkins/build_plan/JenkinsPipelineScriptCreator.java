@@ -65,7 +65,7 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
             return Files.readString(resource.getFile().toPath());
         }
         catch (IOException e) {
-            throw new JenkinsException("Could not load pipeline skript definition.", e);
+            throw new JenkinsException("Could not load pipeline script definition.", e);
         }
     }
 
