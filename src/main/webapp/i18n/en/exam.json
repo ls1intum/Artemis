@@ -270,6 +270,15 @@
             "updated": "Exercise group updated",
             "deleted": "Deleted exercise group with title {{ param }}"
         },
+        "examSession": {
+            "id": "ID",
+            "sessionToken": "Token",
+            "userAgent": "User Agent",
+            "browserFingerprintHash": "Browser Fingerprint",
+            "instanceId": "Browser Instance ID",
+            "ipAddress": "IP Address",
+            "createdDate": "Created Date"
+        },
         "studentExams": {
             "title": "Student exams",
             "generateStudentExams": "Generate individual exams",
@@ -286,6 +295,7 @@
             "workingTime": "Working time",
             "started": "Started",
             "submitted": "Submitted",
+            "examSessions": "Sessions",
             "submissionDate": "Submission date",
             "grade": "Grade",
             "gradeBeforeBonus": "Grade before bonus",

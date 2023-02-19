@@ -33,7 +33,10 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface StudentExamRepository extends JpaRepository<StudentExam, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
-    Optional<StudentExam> findWithExercisesById(Long id);
+    Optional<StudentExam> findWithExercisesById(Long studentExamId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "examSessions" })
+    Optional<StudentExam> findWithExercisesAndSessionsById(Long studentExamId);
 
     @Query("""
             SELECT DISTINCT se
@@ -74,6 +77,15 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             	AND se.testRun = FALSE
             """)
     Set<StudentExam> findByExamId(@Param("examId") long examId);
+
+    @Query("""
+            SELECT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.examSessions
+            WHERE se.exam.id = :examId
+            	AND se.testRun = FALSE
+            """)
+    Set<StudentExam> findByExamIdWithSessions(@Param("examId") long examId);
 
     @Query("""
             SELECT se
@@ -291,6 +303,18 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     default StudentExam findByIdWithExercisesElseThrow(Long studentExamId) {
         return findWithExercisesById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
     }
+    /**
+     * Get one student exam by id with exercises and sessions
+     *
+     * @param studentExamId the id of the student exam
+     * @return the student exam with exercises
+     */
+    @NotNull
+    default StudentExam findByIdWithExercisesAndSessionsElseThrow(Long studentExamId) {
+        return findWithExercisesAndSessionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
+    }
+
+
 
     /**
      * Get the maximal working time of all student exams for the exam with the given id.
