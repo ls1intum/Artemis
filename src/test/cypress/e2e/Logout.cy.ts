@@ -48,10 +48,13 @@ describe('Logout tests', () => {
 });
 
 const startExerciseAndMakeChanges = (course: Course, modelingExercise: ModelingExercise) => {
+    const exerciseID = modelingExercise.id!;
     cy.visit(`/courses/${course.id}/exercises`);
-    courseOverview.startExercise(modelingExercise.id!);
-    courseOverview.openRunningExercise(modelingExercise.id!);
-    modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 1);
-    modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 2);
+    cy.reloadUntilFound('#start-exercise-' + exerciseID);
+    courseOverview.startExercise(exerciseID);
+    cy.reloadUntilFound('#open-exercise-' + exerciseID);
+    courseOverview.openRunningExercise(exerciseID);
+    modelingExerciseEditor.addComponentToModel(exerciseID, 1);
+    modelingExerciseEditor.addComponentToModel(exerciseID, 2);
     cy.get('#account-menu').click().get('#logout').click();
 };
