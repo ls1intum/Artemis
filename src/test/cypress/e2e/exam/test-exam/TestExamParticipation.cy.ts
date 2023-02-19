@@ -6,7 +6,7 @@ import buildError from '../../../fixtures/exercise/programming/build_error/submi
 import { Course } from 'app/entities/course.model';
 import { generateUUID } from '../../../support/utils';
 import { EXERCISE_TYPE } from '../../../support/constants';
-import { AdditionalData, Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
+import { Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
 import { examExerciseGroupCreation, examNavigation, examParticipation, examStartEnd } from 'src/test/cypress/support/artemis';
 import { admin, studentOne, studentThree, studentTwo } from 'src/test/cypress/support/users';
 import { courseManagementRequest } from 'src/test/cypress/support/requests/ArtemisRequests';
@@ -44,18 +44,18 @@ describe('Test exam participation', () => {
                 .build();
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture });
-                addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture });
-                addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Text, { textFixture });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Text, { textFixture });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Text, { textFixture });
 
-                addGroupWithExercise(exam, EXERCISE_TYPE.Programming, { submission: allSuccessful, expectedScore: 100 });
-                addGroupWithExercise(exam, EXERCISE_TYPE.Programming, { submission: buildError, expectedScore: 0 });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Programming, { submission: allSuccessful, expectedScore: 100 });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Programming, { submission: buildError, expectedScore: 0 });
 
-                addGroupWithExercise(exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 });
-                addGroupWithExercise(exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 });
 
-                addGroupWithExercise(exam, EXERCISE_TYPE.Modeling);
-                addGroupWithExercise(exam, EXERCISE_TYPE.Modeling);
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Modeling);
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Modeling);
             });
         });
 
@@ -134,7 +134,7 @@ describe('Test exam participation', () => {
                 .build();
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Text, { textFixture });
             });
         });
 
@@ -161,16 +161,3 @@ describe('Test exam participation', () => {
         }
     });
 });
-
-function addGroupWithExercise(exam: Exam, exerciseType: EXERCISE_TYPE, additionalData?: AdditionalData) {
-    examExerciseGroupCreation.addGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, (response) => {
-        if (exerciseType == EXERCISE_TYPE.Quiz) {
-            additionalData!.quizExerciseID = response.body.quizQuestions![0].id;
-        }
-        addExerciseToArray(exerciseArray, exerciseType, response, additionalData);
-    });
-}
-
-function addExerciseToArray(exerciseArray: Array<Exercise>, type: EXERCISE_TYPE, response: any, additionalData?: AdditionalData) {
-    exerciseArray.push({ title: response.body.title, type, id: response.body.id, additionalData });
-}
