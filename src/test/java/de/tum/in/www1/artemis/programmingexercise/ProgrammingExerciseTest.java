@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceErrorKeys;
 
 class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -156,14 +155,9 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
             bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getSolutionBuildPlanId(), true, false);
             bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(), programmingExercise.getProjectKey(), true);
             bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl(), programmingExercise.getProjectKey(), true);
+        }
 
-            // test cases with weights = 0, changing to automatic feedback: update should NOT work
-            request.putAndExpectError("/api/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST, ProgrammingExerciseResourceErrorKeys.INVALID_TEST_CASE_WEIGHTS);
-        }
-        else {
-            // for exercises with manual feedback the update should work
-            updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
-        }
+        updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
