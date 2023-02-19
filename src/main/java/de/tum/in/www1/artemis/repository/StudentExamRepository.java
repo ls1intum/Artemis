@@ -303,6 +303,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     default StudentExam findByIdWithExercisesElseThrow(Long studentExamId) {
         return findWithExercisesById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
     }
+
     /**
      * Get one student exam by id with exercises and sessions
      *
@@ -313,8 +314,6 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     default StudentExam findByIdWithExercisesAndSessionsElseThrow(Long studentExamId) {
         return findWithExercisesAndSessionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
     }
-
-
 
     /**
      * Get the maximal working time of all student exams for the exam with the given id.

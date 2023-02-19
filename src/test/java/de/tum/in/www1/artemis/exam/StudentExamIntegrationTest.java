@@ -444,7 +444,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(examSession.getIpAddress()).isNull();
         assertThat(optionalExamSession.get().getUserAgent()).isEqualTo("foo");
         assertThat(optionalExamSession.get().getBrowserFingerprintHash()).isEqualTo("bar");
-        assertThat(optionalExamSession.get().getIpAddress().toNormalizedString()).isEqualTo("10.0.28.1");
+        assertThat(optionalExamSession.get().getIpAddressAsIpAddress().toNormalizedString()).isEqualTo("10.0.28.1");
     }
 
     @ParameterizedTest
