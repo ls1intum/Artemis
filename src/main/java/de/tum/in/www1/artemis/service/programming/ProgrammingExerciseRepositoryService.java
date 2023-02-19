@@ -645,25 +645,25 @@ public class ProgrammingExerciseRepositoryService {
     void deleteRepositories(final ProgrammingExercise programmingExercise) {
         if (programmingExercise.getTemplateRepositoryUrl() != null) {
             final var templateRepositoryUrlAsUrl = programmingExercise.getVcsTemplateRepositoryUrl();
-            versionControlService.get().deleteRepository(templateRepositoryUrlAsUrl);
+            versionControlService.orElseThrow().deleteRepository(templateRepositoryUrlAsUrl);
         }
         if (programmingExercise.getSolutionRepositoryUrl() != null) {
             final var solutionRepositoryUrlAsUrl = programmingExercise.getVcsSolutionRepositoryUrl();
-            versionControlService.get().deleteRepository(solutionRepositoryUrlAsUrl);
+            versionControlService.orElseThrow().deleteRepository(solutionRepositoryUrlAsUrl);
         }
         if (programmingExercise.getTestRepositoryUrl() != null) {
             final var testRepositoryUrlAsUrl = programmingExercise.getVcsTestRepositoryUrl();
-            versionControlService.get().deleteRepository(testRepositoryUrlAsUrl);
+            versionControlService.orElseThrow().deleteRepository(testRepositoryUrlAsUrl);
         }
 
         // We also want to delete any auxiliary repositories
         programmingExercise.getAuxiliaryRepositories().forEach(repo -> {
             if (repo.getRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(repo.getVcsRepositoryUrl());
+                versionControlService.orElseThrow().deleteRepository(repo.getVcsRepositoryUrl());
             }
         });
 
-        versionControlService.get().deleteProject(programmingExercise.getProjectKey());
+        versionControlService.orElseThrow().deleteProject(programmingExercise.getProjectKey());
     }
 
     /**

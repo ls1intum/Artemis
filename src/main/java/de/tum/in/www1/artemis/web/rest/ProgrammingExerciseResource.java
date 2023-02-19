@@ -77,9 +77,9 @@ public class ProgrammingExerciseResource {
 
     private final ExerciseDeletionService exerciseDeletionService;
 
-    public final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseService programmingExerciseService;
 
-    public final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
+    private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
