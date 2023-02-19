@@ -15,6 +15,6 @@ war {
     webAppDirName = "build/resources/main/static/"
     webXml = file("${project.rootDir}/src/main/webapp/WEB-INF/web.xml")
     enabled = true
-    extension = "war.original"
+    archiveExtension = "war.original"
     includes = ["WEB-INF/**", "META-INF/**"]
 }
