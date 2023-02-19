@@ -469,7 +469,7 @@ public class StudentExamService {
         User student = studentExam.getUser();
 
         for (Exercise exercise : studentExam.getExercises()) {
-            // TODO: why is this line of code necessary?
+            // NOTE: the following code is performed in parallel threads, therefore we need to set the authorization here
             SecurityUtils.setAuthorizationObject();
             // NOTE: it's not ideal to invoke the next line several times (2000 student exams with 10 exercises would lead to 20.000 database calls to find all participations).
             // One optimization could be that we load all participations per exercise once (or per exercise) into a large list (10 * 2000 = 20.000 participations) and then check if
