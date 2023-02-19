@@ -125,7 +125,6 @@ public class ExerciseDeletionService {
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findByIdWithLearningGoalsElseThrow(exerciseId);
 
-        log.debug("Checking if exercise {} is modeling exercise", exercise.getId());
         if (exercise instanceof ModelingExercise modelingExercise) {
             log.info("Deleting clusters, elements and cancel scheduled operations of exercise {}", exercise.getId());
 
@@ -170,27 +169,25 @@ public class ExerciseDeletionService {
         }
         else {
             // delete text assessment knowledge if exercise is of type TextExercise and if no other exercise uses same knowledge
-            if (exercise instanceof TextExercise) {
+            if (exercise instanceof TextExercise textExercise) {
                 // explicitly load the text exercise as such so that the knowledge is eagerly loaded as well
-                TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exercise.getId());
+                textExercise = textExerciseRepository.findByIdElseThrow(exercise.getId());
                 if (textExercise.getKnowledge() != null) {
                     long knowledgeId = textExercise.getKnowledge().getId();
                     // Remove knowledge to avoid foreign key constraint exception
                     textExercise.setKnowledge(null);
-                    ((TextExercise) exercise).setKnowledge(null);
                     textExerciseRepository.save(textExercise);
                     textAssessmentKnowledgeService.deleteKnowledgeIfUnused(knowledgeId);
                 }
             }
             // delete model assessment knowledge if exercise is of type ModelExercise and if no other exercise uses same knowledge
-            else if (exercise instanceof ModelingExercise) {
+            else if (exercise instanceof ModelingExercise modelingExercise) {
                 // explicitly load the modeling exercise as such so that the knowledge is eagerly loaded as well
-                ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exercise.getId());
+                modelingExercise = modelingExerciseRepository.findByIdElseThrow(exercise.getId());
                 if (modelingExercise.getKnowledge() != null) {
                     long knowledgeId = modelingExercise.getKnowledge().getId();
                     // Remove knowledge to avoid foreign key constraint exception
                     modelingExercise.setKnowledge(null);
-                    ((ModelingExercise) exercise).setKnowledge(null);
                     modelingExerciseRepository.save(modelingExercise);
                     modelAssessmentKnowledgeService.deleteKnowledgeIfUnused(knowledgeId);
                 }
