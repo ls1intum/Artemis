@@ -196,8 +196,8 @@ public class ProgrammingExerciseGradingService {
      * Retrieves the submission that is assigned to the specified participation and its commit hash matches the one from the build result.
      *
      * @param participationId id of the participation
-     * @param buildResult     The build results
-     * @return The submission or empty no submissions exist
+     * @param buildResult     The build result
+     * @return The submission or empty if no submissions exist
      */
     protected Optional<ProgrammingSubmission> getSubmissionForBuildResult(Long participationId, AbstractBuildResultNotificationDTO buildResult) {
         var submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
@@ -672,6 +672,7 @@ public class ProgrammingExerciseGradingService {
         else if (!testCases.isEmpty() && !result.getFeedbacks().isEmpty() && !testCaseFeedback.isEmpty()) {
             addFeedbackTestsNotExecuted(result, exercise, staticCodeAnalysisFeedback);
         }
+
         // Case 3: If there is no test case feedback, the build has failed, or it has previously fallen under case 2. In this case we just return the original result without
         // changing it.
 
@@ -685,7 +686,7 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Adds the appropriate feedback to the result in case the automatic tests were not executed.
+     * Adds the appropriate feedback to the result in case the automatic test cases were not executed.
      *
      * @param result                     to which the feedback should be added.
      * @param exercise                   to which the result belongs to.
@@ -724,7 +725,7 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Checks which tests were not executed and add a new Feedback for them to the exercise.
+     * Checks which test cases were not executed and add a new Feedback for them to the exercise.
      *
      * @param result    of the build run.
      * @param testCases of the given programming exercise.
@@ -874,8 +875,10 @@ public class ProgrammingExerciseGradingService {
         final double testPoints;
         double exerciseMaxPoints = scoreCalculationData.exercise().getMaxPoints();
 
-        // A weight-sum of zero would let the solution show an error to the instructor as the solution score must be
-        // 100% of all reachable points. To prevent this, we weigh all test cases equally in such a case.
+        // In case of a weight-sum of zero the instructor must be able to distinguish between a working solution
+        // (all tests passed, 0 points) and a solution with test failures.
+        // Only the second case should show a warning while the first case is considered as 100%.
+        // Therefore, all test cases have equal weight in such a case.
         if (isWeightSumZero && scoreCalculationData.participation() instanceof SolutionProgrammingExerciseParticipation) {
             testPoints = (1.0 / totalTestCaseCount) * exerciseMaxPoints;
         }
