@@ -1430,7 +1430,7 @@ class ProgrammingExerciseIntegrationTestService {
             final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
             testCaseUpdate.setId(testCase.getId());
             testCaseUpdate.setVisibility(Visibility.AFTER_DUE_DATE);
-            testCaseUpdate.setWeight(0D);
+            testCaseUpdate.setWeight(-1.);
             testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
             return testCaseUpdate;
