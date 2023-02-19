@@ -106,15 +106,17 @@ public class ProgrammingExerciseRepositoryService {
     private RepositoryResources getRepositoryResources(final ProgrammingExercise programmingExercise, final RepositoryType repositoryType) throws GitAPIException {
         final String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase(Locale.ROOT);
         final ProjectType projectType = programmingExercise.getProjectType();
+        final Path projectTypeTemplateDir = getTemplateDirectoryForRepositoryType(repositoryType);
 
         final VcsRepositoryUrl repoUrl = programmingExercise.getRepositoryURL(repositoryType);
         final Repository repo = gitService.getOrCheckoutRepository(repoUrl, true);
-        // Get path, files and prefix for the programming-language dependent files. They are copied first.
-        final Path templatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()).resolve(repositoryType.getName())
-                .resolve(ALL_FILES_GLOB);
 
-        Resource[] resources = resourceLoaderService.getResources(templatePath);
-        Path prefix = Path.of(programmingLanguage, repositoryType.getName());
+        // Get path, files and prefix for the programming-language dependent files. They are copied first.
+        final Path generalTemplatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()).resolve(projectTypeTemplateDir)
+                .resolve(ALL_FILES_GLOB);
+        Resource[] resources = resourceLoaderService.getResources(generalTemplatePath);
+
+        Path prefix = Path.of(programmingLanguage).resolve(projectTypeTemplateDir);
 
         Resource[] projectTypeResources = null;
         Path projectTypePrefix = null;
@@ -125,9 +127,9 @@ public class ProgrammingExerciseRepositoryService {
                     projectType);
             final String projectTypePath = projectType.name().toLowerCase();
             final Path generalProjectTypePrefix = Path.of(programmingLanguage, projectTypePath);
-            final Path projectTypeTemplatePath = programmingLanguageProjectTypePath.resolve(repositoryType.getName()).resolve(ALL_FILES_GLOB);
+            final Path projectTypeTemplatePath = programmingLanguageProjectTypePath.resolve(projectTypeTemplateDir).resolve(ALL_FILES_GLOB);
 
-            final Path projectTypeSpecificPrefix = generalProjectTypePrefix.resolve(repositoryType.getName());
+            final Path projectTypeSpecificPrefix = generalProjectTypePrefix.resolve(projectTypeTemplateDir);
             final Resource[] projectTypeSpecificResources = resourceLoaderService.getResources(projectTypeTemplatePath);
 
             if (ProjectType.XCODE.equals(projectType)) {
@@ -142,6 +144,15 @@ public class ProgrammingExerciseRepositoryService {
         }
 
         return new RepositoryResources(repo, resources, prefix, projectTypeResources, projectTypePrefix);
+    }
+
+    private Path getTemplateDirectoryForRepositoryType(final RepositoryType repositoryType) {
+        if (RepositoryType.TESTS.equals(repositoryType)) {
+            return Path.of("test");
+        }
+        else {
+            return Path.of(repositoryType.getName());
+        }
     }
 
     /**
