@@ -102,8 +102,10 @@ public class JenkinsBuildPlanService {
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL) {
         final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUrls = getInternalRepositoryUrls(exercise, repositoryURL);
 
-        final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
+        // create build plan in database first, otherwise the job in Jenkins cannot find it for the initial build
+        jenkinsPipelineScriptCreator.createBuildPlanForExercise(exercise);
 
+        final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
         final boolean checkoutSolution = exercise.getCheckoutSolutionRepository();
@@ -114,8 +116,6 @@ public class JenkinsBuildPlanService {
         String job = jobFolder + "-" + planKey;
         jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
         givePlanPermissions(exercise, planKey);
-
-        jenkinsPipelineScriptCreator.createBuildPlanForExercise(exercise);
 
         triggerBuild(jobFolder, job);
     }
