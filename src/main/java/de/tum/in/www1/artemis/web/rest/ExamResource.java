@@ -77,6 +77,8 @@ public class ExamResource {
 
     private final ExamService examService;
 
+    private final ExamDeletionService examDeletionService;
+
     private final ExamDateService examDateService;
 
     private final ExamRegistrationService examRegistrationService;
@@ -103,14 +105,15 @@ public class ExamResource {
 
     private final CustomAuditEventRepository auditEventRepository;
 
-    public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamAccessService examAccessService,
-            InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService, AuthorizationCheckService authCheckService,
-            ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService,
-            ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository, ExamImportService examImportService,
-            ExamMonitoringScheduleService examMonitoringScheduleService, CustomAuditEventRepository auditEventRepository) {
+    public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
+            ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
+            AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
+            AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository,
+            ExamImportService examImportService, ExamMonitoringScheduleService examMonitoringScheduleService, CustomAuditEventRepository auditEventRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
+        this.examDeletionService = examDeletionService;
         this.submissionService = submissionService;
         this.examDateService = examDateService;
         this.examRegistrationService = examRegistrationService;
@@ -648,7 +651,7 @@ public class ExamResource {
             instanceMessageSendService.sendExamMonitoringScheduleCancel(examId);
         }
 
-        examService.delete(examId);
+        examDeletionService.delete(examId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
     }
 
@@ -673,7 +676,7 @@ public class ExamResource {
             instanceMessageSendService.sendExamMonitoringScheduleCancel(examId);
         }
 
-        examService.reset(exam.getId());
+        examDeletionService.reset(exam.getId());
         Exam returnExam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
         examService.setExamProperties(returnExam);
 
@@ -740,7 +743,7 @@ public class ExamResource {
         final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_STUDENT_EXAMS);
 
         // Reset existing student exams & participations in case they already exist
-        examService.deleteStudentExamsAndExistingParticipationsForExam(exam.getId());
+        examDeletionService.deleteStudentExamsAndExistingParticipationsForExam(exam.getId());
 
         List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam);
 

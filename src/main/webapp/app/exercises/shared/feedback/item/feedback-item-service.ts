@@ -32,9 +32,15 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
     }
 
     group(feedbackItems: FeedbackItem[]): FeedbackNode[] {
-        return getAllFeedbackGroups() //
+        const feedbackGroups = getAllFeedbackGroups() //
             .map((group: FeedbackGroup) => group.addAllItems(feedbackItems.filter(group.shouldContain)))
             .filter((group: FeedbackGroup) => !group.isEmpty());
+
+        if (feedbackGroups.length === 1) {
+            feedbackGroups[0].open = true;
+        }
+
+        return feedbackGroups;
     }
 
     private createFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {

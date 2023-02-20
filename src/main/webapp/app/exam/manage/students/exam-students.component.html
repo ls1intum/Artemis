@@ -29,6 +29,15 @@
                 <fa-icon [icon]="faPlus" [fixedWidth]="true"></fa-icon>&nbsp;
                 <span jhiTranslate="artemisApp.examManagement.examStudents.registerAllFromCourse"></span>
             </button>
+            <a
+                *ngIf="!isTestExam && hasExamStarted"
+                [routerLink]="['/course-management', courseId, 'exams', exam.id, 'students', 'verify-attendance']"
+                class="btn btn-info ms-auto"
+                title="{{ 'artemisApp.examManagement.examStudents.verifyAttendanceTooltip' | artemisTranslate }}"
+            >
+                <fa-icon [icon]="faCheck"></fa-icon>
+                <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examStudents.verifyAttendanceBtn' | artemisTranslate }}</span>
+            </a>
             <button
                 *ngIf="!isTestExam"
                 [disabled]="isLoading"
@@ -101,7 +110,7 @@
                 <ngx-datatable-column prop="" [minWidth]="60" [width]="80" [maxWidth]="100">
                     <ng-template ngx-datatable-header-template></ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <img class="img-fluid" [src]="value?.studentImagePath ? SERVER_API_URL + value?.studentImagePath : missingImage" />
+                        <img [id]="value?.id" class="img-fluid" [src]="value?.studentImagePath ? SERVER_API_URL + value?.studentImagePath : missingImage" />
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column prop="" [minWidth]="150" [width]="200" [maxWidth]="200">

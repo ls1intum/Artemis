@@ -119,12 +119,12 @@
             class="form-check-input"
             name="allowComplaintsForAutomaticAssessment"
             [checked]="exercise.allowComplaintsForAutomaticAssessments"
-            [disabled]="exercise.assessmentType !== assessmentType.AUTOMATIC || !exercise.dueDate || readOnly"
+            [disabled]="exercise.assessmentType !== assessmentType.AUTOMATIC || (!isExamMode && !exercise.dueDate) || readOnly"
             id="allowComplaintsForAutomaticAssessment"
             (change)="toggleComplaintsType()"
         />
         <label
-            [ngStyle]="exercise.assessmentType !== assessmentType.AUTOMATIC || !exercise.dueDate ? { color: 'grey' } : {}"
+            [ngStyle]="exercise.assessmentType !== assessmentType.AUTOMATIC || (!isExamMode && !exercise.dueDate) ? { color: 'grey' } : {}"
             class="form-control-label"
             for="allowComplaintsForAutomaticAssessment"
             jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"
