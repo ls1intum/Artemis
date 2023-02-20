@@ -190,7 +190,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void shouldReturnTheResultDetailsForAnInstructorWithoutSensitiveInformationFiltered() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
-        result = database.addVariousVisibilityFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResult(result);
 
         // Set programming exercise due date in future.
         database.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().plusHours(10));
@@ -686,7 +686,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         final var repositorySlug = (programmingExercise.getProjectKey() + "-" + studentLogin).toLowerCase();
         bitbucketRequestMockProvider.mockSetStudentRepositoryPermission(repositorySlug, programmingExercise.getProjectKey(), studentLogin,
                 VersionControlRepositoryPermission.REPO_READ);
-        mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
+        mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true);
         Result result = new Result().rated(false);
         programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(5));
         programmingExerciseRepository.save(programmingExercise);

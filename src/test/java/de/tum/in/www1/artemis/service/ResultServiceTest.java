@@ -81,8 +81,18 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     private void testGetFeedbacksForResultAsCurrentUser() {
         Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResult(result);
 
+        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void testGetFeedbacksAreSortedWithManualFirst() {
+        Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
+        result = database.addVariousFeedbackTypeFeedbacksToResult(result);
+
+        // The ordering should be the same as is declared in addVariousFeedbackTypeFeedbacksToResult()
         assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(result.getFeedbacks());
     }
 
@@ -93,11 +103,11 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         exam.setPublishResultsDate(ZonedDateTime.now().plusDays(2));
         examRepository.save(exam);
         Result result = database.addResultToParticipation(null, null, examStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResult(result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
+        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
@@ -107,11 +117,11 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         exam.setPublishResultsDate(ZonedDateTime.now().minusDays(2));
         examRepository.save(exam);
         Result result = database.addResultToParticipation(null, null, examStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResult(result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
+        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
@@ -120,11 +130,11 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExerciseRepository.save(programmingExercise);
         Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResult(result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
+        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
@@ -133,11 +143,11 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
         Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResult(result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
+        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
@@ -147,13 +157,13 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(2));
         programmingExerciseRepository.save(programmingExercise);
         Result result = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResult(result);
         result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream()
                 .filter(feedback -> !feedback.isInvisible() && feedback.getType() != null && feedback.getType().equals(FeedbackType.AUTOMATIC)).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
+        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
@@ -163,12 +173,12 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
         Result result = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResult(result);
         result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
+        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
@@ -178,12 +188,12 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
         Result result = database.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResult(result);
         result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
+        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -199,7 +209,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         participationRepository.save(participation2);
 
         Result result = database.addResultToParticipation(assessmentType, null, programmingExerciseStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResult(result);
         result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
         List<Feedback> expectedFeedbacks;
@@ -211,7 +221,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
             expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
             assertThat(expectedFeedbacks).hasSize(3);
         }
-        assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
+        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -227,12 +237,12 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         participationRepository.save(participation2);
 
         Result result = database.addResultToParticipation(assessmentType, null, programmingExerciseStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResult(result);
         result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
         List<Feedback> expectedFeedbacks;
         expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
         assertThat(expectedFeedbacks).hasSize(3);
-        assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
+        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 }

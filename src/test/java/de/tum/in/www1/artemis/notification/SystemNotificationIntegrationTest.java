@@ -8,8 +8,6 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
@@ -100,11 +98,10 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
         request.post("/api/admin/system-notifications", systemNotification, HttpStatus.BAD_REQUEST);
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(strings = { "/api/admin/system-notifications/", "/api/notifications/" })
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testCreateSystemNotification_asInstructor_Forbidden(String endpoint) throws Exception {
-        request.post(endpoint, systemNotification, HttpStatus.FORBIDDEN);
+    void testCreateSystemNotification_asInstructor_Forbidden() throws Exception {
+        request.post("/api/admin/system-notifications/", systemNotification, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -125,13 +122,12 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(systemNotificationRepo.findById(systemNotification.getId())).get().as("repository contains updated notification").isEqualTo(response);
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(strings = { "/api/admin/system-notifications/", "/api/notifications/" })
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testUpdateSystemNotification_asInstructor_Forbidden(String endpoint) throws Exception {
+    void testUpdateSystemNotification_asInstructor_Forbidden() throws Exception {
         systemNotificationRepo.save(systemNotification);
         systemNotification.setText("updated text");
-        request.put(endpoint, systemNotification, HttpStatus.FORBIDDEN);
+        request.put("/api/admin/system-notifications/", systemNotification, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -165,12 +161,11 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
         request.delete("/api/admin/system-notifications/" + response.getId(), HttpStatus.OK);
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(strings = { "/api/admin/system-notifications/", "/api/notifications/" })
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testDeleteSystemNotification_asInstructor_Forbidden(String endpoint) throws Exception {
+    void testDeleteSystemNotification_asInstructor_Forbidden() throws Exception {
         SystemNotification notification = systemNotificationRepo.save(systemNotification);
         assertThat(systemNotificationRepo.findById(notification.getId())).get().as("system notification is not null").isNotNull();
-        request.delete(endpoint + notification.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/admin/system-notifications/" + notification.getId(), HttpStatus.FORBIDDEN);
     }
 }
