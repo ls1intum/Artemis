@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -59,5 +60,25 @@ public abstract class AbstractBuildPlanCreator {
         }
         var defaultBuildPlan = generateDefaultBuildPlan(exercise);
         buildPlanRepository.setBuildPlanForExercise(defaultBuildPlan, exercise);
+    }
+
+    /**
+     * Replaces placeholders in the build plan template by their actual values.
+     *
+     * @param replacements      Mapping from placeholder variables to their replacement values.
+     * @param buildPlanTemplate In which the variables should be replaced.
+     * @return A build plan with filled-in values.
+     */
+    protected String replaceVariablesInBuildPlanTemplate(final Map<String, String> replacements, final String buildPlanTemplate) {
+        if (replacements == null) {
+            return buildPlanTemplate;
+        }
+
+        String buildPlan = buildPlanTemplate;
+        for (final var replacement : replacements.entrySet()) {
+            buildPlan = buildPlan.replace(replacement.getKey(), replacement.getValue());
+        }
+
+        return buildPlan;
     }
 }

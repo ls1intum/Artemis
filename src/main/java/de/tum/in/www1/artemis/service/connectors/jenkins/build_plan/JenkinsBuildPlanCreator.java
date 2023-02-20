@@ -88,8 +88,46 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         this.artemisNotificationUrl = artemisServerUrl + Constants.NEW_RESULT_RESOURCE_API_PATH;
     }
 
+    @Override
+    public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, InternalVcsRepositoryURLs internalVcsRepositoryURLs,
+            boolean checkoutSolution, String buildPlanUrl) {
+        final String jenkinsfile = getJenkinsfile(internalVcsRepositoryURLs, checkoutSolution, buildPlanUrl);
+
+        final Path configFilePath = Path.of("templates", "jenkins", "config.xml");
+        final var configFileReplacements = Map.of(REPLACE_PIPELINE_SCRIPT, jenkinsfile, REPLACE_PUSH_TOKEN, pushToken);
+        final var xmlResource = resourceLoaderService.getResource(configFilePath.toString());
+        return XmlFileUtils.readXmlFile(xmlResource, configFileReplacements);
+    }
+
+    private String getJenkinsfile(InternalVcsRepositoryURLs internalVcsRepositoryURLs, boolean checkoutSolution, String buildPlanUrl) {
+        final String jenkinsfile = makeSafeForXml(loadJenkinsfile());
+        final var replacements = getReplacements(internalVcsRepositoryURLs, checkoutSolution, buildPlanUrl);
+
+        return replacePipelineScriptParameters(jenkinsfile, replacements);
+    }
+
+    private String loadJenkinsfile() {
+        Resource resource = resourceLoaderService.getResource("templates", "jenkins", "Jenkinsfile");
+
+        try {
+            return Files.readString(resource.getFile().toPath());
+        }
+        catch (IOException e) {
+            throw new ContinuousIntegrationBuildPlanException("Could not load Jenkinsfile.", e);
+        }
+    }
+
+    private String makeSafeForXml(final String script) {
+        String result = script;
+        result = result.replace("'", "&apos;");
+        result = result.replace("<", "&lt;");
+        result = result.replace(">", "&gt;");
+        return result.replace("\\", "\\\\");
+    }
+
     private Map<String, String> getReplacements(InternalVcsRepositoryURLs internalVcsRepositoryURLs, boolean checkoutSolution, String buildPlanUrl) {
-        Map<String, String> replacements = new HashMap<>();
+        final Map<String, String> replacements = new HashMap<>();
+
         replacements.put(REPLACE_TEST_REPO, internalVcsRepositoryURLs.testRepositoryUrl().getURI().toString());
         replacements.put(REPLACE_ASSIGNMENT_REPO, internalVcsRepositoryURLs.assignmentRepositoryUrl().getURI().toString());
         replacements.put(REPLACE_SOLUTION_REPO, internalVcsRepositoryURLs.solutionRepositoryUrl().getURI().toString());
@@ -107,45 +145,11 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         return replacements;
     }
 
-    @Override
-    public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, InternalVcsRepositoryURLs internalVcsRepositoryURLs,
-            boolean checkoutSolution, String buildPlanUrl) {
-        final var resourcePath = Path.of("templates", "jenkins", "config.xml");
-        String jenkinsFileScript = loadJenkinsfile();
-        jenkinsFileScript = jenkinsFileScript.replace("'", "&apos;");
-        jenkinsFileScript = jenkinsFileScript.replace("<", "&lt;");
-        jenkinsFileScript = jenkinsFileScript.replace(">", "&gt;");
-        jenkinsFileScript = jenkinsFileScript.replace("\\", "\\\\");
-
-        // these replacements are made in the pipeline.groovy file
-        var replacements = getReplacements(internalVcsRepositoryURLs, checkoutSolution, buildPlanUrl);
-        jenkinsFileScript = replacePipelineScriptParameters(jenkinsFileScript, replacements);
-
-        // these replacements are made in the config.xml file
-        // since the old replacements are already applied to the jenkinsFileScript, the old content of the map can be overridden
-        replacements = Map.of(REPLACE_PIPELINE_SCRIPT, jenkinsFileScript, REPLACE_PUSH_TOKEN, pushToken);
-        final var xmlResource = resourceLoaderService.getResource(resourcePath.toString());
-        return XmlFileUtils.readXmlFile(xmlResource, replacements);
-    }
-
-    private String replacePipelineScriptParameters(String jenkinsFileScript, Map<String, String> variablesToReplace) {
-        if (variablesToReplace != null) {
-            for (final var replacement : variablesToReplace.entrySet()) {
-                jenkinsFileScript = jenkinsFileScript.replace(replacement.getKey(), replacement.getValue());
-            }
+    private String replacePipelineScriptParameters(String jenkinsfile, Map<String, String> variablesToReplace) {
+        for (final var replacement : variablesToReplace.entrySet()) {
+            jenkinsfile = jenkinsfile.replace(replacement.getKey(), replacement.getValue());
         }
-        return jenkinsFileScript;
+
+        return jenkinsfile;
     }
-
-    private String loadJenkinsfile() {
-        Resource resource = resourceLoaderService.getResource("templates", "jenkins", "Jenkinsfile");
-
-        try {
-            return Files.readString(resource.getFile().toPath());
-        }
-        catch (IOException e) {
-            throw new ContinuousIntegrationBuildPlanException("Could not load Jenkinsfile.", e);
-        }
-    }
-
 }

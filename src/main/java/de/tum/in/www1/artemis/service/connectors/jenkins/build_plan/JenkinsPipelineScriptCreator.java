@@ -44,23 +44,33 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
     }
 
     @Override
-    protected String generateDefaultBuildPlan(ProgrammingExercise exercise) {
+    protected String generateDefaultBuildPlan(final ProgrammingExercise exercise) {
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
-        final boolean isSequentialTestRuns = exercise.hasSequentialTestRuns();
         final Optional<ProjectType> projectType = Optional.ofNullable(exercise.getProjectType());
 
-        final String[] pipelinePath = getResourcePath(programmingLanguage, projectType, isSequentialTestRuns);
-        final Resource resource = resourceLoaderService.getResource(pipelinePath);
-        final String pipelineScript = loadPipelineScript(resource);
+        final String pipelineScript = loadPipelineScript(exercise, projectType);
 
         final boolean isStaticCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
         final boolean isTestwiseCoverageAnalysisEnabled = exercise.isTestwiseCoverageEnabled();
         final var replacements = getReplacements(programmingLanguage, projectType, isStaticCodeAnalysisEnabled, isTestwiseCoverageAnalysisEnabled);
 
-        return replacePipelineScriptParameters(pipelineScript, replacements);
+        return replaceVariablesInBuildPlanTemplate(replacements, pipelineScript);
     }
 
-    private String loadPipelineScript(final Resource resource) {
+    /**
+     * Loads the template for the {@code pipeline.groovy} script.
+     *
+     * @param exercise    The exercise for which a pipeline should be loaded.
+     * @param projectType The project type of the exercise.
+     * @return The template for a {@code pipeline.groovy} script.
+     */
+    private String loadPipelineScript(final ProgrammingExercise exercise, final Optional<ProjectType> projectType) {
+        final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
+        final boolean isSequentialTestRuns = exercise.hasSequentialTestRuns();
+
+        final String[] pipelinePath = getResourcePath(programmingLanguage, projectType, isSequentialTestRuns);
+        final Resource resource = resourceLoaderService.getResource(pipelinePath);
+
         try {
             return Files.readString(resource.getFile().toPath());
         }
@@ -71,7 +81,8 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
 
     private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, boolean isStaticCodeAnalysisEnabled,
             boolean isTestwiseCoverageAnalysisEnabled) {
-        Map<String, String> replacements = new HashMap<>();
+        final Map<String, String> replacements = new HashMap<>();
+
         replacements.put(REPLACE_IS_STATIC_CODE_ANALYSIS_ENABLED, String.valueOf(isStaticCodeAnalysisEnabled));
         replacements.put(REPLACE_TESTWISE_COVERAGE, String.valueOf(isTestwiseCoverageAnalysisEnabled));
         replacements.put(REPLACE_DOCKER_IMAGE_NAME, programmingLanguageConfiguration.getImage(programmingLanguage, projectType));
@@ -84,37 +95,30 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
         if (programmingLanguage == null) {
             throw new IllegalArgumentException("ProgrammingLanguage should not be null");
         }
+
         final var pipelineScriptFilename = "pipeline.groovy";
         final var regularOrSequentialDir = isSequentialRuns ? "sequentialRuns" : "regularRuns";
         final var programmingLanguageName = programmingLanguage.name().toLowerCase();
-
-        Optional<String> projectTypeName;
-
-        // Set a project type name in case the chosen Jenkinsfile also depend on the project type
-        if (projectType.isPresent() && ProgrammingLanguage.C.equals(programmingLanguage)) {
-            projectTypeName = Optional.of(projectType.get().name().toLowerCase(Locale.ROOT));
-        }
-        else if (projectType.isPresent() && projectType.get().isGradle()) {
-            projectTypeName = Optional.of("gradle");
-        }
-        // Maven is also the project type for all other Java exercises (also if the project type is not present)
-        else if (ProgrammingLanguage.JAVA.equals(programmingLanguage)) {
-            projectTypeName = Optional.of("maven");
-        }
-        else {
-            projectTypeName = Optional.empty();
-        }
+        final Optional<String> projectTypeName = getProjectTypeName(programmingLanguage, projectType);
 
         return projectTypeName.map(name -> new String[] { "templates", "jenkins", programmingLanguageName, name, regularOrSequentialDir, pipelineScriptFilename })
                 .orElseGet(() -> new String[] { "templates", "jenkins", programmingLanguageName, regularOrSequentialDir, pipelineScriptFilename });
     }
 
-    private String replacePipelineScriptParameters(String pipelineGroovyScript, Map<String, String> variablesToReplace) {
-        if (variablesToReplace != null) {
-            for (final var replacement : variablesToReplace.entrySet()) {
-                pipelineGroovyScript = pipelineGroovyScript.replace(replacement.getKey(), replacement.getValue());
-            }
+    private Optional<String> getProjectTypeName(final ProgrammingLanguage programmingLanguage, final Optional<ProjectType> projectType) {
+        // Set a project type name in case the chosen Jenkinsfile also depend on the project type
+        if (projectType.isPresent() && ProgrammingLanguage.C.equals(programmingLanguage)) {
+            return Optional.of(projectType.get().name().toLowerCase(Locale.ROOT));
         }
-        return pipelineGroovyScript;
+        else if (projectType.isPresent() && projectType.get().isGradle()) {
+            return Optional.of("gradle");
+        }
+        // Maven is also the project type for all other Java exercises (also if the project type is not present)
+        else if (ProgrammingLanguage.JAVA.equals(programmingLanguage)) {
+            return Optional.of("maven");
+        }
+        else {
+            return Optional.empty();
+        }
     }
 }
