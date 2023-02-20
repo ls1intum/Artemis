@@ -51,7 +51,7 @@ node('docker') {
         }
         stage('Load') {
             timestamps {
-                sh "wget -O pipeline.groovy #buildPlanUrl"
+                sh "curl -o pipeline.groovy #buildPlanUrl"
                 ownStages = load 'pipeline.groovy'
                 ownStages.testRunner()
             }
