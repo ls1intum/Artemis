@@ -1,5 +1,6 @@
 name: Pull Request Ready for Review
 on:
+  pull_request:
   pull_request_target:
     types: [ready_for_review]
 
@@ -16,8 +17,16 @@ jobs:
           column: Ready for review
           repo-token: ${{ secrets.GH_TOKEN_ADD_TO_PROJECT }}
 
+      - name: Request Reviews from @ls1intum/artemis-developers Team
+        uses: rowi1de/auto-assign-review-teams@v1.1.3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          teams: "@ls1intum/artemis-developers"
+          skip-with-manual-reviewers: 5
+
       - name: Label "ready for review"
         uses: actions/github-script@v6
+        if: always() # run this step even if previous step failed
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
