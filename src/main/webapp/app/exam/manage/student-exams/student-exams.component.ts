@@ -311,14 +311,15 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
         return studentExam.user?.login || '';
     };
 
-    private setStudentExams(studentExams: any): void {
-        if (studentExams) {
-            this.studentExams = studentExams;
-            this.studentExams.forEach((studentExam: StudentExam) => {
-                studentExam.exam = this.exam;
-                studentExam.numberOfExamSessions = studentExam.examSessions?.length ?? 0;
-            });
+    private setStudentExams(studentExams: StudentExam[] | null): void {
+        if (!studentExams) {
+            return;
         }
+        this.studentExams = studentExams;
+        this.studentExams.forEach((studentExam: StudentExam) => {
+            studentExam.exam = this.exam;
+            studentExam.numberOfExamSessions = studentExam.examSessions?.length ?? 0;
+        });
     }
 
     /**
