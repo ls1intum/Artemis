@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile("gitlabci | jenkins")
 @RestController
@@ -41,7 +42,8 @@ public class BuildPlanResource {
 
         final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(exerciseId);
         // orElseThrow is safe here since the query above ensures that we find a build plan that is attached to that exercise
-        final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId).orElseThrow();
+        final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Could find connected exercise for build plan."));
 
         if (!programmingExercise.hasBuildPlanAccessSecretSet() || !secret.equals(programmingExercise.getBuildPlanAccessSecret())) {
             throw new AccessForbiddenException();
