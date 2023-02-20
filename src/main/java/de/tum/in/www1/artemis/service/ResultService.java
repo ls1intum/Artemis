@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
@@ -217,12 +215,10 @@ public class ResultService {
     public List<Feedback> getFeedbacksForResult(Result result) {
         this.filterSensitiveInformationIfNecessary(result.getParticipation(), result);
 
-        // remove unnecessary data to keep the json payload smaller
-        for (Feedback feedback : result.getFeedbacks()) {
-            feedback.setResult(null);
-        }
-
-        return result.getFeedbacks();
+        return result.getFeedbacks().stream() //
+                .map(feedback -> feedback.result(null)) // remove unnecessary data to keep the json payload smaller
+                .sorted(Comparator.comparing(feedback -> Objects.requireNonNullElse(feedback.getType(), FeedbackType.AUTOMATIC))) // sort according to FeedbackType enum order.
+                .toList();
     }
 
     /**

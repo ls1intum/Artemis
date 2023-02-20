@@ -15,7 +15,8 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faInfoCircle, faPlus, faUpload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faInfoCircle, faPlus, faUpload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -39,7 +40,6 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
 
     courseId: number;
     exam: Exam;
-    file: File;
     isTestExam: boolean;
     allRegisteredUsers: ExamUser[] = [];
     filteredUsersSize = 0;
@@ -49,6 +49,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     isLoading = false;
+    hasExamStarted = false;
     isSearching = false;
     searchFailed = false;
     searchNoResults = false;
@@ -62,6 +63,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     faUserSlash = faUserSlash;
     faInfoCircle = faInfoCircle;
     faUpload = faUpload;
+    faCheck = faCheck;
 
     constructor(
         private router: Router,
@@ -78,32 +80,29 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.isAdmin = this.accountService.isAdmin();
         this.route.data.subscribe(({ exam }: { exam: Exam }) => {
-            this.exam = exam;
-            this.allRegisteredUsers =
-                exam.examUsers?.map((examUser) => {
-                    return {
-                        ...examUser.user!,
-                        ...examUser,
-                    };
-                }) || [];
-            this.isTestExam = this.exam.testExam!;
-            this.isLoading = false;
+            this.setUpExamInformation(exam);
         });
     }
 
     reloadExamWithRegisteredUsers() {
         this.isLoading = true;
         this.examManagementService.find(this.courseId, this.exam.id!, true).subscribe((examResponse: HttpResponse<Exam>) => {
-            this.exam = examResponse.body!;
-            this.allRegisteredUsers =
-                this.exam.examUsers?.map((examUser) => {
-                    return {
-                        ...examUser.user!,
-                        ...examUser,
-                    };
-                }) || [];
-            this.isLoading = false;
+            this.setUpExamInformation(examResponse.body!);
         });
+    }
+
+    private setUpExamInformation(exam: Exam) {
+        this.exam = exam;
+        this.hasExamStarted = exam.startDate?.isBefore(dayjs()) || false;
+        this.allRegisteredUsers =
+            exam.examUsers?.map((examUser) => {
+                return {
+                    ...examUser.user!,
+                    ...examUser,
+                };
+            }) || [];
+        this.isTestExam = this.exam.testExam!;
+        this.isLoading = false;
     }
 
     ngOnDestroy() {
