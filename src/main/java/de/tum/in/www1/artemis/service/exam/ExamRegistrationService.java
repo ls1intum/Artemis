@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.exam;
 
-import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -228,10 +226,7 @@ public class ExamRegistrationService {
         ExamUser registeredExamUser = examUserRepository.findByExamIdAndUserId(exam.getId(), currentUser.getId());
 
         if (registeredExamUser == null) {
-            registeredExamUser = new ExamUser();
-            registeredExamUser.setExam(exam);
-            registeredExamUser.setUser(currentUser);
-            registeredExamUser = examUserRepository.save(registeredExamUser);
+            registeredExamUser = createExamUser(exam, currentUser);
         }
 
         // We only need to update the registered exam users, if the user is not yet registered for the test exam
@@ -325,12 +320,9 @@ public class ExamRegistrationService {
             var student = students.get(i);
             ExamUser registeredExamUserCheck = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
 
-            if (!exam.getExamUsers().contains(registeredExamUserCheck) && !student.getAuthorities().contains(ADMIN_AUTHORITY)
-                    && !student.getGroups().contains(course.getInstructorGroupName())) {
-                ExamUser registeredExamUser = new ExamUser();
-                registeredExamUser.setUser(student);
-                registeredExamUser.setExam(exam);
-                registeredExamUser = examUserRepository.save(registeredExamUser);
+            if (!exam.getExamUsers().contains(registeredExamUserCheck) && !authorizationCheckService.isInstructorInCourse(course, student)
+                    && !authorizationCheckService.isAdmin(student)) {
+                ExamUser registeredExamUser = createExamUser(exam, student);
                 exam.addExamUser(registeredExamUser);
                 userData.put("student " + i, student.toDatabaseString());
             }
@@ -339,5 +331,12 @@ public class ExamRegistrationService {
         examRepository.save(exam);
         AuditEvent auditEvent = new AuditEvent(userRepository.getUser().getLogin(), Constants.ADD_USER_TO_EXAM, userData);
         auditEventRepository.add(auditEvent);
+    }
+
+    private ExamUser createExamUser(Exam exam, User user) {
+        ExamUser examUser = new ExamUser();
+        examUser.setExam(exam);
+        examUser.setUser(user);
+        return examUserRepository.save(examUser);
     }
 }
