@@ -270,11 +270,11 @@
         },
         "examSession": {
             "id": "ID",
-            "sessionToken": "Zeichen",
-            "userAgent": "Nutzer Agent",
-            "browserFingerprintHash": "Browser Fingerabdruck",
-            "instanceId": "Browser Instanz ID",
-            "ipAddress": "IP Addresse",
+            "sessionToken": "Sitzungsschlüssel",
+            "userAgent": "User Agent",
+            "browserFingerprintHash": "Browser-Fingerabdruck",
+            "instanceId": "Browserinstanz-ID",
+            "ipAddress": "IP-Adresse",
             "createdDate": "Erstellungsdatum"
         },
         "studentExams": {
