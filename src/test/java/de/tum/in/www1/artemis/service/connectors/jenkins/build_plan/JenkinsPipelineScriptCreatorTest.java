@@ -16,9 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 
-public class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJenkinsGitlabTest {
-
-    private static final String TEST_PREFIX = "jenkinspipelinescriptcreatortest";
+class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private BuildPlanRepository buildPlanRepository;
@@ -32,8 +30,9 @@ public class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJ
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
-    public void init() {
+    void init() {
         var course = database.addEmptyCourse();
+
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
@@ -43,30 +42,29 @@ public class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJ
         programmingExercise.setReleaseDate(null);
         course.addExercises(programmingExercise);
 
-        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
     }
 
     @Test
-    public void testBuildPlanCreation() {
+    void testBuildPlanCreation() {
         jenkinsPipelineScriptCreator.createBuildPlanForExercise(programmingExercise);
         Optional<BuildPlan> optionalBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId());
-        assertThat(optionalBuildPlan.isPresent()).isTrue();
+        assertThat(optionalBuildPlan).isPresent();
     }
 
     @Test
-    public void testReplacements() {
+    void testReplacements() {
         jenkinsPipelineScriptCreator.createBuildPlanForExercise(programmingExercise);
-        BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId()).orElse(null);
-        assertThat(buildPlan).isNotNull();
+        BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId()).orElseThrow();
         assertThat(buildPlan.getBuildPlan()).doesNotContain("#isStaticCodeAnalysisEnabled", "#testWiseCoverage", "#dockerImage", "#dockerArgs")
                 // testwise coverage is disabled in the dummy exercise
                 .contains("isTestwiseCoverageEnabled = false && isSolutionBuild");
     }
 
     @Test
-    public void testBuildPlanRecreation() {
+    void testBuildPlanRecreation() {
         jenkinsPipelineScriptCreator.createBuildPlanForExercise(programmingExercise);
-        BuildPlan oldBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId()).orElse(null);
+        BuildPlan oldBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId()).orElseThrow();
         assertThat(oldBuildPlan).isNotNull();
         assertThat(oldBuildPlan.getBuildPlan()).contains("isStaticCodeAnalysisEnabled = true");
 
@@ -74,8 +72,7 @@ public class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJ
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         jenkinsPipelineScriptCreator.createBuildPlanForExercise(programmingExercise);
 
-        BuildPlan newBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId()).orElse(null);
-        assertThat(newBuildPlan).isNotNull();
+        BuildPlan newBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId()).orElseThrow();
         assertThat(newBuildPlan.getBuildPlan()).contains("isStaticCodeAnalysisEnabled = false");
     }
 }
