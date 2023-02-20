@@ -31,4 +31,16 @@ public interface BuildPlanRepository extends JpaRepository<BuildPlan, Long> {
         buildPlanWrapper.addProgrammingExercise(exercise);
         save(buildPlanWrapper);
     }
+
+    /**
+     * Disconnects the build plan from this exercise in case it exists.
+     *
+     * @param exercise The programming exercise from which the build plan should be removed.
+     */
+    default void disconnectBuildPlanFromExercise(final ProgrammingExercise exercise) {
+        findByProgrammingExercises_IdWithProgrammingExercises(exercise.getId()).ifPresent(buildPlan -> {
+            buildPlan.disconnectFromExercise(exercise);
+            save(buildPlan);
+        });
+    }
 }

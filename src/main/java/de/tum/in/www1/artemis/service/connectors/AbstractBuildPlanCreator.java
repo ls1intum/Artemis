@@ -2,11 +2,9 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 
-import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -52,12 +50,7 @@ public abstract class AbstractBuildPlanCreator {
      * @param exercise The exercise for which a new build plan is created.
      */
     public void createBuildPlanForExercise(ProgrammingExercise exercise) {
-        Optional<BuildPlan> optionalBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(exercise.getId());
-        if (optionalBuildPlan.isPresent()) {
-            BuildPlan oldBuildPlan = optionalBuildPlan.get();
-            oldBuildPlan.disconnectFromExercise(exercise);
-            buildPlanRepository.save(oldBuildPlan);
-        }
+        buildPlanRepository.disconnectBuildPlanFromExercise(exercise);
         var defaultBuildPlan = generateDefaultBuildPlan(exercise);
         buildPlanRepository.setBuildPlanForExercise(defaultBuildPlan, exercise);
     }
