@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public interface BuildPlanRepository extends JpaRepository<BuildPlan, Long> {
 
@@ -21,6 +22,11 @@ public interface BuildPlanRepository extends JpaRepository<BuildPlan, Long> {
             WHERE programmingExercises.id = :exerciseId
             """)
     Optional<BuildPlan> findByProgrammingExercises_IdWithProgrammingExercises(@Param("exerciseId") long exerciseId);
+
+    default BuildPlan findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(long exerciseId) {
+        return findByProgrammingExercises_IdWithProgrammingExercises(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Could not find a build plan for exercise " + exerciseId));
+    }
 
     @EntityGraph(type = LOAD, attributePaths = { "programmingExercises" })
     Optional<BuildPlan> findByBuildPlan(String buildPlan);

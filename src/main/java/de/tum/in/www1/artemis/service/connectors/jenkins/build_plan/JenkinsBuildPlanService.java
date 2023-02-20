@@ -102,21 +102,21 @@ public class JenkinsBuildPlanService {
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL) {
         final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUrls = getInternalRepositoryUrls(exercise, repositoryURL);
 
-        // create build plan in database first, otherwise the job in Jenkins cannot find it for the initial build
-        jenkinsPipelineScriptCreator.createBuildPlanForExercise(exercise);
-
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
         final boolean checkoutSolution = exercise.getCheckoutSolutionRepository();
-        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, checkoutSolution,
+        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, checkoutSolution,
                 buildPlanUrl);
 
-        String jobFolder = exercise.getProjectKey();
-        String job = jobFolder + "-" + planKey;
-        jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
-        givePlanPermissions(exercise, planKey);
+        // create build plan in database first, otherwise the job in Jenkins cannot find it for the initial build
+        jenkinsPipelineScriptCreator.createBuildPlanForExercise(exercise);
 
+        final String jobFolder = exercise.getProjectKey();
+        final String job = jobFolder + "-" + planKey;
+        jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
+
+        givePlanPermissions(exercise, planKey);
         triggerBuild(jobFolder, job);
     }
 
