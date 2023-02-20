@@ -180,7 +180,7 @@
 
     <div class="mb-3 mt-3">
         <h5><span jhiTranslate="artemisApp.studentExams.examSessions">Sessions</span></h5>
-        <div id="exam-session-table-wrapper" *ngIf="studentExam.examSessions && studentExam.examSessions.length > 0; else noSession">
+        <div class="exam-session-table-wrapper" *ngIf="studentExam.examSessions && studentExam.examSessions.length > 0; else noSession">
             <table class="table table-striped">
                 <thead>
                     <tr>
