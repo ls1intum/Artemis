@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.build_plan;
 
 import java.io.IOException;
-import java.nio.file.Files;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.commons.io.IOUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
@@ -71,8 +73,8 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
         final String[] pipelinePath = getResourcePath(programmingLanguage, projectType, isSequentialTestRuns);
         final Resource resource = resourceLoaderService.getResource(pipelinePath);
 
-        try {
-            return Files.readString(resource.getFile().toPath());
+        try (InputStream inputStream = resource.getInputStream()) {
+            return IOUtils.toString(inputStream, Charset.defaultCharset());
         }
         catch (IOException e) {
             throw new JenkinsException("Could not load pipeline script definition.", e);

@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.build_plan;
 
 import java.io.IOException;
-import java.nio.file.Files;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,6 +10,7 @@ import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
@@ -109,8 +111,8 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     private String loadJenkinsfile() {
         Resource resource = resourceLoaderService.getResource("templates", "jenkins", "Jenkinsfile");
 
-        try {
-            return Files.readString(resource.getFile().toPath());
+        try (InputStream inputStream = resource.getInputStream()) {
+            return IOUtils.toString(inputStream, Charset.defaultCharset());
         }
         catch (IOException e) {
             throw new ContinuousIntegrationBuildPlanException("Could not load Jenkinsfile.", e);
