@@ -2,6 +2,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exam } from 'app/entities/exam.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { Exercise as CypressExercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
@@ -239,6 +240,24 @@ export class CourseManagementRequests {
      */
     registerStudentForExam(exam: Exam, student: CypressCredentials) {
         return cy.request({ method: POST, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id + '/students/' + student.username });
+    }
+
+    /**
+     * Creates an exam with the provided settings.
+     * @param exam the exam object created by a {@link CypressExamBuilder}
+     * @param exercises an array of exercises
+     * @param workingTime the working time in seconds
+     * @returns <Chainable> request response
+     */
+    createExamTestRun(exam: Exam, exerciseArray: Array<CypressExercise>, workingTime = 1080) {
+        const courseId = exam.course!.id;
+        const examId = exam.id!;
+        const body = {
+            exam,
+            exerciseArray,
+            workingTime,
+        };
+        return cy.request({ url: COURSE_BASE + courseId + '/exams/' + examId + '/test-run', method: POST, body });
     }
 
     /**
