@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 
-public class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "jenkinspipelinescriptcreatortest";
 
@@ -32,7 +32,7 @@ public class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJ
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
-    public void init() {
+    void init() {
         var course = database.addEmptyCourse();
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
@@ -47,14 +47,14 @@ public class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJ
     }
 
     @Test
-    public void testBuildPlanCreation() {
+    void testBuildPlanCreation() {
         jenkinsPipelineScriptCreator.createBuildPlanForExercise(programmingExercise);
         Optional<BuildPlan> optionalBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId());
         assertThat(optionalBuildPlan.isPresent()).isTrue();
     }
 
     @Test
-    public void testReplacements() {
+    void testReplacements() {
         jenkinsPipelineScriptCreator.createBuildPlanForExercise(programmingExercise);
         BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId()).orElse(null);
         assertThat(buildPlan).isNotNull();
@@ -64,7 +64,7 @@ public class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJ
     }
 
     @Test
-    public void testBuildPlanRecreation() {
+    void testBuildPlanRecreation() {
         jenkinsPipelineScriptCreator.createBuildPlanForExercise(programmingExercise);
         BuildPlan oldBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId()).orElse(null);
         assertThat(oldBuildPlan).isNotNull();
