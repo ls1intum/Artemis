@@ -6,10 +6,15 @@ It should then reflect the remaining points along the x-axis and return the resu
 
 Implement the function in three different ways:
 
-1. [1P] As a list comprehension without using any higher-order functions or recursion.
-   Call this function ```selectAndReflectA```.
-2. [1P] As a recursive function with the help of pattern matching.
+1. [task][List Comprehension](Properties.Checked by QuickCheck.Testing A against sample solution, Properties.Checked by SmallCheck.Testing filtering in A, Properties.Checked by SmallCheck.Testing mapping in A,  Unit Tests.Testing selectAndReflectA (0,0) [])
+   As a list comprehension without using any higher-order functions or recursion.
+   Call this function `selectAndReflectA`.
+
+2. [task][Recursion](Properties.Checked by QuickCheck.Testing B against sample solution, Properties.Checked by SmallCheck.Testing filtering in B, Properties.Checked by SmallCheck.Testing mapping in B,  Unit Tests.Testing selectAndReflectB (0,1) [(0,0)])
+   As a recursive function with the help of pattern matching.
    You are not allowed to use list comprehensions or higher-order functions.
-   Call this function ```selectAndReflectB```.
-3. [1P] Use higher-order functions (e.g. `map`, `filter`, etc.) but no recursion or list comprehensions.
-   Call this function ```selectAndReflectC```.
+   Call this function `selectAndReflectB`.
+
+3. [task][Higher-Order Functions](Properties.Checked by QuickCheck.Testing C against sample solution, Properties.Checked by SmallCheck.Testing filtering in C, Properties.Checked by SmallCheck.Testing mapping in C,  Unit Tests.Testing selectAndReflectC (0,1) [(-1,-1)])
+   Use higher-order functions (e.g. `map`, `filter`, etc.) but no recursion or list comprehensions.
+   Call this function `selectAndReflectC`.

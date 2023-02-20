@@ -5,6 +5,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
@@ -79,11 +80,20 @@ public class ExamSession extends AbstractAuditingEntity {
         this.instanceId = instanceId;
     }
 
-    public IPAddress getIpAddress() {
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+    }
+
+    @JsonIgnore
+    public IPAddress getIpAddressAsIpAddress() {
         return ipAddress != null ? new IPAddressString(ipAddress).getAddress() : null;
     }
 
-    public void setIpAddress(IPAddress ipAddress) {
+    public void setIpAddressFromIpAddress(IPAddress ipAddress) {
         this.ipAddress = ipAddress != null ? ipAddress.toCanonicalString() : null;
 
     }

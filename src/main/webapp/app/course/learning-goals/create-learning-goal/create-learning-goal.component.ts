@@ -9,6 +9,7 @@ import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LectureService } from 'app/lecture/lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-create-learning-goal',
@@ -16,6 +17,7 @@ import { Lecture } from 'app/entities/lecture.model';
     styles: [],
 })
 export class CreateLearningGoalComponent implements OnInit {
+    documentationType = DocumentationType.LearningGoals;
     learningGoalToCreate: LearningGoal = new LearningGoal();
     isLoading: boolean;
     courseId: number;

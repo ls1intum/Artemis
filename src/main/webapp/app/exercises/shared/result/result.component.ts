@@ -209,6 +209,12 @@ export class ResultComponent implements OnInit, OnChanges {
             result.participation = this.participation;
         }
 
+        if (this.exercise?.type === ExerciseType.QUIZ) {
+            // There is no feedback for quiz exercises.
+            // Instead, the scoring is showed next to the different questions
+            return;
+        }
+
         const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'xl' });
         const componentInstance: FeedbackComponent = modalRef.componentInstance;
         componentInstance.exercise = this.exercise;
