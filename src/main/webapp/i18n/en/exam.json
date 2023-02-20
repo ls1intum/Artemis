@@ -270,6 +270,15 @@
             "updated": "Exercise group updated",
             "deleted": "Deleted exercise group with title {{ param }}"
         },
+        "examSession": {
+            "id": "ID",
+            "sessionToken": "Token",
+            "userAgent": "User Agent",
+            "browserFingerprintHash": "Browser Fingerprint",
+            "instanceId": "Browser Instance ID",
+            "ipAddress": "IP Address",
+            "createdDate": "Created Date"
+        },
         "studentExams": {
             "title": "Student exams",
             "generateStudentExams": "Generate individual exams",
@@ -286,6 +295,7 @@
             "workingTime": "Working time",
             "started": "Started",
             "submitted": "Submitted",
+            "examSessions": "Sessions",
             "submissionDate": "Submission date",
             "grade": "Grade",
             "gradeBeforeBonus": "Grade before bonus",
@@ -738,7 +748,8 @@
             "saveWorkingTimeSuccessful": "The working time was saved successfully.",
             "toggleSuccessful": "The submitted status was changed successfully.",
             "togglefailed": "The submitted status could not be changed!",
-            "hasComplaint": "Has Complaint"
+            "hasComplaint": "Has Complaint",
+            "noSessions": "No Sessions"
         },
         "studentExam": {
             "submitSuccessful": "Your exam was submitted successfully. Artemis does not require further action, the window can be closed. Be sure to follow your instructor's exam protocol.",
