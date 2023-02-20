@@ -4,24 +4,24 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
     <changeSet author="baboci" id="20230220022200">
         <update tableName="exam_user">
-            <column name="did_check_login" type="boolean"/>
+            <column name="did_check_login" valueBoolean="false"/>
             <where>did_check_login IS NULL</where>
         </update>
         <update tableName="exam_user">
-            <column name="did_check_name" type="boolean"/>
+            <column name="did_check_name" valueBoolean="false"/>
             <where>did_check_name IS NULL</where>
         </update>
         <update tableName="exam_user">
-            <column name="did_check_registration_number" type="boolean"/>
+            <column name="did_check_registration_number" valueBoolean="false"/>
             <where>did_check_registration_number IS NULL</where>
         </update>
         <update tableName="exam_user">
-            <column name="did_check_image" type="boolean"/>
+            <column name="did_check_image" valueBoolean="false"/>
             <where>did_check_image IS NULL</where>
         </update>
-        <addNotNullConstraint tableName="exam_user" columnName="did_check_login" defaultNullValue="false"/>
-        <addNotNullConstraint tableName="exam_user" columnName="did_check_name" defaultNullValue="false"/>
-        <addNotNullConstraint tableName="exam_user" columnName="did_check_registration_number" defaultNullValue="false"/>
-        <addNotNullConstraint tableName="exam_user" columnName="did_check_image" defaultNullValue="false"/>
+        <addNotNullConstraint tableName="exam_user" columnName="did_check_login" defaultNullValue="false" columnDataType="boolean"/>
+        <addNotNullConstraint tableName="exam_user" columnName="did_check_name" defaultNullValue="false" columnDataType="boolean"/>
+        <addNotNullConstraint tableName="exam_user" columnName="did_check_registration_number" defaultNullValue="false" columnDataType="boolean"/>
+        <addNotNullConstraint tableName="exam_user" columnName="did_check_image" defaultNullValue="false" columnDataType="boolean"/>
     </changeSet>
 </databaseChangeLog>
