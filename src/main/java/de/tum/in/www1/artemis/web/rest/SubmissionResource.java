@@ -72,20 +72,20 @@ public class SubmissionResource {
     }
 
     /**
-     * DELETE /submissions/:id : delete the "id" submission.
+     * DELETE /submissions/:submissionId : delete the "id" submission.
      *
-     * @param id the id of the submission to delete
+     * @param submissionId the id of the submission to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/submissions/{id}")
+    @DeleteMapping("/submissions/{submissionId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> deleteSubmission(@PathVariable Long id) {
-        log.debug("REST request to delete Submission : {}", id);
+    public ResponseEntity<Void> deleteSubmission(@PathVariable Long submissionId) {
+        log.debug("REST request to delete Submission : {}", submissionId);
 
-        Optional<Submission> submission = submissionRepository.findWithEagerResultsAndAssessorById(id);
+        Optional<Submission> submission = submissionRepository.findWithEagerResultsAndAssessorById(submissionId);
 
         if (submission.isEmpty()) {
-            log.error("Submission with id: {} cannot be deleted", id);
+            log.error("Submission with id: {} cannot be deleted", submissionId);
             return ResponseEntity.notFound().build();
         }
 
@@ -100,9 +100,9 @@ public class SubmissionResource {
             buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
         }
         buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.get().getId());
-        submissionRepository.deleteById(id);
+        submissionRepository.deleteById(submissionId);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, submissionId.toString())).build();
     }
 
     /**

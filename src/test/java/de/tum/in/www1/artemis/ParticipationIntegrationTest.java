@@ -119,7 +119,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
 
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService, programmingExerciseStudentParticipationRepository);
+        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
     }
 
     @AfterEach
@@ -282,7 +282,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var repo = new LocalRepository(defaultBranch);
         repo.configureRepos("studentRepo", "studentOriginRepo");
         programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, user.getLogin(), repo, true);
-        mockConnectorRequestsForStartPractice(programmingExercise, TEST_PREFIX + "student1", Set.of(user), true, HttpStatus.CREATED);
+        mockConnectorRequestsForStartPractice(programmingExercise, TEST_PREFIX + "student1", Set.of(user), true);
 
         StudentParticipation participation = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/participations/practice", null,
                 StudentParticipation.class, HttpStatus.CREATED);
@@ -303,7 +303,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var repo = new LocalRepository(defaultBranch);
         repo.configureRepos("studentRepo", "studentOriginRepo");
         programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, user.getLogin(), repo);
-        mockConnectorRequestsForStartParticipation(programmingExercise, TEST_PREFIX + "student1", Set.of(user), true, HttpStatus.CREATED);
+        mockConnectorRequestsForStartParticipation(programmingExercise, TEST_PREFIX + "student1", Set.of(user), true);
 
         StudentParticipation participation = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/participations", null, StudentParticipation.class,
                 HttpStatus.CREATED);

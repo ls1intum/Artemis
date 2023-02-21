@@ -1,7 +1,7 @@
 <!--resizable container-->
 <jhi-resizeable-container *ngIf="exercise">
     <!--region Left Panel-->
-    <span left-header *ngIf="exercise.title">{{ exercise.title }}</span>
+    <span class="exercise-title" left-header *ngIf="exercise.title">{{ exercise.title }}</span>
     <!-- prettier-ignore -->
     <span left-header>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
         *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
