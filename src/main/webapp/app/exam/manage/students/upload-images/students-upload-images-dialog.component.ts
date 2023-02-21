@@ -18,7 +18,6 @@ class NotFoundExamUserType {
 @Component({
     selector: 'jhi-student-upload-images-dialog',
     templateUrl: './students-upload-images-dialog.component.html',
-    styleUrls: ['./students-upload-images-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
 export class StudentsUploadImagesDialogComponent implements OnDestroy {
@@ -100,12 +99,5 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
                 },
             });
         }
-    }
-
-    /**
-     * Number of images which could not be saved
-     */
-    get numberOfImagesNotSaved(): number {
-        return !this.hasParsed ? 0 : this.notFoundUsers?.numberOfUsersNotFound ?? 0;
     }
 }

@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
-import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.*;
+import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.INDIVIDUAL;
+import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
-import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService.*;
+import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX;
+import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -44,7 +46,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participant;
@@ -79,6 +83,9 @@ import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
  */
 @Service
 public class ProgrammingExerciseTestService {
+
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
 
     @Autowired
     private DatabaseUtilService database;
@@ -135,9 +142,6 @@ public class ProgrammingExerciseTestService {
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
-    @Value("${artemis.version-control.default-branch:main}")
-    private String defaultBranch;
-
     @Autowired
     private CourseExamExportService courseExamExportService;
 
@@ -155,6 +159,15 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private UrlService urlService;
+
+    @Autowired // can be used as SpyBean
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
+    private StudentExamRepository studentExamRepository;
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
 
     public Course course;
 
@@ -193,10 +206,11 @@ public class ProgrammingExerciseTestService {
     public LocalRepository studentTeamRepo;
 
     // Injected in the constructor
-    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private VersionControlService versionControlService;
 
     // Injected in the constructor
-    private VersionControlService versionControlService;
+    @SuppressWarnings("unused") // might be used in the future and is here for consistency reasons
+    private ContinuousIntegrationService continuousIntegrationService;
 
     private MockDelegate mockDelegate;
 
@@ -207,8 +221,7 @@ public class ProgrammingExerciseTestService {
         database.addUsers(userPrefix, numberOfStudents + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
     }
 
-    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) throws Exception {
+    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws Exception {
         mockDelegate.resetMockProvider();
         exerciseRepo = new LocalRepository(defaultBranch);
         testRepo = new LocalRepository(defaultBranch);
@@ -222,7 +235,7 @@ public class ProgrammingExerciseTestService {
         studentTeamRepo = new LocalRepository(defaultBranch);
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.continuousIntegrationService = continuousIntegrationService;
 
         course = database.addEmptyCourse();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
@@ -853,7 +866,7 @@ public class ProgrammingExerciseTestService {
         if (exerciseMode == TEAM) {
             participant = setupTeam(user);
         }
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true, HttpStatus.CREATED);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
         final var path = "/api/exercises/{exerciseId}/participations".replace("{exerciseId}", String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
@@ -870,7 +883,7 @@ public class ProgrammingExerciseTestService {
         user = userRepo.save(user);
         Participant participant = user;
 
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true, HttpStatus.CREATED);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
 
         final var path = "/api/exercises/{exerciseId}/participations".replace("{exerciseId}", String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
@@ -1299,7 +1312,69 @@ public class ProgrammingExerciseTestService {
         disableAutoGC(testsRepository);
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
         doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
+    }
 
+    public List<StudentExam> prepareStudentExamsForConduction(String testPrefix, ZonedDateTime examVisibleDate, ZonedDateTime examStartDate, ZonedDateTime examEndDate,
+            Set<User> registeredStudents, List<LocalRepository> studentRepos) throws Exception {
+
+        for (int i = 1; i <= registeredStudents.size(); i++) {
+            mockDelegate.mockUserExists(testPrefix + "student" + i);
+        }
+
+        final var course = database.addEmptyCourse();
+        var exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
+
+        // register users
+        Set<ExamUser> registeredExamUsers = new HashSet<>();
+        exam = examRepository.save(exam);
+        for (var user : registeredStudents) {
+            var registeredExamUser = new ExamUser();
+            registeredExamUser.setUser(user);
+            registeredExamUser.setExam(exam);
+            registeredExamUser = examUserRepository.save(registeredExamUser);
+            exam.addExamUser(registeredExamUser);
+            registeredExamUsers.add(registeredExamUser);
+        }
+        exam.setExamUsers(registeredExamUsers);
+        exam.setNumberOfExercisesInExam(exam.getExerciseGroups().size());
+        exam.setRandomizeExerciseOrder(false);
+        exam.setNumberOfCorrectionRoundsInExam(2);
+        exam = examRepository.save(exam);
+
+        // generate individual student exams
+        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
+                StudentExam.class, HttpStatus.OK);
+        assertThat(studentExams).hasSize(exam.getExamUsers().size());
+        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(registeredStudents.size());
+
+        // start exercises
+        List<ProgrammingExercise> programmingExercises = new ArrayList<>();
+        for (var exercise : exam.getExerciseGroups().get(6).getExercises()) {
+            var programmingExercise = (ProgrammingExercise) exercise;
+            programmingExercises.add(programmingExercise);
+
+            setupRepositoryMocks(programmingExercise);
+            for (var examUser : exam.getExamUsers()) {
+                var repo = new LocalRepository(defaultBranch);
+                repo.configureRepos("studentRepo", "studentOriginRepo");
+                setupRepositoryMocksParticipant(programmingExercise, examUser.getUser().getLogin(), repo);
+                studentRepos.add(repo);
+            }
+        }
+
+        for (var programmingExercise : programmingExercises) {
+            for (var user : registeredStudents) {
+                mockDelegate.mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true);
+            }
+        }
+
+        int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
+        assertThat(noGeneratedParticipations).isEqualTo(registeredStudents.size() * exam.getExerciseGroups().size());
+
+        mockDelegate.resetMockProvider();
+
+        return studentExams;
     }
 
     /**
@@ -1394,7 +1469,7 @@ public class ProgrammingExerciseTestService {
     void startProgrammingExerciseStudentSubmissionFailedWithBuildlog() throws Exception {
         persistProgrammingExercise();
         User user = userRepo.findOneByLogin(userPrefix + studentLogin).orElseThrow();
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true);
         final var participation = createUserParticipation();
 
         // create a submission which fails
@@ -1427,7 +1502,7 @@ public class ProgrammingExerciseTestService {
     void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
         persistProgrammingExercise();
         User user = userRepo.findOneByLogin(userPrefix + studentLogin).orElseThrow();
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true);
 
         final var participation = createUserParticipation();
 
@@ -1455,7 +1530,7 @@ public class ProgrammingExerciseTestService {
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents).hasSameSizeAs(students);
 
         // Set up mockRetrieveArtifacts requests for start participation
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true, HttpStatus.CREATED);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true);
 
         // Add a new student to the team
         User newStudent = database
@@ -1486,7 +1561,7 @@ public class ProgrammingExerciseTestService {
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents).hasSameSizeAs(students);
 
         // Set up mockRetrieveArtifacts requests for start participation
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true, HttpStatus.CREATED);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true);
 
         // Remove the first student from the team
         User firstStudent = students.iterator().next();
@@ -1519,7 +1594,7 @@ public class ProgrammingExerciseTestService {
 
         // Set up mock requests for start participation and that a lti user is not existent
         final boolean ltiUserExists = false;
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), ltiUserExists, HttpStatus.CREATED);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), ltiUserExists);
 
         // Start participation with original team
         assertThrows(GitLabException.class, () -> participationService.startExercise(exercise, team, false));
@@ -1581,7 +1656,7 @@ public class ProgrammingExerciseTestService {
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
 
         // test for Conflict exception
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true, HttpStatus.CONFLICT);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true);
 
         // Start participation
         participationService.startExercise(exercise, team, false);
