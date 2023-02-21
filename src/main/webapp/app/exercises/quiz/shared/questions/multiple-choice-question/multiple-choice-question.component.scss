@@ -89,7 +89,7 @@
         }
 
         th {
-            color: dimgray;
+            color: var(--gray-600);
         }
 
         th,
@@ -207,7 +207,7 @@
     width: 2.5%;
     margin-left: 0.2rem;
     border-radius: 2px;
-    color: white;
+    color: var(--white);
 }
 
 .visual-answer-delete-container:hover {
