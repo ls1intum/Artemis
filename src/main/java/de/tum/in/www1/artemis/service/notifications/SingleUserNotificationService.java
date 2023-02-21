@@ -153,7 +153,7 @@ public class SingleUserNotificationService {
      */
     public void checkNotificationForAssessmentExerciseSubmission(Exercise exercise, User recipient, Result result) {
         // only send the notification now if no assessment due date was set or if it is in the past
-        if (exercise.isCourseExercise() && (exercise.getAssessmentDueDate() == null || !exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now()))) {
+        if (exercise.isCourseExercise() && (exercise.getAssessmentDueDate() == null || exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
             saturateExerciseWithResultAndStudentParticipationForGivenUserForEmail(exercise, recipient, result);
             notifyUserAboutAssessedExerciseSubmission(exercise, recipient);
         }

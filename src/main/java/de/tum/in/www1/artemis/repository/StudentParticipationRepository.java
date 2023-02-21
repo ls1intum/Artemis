@@ -219,6 +219,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.exercise.id = :#{#exerciseId}
                 AND p.testRun = :#{#testRun}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+                AND r.assessmentType <> 'AUTOMATIC'
                 AND r.id = (
                     SELECT max(id)
                     FROM p.results

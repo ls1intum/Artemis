@@ -45,7 +45,7 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
-import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.exam.ExamDeletionService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.service.user.UserService;
@@ -89,7 +89,7 @@ public class CourseService {
 
     private final CourseExamExportService courseExamExportService;
 
-    private final ExamService examService;
+    private final ExamDeletionService examDeletionService;
 
     private final ExamRepository examRepository;
 
@@ -140,7 +140,7 @@ public class CourseService {
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
-            UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService, ExamService examService,
+            UserService userService, ExamDeletionService examDeletionService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService,
             ExamRepository examRepository, CourseExamExportService courseExamExportService, LearningGoalService learningGoalService, GradingScaleRepository gradingScaleRepository,
             StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
             RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
@@ -159,9 +159,9 @@ public class CourseService {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
+        this.examDeletionService = examDeletionService;
         this.learningGoalRepository = learningGoalRepository;
         this.groupNotificationService = groupNotificationService;
-        this.examService = examService;
         this.examRepository = examRepository;
         this.courseExamExportService = courseExamExportService;
         this.learningGoalService = learningGoalService;
@@ -323,7 +323,7 @@ public class CourseService {
      * <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
      * <li>All GroupNotifications of the course, see {@link GroupNotificationRepository#delete}</li>
      * <li>All default groups created by Artemis, see {@link UserService#deleteGroup}</li>
-     * <li>All Exams, see {@link ExamService#delete}</li>
+     * <li>All Exams, see {@link ExamDeletionService#delete}</li>
      * <li>The Grading Scale if such exists, see {@link GradingScaleRepository#delete}</li>
      * </ul>
      *
@@ -357,7 +357,7 @@ public class CourseService {
         // delete the Exams
         List<Exam> exams = examRepository.findByCourseId(course.getId());
         for (Exam exam : exams) {
-            examService.delete(exam.getId());
+            examDeletionService.delete(exam.getId());
         }
     }
 

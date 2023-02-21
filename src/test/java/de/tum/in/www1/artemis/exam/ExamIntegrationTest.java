@@ -188,7 +188,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     private User instructor;
 
     @BeforeEach
-    void initTestCase() throws Exception {
+    void initTestCase() {
 
         database.addUsers(TEST_PREFIX, numberOfStudents, 5, 0, 1);
         // Add users that are not in the course
@@ -1489,12 +1489,42 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testDeleteExamWithOneTestRun() throws Exception {
+    void testDeleteExamWithOneTestRuns() throws Exception {
         var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
         var exam = database.addExam(course1);
         exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteExamWithMultipleTestRuns() throws Exception {
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        bambooRequestMockProvider.enableMockingOfRequests(true);
+        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        var exam = database.addExam(course1);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, true, true);
+        mockDeleteProgrammingExercise(database.getFirstExerciseWithType(exam, ProgrammingExercise.class), Set.of(instructor));
+
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        assertThat(studentExamRepository.findAllTestRunsByExamId(exam.getId())).hasSize(3);
+        request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteCourseWithMultipleTestRuns() throws Exception {
+        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        var exam = database.addExam(course1);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        assertThat(studentExamRepository.findAllTestRunsByExamId(exam.getId())).hasSize(3);
+        request.delete("/api/courses/" + exam.getCourse().getId(), HttpStatus.OK);
     }
 
     @Test
@@ -1925,21 +1955,20 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @CsvSource({ "false, false", "true, false", "false, true", "true, true" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamScore(boolean withCourseBonus, boolean withSecondCorrectionAndStarted) throws Exception {
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService, programmingExerciseStudentParticipationRepository);
+        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.enableMockingOfRequests(true);
 
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
-        var examVisibleDate = now().minusMinutes(5);
-        var examStartDate = now().plusMinutes(5);
-        var examEndDate = now().plusMinutes(20);
+        var visibleDate = now().minusMinutes(5);
+        var startDate = now().plusMinutes(5);
+        var endDate = now().plusMinutes(20);
 
         // register users. Instructors are ignored from scores as they are exclusive for test run exercises
         Set<User> registeredStudents = getRegisteredStudentsForExam();
 
-        List<StudentExam> studentExams = database.prepareStudentExamsForConduction(TEST_PREFIX, this, bitbucketRequestMockProvider, programmingExerciseTestService, request,
-                examVisibleDate, examStartDate, examEndDate, registeredStudents, studentRepos);
+        var studentExams = programmingExerciseTestService.prepareStudentExamsForConduction(TEST_PREFIX, visibleDate, startDate, endDate, registeredStudents, studentRepos);
         Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(studentExams.get(0).getExam().getId());
         Course course = exam.getCourse();
 
@@ -2256,11 +2285,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         final ProgrammingExercise programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().iterator().next();
 
-        Set<User> users = new HashSet<>();
-        for (var user : exam.getExamUsers()) {
-            users.add(user.getUser());
-        }
-        mockDeleteProgrammingExercise(programmingExerciseTestService, programmingExercise, users);
+        var usersOfExam = exam.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
+        mockDeleteProgrammingExercise(programmingExercise, usersOfExam);
 
         await().until(() -> participantScoreScheduleService.isIdle());
 

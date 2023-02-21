@@ -184,7 +184,7 @@ public class ProgrammingExerciseResource {
         // Only when changing the assessment format to automatic an additional check for > 0 has to be performed.
         if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC) {
             final Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
-            if (!ProgrammingExerciseTestCaseService.isTestCaseWeightSumValid(exercise, testCases)) {
+            if (!ProgrammingExerciseTestCaseService.isTestCaseWeightSumValid(testCases)) {
                 throw new BadRequestAlertException("For exercises with only automatic assignment at least one test case weight must be greater than zero.", "Exercise",
                         ProgrammingExerciseResourceErrorKeys.INVALID_TEST_CASE_WEIGHTS);
             }
