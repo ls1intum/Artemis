@@ -50,7 +50,7 @@ void postBuildTasks() {
     sh '''
     rm -rf results
     mkdir results
-    if []
+    if [ -e test-reports/results.xml ]
     then
         sed -i 's/<testsuites>//g ; s/<\\/testsuites>//g' test-reports/results.xml
     fi
