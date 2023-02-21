@@ -404,6 +404,7 @@
                                                     [routerLink]="getAssessmentLink(submission)"
                                                     [queryParams]="getAssessmentQueryParams(correctionRound)"
                                                     class="btn btn-warning btn-sm"
+                                                    id="continue-assessment"
                                                 >
                                                     <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>&nbsp;{{
                                                         'artemisApp.exerciseAssessmentDashboard.continueAssessment' | artemisTranslate
@@ -415,6 +416,7 @@
                                                         [routerLink]="getAssessmentLink(submission)"
                                                         [queryParams]="getAssessmentQueryParams(correctionRound)"
                                                         class="btn btn-primary btn-sm"
+                                                        id="open-assessment"
                                                     >
                                                         <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                                                         &nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.openAssessment' | artemisTranslate }}
@@ -548,6 +550,7 @@
                                             [routerLink]="getAssessmentLink(submissionWithComplaint.submission)"
                                             [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
                                             class="btn btn-success btn-sm"
+                                            id="evaluate-complaint"
                                         >
                                             <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                                             {{ 'artemisApp.exerciseAssessmentDashboard.evaluateComplaint' | artemisTranslate }}

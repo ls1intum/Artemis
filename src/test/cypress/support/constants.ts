@@ -15,6 +15,7 @@ export const USER_ID_SELECTOR = 'USERID';
 // Timeformat
 export const TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss.SSS';
 
+// Exercise types
 export enum EXERCISE_TYPE {
     Text,
     Modeling,
