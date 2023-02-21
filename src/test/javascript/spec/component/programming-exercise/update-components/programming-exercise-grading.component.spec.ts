@@ -95,6 +95,43 @@ describe('ProgrammingExerciseGradingComponent', () => {
         });
     }));
 
+    it('should create a grading summary for a bonus exercise with semiautomatic assessment', fakeAsync(() => {
+        fixture.detectChanges();
+
+        comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_AS_BONUS;
+        comp.programmingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        comp.programmingExercise.bonusPoints = undefined;
+
+        fixture.whenStable().then(() => {
+            const result = comp.getGradingSummary();
+            expect(result).not.toBe('');
+        });
+    }));
+
+    it('should create a grading summary with exceeding penalty', fakeAsync(() => {
+        fixture.detectChanges();
+
+        comp.programmingExercise.submissionPolicy = { type: SubmissionPolicyType.SUBMISSION_PENALTY, exceedingPenalty: 10, submissionLimit: 5 };
+        comp.programmingExercise.maxStaticCodeAnalysisPenalty = 5;
+
+        fixture.whenStable().then(() => {
+            const result = comp.getGradingSummary();
+            expect(result).not.toBe('');
+        });
+    }));
+
+    it('should create a grading summary with locked repositories and disabled code analysis', fakeAsync(() => {
+        fixture.detectChanges();
+
+        comp.programmingExercise.submissionPolicy = { type: SubmissionPolicyType.LOCK_REPOSITORY, submissionLimit: 5 };
+        comp.programmingExercise.staticCodeAnalysisEnabled = false;
+
+        fixture.whenStable().then(() => {
+            const result = comp.getGradingSummary();
+            expect(result).not.toBe('');
+        });
+    }));
+
     it('should not create a grading summary when there are no points', fakeAsync(() => {
         fixture.detectChanges();
 
@@ -104,5 +141,29 @@ describe('ProgrammingExerciseGradingComponent', () => {
             const result = comp.getGradingSummary();
             expect(result).toBe('');
         });
+    }));
+
+    it('should return replacement for grading summary key', fakeAsync(() => {
+        fixture.detectChanges();
+
+        const replacements = {
+            exerciseType: 'replacedType',
+        };
+
+        const replacedString = comp.replacePlaceholder('"exerciseType"', 'exerciseType', replacements);
+
+        expect(replacedString).toBe('replacedType');
+    }));
+
+    it('should not return replacement for unknown grading summary key', fakeAsync(() => {
+        fixture.detectChanges();
+
+        const replacements = {
+            exerciseType: 'replacedType',
+        };
+
+        const replacedString = comp.replacePlaceholder('"exerciseType2"', 'exerciseType2', replacements);
+
+        expect(replacedString).toBe('"exerciseType2"');
     }));
 });

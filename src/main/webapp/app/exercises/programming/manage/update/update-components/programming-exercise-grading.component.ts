@@ -81,7 +81,11 @@ export class ProgrammingExerciseGradingComponent {
 
     replacePlaceholders(stringWithPlaceholders: string, replacements: any) {
         return stringWithPlaceholders.replace(/{(\w+)}/g, (placeholderWithDelimiters, placeholderWithoutDelimiters) =>
-            Object.prototype.hasOwnProperty.call(replacements, placeholderWithoutDelimiters) ? replacements[placeholderWithoutDelimiters] : placeholderWithDelimiters,
+            this.replacePlaceholder(placeholderWithDelimiters, placeholderWithoutDelimiters, replacements),
         );
     }
-}
+
+    replacePlaceholder(placeholderWithDelimiters: string, placeholderWithoutDelimiters: any, replacements: any) {
+        return Object.prototype.hasOwnProperty.call(replacements, placeholderWithoutDelimiters) ? replacements[placeholderWithoutDelimiters] : placeholderWithDelimiters;
+    }
+} /* istanbul ignore next */
