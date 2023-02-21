@@ -193,7 +193,11 @@ public class CourseScoreCalculationService {
         // Get participation results (used in course-statistics.component).
         List<Result> participationResults = new ArrayList<>();
         for (StudentParticipation studentParticipation : studentParticipations) {
-            participationResults.add(getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate()));
+            if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
+                Result participationResult = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
+                participationResult.setParticipation(studentParticipation);
+                participationResults.add(getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate()));
+            }
         }
 
         return new CourseForDashboardDTO(course, scoresPerExerciseType, participationResults);
