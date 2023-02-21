@@ -47,6 +47,8 @@ import {
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -124,8 +126,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     loadingExam: boolean;
     examMonitoringGloballyEnabled: boolean;
+    isAtLeastTutor?: boolean;
 
     generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject('success');
+
+    // Icons
+    faGraduationCap = faGraduationCap;
 
     constructor(
         private courseCalculationService: CourseScoreCalculationService,
@@ -145,6 +151,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private examActionService: ExamActionService,
         private featureToggleService: FeatureToggleService,
         private artemisDatePipe: ArtemisDatePipe,
+        private courseService: CourseManagementService,
     ) {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
@@ -184,43 +191,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             } else {
                 this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe({
                     next: (studentExam) => {
-                        this.studentExam = studentExam;
-                        this.exam = studentExam.exam!;
-                        this.testExam = this.exam.testExam!;
-                        if (!this.exam.testExam) {
-                            this.initIndividualEndDates(this.exam.startDate!);
-                        }
-
-                        // Listen to exam monitoring updates to disable monitoring
-                        try {
-                            this.examMonitoringUpdateSubscription = this.examActionService.subscribeForExamMonitoringUpdate(this.exam).subscribe((status: boolean) => {
-                                this.exam.monitoring = status;
-                            });
-                        } catch (error) {
-                            captureException(error);
-                        }
-
-                        // only show the summary if the student was able to submit on time.
-                        if (this.isOver() && this.studentExam.submitted) {
-                            this.examParticipationService
-                                .loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExam.id!)
-                                .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
-                        }
-
-                        // Directly start the exam when we continue from a failed save
-                        if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
-                            this.examParticipationService
-                                .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId)
-                                .subscribe((localExam: StudentExam) => {
-                                    this.studentExam = localExam;
-                                    this.loadingExam = false;
-                                    this.examStarted(this.studentExam);
-                                });
-                        } else {
-                            this.loadingExam = false;
-                        }
+                        this.handleStudentExam(studentExam);
                     },
-                    error: () => (this.loadingExam = false),
+                    error: () => {
+                        const course = this.courseCalculationService.getCourse(this.courseId);
+                        this.isAtLeastTutor = course?.isAtLeastTutor;
+                        if (!course) {
+                            this.courseService.find(this.courseId).subscribe((courseResponse) => {
+                                this.isAtLeastTutor = courseResponse.body?.isAtLeastTutor;
+                            });
+                        }
+                        this.loadingExam = false;
+                    },
                 });
             }
             // Receive whether the exam monitoring is globally enabled or not
@@ -567,6 +549,42 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.examActionService.unsubscribeForExamMonitoringUpdate(this.exam);
         window.clearInterval(this.autoSaveInterval);
         this.websocketService.unsubscribe(getWebSocketChannelForWorkingTimeChange(this.studentExamId));
+    }
+
+    handleStudentExam(studentExam: StudentExam) {
+        this.studentExam = studentExam;
+        this.exam = studentExam.exam!;
+        this.testExam = this.exam.testExam!;
+        if (!this.exam.testExam) {
+            this.initIndividualEndDates(this.exam.startDate!);
+        }
+
+        // Listen to exam monitoring updates to disable monitoring
+        try {
+            this.examMonitoringUpdateSubscription = this.examActionService.subscribeForExamMonitoringUpdate(this.exam).subscribe((status: boolean) => {
+                this.exam.monitoring = status;
+            });
+        } catch (error) {
+            captureException(error);
+        }
+
+        // only show the summary if the student was able to submit on time.
+        if (this.isOver() && this.studentExam.submitted) {
+            this.examParticipationService
+                .loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExam.id!)
+                .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
+        }
+
+        // Directly start the exam when we continue from a failed save
+        if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
+            this.examParticipationService.loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId).subscribe((localExam: StudentExam) => {
+                this.studentExam = localExam;
+                this.loadingExam = false;
+                this.examStarted(this.studentExam);
+            });
+        } else {
+            this.loadingExam = false;
+        }
     }
 
     /**

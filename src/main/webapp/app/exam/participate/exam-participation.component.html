@@ -132,7 +132,17 @@
         <jhi-exam-participation-summary *ngIf="isOver() && studentExam.submitted" [studentExam]="studentExam"></jhi-exam-participation-summary>
     </ng-container>
 </ng-container>
-<div class="alert alert-danger" *ngIf="!loadingExam && !exam">
-    <h6 *ngIf="!testExam" jhiTranslate="artemisApp.examParticipation.noStudentExam"></h6>
-    <h6 *ngIf="testExam" jhiTranslate="artemisApp.examParticipation.noFurtherAttempts"></h6>
-</div>
+<ng-container *ngIf="!loadingExam && !exam">
+    <div class="alert alert-warning" *ngIf="isAtLeastTutor && !!testRunId; else noTutor">
+        <h6 jhiTranslate="artemisApp.examParticipation.atLeastTutorStudentExam"></h6>
+        <a [routerLink]="['/course-management', courseId, 'exams', examId]" class="btn btn-primary">
+            <fa-icon [icon]="faGraduationCap" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
+        </a>
+    </div>
+    <ng-template #noTutor>
+        <div class="alert alert-danger" *ngIf="!loadingExam && !exam">
+            <h6 *ngIf="!testExam" jhiTranslate="artemisApp.examParticipation.noStudentExam"></h6>
+            <h6 *ngIf="testExam" jhiTranslate="artemisApp.examParticipation.noFurtherAttempts"></h6>
+        </div>
+    </ng-template>
+</ng-container>

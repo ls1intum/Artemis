@@ -50,7 +50,6 @@
                 </div>
                 <div *ngSwitchCase="'CONDUCTING'">
                     <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'conducting' | artemisTranslate }}</h5>
-                    <div class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'conductingExplanation' | artemisTranslate }}</div>
                 </div>
                 <div *ngSwitchCase="'TIMEEXTENSION'">
                     <h5 class="text-center">{{ 'artemisApp.exam.overview.timeExtension' | artemisTranslate }}</h5>
@@ -58,15 +57,14 @@
                 </div>
                 <div *ngSwitchCase="'CLOSED'">
                     <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'closed' | artemisTranslate }}</h5>
-                    <div class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'closedExplanation' | artemisTranslate }}</div>
                 </div>
                 <div *ngSwitchCase="'STUDENTREVIEW'">
                     <h5 class="text-center">{{ 'artemisApp.exam.overview.review' | artemisTranslate }}</h5>
                     <div class="text-center">{{ 'artemisApp.exam.overview.reviewExplanation' | artemisTranslate }} {{ exam.examStudentReviewEnd | artemisDate }}</div>
                 </div>
                 <div *ngSwitchCase="'NO_MORE_ATTEMPTS'">
-                    <h5 class="text-center">{{ 'artemisApp.exam.overview.noMoreAttempts' | artemisTranslate }}</h5>
-                    <div class="text-center">{{ 'artemisApp.exam.overview.noMoreAttemptsExplanation' | artemisTranslate }}</div>
+                    <h5 class="text-center">{{ 'artemisApp.exam.overview.testExam.noMoreAttempts' | artemisTranslate }}</h5>
+                    <div class="text-center">{{ 'artemisApp.exam.overview.testExam.noMoreAttemptsExplanation' | artemisTranslate }}</div>
                 </div>
             </div>
         </ng-template>
