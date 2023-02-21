@@ -48,14 +48,8 @@ describe('QuizVisualEditorComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', fakeAsync(() => {
-        fixture.detectChanges();
-        expect(comp).not.toBeNull();
-    }));
-
     it('parse the given question properly to markdown', fakeAsync(() => {
         fixture.detectChanges();
-        expect(comp).not.toBeNull();
 
         comp.question.text = 'Hallo';
         comp.question.hint = 'Hint';
@@ -76,7 +70,6 @@ describe('QuizVisualEditorComponent', () => {
 
     it('delete an answer option', fakeAsync(() => {
         fixture.detectChanges();
-        expect(comp).not.toBeNull();
 
         const answerOption = new AnswerOption();
         const answerOption2 = new AnswerOption();
@@ -90,7 +83,6 @@ describe('QuizVisualEditorComponent', () => {
 
     it('toggle the isCorrect state', fakeAsync(() => {
         fixture.detectChanges();
-        expect(comp).not.toBeNull();
 
         const answerOption = new AnswerOption();
         answerOption.text = 'Answer';
@@ -106,7 +98,6 @@ describe('QuizVisualEditorComponent', () => {
 
     it('does not toggle the if single mode and already has correct answer', fakeAsync(() => {
         fixture.detectChanges();
-        expect(comp).not.toBeNull();
 
         comp.question.singleChoice = true;
 
@@ -126,7 +117,6 @@ describe('QuizVisualEditorComponent', () => {
 
     it('add a new answer option', fakeAsync(() => {
         fixture.detectChanges();
-        expect(comp).not.toBeNull();
 
         expect(comp.question.answerOptions).toBeUndefined();
 
