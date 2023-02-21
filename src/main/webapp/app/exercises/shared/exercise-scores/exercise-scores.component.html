@@ -293,13 +293,12 @@
                                     Online editor
                                 </a>
                             </div>
-                            <div>
+                            <div
+                                *ngIf="(newManualResultAllowed || (value.results?.[0]?.assessmentType && value.results[0].assessmentType !== AssessmentType.AUTOMATIC)) &&
+                                        value.results?.[0]?.submission"
+                            >
                                 <a
-                                    *ngIf="
-                                        exercise.course &&
-                                        (newManualResultAllowed || (value.results?.[0]?.assessmentType && value.results[0].assessmentType !== AssessmentType.AUTOMATIC)) &&
-                                        value.results?.[0]?.submission
-                                    "
+                                    *ngIf="exercise.course"
                                     [routerLink]="[
                                         '/course-management',
                                         exercise.course?.id,
@@ -309,18 +308,19 @@
                                         value.results[0].submission.id,
                                         'assessment'
                                     ]"
-                                    class="btn btn-primary btn-sm me-1"
+                                    class="btn btn-sm me-1"
+                                    [ngClass]="{ 'btn-success': !value.results?.[0]?.assessmentType || value.results?.[0].assessmentType === AssessmentType.AUTOMATIC, 'btn-primary': value.results?.[0]?.completionDate, 'btn-warning': !value.results?.[0]?.completionDate }"
                                 >
                                     <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
-                                    {{ 'artemisApp.programmingSubmission.view' | artemisTranslate }}
+                                    {{ 'artemisApp.assessment.dashboard.actions.' +
+                                        !value.results?.[0]?.assessmentType || value.results?.[0].assessmentType === AssessmentType.AUTOMATIC ? 'assess' : (value.results?.[0]?.completionDate ? 'open' : 'continue')
+                                        | artemisTranslate
+                                    }}
                                 </a>
                                 <a
                                     *ngIf="
-                                        exercise.exerciseGroup &&
-                                        (newManualResultAllowed || (value.results?.[0]?.assessmentType && value.results?.[0].assessmentType !== AssessmentType.AUTOMATIC)) &&
-                                        exercise.exerciseGroup!.exam?.numberOfCorrectionRoundsInExam !== undefined &&
-                                        exercise.exerciseGroup!.exam!.numberOfCorrectionRoundsInExam! < 2 &&
-                                        value.results?.[0]?.submission
+                                        exercise.exerciseGroup?.exam?.numberOfCorrectionRoundsInExam !== undefined &&
+                                        exercise.exerciseGroup!.exam!.numberOfCorrectionRoundsInExam! < 2
                                     "
                                     [routerLink]="[
                                         '/course-management',
@@ -335,10 +335,14 @@
                                         value.results[0].submission.id,
                                         'assessment'
                                     ]"
-                                    class="btn btn-primary btn-sm me-1"
+                                    class="btn btn-sm me-1"
+                                    [ngClass]="{ 'btn-success': !value.results?.[0]?.assessmentType || value.results?.[0].assessmentType === AssessmentType.AUTOMATIC, 'btn-primary': value.results?.[0]?.completionDate, 'btn-warning': !value.results?.[0]?.completionDate }"
                                 >
                                     <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
-                                    {{ 'artemisApp.programmingSubmission.view' | artemisTranslate }}
+                                    {{ 'artemisApp.assessment.dashboard.actions.' +
+                                        !value.results?.[0]?.assessmentType || value.results?.[0].assessmentType === AssessmentType.AUTOMATIC ? 'assess' : (value.results?.[0]?.completionDate ? 'open' : 'continue')
+                                        | artemisTranslate
+                                    }}
                                 </a>
                                 <button
                                     (click)="cancelAssessment(value.results[0].submission)"
