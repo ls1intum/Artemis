@@ -468,13 +468,19 @@ a.result-late:hover {
 }
 
 span.result {
-    text-decoration: underline;
     font-weight: normal;
 }
 
 span.result:hover {
-    text-decoration: underline;
     font-weight: normal;
+}
+
+span.clickable-result {
+    text-decoration: underline;
+}
+
+span.clickable-result:hover {
+    text-decoration: underline;
     cursor: pointer;
 }
 

@@ -22,9 +22,9 @@ import org.imsglobal.pox.IMSPOXRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.thymeleaf.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -107,10 +107,9 @@ public class Lti10Service {
         String username = createUsernameFromLaunchRequest(launchRequest, onlineCourseConfiguration);
         String firstName = getUserFirstNameFromLaunchRequest(launchRequest);
         String lastName = getUserLastNameFromLaunchRequest(launchRequest);
-        ltiService.authenticateLtiUser(launchRequest.getLis_person_contact_email_primary(), launchRequest.getUser_id(), username, firstName, lastName,
-                onlineCourseConfiguration.isRequireExistingUser());
+        ltiService.authenticateLtiUser(launchRequest.getLis_person_contact_email_primary(), username, firstName, lastName, onlineCourseConfiguration.isRequireExistingUser());
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        ltiService.onSuccessfulLtiAuthentication(user, launchRequest.getUser_id(), exercise);
+        ltiService.onSuccessfulLtiAuthentication(user, exercise);
         saveLtiOutcomeUrl(user, exercise, launchRequest.getLis_outcome_service_url(), launchRequest.getLis_result_sourcedid());
     }
 

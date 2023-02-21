@@ -3,6 +3,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -28,6 +29,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     lectureWizardStepForGoingBack: number;
 
     faHandshakeAngle = faHandshakeAngle;
+
+    documentationType = DocumentationType.Exercise;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideProgrammingExerciseCard') overrideProgrammingExerciseCard: TemplateRef<any>;

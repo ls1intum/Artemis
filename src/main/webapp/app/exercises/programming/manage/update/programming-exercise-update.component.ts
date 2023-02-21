@@ -28,6 +28,7 @@ import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -120,6 +121,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public withDependenciesValue = false;
 
     public modePickerOptions: ModePickerOption<ProjectType>[] = [];
+
+    documentationType = DocumentationType.Programming;
 
     // Icons
     faSave = faSave;

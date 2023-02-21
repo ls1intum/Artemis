@@ -12,4 +12,16 @@ export class ExerciseAssessmentDashboardPage {
         cy.reloadUntilFound(this.startAssessingSelector);
         cy.get(this.startAssessingSelector).click();
     }
+
+    clickOpenAssessment() {
+        cy.get('#open-assessment').click();
+    }
+
+    clickEvaluateComplaint() {
+        cy.get('#evaluate-complaint').click();
+    }
+
+    getComplaintText() {
+        return cy.get('#complaintTextArea');
+    }
 }

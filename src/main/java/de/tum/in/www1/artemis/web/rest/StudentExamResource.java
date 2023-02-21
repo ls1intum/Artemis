@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * REST controller for managing ExerciseGroup.
@@ -52,6 +53,8 @@ public class StudentExamResource {
     private final Logger log = LoggerFactory.getLogger(StudentExamResource.class);
 
     private final ExamAccessService examAccessService;
+
+    private final ExamDeletionService examDeletionService;
 
     private final StudentExamService studentExamService;
 
@@ -66,8 +69,6 @@ public class StudentExamResource {
     private final ExamDateService examDateService;
 
     private final ExamSessionService examSessionService;
-
-    private final QuizExerciseRepository quizExerciseRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -86,12 +87,19 @@ public class StudentExamResource {
     @Value("${info.student-exam-store-session-data:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
 
-    public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
-            UserRepository userRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService,
-            ExamSessionService examSessionService, StudentParticipationRepository studentParticipationRepository, QuizExerciseRepository quizExerciseRepository,
-            ExamRepository examRepository, SubmittedAnswerRepository submittedAnswerRepository, AuthorizationCheckService authorizationCheckService, ExamService examService,
-            InstanceMessageSendService instanceMessageSendService, WebsocketMessagingService messagingService) {
+    private static final String ENTITY_NAME = "studentExam";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
+    public StudentExamResource(ExamAccessService examAccessService, ExamDeletionService examDeletionService, StudentExamService studentExamService,
+            StudentExamAccessService studentExamAccessService, UserRepository userRepository, AuditEventRepository auditEventRepository,
+            StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
+            StudentParticipationRepository studentParticipationRepository, ExamRepository examRepository, SubmittedAnswerRepository submittedAnswerRepository,
+            AuthorizationCheckService authorizationCheckService, ExamService examService, InstanceMessageSendService instanceMessageSendService,
+            WebsocketMessagingService messagingService) {
         this.examAccessService = examAccessService;
+        this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
         this.userRepository = userRepository;
@@ -100,7 +108,6 @@ public class StudentExamResource {
         this.examDateService = examDateService;
         this.examSessionService = examSessionService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.quizExerciseRepository = quizExerciseRepository;
         this.examRepository = examRepository;
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -126,7 +133,7 @@ public class StudentExamResource {
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesAndSessionsElseThrow(studentExamId);
 
         examService.loadQuizExercisesForStudentExam(studentExam);
 
@@ -162,7 +169,10 @@ public class StudentExamResource {
         log.debug("REST request to get all student exams for exam : {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        return ResponseEntity.ok(studentExamRepository.findByExamId(examId));
+        var studentExams = studentExamRepository.findByExamIdWithSessions(examId);
+        // reduce payload
+        studentExams.forEach(studentExam -> studentExam.setExam(null));
+        return ResponseEntity.ok(studentExams);
     }
 
     /**
@@ -501,7 +511,7 @@ public class StudentExamResource {
 
         // delete all test runs if the instructor forgot to delete them
         List<StudentExam> testRuns = studentExamRepository.findAllTestRunsByExamId(examId);
-        testRuns.forEach(testRun -> studentExamService.deleteTestRun(testRun.getId()));
+        testRuns.forEach(testRun -> examDeletionService.deleteTestRun(testRun.getId()));
 
         final var instructor = userRepository.getUser();
         var assessedUnsubmittedStudentExams = studentExamService.assessUnsubmittedStudentExams(exam, instructor);
@@ -522,13 +532,13 @@ public class StudentExamResource {
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/test-run/{testRunId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<StudentExam> deleteTestRun(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId) {
+    public ResponseEntity<Void> deleteTestRun(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId) {
         log.info("REST request to delete the test run with id {}", testRunId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        StudentExam testRun = studentExamService.deleteTestRun(testRunId);
-        return ResponseEntity.ok(testRun);
+        examDeletionService.deleteTestRun(testRunId);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, testRunId.toString())).build();
     }
 
     /**
@@ -544,7 +554,7 @@ public class StudentExamResource {
     public ResponseEntity<Void> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
+        final Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Start exercises is only allowed for real exams", "StudentExam", "startExerciseOnlyForRealExams");
@@ -630,9 +640,6 @@ public class StudentExamResource {
 
         // Create new exam session
         createNewExamSession(request, studentExam);
-
-        // Remove not needed objects
-        studentExam.getExam().setCourse(null);
     }
 
     /**
