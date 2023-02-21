@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
@@ -110,7 +109,7 @@ public class ProgrammingExerciseTestCaseService {
             updatedTests.add(matchingTestCase);
         }
 
-        if (!isTestCaseWeightSumValid(programmingExercise, existingTestCases)) {
+        if (!isTestCaseWeightSumValid(existingTestCases)) {
             throw new BadRequestAlertException("The sum of all test case weights is 0 or below.", "TestCaseGrading", "weightSumError", true);
         }
 
@@ -124,24 +123,15 @@ public class ProgrammingExerciseTestCaseService {
     /**
      * Checks if the sum of test case weights is valid.
      *
-     * The test case weights are valid if at least one test has a weight >0 for purely automatic feedback so that students can still achieve 100% score.
-     * If manual feedback is given, then a test case weight of zero is okay, as students can still receive points via manual feedbacks.
-     *
-     * @param exercise  the test cases belong to.
      * @param testCases of the exercise.
-     * @return true, if the sum of weights is valid as specified above.
+     * @return true, if the sum of weights is not negative.
      */
-    public static boolean isTestCaseWeightSumValid(ProgrammingExercise exercise, Set<ProgrammingExerciseTestCase> testCases) {
+    public static boolean isTestCaseWeightSumValid(Set<ProgrammingExerciseTestCase> testCases) {
         if (testCases.isEmpty()) {
             return true;
         }
         double testWeightsSum = testCases.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).filter(Objects::nonNull).sum();
-        if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC) {
-            return testWeightsSum > 0;
-        }
-        else {
-            return testWeightsSum >= 0;
-        }
+        return testWeightsSum >= 0;
     }
 
     private static void validateTestCase(ProgrammingExerciseTestCase testCase) {

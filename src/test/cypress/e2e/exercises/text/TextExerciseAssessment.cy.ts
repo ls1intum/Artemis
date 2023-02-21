@@ -72,7 +72,7 @@ describe('Text exercise assessment', () => {
 
         it('Instructor can see complaint and reject it', () => {
             cy.login(instructor, `/course-management/${course.id}/complaints`);
-            textExerciseAssessment.acceptComplaint('Makes sense').its('response.statusCode').should('eq', 200);
+            textExerciseAssessment.acceptComplaint('Makes sense', false).its('response.statusCode').should('eq', 200);
         });
     });
 

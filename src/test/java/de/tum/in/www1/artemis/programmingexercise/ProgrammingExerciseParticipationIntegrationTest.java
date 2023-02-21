@@ -416,20 +416,20 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     private Result addStudentParticipationWithResult(AssessmentType assessmentType, ZonedDateTime completionDate) {
         programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         Result r = database.addResultToParticipation(assessmentType, completionDate, programmingExerciseParticipation);
-        return database.addVariousVisibilityFeedbackToResults(r);
+        return database.addVariousVisibilityFeedbackToResult(r);
     }
 
     private TemplateProgrammingExerciseParticipation addTemplateParticipationWithResult() {
         programmingExerciseParticipation = database.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
         Result r = database.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
-        database.addVariousVisibilityFeedbackToResults(r);
+        database.addVariousVisibilityFeedbackToResult(r);
         return (TemplateProgrammingExerciseParticipation) programmingExerciseParticipation;
     }
 
     private SolutionProgrammingExerciseParticipation addSolutionParticipationWithResult() {
         programmingExerciseParticipation = database.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
         Result result = database.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
-        database.addVariousVisibilityFeedbackToResults(result);
+        database.addVariousVisibilityFeedbackToResult(result);
         return (SolutionProgrammingExerciseParticipation) programmingExerciseParticipation;
     }
 
