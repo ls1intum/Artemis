@@ -485,4 +485,19 @@ describe('AccountService', () => {
             expect(url).toBe(expectedUrl);
         });
     });
+
+    describe('test prefilled username', () => {
+        it('should set prefilled username', () => {
+            accountService.setPrefilledUsername('user');
+
+            expect(accountService.getAndClearPrefilledUsername()).toBe('user');
+        });
+
+        it('should clear prefilledusername after get', () => {
+            accountService.setPrefilledUsername('test');
+
+            expect(accountService.getAndClearPrefilledUsername()).toBe('test');
+            expect(accountService.getAndClearPrefilledUsername()).toBeUndefined();
+        });
+    });
 });
