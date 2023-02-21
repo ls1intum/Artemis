@@ -43,7 +43,7 @@ public class BuildPlanResource {
         final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(exerciseId);
         // orElseThrow is safe here since the query above ensures that we find a build plan that is attached to that exercise
         final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("Could find connected exercise for build plan."));
+                .orElseThrow(() -> new EntityNotFoundException("Could not find connected exercise for build plan."));
 
         if (!programmingExercise.hasBuildPlanAccessSecretSet() || !secret.equals(programmingExercise.getBuildPlanAccessSecret())) {
             throw new AccessForbiddenException();
