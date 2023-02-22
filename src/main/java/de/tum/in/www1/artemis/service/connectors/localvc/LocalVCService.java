@@ -94,19 +94,21 @@ public class LocalVCService extends AbstractVersionControlService {
             FileUtils.deleteDirectory(projectPath.toFile());
         }
         catch (IOException e) {
-            log.error("Could not delete project", e);
+            throw new LocalVCException("Could not delete project " + projectKey, e);
         }
     }
 
     @Override
     public void deleteRepository(VcsRepositoryUrl repositoryUrl) {
+
+        LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(localVCServerUrl, repositoryUrl.toString());
+        Path localPath = localVCRepositoryUrl.getLocalPath(localVCPath);
+
         try {
-            LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(localVCServerUrl, repositoryUrl.toString());
-            Path localPath = localVCRepositoryUrl.getLocalPath(localVCPath);
             FileUtils.deleteDirectory(localPath.toFile());
         }
         catch (IOException e) {
-            log.error("Could not delete repository", e);
+            throw new LocalVCException("Could not delete repository " + localVCRepositoryUrl.getRepositorySlug(), e);
         }
     }
 
@@ -225,6 +227,16 @@ public class LocalVCService extends AbstractVersionControlService {
         Path remoteDirPath = localVCUrl.getLocalPath(localVCPath);
 
         log.debug("Creating local git repository {} in folder {}", repositorySlug, remoteDirPath);
+
+        // Check if the folder for the repository to be created already exists. In that case delete it first.
+        if (Files.exists(remoteDirPath)) {
+            try {
+                FileUtils.deleteDirectory(remoteDirPath.toFile());
+            }
+            catch (IOException e) {
+                throw new LocalVCException("Repository already exists in local VC system but was not able to delete it.", e);
+            }
+        }
 
         try {
             Files.createDirectories(remoteDirPath);

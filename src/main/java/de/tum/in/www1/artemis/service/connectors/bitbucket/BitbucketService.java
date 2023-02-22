@@ -192,7 +192,7 @@ public class BitbucketService extends AbstractVersionControlService {
             restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
         }
         catch (Exception e) {
-            log.error("Could not delete repository", e);
+            throw new BitbucketException("Could not delete repository " + projectKey, e);
         }
     }
 

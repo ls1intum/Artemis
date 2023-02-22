@@ -71,5 +71,4 @@ public class JGitServletConfiguration {
         }
         return null;
     }
-
 }
