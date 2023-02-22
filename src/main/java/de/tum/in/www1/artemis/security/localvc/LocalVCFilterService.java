@@ -5,6 +5,8 @@ import java.util.Base64;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -19,6 +21,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.AccessUnauthorizedException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -27,6 +30,8 @@ import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 @Service
 @Profile("localvc")
 public class LocalVCFilterService {
+
+    private final Logger log = LoggerFactory.getLogger(LocalVCFilterService.class);
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
@@ -66,6 +71,8 @@ public class LocalVCFilterService {
      * @throws LocalVCAuthException For when the user cannot be authenticated or is not authorized to access the repository.
      */
     public void authenticateAndAuthorizeGitRequest(HttpServletRequest servletRequest, RepositoryActionType repositoryActionType) throws LocalVCAuthException {
+
+        long timeNanoStart = System.nanoTime();
 
         String basicAuthCredentials = checkAuthorizationHeader(servletRequest.getHeader(LocalVCFilterService.AUTHORIZATION_HEADER));
 
@@ -111,6 +118,8 @@ public class LocalVCFilterService {
         }
 
         authorizeUser(repositoryTypeOrUserName, user, exercise, isTestRunRepository, repositoryActionType);
+
+        log.info("Authorizing user {} for repository {} took {}", user.getLogin(), url, TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
     private String checkAuthorizationHeader(String authorizationHeader) throws LocalVCAuthException {

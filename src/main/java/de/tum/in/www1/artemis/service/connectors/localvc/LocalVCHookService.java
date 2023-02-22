@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipati
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -73,6 +74,8 @@ public class LocalVCHookService {
      * @param repository the JGit repository this submission belongs to.
      */
     public void createNewSubmission(String commitHash, Repository repository) {
+
+        long timeNanoStart = System.nanoTime();
 
         Path repositoryFolderPath = repository.getDirectory().toPath();
 
@@ -143,6 +146,9 @@ public class LocalVCHookService {
             // Throwing an exception here would lead to the Git client request getting stuck.
             // Instead, the user can see in the UI that creating the submission failed.
         }
+
+        log.info("New submission created for participation {} as a result of push to repository {} in {}.", participation.getId(), repositoryFolderPath,
+                TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
     private Commit extractCommitInfo(String commitHash, Repository repository) {
