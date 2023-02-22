@@ -60,6 +60,7 @@ import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
 import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-problem.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -701,7 +702,93 @@ describe('ProgrammingExercise Management Update Component', () => {
         expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
         expect(comp.programmingExercise.testwiseCoverageEnabled).toBeFalse();
     }));
+
+    it('should toggle the wizard mode', fakeAsync(() => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+
+        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+        tick();
+
+        expect(comp.isShowingWizardMode).toBeFalse();
+        comp.toggleWizardMode();
+        expect(comp.isShowingWizardMode).toBeTrue();
+    }));
+
+    it('should increase the wizard step', fakeAsync(() => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+
+        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+        tick();
+
+        expect(comp.currentWizardModeStep).toBe(1);
+        comp.nextWizardStep();
+        expect(comp.currentWizardModeStep).toBe(2);
+    }));
+
+    it('should return the problem step inputs', fakeAsync(() => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+
+        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+        tick();
+
+        const problemStepInputs = comp.getProblemStepInputs();
+        expect(problemStepInputs).not.toBeNull();
+    }));
+
+    it('stores withdependenices when changed', fakeAsync(() => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+
+        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+        tick();
+
+        expect(comp.withDependencies).toBeFalse();
+        comp.onWithDependenciesChanged(true);
+        expect(comp.withDependencies).toBeTrue();
+    }));
+
+    it('stores updated categories', fakeAsync(() => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+
+        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+        tick();
+
+        const categories = [new ExerciseCategory()];
+        expect(comp.exerciseCategories).toBeUndefined();
+        comp.updateCategories(categories);
+        expect(comp.exerciseCategories).toBe(categories);
+    }));
 });
+
 const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage) => {
     switch (programmingLanguage) {
         case ProgrammingLanguage.SWIFT:

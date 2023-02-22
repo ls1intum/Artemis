@@ -59,7 +59,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     isImport: boolean;
     isEdit: boolean;
     isExamMode: boolean;
-    isShowingWizardMode: boolean;
+    isShowingWizardMode = false;
     hasUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     backupExercise: ProgrammingExercise;
