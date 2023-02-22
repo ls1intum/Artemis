@@ -9,7 +9,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
@@ -22,8 +21,6 @@ public class RepositoryAccessService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final PlagiarismService plagiarismService;
 
     private final SubmissionPolicyService submissionPolicyService;
@@ -32,11 +29,9 @@ public class RepositoryAccessService {
 
     private final ExamSubmissionService examSubmissionService;
 
-    public RepositoryAccessService(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingExerciseRepository programmingExerciseRepository,
-            PlagiarismService plagiarismService, SubmissionPolicyService submissionPolicyService, AuthorizationCheckService authorizationCheckService,
-            ExamSubmissionService examSubmissionService) {
+    public RepositoryAccessService(ProgrammingExerciseParticipationService programmingExerciseParticipationService, PlagiarismService plagiarismService,
+            SubmissionPolicyService submissionPolicyService, AuthorizationCheckService authorizationCheckService, ExamSubmissionService examSubmissionService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.plagiarismService = plagiarismService;
         this.submissionPolicyService = submissionPolicyService;
         this.authorizationCheckService = authorizationCheckService;
@@ -59,8 +54,7 @@ public class RepositoryAccessService {
 
         // Error case 3: The user's participation repository is locked.
         boolean lockRepositoryPolicyEnforced = false;
-        // TODO: Get exercises with submissions before calling this method.
-        if (programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy() instanceof LockRepositoryPolicy policy) {
+        if (programmingExercise.getSubmissionPolicy() instanceof LockRepositoryPolicy policy) {
             lockRepositoryPolicyEnforced = submissionPolicyService.isParticipationLocked(policy, participation);
         }
         if (repositoryActionType == RepositoryActionType.WRITE && (programmingParticipation.isLocked() || lockRepositoryPolicyEnforced)) {

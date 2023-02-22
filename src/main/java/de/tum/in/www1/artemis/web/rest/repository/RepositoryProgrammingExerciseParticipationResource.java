@@ -50,11 +50,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final ParticipationRepository participationRepository;
 
+    private final SubmissionPolicyRepository submissionPolicyRepository;
+
     public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, RepositoryAccessService repositoryAccessService) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, RepositoryAccessService repositoryAccessService,
+            SubmissionPolicyRepository submissionPolicyRepository) {
         super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
                 repositoryAccessService);
         this.participationService = participationService;
@@ -62,6 +65,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         this.buildLogService = buildLogService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.participationRepository = participationRepository;
+        this.submissionPolicyRepository = submissionPolicyRepository;
     }
 
     @Override
@@ -75,6 +79,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingParticipation);
         if (programmingExercise == null) {
             throw new IllegalArgumentException();
+        }
+
+        // Add submission policy to the programming exercise.
+        if (programmingExercise.getSubmissionPolicy() == null) {
+            programmingExercise.setSubmissionPolicy(submissionPolicyRepository.findByExerciseId(programmingExercise.getId()));
         }
 
         try {
