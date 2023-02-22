@@ -31,6 +31,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
         // There should only be one command.
         if (iterator.hasNext()) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "There should only be one command.");
+            return;
         }
 
         if (command.getType() != ReceiveCommand.Type.UPDATE) {
