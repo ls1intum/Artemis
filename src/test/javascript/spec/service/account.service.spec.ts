@@ -14,14 +14,17 @@ import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Team } from 'app/entities/team.model';
+import { post } from '../helpers/sample/metis-sample-data';
 
 describe('AccountService', () => {
     let accountService: AccountService;
     let httpService: MockHttpService;
     let getStub: jest.SpyInstance;
+    let postStub: jest.SpyInstance;
     let translateService: TranslateService;
 
     const getUserUrl = 'api/account';
+    const updateLanguageUrl = 'api/account/change-language';
     const user = { id: 1, groups: ['USER'] } as User;
     const user2 = { id: 2, groups: ['USER'] } as User;
     const user3 = { id: 3, groups: ['USER', 'TA'], authorities: [Authority.USER] } as User;
@@ -46,6 +49,7 @@ describe('AccountService', () => {
         // @ts-ignore
         accountService = new AccountService(translateService, new MockSyncStorage(), httpService, new MockWebsocketService(), new MockFeatureToggleService());
         getStub = jest.spyOn(httpService, 'get');
+        postStub = jest.spyOn(httpService, 'post');
     });
 
     afterEach(() => {
@@ -483,6 +487,17 @@ describe('AccountService', () => {
             url = accountService.getImageUrl();
 
             expect(url).toBe(expectedUrl);
+        });
+    });
+
+    describe('test updateLanguage', () => {
+        it('should call update language url with language key', () => {
+            postStub.mockReturnValue(of({ body: {} }));
+
+            accountService.updateLanguage('EN');
+
+            expect(postStub).toHaveBeenCalledOnce();
+            expect(postStub).toHaveBeenCalledWith(updateLanguageUrl, 'EN');
         });
     });
 

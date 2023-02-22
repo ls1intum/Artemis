@@ -107,6 +107,18 @@ describe('UserRouteAccessService', () => {
         await expect(service.checkLogin([], url)).resolves.toBeTrue();
     });
 
+    it('should return false if it does not have authority', async () => {
+        jest.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(false));
+        const storeSpy = jest.spyOn(storageService, 'storeUrl');
+        const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
+
+        const result = await service.checkLogin([Authority.EDITOR], url);
+
+        expect(result).toBeFalse();
+        expect(consoleErrorMock).toHaveBeenCalledWith('User has not any of required authorities: ', [Authority.EDITOR]);
+        expect(storeSpy).toHaveBeenCalledTimes(0);
+    });
+
     it('should store url if identity is undefined', async () => {
         jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(undefined));
         const storeSpy = jest.spyOn(storageService, 'storeUrl');
