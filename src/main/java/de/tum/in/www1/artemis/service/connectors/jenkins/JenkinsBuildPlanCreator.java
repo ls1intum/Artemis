@@ -148,7 +148,8 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         return replacements;
     }
 
-    private Path getResourcePath(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
+    private Path getResourcePath(final ProgrammingLanguage programmingLanguage, final Optional<ProjectType> projectType, final boolean isStaticCodeAnalysisEnabled,
+            final boolean isSequentialRuns) {
         if (programmingLanguage == null) {
             throw new IllegalArgumentException("ProgrammingLanguage should not be null");
         }
@@ -157,7 +158,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         return buildResourcePath(programmingLanguage, projectTypeName, isSequentialRuns, isStaticCodeAnalysisEnabled);
     }
 
-    private static Optional<String> getProjectTypeName(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType) {
+    private static Optional<String> getProjectTypeName(final ProgrammingLanguage programmingLanguage, final Optional<ProjectType> projectType) {
         // Set a project type name in case the chosen Jenkinsfile also depend on the project type
         if (projectType.isPresent() && ProgrammingLanguage.C.equals(programmingLanguage)) {
             return Optional.of(projectType.get().name().toLowerCase(Locale.ROOT));
@@ -174,8 +175,8 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         }
     }
 
-    private static Path buildResourcePath(ProgrammingLanguage programmingLanguage, Optional<String> projectTypeName, boolean isSequentialRuns,
-            boolean isStaticCodeAnalysisEnabled) {
+    private static Path buildResourcePath(final ProgrammingLanguage programmingLanguage, final Optional<String> projectTypeName, final boolean isSequentialRuns,
+            final boolean isStaticCodeAnalysisEnabled) {
         final String programmingLanguageName = programmingLanguage.name().toLowerCase();
         final String regularOrSequentialDir = isSequentialRuns ? "sequentialRuns" : "regularRuns";
         final String pipelineScriptFilename = isStaticCodeAnalysisEnabled ? "Jenkinsfile-staticCodeAnalysis" : "Jenkinsfile";
@@ -206,7 +207,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         return XmlFileUtils.readXmlFile(xmlResource, replacements);
     }
 
-    private String replacePipelineScriptParameters(Path pipelineScriptPath, Map<String, String> variablesToReplace) {
+    private String replacePipelineScriptParameters(final Path pipelineScriptPath, final Map<String, String> variablesToReplace) {
         final var resource = resourceLoaderService.getResource(pipelineScriptPath);
         try {
             var pipelineScript = StreamUtils.copyToString(resource.getInputStream(), Charset.defaultCharset());

@@ -48,7 +48,7 @@ public class PlantUmlService {
             final Path path = PATH_TMP_THEME.resolve(fileName);
             if (!Files.exists(path)) {
                 log.info("Storing UML theme to temporary directory");
-                var themeResource = resourceLoaderService.getResource(Path.of("puml", fileName));
+                final var themeResource = resourceLoaderService.getResource(Path.of("puml", fileName));
                 try (var inputStream = themeResource.getInputStream()) {
                     Files.createDirectories(PATH_TMP_THEME);
                     Files.write(path, inputStream.readAllBytes());

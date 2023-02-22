@@ -51,7 +51,7 @@ public class GitLabCIBuildPlanService {
     }
 
     private static Optional<String> getProjectTypeName(final ProgrammingExercise programmingExercise) {
-        if (programmingExercise.getProgrammingLanguage().equals(ProgrammingLanguage.JAVA)) {
+        if (ProgrammingLanguage.JAVA.equals(programmingExercise.getProgrammingLanguage())) {
             return Optional.of("maven");
         }
         else {
@@ -59,7 +59,7 @@ public class GitLabCIBuildPlanService {
         }
     }
 
-    private static Path buildResourcePath(final ProgrammingLanguage programmingLanguage, Optional<String> projectTypeName, boolean sequentialTestRuns) {
+    private static Path buildResourcePath(final ProgrammingLanguage programmingLanguage, final Optional<String> projectTypeName, final boolean sequentialTestRuns) {
         final String programmingLanguageName = programmingLanguage.name().toLowerCase();
         final String regularOrSequentialDir = sequentialTestRuns ? "sequentialRuns" : "regularRuns";
 
