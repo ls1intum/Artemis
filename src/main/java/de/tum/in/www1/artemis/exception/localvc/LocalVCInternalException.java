@@ -1,6 +1,4 @@
-package de.tum.in.www1.artemis.security.localvc;
-
-import de.tum.in.www1.artemis.exception.LocalVCException;
+package de.tum.in.www1.artemis.exception.localvc;
 
 public class LocalVCInternalException extends LocalVCException {
 

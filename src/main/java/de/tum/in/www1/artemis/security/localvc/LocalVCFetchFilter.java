@@ -11,6 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCBadRequestException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
 /**

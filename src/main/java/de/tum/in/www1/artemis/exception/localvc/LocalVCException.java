@@ -1,4 +1,6 @@
-package de.tum.in.www1.artemis.exception;
+package de.tum.in.www1.artemis.exception.localvc;
+
+import de.tum.in.www1.artemis.exception.VersionControlException;
 
 public class LocalVCException extends VersionControlException {
 

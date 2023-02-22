@@ -6,7 +6,7 @@ import java.net.URL;
 import java.nio.file.Path;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.exception.LocalVCException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
 
 public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
 
