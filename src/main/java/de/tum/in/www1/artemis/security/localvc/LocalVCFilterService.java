@@ -1,11 +1,10 @@
 package de.tum.in.www1.artemis.security.localvc;
 
-import java.net.URL;
+import java.net.URISyntaxException;
 import java.util.Base64;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -15,11 +14,9 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.exception.LocalVCException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -31,14 +28,11 @@ import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 @Profile("localvc")
 public class LocalVCFilterService {
 
-    @Value("${artemis.version-control.url}")
-    private URL localVCServerUrl;
-
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
     private final UserRepository userRepository;
 
-    private final CourseService courseService;
+    private final UrlService urlService;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -52,13 +46,13 @@ public class LocalVCFilterService {
 
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
-    public LocalVCFilterService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, CourseService courseService,
+    public LocalVCFilterService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, UrlService urlService,
             ProgrammingExerciseService programmingExerciseService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, RepositoryAccessService repositoryAccessService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
-        this.courseService = courseService;
+        this.urlService = urlService;
         this.programmingExerciseService = programmingExerciseService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -90,20 +84,17 @@ public class LocalVCFilterService {
             return;
         }
 
-        String url = servletRequest.getRequestURL().toString();
-        LocalVCRepositoryUrl localVCUrl = validateRepositoryUrl(url);
-
-        String projectKey = localVCUrl.getProjectKey();
-        String courseShortName = localVCUrl.getCourseShortName();
-        String repositoryTypeOrUserName = localVCUrl.getRepositoryTypeOrUserName();
-        boolean isTestRunRepository = localVCUrl.isTestRunRepository();
-
+        VcsRepositoryUrl url;
         try {
-            courseService.findOneByShortName(courseShortName);
+            url = new VcsRepositoryUrl(servletRequest.getRequestURL().toString().replace("/info/refs", ""));
         }
-        catch (EntityNotFoundException e) {
-            throw new LocalVCInternalException("Could not find single course with short name " + courseShortName);
+        catch (URISyntaxException e) {
+            throw new LocalVCBadRequestException("Badly formed Local Git URI: " + servletRequest.getRequestURL().toString().replace("/info/refs", ""), e);
         }
+
+        String projectKey = urlService.getProjectKeyFromRepositoryUrl(url);
+        String repositoryTypeOrUserName = urlService.getRepositoryTypeOrUserNameFromRepositoryUrl(url);
+        boolean isTestRunRepository = urlService.getIsPracticeRepositoryFromRepositoryUrl(url);
 
         ProgrammingExercise exercise;
 
@@ -151,20 +142,6 @@ public class LocalVCFilterService {
 
         // Check that the user exists.
         return userRepository.findOneByLogin(username).orElseThrow(LocalVCAuthException::new);
-    }
-
-    private LocalVCRepositoryUrl validateRepositoryUrl(String url) throws LocalVCBadRequestException {
-
-        LocalVCRepositoryUrl localVCRepositoryUrl;
-
-        try {
-            localVCRepositoryUrl = new LocalVCRepositoryUrl(localVCServerUrl, url);
-        }
-        catch (LocalVCException e) {
-            throw new LocalVCBadRequestException("Badly formed Local Git URI: " + url, e);
-        }
-
-        return localVCRepositoryUrl;
     }
 
     private void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, boolean isTestRunRepository, RepositoryActionType repositoryActionType)

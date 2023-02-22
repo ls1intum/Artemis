@@ -169,7 +169,7 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public void deleteProject(String courseShortName, String projectKey) {
+    public void deleteProject(String projectKey) {
         // courseShortName is only needed for local VC.
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey;
         log.info("Try to delete bitbucket project {}", projectKey);
@@ -197,7 +197,7 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String courseShortName, String repositorySlug) {
+    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
         return new BitbucketRepositoryUrl(projectKey, repositorySlug);
     }
 
@@ -548,7 +548,7 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public boolean checkIfProjectExists(String projectKey, String courseShortName, String projectName) {
+    public boolean checkIfProjectExists(String projectKey, String projectName) {
         try {
             // first check that the project key is unique, if the project does not exist, we expect a 404 Not Found status
             var project = getBitbucketProject(projectKey);
@@ -880,7 +880,7 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public void createRepository(String projectKey, String courseShortName, String repositorySlug, String parentProjectKey) {
+    public void createRepository(String projectKey, String repositorySlug, String parentProjectKey) {
         createRepository(projectKey, repositorySlug);
     }
 

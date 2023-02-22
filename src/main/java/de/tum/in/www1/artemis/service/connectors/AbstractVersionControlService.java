@@ -103,13 +103,13 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         targetRepositoryName = targetRepositoryName.toLowerCase();
         final String targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
         // get the remote url of the source repo
-        final var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceCourseShortName, sourceRepositoryName);
+        final var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceRepositoryName);
         // get the remote url of the target repo
-        final var targetRepoUrl = getCloneRepositoryUrl(targetProjectKey, targetCourseShortName, targetRepoSlug);
+        final var targetRepoUrl = getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
         Repository targetRepo = null;
         try {
             // create the new target repo
-            createRepository(targetProjectKey, targetCourseShortName, targetRepoSlug, null);
+            createRepository(targetProjectKey, targetRepoSlug, null);
             // clone the source repo to the target directory
             targetRepo = gitService.getOrCheckoutRepositoryIntoTargetDirectory(sourceRepoUrl, targetRepoUrl, true);
             // copy by pushing the source's content to the target's repo

@@ -232,13 +232,11 @@ public class ProgrammingExerciseImportService {
         // Used in .project
         replacements.put("<name>" + templateExercise.getTitle(), "<name>" + newExercise.getTitle());
 
-        final var courseShortName = newExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-
         final var user = userRepository.getUser();
 
-        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TEMPLATE), courseShortName, user);
-        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TESTS), courseShortName, user);
-        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.SOLUTION), courseShortName, user);
+        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TEMPLATE), user);
+        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TESTS), user);
+        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.SOLUTION), user);
     }
 
     /**
@@ -252,9 +250,8 @@ public class ProgrammingExerciseImportService {
      * @throws GitAPIException If the checkout/push of one repository fails
      * @throws IOException     If the values in the files could not be replaced
      */
-    private void adjustProjectName(Map<String, String> replacements, String projectKey, String courseShortName, String repositoryName, User user)
-            throws GitAPIException, IOException {
-        final var repositoryUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, courseShortName, repositoryName);
+    private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException, IOException {
+        final var repositoryUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, repositoryName);
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements, List.of("gradle-wrapper.jar"));
         gitService.stageAllChanges(repository);
