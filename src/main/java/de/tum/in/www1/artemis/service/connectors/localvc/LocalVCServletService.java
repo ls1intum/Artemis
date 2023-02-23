@@ -43,29 +43,28 @@ public class LocalVCServletService {
             throw new RepositoryNotFoundException(repositoryPath);
         }
 
-        Repository repository;
-
         if (repositories.containsKey(repositoryPath)) {
             log.debug("Retrieving cached local repository {}", repositoryPath);
-            repository = repositories.get(repositoryPath);
+            Repository repository = repositories.get(repositoryPath);
+            repository.incrementOpen();
+            return repository;
         }
         else {
             log.debug("Opening local repository {}", repositoryPath);
-            try {
-                repository = FileRepositoryBuilder.create(repositoryDir.toFile());
+            try (Repository repository = FileRepositoryBuilder.create(repositoryDir.toFile())) {
+                // Enable pushing without credentials, authentication is handled by the LocalVCPushFilter.
+                repository.getConfig().setBoolean("http", null, "receivepack", true);
+
                 this.repositories.put(repositoryPath, repository);
+
+                repository.incrementOpen();
+
+                return repository;
             }
             catch (IOException e) {
                 log.error("Unable to open local repository {}", repositoryPath);
                 throw new RepositoryNotFoundException(repositoryPath);
             }
         }
-
-        // Enable pushing without credentials, authentication is handled by the LocalVCPushFilter.
-        repository.getConfig().setBoolean("http", null, "receivepack", true);
-
-        repository.incrementOpen();
-
-        return repository;
     }
 }

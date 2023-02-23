@@ -275,7 +275,6 @@ public class ProgrammingExerciseService {
 
     private void setURLsAndBuildPlanIDsForNewExercise(ProgrammingExercise programmingExercise) {
         final var projectKey = programmingExercise.getProjectKey();
-        final var courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         final var templateParticipation = programmingExercise.getTemplateParticipation();
         final var solutionParticipation = programmingExercise.getSolutionParticipation();
         final var templatePlanId = programmingExercise.generateBuildPlanId(TEMPLATE);
@@ -285,15 +284,15 @@ public class ProgrammingExerciseService {
         final var testRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
 
         templateParticipation.setBuildPlanId(templatePlanId); // Set build plan id to newly created BaseBuild plan
-        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, courseShortName, exerciseRepoName).toString());
+        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
         solutionParticipation.setBuildPlanId(solutionPlanId);
-        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, courseShortName, solutionRepoName).toString());
-        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, courseShortName, testRepoName).toString());
+        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
+        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
     }
 
     private void setURLsForAuxiliaryRepositoriesOfExercise(ProgrammingExercise programmingExercise) {
-        programmingExercise.getAuxiliaryRepositories().forEach(repo -> repo.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(),
-                programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), programmingExercise.generateRepositoryName(repo.getName())).toString()));
+        programmingExercise.getAuxiliaryRepositories().forEach(repo -> repo.setRepositoryUrl(
+                versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName(repo.getName())).toString()));
     }
 
     /**
@@ -408,11 +407,11 @@ public class ProgrammingExerciseService {
         // Create project
         versionControlService.get().createProjectForExercise(programmingExercise);
         // Create template repository.
-        versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null);
+        versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null);
         // Create tests repository
-        versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null);
+        versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null);
         // Create solution repository
-        versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null);
+        versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null);
 
         // Create auxiliary repositories
         createAndInitializeAuxiliaryRepositories(projectKey, courseShortName, programmingExercise);
@@ -421,10 +420,8 @@ public class ProgrammingExerciseService {
     private void createAndInitializeAuxiliaryRepositories(String projectKey, String courseShortName, ProgrammingExercise programmingExercise) throws GitAPIException {
         for (AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
             String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
-            versionControlService.get().createRepository(projectKey, courseShortName, repositoryName, null);
-            repo.setRepositoryUrl(versionControlService.get()
-                    .getCloneRepositoryUrl(programmingExercise.getProjectKey(), programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), repositoryName)
-                    .toString());
+            versionControlService.get().createRepository(projectKey, repositoryName, null);
+            repo.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), repositoryName).toString());
             Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUrl(), true);
             gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, true, null);
         }
@@ -916,7 +913,7 @@ public class ProgrammingExerciseService {
                 }
             });
 
-            versionControlService.get().deleteProject(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), programmingExercise.getProjectKey());
+            versionControlService.get().deleteProject(programmingExercise.getProjectKey());
         }
         /*
          * Always delete the local copies of the repository because they can (in theory) be restored by cloning again, but they block the creation of new programming exercises with
@@ -1069,9 +1066,8 @@ public class ProgrammingExerciseService {
      */
     public void checkIfProjectExists(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
-        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         String projectName = programmingExercise.getProjectName();
-        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, courseShortName, projectName);
+        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
         if (projectExists) {
             var errorMessageVcs = "Project already exists on the Version Control Server: " + projectName + ". Please choose a different title and short name!";
             throw new BadRequestAlertException(errorMessageVcs, "ProgrammingExercise", "vcsProjectExists");
@@ -1099,7 +1095,7 @@ public class ProgrammingExerciseService {
         String projectName = courseShortName + " " + programmingExercise.getTitle();
         log.debug("Project Key: {}", projectKey);
         log.debug("Project Name: {}", projectName);
-        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, courseShortName, projectName);
+        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
         if (projectExists) {
             return true;
         }

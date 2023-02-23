@@ -55,7 +55,7 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     void testCheckIfProjectExistsFails() throws GitLabApiException {
         gitlabRequestMockProvider.mockFailToCheckIfProjectExists("project-key");
         try {
-            versionControlService.checkIfProjectExists("project-key", "course-short-name", "project-name");
+            versionControlService.checkIfProjectExists("project-key", "project-name");
         }
         catch (VersionControlException e) {
             assertThat(e.getMessage()).isNotEmpty();

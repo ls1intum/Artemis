@@ -39,10 +39,9 @@ public interface VersionControlService {
     /**
      * Deletes the project for the given courseShortName and project key
      *
-     * @param courseShortName of the course the repository belongs to
-     * @param projectKey      of the project that should be deleted
+     * @param projectKey of the project that should be deleted
      */
-    void deleteProject(String courseShortName, String projectKey);
+    void deleteProject(String projectKey);
 
     /**
      * Deletes the repository at the given url
@@ -54,12 +53,11 @@ public interface VersionControlService {
     /**
      * Get the clone URL used for cloning
      *
-     * @param projectKey      The project key
-     * @param courseShortName The short name of the course the repository's exercise belongs to.
-     * @param repositorySlug  The repository slug
+     * @param projectKey     The project key
+     * @param repositorySlug The repository slug
      * @return The clone URL
      */
-    VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String courseShortName, String repositorySlug);
+    VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug);
 
     /**
      * Check if the given repository url is valid and accessible.
@@ -100,22 +98,20 @@ public interface VersionControlService {
      * Creates a repository on the VCS.
      *
      * @param projectKey       The key of the project that contains the repository (must exist)
-     * @param courseShortName  The name of the course the repository belongs to (also contained in the projectKey but needed for local VC URLs to quickly find the course).
      * @param repoName         The name of repository
      * @param parentProjectKey The key of parent project (for sub-groups in Gitlab), null if not applicable
      * @throws VersionControlException if the repository could not be created
      */
-    void createRepository(String projectKey, String courseShortName, String repoName, String parentProjectKey) throws VersionControlException;
+    void createRepository(String projectKey, String repoName, String parentProjectKey) throws VersionControlException;
 
     /**
      * Checks if the project with the given projectKey already exists
      *
-     * @param projectKey      to check if a project with this unique key already exists
-     * @param courseShortName needed only for local git checks where there exists a folder for each course
-     * @param projectName     to check if a project with the same name already exists
+     * @param projectKey  to check if a project with this unique key already exists
+     * @param projectName to check if a project with the same name already exists
      * @return true if the project exists, false otherwise
      */
-    boolean checkIfProjectExists(String projectKey, String courseShortName, String projectName);
+    boolean checkIfProjectExists(String projectKey, String projectName);
 
     /**
      * Copies a repository from one project to another one. The project can be the same.
@@ -175,13 +171,12 @@ public interface VersionControlService {
     /**
      * Get the default branch of the repository
      *
-     * @param projectKey      The project key to which the repository slug belongs
-     * @param courseShortName The short name of the course the repository belongs to
-     * @param repositorySlug  The repository slug of the repository for which the default branch shall be retrieved
+     * @param projectKey     The project key to which the repository slug belongs
+     * @param repositorySlug The repository slug of the repository for which the default branch shall be retrieved
      * @return the name of the default branch, e.g. 'main'
      */
-    default String getDefaultBranchOfRepository(String projectKey, String courseShortName, String repositorySlug) throws VersionControlException {
-        return getDefaultBranchOfRepository(getCloneRepositoryUrl(projectKey, courseShortName, repositorySlug));
+    default String getDefaultBranchOfRepository(String projectKey, String repositorySlug) throws VersionControlException {
+        return getDefaultBranchOfRepository(getCloneRepositoryUrl(projectKey, repositorySlug));
     }
 
     /**

@@ -8,6 +8,7 @@ import org.eclipse.jgit.transport.PostReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
 
+import de.tum.in.www1.artemis.exception.localvc.LocalVCBadRequestException;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCHookService;
 
 public class LocalVCPostPushHook implements PostReceiveHook {

@@ -31,8 +31,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.exception.LocalVCException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
@@ -50,7 +50,7 @@ public class LocalVCService extends AbstractVersionControlService {
     private URL localVCServerUrl;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCPath;
+    private String localVCBasePath;
 
     public LocalVCService(UrlService urlService, GitService gitService, ApplicationContext applicationContext,
             ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
@@ -88,31 +88,32 @@ public class LocalVCService extends AbstractVersionControlService {
     }
 
     @Override
-    public void deleteProject(String courseShortName, String projectKey) {
+    public void deleteProject(String projectKey) {
         try {
-            Path projectPath = Path.of(localVCPath, courseShortName, projectKey);
+            Path projectPath = Path.of(localVCBasePath, projectKey);
             FileUtils.deleteDirectory(projectPath.toFile());
         }
         catch (IOException e) {
-            log.error("Could not delete project", e);
+            throw new LocalVCException("Could not delete project " + projectKey, e);
         }
     }
 
     @Override
     public void deleteRepository(VcsRepositoryUrl repositoryUrl) {
+
+        Path localPath = urlService.getLocalVCPathFromRepositoryUrl(repositoryUrl, localVCBasePath);
+
         try {
-            LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(localVCServerUrl, repositoryUrl.toString());
-            Path localPath = localVCRepositoryUrl.getLocalPath(localVCPath);
             FileUtils.deleteDirectory(localPath.toFile());
         }
         catch (IOException e) {
-            log.error("Could not delete repository", e);
+            throw new LocalVCException("Could not delete repository at " + localPath, e);
         }
     }
 
     @Override
-    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String courseShortName, String repositorySlug) {
-        return new LocalVCRepositoryUrl(localVCServerUrl, projectKey, courseShortName, repositorySlug);
+    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
+        return new LocalVCRepositoryUrl(projectKey, repositorySlug, localVCServerUrl);
     }
 
     @Override
@@ -129,8 +130,7 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws LocalVCException {
         try {
-            LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(localVCServerUrl, repositoryUrl.toString());
-            String localRepositoryPath = localVCRepositoryUrl.getLocalPath(localVCPath).toString();
+            String localRepositoryPath = urlService.getLocalVCPathFromRepositoryUrl(repositoryUrl, localVCBasePath).toString();
             Map<String, Ref> remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localRepositoryPath).callAsMap();
             if (remoteRepositoryRefs.containsKey("HEAD")) {
                 return remoteRepositoryRefs.get("HEAD").getTarget().getName();
@@ -158,12 +158,11 @@ public class LocalVCService extends AbstractVersionControlService {
      * @return true or false depending on whether the respective folder exists.
      */
     @Override
-    public boolean checkIfProjectExists(String projectKey, String courseShortName, String projectName) {
+    public boolean checkIfProjectExists(String projectKey, String projectName) {
         String projectKeyStripped = StringUtil.stripIllegalCharacters(projectKey);
-        String courseShortNameStripped = StringUtil.stripIllegalCharacters(courseShortName);
 
         // Try to find the folder in the file system. If it is not found, return false.
-        Path projectPath = Path.of(localVCPath, courseShortNameStripped, projectKeyStripped);
+        Path projectPath = Path.of(localVCBasePath, projectKeyStripped);
         if (Files.exists(projectPath)) {
             log.warn("Local VC project with key {} already exists: {}", projectKey, projectName);
             return true;
@@ -182,18 +181,17 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws LocalVCException {
-        String courseShortName = StringUtil.stripIllegalCharacters(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName());
         String projectKey = StringUtil.stripIllegalCharacters(programmingExercise.getProjectKey());
 
-        log.debug("Creating folder for local git project at {}", Path.of(localVCPath, courseShortName, projectKey));
+        log.debug("Creating folder for local git project at {}", Path.of(localVCBasePath, projectKey));
 
         try {
             // Instead of defining a project like would be done for GitLab or Bitbucket, just define a directory that will contain all repositories.
-            Path projectPath = Path.of(localVCPath, courseShortName, projectKey);
+            Path projectPath = Path.of(localVCBasePath, projectKey);
             Files.createDirectories(projectPath);
         }
         catch (IOException e) {
-            log.error("Could not create local git project for key {} in course {}", projectKey, courseShortName, e);
+            log.error("Could not create local git project for key {}.", projectKey, e);
             throw new LocalVCException("Error while creating local VC project.");
         }
     }
@@ -206,25 +204,34 @@ public class LocalVCService extends AbstractVersionControlService {
     }
 
     @Override
-    public void createRepository(String projectKey, String courseShortName, String repositorySlug, String parentProjectKey) {
-        createRepository(projectKey, courseShortName, repositorySlug);
+    public void createRepository(String projectKey, String repositorySlug, String parentProjectKey) {
+        createRepository(projectKey, repositorySlug);
     }
 
     /**
      * Create a new repo
      *
-     * @param projectKey      The project key of the parent project
-     * @param courseShortName The short name of the course the repository belongs to
-     * @param repositorySlug  The name for the new repository
+     * @param projectKey     The project key of the parent project
+     * @param repositorySlug The name for the new repository
      * @throws LocalVCException if the repo could not be created
      */
-    private void createRepository(String projectKey, String courseShortName, String repositorySlug) throws LocalVCException {
+    private void createRepository(String projectKey, String repositorySlug) throws LocalVCException {
 
-        LocalVCRepositoryUrl localVCUrl = new LocalVCRepositoryUrl(localVCServerUrl, projectKey, courseShortName, repositorySlug);
+        LocalVCRepositoryUrl localVCUrl = new LocalVCRepositoryUrl(projectKey, repositorySlug, localVCServerUrl);
 
-        Path remoteDirPath = localVCUrl.getLocalPath(localVCPath);
+        Path remoteDirPath = urlService.getLocalVCPathFromRepositoryUrl(localVCUrl, localVCBasePath);// localVCUrl.getLocalPath(localVCBasePath);
 
         log.debug("Creating local git repository {} in folder {}", repositorySlug, remoteDirPath);
+
+        // Check if the folder for the repository to be created already exists. In that case delete it first.
+        if (Files.exists(remoteDirPath)) {
+            try {
+                FileUtils.deleteDirectory(remoteDirPath.toFile());
+            }
+            catch (IOException e) {
+                throw new LocalVCException("Repository already exists in local VC system but was not able to delete it.", e);
+            }
+        }
 
         try {
             Files.createDirectories(remoteDirPath);
@@ -249,13 +256,11 @@ public class LocalVCService extends AbstractVersionControlService {
         if (repositoryUrl == null || repositoryUrl.getURI() == null) {
             return false;
         }
-        try {
-            new LocalVCRepositoryUrl(localVCServerUrl, repositoryUrl.toString());
-        }
-        catch (LocalVCException e) {
-            return false;
-        }
-        return true;
+
+        String projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
+        String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+
+        return repositorySlug.endsWith(".git") && repositorySlug.toLowerCase().startsWith(projectKey.toLowerCase());
     }
 
     @Override

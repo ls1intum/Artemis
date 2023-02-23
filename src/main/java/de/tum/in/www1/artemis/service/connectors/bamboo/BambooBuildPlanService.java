@@ -118,8 +118,8 @@ public class BambooBuildPlanService {
         final String projectName = programmingExercise.getProjectName();
         final boolean recordTestwiseCoverage = Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && "SOLUTION".equals(planKey);
 
-        Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), projectName,
-                repositoryName, testRepositoryName, programmingExercise.getCheckoutSolutionRepository(), solutionRepositoryName, auxiliaryRepositories)
+        Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName,
+                programmingExercise.getCheckoutSolutionRepository(), solutionRepositoryName, auxiliaryRepositories)
                         .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.getPackageName(),
                                 programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getCheckoutSolutionRepository(),
                                 recordTestwiseCoverage, programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
@@ -389,9 +389,8 @@ public class BambooBuildPlanService {
         return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
     }
 
-    private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String courseShortName, String projectName, String repositoryName,
-            String vcsTestRepositorySlug, boolean checkoutSolutionRepository, String vcsSolutionRepositorySlug,
-            List<AuxiliaryRepository.AuxRepoNameWithSlug> auxiliaryRepositories) {
+    private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, String repositoryName, String vcsTestRepositorySlug,
+            boolean checkoutSolutionRepository, String vcsSolutionRepositorySlug, List<AuxiliaryRepository.AuxRepoNameWithSlug> auxiliaryRepositories) {
         List<VcsRepositoryIdentifier> vcsTriggerRepositories = new ArrayList<>();
         // Trigger the build when a commit is pushed to the ASSIGNMENT_REPO.
         vcsTriggerRepositories.add(new VcsRepositoryIdentifier(ASSIGNMENT_REPO_NAME));
@@ -402,17 +401,17 @@ public class BambooBuildPlanService {
         }
 
         List<VcsRepository<?, ?>> planRepositories = new ArrayList<>();
-        planRepositories.add(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName,
-                versionControlService.get().getDefaultBranchOfRepository(projectKey, courseShortName, repositoryName)));
+        planRepositories.add(
+                createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName, versionControlService.get().getDefaultBranchOfRepository(projectKey, repositoryName)));
         planRepositories.add(createBuildPlanRepository(TEST_REPO_NAME, projectKey, vcsTestRepositorySlug,
-                versionControlService.get().getDefaultBranchOfRepository(projectKey, courseShortName, vcsTestRepositorySlug)));
+                versionControlService.get().getDefaultBranchOfRepository(projectKey, vcsTestRepositorySlug)));
         for (var repo : auxiliaryRepositories) {
             planRepositories.add(createBuildPlanRepository(repo.name(), projectKey, repo.repositorySlug(),
-                    versionControlService.get().getDefaultBranchOfRepository(projectKey, courseShortName, repo.repositorySlug())));
+                    versionControlService.get().getDefaultBranchOfRepository(projectKey, repo.repositorySlug())));
         }
         if (checkoutSolutionRepository) {
             planRepositories.add(createBuildPlanRepository(SOLUTION_REPO_NAME, projectKey, vcsSolutionRepositorySlug,
-                    versionControlService.get().getDefaultBranchOfRepository(projectKey, courseShortName, vcsSolutionRepositorySlug)));
+                    versionControlService.get().getDefaultBranchOfRepository(projectKey, vcsSolutionRepositorySlug)));
         }
 
         return new Plan(createBuildProject(projectName, projectKey), planKey, planKey).description(planDescription)

@@ -286,7 +286,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void deleteProject(String courseShortName, String projectKey) {
+    public void deleteProject(String projectKey) {
         // courseShortName is only needed for local VC.
         try {
             gitlab.getGroupApi().deleteGroup(projectKey);
@@ -315,7 +315,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String courseShortName, String repositorySlug) {
+    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
         return new GitLabRepositoryUrl(projectKey, repositorySlug);
     }
 
@@ -445,7 +445,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void createRepository(String projectKey, String courseShortName, String repoName, String parentProjectKey) throws VersionControlException {
+    public void createRepository(String projectKey, String repoName, String parentProjectKey) throws VersionControlException {
         try {
             final var groupId = gitlab.getGroupApi().getGroup(projectKey).getId();
             final var project = new Project().withPath(repoName.toLowerCase()).withName(repoName.toLowerCase()).withNamespaceId(groupId).withVisibility(Visibility.PRIVATE)
@@ -462,7 +462,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public boolean checkIfProjectExists(String projectKey, String courseShortName, String projectName) {
+    public boolean checkIfProjectExists(String projectKey, String projectName) {
         try {
             return !gitlab.getProjectApi().getProjects(projectKey).isEmpty();
         }

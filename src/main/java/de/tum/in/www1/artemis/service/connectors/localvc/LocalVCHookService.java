@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.localvc;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Optional;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -21,14 +21,16 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -37,8 +39,8 @@ public class LocalVCHookService {
 
     private final Logger log = LoggerFactory.getLogger(LocalVCHookService.class);
 
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCPath;
+    @Value("${artemis.version-control.url}")
+    private URL localVCServerUrl;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -54,14 +56,13 @@ public class LocalVCHookService {
 
     private final LocalCITriggerService localCITriggerService;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final UrlService urlService;
 
     public LocalVCHookService(ProgrammingExerciseService programmingExerciseService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, LocalCITriggerService localCITriggerService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService) {
+            LocalCITriggerService localCITriggerService, ProgrammingMessagingService programmingMessagingService, UrlService urlService) {
         this.programmingExerciseService = programmingExerciseService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -69,7 +70,7 @@ public class LocalVCHookService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.localCITriggerService = localCITriggerService;
-        this.continuousIntegrationService = continuousIntegrationService;
+        this.urlService = urlService;
     }
 
     /**
@@ -78,23 +79,36 @@ public class LocalVCHookService {
      */
     public void createNewSubmission(String commitHash, Repository repository) {
 
+        long timeNanoStart = System.nanoTime();
+
         Path repositoryFolderPath = repository.getDirectory().toPath();
 
-        LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(localVCPath, repositoryFolderPath);
-
-        // For pushes to the "tests" repository, no submission is created.
-        if (localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.TESTS.getName())) {
+        LocalVCRepositoryUrl localVCRepositoryUrl;
+        try {
+            localVCRepositoryUrl = new LocalVCRepositoryUrl(repositoryFolderPath, localVCServerUrl);
+        }
+        catch (LocalVCException e) {
+            log.error("Could not create valid repository URL from path {}.", repositoryFolderPath);
             return;
         }
+
+        String repositoryTypeOrUserName = urlService.getRepositoryTypeOrUserNameFromRepositoryUrl(localVCRepositoryUrl);
+
+        // For pushes to the "tests" repository, no submission is created.
+        if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.getName())) {
+            return;
+        }
+
+        String projectKey = urlService.getProjectKeyFromRepositoryUrl(localVCRepositoryUrl);
 
         ProgrammingExercise exercise;
 
         try {
-            exercise = programmingExerciseService.findOneByProjectKey(localVCRepositoryUrl.getProjectKey(), false);
+            exercise = programmingExerciseService.findOneByProjectKey(projectKey, false);
         }
         catch (EntityNotFoundException e) {
             // This should never happen, as the unambiguous exercise is already retrieved in the LocalVCPushFilter.
-            log.error("No exercise or multiple exercises found for the given project key: {}", localVCRepositoryUrl.getProjectKey());
+            log.error("No exercise or multiple exercises found for the given project key: {}", projectKey);
             return;
         }
 
@@ -102,15 +116,16 @@ public class LocalVCHookService {
         ProgrammingExerciseParticipation participation;
 
         try {
-            if (localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.TEMPLATE.getName())) {
+            if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.getName())) {
                 participation = templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
             }
-            else if (localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.SOLUTION.getName())) {
+            else if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.getName())) {
                 participation = solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
             }
             else {
-                participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRun(exercise,
-                        localVCRepositoryUrl.getRepositoryTypeOrUserName(), localVCRepositoryUrl.isTestRunRepository(), true);
+                boolean isPracticeRepository = urlService.getIsPracticeRepositoryFromRepositoryUrl(localVCRepositoryUrl);
+                participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRun(exercise, repositoryTypeOrUserName,
+                        isPracticeRepository, true);
             }
         }
         catch (EntityNotFoundException e) {
@@ -133,13 +148,16 @@ public class LocalVCHookService {
             // Programming exercise was removed from the participation by the notifyUserAboutSubmission method.
             participation.setProgrammingExercise(exercise);
             // Trigger the build for the new submission on the local CI system.
-            continuousIntegrationService.get().triggerBuild(participation);
+            localCITriggerService.triggerBuild(participation);
         }
         catch (Exception ex) {
             log.error("Exception encountered when trying to create a new submission for participation {} with the following commit: {}", participation.getId(), commit, ex);
             // Throwing an exception here would lead to the Git client request getting stuck.
             // Instead, the user can see in the UI that creating the submission failed.
         }
+
+        log.info("New submission created for participation {} as a result of push to repository {} in {}.", participation.getId(), repositoryFolderPath,
+                TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
     private Commit extractCommitInfo(String commitHash, Repository repository) {

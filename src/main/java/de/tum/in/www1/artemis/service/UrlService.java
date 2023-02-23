@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,7 +118,9 @@ public class UrlService {
     /**
      * Gets the project key from the given URL
      *
-     * Example: https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git --> EIST2016RME
+     * Examples:
+     * https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git --> EIST2016RME
+     * http://localhost:8080/git/TESTCOURSE1TESTEX1/testcourse1testex1-student1.git --> TESTCOURSE1TESTEX1
      *
      * @param url The complete repository url (including protocol, host and the complete path)
      * @return The project key
@@ -131,9 +135,47 @@ public class UrlService {
         // Note: pathComponents[0] = "" because the path always starts with "/"
         var projectKey = pathComponents[1];
         if ("scm".equals(pathComponents[1]) || "git".equals(pathComponents[1])) {
-            // special case for Bitbucket and local Git
+            // special case for Bitbucket and local VC
             projectKey = pathComponents[2];
         }
         return projectKey;
+    }
+
+    /**
+     * Gets the local VC path from the given repository URL.
+     *
+     * @param vcsRepositoryUrl The repository url object.
+     * @param localVCBasePath  The base path for the local VC (defined as an environment variable at artemis.version-control.local-vcs-repo-path).
+     * @return The path pointing to the repository in the local file system.
+     */
+    public Path getLocalVCPathFromRepositoryUrl(VcsRepositoryUrl vcsRepositoryUrl, String localVCBasePath) {
+        String projectKey = getProjectKeyFromRepositoryUrl(vcsRepositoryUrl);
+        String repositorySlug = getRepositorySlugFromUrl(vcsRepositoryUrl.getURI());
+        return Paths.get(localVCBasePath, projectKey, repositorySlug + ".git");
+    }
+
+    /**
+     * Returns whether the URL contains "practice" in the repository slug.
+     *
+     * @param vcsRepositoryUrl The repository url object.
+     * @return true if the repository slug contains "practice", false otherwise.
+     */
+    public boolean getIsPracticeRepositoryFromRepositoryUrl(VcsRepositoryUrl vcsRepositoryUrl) {
+        String projectKey = getProjectKeyFromRepositoryUrl(vcsRepositoryUrl);
+        String repositorySlug = getRepositorySlugFromUrl(vcsRepositoryUrl.getURI());
+        return repositorySlug.toLowerCase().replace(projectKey.toLowerCase() + "-", "").startsWith("practice-");
+    }
+
+    /**
+     * Returns the repository type or username from the repository slug.
+     *
+     * @param vcsRepositoryUrl The repository url object.
+     * @return The repository type or username (e.g. "exercise" for the template repository, "artemis_test_user_1" for artemis_test_user_1's repository).
+     */
+    public String getRepositoryTypeOrUserNameFromRepositoryUrl(VcsRepositoryUrl vcsRepositoryUrl) {
+        String projectKey = getProjectKeyFromRepositoryUrl(vcsRepositoryUrl);
+        String repositorySlug = getRepositorySlugFromUrl(vcsRepositoryUrl.getURI());
+        String repositoryTypeOrUserNameWithPracticePrefix = repositorySlug.toLowerCase().replace(projectKey.toLowerCase() + "-", "");
+        return repositoryTypeOrUserNameWithPracticePrefix.replace("practice-", "");
     }
 }
