@@ -39,6 +39,12 @@ public abstract class Notification extends DomainObject {
     @Column(name = "text")
     private String text;
 
+    @Column(name = "text_is_placeholder")
+    private boolean textIsPlaceholder;
+
+    @Column(name = "notification_text_values")
+    private String notificationTextValues;
+
     @Column(name = "notification_date")
     private ZonedDateTime notificationDate;
 
@@ -87,6 +93,22 @@ public abstract class Notification extends DomainObject {
 
     public void setText(String text) {
         this.text = text;
+    }
+
+    public boolean getTextIsPlaceholder() {
+        return textIsPlaceholder;
+    }
+
+    public void setTextIsPlaceholder(boolean textIsPlaceholder) {
+        this.textIsPlaceholder = textIsPlaceholder;
+    }
+
+    public String getNotificationTextValues() {
+        return notificationTextValues;
+    }
+
+    public void setNotificationTextValues(String notificationTextValues) {
+        this.notificationTextValues = notificationTextValues;
     }
 
     public ZonedDateTime getNotificationDate() {
