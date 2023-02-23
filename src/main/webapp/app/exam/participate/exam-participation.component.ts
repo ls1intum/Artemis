@@ -195,11 +195,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     },
                     error: () => {
                         const course = this.courseCalculationService.getCourse(this.courseId);
-                        this.isAtLeastTutor = course?.isAtLeastTutor;
                         if (!course) {
                             this.courseService.find(this.courseId).subscribe((courseResponse) => {
                                 this.isAtLeastTutor = courseResponse.body?.isAtLeastTutor;
                             });
+                        } else {
+                            this.isAtLeastTutor = course.isAtLeastTutor;
                         }
                         this.loadingExam = false;
                     },

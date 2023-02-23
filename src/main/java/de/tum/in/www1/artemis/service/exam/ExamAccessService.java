@@ -80,8 +80,9 @@ public class ExamAccessService {
             Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
 
             if (!examWithExerciseGroupsAndExercises.isTestExam()) {
+                // We skip the alert in case it's at least a tutor, since this user should be redirected to the exam overview instead
                 throw new BadRequestAlertException("The requested Exam is no test exam and thus no student exam can be created", ENTITY_NAME,
-                        "StudentExamGenerationOnlyForTestExams");
+                        "StudentExamGenerationOnlyForTestExams", authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, currentUser));
             }
             studentExam = studentExamService.generateTestExam(examWithExerciseGroupsAndExercises, currentUser);
             // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource

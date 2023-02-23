@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -30,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private static final String TEST_PREFIX = "examaccessservicetest"; // only lower case is supported
+    private static final String TEST_PREFIX = "examaccessservicetest";
 
     @Autowired
     private CourseRepository courseRepository;
@@ -374,7 +375,9 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExamInCourseElseThrow_realExam() {
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).asInstanceOf(type(BadRequestAlertException.class))
+                .satisfies(error -> assertThat(error.getParameters().get("skipAlert")).isNull());
+
     }
 
     @Test
@@ -395,4 +398,10 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         assertThat(studentExam2.equals(studentExamForTestExam2)).isEqualTo(true);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetExamInCourseElseThrow_tutor_skipAlert() {
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).asInstanceOf(type(BadRequestAlertException.class))
+                .satisfies(error -> assertThat(error.getParameters().get("skipAlert")).isEqualTo(Boolean.TRUE));
+    }
 }
