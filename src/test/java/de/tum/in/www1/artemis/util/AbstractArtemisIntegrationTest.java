@@ -3,27 +3,18 @@ package de.tum.in.www1.artemis.util;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import java.util.Date;
-import java.util.List;
-import java.util.stream.Stream;
-
 import javax.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
-import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -156,23 +147,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @BeforeEach
     void mockMailService() {
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
-    }
-
-    @BeforeEach
-    void mockPushNotificationDeviceConfigurationRepository() {
-        when(pushNotificationDeviceConfigurationRepository.findByUserIn(anyList(), any(PushNotificationDeviceType.class))).thenAnswer(new Answer() {
-
-            public Object answer(InvocationOnMock invocation) {
-                List<User> userList = (List<User>) invocation.getArguments()[0];
-                List<PushNotificationDeviceConfiguration> appleList = userList.stream().map(user -> {
-                    return new PushNotificationDeviceConfiguration("Test", PushNotificationDeviceType.APNS, new Date(), "someSecret".getBytes(), user);
-                }).toList();
-                List<PushNotificationDeviceConfiguration> firebaseList = userList.stream().map(user -> {
-                    return new PushNotificationDeviceConfiguration("Test", PushNotificationDeviceType.FIREBASE, new Date(), "someSecret".getBytes(), user);
-                }).toList();
-                return Stream.concat(appleList.stream(), firebaseList.stream()).toList();
-            }
-        });
     }
 
     @AfterEach()

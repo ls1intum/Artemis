@@ -94,7 +94,7 @@ public class PushNotificationResource {
         return ResponseEntity.ok().build();
     }
 
-    private static String getToken() {
+    private String getToken() {
         UsernamePasswordAuthenticationToken auth = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         String token = (String) auth.getCredentials();
         return token;

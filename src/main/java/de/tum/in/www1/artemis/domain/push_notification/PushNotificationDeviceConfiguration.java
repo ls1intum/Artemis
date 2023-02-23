@@ -6,6 +6,8 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import de.tum.in.www1.artemis.domain.User;
 
@@ -33,8 +35,9 @@ public class PushNotificationDeviceConfiguration {
     private byte[] secretKey;
 
     @Id
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @ManyToOne(cascade = CascadeType.ALL)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "user_id", foreignKey = @ForeignKey())
     private User owner;
 
     public PushNotificationDeviceConfiguration(String token, PushNotificationDeviceType deviceType, Date expirationDate, byte[] secretKey, User owner) {
@@ -43,6 +46,10 @@ public class PushNotificationDeviceConfiguration {
         this.expirationDate = expirationDate;
         this.secretKey = secretKey;
         this.owner = owner;
+    }
+
+    public PushNotificationDeviceConfiguration() {
+
     }
 
     public String getToken() {

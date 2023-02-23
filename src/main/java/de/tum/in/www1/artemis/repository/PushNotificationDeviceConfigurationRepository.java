@@ -22,5 +22,5 @@ public interface PushNotificationDeviceConfigurationRepository extends JpaReposi
      * Finds all the deviceTokens for a specific deviceType for a list of users.
      */
     @Query("SELECT p FROM PushNotificationDeviceConfiguration p WHERE p.expirationDate > now() AND p.owner IN :userList AND p.deviceType = :deviceType")
-    List<PushNotificationDeviceConfiguration> findByUserIn(@Param("userList") List<User> userList, PushNotificationDeviceType deviceType);
+    List<PushNotificationDeviceConfiguration> findByUserIn(@Param("userList") List<User> userList, @Param("deviceType") PushNotificationDeviceType deviceType);
 }

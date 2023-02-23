@@ -121,22 +121,20 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
         assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, EMAIL))
                 .as("Emails with type ATTACHMENT_CHANGE should be allowed for the given user").isTrue();
 
+        assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, PUSH))
+                .as("Pushs with type ATTACHMENT_CHANGE should be allowed for the given user").isTrue();
+
         notification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXERCISE_PRACTICE));
         assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, EMAIL))
                 .as("Emails with type EXERCISE_PRACTICE should be allowed for the given user").isTrue();
+
+        assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, PUSH))
+                .as("Pushs with type EXERCISE_PRACTICE should be allowed for the given user").isTrue();
 
         notification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXAM_ARCHIVE_STARTED));
         assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, EMAIL))
                 .as("Emails with type EXAM_ARCHIVE_STARTED should not be allowed for the given user").isFalse();
 
-        assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, PUSH))
-                .as("Pushs with type ATTACHMENT_CHANGE should be allowed for the given user").isTrue();
-
-        notification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXERCISE_PRACTICE));
-        assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, PUSH))
-                .as("Pushs with type EXERCISE_PRACTICE should be allowed for the given user").isTrue();
-
-        notification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXAM_ARCHIVE_STARTED));
         assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, PUSH))
                 .as("Pushs with type EXAM_ARCHIVE_STARTED should not be allowed for the given user").isFalse();
     }
