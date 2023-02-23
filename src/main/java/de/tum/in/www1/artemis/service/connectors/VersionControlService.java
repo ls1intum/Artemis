@@ -37,7 +37,7 @@ public interface VersionControlService {
     void addWebHookForParticipation(ProgrammingExerciseParticipation participation);
 
     /**
-     * Deletes the project for the given courseShortName and project key
+     * Deletes the project for the given project key
      *
      * @param projectKey of the project that should be deleted
      */
@@ -116,18 +116,16 @@ public interface VersionControlService {
     /**
      * Copies a repository from one project to another one. The project can be the same.
      *
-     * @param sourceProjectKey      The key of the template project (normally based on the course and exercise short name)
-     * @param sourceCourseShortName The short name of the course the repository belongs to
-     * @param sourceRepositoryName  The name of the repository which should be copied
-     * @param sourceBranch          The default branch of the source repository
-     * @param targetProjectKey      The key of the target project to which to copy the new repository to
-     * @param targetCourseShortName The short name of the course to which to copy the new repository to
-     * @param targetRepositoryName  The desired name of the target repository
+     * @param sourceProjectKey     The key of the template project (normally based on the course and exercise short name)
+     * @param sourceRepositoryName The name of the repository which should be copied
+     * @param sourceBranch         The default branch of the source repository
+     * @param targetProjectKey     The key of the target project to which to copy the new repository to
+     * @param targetRepositoryName The desired name of the target repository
      * @return The URL for cloning the repository
      * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
      */
-    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceCourseShortName, String sourceRepositoryName, String sourceBranch, String targetProjectKey,
-            String targetCourseShortName, String targetRepositoryName) throws VersionControlException;
+    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName)
+            throws VersionControlException;
 
     /**
      * Add the user to the repository

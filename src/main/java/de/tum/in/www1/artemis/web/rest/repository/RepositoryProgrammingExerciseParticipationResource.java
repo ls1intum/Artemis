@@ -18,7 +18,10 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.RepositoryAccessService;
+import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -90,7 +93,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             repositoryAccessService.checkAccessRepositoryElseThrow(participation, programmingExercise, userRepository.getUserWithGroupsAndAuthorities(), repositoryActionType);
         }
         catch (AccessUnauthorizedException e) {
-            throw new AccessForbiddenException();
+            throw new AccessForbiddenException(e);
         }
 
         var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();

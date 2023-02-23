@@ -13,16 +13,21 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCBadRequestException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.RepositoryAccessService;
+import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -31,6 +36,10 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessUnauthorizedException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
+/**
+ * This service is responsible for authenticating and authorizing git requests.
+ * It is used by the LocalVCFetchFilter and LocalVCPushFilter.
+ */
 @Service
 @Profile("localvc")
 public class LocalVCFilterService {
@@ -113,7 +122,7 @@ public class LocalVCFilterService {
             exercise = programmingExerciseService.findOneByProjectKey(projectKey, true);
         }
         catch (EntityNotFoundException e) {
-            throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey);
+            throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey, e);
         }
 
         // Check that offline IDE usage is allowed.
@@ -165,7 +174,7 @@ public class LocalVCFilterService {
                 repositoryAccessService.checkAccessTestRepositoryElseThrow(false, exercise, user);
             }
             catch (AccessForbiddenException e) {
-                throw new LocalVCAuthException();
+                throw new LocalVCAuthException(e);
             }
             return;
         }
@@ -186,20 +195,20 @@ public class LocalVCFilterService {
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException(
-                    "Could not find single participation for exercise " + exercise.getId() + " and repository type or user name " + repositoryTypeOrUserName);
+                    "Could not find single participation for exercise " + exercise.getId() + " and repository type or user name " + repositoryTypeOrUserName, e);
         }
 
         try {
             repositoryAccessService.checkAccessRepositoryElseThrow(participation, exercise, user, repositoryActionType);
         }
         catch (AccessUnauthorizedException e) {
-            throw new LocalVCAuthException();
+            throw new LocalVCAuthException(e);
         }
         catch (AccessForbiddenException e) {
-            throw new LocalVCForbiddenException();
+            throw new LocalVCForbiddenException(e);
         }
         catch (IllegalArgumentException e) {
-            throw new LocalVCInternalException();
+            throw new LocalVCInternalException(e);
         }
     }
 }

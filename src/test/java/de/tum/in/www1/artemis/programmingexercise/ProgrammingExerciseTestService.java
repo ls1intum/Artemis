@@ -278,7 +278,6 @@ public class ProgrammingExerciseTestService {
     public void setupRepositoryMocks(ProgrammingExercise exercise, LocalRepository exerciseRepository, LocalRepository solutionRepository, LocalRepository testRepository,
             LocalRepository auxRepository) throws Exception {
         final var projectKey = exercise.getProjectKey();
-        final var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
         final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);

@@ -45,7 +45,7 @@ public class TeamService {
         this.participationService = participationService;
     }
 
-    public Team findOneByExerciseCourseIdAndShortName(Long courseId, String shortName) throws EntityNotFoundException {
+    public Team findOneByExerciseCourseIdAndShortNameOrThrow(Long courseId, String shortName) throws EntityNotFoundException {
         List<Team> teams = teamRepository.findAllByExerciseCourseIdAndShortName(courseId, shortName);
 
         if (teams.size() != 1) {

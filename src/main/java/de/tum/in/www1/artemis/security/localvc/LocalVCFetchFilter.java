@@ -54,6 +54,7 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
         }
         catch (LocalVCInternalException e) {
             servletResponse.setStatus(500);
+            log.error("Internal server error while trying to fetch repository {}", servletRequest.getRequestURI(), e);
             return;
         }
         catch (Exception e) {

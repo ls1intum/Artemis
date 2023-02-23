@@ -170,7 +170,6 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public void deleteProject(String projectKey) {
-        // courseShortName is only needed for local VC.
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey;
         log.info("Try to delete bitbucket project {}", projectKey);
         try {
@@ -880,8 +879,8 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public void createRepository(String projectKey, String repositorySlug, String parentProjectKey) {
-        createRepository(projectKey, repositorySlug);
+    public void createRepository(String entityName, String topLevelEntity, String parentEntity) {
+        createRepository(entityName, topLevelEntity);
     }
 
     public final class BitbucketRepositoryUrl extends VcsRepositoryUrl {

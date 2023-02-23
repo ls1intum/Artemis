@@ -97,8 +97,8 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     }
 
     @Override
-    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceCourseShortName, String sourceRepositoryName, String sourceBranch, String targetProjectKey,
-            String targetCourseShortName, String targetRepositoryName) throws VersionControlException {
+    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName)
+            throws VersionControlException {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
         final String targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
