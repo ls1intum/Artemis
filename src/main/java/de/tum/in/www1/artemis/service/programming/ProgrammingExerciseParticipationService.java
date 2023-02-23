@@ -116,7 +116,7 @@ public class ProgrammingExerciseParticipationService {
     public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentLoginAndTestRun(Exercise exercise, String username, boolean testRun,
             boolean withSubmissions) throws EntityNotFoundException {
         if (exercise.isTeamMode()) {
-            Team team = teamService.findOneByExerciseCourseIdAndShortName(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), username);
+            Team team = teamService.findOneByExerciseCourseIdAndShortNameOrThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), username);
 
             Optional<ProgrammingExerciseStudentParticipation> participation;
             if (withSubmissions) {

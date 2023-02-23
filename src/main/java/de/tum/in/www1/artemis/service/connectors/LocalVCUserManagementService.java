@@ -27,7 +27,7 @@ public class LocalVCUserManagementService implements VcsUserManagementService {
      */
     @Override
     public void createVcsUser(User user, String password) throws VersionControlException {
-        // Not implemented for local VC.
+        throw new UnsupportedOperationException("Not implemented for local VC.");
     }
 
     /**
