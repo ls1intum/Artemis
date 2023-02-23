@@ -1,0 +1,9 @@
+# ===================================================================
+# Local CI specific properties: this file will only be loaded during startup if the profile localci is active
+#
+# This configuration overrides the application.yml file.
+# ===================================================================
+artemis:
+    continuous-integration:
+        # The number of threads that are used to execute the CI jobs.
+        thread-pool-size: 1
