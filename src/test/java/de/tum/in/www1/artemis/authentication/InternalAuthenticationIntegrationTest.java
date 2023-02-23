@@ -62,9 +62,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     private UserRepository userRepository;
 
     @Autowired
-    private LtiUserIdRepository ltiUserIdRepository;
-
-    @Autowired
     private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
     @Autowired
@@ -141,10 +138,8 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         request.postForm("/api/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
 
         final var user = database.getUserByLogin(USERNAME);
-        final var ltiUser = ltiUserIdRepository.findByUser(user).get();
         final var ltiOutcome = ltiOutcomeUrlRepository.findByUserAndExercise(user, programmingExercise).get();
-        assertThat(ltiUser.getUser()).isEqualTo(user);
-        assertThat(ltiUser.getLtiUserId()).isEqualTo(ltiLaunchRequest.getUser_id());
+
         assertThat(ltiOutcome.getUser()).isEqualTo(user);
         assertThat(ltiOutcome.getExercise()).isEqualTo(programmingExercise);
         assertThat(ltiOutcome.getUrl()).isEqualTo(ltiLaunchRequest.getLis_outcome_service_url());

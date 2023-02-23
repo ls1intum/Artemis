@@ -282,7 +282,7 @@ public class GitlabRequestMockProvider {
         mockProtectBranch(defaultBranch, repositoryUrl);
     }
 
-    private void mockUserExists(String username, boolean exists) throws GitLabApiException {
+    public void mockUserExists(String username, boolean exists) throws GitLabApiException {
         doReturn(exists ? new User().withUsername(username) : null).when(userApi).getUser(username);
     }
 
@@ -345,7 +345,7 @@ public class GitlabRequestMockProvider {
 
     public void mockUpdateVcsUser(String login, de.tum.in.www1.artemis.domain.User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword)
             throws GitLabApiException {
-        mockUpdateBasicUserInformation(login, user, shouldSynchronizePassword);
+        mockUpdateBasicUserInformation(login, shouldSynchronizePassword);
         mockUpdateUserActivationState(user, false);
 
         // Add as member to new groups
@@ -379,11 +379,11 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockUpdateVcsUserFailToActivate(String login, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
-        mockUpdateBasicUserInformation(login, user, true);
+        mockUpdateBasicUserInformation(login, true);
         mockUpdateUserActivationState(user, true);
     }
 
-    public void mockUpdateBasicUserInformation(String login, de.tum.in.www1.artemis.domain.User user, boolean shouldUpdatePassword) throws GitLabApiException {
+    public void mockUpdateBasicUserInformation(String login, boolean shouldUpdatePassword) throws GitLabApiException {
         var gitlabUser = new User().withUsername(login).withId(1L);
         doReturn(gitlabUser).when(userApi).getUser(login);
         if (shouldUpdatePassword) {

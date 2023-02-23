@@ -125,6 +125,10 @@ export class StudentExamDetailComponent implements OnInit {
         }
 
         this.studentExam = studentExamWithGrade.studentExam;
+        if (this.studentExam.examSessions) {
+            // show the oldest session first (sessions are created sequentially so we can sort after id)
+            this.studentExam.examSessions.sort((s1, s2) => s1.id! - s2.id!);
+        }
         this.achievedPointsPerExercise = studentExamWithGrade.achievedPointsPerExercise;
 
         this.initWorkingTimeForm();

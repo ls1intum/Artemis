@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { ExamUserDTO } from 'app/entities/exam-user-dto.mode';
+import { ExamUserDTO } from 'app/entities/exam-user-dto.model';
+import { ExamUserAttendanceCheckDTO } from 'app/entities/exam-users-attendance-check-dto.model';
 import { filter, map, tap } from 'rxjs/operators';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -232,6 +233,16 @@ export class ExamManagementService {
     }
 
     /**
+     * Verify exam user attendance check. It will return exam users that started the exam but did not sign.
+     * @param courseId
+     * @param examId
+     * @return matriculation number of students that were not found in the system
+     */
+    verifyExamUserAttendance(courseId: number, examId: number): Observable<HttpResponse<ExamUserAttendanceCheckDTO[]>> {
+        return this.http.get<ExamUserAttendanceCheckDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/verify-exam-users`, { observe: 'response' });
+    }
+
+    /**
      * Remove a student from the registered users for an exam
      * @param courseId The course id
      * @param examId The id of the exam from which to remove the student
@@ -287,8 +298,8 @@ export class ExamManagementService {
      * @param examId the id of the exam
      * @param testRunId the id of the test run
      */
-    deleteTestRun(courseId: number, examId: number, testRunId: number): Observable<HttpResponse<StudentExam>> {
-        return this.http.delete<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-run/${testRunId}`, { observe: 'response' });
+    deleteTestRun(courseId: number, examId: number, testRunId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-run/${testRunId}`, { observe: 'response' });
     }
 
     /**

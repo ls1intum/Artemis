@@ -10,6 +10,10 @@ export class ExamNavigationBar {
         cy.get('#exam-exercise-' + index).click();
     }
 
+    openExerciseOverview() {
+        cy.get('.exam-navigation .navigation-item.overview').click();
+    }
+
     /**
      * Presses the hand in early button in the navigation bar.
      */

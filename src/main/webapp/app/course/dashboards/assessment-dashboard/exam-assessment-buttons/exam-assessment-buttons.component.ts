@@ -66,6 +66,7 @@ export class ExamAssessmentButtonsComponent implements OnInit {
             });
             const studentExamObservable = this.studentExamService.findAllForExam(this.courseId, this.examId).pipe(
                 tap((res) => {
+                    // TODO: directly load the longest working time from the server and avoid loading all student exams
                     this.setStudentExams(res.body);
                     this.longestWorkingTime = Math.max.apply(
                         null,

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
@@ -31,7 +30,6 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackSer
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -206,12 +204,10 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldAllowTestCaseWeightSumZeroManualAssessment(AssessmentType assessmentType) throws Exception {
+    void shouldAllowTestCaseWeightSumZero(AssessmentType assessmentType) throws Exception {
         // for non-automatic exercises the update succeeds and triggers an update
-        if (assessmentType != AssessmentType.AUTOMATIC) {
-            bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
-            bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getTemplateParticipation());
-        }
+        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
+        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getTemplateParticipation());
 
         programmingExercise.setAssessmentType(assessmentType);
         programmingExerciseRepository.save(programmingExercise);
@@ -233,15 +229,8 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
             return testCaseDTO;
         }).collect(Collectors.toSet());
 
-        if (assessmentType == AssessmentType.AUTOMATIC) {
-            assertThatThrownBy(() -> testCaseService.update(programmingExercise.getId(), testCaseDTOs)).isInstanceOf(BadRequestAlertException.class)
-                    .hasMessageContaining("The sum of all test case weights is 0 or below.");
-        }
-        else {
-            Set<ProgrammingExerciseTestCase> updated = testCaseService.update(programmingExercise.getId(), testCaseDTOs);
-            assertThat(updated).hasSize(3);
-            assertThat(updated).allMatch(testCase -> testCase.getWeight() == 0.0);
-        }
+        Set<ProgrammingExerciseTestCase> updated = testCaseService.update(programmingExercise.getId(), testCaseDTOs);
+        assertThat(updated).hasSize(3).allMatch(testCase -> testCase.getWeight() == 0.0);
     }
 
     @Test
