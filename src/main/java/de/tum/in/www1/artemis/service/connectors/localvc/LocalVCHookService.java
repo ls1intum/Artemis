@@ -22,7 +22,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
@@ -32,6 +33,9 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+/**
+ * Contains methods used by the LocalVCPostPushHook.
+ */
 @Service
 @Profile("localvc")
 public class LocalVCHookService {
@@ -70,6 +74,8 @@ public class LocalVCHookService {
     }
 
     /**
+     * Create a new submission for the given commit hash.
+     *
      * @param commitHash the hash of the commit that leads to a new submission.
      * @param repository the JGit repository this submission belongs to.
      */

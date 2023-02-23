@@ -16,6 +16,10 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.AccessUnauthorizedException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
+/**
+ * This service is responsible for checking if a user has access to a repository.
+ * It is used for accessing repositories in the local VC system from a local Git client as well as for accessing repositories via the online editor.
+ */
 @Service
 public class RepositoryAccessService {
 
@@ -38,6 +42,14 @@ public class RepositoryAccessService {
         this.examSubmissionService = examSubmissionService;
     }
 
+    /**
+     * Checks if the user has access to the repository of the given participation.
+     *
+     * @param participation        The participation for which the repository should be accessed.
+     * @param programmingExercise  The programming exercise of the participation.
+     * @param user                 The user who wants to access the repository.
+     * @param repositoryActionType The type of action that the user wants to perform on the repository (i.e. WRITE or READ).
+     */
     public void checkAccessRepositoryElseThrow(Participation participation, ProgrammingExercise programmingExercise, User user, RepositoryActionType repositoryActionType) {
 
         // Error case 1: The participation is not from a programming exercise.
@@ -98,6 +110,13 @@ public class RepositoryAccessService {
         }
     }
 
+    /**
+     * Checks if the user has access to the test repository of the given programming exercise.
+     *
+     * @param atLeastEditor if true, the user needs at least editor permissions, otherwise only teaching assistant permissions are required.
+     * @param exercise      the programming exercise the test repository belongs to.
+     * @param user          the user that wants to access the test repository.
+     */
     public void checkAccessTestRepositoryElseThrow(boolean atLeastEditor, ProgrammingExercise exercise, User user) {
         // The only test-repository endpoint that requires at least editor permissions is the getStatus endpoint (GET /api/test-repository/{exerciseId}).
         if (atLeastEditor) {

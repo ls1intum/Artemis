@@ -8,6 +8,9 @@ import java.nio.file.Path;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
 
+/**
+ * Represents a URL to a local VC repository.
+ */
 public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
 
     public LocalVCRepositoryUrl(String projectKey, String repositorySlug, URL localVCServerUrl) {

@@ -41,7 +41,10 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -403,7 +406,6 @@ public class ProgrammingExerciseService {
 
     private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) throws GitAPIException {
         final String projectKey = programmingExercise.getProjectKey();
-        final String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         // Create project
         versionControlService.get().createProjectForExercise(programmingExercise);
         // Create template repository.
@@ -414,10 +416,10 @@ public class ProgrammingExerciseService {
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null);
 
         // Create auxiliary repositories
-        createAndInitializeAuxiliaryRepositories(projectKey, courseShortName, programmingExercise);
+        createAndInitializeAuxiliaryRepositories(projectKey, programmingExercise);
     }
 
-    private void createAndInitializeAuxiliaryRepositories(String projectKey, String courseShortName, ProgrammingExercise programmingExercise) throws GitAPIException {
+    private void createAndInitializeAuxiliaryRepositories(String projectKey, ProgrammingExercise programmingExercise) throws GitAPIException {
         for (AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
             String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
             versionControlService.get().createRepository(projectKey, repositoryName, null);

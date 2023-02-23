@@ -9,12 +9,12 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
+/**
+ * Note: Empty implementation for local VC. There is no external system, that needs user management.
+ */
 @Service
 @Profile("localvc")
 public class LocalVCUserManagementService implements VcsUserManagementService {
-
-    public LocalVCUserManagementService() {
-    }
 
     /**
      * Creates a new user in the VCS based on a local Artemis user. Should be called
@@ -48,7 +48,7 @@ public class LocalVCUserManagementService implements VcsUserManagementService {
      */
     @Override
     public void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, String newPassword) {
-        // Not implemented for local VC.
+        throw new UnsupportedOperationException("Not implemented for local VC.");
     }
 
     /**
@@ -58,7 +58,7 @@ public class LocalVCUserManagementService implements VcsUserManagementService {
      */
     @Override
     public void deleteVcsUser(String login) throws VersionControlException {
-        // Not implemented for local VC.
+        throw new UnsupportedOperationException("Not implemented for local VC.");
     }
 
     /**
@@ -69,7 +69,7 @@ public class LocalVCUserManagementService implements VcsUserManagementService {
      */
     @Override
     public void activateUser(String login) throws VersionControlException {
-        // Not implemented for local VC.
+        throw new UnsupportedOperationException("Not implemented for local VC.");
     }
 
     /**
@@ -80,7 +80,7 @@ public class LocalVCUserManagementService implements VcsUserManagementService {
      */
     @Override
     public void deactivateUser(String login) throws VersionControlException {
-        // Not implemented for local VC.
+        throw new UnsupportedOperationException("Not implemented for local VC.");
     }
 
     /**
@@ -97,6 +97,6 @@ public class LocalVCUserManagementService implements VcsUserManagementService {
      */
     @Override
     public void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) {
-        // Not implemented for local VC.
+        throw new UnsupportedOperationException("Not implemented for local VC.");
     }
 }

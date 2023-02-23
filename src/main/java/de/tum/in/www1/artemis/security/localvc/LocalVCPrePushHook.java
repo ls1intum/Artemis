@@ -12,6 +12,10 @@ import org.eclipse.jgit.transport.PreReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
 
+/**
+ * Contains an onPreReceive method that is called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was
+ * successful).
+ */
 public class LocalVCPrePushHook implements PreReceiveHook {
 
     public LocalVCPrePushHook() {

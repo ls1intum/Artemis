@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.Repository;
@@ -15,6 +16,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+/**
+ * Contains methods used to create the local VC servlet.
+ */
 @Service
 @Profile("localvc")
 public class LocalVCServletService {
@@ -63,7 +67,7 @@ public class LocalVCServletService {
             }
             catch (IOException e) {
                 log.error("Unable to open local repository {}", repositoryPath);
-                throw new RepositoryNotFoundException(repositoryPath);
+                throw new RepositoryNotFoundException(repositoryPath, e);
             }
         }
     }

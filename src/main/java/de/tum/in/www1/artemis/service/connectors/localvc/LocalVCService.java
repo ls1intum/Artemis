@@ -16,7 +16,9 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,18 +30,25 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Commit;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.util.StringUtil;
 
+/**
+ * Implementation of VersionControlService for the local VC server.
+ */
 @Service
 @Profile("localvc")
 public class LocalVCService extends AbstractVersionControlService {
@@ -129,19 +138,19 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws LocalVCException {
+        String localRepositoryPath = urlService.getLocalVCPathFromRepositoryUrl(repositoryUrl, localVCBasePath).toString();
+        Map<String, Ref> remoteRepositoryRefs;
         try {
-            String localRepositoryPath = urlService.getLocalVCPathFromRepositoryUrl(repositoryUrl, localVCBasePath).toString();
-            Map<String, Ref> remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localRepositoryPath).callAsMap();
-            if (remoteRepositoryRefs.containsKey("HEAD")) {
-                return remoteRepositoryRefs.get("HEAD").getTarget().getName();
-            }
+            remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localRepositoryPath).callAsMap();
+        }
+        catch (GitAPIException e) {
+            throw new LocalVCException("Cannot get default branch of repository " + localRepositoryPath + ". ls-remote failed.", e);
+        }
+        if (remoteRepositoryRefs.containsKey("HEAD")) {
+            return remoteRepositoryRefs.get("HEAD").getTarget().getName();
+        }
 
-            throw new LocalVCException("Cannot get default branch of repository " + localRepositoryPath + ". ls-remote does not return a HEAD reference.");
-        }
-        catch (Exception e) {
-            log.error("Unable to get default branch for repository {}", repositoryUrl.folderNameForRepositoryUrl(), e);
-            throw new LocalVCException("Unable to get default branch for repository " + repositoryUrl.folderNameForRepositoryUrl(), e);
-        }
+        throw new LocalVCException("Cannot get default branch of repository " + localRepositoryPath + ". ls-remote does not return a HEAD reference.");
     }
 
     @Override
@@ -191,8 +200,7 @@ public class LocalVCService extends AbstractVersionControlService {
             Files.createDirectories(projectPath);
         }
         catch (IOException e) {
-            log.error("Could not create local git project for key {}.", projectKey, e);
-            throw new LocalVCException("Error while creating local VC project.");
+            throw new LocalVCException("Error while creating local VC project.", e);
         }
     }
 
@@ -247,7 +255,7 @@ public class LocalVCService extends AbstractVersionControlService {
         }
         catch (GitAPIException | IOException e) {
             log.error("Could not create local git repo {} at location {}", repositorySlug, remoteDirPath, e);
-            throw new LocalVCException("Error while creating local git project.");
+            throw new LocalVCException("Error while creating local git project.", e);
         }
     }
 
@@ -280,7 +288,7 @@ public class LocalVCService extends AbstractVersionControlService {
             return ZonedDateTime.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
         }
         catch (DateTimeParseException e) {
-            throw new LocalVCException("Unable to get the push date from participation.");
+            throw new LocalVCException("Unable to get the push date from participation.", e);
         }
     }
 }

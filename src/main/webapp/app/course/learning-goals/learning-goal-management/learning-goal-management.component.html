@@ -57,7 +57,7 @@
                                 class="btn btn-primary"
                                 value="Create Relation"
                                 (click)="createRelation()"
-                                [disabled]="!headLearningGoal || !tailLearningGoal || !relationType || headLearningGoal === tailLearningGoal"
+                                [disabled]="!headLearningGoal || !tailLearningGoal || !relationType || headLearningGoal == tailLearningGoal"
                             />
                         </div>
                     </form>

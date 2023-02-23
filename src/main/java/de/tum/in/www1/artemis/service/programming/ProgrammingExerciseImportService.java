@@ -75,9 +75,7 @@ public class ProgrammingExerciseImportService {
      */
     public void importRepositories(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         final var sourceProjectKey = templateExercise.getProjectKey();
-        final var sourceCourseShortName = templateExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         final var targetProjectKey = newExercise.getProjectKey();
-        final var targetCourseShortName = newExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
 
         // First, create a new project for our imported exercise
         versionControlService.get().createProjectForExercise(newExercise);
@@ -88,18 +86,15 @@ public class ProgrammingExerciseImportService {
 
         String sourceBranch = versionControlService.get().getOrRetrieveBranchOfExercise(templateExercise);
 
-        versionControlService.get().copyRepository(sourceProjectKey, sourceCourseShortName, templateRepoName, sourceBranch, targetProjectKey, targetCourseShortName,
-                RepositoryType.TEMPLATE.getName());
-        versionControlService.get().copyRepository(sourceProjectKey, sourceCourseShortName, solutionRepoName, sourceBranch, targetProjectKey, targetCourseShortName,
-                RepositoryType.SOLUTION.getName());
-        versionControlService.get().copyRepository(sourceProjectKey, sourceCourseShortName, testRepoName, sourceBranch, targetProjectKey, targetCourseShortName,
-                RepositoryType.TESTS.getName());
+        versionControlService.get().copyRepository(sourceProjectKey, templateRepoName, sourceBranch, targetProjectKey, RepositoryType.TEMPLATE.getName());
+        versionControlService.get().copyRepository(sourceProjectKey, solutionRepoName, sourceBranch, targetProjectKey, RepositoryType.SOLUTION.getName());
+        versionControlService.get().copyRepository(sourceProjectKey, testRepoName, sourceBranch, targetProjectKey, RepositoryType.TESTS.getName());
 
         List<AuxiliaryRepository> auxiliaryRepositories = templateExercise.getAuxiliaryRepositories();
         for (int i = 0; i < auxiliaryRepositories.size(); i++) {
             AuxiliaryRepository auxiliaryRepository = auxiliaryRepositories.get(i);
-            String repositoryUrl = versionControlService.get().copyRepository(sourceProjectKey, sourceCourseShortName, auxiliaryRepository.getRepositoryName(), sourceBranch,
-                    targetProjectKey, targetCourseShortName, auxiliaryRepository.getName()).toString();
+            String repositoryUrl = versionControlService.get()
+                    .copyRepository(sourceProjectKey, auxiliaryRepository.getRepositoryName(), sourceBranch, targetProjectKey, auxiliaryRepository.getName()).toString();
             AuxiliaryRepository newAuxiliaryRepository = newExercise.getAuxiliaryRepositories().get(i);
             newAuxiliaryRepository.setRepositoryUrl(repositoryUrl);
             auxiliaryRepositoryRepository.save(newAuxiliaryRepository);

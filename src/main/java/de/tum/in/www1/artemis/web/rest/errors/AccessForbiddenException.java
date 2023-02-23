@@ -5,6 +5,9 @@ import java.io.Serial;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+/**
+ * Generic unchecked exception for access forbidden (i.e. 403) errors.
+ */
 @ResponseStatus(HttpStatus.FORBIDDEN)
 public class AccessForbiddenException extends RuntimeException {
 
@@ -15,6 +18,10 @@ public class AccessForbiddenException extends RuntimeException {
 
     public AccessForbiddenException() {
         super(NOT_ALLOWED);
+    }
+
+    public AccessForbiddenException(Throwable cause) {
+        super(NOT_ALLOWED, cause);
     }
 
     public AccessForbiddenException(String message) {
