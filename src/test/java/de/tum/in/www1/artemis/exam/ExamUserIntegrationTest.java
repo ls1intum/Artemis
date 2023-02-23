@@ -102,7 +102,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         exam1 = database.addExerciseGroupsAndExercisesToExam(exam1, false);
         exam1 = examRepository.save(exam1);
 
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService, programmingExerciseStudentParticipationRepository);
+        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.enableMockingOfRequests(true);
     }
@@ -265,20 +265,20 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
             bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + "student" + i);
         }
 
-        ZonedDateTime examVisibleDate;
-        ZonedDateTime examStartDate;
-        ZonedDateTime examEndDate;
+        ZonedDateTime visibleDate;
+        ZonedDateTime startDate;
+        ZonedDateTime endDate;
         if (early) {
-            examStartDate = ZonedDateTime.now().plusHours(1);
-            examEndDate = ZonedDateTime.now().plusHours(3);
+            startDate = ZonedDateTime.now().plusHours(1);
+            endDate = ZonedDateTime.now().plusHours(3);
         }
         else {
             // If the exam is prepared only 5 minutes before the release date, the repositories of the students are unlocked as well.
-            examStartDate = ZonedDateTime.now().plusMinutes(6);
-            examEndDate = ZonedDateTime.now().plusMinutes(8);
+            startDate = ZonedDateTime.now().plusMinutes(6);
+            endDate = ZonedDateTime.now().plusMinutes(8);
         }
 
-        examVisibleDate = ZonedDateTime.now().minusMinutes(15);
+        visibleDate = ZonedDateTime.now().minusMinutes(15);
         // --> 2 min = 120s working time
 
         // all registered students
@@ -287,8 +287,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
             registeredStudents.add(database.getUserByLogin(TEST_PREFIX + "student" + i));
         }
 
-        List<StudentExam> studentExams = database.prepareStudentExamsForConduction(TEST_PREFIX, this, bitbucketRequestMockProvider, programmingExerciseTestService, request,
-                examVisibleDate, examStartDate, examEndDate, registeredStudents, studentRepos);
+        var studentExams = programmingExerciseTestService.prepareStudentExamsForConduction(TEST_PREFIX, visibleDate, startDate, endDate, registeredStudents, studentRepos);
         Exam exam = examRepository.findByIdElseThrow(studentExams.get(0).getExam().getId());
         Course course = exam.getCourse();
 

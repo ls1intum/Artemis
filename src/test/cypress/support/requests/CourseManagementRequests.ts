@@ -5,7 +5,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { BASE_API, DELETE, GET, POST, PUT } from '../constants';
+import { BASE_API, DELETE, EXERCISE_TYPE, GET, POST, PUT } from '../constants';
 import programmingExerciseTemplate from '../../fixtures/exercise/programming/template.json';
 import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
@@ -162,22 +162,22 @@ export class CourseManagementRequests {
 
     updateModelingExerciseDueDate(exercise: ModelingExercise, due = day()) {
         exercise.dueDate = due;
-        return this.updateExercise(exercise, CypressExerciseType.MODELING);
+        return this.updateExercise(exercise, EXERCISE_TYPE.Modeling);
     }
 
-    private updateExercise(exercise: Exercise, type: CypressExerciseType) {
+    private updateExercise(exercise: Exercise, type: EXERCISE_TYPE) {
         let url: string;
         switch (type) {
-            case CypressExerciseType.PROGRAMMING:
+            case EXERCISE_TYPE.Programming:
                 url = PROGRAMMING_EXERCISE_BASE;
                 break;
-            case CypressExerciseType.TEXT:
+            case EXERCISE_TYPE.Text:
                 url = TEXT_EXERCISE_BASE;
                 break;
-            case CypressExerciseType.MODELING:
+            case EXERCISE_TYPE.Modeling:
                 url = MODELING_EXERCISE_BASE;
                 break;
-            case CypressExerciseType.QUIZ:
+            case EXERCISE_TYPE.Quiz:
             default:
                 throw new Error(`Exercise type '${type}' is not supported yet!`);
         }
@@ -311,7 +311,7 @@ export class CourseManagementRequests {
 
     updateModelingExerciseAssessmentDueDate(exercise: ModelingExercise, due = day()) {
         exercise.assessmentDueDate = due;
-        return this.updateExercise(exercise, CypressExerciseType.MODELING);
+        return this.updateExercise(exercise, EXERCISE_TYPE.Modeling);
     }
 
     deleteModelingExercise(exerciseID: number) {
@@ -483,12 +483,12 @@ export class CourseManagementRequests {
 
     updateTextExerciseDueDate(exercise: TextExercise, due = day()) {
         exercise.dueDate = due;
-        return this.updateExercise(exercise, CypressExerciseType.TEXT);
+        return this.updateExercise(exercise, EXERCISE_TYPE.Text);
     }
 
     updateTextExerciseAssessmentDueDate(exercise: TextExercise, due = day()) {
         exercise.assessmentDueDate = due;
-        return this.updateExercise(exercise, CypressExerciseType.TEXT);
+        return this.updateExercise(exercise, EXERCISE_TYPE.Text);
     }
 
     deleteLecture(lectureId: number) {
@@ -645,13 +645,6 @@ export enum CypressAssessmentType {
     AUTOMATIC,
     SEMI_AUTOMATIC,
     MANUAL,
-}
-
-export enum CypressExerciseType {
-    PROGRAMMING,
-    MODELING,
-    TEXT,
-    QUIZ,
 }
 
 export function convertCourseAfterMultiPart(response: Cypress.Response<Course>): Course {
