@@ -22,6 +22,8 @@ cd /repositories/test-repository
 if [ "$ARTEMIS_BUILD_TOOL" = "gradle" ]
 then
   chmod +x gradlew
+  # Remove carriage returns from gradlew in case the file was copied from a Windows machine.
+  sed -i -e 's/\r$//' gradlew
   ./gradlew clean test
 else
   mvn clean test
