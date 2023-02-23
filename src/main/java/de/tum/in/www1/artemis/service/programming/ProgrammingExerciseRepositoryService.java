@@ -69,7 +69,7 @@ public class ProgrammingExerciseRepositoryService {
      * @param user        the user who has initiated the generation of the programming exercise
      * @throws GitAPIException If committing, or pushing to the repo throws an exception
      */
-    void commitAndPushRepository(final Repository repository, final String message, boolean emptyCommit, final User user) throws GitAPIException {
+    void commitAndPushRepository(final Repository repository, final String message, final boolean emptyCommit, final User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, message, emptyCommit, user);
 
@@ -207,7 +207,7 @@ public class ProgrammingExerciseRepositoryService {
     }
 
     private void createAndInitializeAuxiliaryRepositories(final String projectKey, final ProgrammingExercise programmingExercise) throws GitAPIException {
-        for (AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
+        for (final AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
             final String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
             versionControlService.orElseThrow().createRepository(projectKey, repositoryName, null);
             repo.setRepositoryUrl(versionControlService.orElseThrow().getCloneRepositoryUrl(programmingExercise.getProjectKey(), repositoryName).toString());
@@ -368,7 +368,7 @@ public class ProgrammingExerciseRepositoryService {
         sectionsMap.put("sequential", false);
 
         // replace placeholder settings in project file
-        String projectFileFileName;
+        final String projectFileFileName;
         if (projectType != null && projectType.isGradle()) {
             projectFileFileName = "build.gradle";
         }
@@ -401,7 +401,7 @@ public class ProgrammingExerciseRepositoryService {
             final Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
             // filter non-existing resources to avoid exceptions
             final List<Resource> existingProjectTypeTestFileResources = new ArrayList<>();
-            for (Resource resource : projectTypeTestFileResources) {
+            for (final Resource resource : projectTypeTestFileResources) {
                 if (resource.exists()) {
                     existingProjectTypeTestFileResources.add(resource);
                 }
@@ -437,7 +437,7 @@ public class ProgrammingExerciseRepositoryService {
         sectionsMap.put("non-sequential", false);
         sectionsMap.put("sequential", true);
 
-        String projectFileName;
+        final String projectFileName;
         if (isMaven) {
             projectFileName = "pom.xml";
         }
@@ -461,7 +461,7 @@ public class ProgrammingExerciseRepositoryService {
         sequentialTestTasks.add("structural");
         sequentialTestTasks.add("behavior");
 
-        for (String buildStage : sequentialTestTasks) {
+        for (final String buildStage : sequentialTestTasks) {
             final Path buildStagePath = repoLocalPath.resolve(buildStage);
             Files.createDirectory(buildStagePath);
 
@@ -471,7 +471,7 @@ public class ProgrammingExerciseRepositoryService {
             Files.createDirectory(buildStagePath.toAbsolutePath().resolve("test"));
             Files.createDirectory(buildStagePath.toAbsolutePath().resolve("test").resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER));
 
-            String packagePath = buildStagePath.toAbsolutePath().resolve("test").resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath().toString();
+            final String packagePath = buildStagePath.toAbsolutePath().resolve("test").resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath().toString();
 
             // staging project files are only required for maven
             if (isMaven && stagePomXml != null) {
@@ -556,7 +556,7 @@ public class ProgrammingExerciseRepositoryService {
      *
      * @param exerciseId of the exercise
      */
-    public void unlockAllRepositories(Long exerciseId) {
+    public void unlockAllRepositories(final Long exerciseId) {
         instanceMessageSendService.sendUnlockAllRepositories(exerciseId);
     }
 
@@ -565,7 +565,7 @@ public class ProgrammingExerciseRepositoryService {
      *
      * @param exerciseId of the exercise
      */
-    public void lockAllRepositories(Long exerciseId) {
+    public void lockAllRepositories(final Long exerciseId) {
         instanceMessageSendService.sendLockAllRepositories(exerciseId);
     }
 
@@ -576,7 +576,7 @@ public class ProgrammingExerciseRepositoryService {
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
      * @param updatedProgrammingExercise      the updated exercise with new values
      */
-    public void handleRepoAccessRightChanges(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
+    public void handleRepoAccessRightChanges(final ProgrammingExercise programmingExerciseBeforeUpdate, final ProgrammingExercise updatedProgrammingExercise) {
         if (!programmingExerciseBeforeUpdate.isReleased()) {
             if (updatedProgrammingExercise.isReleased() && !Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
                 // There might be some repositories that have to be unlocked
@@ -592,7 +592,7 @@ public class ProgrammingExerciseRepositoryService {
             return;
         }
 
-        boolean lockedUnlockedRepos = handleRepoAccessRightChangesDueDates(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        final boolean lockedUnlockedRepos = handleRepoAccessRightChangesDueDates(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
         if (lockedUnlockedRepos) {
             return;
         }
@@ -607,7 +607,7 @@ public class ProgrammingExerciseRepositoryService {
      * @param updatedProgrammingExercise      the updated exercise with new values
      * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
      */
-    private boolean handleRepoAccessRightChangesDueDates(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
+    private boolean handleRepoAccessRightChangesDueDates(final ProgrammingExercise programmingExerciseBeforeUpdate, final ProgrammingExercise updatedProgrammingExercise) {
         if (!Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
             final ZonedDateTime now = ZonedDateTime.now();
 
@@ -634,7 +634,7 @@ public class ProgrammingExerciseRepositoryService {
      * @param updatedProgrammingExercise      the updated exercise with new values
      * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
      */
-    private boolean handleRepoAccessRightChangesChangesOfflineIDE(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
+    private boolean handleRepoAccessRightChangesChangesOfflineIDE(final ProgrammingExercise programmingExerciseBeforeUpdate, final ProgrammingExercise updatedProgrammingExercise) {
         if (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
             if (Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && !Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
                 unlockAllRepositories(programmingExerciseBeforeUpdate.getId());
