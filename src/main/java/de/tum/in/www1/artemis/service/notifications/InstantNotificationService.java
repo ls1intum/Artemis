@@ -2,12 +2,17 @@ package de.tum.in.www1.artemis.service.notifications;
 
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 
-public interface InstantNotificationService {
+@Service
+public class InstantNotificationService {
 
-    void sendNotification(Notification notification, User user, Object notificationSubject);
+    public void sendNotification(Notification notification, User user, Object notificationSubject) {
+    }
 
-    void sendNotification(Notification notification, List<User> users, Object notificationSubject);
+    public void sendNotification(Notification notification, List<User> users, Object notificationSubject) {
+    }
 }

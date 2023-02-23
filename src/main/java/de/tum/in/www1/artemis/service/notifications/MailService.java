@@ -41,7 +41,7 @@ import tech.jhipster.config.JHipsterProperties;
  * We use the @Async annotation to send emails asynchronously.
  */
 @Service
-public class MailService implements InstantNotificationService {
+public class MailService extends InstantNotificationService {
 
     private final Logger log = LoggerFactory.getLogger(MailService.class);
 

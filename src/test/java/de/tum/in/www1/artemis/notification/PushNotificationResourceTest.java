@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceTyp
 import de.tum.in.www1.artemis.web.rest.push_notification.PushNotificationRegisterBody;
 import de.tum.in.www1.artemis.web.rest.push_notification.PushNotificationUnregisterRequest;
 
-public class PushNotificationResourceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class PushNotificationResourceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     @WithMockUser(roles = "USER")

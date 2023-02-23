@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebaseP
  * Handles the sending of Notifications via this channels.
  */
 @Service
-public class GeneralInstantNotificationService implements InstantNotificationService {
+public class GeneralInstantNotificationService extends InstantNotificationService {
 
     private final ApplePushNotificationService applePushNotificationService;
 

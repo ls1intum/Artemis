@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebasePushNotificationService;
 
-public class GeneralInstantNotificationServiceTest {
+class GeneralInstantNotificationServiceTest {
 
     @Mock
     private NotificationSettingsService notificationSettingsService;

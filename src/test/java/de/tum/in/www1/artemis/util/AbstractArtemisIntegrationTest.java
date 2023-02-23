@@ -22,7 +22,6 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
@@ -34,10 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.Lti10Service;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
-import de.tum.in.www1.artemis.service.notifications.MailService;
-import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
-import de.tum.in.www1.artemis.service.notifications.TutorialGroupNotificationService;
+import de.tum.in.www1.artemis.service.notifications.*;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebasePushNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
@@ -86,6 +82,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @SpyBean
     protected MailService mailService;
+
+    @SpyBean
+    protected GeneralInstantNotificationService generalInstantNotificationService;
 
     @SpyBean
     protected FirebasePushNotificationService firebasePushNotificationService;
@@ -157,16 +156,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @BeforeEach
     void mockMailService() {
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
-    }
-
-    @BeforeEach
-    void mockApplePushNotificationService() {
-        doNothing().when(applePushNotificationService).sendNotification(any(Notification.class), anyList(), any());
-    }
-
-    @BeforeEach
-    void mockFirebasePushNotificationService() {
-        doNothing().when(firebasePushNotificationService).sendNotification(any(Notification.class), anyList(), any());
     }
 
     @BeforeEach

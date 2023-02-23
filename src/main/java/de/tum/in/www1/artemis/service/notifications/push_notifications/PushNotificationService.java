@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.service.notifications.InstantNotificationService;
  * Implements the encryption of the payload
  */
 @Service
-public abstract class PushNotificationService implements InstantNotificationService {
+public class PushNotificationService extends InstantNotificationService {
 
     private static SecureRandom random = new SecureRandom();
 
@@ -60,7 +60,8 @@ public abstract class PushNotificationService implements InstantNotificationServ
      * @param requests     the requests previously built using buildSendRequest
      * @param relayBaseUrl the url of the relay
      */
-    abstract void sendNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayBaseUrl);
+    void sendNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayBaseUrl) {
+    }
 
     @Override
     public final void sendNotification(Notification notification, User user, Object notificationSubject) {
@@ -68,7 +69,7 @@ public abstract class PushNotificationService implements InstantNotificationServ
     }
 
     @Override
-    public final void sendNotification(Notification notification, List<User> users, Object notificationSubject) {
+    public void sendNotification(Notification notification, List<User> users, Object notificationSubject) {
         final Optional<String> relayServerBaseUrl = getRelayBaseUrl();
 
         if (relayServerBaseUrl.isEmpty())
@@ -103,11 +104,17 @@ public abstract class PushNotificationService implements InstantNotificationServ
         sendNotificationRequestsToEndpoint(notificationRequests, relayServerBaseUrl.get());
     }
 
-    abstract PushNotificationDeviceConfigurationRepository getRepository();
+    PushNotificationDeviceConfigurationRepository getRepository() {
+        return null;
+    }
 
-    abstract PushNotificationDeviceType getDeviceType();
+    PushNotificationDeviceType getDeviceType() {
+        return null;
+    }
 
-    abstract Optional<String> getRelayBaseUrl();
+    Optional<String> getRelayBaseUrl() {
+        return null;
+    }
 
     record PushNotificationData(String title, String body, String target, String type) {
     }
