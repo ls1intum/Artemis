@@ -33,6 +33,12 @@ public class ProgrammingExerciseRepositoryService {
 
     private static final String TEST_FILES_PATH = "testFiles";
 
+    private static final String TEST_DIR = "test";
+
+    private static final String POM_XML = "pom.xml";
+
+    private static final String BUILD_GRADLE = "build.gradle";
+
     private static final String PACKAGE_NAME_FOLDER_PLACEHOLDER = "${packageNameFolder}";
 
     private static final String PACKAGE_NAME_FILE_PLACEHOLDER = "${packageNameFile}";
@@ -69,7 +75,7 @@ public class ProgrammingExerciseRepositoryService {
      * @param user        the user who has initiated the generation of the programming exercise
      * @throws GitAPIException If committing, or pushing to the repo throws an exception
      */
-    void commitAndPushRepository(final Repository repository, final String message, final boolean emptyCommit, final User user) throws GitAPIException {
+    void commitAndPushRepository(final Repository repository, final String message, boolean emptyCommit, final User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, message, emptyCommit, user);
 
@@ -148,7 +154,7 @@ public class ProgrammingExerciseRepositoryService {
 
     private Path getTemplateDirectoryForRepositoryType(final RepositoryType repositoryType) {
         if (RepositoryType.TESTS.equals(repositoryType)) {
-            return Path.of("test");
+            return Path.of(TEST_DIR);
         }
         else {
             return Path.of(repositoryType.getName());
@@ -285,7 +291,7 @@ public class ProgrammingExerciseRepositoryService {
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
 
         // First get files that are not dependent on the project type
-        final Path templatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()).resolve("test");
+        final Path templatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()).resolve(TEST_DIR);
 
         // Java both supports Gradle and Maven as a test template
         Path projectTemplatePath = templatePath;
@@ -335,7 +341,7 @@ public class ProgrammingExerciseRepositoryService {
             throws IOException {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path projectTypeTemplatePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType)
-                .resolve("test");
+                .resolve(TEST_DIR);
         final Path projectTypeProjectTemplatePath = projectTypeTemplatePath.resolve("projectTemplate").resolve(ALL_FILES_GLOB);
 
         try {
@@ -362,20 +368,12 @@ public class ProgrammingExerciseRepositoryService {
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
         final Path testFilePath = templatePath.resolve(TEST_FILES_PATH).resolve(ALL_FILES_GLOB);
         final Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
-        final String packagePath = repoLocalPath.resolve("test").resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath().toString();
+        final String packagePath = repoLocalPath.resolve(TEST_DIR).resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath().toString();
 
         sectionsMap.put("non-sequential", true);
         sectionsMap.put("sequential", false);
 
-        // replace placeholder settings in project file
-        final String projectFileFileName;
-        if (projectType != null && projectType.isGradle()) {
-            projectFileFileName = "build.gradle";
-        }
-        else {
-            projectFileFileName = "pom.xml";
-        }
-        fileService.replacePlaceholderSections(repoLocalPath.resolve(projectFileFileName).toAbsolutePath().toString(), sectionsMap);
+        setupBuildToolProjectFile(repoLocalPath, projectType, sectionsMap);
 
         fileService.copyResources(testFileResources, resources.prefix.toString(), packagePath, false);
 
@@ -385,17 +383,40 @@ public class ProgrammingExerciseRepositoryService {
 
         // Copy static code analysis config files
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
-            final Path staticCodeAnalysisConfigPath = templatePath.resolve("staticCodeAnalysisConfig").resolve(ALL_FILES_GLOB);
-            final Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
-            fileService.copyResources(staticCodeAnalysisResources, resources.prefix.toString(), repoLocalPath.toString(), true);
+            setupStaticCodeAnalysisConfigFiles(resources, templatePath, repoLocalPath);
         }
+    }
+
+    /**
+     * Fills in placeholders in the build tool project definition file based on the enabled exercise features.
+     *
+     * @param repoLocalPath  The local path to the repository.
+     * @param projectType    The exercise project type.
+     * @param activeFeatures The active features in the exercise.
+     */
+    private void setupBuildToolProjectFile(final Path repoLocalPath, final ProjectType projectType, final Map<String, Boolean> activeFeatures) {
+        final String projectFileFileName;
+        if (projectType != null && projectType.isGradle()) {
+            projectFileFileName = BUILD_GRADLE;
+        }
+        else {
+            projectFileFileName = POM_XML;
+        }
+
+        fileService.replacePlaceholderSections(repoLocalPath.resolve(projectFileFileName).toAbsolutePath().toString(), activeFeatures);
+    }
+
+    private void setupStaticCodeAnalysisConfigFiles(final RepositoryResources resources, final Path templatePath, final Path repoLocalPath) throws IOException {
+        final Path staticCodeAnalysisConfigPath = templatePath.resolve("staticCodeAnalysisConfig").resolve(ALL_FILES_GLOB);
+        final Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
+        fileService.copyResources(staticCodeAnalysisResources, resources.prefix.toString(), repoLocalPath.toString(), true);
     }
 
     private void overwriteProjectTypeSpecificFiles(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final String packagePath)
             throws IOException {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path projectTypeTemplatePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType)
-                .resolve("test");
+                .resolve(TEST_DIR);
 
         try {
             final Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
@@ -428,69 +449,105 @@ public class ProgrammingExerciseRepositoryService {
      */
     private void setupTestTemplateSequentialTestRuns(final RepositoryResources resources, final Path templatePath, final Path projectTemplatePath, final ProjectType projectType,
             final Map<String, Boolean> sectionsMap) throws IOException {
-        final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
-        final Path stagePomXmlName = Path.of("stagePom.xml");
+        sectionsMap.put("non-sequential", false);
+        sectionsMap.put("sequential", true);
 
         // maven configuration should be set for kotlin and older exercises where no project type has been introduced where no project type is defined
         final boolean isMaven = ProjectType.isMavenProject(projectType);
 
-        sectionsMap.put("non-sequential", false);
-        sectionsMap.put("sequential", true);
-
         final String projectFileName;
         if (isMaven) {
-            projectFileName = "pom.xml";
+            projectFileName = POM_XML;
         }
         else {
-            projectFileName = "build.gradle";
+            projectFileName = BUILD_GRADLE;
         }
+
+        final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
+
         fileService.replacePlaceholderSections(repoLocalPath.resolve(projectFileName).toAbsolutePath().toString(), sectionsMap);
 
-        // staging project files are only required for maven
-        Resource stagePomXml = null;
-        if (isMaven) {
-            Path stagePomXmlPath = templatePath.resolve(stagePomXmlName);
-            if (projectTemplatePath.resolve(stagePomXmlName).toFile().exists()) {
-                stagePomXmlPath = projectTemplatePath.resolve(stagePomXmlName);
-            }
-            stagePomXml = resourceLoaderService.getResource(stagePomXmlPath);
-        }
+        final Optional<Resource> stagePomXml = getStagePomXml(templatePath, projectTemplatePath, isMaven);
 
         // This is done to prepare for a feature where instructors/tas can add multiple build stages.
-        final List<String> sequentialTestTasks = new ArrayList<>();
-        sequentialTestTasks.add("structural");
-        sequentialTestTasks.add("behavior");
+        setupBuildStage(resources.prefix, templatePath, projectTemplatePath, projectType, repoLocalPath, stagePomXml, BuildStage.STRUCTURAL);
+        setupBuildStage(resources.prefix, templatePath, projectTemplatePath, projectType, repoLocalPath, stagePomXml, BuildStage.BEHAVIOR);
+    }
 
-        for (final String buildStage : sequentialTestTasks) {
-            final Path buildStagePath = repoLocalPath.resolve(buildStage);
-            Files.createDirectory(buildStagePath);
+    private Optional<Resource> getStagePomXml(final Path templatePath, final Path projectTemplatePath, boolean isMaven) {
+        if (!isMaven) {
+            return Optional.empty();
+        }
 
-            Path buildStageResourcesPath = templatePath.resolve(TEST_FILES_PATH).resolve(buildStage).resolve(ALL_FILES_GLOB);
-            Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
+        final Path stagePomXmlName = Path.of("stagePom.xml");
 
-            Files.createDirectory(buildStagePath.toAbsolutePath().resolve("test"));
-            Files.createDirectory(buildStagePath.toAbsolutePath().resolve("test").resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER));
+        Path stagePomXmlPath = templatePath.resolve(stagePomXmlName);
+        if (projectTemplatePath.resolve(stagePomXmlName).toFile().exists()) {
+            stagePomXmlPath = projectTemplatePath.resolve(stagePomXmlName);
+        }
 
-            final String packagePath = buildStagePath.toAbsolutePath().resolve("test").resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath().toString();
+        return Optional.ofNullable(resourceLoaderService.getResource(stagePomXmlPath));
+    }
 
-            // staging project files are only required for maven
-            if (isMaven && stagePomXml != null) {
-                Files.copy(stagePomXml.getInputStream(), buildStagePath.resolve("pom.xml"));
-            }
+    private enum BuildStage {
 
-            fileService.copyResources(buildStageResources, resources.prefix.toString(), packagePath, false);
+        STRUCTURAL, BEHAVIOR;
 
-            // Possibly overwrite files if the project type is defined
-            if (projectType != null) {
-                buildStageResourcesPath = projectTemplatePath.resolve(TEST_FILES_PATH).resolve(buildStage).resolve(ALL_FILES_GLOB);
-                try {
-                    buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
-                    fileService.copyResources(buildStageResources, resources.prefix.toString(), packagePath, false);
-                }
-                catch (FileNotFoundException fileNotFoundException) {
-                    log.debug("Could not copy resource to template", fileNotFoundException);
-                }
-            }
+        Path getTemplateDirectory() {
+            return switch (this) {
+                case STRUCTURAL -> Path.of("structural");
+                case BEHAVIOR -> Path.of("behavior");
+            };
+        }
+    }
+
+    /**
+     * Sets up the resources specific to exercises that use multiple build stages.
+     *
+     * @param resourcePrefix      The root of the general template directory.
+     * @param templatePath        The path in which the template test files can be found.
+     * @param projectTemplatePath The path in which the template test files can be found in case the exercise has a project type.
+     * @param projectType         The project type of the exercise.
+     * @param repoLocalPath       The local path of the repository for the exercise.
+     * @param stagePomXml         A {@code pom.xml} file for this build stage.
+     * @param buildStage          The build stage that should be set up.
+     * @throws IOException Thrown in case reading template files, or writing them to the local repository fails.
+     */
+    private void setupBuildStage(final Path resourcePrefix, final Path templatePath, final Path projectTemplatePath, final ProjectType projectType, final Path repoLocalPath,
+            final Optional<Resource> stagePomXml, final BuildStage buildStage) throws IOException {
+        final Path buildStageTemplateSubDirectory = buildStage.getTemplateDirectory();
+        final Path buildStagePath = repoLocalPath.resolve(buildStageTemplateSubDirectory);
+        Files.createDirectory(buildStagePath);
+
+        Files.createDirectory(buildStagePath.toAbsolutePath().resolve(TEST_DIR));
+        Files.createDirectory(buildStagePath.toAbsolutePath().resolve(TEST_DIR).resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER));
+
+        final String packagePath = buildStagePath.toAbsolutePath().resolve(TEST_DIR).resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath().toString();
+
+        // staging project files are only required for maven
+        final boolean isMaven = ProjectType.isMavenProject(projectType);
+        if (isMaven && stagePomXml.isPresent()) {
+            Files.copy(stagePomXml.get().getInputStream(), buildStagePath.resolve(POM_XML));
+        }
+
+        final Path buildStageResourcesPath = templatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory).resolve(ALL_FILES_GLOB);
+        final Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
+        fileService.copyResources(buildStageResources, resourcePrefix.toString(), packagePath, false);
+
+        if (projectType != null) {
+            overwriteStageFilesForProjectType(resourcePrefix, projectTemplatePath, buildStageTemplateSubDirectory, packagePath);
+        }
+    }
+
+    private void overwriteStageFilesForProjectType(final Path resourcePrefix, final Path projectTemplatePath, final Path buildStageTemplateSubDirectory, final String packagePath)
+            throws IOException {
+        final Path buildStageResourcesPath = projectTemplatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory).resolve(ALL_FILES_GLOB);
+        try {
+            final Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
+            fileService.copyResources(buildStageResources, resourcePrefix.toString(), packagePath, false);
+        }
+        catch (FileNotFoundException fileNotFoundException) {
+            log.debug("Could not copy resource to template", fileNotFoundException);
         }
     }
 
