@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
@@ -109,6 +111,17 @@ public abstract class Notification extends DomainObject {
 
     public void setNotificationTextValues(String notificationTextValues) {
         this.notificationTextValues = notificationTextValues;
+    }
+
+    public void setNotificationTextValues(String[] notificationTextValues) {
+        String jsonString = null;
+        try {
+            jsonString = new ObjectMapper().writeValueAsString(notificationTextValues);
+        }
+        catch (JsonProcessingException exception) {
+            System.err.println(exception.getMessage());
+        }
+        this.notificationTextValues = jsonString;
     }
 
     public ZonedDateTime getNotificationDate() {

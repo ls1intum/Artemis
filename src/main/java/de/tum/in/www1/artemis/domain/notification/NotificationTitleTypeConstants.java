@@ -119,13 +119,16 @@ public class NotificationTitleTypeConstants {
 
     public static final String COURSE_ARCHIVE_STARTED_TEXT = "notification.text.courseArchiveStarted";
 
-    public static final String COURSE_ARCHIVE_FINISHED_TEXT = "notification.text.courseArchiveFinished";
+    public static final String COURSE_ARCHIVE_FINISHED_WITH_ERRORS_TEXT = "notification.text.courseArchiveFinishedWithErrors";
+
+    public static final String COURSE_ARCHIVE_FINISHED_WITHOUT_ERRORS_TEXT = "notification.text.courseArchiveFinishedWithoutErrors";
 
     public static final String COURSE_ARCHIVE_FAILED_TEXT = "notification.text.courseArchiveFailed";
 
     public static final String EXAM_ARCHIVE_STARTED_TEXT = "notification.text.examArchiveStarted";
 
-    public static final String EXAM_ARCHIVE_FINISHED_TEXT = "notification.text.examArchiveFinished";
+    public static final String EXAM_ARCHIVE_FINISHED_WITH_ERRORS_TEXT = "notification.text.examArchiveFinishedWithErrors";
+    public static final String EXAM_ARCHIVE_FINISHED_WITHOUT_ERRORS_TEXT = "notification.text.examArchiveFinishedWithoutErrors";
 
     public static final String EXAM_ARCHIVE_FAILED_TEXT = "notification.text.examArchiveFailed";
 
