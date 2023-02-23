@@ -9,7 +9,7 @@
             </column>
         </addColumn>
         <addColumn tableName="notification">
-            <column name="notification_text_values" type="text" afterColumn="text_is_placeholder"/>
+            <column name="placeholder_values" type="text" afterColumn="text_is_placeholder"/>
         </addColumn>
     </changeSet>
 </databaseChangeLog>

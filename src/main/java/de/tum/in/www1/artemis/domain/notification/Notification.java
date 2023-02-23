@@ -44,8 +44,8 @@ public abstract class Notification extends DomainObject {
     @Column(name = "text_is_placeholder")
     private boolean textIsPlaceholder;
 
-    @Column(name = "notification_text_values")
-    private String notificationTextValues;
+    @Column(name = "placeholder_values")
+    private String placeholderValues;
 
     @Column(name = "notification_date")
     private ZonedDateTime notificationDate;
@@ -105,15 +105,15 @@ public abstract class Notification extends DomainObject {
         this.textIsPlaceholder = textIsPlaceholder;
     }
 
-    public String getNotificationTextValues() {
-        return notificationTextValues;
+    public String getPlaceholderValues() {
+        return placeholderValues;
     }
 
-    public void setNotificationTextValues(String notificationTextValues) {
-        this.notificationTextValues = notificationTextValues;
+    public void setPlaceholderValues(String notificationTextValues) {
+        this.placeholderValues = notificationTextValues;
     }
 
-    public void setNotificationTextValues(String[] notificationTextValues) {
+    public void setPlaceholderValues(String[] notificationTextValues) {
         String jsonString = null;
         try {
             jsonString = new ObjectMapper().writeValueAsString(notificationTextValues);
@@ -121,7 +121,7 @@ public abstract class Notification extends DomainObject {
         catch (JsonProcessingException exception) {
             System.err.println(exception.getMessage());
         }
-        this.notificationTextValues = jsonString;
+        this.placeholderValues = jsonString;
     }
 
     public ZonedDateTime getNotificationDate() {
