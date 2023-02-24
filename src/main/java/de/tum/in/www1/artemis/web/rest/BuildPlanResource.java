@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -24,8 +26,11 @@ public class BuildPlanResource {
 
     private final BuildPlanRepository buildPlanRepository;
 
-    public BuildPlanResource(BuildPlanRepository buildPlanRepository) {
+    private final AuthorizationCheckService authorizationCheckService;
+
+    public BuildPlanResource(BuildPlanRepository buildPlanRepository, AuthorizationCheckService authorizationCheckService) {
         this.buildPlanRepository = buildPlanRepository;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -51,4 +56,23 @@ public class BuildPlanResource {
 
         return ResponseEntity.ok().body(buildPlan.getBuildPlan());
     }
+
+    @GetMapping("/programming-exercises/{exerciseId}/build-plan")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<BuildPlan> getBuildPlan(@PathVariable Long exerciseId) {
+        log.debug("REST request to get build plan for programming exercise with id {}", exerciseId);
+
+        final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(exerciseId);
+        // orElseThrow is safe here since the query above ensures that we find a build plan that is attached to that exercise
+        final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Could not find connected exercise for build plan."));
+
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
+
+        return ResponseEntity.ok().body(buildPlan);
+    }
+
+    // ToDo
+    // @PutMapping("/programming-exercises/{exerciseId}/build-plan")
+    // setBuildPlan(@PathVariable Long exerciseId, @RequestBody BuildPlan buildPlan)
 }
