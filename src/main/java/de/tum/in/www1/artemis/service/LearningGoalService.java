@@ -81,4 +81,9 @@ public class LearningGoalService {
         }
         return new SearchResultPageDTO<>(lecturePage.getContent(), lecturePage.getTotalPages());
     }
+
+    public boolean checkForCircularRelation() {
+        //Implement DFS to detect circles
+        return false;
+    }
 }

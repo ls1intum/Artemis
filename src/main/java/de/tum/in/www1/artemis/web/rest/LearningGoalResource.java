@@ -352,6 +352,7 @@ public class LearningGoalResource {
             relation.setTailLearningGoal(tailLearningGoal);
             relation.setHeadLearningGoal(headLearningGoal);
             relation.setType(relationType);
+            learningGoalService.checkForCircularRelation();
             learningGoalRelationRepository.save(relation);
 
             return ResponseEntity.ok().body(relation);
