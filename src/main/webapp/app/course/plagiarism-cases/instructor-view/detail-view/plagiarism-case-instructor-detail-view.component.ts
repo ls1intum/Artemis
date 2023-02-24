@@ -16,7 +16,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { abbreviateString } from 'app/utils/text.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',

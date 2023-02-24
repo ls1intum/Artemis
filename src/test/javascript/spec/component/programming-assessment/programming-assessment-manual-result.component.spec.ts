@@ -66,6 +66,7 @@ import { ExtensionPointDirective } from 'app/shared/extension-point/extension-po
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 import { AlertService } from 'app/core/util/alert.service';
+import { Exercise } from 'app/entities/exercise.model';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -569,4 +570,33 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(onSuccessCalled).toBeFalse();
         expect(onErrorCalled).toBeTrue();
     });
+
+    it.each([
+        [0, { complaintResponse: { complaint: { accepted: false } }, onSuccess: () => {}, onError: () => {} }, [], false],
+        [0, { complaintResponse: { complaint: { accepted: false } }, onSuccess: () => {}, onError: () => {} }, [{ credits: 1 }], false],
+        [1, { complaintResponse: { complaint: { accepted: false } }, onSuccess: () => {}, onError: () => {} }, [], false],
+        [1, { complaintResponse: { complaint: { accepted: false } }, onSuccess: () => {}, onError: () => {} }, [{ credits: 1 }], false],
+        [0, { complaintResponse: { complaint: { accepted: true } }, onSuccess: () => {}, onError: () => {} }, [], true],
+        [0, { complaintResponse: { complaint: { accepted: true } }, onSuccess: () => {}, onError: () => {} }, [{ credits: 1 }], false],
+        [1, { complaintResponse: { complaint: { accepted: true } }, onSuccess: () => {}, onError: () => {} }, [], true],
+        [1, { complaintResponse: { complaint: { accepted: true } }, onSuccess: () => {}, onError: () => {} }, [{ credits: 1 }], true],
+    ])(
+        'should get confirmation if complaint is accepted without higher score',
+        (totalScoreBeforeAssessment: number, assessmentAfterComplaint: AssessmentAfterComplaint, newFeedback: Feedback[], needsConfirmation: boolean) => {
+            comp.exercise = { maxPoints: 2 } as Exercise;
+            comp.totalScoreBeforeAssessment = totalScoreBeforeAssessment;
+            comp.referencedFeedback = [];
+            comp.automaticFeedback = [];
+            comp.unreferencedFeedback = newFeedback;
+            jest.spyOn(window, 'confirm').mockReturnValue(false);
+
+            comp.checkFeedbackChangeForAcceptedComplaint(assessmentAfterComplaint);
+
+            if (needsConfirmation) {
+                expect(window.confirm).toHaveBeenCalledOnce();
+            } else {
+                expect(window.confirm).toHaveBeenCalledTimes(0);
+            }
+        },
+    );
 });

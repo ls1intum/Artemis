@@ -22,9 +22,9 @@ import org.imsglobal.pox.IMSPOXRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.thymeleaf.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -107,10 +107,9 @@ public class Lti10Service {
         String username = createUsernameFromLaunchRequest(launchRequest, onlineCourseConfiguration);
         String firstName = getUserFirstNameFromLaunchRequest(launchRequest);
         String lastName = getUserLastNameFromLaunchRequest(launchRequest);
-        ltiService.authenticateLtiUser(launchRequest.getLis_person_contact_email_primary(), launchRequest.getUser_id(), username, firstName, lastName,
-                onlineCourseConfiguration.isRequireExistingUser());
+        ltiService.authenticateLtiUser(launchRequest.getLis_person_contact_email_primary(), username, firstName, lastName, onlineCourseConfiguration.isRequireExistingUser());
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        ltiService.onSuccessfulLtiAuthentication(user, launchRequest.getUser_id(), exercise);
+        ltiService.onSuccessfulLtiAuthentication(user, exercise);
         saveLtiOutcomeUrl(user, exercise, launchRequest.getLis_outcome_service_url(), launchRequest.getLis_result_sourcedid());
     }
 
@@ -125,13 +124,13 @@ public class Lti10Service {
     public String createUsernameFromLaunchRequest(LtiLaunchRequestDTO launchRequest, OnlineCourseConfiguration onlineCourseConfiguration) {
         String username;
 
-        if (!StringUtils.isEmpty(launchRequest.getExt_user_username())) {
+        if (StringUtils.hasLength(launchRequest.getExt_user_username())) {
             username = launchRequest.getExt_user_username();
         }
-        else if (!StringUtils.isEmpty(launchRequest.getLis_person_sourcedid())) {
+        else if (StringUtils.hasLength(launchRequest.getLis_person_sourcedid())) {
             username = launchRequest.getLis_person_sourcedid();
         }
-        else if (!StringUtils.isEmpty(launchRequest.getUser_id())) {
+        else if (StringUtils.hasLength(launchRequest.getUser_id())) {
             username = launchRequest.getUser_id();
         }
         else {
@@ -159,10 +158,10 @@ public class Lti10Service {
      * @return the last name for the LTI user
      */
     public String getUserLastNameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
-        if (!StringUtils.isEmpty(launchRequest.getLis_person_name_family())) {
+        if (StringUtils.hasLength(launchRequest.getLis_person_name_family())) {
             return launchRequest.getLis_person_name_family();
         }
-        else if (!StringUtils.isEmpty(launchRequest.getLis_person_sourcedid())) {
+        else if (StringUtils.hasLength(launchRequest.getLis_person_sourcedid())) {
             return launchRequest.getLis_person_sourcedid();
         }
         return "";

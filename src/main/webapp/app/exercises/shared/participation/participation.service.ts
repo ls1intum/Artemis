@@ -11,6 +11,7 @@ import { SubmissionService } from 'app/exercises/shared/submission/submission.se
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import dayjs from 'dayjs/esm';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
@@ -96,6 +97,10 @@ export class ParticipationService {
                 return { fileName, fileContent: res.body } as BuildArtifact;
             }),
         );
+    }
+
+    shouldPreferPractice(exercise?: Exercise): boolean {
+        return !!exercise?.dueDate && dayjs().isAfter(exercise.dueDate);
     }
 
     protected convertParticipationDatesFromClient(participation: StudentParticipation): StudentParticipation {

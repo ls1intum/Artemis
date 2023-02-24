@@ -6,7 +6,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { Component, Input, ViewChild } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { SortService } from '../../../../../../main/webapp/app/shared/service/sort.service';
+import { SortService } from 'app/shared/service/sort.service';
 import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })

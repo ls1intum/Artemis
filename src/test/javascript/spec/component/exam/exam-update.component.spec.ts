@@ -39,6 +39,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     template: '',
@@ -85,6 +86,7 @@ describe('Exam Update Component', () => {
                     DummyComponent,
                     MockPipe(ArtemisTranslatePipe),
                     MockComponent(HelpIconComponent),
+                    MockComponent(DocumentationButtonComponent),
                     MockDirective(CustomMinDirective),
                     MockDirective(CustomMaxDirective),
                     MockDirective(FeatureToggleDirective),
@@ -461,9 +463,9 @@ describe('Exam Update Component', () => {
         examForImport.confirmationStartText = '111';
         examForImport.confirmationEndText = '222';
         examForImport.course = course2;
-        examForImport.numberOfRegisteredUsers = 1;
+        examForImport.numberOfExamUsers = 1;
         examForImport.exerciseGroups = [exerciseGroup1];
-        examForImport.registeredUsers = [new User(5)];
+        examForImport.examUsers = [new User(5)];
         examForImport.studentExams = [new StudentExam()];
 
         beforeEach(() => {
@@ -491,6 +493,7 @@ describe('Exam Update Component', () => {
                     MockComponent(ButtonComponent),
                     MockComponent(HelpIconComponent),
                     MockComponent(DifficultyBadgeComponent),
+                    MockComponent(DocumentationButtonComponent),
                     MockDirective(FeatureToggleDirective),
                 ],
                 providers: [
@@ -574,8 +577,8 @@ describe('Exam Update Component', () => {
             expect(component.exam.confirmationStartText).toBe('111');
             expect(component.exam.confirmationEndText).toBe('222');
             expect(component.exam.course).toEqual(course);
-            expect(component.exam.numberOfRegisteredUsers).toBe(1);
-            expect(component.exam.registeredUsers).toBeUndefined();
+            expect(component.exam.numberOfExamUsers).toBe(1);
+            expect(component.exam.examUsers).toBeUndefined();
             expect(component.exam.studentExams).toBeUndefined();
         });
 

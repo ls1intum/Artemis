@@ -82,7 +82,7 @@ class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         final var examSessionById = examSessionRepository.findById(id);
         assertThat(examSessionById).isPresent();
-        assertThat(examSessionById.get().getIpAddress().toCanonicalString()).isEqualTo("192.0.2.235");
+        assertThat(examSessionById.get().getIpAddressAsIpAddress().toCanonicalString()).isEqualTo("192.0.2.235");
     }
 
     @Test
@@ -93,7 +93,7 @@ class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         final var examSessionById = examSessionRepository.findById(id);
         assertThat(examSessionById).isPresent();
-        assertThat(examSessionById.get().getIpAddress().toCanonicalString()).isEqualTo("2001:db8::8a2e:370:7334");
+        assertThat(examSessionById.get().getIpAddressAsIpAddress().toCanonicalString()).isEqualTo("2001:db8::8a2e:370:7334");
     }
 
 }

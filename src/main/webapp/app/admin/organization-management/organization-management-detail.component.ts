@@ -45,7 +45,7 @@ export class OrganizationManagementDetailComponent implements OnInit {
     constructor(private organizationService: OrganizationManagementService, private userService: UserService, private alertService: AlertService, private route: ActivatedRoute) {}
 
     /**
-     * Retrieve the organization from the organization management activated route data {@link OrganizationMgmtResolve} subscription
+     * Retrieve the organization from the organization management activated route data subscription
      * and get the organization based on its id
      */
     ngOnInit() {
