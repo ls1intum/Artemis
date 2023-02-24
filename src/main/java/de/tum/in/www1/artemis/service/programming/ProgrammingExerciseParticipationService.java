@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -41,8 +40,6 @@ public class ProgrammingExerciseParticipationService {
 
     private final ParticipationRepository participationRepository;
 
-    private final TeamService teamService;
-
     private final Optional<VersionControlService> versionControlService;
 
     private final AuthorizationCheckService authCheckService;
@@ -51,21 +48,23 @@ public class ProgrammingExerciseParticipationService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final TeamRepository teamRepository;
+
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentParticipationRepository studentParticipationRepository,
-            ParticipationRepository participationRepository, TeamService teamService, TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
+            ParticipationRepository participationRepository, TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
             Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService, GitService gitService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, TeamRepository teamRepository) {
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
         this.participationRepository = participationRepository;
-        this.teamService = teamService;
         this.versionControlService = versionControlService;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -116,7 +115,7 @@ public class ProgrammingExerciseParticipationService {
     public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentLoginAndTestRun(Exercise exercise, String username, boolean testRun,
             boolean withSubmissions) throws EntityNotFoundException {
         if (exercise.isTeamMode()) {
-            Team team = teamService.findOneByExerciseCourseIdAndShortNameOrThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), username);
+            Team team = teamRepository.findOneByExerciseCourseIdAndShortNameOrThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), username);
 
             Optional<ProgrammingExerciseStudentParticipation> participation;
             if (withSubmissions) {

@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.service.team.strategies.CreateOnlyStrategy;
 import de.tum.in.www1.artemis.service.team.strategies.PurgeExistingStrategy;
 import de.tum.in.www1.artemis.web.rest.TeamResource;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.StudentsAppearMultipleTimesException;
 import de.tum.in.www1.artemis.web.rest.errors.StudentsNotFoundException;
 
@@ -43,16 +42,6 @@ public class TeamService {
         this.versionControlService = versionControlService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.participationService = participationService;
-    }
-
-    public Team findOneByExerciseCourseIdAndShortNameOrThrow(Long courseId, String shortName) throws EntityNotFoundException {
-        List<Team> teams = teamRepository.findAllByExerciseCourseIdAndShortName(courseId, shortName);
-
-        if (teams.size() != 1) {
-            throw new EntityNotFoundException("Team with short name " + shortName + " not found in course " + courseId);
-        }
-
-        return teams.get(0);
     }
 
     /**

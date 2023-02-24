@@ -122,4 +122,14 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     default Team findByIdElseThrow(long teamId) throws EntityNotFoundException {
         return findById(teamId).orElseThrow(() -> new EntityNotFoundException("Team", teamId));
     }
+
+    default Team findOneByExerciseCourseIdAndShortNameOrThrow(Long courseId, String shortName) throws EntityNotFoundException {
+        List<Team> teams = findAllByExerciseCourseIdAndShortName(courseId, shortName);
+
+        if (teams.size() != 1) {
+            throw new EntityNotFoundException("Team with short name " + shortName + " not found in course " + courseId);
+        }
+
+        return teams.get(0);
+    }
 }
