@@ -175,6 +175,19 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':examId/exercise-groups/:exerciseGroupId/edit',
+        component: ExerciseGroupUpdateComponent,
+        resolve: {
+            exam: ExamResolve,
+            exerciseGroup: ExerciseGroupResolve,
+        },
+        data: {
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.examManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/tutor-effort-statistics',
         loadChildren: () => import('../../exercises/text/manage/tutor-effort/tutor-effort-statistics.module').then((m) => m.ArtemisTutorEffortStatisticsModule),
     },

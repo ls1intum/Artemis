@@ -153,6 +153,19 @@ public class ExerciseGroupResource {
     }
 
     /**
+     * GET exerciseGroups/{exerciseGroupId}/title : Returns the title of the exercise group with the given id
+     *
+     * @param exerciseGroupId the id of the lecture
+     * @return the title of the lecture wrapped in an ResponseEntity or 404 Not Found if no lecture with that id exists
+     */
+    @GetMapping("/exerciseGroups/{exerciseGroupId}/title")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<String> getExerciseGroupTitle(@PathVariable Long exerciseGroupId) {
+        final var title = exerciseGroupRepository.getExerciseGroupTitle(exerciseGroupId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+    }
+
+    /**
      * GET /courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId} : Find an exercise group by id.
      *
      * @param courseId        the course to which the exercise group belongs to
