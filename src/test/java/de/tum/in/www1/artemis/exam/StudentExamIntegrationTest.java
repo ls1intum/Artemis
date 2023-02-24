@@ -2412,4 +2412,26 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(studentParticipation.getInitializationDate()).isEqualTo(studentExamForConduction.getStartedDate());
         }
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRetrieveOwnStudentExam_present() throws Exception {
+        StudentExam studentExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
+        assertThat(studentExam).isEqualTo(studentExam1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRetrieveOwnStudentExam_noStudentExam() throws Exception {
+        Exam exam = database.addExam(course1);
+        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        var examUser1 = new ExamUser();
+        examUser1.setExam(exam);
+        examUser1.setUser(student1);
+        examUser1 = examUserRepository.save(examUser1);
+        exam.addExamUser(examUser1);
+        examRepository.save(exam);
+        StudentExam studentExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
+        assertThat(studentExam).isNull();
+    }
 }

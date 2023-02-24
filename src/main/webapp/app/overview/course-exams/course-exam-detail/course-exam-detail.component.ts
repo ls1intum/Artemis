@@ -6,7 +6,7 @@ import dayjs from 'dayjs/esm';
 import { faBook, faCalendarDay, faCirclePlay, faCircleStop, faMagnifyingGlass, faPenAlt, faPlay, faUserClock } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, interval } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 
 // Enum to dynamically change the template-content
 export const enum ExamState {
@@ -42,7 +42,7 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
     examStateSubscription: Subscription;
     timeLeftToStart: number;
 
-    studentExam: StudentExam;
+    studentExam?: StudentExam;
 
     // Icons
     faPenAlt = faPenAlt;
@@ -54,7 +54,7 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
     faBook = faBook;
     faCircleStop = faCircleStop;
 
-    constructor(private router: Router, private examParticipationService: ExamParticipationService) {}
+    constructor(private router: Router, private studentExamService: StudentExamService) {}
 
     ngOnInit() {
         // A subscription is used here to limit the number of calls
@@ -112,7 +112,7 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
         }
 
         this.loadStudentExam();
-        if (!this.studentExam && !this.exam.testExam) {
+        if ((!this.studentExam || !this.studentExam.submitted) && !this.exam.testExam) {
             this.examState = ExamState.CLOSED;
             // Exam is over and student did not participate. We can cancel the subscription
             this.cancelExamStateSubscription();
@@ -148,14 +148,12 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
     }
 
     loadStudentExam() {
-        if (!this.studentExam && this.course?.id && this.exam?.id) {
-            if (!this.exam.testExam) {
-                this.examParticipationService.loadStudentExam(this.course.id, this.exam.id).subscribe({
-                    next: (studentExam) => {
-                        this.studentExam = studentExam;
-                    },
-                });
-            }
+        if (!this.studentExam && !this.exam.testExam && this.course?.id && this.exam?.id) {
+            this.studentExamService.retrieveOwnStudentExam(this.course.id, this.exam.id).subscribe({
+                next: (studentExam) => {
+                    this.studentExam = studentExam.body ?? undefined;
+                },
+            });
         }
     }
 

@@ -730,4 +730,17 @@ public class StudentExamResource {
 
         return ResponseEntity.ok(studentExamRepository.save(studentExam));
     }
+
+    @GetMapping("/courses/{courseId}/exams/{examId}/own-student-exam")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<StudentExam> retrieveOwnStudentExam(@PathVariable Long courseId, @PathVariable Long examId) {
+        examAccessService.checkIsStudentInExam(courseId, examId);
+        Exam exam = examRepository.findByIdElseThrow(examId);
+        if (exam.isTestExam()) {
+            throw new BadRequestException("You cannot retreive the student exam of a test exam");
+        }
+
+        User student = userRepository.getUser();
+        return ResponseEntity.ok(studentExamRepository.findByExamIdAndUserId(examId, student.getId()).orElse(null));
+    }
 }

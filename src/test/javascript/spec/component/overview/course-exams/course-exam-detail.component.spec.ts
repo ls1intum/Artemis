@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
+import { CourseExamDetailComponent, ExamState } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisTestModule } from '../../../test.module';
 import dayjs from 'dayjs/esm';
@@ -10,17 +10,17 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { CourseExamAttemptReviewDetailComponent } from 'app/overview/course-exams/course-exam-attempt-review-detail/course-exam-attempt-review-detail.component';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { MockExamParticipationService } from '../../../helpers/mocks/service/mock-exam-participation.service';
 import { of } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { HttpResponse } from '@angular/common/http';
 
 describe('CourseExamDetailComponent', () => {
     let component: CourseExamDetailComponent;
     let componentFixture: ComponentFixture<CourseExamDetailComponent>;
 
-    let examParticipationService: ExamParticipationService;
-    let examParticipationServiceSpy: jest.SpyInstance;
+    let studentExamService: StudentExamService;
+    let studentExamServiceSpy: jest.SpyInstance;
 
     const currentDate = dayjs();
     const currentDateMinus60 = currentDate.subtract(60, 'minutes');
@@ -33,7 +33,7 @@ describe('CourseExamDetailComponent', () => {
     const currentDatePlus60 = currentDate.add(60, 'minutes');
     const currentDatePlus90 = currentDate.add(90, 'minutes');
 
-    const studentExam = {} as StudentExam;
+    const studentExam = { submitted: true } as StudentExam;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -45,17 +45,14 @@ describe('CourseExamDetailComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisDurationFromSecondsPipe),
             ],
-            providers: [
-                { provide: Router, useClass: MockRouter },
-                { provide: ExamParticipationService, useClass: MockExamParticipationService },
-            ],
+            providers: [{ provide: Router, useClass: MockRouter }],
         })
             .compileComponents()
             .then(() => {
                 componentFixture = TestBed.createComponent(CourseExamDetailComponent);
                 component = componentFixture.componentInstance;
-                examParticipationService = TestBed.inject(ExamParticipationService);
-                examParticipationServiceSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(of(studentExam));
+                studentExamService = TestBed.inject(StudentExamService);
+                studentExamServiceSpy = jest.spyOn(studentExamService, 'retrieveOwnStudentExam').mockReturnValue(of(new HttpResponse({ body: studentExam })));
             });
     });
 
@@ -195,19 +192,31 @@ describe('CourseExamDetailComponent', () => {
         expect(component.examState).toBe('NO_MORE_ATTEMPTS');
     });
 
-    it('foo', () => {
+    it.each([
+        [undefined, false, ExamState.CLOSED],
+        [undefined, true, ExamState.CLOSED],
+        [{}, false, ExamState.CLOSED],
+        [{}, true, ExamState.CLOSED],
+        [{ submitted: false }, false, ExamState.CLOSED],
+        [{ submitted: false }, true, ExamState.CLOSED],
+        [{ submitted: true }, false, ExamState.STUDENTREVIEW],
+        [{ submitted: true }, true, ExamState.CLOSED],
+    ])('should determine the exam state after end date with different student exams', (studentExam: StudentExam | undefined, testExam: boolean, examState: ExamState) => {
         component.exam = { id: 1 };
         component.course = { id: 2 };
         component.exam.startDate = currentDateMinus60;
         component.exam.endDate = currentDateMinus35;
         component.exam.workingTime = 25 * 60;
-        component.exam.examStudentReviewStart = currentDateMinus30;
-        component.exam.examStudentReviewEnd = currentDatePlus5;
+        if (!testExam) {
+            component.exam.examStudentReviewStart = currentDateMinus30;
+            component.exam.examStudentReviewEnd = currentDatePlus5;
+        }
+        component.exam.testExam = testExam;
 
-        examParticipationServiceSpy.mockReturnValue(of(undefined));
+        studentExamServiceSpy.mockReturnValue(of(new HttpResponse({ body: studentExam })));
 
         component.ngOnInit();
         component.updateExamState();
-        expect(component.examState).toBe('CLOSED');
+        expect(component.examState).toBe(examState);
     });
 });

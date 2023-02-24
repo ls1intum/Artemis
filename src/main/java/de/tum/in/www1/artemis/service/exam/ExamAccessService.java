@@ -274,6 +274,19 @@ public class ExamAccessService {
     }
 
     /**
+     * Checks if the current user is a student in the exam and course.
+     *
+     * @param courseId The id of the course
+     * @param examId   The id of the exam
+     */
+    public void checkIsStudentInExam(Long courseId, Long examId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.isStudentInCourse(course, currentUser);
+        checkExamBelongsToCourseElseThrow(courseId, examId);
+    }
+
+    /**
      * Checks if the current user is eligible to access the example solutions for the given exercise and
      * if the example solution is published.
      * Eligibility conditions vary based on user roles.
