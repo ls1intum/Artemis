@@ -360,7 +360,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      *       2. The tuple order is the same as the order of the commands in the markdown text inserted by the user
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      * @param {GradingInstruction} instruction
-     * @param {GradingCriterion} criteria
      */
     onInstructionChange(domainCommands: [string, DomainCommand | null][], instruction: GradingInstruction): void {
         this.instructions = [instruction];

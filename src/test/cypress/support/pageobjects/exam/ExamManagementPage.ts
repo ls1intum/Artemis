@@ -63,6 +63,13 @@ export class ExamManagementPage {
     }
 
     /**
+     * Opens the test run page.
+     */
+    openTestRun() {
+        cy.get(`#testrun-button`).click();
+    }
+
+    /**
      * helper methods to get information of course
      * */
     getExamTitle() {
