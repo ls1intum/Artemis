@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationResultService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
-import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -52,15 +51,11 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingExerciseTestCaseService testCaseService;
 
-    private final ProgrammingTriggerService programmingTriggerService;
-
     private final SimpMessageSendingOperations messagingTemplate;
 
     private final ResultRepository resultRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
-
-    private final StaticCodeAnalysisService staticCodeAnalysisService;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
@@ -82,24 +77,22 @@ public class ProgrammingExerciseGradingService {
 
     private final BuildLogEntryService buildLogService;
 
-    private final TestwiseCoverageService testwiseCoverageService;
+    private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
-    public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, StudentParticipationRepository studentParticipationRepository,
-            ResultRepository resultRepository, Optional<ContinuousIntegrationResultService> continuousIntegrationResultService,
-            Optional<VersionControlService> versionControlService, ProgrammingTriggerService programmingTriggerService, SimpMessageSendingOperations messagingTemplate,
-            StaticCodeAnalysisService staticCodeAnalysisService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+    public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
+            Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, Optional<VersionControlService> versionControlService,
+            SimpMessageSendingOperations messagingTemplate, ProgrammingExerciseTestCaseService testCaseService,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
-            TestwiseCoverageService testwiseCoverageService) {
-        this.testCaseService = testCaseService;
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
         this.versionControlService = versionControlService;
-        this.programmingTriggerService = programmingTriggerService;
         this.messagingTemplate = messagingTemplate;
-        this.staticCodeAnalysisService = staticCodeAnalysisService;
+        this.testCaseService = testCaseService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -110,7 +103,7 @@ public class ProgrammingExerciseGradingService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.exerciseDateService = exerciseDateService;
         this.buildLogService = buildLogService;
-        this.testwiseCoverageService = testwiseCoverageService;
+        this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
     }
 
     /**
@@ -262,17 +255,6 @@ public class ProgrammingExerciseGradingService {
         // Note: This programming submission might already have multiple results, however they do not contain the assessor or the feedback
         var programmingSubmission = (ProgrammingSubmission) processedResult.getSubmission();
 
-        if (isSolutionParticipation) {
-            // If the solution participation was updated, also trigger the template participation build.
-            // This method will return without triggering the build if the submission is not of type TEST.
-            triggerTemplateBuildIfTestCasesChanged(programmingExercise.getId(), programmingSubmission);
-
-            // the test cases and the submission have been saved to the database previously, therefore we can add the reference to the coverage reports
-            if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && Boolean.TRUE.equals(processedResult.isSuccessful())) {
-                testwiseCoverageService.createTestwiseCoverageReport(newResult.getCoverageFileReportsByTestCaseName(), programmingExercise, programmingSubmission);
-            }
-        }
-
         if (isStudentParticipation) {
             // When a student receives a new result, we want to check whether we need to lock the participation
             // repository when a lock repository policy is present. At this point, we know that the programming
@@ -339,32 +321,6 @@ public class ProgrammingExerciseGradingService {
                 exercise.getCourseViaExerciseGroupOrCourseMember());
 
         return resultRepository.save(latestSemiAutomaticResult);
-    }
-
-    /**
-     * Trigger the build of the template repository, if the submission of the provided result is of type TEST.
-     * Will use the commitHash of the submission for triggering the template build.
-     * <p>
-     * If the submission of the provided result is not of type TEST, the method will return without triggering the build.
-     *
-     * @param programmingExerciseId ProgrammingExercise id that belongs to the result.
-     * @param submission            ProgrammingSubmission
-     */
-    private void triggerTemplateBuildIfTestCasesChanged(long programmingExerciseId, ProgrammingSubmission submission) {
-        // We only trigger the template build when the test repository was changed.
-        // If the submission is from type TEST but already has a result, this build was not triggered by a test repository change
-        if (!submission.belongsToTestRepository() || (submission.belongsToTestRepository() && submission.getResults() != null && !submission.getResults().isEmpty())) {
-            return;
-        }
-        try {
-            programmingTriggerService.triggerTemplateBuildAndNotifyUser(programmingExerciseId, submission.getCommitHash(), SubmissionType.TEST);
-        }
-        catch (EntityNotFoundException ex) {
-            // If for some reason the programming exercise does not have a template participation, we can only log and abort.
-            log.error(
-                    "Could not trigger the build of the template repository for the programming exercise id {} because no template participation could be found for the given exercise",
-                    programmingExerciseId);
-        }
     }
 
     /**
@@ -637,7 +593,7 @@ public class ProgrammingExerciseGradingService {
         }
 
         // Remove feedback that is in an invisible SCA category
-        staticCodeAnalysisFeedback = staticCodeAnalysisService.categorizeScaFeedback(result, staticCodeAnalysisFeedback, exercise);
+        staticCodeAnalysisFeedback = staticCodeAnalysisCategoryRepository.categorizeScaFeedback(result, staticCodeAnalysisFeedback, exercise);
 
         if (applySubmissionPolicy) {
             SubmissionPolicy submissionPolicy = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exercise.getId()).getSubmissionPolicy();
@@ -931,7 +887,7 @@ public class ProgrammingExerciseGradingService {
         final double maxExercisePenaltyPoints = Objects.requireNonNullElse(programmingExercise.getMaxStaticCodeAnalysisPenalty(), 100) / 100.0 * programmingExercise.getMaxPoints();
         double overallPenaltyPoints = 0;
 
-        for (var category : staticCodeAnalysisService.findByExerciseId(programmingExercise.getId())) {
+        for (var category : staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExercise.getId())) {
             if (!category.getState().equals(CategoryState.GRADED)) {
                 continue;
             }
@@ -994,7 +950,7 @@ public class ProgrammingExerciseGradingService {
         }
 
         // number of students per amount of detected issues per category
-        final var categories = staticCodeAnalysisService.findByExerciseId(exerciseId);
+        final Set<StaticCodeAnalysisCategory> categories = staticCodeAnalysisCategoryRepository.findByExerciseId(exerciseId);
         final var categoryIssuesStudentsMap = new HashMap<String, Map<Integer, Integer>>();
         for (StaticCodeAnalysisCategory category : categories) {
             categoryIssuesStudentsMap.put(category.getName(), new HashMap<>());

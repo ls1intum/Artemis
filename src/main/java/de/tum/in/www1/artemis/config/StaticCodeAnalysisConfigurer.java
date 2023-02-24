@@ -3,13 +3,6 @@ package de.tum.in.www1.artemis.config;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -18,30 +11,17 @@ import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 /**
  * Provides hard-coded programming language specific static code analysis default categories as an unmodifiable Map
  */
-@Configuration
 public class StaticCodeAnalysisConfigurer {
 
-    private final Logger log = LoggerFactory.getLogger(StaticCodeAnalysisConfigurer.class);
-
-    private Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> languageToDefaultCategories;
-
-    public StaticCodeAnalysisConfigurer() {
-    }
-
-    @PostConstruct
-    private void init() {
-        languageToDefaultCategories = Map.of(ProgrammingLanguage.JAVA, createDefaultCategoriesForJava(), ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift(),
-                ProgrammingLanguage.C, createDefaultCategoriesForC());
-
-        log.debug("Initialized default static code analysis categories for: {}", languageToDefaultCategories.keySet());
-    }
+    private static Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> languageToDefaultCategories = Map.of(ProgrammingLanguage.JAVA,
+            createDefaultCategoriesForJava(), ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift(), ProgrammingLanguage.C, createDefaultCategoriesForC());
 
     /**
      * Create an unmodifiable List of default static code analysis categories for Java
      *
      * @return unmodifiable static code analysis categories
      */
-    private List<StaticCodeAnalysisDefaultCategory> createDefaultCategoriesForJava() {
+    private static List<StaticCodeAnalysisDefaultCategory> createDefaultCategoriesForJava() {
         return List.of(
                 new StaticCodeAnalysisDefaultCategory("Bad Practice", 0.5D, 5D, CategoryState.FEEDBACK,
                         List.of(createMapping(StaticCodeAnalysisTool.SPOTBUGS, "BAD_PRACTICE"), createMapping(StaticCodeAnalysisTool.SPOTBUGS, "I18N"),
@@ -80,7 +60,7 @@ public class StaticCodeAnalysisConfigurer {
      *
      * @return unmodifiable static code analysis categories
      */
-    private List<StaticCodeAnalysisDefaultCategory> createDefaultCategoriesForSwift() {
+    private static List<StaticCodeAnalysisDefaultCategory> createDefaultCategoriesForSwift() {
         return List.of(
                 // TODO: rene: add correct category rules
                 new StaticCodeAnalysisDefaultCategory("Code Style", 0.2D, 2D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, "swiftLint"))),
@@ -96,7 +76,7 @@ public class StaticCodeAnalysisConfigurer {
      *
      * @return unmodifiable static code analysis categories
      */
-    private List<StaticCodeAnalysisDefaultCategory> createDefaultCategoriesForC() {
+    private static List<StaticCodeAnalysisDefaultCategory> createDefaultCategoriesForC() {
         return List.of(new StaticCodeAnalysisDefaultCategory("Bad Practice", 0.2D, 2D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.GCC, "BadPractice"))),
                 new StaticCodeAnalysisDefaultCategory("Memory Management", 0.2D, 2D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.GCC, "Memory"))),
                 new StaticCodeAnalysisDefaultCategory("Undefined Behavior", 0.2D, 2D, CategoryState.FEEDBACK,
@@ -105,12 +85,11 @@ public class StaticCodeAnalysisConfigurer {
                 new StaticCodeAnalysisDefaultCategory("Miscellaneous", 0.2D, 2D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.GCC, "Misc"))));
     }
 
-    @Bean(name = "staticCodeAnalysisConfiguration")
-    public Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisConfiguration() {
+    public static Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisConfiguration() {
         return languageToDefaultCategories;
     }
 
-    private StaticCodeAnalysisDefaultCategory.CategoryMapping createMapping(StaticCodeAnalysisTool tool, String category) {
+    private static StaticCodeAnalysisDefaultCategory.CategoryMapping createMapping(StaticCodeAnalysisTool tool, String category) {
         return new StaticCodeAnalysisDefaultCategory.CategoryMapping(tool, category);
     }
 }
