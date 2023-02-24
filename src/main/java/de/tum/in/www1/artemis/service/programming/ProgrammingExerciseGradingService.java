@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationResultService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
@@ -46,7 +46,7 @@ public class ProgrammingExerciseGradingService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingService.class);
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<ContinuousIntegrationResultService> continuousIntegrationResultService;
 
     private final Optional<VersionControlService> versionControlService;
 
@@ -87,9 +87,9 @@ public class ProgrammingExerciseGradingService {
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseFeedbackService programmingExerciseFeedbackService, ProgrammingExerciseTestCaseRepository testCaseRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, SimpMessageSendingOperations messagingTemplate,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
+            Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, Optional<VersionControlService> versionControlService,
+            SimpMessageSendingOperations messagingTemplate, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
@@ -97,7 +97,7 @@ public class ProgrammingExerciseGradingService {
         this.programmingExerciseFeedbackService = programmingExerciseFeedbackService;
         this.testCaseRepository = testCaseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.continuousIntegrationService = continuousIntegrationService;
+        this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
         this.versionControlService = versionControlService;
         this.messagingTemplate = messagingTemplate;
@@ -130,10 +130,10 @@ public class ProgrammingExerciseGradingService {
 
         Result newResult = null;
         try {
-            var buildResult = continuousIntegrationService.get().convertBuildResult(requestBody);
+            var buildResult = continuousIntegrationResultService.get().convertBuildResult(requestBody);
             checkCorrectBranchElseThrow(participation, buildResult);
 
-            newResult = continuousIntegrationService.get().createResultFromBuildResult(buildResult, participation);
+            newResult = continuousIntegrationResultService.get().createResultFromBuildResult(buildResult, participation);
 
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
@@ -147,7 +147,7 @@ public class ProgrammingExerciseGradingService {
                 var projectType = participation.getProgrammingExercise().getProjectType();
                 var buildLogs = buildResult.extractBuildLogs(programmingLanguage);
 
-                continuousIntegrationService.get().extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
+                continuousIntegrationResultService.get().extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
 
                 if (latestSubmission.isBuildFailed()) {
                     buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);

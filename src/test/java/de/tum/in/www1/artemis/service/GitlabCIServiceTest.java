@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCIResultService;
 import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCIService;
 
 class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
@@ -55,6 +56,9 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
 
     @Autowired
     private GitLabCIService gitlabCIService;
+
+    @Autowired
+    private GitLabCIResultService gitLabCIResultService;
 
     @Autowired
     private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
@@ -140,14 +144,14 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "Scanning for projects...", submission));
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry", submission));
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "Total time:", submission));
-        gitlabCIService.extractAndPersistBuildLogStatistics(submission, ProgrammingLanguage.JAVA, ProjectType.MAVEN_MAVEN, buildLogEntries);
+        gitLabCIResultService.extractAndPersistBuildLogStatistics(submission, ProgrammingLanguage.JAVA, ProjectType.MAVEN_MAVEN, buildLogEntries);
         var buildLogStatisticSizeAfterSuccessfulSave = buildLogStatisticsEntryRepository.count();
         assertThat(buildLogStatisticSizeAfterSuccessfulSave).isEqualTo(buildLogStatisticSizeBefore + 1);
         // TODO: add an assertion on the average data and add more realistic build log entries
 
         // should not work
-        gitlabCIService.extractAndPersistBuildLogStatistics(submission, ProgrammingLanguage.JAVA, ProjectType.GRADLE_GRADLE, buildLogEntries);
-        gitlabCIService.extractAndPersistBuildLogStatistics(submission, ProgrammingLanguage.C, ProjectType.GCC, buildLogEntries);
+        gitLabCIResultService.extractAndPersistBuildLogStatistics(submission, ProgrammingLanguage.JAVA, ProjectType.GRADLE_GRADLE, buildLogEntries);
+        gitLabCIResultService.extractAndPersistBuildLogStatistics(submission, ProgrammingLanguage.C, ProjectType.GCC, buildLogEntries);
 
         var buildLogStatisticSizeAfterUnsuccessfulSave = buildLogStatisticsEntryRepository.count();
         assertThat(buildLogStatisticSizeAfterUnsuccessfulSave).isEqualTo(buildLogStatisticSizeAfterUnsuccessfulSave);
@@ -252,7 +256,6 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         assertThat(continuousIntegrationService.getWebHookUrl(null, null)).isNotPresent();
         assertThat(continuousIntegrationService.checkIfProjectExists(null, null)).isNull();
         assertThat(continuousIntegrationService.checkIfBuildPlanExists(null, null)).isTrue();
-        assertThat(continuousIntegrationService.getLatestBuildLogs(null)).isNull();
         assertThat(continuousIntegrationService.retrieveLatestArtifact(null)).isNull();
     }
 }

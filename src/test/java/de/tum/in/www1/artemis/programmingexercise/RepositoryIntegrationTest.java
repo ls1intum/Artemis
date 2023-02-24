@@ -702,34 +702,6 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testBuildLogsWithManualResult() throws Exception {
-        var submission = database.createProgrammingSubmission(participation, true);
-        doReturn(logs).when(continuousIntegrationService).getLatestBuildLogs(submission);
-        database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC);
-        var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
-        assertThat(receivedLogs).hasSize(2);
-        assertThat(receivedLogs.get(0).getTime()).isEqualTo(logs.get(0).getTime());
-        // due to timezone assertThat isEqualTo issues, we compare those directly first and ignore them afterwards
-        assertThat(receivedLogs).usingRecursiveFieldByFieldElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testBuildLogs() throws Exception {
-        var submission = database.createProgrammingSubmission(participation, true);
-
-        doReturn(logs).when(continuousIntegrationService).getLatestBuildLogs(submission);
-
-        database.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
-        var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
-        assertThat(receivedLogs).hasSize(2);
-        assertThat(receivedLogs.get(0).getTime()).isEqualTo(logs.get(0).getTime());
-        // due to timezone assertThat isEqualTo issues, we compare those directly first and ignore them afterwards
-        assertThat(receivedLogs).usingRecursiveFieldByFieldElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsFromDatabase() throws Exception {
         var submission = new ProgrammingSubmission();
         submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));

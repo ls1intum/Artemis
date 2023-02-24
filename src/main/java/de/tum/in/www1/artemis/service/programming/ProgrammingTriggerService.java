@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.TRIGGER_INSTRUCTOR_BUILD;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +30,6 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
@@ -47,8 +44,6 @@ public class ProgrammingTriggerService {
     @Value("${artemis.external-system-request.batch-waiting-time}")
     private int externalSystemRequestBatchWaitingTime;
 
-    private final Environment environment;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
@@ -56,8 +51,6 @@ public class ProgrammingTriggerService {
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
-
-    private final LocalCITriggerService localCITriggerService;
 
     private final AuditEventRepository auditEventRepository;
 
@@ -69,17 +62,14 @@ public class ProgrammingTriggerService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    public ProgrammingTriggerService(Environment environment, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            LocalCITriggerService localCITriggerService, ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            AuditEventRepository auditEventRepository, ResultRepository resultRepository,
+    public ProgrammingTriggerService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository, ResultRepository resultRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingMessagingService programmingMessagingService) {
-        this.environment = environment;
         this.participationService = participationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.continuousIntegrationService = continuousIntegrationService;
-        this.localCITriggerService = localCITriggerService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.auditEventRepository = auditEventRepository;
         this.resultRepository = resultRepository;
@@ -99,14 +89,8 @@ public class ProgrammingTriggerService {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExerciseId).get();
 
         try {
-            if (Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
-                localCITriggerService.triggerBuild(programmingExercise.getSolutionParticipation());
-                localCITriggerService.triggerBuild(programmingExercise.getTemplateParticipation());
-            }
-            else {
-                continuousIntegrationService.get().triggerBuild(programmingExercise.getSolutionParticipation());
-                continuousIntegrationService.get().triggerBuild(programmingExercise.getTemplateParticipation());
-            }
+            continuousIntegrationService.get().triggerBuild(programmingExercise.getSolutionParticipation());
+            continuousIntegrationService.get().triggerBuild(programmingExercise.getTemplateParticipation());
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Could not trigger build for solution repository after test case update for programming exercise with id {}", programmingExerciseId);
@@ -235,12 +219,7 @@ public class ProgrammingTriggerService {
                     participationService.resumeProgrammingExercise(participation);
                     // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
                 }
-                if (Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
-                    localCITriggerService.triggerBuild(participation);
-                }
-                else {
-                    continuousIntegrationService.get().triggerBuild(participation);
-                }
+                continuousIntegrationService.get().triggerBuild(participation);
                 // TODO: this is a workaround, in the future we should use the participation to notify the client and avoid using the submission
                 programmingMessagingService.notifyUserAboutSubmission(submission.get());
             }
@@ -270,12 +249,7 @@ public class ProgrammingTriggerService {
                 participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
                 // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             }
-            if (Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
-                localCITriggerService.triggerBuild(programmingExerciseParticipation);
-            }
-            else {
-                continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
-            }
+            continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
             programmingMessagingService.notifyUserAboutSubmission(submission);
         }
         catch (Exception e) {
@@ -311,13 +285,7 @@ public class ProgrammingTriggerService {
     private void createSubmissionTriggerBuildAndNotifyUser(ProgrammingExerciseParticipation participation, String commitHash, SubmissionType submissionType) {
         ProgrammingSubmission submission = createSubmissionWithCommitHashAndSubmissionType(participation, commitHash, submissionType);
         try {
-            if (Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
-                localCITriggerService.triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
-            }
-            else {
-                continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
-            }
-
+            continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
             programmingMessagingService.notifyUserAboutSubmission(submission);
         }
         catch (Exception e) {

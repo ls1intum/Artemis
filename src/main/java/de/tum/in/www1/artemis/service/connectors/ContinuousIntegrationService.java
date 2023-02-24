@@ -11,10 +11,8 @@ import org.springframework.http.ResponseEntity;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
-import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 /**
  * Abstract service for managing entities related to continuous integration.
@@ -117,23 +115,6 @@ public interface ContinuousIntegrationService {
     String getPlanKey(Object requestBody) throws ContinuousIntegrationException;
 
     /**
-     * converts the object from the CI system (Bamboo, Jenkins, or GitLabCI) into a proper Java DTO
-     *
-     * @param requestBody the object sent from the CI system to Artemis
-     * @return the DTO with all information in Java Object form
-     */
-    AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody);
-
-    /**
-     * Generate an Artemis result object from the CI build result. Will use the test case results and issues in static code analysis as result feedback.
-     *
-     * @param buildResult   Build result data provided by build notification (already converted into a DTO)
-     * @param participation to attach result to.
-     * @return the created Artemis result with a score, completion date, etc.
-     */
-    Result createResultFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingExerciseParticipation participation);
-
-    /**
      * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
      *
      * @param participation participation for which to get status
@@ -149,14 +130,6 @@ public interface ContinuousIntegrationService {
      * @return true if build plan is valid otherwise false
      */
     boolean checkIfBuildPlanExists(String projectKey, String buildPlanId);
-
-    /**
-     * Get the build logs of the latest CI build.
-     *
-     * @param programmingSubmission The programming for which the latest build logs should be retrieved
-     * @return list of build log entries
-     */
-    List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission);
 
     /**
      * Get the build artifact (JAR/WAR), if any, of the latest build
@@ -247,18 +220,6 @@ public interface ContinuousIntegrationService {
      * @return The URL as a String pointing to the to be triggered build plan in the CI system. If this is not needed/supported, an empty optional is returned.
      */
     Optional<String> getWebHookUrl(String projectKey, String buildPlanId);
-
-    /**
-     * Extract the build log statistics from the BuildLogEntries and persist a BuildLogStatisticsEntry.
-     * Not all programming languages and project types might be supported on all implementations of the ContinuousIntegrationService.
-     *
-     * @param programmingSubmission the submission to which the generated BuildLogStatisticsEntry should be attached
-     * @param programmingLanguage   the programming language of the programming exercise
-     * @param projectType           the project type of the programming exercise
-     * @param buildLogEntries       the list of BuildLogEntries received from the CI-Server
-     */
-    void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
-            List<BuildLogEntry> buildLogEntries);
 
     /**
      * Path a repository should get checked out in a build plan. E.g. the assignment repository should get checked out

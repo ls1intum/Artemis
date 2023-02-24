@@ -2,13 +2,10 @@ package de.tum.in.www1.artemis.service.connectors.bamboo;
 
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
-import static de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry.BuildJobPartDuration;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,8 +37,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -54,7 +49,6 @@ import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
-import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Service
@@ -335,62 +329,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
         }
     }
 
-    @Override
-    public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
-        // Return the logs from Bamboo (and filter them now)
-        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
-        ProgrammingLanguage programmingLanguage = programmingExerciseParticipation.getProgrammingExercise().getProgrammingLanguage();
-        ProjectType projectType = programmingExerciseParticipation.getProgrammingExercise().getProjectType();
-
-        var buildLogEntries = retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId());
-        extractAndPersistBuildLogStatistics(programmingSubmission, programmingLanguage, projectType, buildLogEntries);
-        buildLogEntries = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
-        var savedBuildLogs = buildLogService.saveBuildLogs(buildLogEntries, programmingSubmission);
-
-        // Set the received logs in order to avoid duplicate entries (this removes existing logs) & save them into the database
-        programmingSubmission.setBuildLogEntries(savedBuildLogs);
-        programmingSubmissionRepository.save(programmingSubmission);
-
-        return buildLogEntries;
-    }
-
-    @Override
-    public void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
-            List<BuildLogEntry> buildLogEntries) {
-        if (buildLogEntries.isEmpty()) {
-            // No logs received -> Do nothing
-            return;
-        }
-
-        if (programmingLanguage != ProgrammingLanguage.JAVA) {
-            // Not supported -> Do nothing
-            return;
-        }
-
-        ZonedDateTime jobStarted = getTimestampForLogEntry(buildLogEntries, "started building on agent");
-        ZonedDateTime agentSetupCompleted = getTimestampForLogEntry(buildLogEntries, "Executing build");
-        ZonedDateTime testsStarted = getTimestampForLogEntry(buildLogEntries, "Starting task 'Tests'");
-        ZonedDateTime testsFinished = getTimestampForLogEntry(buildLogEntries, "Finished task 'Tests' with result");
-        ZonedDateTime scaStarted = getTimestampForLogEntry(buildLogEntries, "Starting task 'Static Code Analysis'");
-        ZonedDateTime scaFinished = getTimestampForLogEntry(buildLogEntries, "Finished task 'Static Code Analysis'");
-        ZonedDateTime jobFinished = getTimestampForLogEntry(buildLogEntries, "Finished building");
-
-        Integer dependenciesDownloadedCount = null;
-
-        if (ProjectType.isMavenProject(projectType)) {
-            // Not supported for GRADLE projects
-            dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
-        }
-
-        var agentSetupDuration = new BuildJobPartDuration(jobStarted, agentSetupCompleted);
-        var testDuration = new BuildJobPartDuration(testsStarted, testsFinished);
-        var scaDuration = new BuildJobPartDuration(scaStarted, scaFinished);
-        var totalJobDuration = new BuildJobPartDuration(jobStarted, jobFinished);
-
-        buildLogStatisticsEntryRepository.saveBuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
-                dependenciesDownloadedCount);
-    }
-
     /**
      * get the build plan for the given planKey
      *
@@ -582,16 +520,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
-        final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
-        // Filter the first build plan in case it was automatically executed when the build plan was created.
-        if (isFirstBuildForThisPlan(buildResult)) {
-            return null;
-        }
-        return buildResult;
-    }
-
-    @Override
     public ConnectorHealth health() {
         ConnectorHealth health;
         try {
@@ -611,18 +539,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
         // No webhooks needed between Bamboo and Bitbucket, so we return an empty Optional
         // See https://confluence.atlassian.com/bamboo/integrating-bamboo-with-bitbucket-server-779302772.html
         return Optional.empty();
-    }
-
-    /**
-     * Check if the build result received is the initial build of the plan.
-     * Note: this is an edge case and means it was not created with a commit+push by the user
-     *
-     * @param buildResult Build result data provided by build notification.
-     * @return true if build is the first build.
-     */
-    private boolean isFirstBuildForThisPlan(BambooBuildResultNotificationDTO buildResult) {
-        final var reason = buildResult.getBuild().reason();
-        return reason != null && reason.contains("First build for this plan");
     }
 
     /**
@@ -659,41 +575,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
             return buildResult;
         }
         return null;
-    }
-
-    /**
-     * Load the build log from the database.
-     * Performs a request to the Bamboo REST API to retrieve the build log of the latest build, if the log is not available in the database.
-     *
-     * @param planKey to identify the build logs with.
-     * @return the list of retrieved build logs.
-     */
-    private List<BuildLogEntry> retrieveLatestBuildLogsFromBamboo(String planKey) {
-        var logs = new ArrayList<BuildLogEntry>();
-        try {
-            String requestUrl = serverUrl + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json";
-            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("expand", "logEntries").queryParam("max-results", "2000");
-            var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, BambooBuildResultDTO.class);
-
-            if (response.getBody() != null && response.getBody().getLogEntries() != null) {
-                // Note: This code is duplicated in the bamboo-notification-plugin: ServerNotificationTransport:createLogEntryJSONObject
-                for (var logEntry : response.getBody().getLogEntries().getLogEntry()) {
-                    String logString = logEntry.getUnstyledLog();
-                    // The log is provided in two attributes: with unescaped characters in unstyledLog and with escaped characters in log
-                    // We want to have unescaped characters but fall back to the escaped characters in case no unescaped characters are present
-                    if (logString == null) {
-                        logString = logEntry.getLog();
-                    }
-
-                    BuildLogEntry log = new BuildLogEntry(logEntry.getDate(), logString);
-                    logs.add(log);
-                }
-            }
-        }
-        catch (Exception e) {
-            log.error("HttpError while retrieving build result logs from Bamboo", e);
-        }
-        return logs;
     }
 
     /**

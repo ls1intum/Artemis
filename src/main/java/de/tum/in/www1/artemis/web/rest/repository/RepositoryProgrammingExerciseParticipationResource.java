@@ -384,15 +384,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
         // Load the logs from the database
         List<BuildLogEntry> buildLogsFromDatabase = buildLogService.getLatestBuildLogs(programmingSubmission);
-
-        // If there are logs present in the database, return them (they were already filtered when inserted)
-        if (!buildLogsFromDatabase.isEmpty()) {
-            return new ResponseEntity<>(buildLogsFromDatabase, HttpStatus.OK);
-        }
-
-        // Otherwise attempt to fetch the build logs from the CI
-        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(programmingSubmission);
-
-        return new ResponseEntity<>(logs, HttpStatus.OK);
+        return new ResponseEntity<>(buildLogsFromDatabase, HttpStatus.OK);
     }
 }

@@ -1,22 +1,26 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -24,22 +28,31 @@ import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResultNotificationDTO;
-import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Service
 @Profile("localci")
 public class LocalCIService extends AbstractContinuousIntegrationService {
 
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private String localVCBasePath;
+
     private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
+    private final UrlService urlService;
+
+    private final LocalCIExecutorService localCIExecutorService;
+
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, UrlService urlService,
+            LocalCIExecutorService localCIExecutorService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
+        this.urlService = urlService;
+        this.localCIExecutorService = localCIExecutorService;
     }
 
     @Override
@@ -83,47 +96,48 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     @Async
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws LocalCIException {
         // Prepare paths to assignment repository, test repository, and the build script, and add a new build job to the queue managed by the LocalCIExecutorService.
-        // String assignmentRepositoryUrlString = participation.getRepositoryUrl();
-        // VcsRepositoryUrl assignmentRepositoryUrl;
-        // try {
-        // assignmentRepositoryUrl = new VcsRepositoryUrl(assignmentRepositoryUrlString);
-        // }
-        // catch (URISyntaxException e) {
-        // throw new LocalCIException("Could not parse assignment repository url: " + assignmentRepositoryUrlString);
-        // }
-        // Path assignmentRepositoryPath = urlService.getLocalVCPathFromRepositoryUrl(assignmentRepositoryUrl, localVCBasePath).toAbsolutePath();
-        //
-        // ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        // String testRepositoryUrlString = programmingExercise.getTestRepositoryUrl();
-        // VcsRepositoryUrl testRepositoryUrl;
-        // try {
-        // testRepositoryUrl = new VcsRepositoryUrl(testRepositoryUrlString);
-        // }
-        // catch (URISyntaxException e) {
-        // throw new LocalCIException("Could not parse test repository url: " + testRepositoryUrlString);
-        // }
-        // Path testRepositoryPath = urlService.getLocalVCPathFromRepositoryUrl(testRepositoryUrl, localVCBasePath).toAbsolutePath();
-        //
-        // ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
-        // if (programmingLanguage != ProgrammingLanguage.JAVA) {
-        // throw new LocalCIException("Programming language " + programmingLanguage + " is not supported by local CI.");
-        // }
-        //
-        // // Get script file out of resources. TODO: Check if there is an easier way to do this and if not find out why this is necessary.
-        // InputStream scriptInputStream = getClass().getResourceAsStream("/templates/localci/java/build_and_run_tests.sh");
-        // if (scriptInputStream == null) {
-        // throw new LocalCIException("Could not find build script for local CI.");
-        // }
-        // Path scriptPath;
-        // try {
-        // scriptPath = Files.createTempFile("build_and_run_tests", ".sh");
-        // Files.copy(scriptInputStream, scriptPath, StandardCopyOption.REPLACE_EXISTING);
-        // }
-        // catch (IOException e) {
-        // throw new LocalCIException("Could not create temporary file for build script.");
-        // }
-        //
-        // localCIExecutorService.addBuildJobToQueue(participation, assignmentRepositoryPath, testRepositoryPath, scriptPath);
+        String assignmentRepositoryUrlString = participation.getRepositoryUrl();
+        VcsRepositoryUrl assignmentRepositoryUrl;
+        try {
+            assignmentRepositoryUrl = new VcsRepositoryUrl(assignmentRepositoryUrlString);
+        }
+        catch (URISyntaxException e) {
+            throw new LocalCIException("Could not parse assignment repository url: " + assignmentRepositoryUrlString);
+        }
+        Path assignmentRepositoryPath = urlService.getLocalVCPathFromRepositoryUrl(assignmentRepositoryUrl, localVCBasePath).toAbsolutePath();
+
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+        String testRepositoryUrlString = programmingExercise.getTestRepositoryUrl();
+        VcsRepositoryUrl testRepositoryUrl;
+        try {
+            testRepositoryUrl = new VcsRepositoryUrl(testRepositoryUrlString);
+        }
+        catch (URISyntaxException e) {
+            throw new LocalCIException("Could not parse test repository url: " + testRepositoryUrlString);
+        }
+        Path testRepositoryPath = urlService.getLocalVCPathFromRepositoryUrl(testRepositoryUrl, localVCBasePath).toAbsolutePath();
+
+        ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
+        if (programmingLanguage != ProgrammingLanguage.JAVA) {
+            throw new LocalCIException("Programming language " + programmingLanguage + " is not supported by local CI.");
+        }
+
+        // Get script file out of resources. TODO: Check if there is an easier way to do this and if not find out why this is necessary.
+        InputStream scriptInputStream = getClass().getResourceAsStream("/templates/localci/java/build_and_run_tests.sh");
+        if (scriptInputStream == null) {
+            throw new LocalCIException("Could not find build script for local CI.");
+        }
+        Path scriptPath;
+        try {
+            scriptPath = Files.createTempFile("build_and_run_tests", ".sh");
+            Files.copy(scriptInputStream, scriptPath, StandardCopyOption.REPLACE_EXISTING);
+        }
+        catch (IOException e) {
+            throw new LocalCIException("Could not create temporary file for build script.");
+        }
+
+        localCIExecutorService.addBuildJobToQueue(participation, assignmentRepositoryPath, testRepositoryPath, scriptPath);
+
     }
 
     @Override
@@ -192,18 +206,6 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
         return BuildStatus.INACTIVE;
     }
 
-    @Override
-    public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
-        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
-        return List.of();
-    }
-
-    @Override
-    public void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
-            List<BuildLogEntry> buildLogEntries) {
-        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
-    }
-
     /**
      * get the build plan for the given planKey
      *
@@ -264,15 +266,6 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
-        log.info("Request body: {}", requestBody);
-        if (!(requestBody instanceof LocalCIBuildResultNotificationDTO localCIBuildResult)) {
-            throw new LocalCIException("The request body is not of type LocalCIBuildResultNotificationDTO");
-        }
-        return localCIBuildResult;
-    }
-
-    @Override
     public ConnectorHealth health() {
         return new ConnectorHealth(true);
     }
@@ -309,10 +302,6 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     @Override
     public boolean checkIfBuildPlanExists(String projectKey, String buildPlanId) {
         return getBuildPlan(buildPlanId.toUpperCase()) != null;
-    }
-
-    private String getProjectKeyFromBuildPlanId(String buildPlanId) {
-        return buildPlanId.split("-")[0];
     }
 
     private String getCleanPlanName(String name) {
