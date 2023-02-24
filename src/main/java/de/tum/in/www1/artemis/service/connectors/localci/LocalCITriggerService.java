@@ -29,7 +29,7 @@ public class LocalCITriggerService {
 
     private final UrlService urlService;
 
-    LocalCIExecutorService localCIExecutorService;
+    private final LocalCIExecutorService localCIExecutorService;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCBasePath;

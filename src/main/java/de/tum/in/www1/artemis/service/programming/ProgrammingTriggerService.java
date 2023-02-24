@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.TRIGGER_INSTRUCTOR_BUILD;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -98,14 +99,14 @@ public class ProgrammingTriggerService {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExerciseId).get();
 
         try {
-            // if (Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
-            // localCITriggerService.triggerBuild(programmingExercise.getSolutionParticipation());
-            // localCITriggerService.triggerBuild(programmingExercise.getTemplateParticipation());
-            // }
-            // else {
-            continuousIntegrationService.get().triggerBuild(programmingExercise.getSolutionParticipation());
-            continuousIntegrationService.get().triggerBuild(programmingExercise.getTemplateParticipation());
-            // }
+            if (Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
+                localCITriggerService.triggerBuild(programmingExercise.getSolutionParticipation());
+                localCITriggerService.triggerBuild(programmingExercise.getTemplateParticipation());
+            }
+            else {
+                continuousIntegrationService.get().triggerBuild(programmingExercise.getSolutionParticipation());
+                continuousIntegrationService.get().triggerBuild(programmingExercise.getTemplateParticipation());
+            }
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Could not trigger build for solution repository after test case update for programming exercise with id {}", programmingExerciseId);
@@ -234,12 +235,12 @@ public class ProgrammingTriggerService {
                     participationService.resumeProgrammingExercise(participation);
                     // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
                 }
-                // if (Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
-                // localCITriggerService.triggerBuild(participation);
-                // }
-                // else {
-                continuousIntegrationService.get().triggerBuild(participation);
-                // }
+                if (Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
+                    localCITriggerService.triggerBuild(participation);
+                }
+                else {
+                    continuousIntegrationService.get().triggerBuild(participation);
+                }
                 // TODO: this is a workaround, in the future we should use the participation to notify the client and avoid using the submission
                 programmingMessagingService.notifyUserAboutSubmission(submission.get());
             }
@@ -269,12 +270,12 @@ public class ProgrammingTriggerService {
                 participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
                 // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             }
-            // if (Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
-            // localCITriggerService.triggerBuild(programmingExerciseParticipation);
-            // }
-            // else {
-            continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
-            // }
+            if (Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
+                localCITriggerService.triggerBuild(programmingExerciseParticipation);
+            }
+            else {
+                continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
+            }
             programmingMessagingService.notifyUserAboutSubmission(submission);
         }
         catch (Exception e) {
@@ -310,12 +311,12 @@ public class ProgrammingTriggerService {
     private void createSubmissionTriggerBuildAndNotifyUser(ProgrammingExerciseParticipation participation, String commitHash, SubmissionType submissionType) {
         ProgrammingSubmission submission = createSubmissionWithCommitHashAndSubmissionType(participation, commitHash, submissionType);
         try {
-            // if (Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
-            // localCITriggerService.triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
-            // }
-            // else {
-            continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
-            // }
+            if (Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
+                localCITriggerService.triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
+            }
+            else {
+                continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
+            }
 
             programmingMessagingService.notifyUserAboutSubmission(submission);
         }

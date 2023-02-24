@@ -58,23 +58,23 @@ public class LocalVCHookService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    private final LocalCITriggerService localCITriggerService;
-
     private final UrlService urlService;
+
+    private final LocalCITriggerService localCITriggerService;
 
     public LocalVCHookService(ProgrammingExerciseService programmingExerciseService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionService programmingSubmissionService,
-            LocalCITriggerService localCITriggerService, ProgrammingMessagingService programmingMessagingService, UrlService urlService) {
+            ProgrammingMessagingService programmingMessagingService, UrlService urlService, LocalCITriggerService localCITriggerService) {
         this.programmingExerciseService = programmingExerciseService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
-        this.localCITriggerService = localCITriggerService;
         this.urlService = urlService;
+        this.localCITriggerService = localCITriggerService;
     }
 
     /**

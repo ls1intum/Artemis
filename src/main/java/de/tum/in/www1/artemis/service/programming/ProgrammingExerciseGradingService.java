@@ -22,6 +22,7 @@ import com.google.common.base.Strings;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -81,6 +82,10 @@ public class ProgrammingExerciseGradingService {
 
     private final TestwiseCoverageService testwiseCoverageService;
 
+    private final ProgrammingTriggerService programmingTriggerService;
+
+    private final StaticCodeAnalysisService staticCodeAnalysisService;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseFeedbackService programmingExerciseFeedbackService, ProgrammingExerciseTestCaseRepository testCaseRepository,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<VersionControlService> versionControlService, SimpMessageSendingOperations messagingTemplate,
@@ -88,7 +93,7 @@ public class ProgrammingExerciseGradingService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
-            TestwiseCoverageService testwiseCoverageService) {
+            TestwiseCoverageService testwiseCoverageService, ProgrammingTriggerService programmingTriggerService, StaticCodeAnalysisService staticCodeAnalysisService) {
         this.programmingExerciseFeedbackService = programmingExerciseFeedbackService;
         this.testCaseRepository = testCaseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -107,6 +112,8 @@ public class ProgrammingExerciseGradingService {
         this.exerciseDateService = exerciseDateService;
         this.buildLogService = buildLogService;
         this.testwiseCoverageService = testwiseCoverageService;
+        this.programmingTriggerService = programmingTriggerService;
+        this.staticCodeAnalysisService = staticCodeAnalysisService;
     }
 
     /**
@@ -353,8 +360,7 @@ public class ProgrammingExerciseGradingService {
             return;
         }
         try {
-            // TODO: Uncomment and find way to not run into a circular dependency because of this.
-            // programmingTriggerService.triggerTemplateBuildAndNotifyUser(programmingExerciseId, submission.getCommitHash(), SubmissionType.TEST);
+            programmingTriggerService.triggerTemplateBuildAndNotifyUser(programmingExerciseId, submission.getCommitHash(), SubmissionType.TEST);
         }
         catch (EntityNotFoundException ex) {
             // If for some reason the programming exercise does not have a template participation, we can only log and abort.
@@ -634,7 +640,7 @@ public class ProgrammingExerciseGradingService {
         }
 
         // Remove feedback that is in an invisible SCA category
-        staticCodeAnalysisFeedback = List.of();// staticCodeAnalysisService.categorizeScaFeedback(result, staticCodeAnalysisFeedback, exercise);
+        staticCodeAnalysisFeedback = staticCodeAnalysisService.categorizeScaFeedback(result, staticCodeAnalysisFeedback, exercise);
 
         if (applySubmissionPolicy) {
             SubmissionPolicy submissionPolicy = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exercise.getId()).getSubmissionPolicy();
@@ -928,36 +934,36 @@ public class ProgrammingExerciseGradingService {
         final double maxExercisePenaltyPoints = Objects.requireNonNullElse(programmingExercise.getMaxStaticCodeAnalysisPenalty(), 100) / 100.0 * programmingExercise.getMaxPoints();
         double overallPenaltyPoints = 0;
 
-        // for (var category : staticCodeAnalysisService.findByExerciseId(programmingExercise.getId())) {
-        // if (!category.getState().equals(CategoryState.GRADED)) {
-        // continue;
-        // }
-        //
-        // // get all feedback in this category
-        // List<Feedback> categoryFeedback = feedbackByCategory.getOrDefault(category.getName(), List.of());
-        //
-        // // calculate the sum of all per-feedback penalties
-        // double categoryPenaltyPoints = categoryFeedback.size() * category.getPenalty();
-        //
-        // // cap at the maximum allowed penalty for this category
-        // if (category.getMaxPenalty() != null && categoryPenaltyPoints > category.getMaxPenalty()) {
-        // categoryPenaltyPoints = category.getMaxPenalty();
-        // }
-        //
-        // // Cap at the maximum allowed penalty for this exercise (maxStaticCodeAnalysisPenalty is in percent) The max penalty is applied to the maxScore. If no max penalty
-        // // was supplied, the value defaults to 100 percent. If for example maxScore is 6, maxBonus is 4 and the penalty is 50 percent, then a student can only lose
-        // // 3 (0.5 * maxScore) points due to static code analysis issues.
-        // if (overallPenaltyPoints + categoryPenaltyPoints > maxExercisePenaltyPoints) {
-        // categoryPenaltyPoints = maxExercisePenaltyPoints - overallPenaltyPoints;
-        // }
-        // overallPenaltyPoints += categoryPenaltyPoints;
-        //
-        // // update credits of feedbacks in category
-        // if (!categoryFeedback.isEmpty()) {
-        // double perFeedbackPenalty = categoryPenaltyPoints / categoryFeedback.size();
-        // categoryFeedback.forEach(feedback -> feedback.setCredits(-perFeedbackPenalty));
-        // }
-        // }
+        for (var category : staticCodeAnalysisService.findByExerciseId(programmingExercise.getId())) {
+            if (!category.getState().equals(CategoryState.GRADED)) {
+                continue;
+            }
+
+            // get all feedback in this category
+            List<Feedback> categoryFeedback = feedbackByCategory.getOrDefault(category.getName(), List.of());
+
+            // calculate the sum of all per-feedback penalties
+            double categoryPenaltyPoints = categoryFeedback.size() * category.getPenalty();
+
+            // cap at the maximum allowed penalty for this category
+            if (category.getMaxPenalty() != null && categoryPenaltyPoints > category.getMaxPenalty()) {
+                categoryPenaltyPoints = category.getMaxPenalty();
+            }
+
+            // Cap at the maximum allowed penalty for this exercise (maxStaticCodeAnalysisPenalty is in percent) The max penalty is applied to the maxScore. If no max penalty
+            // was supplied, the value defaults to 100 percent. If for example maxScore is 6, maxBonus is 4 and the penalty is 50 percent, then a student can only lose
+            // 3 (0.5 * maxScore) points due to static code analysis issues.
+            if (overallPenaltyPoints + categoryPenaltyPoints > maxExercisePenaltyPoints) {
+                categoryPenaltyPoints = maxExercisePenaltyPoints - overallPenaltyPoints;
+            }
+            overallPenaltyPoints += categoryPenaltyPoints;
+
+            // update credits of feedbacks in category
+            if (!categoryFeedback.isEmpty()) {
+                double perFeedbackPenalty = categoryPenaltyPoints / categoryFeedback.size();
+                categoryFeedback.forEach(feedback -> feedback.setCredits(-perFeedbackPenalty));
+            }
+        }
 
         return overallPenaltyPoints;
     }
@@ -991,7 +997,7 @@ public class ProgrammingExerciseGradingService {
         }
 
         // number of students per amount of detected issues per category
-        final Set<StaticCodeAnalysisCategory> categories = Collections.emptySet();// staticCodeAnalysisService.findByExerciseId(exerciseId);
+        final Set<StaticCodeAnalysisCategory> categories = staticCodeAnalysisService.findByExerciseId(exerciseId);
         final var categoryIssuesStudentsMap = new HashMap<String, Map<Integer, Integer>>();
         for (StaticCodeAnalysisCategory category : categories) {
             categoryIssuesStudentsMap.put(category.getName(), new HashMap<>());
