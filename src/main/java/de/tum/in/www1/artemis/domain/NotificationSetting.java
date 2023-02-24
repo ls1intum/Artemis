@@ -29,8 +29,8 @@ public class NotificationSetting extends DomainObject {
     @Column(name = "email", columnDefinition = "boolean default false", nullable = false)
     private boolean email = false;
 
-    @Column(name = "push", columnDefinition = "boolean default false", nullable = false)
-    private boolean push = false;
+    @Column(name = "push", columnDefinition = "boolean default true", nullable = false)
+    private boolean push = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties("notificationSetting")
