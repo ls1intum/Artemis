@@ -13,7 +13,7 @@ import {
     textExerciseEditor,
 } from '../../artemis';
 import { Interception } from 'cypress/types/net-stubbing';
-import { CypressCredentials } from '../../../support/users';
+import { CypressCredentials } from '../../users';
 import { ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEditorPage';
 
 /**
@@ -22,7 +22,9 @@ import { ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEd
 export class ExamParticipation {
     /**
      * Makes a submission in a provided exercise
-     * @param examTitle the exam title to confirm the deletion
+     * @param exerciseID the id of the exercise
+     * @param exerciseType the type of the exercise
+     * @param additionalData additional data such as the expected score
      */
     makeSubmission(exerciseID: number, exerciseType: EXERCISE_TYPE, additionalData?: AdditionalData) {
         switch (exerciseType) {

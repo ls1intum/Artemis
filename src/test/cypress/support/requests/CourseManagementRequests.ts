@@ -245,7 +245,7 @@ export class CourseManagementRequests {
     /**
      * Creates an exam with the provided settings.
      * @param exam the exam object created by a {@link CypressExamBuilder}
-     * @param exercises an array of exercises
+     * @param exerciseArray an array of exercises
      * @param workingTime the working time in seconds
      * @returns <Chainable> request response
      */
