@@ -46,7 +46,11 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationBambooBitbuc
     @BeforeEach
     void setup() {
         userRepository.deleteAll();
+        userRepository.flush();
+
         pushNotificationDeviceConfigurationRepository.deleteAll();
+        pushNotificationDeviceConfigurationRepository.flush();
+
         user = databaseUtilService.createAndSaveUser(userLogin);
     }
 
