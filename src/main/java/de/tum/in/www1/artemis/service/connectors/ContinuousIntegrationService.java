@@ -81,14 +81,6 @@ public interface ContinuousIntegrationService {
     void performEmptySetupCommit(ProgrammingExerciseParticipation participation);
 
     /**
-     * triggers a build for the build plan in the given participation
-     *
-     * @param participation the participation with the id of the build plan that should be triggered
-     * @throws ContinuousIntegrationException if the request to the CI failed.
-     */
-    void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException;
-
-    /**
      * Delete project with given identifier from CI system.
      *
      * @param projectKey unique identifier for the project on CI system

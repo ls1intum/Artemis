@@ -118,13 +118,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation) {
-        final var projectKey = participation.getProgrammingExercise().getProjectKey();
-        final var planKey = participation.getBuildPlanId();
-        jenkinsBuildPlanService.triggerBuild(projectKey, planKey);
-    }
-
-    @Override
     public void deleteProject(String projectKey) {
         jenkinsJobService.deleteJob(projectKey);
     }

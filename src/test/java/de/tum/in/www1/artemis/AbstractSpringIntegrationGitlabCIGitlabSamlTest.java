@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
 import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCIService;
+import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCITriggerService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
@@ -55,6 +56,11 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     // GitlabApi.
     @SpyBean
     protected GitLabCIService continuousIntegrationService;
+
+    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Gitlab using the corresponding RestTemplate and
+    // GitlabApi.
+    @SpyBean
+    protected GitLabCITriggerService continuousIntegrationTriggerService;
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Gitlab using the corresponding RestTemplate and
     // GitlabApi.

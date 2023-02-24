@@ -194,23 +194,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
         // Do nothing since Bamboo automatically creates projects
     }
 
-    /**
-     * Triggers a build for the build plan in the given participation.
-     *
-     * @param participation the participation with the id of the build plan that should be triggered.
-     */
-    @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation) throws BambooException {
-        var buildPlan = participation.getBuildPlanId();
-        try {
-            restTemplate.exchange(serverUrl + "/rest/api/latest/queue/" + buildPlan, HttpMethod.POST, null, Void.class);
-        }
-        catch (RestClientException e) {
-            log.error("HttpError while triggering build plan {} with error: {}", buildPlan, e.getMessage());
-            throw new BambooException("Communication failed when trying to trigger the Bamboo build plan " + buildPlan + " with the error: " + e.getMessage());
-        }
-    }
-
     @Override
     public void deleteBuildPlan(String projectKey, String buildPlanId) {
 

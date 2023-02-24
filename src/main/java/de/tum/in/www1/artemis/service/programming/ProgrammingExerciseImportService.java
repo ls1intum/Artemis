@@ -9,7 +9,6 @@ import java.util.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -22,23 +21,18 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService;
+import de.tum.in.www1.artemis.service.connectors.*;
 
 @Service
 public class ProgrammingExerciseImportService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportService.class);
 
-    private final Environment environment;
-
     private final Optional<VersionControlService> versionControlService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    private final LocalCITriggerService localCITriggerService;
+    private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -56,14 +50,13 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
 
-    public ProgrammingExerciseImportService(Environment environment, Optional<VersionControlService> versionControlService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, LocalCITriggerService localCITriggerService, ProgrammingExerciseService programmingExerciseService,
-            GitService gitService, FileService fileService, UserRepository userRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UrlService urlService,
+    public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseService programmingExerciseService, GitService gitService,
+            FileService fileService, UserRepository userRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UrlService urlService,
             TemplateUpgradePolicy templateUpgradePolicy, ProgrammingExerciseImportBasicService programmingExerciseImportBasicService) {
-        this.environment = environment;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
-        this.localCITriggerService = localCITriggerService;
+        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseService = programmingExerciseService;
         this.gitService = gitService;
         this.fileService = fileService;
@@ -145,14 +138,8 @@ public class ProgrammingExerciseImportService {
                 templateExercise.getSolutionRepositoryUrl(), templateExercise.getTestRepositoryUrl(), templateExercise.getAuxiliaryRepositoriesForBuildPlan());
 
         try {
-            if (Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
-                localCITriggerService.triggerBuild(templateParticipation);
-                localCITriggerService.triggerBuild(solutionParticipation);
-            }
-            else {
-                continuousIntegrationService.get().triggerBuild(templateParticipation);
-                continuousIntegrationService.get().triggerBuild(solutionParticipation);
-            }
+            continuousIntegrationTriggerService.get().triggerBuild(templateParticipation);
+            continuousIntegrationTriggerService.get().triggerBuild(solutionParticipation);
         }
         catch (ContinuousIntegrationException e) {
             log.error("Unable to trigger imported build plans", e);

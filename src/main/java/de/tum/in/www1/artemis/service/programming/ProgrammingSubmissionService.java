@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService;
@@ -59,7 +59,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
     private final LocalCITriggerService localCITriggerService;
 
@@ -74,11 +74,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ProgrammingMessagingService programmingMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, LocalCITriggerService localCITriggerService, ParticipationService participationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExamSubmissionService examSubmissionService, GitService gitService,
-            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExamDateService examDateService,
-            ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
+            LocalCITriggerService localCITriggerService, ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            ExamSubmissionService examSubmissionService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
+            FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService, CourseRepository courseRepository,
+            ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ComplaintRepository complaintRepository, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, Environment environment) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
                 exerciseDateService, courseRepository, participationRepository, complaintRepository);
@@ -86,7 +86,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingMessagingService = programmingMessagingService;
         this.versionControlService = versionControlService;
-        this.continuousIntegrationService = continuousIntegrationService;
+        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.localCITriggerService = localCITriggerService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.examSubmissionService = examSubmissionService;
@@ -154,7 +154,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                     localCITriggerService.triggerBuild(participation);
                 }
                 else {
-                    continuousIntegrationService.get().triggerBuild(participation);
+                    continuousIntegrationTriggerService.get().triggerBuild(participation);
                 }
             }
             catch (ContinuousIntegrationException ex) {

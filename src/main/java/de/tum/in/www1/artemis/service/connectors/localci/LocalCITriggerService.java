@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationTriggerService;
 
 /**
  * Service for triggering builds on the local CI server.
@@ -25,7 +26,7 @@ import de.tum.in.www1.artemis.service.UrlService;
  */
 @Service
 @Profile("localci")
-public class LocalCITriggerService {
+public class LocalCITriggerService implements ContinuousIntegrationTriggerService {
 
     private final UrlService urlService;
 
@@ -39,12 +40,7 @@ public class LocalCITriggerService {
         this.localCIExecutorService = localCIExecutorService;
     }
 
-    /**
-     * Triggers a build for given participation.
-     * Needs to be outside ContinuousIntegrationService (LocalCIService) to prevent a circular dependency LocalCIService -> ProgrammingExercisesGradingService -> LocalCIService.
-     *
-     * @param participation the participation with the id of the build plan that should be triggered.
-     */
+    @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws LocalCIException {
 
         // Prepare paths to assignment repository, test repository, and the build script, and add a new build job to the queue managed by the LocalCIExecutorService.

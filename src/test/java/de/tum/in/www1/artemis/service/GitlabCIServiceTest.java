@@ -166,7 +166,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         mockTriggerBuild(null);
 
-        continuousIntegrationService.triggerBuild(participation);
+        continuousIntegrationTriggerService.triggerBuild(participation);
 
         verify(gitlab, atLeastOnce()).getPipelineApi();
         verify(gitlab.getPipelineApi(), atLeastOnce()).createPipelineTrigger(any(), anyString());
@@ -181,7 +181,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         mockTriggerBuildFailed(null);
 
-        assertThatThrownBy(() -> continuousIntegrationService.triggerBuild(participation)).isInstanceOf(GitLabCIException.class);
+        assertThatThrownBy(() -> continuousIntegrationTriggerService.triggerBuild(participation)).isInstanceOf(GitLabCIException.class);
 
         verify(gitlab, atLeastOnce()).getPipelineApi();
         verify(gitlab.getPipelineApi(), never()).triggerPipeline(eq(urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl())), any(Trigger.class),

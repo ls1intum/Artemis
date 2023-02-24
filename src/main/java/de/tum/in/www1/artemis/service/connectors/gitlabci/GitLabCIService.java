@@ -119,7 +119,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     private void setupGitLabCIConfiguration(VcsRepositoryUrl repositoryURL, ProgrammingExercise exercise, String buildPlanId) {
-        final String repositoryPath = getRepositoryPath(repositoryURL);
+        final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryURL);
         ProjectApi projectApi = gitlab.getProjectApi();
         try {
             Project project = projectApi.getProject(repositoryPath);
@@ -180,10 +180,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         }
     }
 
-    private String getRepositoryPath(VcsRepositoryUrl repositoryUrl) {
-        return urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
-    }
-
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
         addBuildPlanToProgrammingExerciseIfUnset(exercise);
@@ -216,23 +212,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     @Override
     public void performEmptySetupCommit(ProgrammingExerciseParticipation participation) {
         log.error("Unsupported action: GitLabCIService.performEmptySetupCommit()");
-    }
-
-    @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException {
-        triggerBuild(participation.getVcsRepositoryUrl(), participation.getProgrammingExercise().getBranch());
-    }
-
-    private void triggerBuild(VcsRepositoryUrl vcsRepositoryUrl, String branch) {
-        final String repositoryPath = getRepositoryPath(vcsRepositoryUrl);
-        try {
-            Trigger trigger = gitlab.getPipelineApi().createPipelineTrigger(repositoryPath, "Trigger build");
-            gitlab.getPipelineApi().triggerPipeline(repositoryPath, trigger, branch, null);
-            gitlab.getPipelineApi().deletePipelineTrigger(repositoryPath, trigger.getId());
-        }
-        catch (GitLabApiException e) {
-            throw new GitLabCIException("Error triggering the build for " + repositoryPath, e);
-        }
     }
 
     @Override
@@ -276,7 +255,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     private Optional<Pipeline> getLatestPipeline(final ProgrammingExerciseParticipation participation) throws GitLabApiException {
-        final String repositoryPath = getRepositoryPath(participation.getVcsRepositoryUrl());
+        final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
         final Optional<String> commitHash = participation.findLatestSubmission().map(ProgrammingSubmission.class::cast).map(ProgrammingSubmission::getCommitHash);
         if (commitHash.isEmpty()) {
             return Optional.empty();
