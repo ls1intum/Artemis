@@ -17,8 +17,8 @@ export const TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss.SSS';
 
 // Exercise types
 export enum EXERCISE_TYPE {
-    Text,
-    Modeling,
-    Quiz,
-    Programming,
+    Text = 'text',
+    Modeling = 'modeling',
+    Quiz = 'quiz',
+    Programming = 'programming',
 }
