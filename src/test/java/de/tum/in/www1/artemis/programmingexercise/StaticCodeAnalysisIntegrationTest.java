@@ -306,7 +306,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         var result = new Result();
         var feedbackForInactiveCategory = ModelFactory.createSCAFeedbackWithInactiveCategory(result);
         result.addFeedback(feedbackForInactiveCategory);
-        var filteredFeedback = staticCodeAnalysisService.categorizeScaFeedback(result, List.of(feedbackForInactiveCategory), programmingExerciseSCAEnabled);
+        var filteredFeedback = staticCodeAnalysisCategoryRepository.categorizeScaFeedback(result, List.of(feedbackForInactiveCategory), programmingExerciseSCAEnabled);
         assertThat(filteredFeedback).isEmpty();
         assertThat(result.getFeedbacks()).isEmpty();
     }
@@ -317,7 +317,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         var feedback = new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS").detailText("{\"category\": \"BAD_PRACTICE\"}")
                 .type(FeedbackType.AUTOMATIC).positive(false);
         result.addFeedback(feedback);
-        var filteredFeedback = staticCodeAnalysisService.categorizeScaFeedback(result, List.of(feedback), programmingExerciseSCAEnabled);
+        var filteredFeedback = staticCodeAnalysisCategoryRepository.categorizeScaFeedback(result, List.of(feedback), programmingExerciseSCAEnabled);
         assertThat(filteredFeedback).hasSize(1);
         assertThat(result.getFeedbacks()).containsExactlyInAnyOrderElementsOf(filteredFeedback);
         assertThat(result.getFeedbacks().iterator().next().getStaticCodeAnalysisCategory()).isEqualTo("Bad Practice");

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
@@ -38,11 +39,14 @@ public class StaticCodeAnalysisResource {
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
+    private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
+
     public StaticCodeAnalysisResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
-            StaticCodeAnalysisService staticCodeAnalysisService) {
+            StaticCodeAnalysisService staticCodeAnalysisService, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository) {
         this.authCheckService = authCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
+        this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
     }
 
     /**
@@ -60,7 +64,7 @@ public class StaticCodeAnalysisResource {
         checkSCAEnabledForExerciseElseThrow(programmingExercise);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
-        Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.findByExerciseId(exerciseId);
+        Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(exerciseId);
         return ResponseEntity.ok(staticCodeAnalysisCategories);
     }
 
