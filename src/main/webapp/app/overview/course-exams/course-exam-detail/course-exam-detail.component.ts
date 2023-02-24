@@ -5,6 +5,8 @@ import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { faBook, faCalendarDay, faCirclePlay, faCircleStop, faMagnifyingGlass, faPenAlt, faPlay, faUserClock } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, interval } from 'rxjs';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 // Enum to dynamically change the template-content
 export const enum ExamState {
@@ -40,6 +42,8 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
     examStateSubscription: Subscription;
     timeLeftToStart: number;
 
+    studentExam: StudentExam;
+
     // Icons
     faPenAlt = faPenAlt;
     faCirclePlay = faCirclePlay;
@@ -50,7 +54,7 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
     faBook = faBook;
     faCircleStop = faCircleStop;
 
-    constructor(private router: Router) {}
+    constructor(private router: Router, private examParticipationService: ExamParticipationService) {}
 
     ngOnInit() {
         // A subscription is used here to limit the number of calls
@@ -93,8 +97,8 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
             this.cancelExamStateSubscription();
             return;
         }
-        if (dayjs(this.exam.startDate).isAfter(dayjs())) {
-            if (dayjs(this.exam.startDate).diff(dayjs(), `s`) < 600) {
+        if (dayjs().isBefore(this.exam.startDate)) {
+            if (dayjs(this.exam.startDate).diff(dayjs(), `seconds`) < 600) {
                 this.examState = ExamState.IMMINENT;
             } else {
                 this.examState = ExamState.UPCOMING;
@@ -102,23 +106,28 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
             this.timeLeftToStartInSeconds();
             return;
         }
-        if (
-            this.exam.examStudentReviewStart &&
-            this.exam.examStudentReviewEnd &&
-            dayjs().isBetween(dayjs(this.exam.examStudentReviewStart), dayjs(this.exam.examStudentReviewEnd))
-        ) {
-            this.examState = ExamState.STUDENTREVIEW;
-            return;
-        }
-        if (dayjs(this.exam.endDate).isAfter(dayjs())) {
+        if (dayjs().isBefore(this.exam.endDate)) {
             this.examState = ExamState.CONDUCTING;
             return;
         }
-        if (dayjs(this.exam.endDate).isBefore(dayjs())) {
+
+        this.loadStudentExam();
+        if (!this.studentExam && !this.exam.testExam) {
+            this.examState = ExamState.CLOSED;
+            // Exam is over and student did not participate. We can cancel the subscription
+            this.cancelExamStateSubscription();
+            return;
+        }
+
+        if (this.exam.examStudentReviewStart && this.exam.examStudentReviewEnd && dayjs().isBetween(this.exam.examStudentReviewStart, this.exam.examStudentReviewEnd)) {
+            this.examState = ExamState.STUDENTREVIEW;
+            return;
+        }
+        if (dayjs().isAfter(this.exam.endDate)) {
             if (!this.exam.testExam) {
                 // The longest individual working time is stored on the server side, but should not be extra loaded. Therefore, a sufficiently large time extension is selected.
                 const endDateWithTimeExtension = dayjs(this.exam.endDate).add(this.exam.workingTime! * 3, 'seconds');
-                if (endDateWithTimeExtension.isAfter(dayjs())) {
+                if (dayjs().isBefore(endDateWithTimeExtension)) {
                     this.examState = ExamState.TIMEEXTENSION;
                     return;
                 } else {
@@ -136,6 +145,18 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
         }
         this.examState = ExamState.UNDEFINED;
         this.cancelExamStateSubscription();
+    }
+
+    loadStudentExam() {
+        if (!this.studentExam && this.course?.id && this.exam?.id) {
+            if (!this.exam.testExam) {
+                this.examParticipationService.loadStudentExam(this.course.id, this.exam.id).subscribe({
+                    next: (studentExam) => {
+                        this.studentExam = studentExam;
+                    },
+                });
+            }
+        }
     }
 
     /**

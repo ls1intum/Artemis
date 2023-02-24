@@ -12,6 +12,9 @@ studentExamInstance.exercises = exercises as Exercise[];
 const examParticipationSubjectMock = new BehaviorSubject<StudentExam>(studentExamInstance);
 
 export class MockExamParticipationService {
+    loadStudentExam = (courseId: number, examId: number): Observable<StudentExam> => {
+        return examParticipationSubjectMock;
+    };
     loadStudentExamWithExercisesForSummary = (): Observable<StudentExam> => {
         return examParticipationSubjectMock;
     };
