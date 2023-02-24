@@ -12,7 +12,7 @@ public class NotificationTitleTypeConstants {
     // Titles
     public static final String LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = "artemisApp.groupNotification.title.liveExamExerciseUpdate";
 
-    public static final String EXERCISE_SUBMISSION_ASSESSED_TITLE = "notification.title.exerciseSubmissionAssessed";
+    public static final String EXERCISE_SUBMISSION_ASSESSED_TITLE = "artemisApp.singleUserNotification.title.exerciseSubmissionAssessed";
 
     public static final String ATTACHMENT_CHANGE_TITLE = "artemisApp.groupNotification.title.attachmentChange";
 
@@ -36,56 +36,56 @@ public class NotificationTitleTypeConstants {
 
     public static final String NEW_ANNOUNCEMENT_POST_TITLE = "artemisApp.groupNotification.title.newAnnouncementPost";
 
-    public static final String NEW_REPLY_FOR_EXERCISE_POST_TITLE = "notification.title.newReplyForExercisePost";
+    public static final String NEW_REPLY_FOR_EXERCISE_POST_TITLE = "artemisApp.groupNotification.title.newReplyForExercisePost";
 
-    public static final String NEW_REPLY_FOR_LECTURE_POST_TITLE = "notification.title.newReplyForLecturePost";
+    public static final String NEW_REPLY_FOR_LECTURE_POST_TITLE = "artemisApp.groupNotification.title.newReplyForLecturePost";
 
-    public static final String NEW_REPLY_FOR_COURSE_POST_TITLE = "notification.title.newReplyForCoursePost";
+    public static final String NEW_REPLY_FOR_COURSE_POST_TITLE = "artemisApp.groupNotification.title.newReplyForCoursePost";
 
-    public static final String FILE_SUBMISSION_SUCCESSFUL_TITLE = "notification.title.fileSubmissionSuccessful";
+    public static final String FILE_SUBMISSION_SUCCESSFUL_TITLE = "artemisApp.singleUserNotification.title.fileSubmissionSuccessful";
 
-    public static final String COURSE_ARCHIVE_STARTED_TITLE = "notification.title.courseArchiveStarted";
+    public static final String COURSE_ARCHIVE_STARTED_TITLE = "artemisApp.groupNotification.title.courseArchiveStarted";
 
-    public static final String COURSE_ARCHIVE_FINISHED_TITLE = "notification.title.courseArchiveFinished";
+    public static final String COURSE_ARCHIVE_FINISHED_TITLE = "artemisApp.groupNotification.title.courseArchiveFinished";
 
-    public static final String COURSE_ARCHIVE_FAILED_TITLE = "notification.title.courseArchiveFailed";
+    public static final String COURSE_ARCHIVE_FAILED_TITLE = "artemisApp.groupNotification.title.courseArchiveFailed";
 
-    public static final String EXAM_ARCHIVE_STARTED_TITLE = "notification.title.examArchiveStarted";
+    public static final String EXAM_ARCHIVE_STARTED_TITLE = "artemisApp.groupNotification.title.examArchiveStarted";
 
-    public static final String EXAM_ARCHIVE_FINISHED_TITLE = "notification.title.examArchiveFinished";
+    public static final String EXAM_ARCHIVE_FINISHED_TITLE = "artemisApp.groupNotification.title.examArchiveFinished";
 
-    public static final String EXAM_ARCHIVE_FAILED_TITLE = "notification.title.examArchiveFailed";
+    public static final String EXAM_ARCHIVE_FAILED_TITLE = "artemisApp.groupNotification.title.examArchiveFailed";
 
     public static final String PROGRAMMING_TEST_CASES_CHANGED_TITLE = "artemisApp.groupNotification.title.programmingTestCasesChanged";
 
     public static final String NEW_MANUAL_FEEDBACK_REQUEST_TITLE = "artemisApp.groupNotification.title.newManualFeedbackRequest";
 
-    public static final String NEW_PLAGIARISM_CASE_STUDENT_TITLE = "notification.title.newPlagiarismCaseStudent";
+    public static final String NEW_PLAGIARISM_CASE_STUDENT_TITLE = "artemisApp.singleUserNotification.title.newPlagiarismCaseStudent";
 
-    public static final String PLAGIARISM_CASE_VERDICT_STUDENT_TITLE = "notification.title.plagiarismCaseVerdictStudent";
+    public static final String PLAGIARISM_CASE_VERDICT_STUDENT_TITLE = "artemisApp.singleUserNotification.title.plagiarismCaseVerdictStudent";
 
-    public static final String TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE = "notification.title.tutorialGroupRegistrationStudent";
+    public static final String TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupRegistrationStudent";
 
-    public static final String TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE = "notification.title.tutorialGroupDeregistrationStudent";
+    public static final String TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupDeregistrationStudent";
 
-    public static final String TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE = "notification.title.tutorialGroupRegistrationTutor";
+    public static final String TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupRegistrationTutor";
 
-    public static final String TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE = "notification.title.tutorialGroupDeregistrationTutor";
+    public static final String TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupDeregistrationTutor";
 
-    public static final String TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE = "notification.title.tutorialGroupRegistrationMultipleTutor";
+    public static final String TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupRegistrationMultipleTutor";
 
-    public static final String TUTORIAL_GROUP_DELETED_TITLE = "notification.title.tutorialGroupDeleted";
+    public static final String TUTORIAL_GROUP_DELETED_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupDeleted";
 
-    public static final String TUTORIAL_GROUP_UPDATED_TITLE = "notification.title.tutorialGroupUpdated";
+    public static final String TUTORIAL_GROUP_UPDATED_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupUpdated";
 
-    public static final String TUTORIAL_GROUP_ASSIGNED_TITLE = "notification.title.tutorialGroupAssigned";
+    public static final String TUTORIAL_GROUP_ASSIGNED_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupAssigned";
 
-    public static final String TUTORIAL_GROUP_UNASSIGNED_TITLE = "notification.title.tutorialGroupUnassigned";
+    public static final String TUTORIAL_GROUP_UNASSIGNED_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupUnassigned";
 
     //Texts
     public static final String LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TEXT = "artemisApp.groupNotification.text.liveExamExerciseUpdate";
 
-    public static final String EXERCISE_SUBMISSION_ASSESSED_TEXT = "notification.text.exerciseSubmissionAssessed";
+    public static final String EXERCISE_SUBMISSION_ASSESSED_TEXT = "artemisApp.singleUserNotification.text.exerciseSubmissionAssessed";
 
     public static final String ATTACHMENT_CHANGE_TEXT = "artemisApp.groupNotification.text.attachmentChange";
 
@@ -95,9 +95,9 @@ public class NotificationTitleTypeConstants {
 
     public static final String QUIZ_EXERCISE_STARTED_TEXT = "artemisApp.groupNotification.text.quizExerciseStarted";
 
-    public static final String EXERCISE_UPDATED_TEXT = "notification.text.exerciseUpdated";
+    public static final String EXERCISE_UPDATED_TEXT = "artemisApp.groupNotification.text.exerciseUpdated";
 
-    public static final String DUPLICATE_TEST_CASE_TEXT = "notification.text.duplicateTestCase";
+    public static final String DUPLICATE_TEST_CASE_TEXT = "artemisApp.groupNotification.text.duplicateTestCase";
 
     public static final String ILLEGAL_SUBMISSION_TEXT = "artemisApp.groupNotification.text.illegalSubmission";
 
@@ -115,7 +115,9 @@ public class NotificationTitleTypeConstants {
 
     public static final String NEW_REPLY_FOR_COURSE_POST_TEXT = "artemisApp.groupNotification.text.newReplyForCoursePost";
 
-    public static final String FILE_SUBMISSION_SUCCESSFUL_TEXT = "notification.text.fileSubmissionSuccessful";
+    public static final String NEW_REPLY = "artemisApp.singleUserNotification.text.newReply";
+
+    public static final String FILE_SUBMISSION_SUCCESSFUL_TEXT = "artemisApp.singleUserNotification.text.fileSubmissionSuccessful";
 
     public static final String COURSE_ARCHIVE_STARTED_TEXT = "artemisApp.groupNotification.text.courseArchiveStarted";
 
@@ -136,27 +138,27 @@ public class NotificationTitleTypeConstants {
 
     public static final String NEW_MANUAL_FEEDBACK_REQUEST_TEXT = "artemisApp.groupNotification.text.newManualFeedbackRequest";
 
-    public static final String NEW_PLAGIARISM_CASE_STUDENT_TEXT= "notification.text.newPlagiarismCaseStudent";
+    public static final String NEW_PLAGIARISM_CASE_STUDENT_TEXT= "artemisApp.singleUserNotification.text.newPlagiarismCaseStudent";
 
-    public static final String PLAGIARISM_CASE_VERDICT_STUDENT_TEXT = "notification.text.plagiarismCaseVerdictStudent";
+    public static final String PLAGIARISM_CASE_VERDICT_STUDENT_TEXT = "artemisApp.singleUserNotification.text.plagiarismCaseVerdictStudent";
 
-    public static final String TUTORIAL_GROUP_REGISTRATION_STUDENT_TEXT = "notification.text.tutorialGroupRegistrationStudent";
+    public static final String TUTORIAL_GROUP_REGISTRATION_STUDENT_TEXT = "artemisApp.singleUserNotification.text.tutorialGroupRegistrationStudent";
 
-    public static final String TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TEXT = "notification.text.tutorialGroupDeregistrationStudent";
+    public static final String TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TEXT = "artemisApp.singleUserNotification.text.tutorialGroupDeregistrationStudent";
 
-    public static final String TUTORIAL_GROUP_REGISTRATION_TUTOR_TEXT = "notification.text.tutorialGroupRegistrationTutor";
+    public static final String TUTORIAL_GROUP_REGISTRATION_TUTOR_TEXT = "artemisApp.singleUserNotification.text.tutorialGroupRegistrationTutor";
 
-    public static final String TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TEXT = "notification.text.tutorialGroupDeregistrationTutor";
+    public static final String TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TEXT = "artemisApp.singleUserNotification.text.tutorialGroupDeregistrationTutor";
 
-    public static final String TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TEXT = "notification.text.tutorialGroupRegistrationMultipleTutor";
+    public static final String TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TEXT = "artemisApp.singleUserNotification.text.tutorialGroupRegistrationMultipleTutor";
 
-    public static final String TUTORIAL_GROUP_DELETED_TEXT = "notification.text.tutorialGroupDeleted";
+    public static final String TUTORIAL_GROUP_DELETED_TEXT = "artemisApp.singleUserNotification.text.tutorialGroupDeleted";
 
-    public static final String TUTORIAL_GROUP_UPDATED_TEXT = "notification.text.tutorialGroupUpdated";
+    public static final String TUTORIAL_GROUP_UPDATED_TEXT = "artemisApp.singleUserNotification.text.tutorialGroupUpdated";
 
-    public static final String TUTORIAL_GROUP_ASSIGNED_TEXT = "notification.text.tutorialGroupAssigned";
+    public static final String TUTORIAL_GROUP_ASSIGNED_TEXT = "artemisApp.singleUserNotification.text.tutorialGroupAssigned";
 
-    public static final String TUTORIAL_GROUP_UNASSIGNED_TEXT = "notification.text.tutorialGroupUnassigned";
+    public static final String TUTORIAL_GROUP_UNASSIGNED_TEXT = "artemisApp.singleUserNotification.text.tutorialGroupUnassigned";
 
     // bidirectional map
     private static final BiMap<NotificationType, String> NOTIFICATION_TYPE_AND_TITLE_MAP = new ImmutableBiMap.Builder<NotificationType, String>()

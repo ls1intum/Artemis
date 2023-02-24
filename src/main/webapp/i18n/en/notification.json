@@ -57,9 +57,9 @@
                 "newLecturePost": "New lecture post",
                 "newCoursePost": "New course-wide post",
                 "newAnnouncementPost": "New announcement",
-                "newReplyForExercisePostGroup": "New reply for exercise post",
-                "newReplyForLecturePostGroup": "New reply for lecture post",
-                "newReplyForCoursePostGroup": "New reply for course-wide post",
+                "newReplyForExercisePost": "New reply for exercise post",
+                "newReplyForLecturePost": "New reply for lecture post",
+                "newReplyForCoursePost": "New reply for course-wide post",
                 "courseArchiveStarted": "Course archival started",
                 "courseArchiveFinished": "Course archival finished",
                 "courseArchiveFailed": "Course archival failed",
@@ -92,6 +92,35 @@
                 "examArchiveFinishedWithoutErrors": "The exam \"{{ placeholderValues.0 }}\" has been archived.",
                 "examArchiveFinishedWithErrors": "The exam \"{{ placeholderValues.0 }}\" has been archived. Some exercises couldn't be included in the archive:<br/><br/> {{ placeholderValues.1 }}",
                 "examArchiveFailed": "There was a problem archiving exam \"{{ placeholderValues.0 }}\": <br/><br/> {{ placeholderValues.1 }}"
+            }
+        },
+        "singleUserNotification": {
+            "title": {
+                "exerciseSubmissionAssessed": "Exercise Submission Assessed",
+                "fileSubmissionSuccessful": "File submission successfulh",
+                "newPlagiarismCaseStudent": "New plagiarism case",
+                "plagiarismCaseVerdictStudent": "Verdict for your plagiarism case",
+                "tutorialGroupRegistrationStudent": "You have been registered to a tutorial group",
+                "tutorialGroupDeregistrationStudent": "You have been deregistered from a tutorial group",
+                "tutorialGroupRegistrationTutor": "A student has been registered to your tutorial group",
+                "tutorialGroupDeregistrationTutor": "A student has been deregistered from your tutorial group",
+                "tutorialGroupMultipleRegistrationTutor": "Multiple students have been registered to your tutorial group",
+                "tutorialGroupAssigned": "You have been assigned to lead a tutorial group",
+                "tutorialGroupUnassigned": "You have been unassigned from leading a tutorial group"
+            },
+            "text": {
+                "newReply": "Your post got replied.",
+                "exerciseSubmissionAssessed": "Your submission for the {{ placeholderValues.0 }} exercise \"{{ placeholderValues.1 }}\" has been assessed.",
+                "fileSubmissionSuccessful": "Your file for the exercise \"{{ placeholderValues.0 }}\" was successfully submitted.",
+                "newPlagiarismCaseStudent": "New plagiarism case concerning the {{ placeholderValues.0 }} exercise \"{{ placeholderValues.1 }}\".",
+                "plagiarismCaseVerdictStudent": "Your plagiarism case concerning the {{ placeholderValues.0 }} exercise \"{{ placeholderValues.1 }}\" has a verdict.",
+                "tutorialGroupRegistrationStudent": "You have been registered to the tutorial group {{ placeholderValues.0 }} by {{ placeholderValues.1 }}.",
+                "tutorialGroupDeregistrationStudent": "You have been deregistered from the tutorial group {{ placeholderValues.0 }} by {{ placeholderValues.1 }}.",
+                "tutorialGroupRegistrationTutor": "The student {{ placeholderValues.0 }} has been registered to your tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
+                "tutorialGroupDeregistrationTutor": "The student {{ placeholderValues.0 }} has been deregistered from your tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
+                "tutorialGroupMultipleRegistrationTutor": "{{ placeholderValues.0 }} students have been registered to your tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
+                "tutorialGroupAssigned": "You have been assigned to lead the tutorial group {{ placeholderValues.0 }} by {{ placeholderValues.1 }}.",
+                "tutorialGroupUnassigned": "You have been unassigned from leading the tutorial group {{ placeholderValues.0 }} by {{ placeholderValues.1 }}."
             }
         }
     }

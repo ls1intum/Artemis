@@ -57,9 +57,9 @@
                 "newLecturePost": "Neuer Vorlesungsbeitrag",
                 "newCoursePost": "Neuer kursweiter Beitrag",
                 "newAnnouncementPost": "Neue Ankündigung",
-                "newReplyForExercisePostGroup": "Neue Antwort auf Aufgabenbeitrag",
-                "newReplyForLecturePostGroup": "Neue Antwort auf Vorlesungsbeitrag",
-                "newReplyForCoursePostGroup": "Neue Antwort auf Kursbeitrag",
+                "newReplyForExercisePost": "Neue Antwort auf Aufgabenbeitrag",
+                "newReplyForLecturePost": "Neue Antwort auf Vorlesungsbeitrag",
+                "newReplyForCoursePost": "Neue Antwort auf Kursbeitrag",
                 "courseArchiveStarted": "Kursarchivierung gestartet",
                 "courseArchiveFinished": "Kursarchivierung beendet",
                 "courseArchiveFailed": "Kursarchivierung fehlgeschlagen",
@@ -92,6 +92,35 @@
                 "examArchiveFinishedWithoutErrors": "Die Klausur \"{{ placeholderValues.0 }}\" wurde archiviert.",
                 "examArchiveFinishedWithErrors": "Die Klausur \"{{ placeholderValues.0 }}\" wurde archiviert. Einige Aufgaben konnten nicht in das Archiv aufgenommen werden:<br/><br/> {{ placeholderValues.1 }}",
                 "examArchiveFailed": "Es gab ein Problem beim Archivieren der Klausur \"{{ placeholderValues.0 }}\": <br/><br/>  {{ placeholderValues.1 }}"
+            }
+        },
+        "singleUserNotification": {
+            "title": {
+                "exerciseSubmissionAssessed": "Aufgaben Abgabe bewertet",
+                "fileSubmissionSuccessful": "Dateiabgabe erfolgreich",
+                "newPlagiarismCaseStudent": "Neuer Plagiarismusfall",
+                "plagiarismCaseVerdictStudent": "Urteil zu deinem Plagiarismusfall",
+                "tutorialGroupRegistrationStudent": "Du wurdest für eine Übungsgruppe registriert",
+                "tutorialGroupDeregistrationStudent": "Du wurdest von einer Übungsgruppe entregistriert",
+                "tutorialGroupRegistrationTutor": "Ein Student wurde für deine Übungsgruppe registriert",
+                "tutorialGroupDeregistrationTutor": "Ein Student wurde aus deiner Übungsgruppe entregistriert",
+                "tutorialGroupMultipleRegistrationTutor": "Mehrere Studenten wurden zu deiner Übungsgruppe registriert",
+                "tutorialGroupAssigned": "Du wurdest zugeteilt eine Übungsgruppe zu leiten",
+                "tutorialGroupUnassigned": "Dir wurde die Leitung einer Übungsgruppe entzogen"
+            },
+            "text": {
+                "newReply": "Auf deinen Beitrag wurde geantwortet",
+                "exerciseSubmissionAssessed": "Deine Abgabe für die \"{{ placeholderValues.0 }}\" Aufgabe \"{{ placeholderValues.1 }}\" wurde bewertet.",
+                "fileSubmissionSuccessful": "Deine Datei für die Aufgabe \"{{ placeholderValues.0 }}\" wurde erfolgreich eingereicht.",
+                "newPlagiarismCaseStudent": "Neuer Plagiarismusfall für die {{ placeholderValues.0 }} Aufgabe \"{{ placeholderValues.1 }}\".",
+                "plagiarismCaseVerdictStudent": "Dein Plagiarismusfall für die {{ placeholderValues.0 }} Aufgabe \"{{ placeholderValues.1 }}\" hat ein Urteil.",
+                "tutorialGroupRegistrationStudent": "Du wurdest für die Übungsgruppe {{ placeholderValues.0 }} von {{ placeholderValues.1 }} registriert.",
+                "tutorialGroupDeregistrationStudent": "Du wurdest von der Übungsgruppe {{ placeholderValues.0 }} von {{ placeholderValues.1 }} entregistriert.",
+                "tutorialGroupRegistrationTutor": "Der Student {{ placeholderValues.0 }} wurde zu deiner Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} registriert.",
+                "tutorialGroupDeregistrationTutor": "Der Student {{ placeholderValues.0 }} wurde von deiner Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} entregistriert.",
+                "tutorialGroupMultipleRegistrationTutor": "{{ placeholderValues.0 }} Studenten wurden für deine Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} registriert.",
+                "tutorialGroupAssigned": "Du wurdest von {{ placeholderValues.1 }} zugeteilt die Übungsgruppe {{ placeholderValues.0 }} zu leiten.",
+                "tutorialGroupUnassigned": "Dir wurde die Leitung von Übungsgruppe {{ placeholderValues.0 }} von {{ placeholderValues.1 }} entzogen."
             }
         }
     }

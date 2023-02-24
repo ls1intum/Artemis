@@ -110,7 +110,7 @@ public class UserTestService {
         student.setInternal(true);
         userRepository.save(student);
         mockDelegate.mockDeleteUserInUserManagement(student, true, false, false);
-        var notification = singleUserNotificationRepository.save(new SingleUserNotification(student, "title", "text"));
+        var notification = singleUserNotificationRepository.save(new SingleUserNotification(student, "title", "text", false, null));
 
         request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.OK);
 
