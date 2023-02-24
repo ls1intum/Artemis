@@ -3,6 +3,8 @@ import { courseManagementRequest } from '../../artemis';
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { BASE_API, EXERCISE_TYPE, PUT } from '../../constants';
 import { POST } from '../../constants';
+import { AdditionalData, Exercise } from './ExamParticipation';
+import { generateUUID } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam exercise group creation page.
@@ -28,7 +30,16 @@ export class ExamExerciseGroupCreationPage {
         cy.wait('@updateExerciseGroup');
     }
 
-    addGroupWithExercise(exam: Exam, title: string, exerciseType: EXERCISE_TYPE, processResponse: (data: any) => void) {
+    addGroupWithExercise(exerciseArray: Array<Exercise>, exam: Exam, exerciseType: EXERCISE_TYPE, additionalData?: AdditionalData) {
+        this.handleAddGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, (response) => {
+            if (exerciseType == EXERCISE_TYPE.Quiz) {
+                additionalData!.quizExerciseID = response.body.quizQuestions![0].id;
+            }
+            this.addExerciseToArray(exerciseArray, response, additionalData);
+        });
+    }
+
+    handleAddGroupWithExercise(exam: Exam, title: string, exerciseType: EXERCISE_TYPE, processResponse: (data: any) => void) {
         courseManagementRequest.addExerciseGroupForExam(exam).then((groupResponse) => {
             switch (exerciseType) {
                 case EXERCISE_TYPE.Text:
@@ -55,5 +66,9 @@ export class ExamExerciseGroupCreationPage {
                     break;
             }
         });
+    }
+
+    addExerciseToArray(exerciseArray: Array<Exercise>, response: any, additionalData?: AdditionalData) {
+        exerciseArray.push({ ...response.body, additionalData });
     }
 }
