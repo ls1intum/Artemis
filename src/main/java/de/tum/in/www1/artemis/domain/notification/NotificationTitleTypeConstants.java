@@ -42,12 +42,6 @@ public class NotificationTitleTypeConstants {
 
     public static final String NEW_REPLY_FOR_COURSE_POST_TITLE = "notification.title.newReplyForCoursePost";
 
-    public static final String NEW_REPLY_FOR_EXERCISE_POST_GROUP_TITLE = "artemisApp.groupNotification.title.newReplyForExercisePostGroup";
-
-    public static final String NEW_REPLY_FOR_LECTURE_POST_GROUP_TITLE = "artemisApp.groupNotification.title.newReplyForLecturePostGroup";
-
-    public static final String NEW_REPLY_FOR_COURSE_POST_GROUP_TITLE = "artemisApp.groupNotification.title.newReplyForCoursePostGroup";
-
     public static final String FILE_SUBMISSION_SUCCESSFUL_TITLE = "notification.title.fileSubmissionSuccessful";
 
     public static final String COURSE_ARCHIVE_STARTED_TITLE = "notification.title.courseArchiveStarted";
@@ -120,12 +114,6 @@ public class NotificationTitleTypeConstants {
     public static final String NEW_REPLY_FOR_LECTURE_POST_TEXT = "artemisApp.groupNotification.text.newReplyForLecturePost";
 
     public static final String NEW_REPLY_FOR_COURSE_POST_TEXT = "artemisApp.groupNotification.text.newReplyForCoursePost";
-
-    public static final String NEW_REPLY_FOR_EXERCISE_POST_GROUP_TEXT = "artemisApp.groupNotification.text.newReplyForExercisePostGroup";
-
-    public static final String NEW_REPLY_FOR_LECTURE_POST_GROUP_TEXT = "artemisApp.groupNotification.text.newReplyForLecturePostGroup";
-
-    public static final String NEW_REPLY_FOR_COURSE_POST_GROUP_TEXT = "artemisApp.groupNotification.text.newReplyForCoursePostGroup";
 
     public static final String FILE_SUBMISSION_SUCCESSFUL_TEXT = "notification.text.fileSubmissionSuccessful";
 
