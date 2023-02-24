@@ -6,7 +6,7 @@ import { Course } from 'app/entities/course.model';
 import { generateUUID } from '../../support/utils';
 import { EXERCISE_TYPE } from '../../support/constants';
 import { courseManagementRequest, examExerciseGroupCreation, examNavigation, examParticipation, examStartEnd, textExerciseEditor } from '../../support/artemis';
-import { AdditionalData, Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
+import { Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
 import { Interception } from 'cypress/types/net-stubbing';
 import { admin, studentOne, studentThree, studentTwo } from '../../support/users';
 
