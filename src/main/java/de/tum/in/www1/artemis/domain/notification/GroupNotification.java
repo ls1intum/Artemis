@@ -68,7 +68,8 @@ public class GroupNotification extends Notification {
         this.setAuthor(user);
     }
 
-    public GroupNotification(Course course, String title, String notificationText, boolean textIsPlaceholder, String[] placeholderValues, User user, GroupNotificationType type, NotificationPriority priority) {
+    public GroupNotification(Course course, String title, String notificationText, boolean textIsPlaceholder, String[] placeholderValues, User user, GroupNotificationType type,
+            NotificationPriority priority) {
         this.setCourse(course);
         this.setType(type);
         this.setNotificationDate(ZonedDateTime.now());

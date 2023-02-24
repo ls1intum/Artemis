@@ -4,8 +4,6 @@ import java.time.ZonedDateTime;
 
 import javax.persistence.*;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
@@ -13,6 +11,8 @@ import org.hibernate.annotations.DiscriminatorOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
@@ -115,7 +115,7 @@ public abstract class Notification extends DomainObject {
 
     /**
      * @param notificationTextValues the notification text values as a string array
-     * We convert it to a json string, so we can store it in the database
+     *                                   We convert it to a json string, so we can store it in the database
      */
     public void setPlaceholderValues(String[] notificationTextValues) {
         String jsonString = null;

@@ -82,7 +82,7 @@ public class NotificationTitleTypeConstants {
 
     public static final String TUTORIAL_GROUP_UNASSIGNED_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupUnassigned";
 
-    //Texts
+    // Texts
     public static final String LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TEXT = "artemisApp.groupNotification.text.liveExamExerciseUpdate";
 
     public static final String EXERCISE_SUBMISSION_ASSESSED_TEXT = "artemisApp.singleUserNotification.text.exerciseSubmissionAssessed";
@@ -130,6 +130,7 @@ public class NotificationTitleTypeConstants {
     public static final String EXAM_ARCHIVE_STARTED_TEXT = "artemisApp.groupNotification.text.examArchiveStarted";
 
     public static final String EXAM_ARCHIVE_FINISHED_WITH_ERRORS_TEXT = "artemisApp.groupNotification.text.examArchiveFinishedWithErrors";
+
     public static final String EXAM_ARCHIVE_FINISHED_WITHOUT_ERRORS_TEXT = "artemisApp.groupNotification.text.examArchiveFinishedWithoutErrors";
 
     public static final String EXAM_ARCHIVE_FAILED_TEXT = "artemisApp.groupNotification.text.examArchiveFailed";
@@ -138,7 +139,7 @@ public class NotificationTitleTypeConstants {
 
     public static final String NEW_MANUAL_FEEDBACK_REQUEST_TEXT = "artemisApp.groupNotification.text.newManualFeedbackRequest";
 
-    public static final String NEW_PLAGIARISM_CASE_STUDENT_TEXT= "artemisApp.singleUserNotification.text.newPlagiarismCaseStudent";
+    public static final String NEW_PLAGIARISM_CASE_STUDENT_TEXT = "artemisApp.singleUserNotification.text.newPlagiarismCaseStudent";
 
     public static final String PLAGIARISM_CASE_VERDICT_STUDENT_TEXT = "artemisApp.singleUserNotification.text.plagiarismCaseVerdictStudent";
 
