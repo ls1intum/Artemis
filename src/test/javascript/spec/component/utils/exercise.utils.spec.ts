@@ -12,6 +12,7 @@ import {
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('ExerciseUtils', () => {
     const exerciseWithDueDate = (dueDate?: dayjs.Dayjs) => {
@@ -151,6 +152,7 @@ describe('ExerciseUtils', () => {
         [{ type: ExerciseType.MODELING, dueDate: dayjs().add(1, 'hour') } as Exercise, false],
         [{ type: ExerciseType.PROGRAMMING } as Exercise, false],
         [{ type: ExerciseType.PROGRAMMING, dueDate: dayjs().subtract(1, 'hour') } as Exercise, true],
+        [{ type: ExerciseType.PROGRAMMING, dueDate: dayjs().subtract(1, 'hour'), assessmentType: AssessmentType.AUTOMATIC } as Exercise, false],
         [{ type: ExerciseType.PROGRAMMING, dueDate: dayjs().add(1, 'hour') } as Exercise, false],
         [
             {
