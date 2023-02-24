@@ -121,6 +121,16 @@
                 "tutorialGroupMultipleRegistrationTutor": "{{ placeholderValues.0 }} Studenten wurden für deine Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} registriert.",
                 "tutorialGroupAssigned": "Du wurdest von {{ placeholderValues.1 }} zugeteilt die Übungsgruppe {{ placeholderValues.0 }} zu leiten.",
                 "tutorialGroupUnassigned": "Dir wurde die Leitung von Übungsgruppe {{ placeholderValues.0 }} von {{ placeholderValues.1 }} entzogen."
+            },
+            "tutorialGroupNotification": {
+                "title": {
+                    "tutorialGroupDeleted": "Übungsgruppe gelöscht",
+                    "tutorialGroupUpdated": "Übungsgruppe aktualisiert"
+                },
+                "text": {
+                    "tutorialGroupDeleted": "Die Übungsgruppe {{ placeholderValues.0 }} wurde gelöscht.",
+                    "tutorialGroupUpdated": "Die Übungsgruppe {{ placeholderValues.0 }} wurde gelöscht."
+                }
             }
         }
     }

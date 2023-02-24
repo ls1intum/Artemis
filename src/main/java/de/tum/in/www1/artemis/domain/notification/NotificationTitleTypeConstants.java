@@ -74,9 +74,9 @@ public class NotificationTitleTypeConstants {
 
     public static final String TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupRegistrationMultipleTutor";
 
-    public static final String TUTORIAL_GROUP_DELETED_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupDeleted";
+    public static final String TUTORIAL_GROUP_DELETED_TITLE = "artemisApp.tutorialGroupNotification.title.tutorialGroupDeleted";
 
-    public static final String TUTORIAL_GROUP_UPDATED_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupUpdated";
+    public static final String TUTORIAL_GROUP_UPDATED_TITLE = "artemisApp.tutorialGroupNotification.title.tutorialGroupUpdated";
 
     public static final String TUTORIAL_GROUP_ASSIGNED_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupAssigned";
 

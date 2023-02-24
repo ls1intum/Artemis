@@ -122,6 +122,16 @@
                 "tutorialGroupAssigned": "You have been assigned to lead the tutorial group {{ placeholderValues.0 }} by {{ placeholderValues.1 }}.",
                 "tutorialGroupUnassigned": "You have been unassigned from leading the tutorial group {{ placeholderValues.0 }} by {{ placeholderValues.1 }}."
             }
+        },
+        "tutorialGroupNotification": {
+            "title": {
+                "tutorialGroupDeleted": "Tutorial Group deleted",
+                "tutorialGroupUpdated": "Tutorial Group updated"
+            },
+            "text": {
+                "tutorialGroupDeleted": "The tutorial group {{ placeholderValues.0 }} has been deleted.",
+                "tutorialGroupUpdated": "The tutorial group {{ placeholderValues.0 }} has been deleted."
+            }
         }
     }
 }
