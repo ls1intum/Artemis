@@ -58,7 +58,7 @@ class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     ProgrammingExerciseTask addTaskToProgrammingExercise(String taskName) {
         var task = new ProgrammingExerciseTask();
         task.setTaskName(taskName);
-        task.setExercise(programmingExerciseRepository.getById(programmingExerciseId));
+        task.setExercise(programmingExerciseRepository.getReferenceById(programmingExerciseId));
         task = programmingExerciseTaskRepository.save(task);
         return task;
     }

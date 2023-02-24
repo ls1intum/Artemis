@@ -84,8 +84,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     private User student;
 
-    private Course course;
-
     private static final String USERNAME = TEST_PREFIX + "student1";
 
     private ProgrammingExercise programmingExercise;
@@ -97,7 +95,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
 
         database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        course = database.addCourseWithOneProgrammingExercise();
+        Course course = database.addCourseWithOneProgrammingExercise();
         database.addOnlineCourseConfigurationToCourse(course);
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
