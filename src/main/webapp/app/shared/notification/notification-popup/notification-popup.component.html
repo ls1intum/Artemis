@@ -16,9 +16,9 @@
                 <h5 class="pe-4">{{ 'artemisApp.notification.liveExamExerciseUpdateNotification' | artemisTranslate }}</h5>
             </div>
             <ng-template #displayNormalNotificationTitle>
-                <h5 class="pe-4">{{ notification.title }}</h5>
+                <h5 class="pe-4">{{ notification.textIsPlaceholder ? (notification.title | artemisTranslate : { placeholderValues: getParsedPlaceholderValues(notification) }) : notification.title }}</h5>
             </ng-template>
-            {{ notification.text }}
+            {{ notification.textIsPlaceholder ? (notification.text | artemisTranslate : { placeholderValues: getParsedPlaceholderValues(notification) }) : notification.text }}
         </div>
     </div>
 </div>

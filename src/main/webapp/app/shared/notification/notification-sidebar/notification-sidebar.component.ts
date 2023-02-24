@@ -161,6 +161,13 @@ export class NotificationSidebarComponent implements OnInit {
         });
     }
 
+    getParsedPlaceholderValues(notification: Notification): string[] {
+        if (notification.placeholderValues) {
+            return JSON.parse(notification.placeholderValues);
+        }
+        return [];
+    }
+
     private loadNotifications(): void {
         if (!this.loading && (this.totalNotifications === 0 || this.notifications.length < this.totalNotifications)) {
             this.loading = true;

@@ -14,6 +14,8 @@ export class Notification implements BaseEntity {
     public notificationType?: NotificationType;
     public title?: string;
     public text?: string;
+    public textIsPlaceholder?: string;
+    public placeholderValues?: string;
     public notificationDate?: dayjs.Dayjs;
     public target?: string;
     public author?: User;
