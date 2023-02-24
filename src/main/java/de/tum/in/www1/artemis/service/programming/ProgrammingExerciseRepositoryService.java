@@ -75,7 +75,7 @@ public class ProgrammingExerciseRepositoryService {
      * @param user        the user who has initiated the generation of the programming exercise
      * @throws GitAPIException If committing, or pushing to the repo throws an exception
      */
-    void commitAndPushRepository(final Repository repository, final String message, boolean emptyCommit, final User user) throws GitAPIException {
+    void commitAndPushRepository(final Repository repository, final String message, final boolean emptyCommit, final User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, message, emptyCommit, user);
 
@@ -474,7 +474,7 @@ public class ProgrammingExerciseRepositoryService {
         setupBuildStage(resources.prefix, templatePath, projectTemplatePath, projectType, repoLocalPath, stagePomXml, BuildStage.BEHAVIOR);
     }
 
-    private Optional<Resource> getStagePomXml(final Path templatePath, final Path projectTemplatePath, boolean isMaven) {
+    private Optional<Resource> getStagePomXml(final Path templatePath, final Path projectTemplatePath, final boolean isMaven) {
         if (!isMaven) {
             return Optional.empty();
         }
