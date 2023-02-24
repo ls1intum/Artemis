@@ -36,7 +36,7 @@ export class ExamParticipation {
                 this.makeQuizExerciseSubmission(exerciseID, additionalData!.quizExerciseID!);
                 break;
             case EXERCISE_TYPE.Programming:
-                this.makeProgrammingExerciseSubmission(exerciseID, additionalData!.submission!);
+                this.makeProgrammingExerciseSubmission(exerciseID, additionalData!.submission!, additionalData!.practiceMode);
                 break;
         }
     }
@@ -48,13 +48,17 @@ export class ExamParticipation {
         cy.wait(1000);
     }
 
-    private makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission) {
+    private makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, practiceMode = false) {
         programmingExerciseEditor.toggleCompressFileTree(exerciseID);
         programmingExerciseEditor.deleteFile(exerciseID, 'Client.java');
         programmingExerciseEditor.deleteFile(exerciseID, 'BubbleSort.java');
         programmingExerciseEditor.deleteFile(exerciseID, 'MergeSort.java');
         programmingExerciseEditor.typeSubmission(exerciseID, submission, 'de.test');
-        programmingExerciseEditor.submit(exerciseID);
+        if (practiceMode) {
+            programmingExerciseEditor.submitPractice(exerciseID);
+        } else {
+            programmingExerciseEditor.submit(exerciseID);
+        }
         programmingExerciseEditor.getResultScoreFromExercise(exerciseID).contains(submission.expectedResult).and('be.visible');
     }
 
@@ -117,6 +121,7 @@ export class AdditionalData {
     submission?: ProgrammingExerciseSubmission;
     expectedScore?: number;
     textFixture?: string;
+    practiceMode?: boolean;
 }
 
 export type Exercise = {
