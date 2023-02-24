@@ -85,6 +85,7 @@ describe('StudentExamDetailComponent', () => {
             exam,
             user: student,
             exercises: [exercise],
+            numberOfExamSessions: 0,
         };
         studentExam2 = {
             id: 2,
@@ -94,6 +95,7 @@ describe('StudentExamDetailComponent', () => {
             submitted: true,
             submissionDate: dayjs(),
             exercises: [exercise],
+            numberOfExamSessions: 0,
         };
 
         studentExamWithGrade = {
