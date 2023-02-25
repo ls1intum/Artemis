@@ -1,4 +1,4 @@
-import { CypressExerciseType } from '../../requests/CourseManagementRequests';
+import { EXERCISE_TYPE } from '../../constants';
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
 
 /**
@@ -36,11 +36,11 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
         return cy.get('#test-' + index);
     }
 
-    rejectComplaint(response: string) {
-        return super.rejectComplaint(response, CypressExerciseType.PROGRAMMING);
+    rejectComplaint(response: string, examMode: boolean) {
+        return super.rejectComplaint(response, examMode, EXERCISE_TYPE.Programming);
     }
 
-    acceptComplaint(response: string) {
-        return super.acceptComplaint(response, CypressExerciseType.PROGRAMMING);
+    acceptComplaint(response: string, examMode: boolean) {
+        return super.acceptComplaint(response, examMode, EXERCISE_TYPE.Programming);
     }
 }

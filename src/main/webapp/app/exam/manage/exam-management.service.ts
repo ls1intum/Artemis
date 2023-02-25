@@ -298,8 +298,8 @@ export class ExamManagementService {
      * @param examId the id of the exam
      * @param testRunId the id of the test run
      */
-    deleteTestRun(courseId: number, examId: number, testRunId: number): Observable<HttpResponse<StudentExam>> {
-        return this.http.delete<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-run/${testRunId}`, { observe: 'response' });
+    deleteTestRun(courseId: number, examId: number, testRunId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-run/${testRunId}`, { observe: 'response' });
     }
 
     /**

@@ -96,8 +96,7 @@ class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbu
         gitDiffEntry.setLineCount(lineCount);
         gitDiffEntry.setGitDiffReport(gitDiffReport);
         gitDiffReport.getEntries().add(gitDiffEntry);
-        var savedGitDiffReport = programmingExerciseGitDiffReportRepository.save(gitDiffReport);
-        return savedGitDiffReport;
+        return programmingExerciseGitDiffReportRepository.save(gitDiffReport);
     }
 
     private CoverageReport newCoverageReport() {

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.HashMap;
@@ -25,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PersistentAuditEvent implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Id
