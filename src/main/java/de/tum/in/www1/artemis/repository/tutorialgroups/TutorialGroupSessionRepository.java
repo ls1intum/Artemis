@@ -22,10 +22,10 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGroupSession, Long> {
 
     @Query("""
-                SELECT tutorialGroupSession
-                FROM TutorialGroupSession tutorialGroupSession
-                WHERE tutorialGroupSession.tutorialGroup.id = :#{#tutorialGroupId}
-                AND tutorialGroupSession.status = :#{#status}
+            SELECT tutorialGroupSession
+            FROM TutorialGroupSession tutorialGroupSession
+            WHERE tutorialGroupSession.tutorialGroup.id = :#{#tutorialGroupId}
+            AND tutorialGroupSession.status = :#{#status}
             AND tutorialGroupSession.start >= :#{#now}
             ORDER BY tutorialGroupSession.start""")
     List<TutorialGroupSession> findNextSessionsOfStatus(@Param("tutorialGroupId") Long tutorialGroupId, @Param("now") ZonedDateTime now,
