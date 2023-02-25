@@ -9,6 +9,7 @@ import { TutorialGroupFreeDaysOverviewComponent } from './tutorial-group-free-da
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { TutorialGroupRowComponent } from './tutorial-groups-table/tutorial-group-row/tutorial-group-row.component';
 import { VerticalProgressBarModule } from 'app/shared/vertical-progress-bar/vertical-progress-bar.module';
+import { TutorialGroupUtilizationIndicatorComponent } from './tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule, ArtemisSidePanelModule, VerticalProgressBarModule],
@@ -19,6 +20,7 @@ import { VerticalProgressBarModule } from 'app/shared/vertical-progress-bar/vert
         TutorialGroupSessionRowComponent,
         TutorialGroupFreeDaysOverviewComponent,
         TutorialGroupRowComponent,
+        TutorialGroupUtilizationIndicatorComponent,
     ],
     exports: [TutorialGroupsTableComponent, TutorialGroupSessionsTableComponent, TutorialGroupDetailComponent, TutorialGroupFreeDaysOverviewComponent],
 })

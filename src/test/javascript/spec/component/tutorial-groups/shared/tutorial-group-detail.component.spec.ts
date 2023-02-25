@@ -8,9 +8,9 @@ import { Component, Input, ViewChild } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
-import { VerticalProgressBarComponent } from 'app/shared/vertical-progress-bar/vertical-progress-bar.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
 class MockHeaderComponent {
@@ -54,7 +54,7 @@ describe('TutorialGroupDetailWrapperTest', () => {
                 MockHeaderComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
-                MockComponent(VerticalProgressBarComponent),
+                MockComponent(TutorialGroupUtilizationIndicatorComponent),
             ],
             providers: [MockProvider(ArtemisMarkdownService), MockProvider(SortService)],
         })
@@ -89,7 +89,7 @@ describe('TutorialGroupDetailComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [NgbTooltipMocksModule],
-            declarations: [TutorialGroupDetailComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(VerticalProgressBarComponent)],
+            declarations: [TutorialGroupDetailComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(TutorialGroupUtilizationIndicatorComponent)],
             providers: [MockProvider(ArtemisMarkdownService), MockProvider(SortService)],
         })
             .compileComponents()
