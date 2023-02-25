@@ -2001,6 +2001,61 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         }
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createQuizExercise_dragAndDrop_withoutBackgroundFile() throws Exception {
+        Course course = database.createCourse();
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setDuration(3600);
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createQuizExercise_withoutDragAndDrop() throws Exception {
+        Course course = database.createCourse();
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setQuizQuestions(quizExercise.getQuizQuestions().stream().filter(question -> !(question instanceof DragAndDropQuestion)).toList());
+        quizExercise.setDuration(3600);
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateQuizExercise_withoutDragAndDrop() throws Exception {
+        Course course = database.createCourse();
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setQuizQuestions(quizExercise.getQuizQuestions().stream().filter(question -> !(question instanceof DragAndDropQuestion)).toList());
+        quizExercise.setDuration(3600);
+        quizExercise = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, false);
+        updateQuizExerciseWithFiles(quizExercise, null, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateQuizExercise_dragAndDrop_withoutFileArrayProvided() throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        updateQuizExerciseWithFiles(quizExercise, null, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateQuizExercise_dragAndDrop_withFileChanges() throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        var newBackgroundFilePath = "newBackgroundFile.png";
+        var newPictureFilePath = "newPictureFile.jpg";
+
+        List<DragAndDropQuestion> dragAndDropQuestions = quizExercise.getQuizQuestions().stream().filter(q -> q instanceof DragAndDropQuestion).map(q -> (DragAndDropQuestion) q)
+                .toList();
+        var question = dragAndDropQuestions.get(0);
+        question.setBackgroundFilePath(newBackgroundFilePath);
+        var items = question.getDragItems();
+        var item = items.get(1);
+        item.setPictureFilePath(newPictureFilePath);
+
+        updateQuizExerciseWithFiles(quizExercise, List.of(newBackgroundFilePath, newPictureFilePath), HttpStatus.OK);
+    }
+
     private QuizExercise createMultipleChoiceQuizExerciseDummy() {
         Course course = database.createCourse();
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
