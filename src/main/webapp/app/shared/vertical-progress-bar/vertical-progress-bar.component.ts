@@ -55,11 +55,11 @@ export class VerticalProgressBarComponent implements OnInit {
         this.cdr.markForCheck;
     }
     @Input()
-    lowerColor = 'green';
+    lowerColor = 'var(--success)';
     @Input()
-    intermediateColor = 'orange';
+    intermediateColor = 'var(--warning)';
     @Input()
-    upperColor = 'red';
+    upperColor = 'var(--danger)';
 
     @Input()
     set animateFilling(showAnimation: boolean) {
