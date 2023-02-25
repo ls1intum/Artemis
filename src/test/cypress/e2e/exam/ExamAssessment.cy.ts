@@ -1,12 +1,13 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { Course } from 'app/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exam } from 'app/entities/exam.model';
-import { CypressAssessmentType, CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
-import partiallySuccessful from '../../fixtures/exercise/programming/partially_successful/submission.json';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import textSubmission from '../../fixtures/exercise/text/submission.json';
+
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+
+import partiallySuccessful from '../../fixtures/exercise/programming/partially_successful/submission.json';
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
+import textSubmission from '../../fixtures/exercise/text/submission.json';
 import {
     courseAssessment,
     courseManagementRequest,
@@ -22,8 +23,9 @@ import {
     studentAssessment,
     textExerciseEditor,
 } from '../../support/artemis';
-import { admin, instructor, studentOne, tutor } from '../../support/users';
 import { EXERCISE_TYPE } from '../../support/constants';
+import { CypressAssessmentType, CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { admin, instructor, studentOne, tutor } from '../../support/users';
 
 let exam: Exam;
 let exerciseGroup: ExerciseGroup;

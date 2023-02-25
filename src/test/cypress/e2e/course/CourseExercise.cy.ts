@@ -1,4 +1,5 @@
-import { Course } from '../../../../main/webapp/app/entities/course.model';
+import { Course } from 'app/entities/course.model';
+
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { courseExercise, courseManagementRequest } from '../../support/artemis';
 import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';

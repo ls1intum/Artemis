@@ -1,11 +1,13 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
-import { BASE_API, PUT } from '../../support/constants';
-import { courseCreation, courseManagement, courseManagementRequest, navigationBar } from '../../support/artemis';
-import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
-import { Course } from 'app/entities/course.model';
 import day from 'dayjs/esm';
+
+import { Course } from 'app/entities/course.model';
+
+import { courseCreation, courseManagement, courseManagementRequest, navigationBar } from '../../support/artemis';
+import { BASE_API, PUT } from '../../support/constants';
+import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, studentOne } from '../../support/users';
+import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
 
 // Selectors
 const modalDeleteButton = '#delete';

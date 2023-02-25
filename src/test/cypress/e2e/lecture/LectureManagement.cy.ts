@@ -1,10 +1,12 @@
-import { Lecture } from 'app/entities/lecture.model';
-import { Course } from 'app/entities/course.model';
-import { generateUUID } from '../../support/utils';
 import dayjs from 'dayjs/esm';
-import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+
+import { Course } from 'app/entities/course.model';
+import { Lecture } from 'app/entities/lecture.model';
+
 import { courseManagementRequest, lectureCreation, lectureManagement } from '../../support/artemis';
+import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor } from '../../support/users';
+import { generateUUID } from '../../support/utils';
 
 describe('Lecture management', () => {
     let course: Course;

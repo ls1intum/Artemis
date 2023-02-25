@@ -1,5 +1,5 @@
-import { COURSE_BASE } from '../../requests/CourseManagementRequests';
 import { POST } from '../../constants';
+import { COURSE_BASE } from '../../requests/CourseManagementRequests';
 
 /**
  * A class which encapsulates UI selectors and actions for the course assessment dashboard page.

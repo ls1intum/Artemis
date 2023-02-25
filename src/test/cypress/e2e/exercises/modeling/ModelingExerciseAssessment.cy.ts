@@ -1,8 +1,10 @@
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { Course } from 'app/entities/course.model';
 import day from 'dayjs/esm';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+
+import { Course } from 'app/entities/course.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+
 import { courseAssessment, courseManagementRequest, exerciseAssessment, exerciseResult, modelingExerciseAssessment, modelingExerciseFeedback } from '../../../support/artemis';
+import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
 
 describe('Modeling Exercise Assessment Spec', () => {

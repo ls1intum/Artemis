@@ -1,7 +1,8 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { TextExercise } from 'app/entities/text-exercise.model';
+
 import { Course } from 'app/entities/course.model';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { TextExercise } from 'app/entities/text-exercise.model';
+
 import {
     courseAssessment,
     courseManagement,
@@ -11,6 +12,7 @@ import {
     textExerciseAssessment,
     textExerciseFeedback,
 } from '../../../support/artemis';
+import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
 
 describe('Text exercise assessment', () => {

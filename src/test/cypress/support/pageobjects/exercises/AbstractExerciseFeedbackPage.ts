@@ -1,5 +1,7 @@
 import { Interception } from 'cypress/types/net-stubbing';
+
 import { BASE_API, POST } from '../../constants';
+
 /**
  * Parent class for all exercise feedback pages (/course/./exercise/./participate/.)
  */
