@@ -20,13 +20,13 @@ public final class ClassPathUtil {
     }
 
     public static ClassPathNode findAllClassesIn(String packageName, ClasspathElementFilter filter) {
-        try (ScanResult scanResult = new ClassGraph().enableAllInfo().whitelistPackages(packageName).filterClasspathElements(filter).scan()) {
+        try (ScanResult scanResult = new ClassGraph().enableAllInfo().acceptPackages(packageName).filterClasspathElements(filter).scan()) {
             return new RootNode(packageName).addAll(scanResult.getAllClasses());
         }
     }
 
     public static List<Class<?>> findAllClassesAsListIn(String packageName) {
-        try (ScanResult scanResult = new ClassGraph().enableClassInfo().whitelistPackages(packageName).scan()) {
+        try (ScanResult scanResult = new ClassGraph().enableClassInfo().acceptPackages(packageName).scan()) {
             return scanResult.getAllClasses().loadClasses();
         }
     }

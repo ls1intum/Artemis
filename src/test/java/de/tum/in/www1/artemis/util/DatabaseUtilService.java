@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -45,8 +44,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.opencsv.CSVReader;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -72,7 +69,6 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.domain.tutorialgroups.*;
-import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
@@ -343,7 +339,7 @@ public class DatabaseUtilService {
     private Optional<String> tutorialGroupInstructors;
 
     @Autowired
-    private BuildLogEntryRepository buildLogEntryRepository;
+    private QuizSubmissionRepository quizSubmissionRepository;
 
     // TODO: this should probably be moved into another service
     public void changeUser(String username) {
@@ -1427,21 +1423,26 @@ public class DatabaseUtilService {
     public StudentExam generateTestRunForInstructor(Exam exam, User instructor, List<Exercise> exercises) {
         var testRun = ModelFactory.generateExamTestRun(exam);
         testRun.setUser(instructor);
-        examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
         for (final var exercise : exercises) {
             testRun.addExercise(exercise);
             assertThat(exercise.isExamExercise()).isTrue();
-            Submission submission;
-            if (exercise instanceof ModelingExercise) {
-                submission = addModelingSubmission((ModelingExercise) exercise, ModelFactory.generateModelingSubmission("", false), instructor.getLogin());
+            Submission submission = null;
+            if (exercise instanceof ModelingExercise modelingExercise) {
+                submission = addModelingSubmission(modelingExercise, ModelFactory.generateModelingSubmission("", false), instructor.getLogin());
             }
-            else if (exercise instanceof TextExercise) {
-                submission = saveTextSubmission((TextExercise) exercise, ModelFactory.generateTextSubmission("", null, false), instructor.getLogin());
+            else if (exercise instanceof TextExercise textExercise) {
+                submission = saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("", null, false), instructor.getLogin());
             }
-            else {
+            else if (exercise instanceof QuizExercise quizExercise) {
+                submission = saveQuizSubmission(quizExercise, ModelFactory.generateQuizSubmission(false), instructor.getLogin());
+            }
+            else if (exercise instanceof ProgrammingExercise programmingExercise) {
                 submission = new ProgrammingSubmission().submitted(true);
-                addProgrammingSubmission((ProgrammingExercise) exercise, (ProgrammingSubmission) submission, instructor.getLogin());
+                addProgrammingSubmission(programmingExercise, (ProgrammingSubmission) submission, instructor.getLogin());
                 submission = submissionRepository.save(submission);
+            }
+            else if (exercise instanceof FileUploadExercise fileUploadExercise) {
+                submission = saveFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmission(false), instructor.getLogin());
             }
             var studentParticipation = (StudentParticipation) submission.getParticipation();
             studentParticipation.setTestRun(true);
@@ -2201,6 +2202,11 @@ public class DatabaseUtilService {
         return (T) exercise;
     }
 
+    public <T extends Exercise> T getFirstExerciseWithType(Exam exam, Class<T> clazz) {
+        var exercise = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).filter(ex -> ex.getClass().equals(clazz)).findFirst().get();
+        return (T) exercise;
+    }
+
     public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases() {
         ProgrammingExercise programmingExercise = addCourseExamExerciseGroupWithOneProgrammingExercise();
         addTestCasesToProgrammingExercise(programmingExercise);
@@ -2560,14 +2566,6 @@ public class DatabaseUtilService {
         course.setOnlineCourseConfiguration(onlineCourseConfiguration);
         courseRepo.save(course);
         return onlineCourseConfiguration;
-    }
-
-    /**
-     * @param programmingExerciseTitle The name of programming exercise
-     * @return A course with named exercise
-     */
-    public Course addCourseWithNamedProgrammingExercise(String programmingExerciseTitle) {
-        return addCourseWithNamedProgrammingExercise(programmingExerciseTitle, false);
     }
 
     public Course addCourseWithNamedProgrammingExercise(String programmingExerciseTitle, boolean scaActive) {
@@ -3408,11 +3406,20 @@ public class DatabaseUtilService {
         return saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, login, assessorLogin, new ArrayList<>());
     }
 
-    public void saveFileUploadSubmission(FileUploadExercise exercise, FileUploadSubmission submission, String login) {
+    public FileUploadSubmission saveFileUploadSubmission(FileUploadExercise exercise, FileUploadSubmission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmission(submission);
         submission.setParticipation(participation);
         fileUploadSubmissionRepo.save(submission);
+        return submission;
+    }
+
+    public QuizSubmission saveQuizSubmission(QuizExercise exercise, QuizSubmission submission, String login) {
+        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        participation.addSubmission(submission);
+        submission.setParticipation(participation);
+        submission = quizSubmissionRepository.save(submission);
+        return submission;
     }
 
     public TextSubmission saveTextSubmission(TextExercise exercise, TextSubmission submission, String login) {
@@ -4699,70 +4706,5 @@ public class DatabaseUtilService {
             user.setGroups(Set.of(userPrefix + "instructor" + userSuffix));
             userRepo.save(user);
         }
-    }
-
-    public List<StudentExam> prepareStudentExamsForConduction(String testPrefix, AbstractSpringIntegrationBambooBitbucketJiraTest integrationTest,
-            BitbucketRequestMockProvider bitbucketRequestMockProvider, ProgrammingExerciseTestService programmingExerciseTestService, RequestUtilService request,
-            ZonedDateTime examVisibleDate, ZonedDateTime examStartDate, ZonedDateTime examEndDate, Set<User> registeredStudents, List<LocalRepository> studentRepos)
-            throws Exception {
-
-        for (int i = 1; i <= registeredStudents.size(); i++) {
-            bitbucketRequestMockProvider.mockUserExists(testPrefix + "student" + i);
-        }
-
-        final var course = this.addEmptyCourse();
-        var exam = this.addExam(course, examVisibleDate, examStartDate, examEndDate);
-        exam = this.addExerciseGroupsAndExercisesToExam(exam, true);
-
-        // register users
-        Set<ExamUser> registeredExamUsers = new HashSet<>();
-        exam = examRepository.save(exam);
-        for (var user : registeredStudents) {
-            var registeredExamUser = new ExamUser();
-            registeredExamUser.setUser(user);
-            registeredExamUser.setExam(exam);
-            registeredExamUser = examUserRepository.save(registeredExamUser);
-            exam.addExamUser(registeredExamUser);
-            registeredExamUsers.add(registeredExamUser);
-        }
-        exam.setExamUsers(registeredExamUsers);
-        exam.setNumberOfExercisesInExam(exam.getExerciseGroups().size());
-        exam.setRandomizeExerciseOrder(false);
-        exam.setNumberOfCorrectionRoundsInExam(2);
-        exam = examRepository.save(exam);
-
-        // generate individual student exams
-        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
-                StudentExam.class, HttpStatus.OK);
-        assertThat(studentExams).hasSize(exam.getExamUsers().size());
-        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(registeredStudents.size());
-
-        // start exercises
-        List<ProgrammingExercise> programmingExercises = new ArrayList<>();
-        for (var exercise : exam.getExerciseGroups().get(6).getExercises()) {
-            var programmingExercise = (ProgrammingExercise) exercise;
-            programmingExercises.add(programmingExercise);
-
-            programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
-            for (var examUser : exam.getExamUsers()) {
-                var repo = new LocalRepository(integrationTest.getDefaultBranch());
-                repo.configureRepos("studentRepo", "studentOriginRepo");
-                programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, examUser.getUser().getLogin(), repo);
-                studentRepos.add(repo);
-            }
-        }
-
-        for (var programmingExercise : programmingExercises) {
-            for (var user : registeredStudents) {
-                integrationTest.mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
-            }
-        }
-
-        int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
-        assertThat(noGeneratedParticipations).isEqualTo(registeredStudents.size() * exam.getExerciseGroups().size());
-
-        bitbucketRequestMockProvider.reset();
-
-        return studentExams;
     }
 }

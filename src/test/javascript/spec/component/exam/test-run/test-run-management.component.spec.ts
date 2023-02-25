@@ -78,7 +78,7 @@ describe('Test Run Management Component', () => {
                 jest.spyOn(examManagementService, 'findAllTestRunsForExam').mockReturnValue(of(new HttpResponse({ body: studentExams })));
                 userSpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
                 jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
-                jest.spyOn(examManagementService, 'deleteTestRun').mockReturnValue(of(new HttpResponse({ body: {} })));
+                jest.spyOn(examManagementService, 'deleteTestRun').mockReturnValue(of());
             });
     });
 
