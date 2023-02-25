@@ -36,7 +36,10 @@ export const examStartEnd = pageObjects.exam.startEnd;
 export const examExerciseGroupCreation = pageObjects.exam.exerciseGroupCreation;
 export const examExerciseGroups = pageObjects.exam.exerciseGroups;
 export const examParticipation = pageObjects.exam.participation;
+export const examTestRun = pageObjects.exam.testRun;
 export const studentExamManagement = pageObjects.exam.studentExamManagement;
+
+export const studentAssessment = pageObjects.assessment.student;
 
 export const exerciseAssessment = pageObjects.assessment.exercise;
 export const exerciseResult = pageObjects.exercise.result;
