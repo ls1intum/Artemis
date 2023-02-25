@@ -5,7 +5,7 @@ import submission from '../../../fixtures/exercise/programming/build_error/submi
 import { Course } from 'app/entities/course.model';
 import { generateUUID } from '../../../support/utils';
 import { EXERCISE_TYPE } from '../../../support/constants';
-import { Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
+import { Exercise } from '../../../support/pageobjects/exam/ExamParticipation';
 import { Interception } from 'cypress/types/net-stubbing';
 import { courseManagementRequest, examExerciseGroupCreation, examManagement, examNavigation, examParticipation, examTestRun } from '../../../support/artemis';
 import { admin, instructor } from '../../../support/users';
@@ -49,7 +49,7 @@ describe('Test exam test run', () => {
 
     beforeEach('Create test run instance', () => {
         cy.login(instructor);
-        // API call does not work yet, for now we use the UI to create the test run
+        // TODO: API call does not work yet, for now we use the UI to create the test run
         // courseManagementRequest.createExamTestRun(exam, exerciseArray).then((response: any) => {
         //     testRun = response.body;
         // });
@@ -78,8 +78,8 @@ describe('Test exam test run', () => {
             testRunID = testRun.id;
 
             expect(testRunResponse.response!.statusCode).to.eq(200);
-            expect(testRun.testRun).to.eq(true);
-            expect(testRun.submitted).to.eq(false);
+            expect(testRun.testRun).to.be.true;
+            expect(testRun.submitted).to.be.false;
             expect(testRun.workingTime).to.eq(minutes * 60 + seconds);
 
             examTestRun.getWorkingTime(testRunID).contains('40min 30s');
