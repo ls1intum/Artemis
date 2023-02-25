@@ -11,7 +11,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
 import javax.xml.stream.XMLInputFactory;
@@ -23,6 +22,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
@@ -35,67 +35,32 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 
-import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.connectors.LtiNewResultService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResultNotificationDTO;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
-public class LocalCIBuildJob implements Runnable {
+@Service
+public class LocalCIBuildJobService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIBuildJob.class);
-
-    private final Path assignmentRepositoryPath;
-
-    private final Path testRepositoryPath;
-
-    private final Path scriptPath;
+    private final Logger log = LoggerFactory.getLogger(LocalCIBuildJobService.class);
 
     private final String dockerConnectionUri;
 
-    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
-
-    private final WebsocketMessagingService messagingService;
-
-    private final LtiNewResultService ltiNewResultService;
-
-    private final ProgrammingExerciseParticipation participation;
-
-    private static int id = 0;
-
-    public LocalCIBuildJob(ProgrammingExerciseParticipation participation, Path assignmentRepositoryPath, Path testRepositoryPath, Path scriptPath,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, WebsocketMessagingService messagingService, LtiNewResultService ltiNewResultService) {
-        this.participation = participation;
-        this.assignmentRepositoryPath = assignmentRepositoryPath;
-        this.testRepositoryPath = testRepositoryPath;
-        this.scriptPath = scriptPath;
-        id++;
-
+    public LocalCIBuildJobService() {
         if (System.getProperty("os.name").toLowerCase().contains("windows")) {
             this.dockerConnectionUri = "tcp://localhost:2375";
         }
         else {
             this.dockerConnectionUri = "unix:///var/run/docker.sock";
         }
-
-        this.programmingExerciseGradingService = programmingExerciseGradingService;
-        this.messagingService = messagingService;
-        this.ltiNewResultService = ltiNewResultService;
     }
 
     /**
      * Runs the build job. This includes creating and starting a Docker container, executing the build script, and processing the build result.
      */
-    @Override
-    public void run() {
+    public LocalCIBuildResultNotificationDTO runBuildJob(ProgrammingExerciseParticipation participation, Path assignmentRepositoryPath, Path testRepositoryPath, Path scriptPath) {
         long timeNanoStart = System.nanoTime();
 
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(dockerConnectionUri).build();
@@ -208,9 +173,9 @@ public class LocalCIBuildJob implements Runnable {
             throw new LocalCIException("Error while parsing test results", e);
         }
 
-        processResult(buildResult);
-
         log.info("Building and testing submission for repository {} took {}", participation.getRepositoryUrl(), TimeLogUtil.formatDurationFrom(timeNanoStart));
+
+        return buildResult;
     }
 
     private LocalCIBuildResultNotificationDTO parseTestResults(TarArchiveInputStream testResultsTarInputStream, ProjectType projectType, ZonedDateTime buildStartedDate,
@@ -287,8 +252,7 @@ public class LocalCIBuildJob implements Runnable {
             }
         }
 
-        LocalCIBuildResultNotificationDTO.LocalCIJobDTO job = new LocalCIBuildResultNotificationDTO.LocalCIJobDTO(id, failedTests, successfulTests, List.of(), List.of(),
-                List.of());
+        LocalCIBuildResultNotificationDTO.LocalCIJobDTO job = new LocalCIBuildResultNotificationDTO.LocalCIJobDTO(1, failedTests, successfulTests, List.of(), List.of(), List.of());
 
         LocalCIBuildResultNotificationDTO.LocalCITestSummaryDTO testSummary = new LocalCIBuildResultNotificationDTO.LocalCITestSummaryDTO(
                 (int) ChronoUnit.SECONDS.between(buildStartedDate, buildCompletedDate), 0, failedTests.size(), 0, 0, successfulTests.size(), "some description", 0, 0,
@@ -298,25 +262,5 @@ public class LocalCIBuildJob implements Runnable {
                 isBuildSuccessful, testSummary, List.of(assignmentVC, testVC), List.of(job));
 
         return new LocalCIBuildResultNotificationDTO(null, null, null, build);
-    }
-
-    private void processResult(LocalCIBuildResultNotificationDTO buildResult) {
-
-        // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-        // Therefore, a mock auth object has to be created.
-        SecurityUtils.setAuthorizationObject();
-        Optional<Result> optResult = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
-
-        // Only notify the user about the new result if the result was created successfully.
-        if (optResult.isPresent()) {
-            Result result = optResult.get();
-            log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
-            // notify user via websocket
-            messagingService.broadcastNewResult((Participation) participation, result);
-            if (participation instanceof StudentParticipation) {
-                // do not try to report results for template or solution participations
-                ltiNewResultService.onNewResult((ProgrammingExerciseStudentParticipation) participation);
-            }
-        }
     }
 }
