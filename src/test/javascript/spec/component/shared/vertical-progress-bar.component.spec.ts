@@ -17,10 +17,6 @@ describe('VerticalProgressBarComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should keep borders in range [0,100]', () => {
         component.lowerBorder = -20;
         component.upperBorder = 120;
