@@ -1,5 +1,5 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import dayjs from 'dayjs/esm';
+import dayjs, { Dayjs } from 'dayjs/esm';
 
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -25,8 +25,8 @@ describe('Programming exercise assessment', () => {
     const tutorCodeFeedback = 'The input parameter should be mentioned in javadoc!';
     const tutorCodeFeedbackPoints = -2;
     const complaint = "That feedback wasn't very useful!";
-    let dueDate: dayjs.Dayjs;
-    let assessmentDueDate: dayjs.Dayjs;
+    let dueDate: Dayjs;
+    let assessmentDueDate: Dayjs;
 
     before('Creates a programming exercise and makes a student submission', () => {
         createCourseWithProgrammingExercise().then(() => {

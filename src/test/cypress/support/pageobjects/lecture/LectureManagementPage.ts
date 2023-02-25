@@ -1,4 +1,4 @@
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 import { BASE_API, DELETE, POST } from '../../constants';
 
@@ -42,7 +42,7 @@ export class LectureManagementPage {
         return cy.get('#unit-creation');
     }
 
-    addTextUnit(name: string, text: string, releaseDate = day()) {
+    addTextUnit(name: string, text: string, releaseDate = dayjs()) {
         this.openCreateUnit(UnitType.TEXT);
         cy.get('#name').type(name);
         cy.get('#pick-releaseDate').find('#date-input-field').type(releaseDate.toString());

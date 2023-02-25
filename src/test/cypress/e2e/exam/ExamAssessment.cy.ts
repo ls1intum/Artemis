@@ -253,7 +253,7 @@ function startAssessing() {
     cy.get('#assessmentLockedCurrentUser').should('be.visible');
 }
 
-function prepareExam(end: dayjs.Dayjs, resultDate = end.add(1, 'seconds')) {
+function prepareExam(end: Dayjs, resultDate = end.add(1, 'seconds')) {
     cy.login(admin);
     const examContent = new CypressExamBuilder(course)
         .visibleDate(dayjs().subtract(1, 'hour'))

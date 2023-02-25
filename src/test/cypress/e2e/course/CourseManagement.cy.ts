@@ -1,5 +1,5 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 import { Course } from 'app/entities/course.model';
 
@@ -17,8 +17,8 @@ const courseData = {
     title: '',
     shortName: '',
     description: 'Lore Impsum',
-    startDate: day(),
-    endDate: day().add(1, 'day'),
+    startDate: dayjs(),
+    endDate: dayjs().add(1, 'day'),
     testCourse: true,
     semester: 'SS23',
     maxPoints: 40,
@@ -283,7 +283,7 @@ describe('Course management', () => {
                 .then(Cypress.Blob.base64StringToBlob)
                 .then((blob) => {
                     courseManagementRequest
-                        .createCourse(false, courseData.title, courseData.shortName, day().subtract(2, 'hours'), day().add(2, 'hours'), 'icon.png', blob)
+                        .createCourse(false, courseData.title, courseData.shortName, dayjs().subtract(2, 'hours'), dayjs().add(2, 'hours'), 'icon.png', blob)
                         .then((response) => {
                             course = convertCourseAfterMultiPart(response);
                             courseId = course.id!;
@@ -305,7 +305,7 @@ describe('Course management', () => {
         });
 
         it('Deletes not existing course icon', () => {
-            courseManagementRequest.createCourse(false, courseData.title, courseData.shortName, day().subtract(2, 'hours'), day().add(2, 'hours')).then((response) => {
+            courseManagementRequest.createCourse(false, courseData.title, courseData.shortName, dayjs().subtract(2, 'hours'), dayjs().add(2, 'hours')).then((response) => {
                 course = convertCourseAfterMultiPart(response);
                 courseId = course.id!;
             });
