@@ -6,7 +6,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { Component, Input, ViewChild } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { SortService } from '../../../../../../main/webapp/app/shared/service/sort.service';
+import { SortService } from 'app/shared/service/sort.service';
 import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
 import { VerticalProgressBarComponent } from 'app/shared/vertical-progress-bar/vertical-progress-bar.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
