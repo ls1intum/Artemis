@@ -1,27 +1,36 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
+import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.exception.QuizJoinException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
@@ -35,6 +44,7 @@ import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -89,12 +99,14 @@ public class QuizExerciseResource {
 
     private final SubmissionRepository submissionRepository;
 
+    private final FileService fileService;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService, UserRepository userRepository,
             ExerciseDeletionService exerciseDeletionServiceService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, CourseRepository courseRepository,
             GroupNotificationService groupNotificationService, ExerciseService exerciseService, ExamDateService examDateService, QuizMessagingService quizMessagingService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository) {
+            QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository, FileService fileService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.exerciseDeletionService = exerciseDeletionServiceService;
@@ -114,18 +126,22 @@ public class QuizExerciseResource {
         this.quizBatchService = quizBatchService;
         this.quizBatchRepository = quizBatchRepository;
         this.submissionRepository = submissionRepository;
+        this.fileService = fileService;
     }
 
     /**
      * POST /quiz-exercises : Create a new quizExercise.
      *
      * @param quizExercise the quizExercise to create
+     * @param files        the files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
      * @return the ResponseEntity with status 201 (Created) and with body the new quizExercise, or with status 400 (Bad Request) if the quizExercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/quiz-exercises")
+    @PostMapping(value = "/quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<QuizExercise> createQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
+    public ResponseEntity<QuizExercise> createQuizExercise(@RequestPart("exercise") QuizExercise quizExercise,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException, IOException {
+
         log.info("REST request to create QuizExercise : {}", quizExercise);
         if (quizExercise.getId() != null) {
             throw new BadRequestAlertException("A new quizExercise cannot already have an ID", ENTITY_NAME, "idExists");
@@ -145,6 +161,8 @@ public class QuizExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
+        quizExerciseService.handleDndQuizFileCreation(quizExercise, files);
+
         quizExercise = quizExerciseService.save(quizExercise);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
@@ -152,22 +170,21 @@ public class QuizExerciseResource {
     }
 
     /**
-     * PUT /quiz-exercises : Updates an existing quizExercise.
+     * PUT /quiz-exercises/:exerciseId : Updates an existing quizExercise.
      *
      * @param quizExercise     the quizExercise to update
+     * @param files            the new files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
      * @param notificationText about the quiz exercise update that should be displayed to the student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with status 500
      *         (Internal Server Error) if the quizExercise couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/quiz-exercises")
+    @PutMapping(value = "/quiz-exercises/{exerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE) // TODO: Move in client
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<QuizExercise> updateQuizExercise(@RequestBody QuizExercise quizExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
+    public ResponseEntity<QuizExercise> updateQuizExercise(@PathVariable Long exerciseId, @RequestPart("exercise") QuizExercise quizExercise,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files, @RequestParam(value = "notificationText", required = false) String notificationText)
+            throws IOException {
         log.info("REST request to update quiz exercise : {}", quizExercise);
-        if (quizExercise.getId() == null) {
-            return createQuizExercise(quizExercise);
-        }
+        quizExercise.setId(exerciseId);
 
         // check if quiz is valid
         if (!quizExercise.isValid()) {
@@ -179,13 +196,15 @@ public class QuizExerciseResource {
 
         // Valid exercises have set either a course or an exerciseGroup
         quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
+
+        final var originalQuiz = quizExerciseRepository.findWithEagerQuestionsById(exerciseId).orElseThrow();
+
         // Retrieve the course over the exerciseGroup or the given courseId
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalQuiz);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         // Forbid conversion between normal course exercise and exam exercise
-        final var originalQuiz = quizExerciseRepository.findByIdElseThrow(quizExercise.getId());
         exerciseService.checkForConversionBetweenExamAndCourseExercise(quizExercise, originalQuiz, ENTITY_NAME);
 
         // check if quiz is has already started
@@ -200,6 +219,8 @@ public class QuizExerciseResource {
         if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED || quizExercise.getQuizBatches() == null || quizExercise.getQuizBatches().size() > 1) {
             quizExercise.setQuizBatches(batches);
         }
+
+        quizExerciseService.handleDndQuizFileUpdates(quizExercise, originalQuiz, files);
 
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -519,14 +540,35 @@ public class QuizExerciseResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
         log.info("REST request to delete quiz exercise : {}", quizExerciseId);
-        var quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
+        var quizExercise = quizExerciseRepository.findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("QuizExercise", quizExerciseId));
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
+
+        List<DragAndDropQuestion> dragAndDropQuestions = quizExercise.getQuizQuestions().stream().filter(question -> question instanceof DragAndDropQuestion)
+                .map(question -> ((DragAndDropQuestion) question)).toList();
+        List<String> backgroundImagePaths = dragAndDropQuestions.stream().map(DragAndDropQuestion::getBackgroundFilePath).toList();
+        List<String> dragItemImagePaths = dragAndDropQuestions.stream().flatMap(question -> question.getDragItems().stream().map(DragItem::getPictureFilePath)).toList();
+        List<Path> imagesToDelete = Stream.concat(backgroundImagePaths.stream(), dragItemImagePaths.stream()).map(path -> {
+            if (path == null) {
+                return null;
+            }
+            try {
+                return Path.of(fileService.actualPathForPublicPath(path));
+            }
+            catch (FilePathParsingException e) {
+                // if the path is invalid, we can't delete it, but we don't want to fail the whole deletion
+                log.warn("Could not find file " + path + " for deletion");
+                return null;
+            }
+        }).filter(Objects::nonNull).toList();
 
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(quizExerciseId, false, false);
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
+
+        fileService.deleteFiles(imagesToDelete);
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.getTitle())).build();
     }
 

@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
+import java.nio.file.Path;
 import java.util.*;
 
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.thymeleaf.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -14,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.quiz.scoring.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
-import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.service.FileService;
 
 /**
@@ -28,9 +30,6 @@ public class DragAndDropQuestion extends QuizQuestion {
 
     @Transient
     private transient FileService fileService = new FileService();
-
-    @Transient
-    private String prevBackgroundFilePath;
 
     @Column(name = "background_file_path")
     @JsonView(QuizView.Before.class)
@@ -132,41 +131,23 @@ public class DragAndDropQuestion extends QuizQuestion {
             return false;
         }
 
+        // A drag item can either be a text or a picture, but not both or none
+        for (DragItem dragItem : dragItems) {
+            if (StringUtils.isEmpty(dragItem.getText()) == StringUtils.isEmpty(dragItem.getPictureFilePath())) {
+                return false;
+            }
+        }
+
         // check if at least one correct mapping exists
         return getCorrectMappings() != null && !getCorrectMappings().isEmpty();
 
-        // TODO (?): Add checks for "is solvable" and "no misleading correct mapping" --> look at the implementation in the client
+        // TODO: (?) Add checks for "is solvable" and "no misleading correct mapping" --> look at the implementation in the client
     }
-
-    /*
-     * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding question is deleted or it is
-     * replaced by another file. The workflow is as follows 1. user uploads a file -> this is a temporary file, because at this point the corresponding question might not exist
-     * yet. 2. user saves the question -> now we move the temporary file which is addressed in backgroundFilePath to a permanent location and update the value in backgroundFilePath
-     * accordingly. => This happens in @PrePersist and @PostPersist 3. user might upload another file to replace the existing file -> this new file is a temporary file at first 4.
-     * user saves changes (with the new backgroundFilePath pointing to the new temporary file) -> now we delete the old file in the permanent location and move the new file to a
-     * permanent location and update the value in backgroundFilePath accordingly. => This happens in @PreUpdate and uses @PostLoad to know the old path 5. When question is deleted,
-     * the file in the permanent location is deleted => This happens in @PostRemove
-     */
 
     /**
-     * Initialisation of the DragAndDropQuestion on Server start
+     * This method is called after the entity is saved for the first time. Before creation, we don't know yet the id of the entity, so we use a placeholder in the
+     * backgroundFilePath
      */
-    @PostLoad
-    public void onLoad() {
-        // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
-        if (backgroundFilePath != null && backgroundFilePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            backgroundFilePath = backgroundFilePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
-        }
-        // save current path as old path (needed to know old path in onUpdate() and onDelete())
-        prevBackgroundFilePath = backgroundFilePath;
-    }
-
-    @PrePersist
-    public void beforeCreate() {
-        // move file if necessary (id at this point will be null, so placeholder will be inserted)
-        backgroundFilePath = fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, FilePathService.getDragAndDropBackgroundFilePath(), getId());
-    }
-
     @PostPersist
     public void afterCreate() {
         // replace placeholder with actual id if necessary (id is no longer null at this point)
@@ -175,16 +156,17 @@ public class DragAndDropQuestion extends QuizQuestion {
         }
     }
 
-    @PreUpdate
-    public void onUpdate() {
-        // move file and delete old file if necessary
-        backgroundFilePath = fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, FilePathService.getDragAndDropBackgroundFilePath(), getId());
-    }
-
     @PostRemove
     public void onDelete() {
         // delete old file if necessary
-        fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, null, FilePathService.getDragAndDropBackgroundFilePath(), getId());
+        try {
+            if (backgroundFilePath != null) {
+                fileService.deleteFiles(List.of(Path.of(fileService.actualPathForPublicPath(backgroundFilePath))));
+            }
+        }
+        catch (FilePathParsingException ignored) {
+            // if the file path is invalid, we don't need to delete it
+        }
     }
 
     /**

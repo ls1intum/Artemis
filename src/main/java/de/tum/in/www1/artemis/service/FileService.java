@@ -129,6 +129,16 @@ public class FileService implements DisposableBean {
     }
 
     /**
+     * Sanitize the filename and replace all invalid characters with an underscore
+     *
+     * @param filename the filename to sanitize
+     * @return the sanitized filename
+     */
+    public String sanitizeFilename(String filename) {
+        return filename.replaceAll("[^a-zA-Z\\d.\\-]", "_");
+    }
+
+    /**
      * Helper method which handles the file creation for both normal file uploads and for markdown
      *
      * @param file         The file to be uploaded with a maximum file size set in resources/config/application.yml
@@ -144,8 +154,7 @@ public class FileService implements DisposableBean {
             throw new IllegalArgumentException("Filename cannot be null");
         }
 
-        // sanitize the filename and replace all invalid characters with with an underscore
-        filename = filename.replaceAll("[^a-zA-Z\\d.\\-]", "_");
+        filename = sanitizeFilename(filename);
 
         // Check the allowed file extensions
         final String fileExtension = FilenameUtils.getExtension(filename);
@@ -159,14 +168,31 @@ public class FileService implements DisposableBean {
         final String fileNameAddition = markdown ? "Markdown_" : "Temp_";
         final StringBuilder responsePath = new StringBuilder(markdown ? MARKDOWN_FILE_SUBPATH : DEFAULT_FILE_SUBPATH);
 
+        String savedFileName = saveFile(filePath, filename, fileNameAddition, fileExtension, keepFileName, file);
+        responsePath.append(savedFileName);
+
+        return responsePath.toString();
+    }
+
+    /**
+     * Saves a file to the given path
+     *
+     * @param filePath         the path to save the file to excluding the filename
+     * @param filename         the filename of the file to save including the extension
+     * @param fileNameAddition the addition to the filename to make sure it is unique
+     * @param fileExtension    the extension of the file to save
+     * @param keepFileName     specifies if original file name should be kept
+     * @param file             the file to save
+     * @return the name of the saved file
+     */
+    public String saveFile(String filePath, String filename, String fileNameAddition, String fileExtension, boolean keepFileName, MultipartFile file) {
         try {
             File newFile = createNewFile(filePath, filename, fileNameAddition, fileExtension, keepFileName);
-            responsePath.append(newFile.toPath().getFileName());
 
             // copy contents of uploaded file into newly created file
             Files.copy(file.getInputStream(), newFile.toPath(), REPLACE_EXISTING);
 
-            return responsePath.toString();
+            return newFile.toPath().getFileName().toString();
         }
         catch (IOException e) {
             log.error("Could not save file {}", filename, e);
@@ -425,7 +451,7 @@ public class FileService implements DisposableBean {
      * @return the newly created file
      * @throws IOException if the file can't be generated.
      */
-    private File generateTargetFile(String originalFilename, String targetFolder, Boolean keepFileName) throws IOException {
+    public File generateTargetFile(String originalFilename, String targetFolder, Boolean keepFileName) throws IOException {
         // determine the base for the filename
         String filenameBase = "Unspecified_";
         if (targetFolder.equals(FilePathService.getDragAndDropBackgroundFilePath())) {
