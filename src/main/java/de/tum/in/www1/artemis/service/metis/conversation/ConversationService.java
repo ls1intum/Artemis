@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
@@ -54,9 +56,14 @@ public class ConversationService {
 
     private final GroupChatRepository groupChatRepository;
 
-    public ConversationService(ConversationDTOService conversationDTOService, UserRepository userRepository, ChannelRepository channelRepository,
-            ConversationParticipantRepository conversationParticipantRepository, ConversationRepository conversationRepository, SimpMessageSendingOperations messagingTemplate,
-            OneToOneChatRepository oneToOneChatRepository, PostRepository postRepository, GroupChatRepository groupChatRepository) {
+    private final CourseRepository courseRepository;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
+    public ConversationService(AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, ConversationDTOService conversationDTOService,
+            UserRepository userRepository, ChannelRepository channelRepository, ConversationParticipantRepository conversationParticipantRepository,
+            ConversationRepository conversationRepository, SimpMessageSendingOperations messagingTemplate, OneToOneChatRepository oneToOneChatRepository,
+            PostRepository postRepository, GroupChatRepository groupChatRepository) {
         this.conversationDTOService = conversationDTOService;
         this.userRepository = userRepository;
         this.channelRepository = channelRepository;
@@ -66,6 +73,8 @@ public class ConversationService {
         this.oneToOneChatRepository = oneToOneChatRepository;
         this.postRepository = postRepository;
         this.groupChatRepository = groupChatRepository;
+        this.courseRepository = courseRepository;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -378,4 +387,13 @@ public class ConversationService {
         return users;
     }
 
+    /**
+     * Find all conversations for which the given user should be able to receive notifications.
+     *
+     * @param user The user for which to find the courses.
+     * @return A list of conversations for which the user should receive notifications.
+     */
+    public List<Conversation> findAllConversationsForNotifications(User user) {
+        return conversationRepository.findAllWhereUserIsParticipant(user.getId());
+    }
 }

@@ -26,6 +26,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                 FROM Notification notification
                     LEFT JOIN notification.course
                     LEFT JOIN notification.recipient
+                    LEFT JOIN notification.message.author
                 WHERE notification.notificationDate IS NOT NULL
                     AND (cast(:hideUntil as timestamp ) IS NULL OR notification.notificationDate > :hideUntil)
                     AND (
@@ -38,16 +39,20 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                         )
                         OR type(notification) = SingleUserNotification and notification.recipient.login = :#{#login}
                         OR type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :#{#tutorialGroupIds}
+                        OR type(notification) = ConversationNotification
+                            AND (notification.conversation.id IN :#{#conversationIds} AND notification.message.author.login != :#{#login})
                     )
             """)
     Page<Notification> findAllNotificationsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
-            @Param("hideUntil") ZonedDateTime hideUntil, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds, Pageable pageable);
+            @Param("hideUntil") ZonedDateTime hideUntil, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds, @Param("conversationIds") Set<Long> conversationIds,
+            Pageable pageable);
 
     @Query("""
                 SELECT notification
                 FROM Notification notification
                     LEFT JOIN notification.course
                     LEFT JOIN notification.recipient
+                    LEFT JOIN notification.message.author
                 WHERE notification.notificationDate IS NOT NULL
                     AND (:#{#hideUntil} IS NULL OR notification.notificationDate > :#{#hideUntil})
                     AND (
@@ -71,11 +76,17 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                             OR notification.title IS NULL
                         )
                      )
+                     OR (type(notification) = ConversationNotification and notification.conversation.id IN :#{#conversationIds}
+                        AND (notification.title NOT IN :#{#deactivatedTitles}
+                            OR notification.title IS NULL
+                            AND notification.message.author.login != :#{#login}
+                        )
+                     )
                 )
             """)
     Page<Notification> findAllNotificationsFilteredBySettingsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
             @Param("hideUntil") ZonedDateTime hideUntil, @Param("deactivatedTitles") Set<String> deactivatedTitles, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
-            Pageable pageable);
+            Set<Long> conversationIds, Pageable pageable);
 
     @Transactional // ok because of modifying query
     @Modifying

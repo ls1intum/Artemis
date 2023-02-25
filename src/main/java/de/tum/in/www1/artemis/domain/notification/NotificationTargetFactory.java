@@ -27,6 +27,10 @@ public class NotificationTargetFactory {
 
     public static final String TUTORIAL_GROUPS_TEXT = "tutorial-groups";
 
+    public static final String NEW_MESSAGE_TEXT = "new-message";
+
+    public static final String MESSAGE_TEXT = "message";
+
     public static final String ATTACHMENT_UPDATED_TEXT = "attachmentUpdated";
 
     public static final String EXERCISE_RELEASED_TEXT = "exerciseReleased";
@@ -223,6 +227,21 @@ public class NotificationTargetFactory {
         notificationTarget.setEntity(isManagement ? TUTORIAL_GROUP_MANAGEMENT_TEXT : TUTORIAL_GROUPS_TEXT);
         notificationTarget.setCourseId(courseId);
         notificationTarget.setMainPage(isManagement ? COURSE_MANAGEMENT_TEXT : COURSES_TEXT);
+        return notificationTarget;
+    }
+
+    // Conversation related targets
+
+    /**
+     * Create a NotificationTarget for notifications message related to a conversation.
+     *
+     * @param message  that is related to the notification
+     * @param courseId of the course to which the tutorial group belongs
+     * @return the created NotificationTarget
+     */
+    public static NotificationTarget createConversationMessageTarget(Post message, Long courseId) {
+        var notificationTarget = new NotificationTarget(NEW_MESSAGE_TEXT, message.getId(), MESSAGE_TEXT, courseId, COURSES_TEXT);
+        notificationTarget.setConversationId(message.getConversation().getId());
         return notificationTarget;
     }
 

@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { CourseConversationsNotificationsService } from 'app/overview/course-conversations-notifications-service';
 import { Observable, ReplaySubject } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { map } from 'rxjs/operators';
@@ -44,6 +46,7 @@ export class NotificationService {
         private courseManagementService: CourseManagementService,
         private serializer: UrlSerializer,
         private tutorialGroupsNotificationService: TutorialGroupsNotificationService,
+        private courseConversationsNotificationsService: CourseConversationsNotificationsService,
     ) {
         this.initNotificationObserver();
     }
@@ -146,6 +149,11 @@ export class NotificationService {
                 this.subscribeToTutorialGroupNotificationUpdates(tutorialGroups);
             }
         });
+        this.courseConversationsNotificationsService.getConversationsForNotifications().subscribe((conversations) => {
+            if (conversations) {
+                this.subscribeToConversationNotificationUpdates(conversations);
+            }
+        });
         return this.notificationObserver;
     }
 
@@ -191,6 +199,22 @@ export class NotificationService {
                 this.subscribedTopics.push(tutorialGroupTopic);
                 this.jhiWebsocketService.subscribe(tutorialGroupTopic);
                 this.jhiWebsocketService.receive(tutorialGroupTopic).subscribe((notification: Notification) => {
+                    this.addNotificationToObserver(notification);
+                });
+            }
+        });
+    }
+
+    private subscribeToConversationNotificationUpdates(conversations: Conversation[]): void {
+        conversations.forEach((conversation) => {
+            const conversationTopic = '/topic/conversation/' + conversation.id + '/notifications';
+            console.log(this.router.url);
+            console.log('courses/' + conversation.course?.id + '/messages');
+            console.log(this.router.url.includes('courses/' + conversation.course?.id + '/messages'));
+            if (!this.subscribedTopics.includes(conversationTopic) && !this.router.url.includes('courses/' + conversation.course?.id + '/messages')) {
+                this.subscribedTopics.push(conversationTopic);
+                this.jhiWebsocketService.subscribe(conversationTopic);
+                this.jhiWebsocketService.receive(conversationTopic).subscribe((notification: Notification) => {
                     this.addNotificationToObserver(notification);
                 });
             }

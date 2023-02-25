@@ -117,6 +117,18 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
             ],
         },
         {
+            key: 'conversationNotifications',
+            restrictionLevels: [Authority.USER],
+            settings: [
+                {
+                    key: 'conversationMessage',
+                    descriptionKey: 'conversationMessageDescription',
+                    settingId: SettingId.NOTIFICATION__USER_NOTIFICATION__CONVERSATION_MESSAGE,
+                    emailSupport: false,
+                },
+            ],
+        },
+        {
             key: 'tutorialGroupNotifications',
             restrictionLevels: [Authority.USER],
             settings: [

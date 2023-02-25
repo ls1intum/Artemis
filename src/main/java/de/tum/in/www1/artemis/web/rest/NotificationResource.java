@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
@@ -51,13 +52,16 @@ public class NotificationResource {
 
     private final TutorialGroupService tutorialGroupService;
 
-    public NotificationResource(NotificationRepository notificationRepository, UserRepository userRepository, NotificationSettingRepository notificationSettingRepository,
-            NotificationSettingsService notificationSettingsService, TutorialGroupService tutorialGroupService) {
+    private final ConversationService conversationService;
+
+    public NotificationResource(ConversationService conversationService, NotificationRepository notificationRepository, UserRepository userRepository,
+            NotificationSettingRepository notificationSettingRepository, NotificationSettingsService notificationSettingsService, TutorialGroupService tutorialGroupService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.notificationSettingRepository = notificationSettingRepository;
         this.notificationSettingsService = notificationSettingsService;
         this.tutorialGroupService = tutorialGroupService;
+        this.conversationService = conversationService;
     }
 
     /**
@@ -71,6 +75,7 @@ public class NotificationResource {
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         var tutorialGroupIds = tutorialGroupService.findAllForNotifications(currentUser).stream().map(DomainObject::getId).collect(Collectors.toSet());
+        var conversationIds = conversationService.findAllConversationsForNotifications(currentUser).stream().map(DomainObject::getId).collect(Collectors.toSet());
 
         log.debug("REST request to get all Notifications for current user {} filtered by settings", currentUser);
         Set<NotificationSetting> notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
@@ -81,11 +86,11 @@ public class NotificationResource {
         final Page<Notification> page;
         if (deactivatedTitles.isEmpty()) {
             page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), hideNotificationsUntilDate, tutorialGroupIds,
-                    pageable);
+                    conversationIds, pageable);
         }
         else {
             page = notificationRepository.findAllNotificationsFilteredBySettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), hideNotificationsUntilDate,
-                    deactivatedTitles, tutorialGroupIds, pageable);
+                    deactivatedTitles, tutorialGroupIds, conversationIds, pageable);
         }
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
