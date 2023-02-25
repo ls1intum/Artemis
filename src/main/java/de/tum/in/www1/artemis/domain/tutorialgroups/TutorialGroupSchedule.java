@@ -20,6 +20,9 @@ import de.tum.in.www1.artemis.domain.DomainObject;
  * Think of it like a recurring calendar event in your calendar app. E.g. a tutorial group might meet every Monday at 10:00 to 12:00 from 2021-01-01 to 2021-06-30.
  * <p>
  * The individual {@link TutorialGroupSession}s are generated from this schedule and stored in the {@link TutorialGroupSession} table.
+ * <p>
+ * IMPORTANT NOTE TO DEVELOPERS: When you add a new property to this class please update the methods {@link #sameSchedule(TutorialGroupSchedule)} and
+ * {@link #onlyLocationChanged(TutorialGroupSchedule)}
  */
 @Entity
 @Table(name = "tutorial_group_schedule")
