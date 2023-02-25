@@ -77,36 +77,8 @@
             />
         </div>
     </div>
-    <h4 class="visual-new-answer-title">{{ 'artemisApp.multipleChoiceQuestion.visualEditor.newAnswerTitle' | artemisTranslate }}</h4>
-    <div class="visual-answer-option form-group-narrow">
-        <div class="form-group-narrow visual-answer-question-container">
-            <div class="visual-answer" [ngClass]="newOption.isCorrect ? 'visual-answer-correct-container' : 'visual-answer-wrong-container'" (click)="toggleIsCorrect(newOption)">
-                <fa-icon [icon]="newOption.isCorrect ? faCheck : faXmark"></fa-icon>
-            </div>
-            <input class="form-control" [(ngModel)]="newOption.text" placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.textPlaceholder' | artemisTranslate }}" />
-            <div [ngClass]="newOption.text ? 'visual-answer-add-container' : 'visual-answer-add-container-disabled'" (click)="addNewAnswer()">
-                <fa-icon [icon]="faPlus"></fa-icon>
-            </div>
-        </div>
-        <div class="form-group-narrow visual-question-hint">
-            <fa-icon
-                [icon]="faQuestionCircle"
-                class="text-secondary me-1"
-                ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintTooltip' | artemisTranslate }}"
-            ></fa-icon>
-            <input class="form-control" [(ngModel)]="newOption.hint" placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintPlaceholder' | artemisTranslate }}" />
-        </div>
-        <div class="visual-question-hint">
-            <fa-icon
-                [icon]="faExclamationCircle"
-                class="text-secondary me-1"
-                ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.explanationTooltip' | artemisTranslate }}"
-            ></fa-icon>
-            <input
-                class="form-control"
-                [(ngModel)]="newOption.explanation"
-                placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.explanationPlaceholder' | artemisTranslate }}"
-            />
-        </div>
-    </div>
+    <button id="quiz-add-mc-question" class="btn btn-block btn-success mt-2" (click)="addNewAnswer()">
+        <fa-icon [icon]="faPlus"></fa-icon>
+        <span jhiTranslate="artemisApp.multipleChoiceQuestion.visualEditor.newAnswerTitle"></span>
+    </button>
 </div>

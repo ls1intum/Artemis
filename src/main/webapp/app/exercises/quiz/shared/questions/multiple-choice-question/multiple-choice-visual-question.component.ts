@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { faCheck, faExclamationCircle, faExclamationTriangle, faPlus, faQuestionCircle, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { faCheckSquare, faCircle, faDotCircle, faSquare } from '@fortawesome/free-regular-svg-icons';
+import { faCircle, faSquare } from '@fortawesome/free-regular-svg-icons';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 
 @Component({
@@ -11,8 +11,6 @@ import { AnswerOption } from 'app/entities/quiz/answer-option.model';
     encapsulation: ViewEncapsulation.None,
 })
 export class MultipleChoiceVisualQuestionComponent {
-    newOption = new AnswerOption();
-
     _question: MultipleChoiceQuestion;
 
     @Input()
@@ -91,8 +89,7 @@ export class MultipleChoiceVisualQuestionComponent {
             this.question.answerOptions = [];
         }
 
-        this.question.answerOptions?.push(this.newOption);
-        this.newOption = new AnswerOption();
+        this.question.answerOptions?.push(new AnswerOption());
 
         this.questionChanged.emit();
     }
