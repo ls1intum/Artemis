@@ -170,6 +170,8 @@ public class StudentExamResource {
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         var studentExams = studentExamRepository.findByExamIdWithSessions(examId);
+        // reduce payload
+        studentExams.forEach(studentExam -> studentExam.setExam(null));
         return ResponseEntity.ok(studentExams);
     }
 
