@@ -114,7 +114,7 @@ public class LocalCIBuildJobService {
             latch.await();
         }
         catch (InterruptedException e) {
-            throw new IllegalStateException("Interrupted while waiting for command to complete", e);
+            throw new LocalCIException("Interrupted while waiting for command to complete", e);
         }
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();

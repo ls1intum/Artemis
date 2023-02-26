@@ -48,6 +48,6 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
         Repository repository = rp.getRepository();
 
-        localVCHookService.createNewSubmission(commitHash, repository);
+        localVCHookService.processNewPush(commitHash, repository);
     }
 }

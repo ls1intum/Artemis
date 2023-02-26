@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.connectors.LtiNewResultService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
@@ -20,11 +21,14 @@ public class ProgrammingMessagingService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final LtiNewResultService ltiNewResultService;
+
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
-            SimpMessageSendingOperations messagingTemplate) {
+            SimpMessageSendingOperations messagingTemplate, LtiNewResultService ltiNewResultService) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.messagingTemplate = messagingTemplate;
+        this.ltiNewResultService = ltiNewResultService;
     }
 
     public void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
@@ -115,5 +119,15 @@ public class ProgrammingMessagingService {
 
     private static String getProgrammingExerciseAllExerciseBuildsTriggeredTopic(Long programmingExerciseId) {
         return "/topic/programming-exercises/" + programmingExerciseId + "/all-builds-triggered";
+    }
+
+    public void notifyUserAboutNewResult(Result result, ProgrammingExerciseParticipation participation) {
+        // notify user via websocket
+        websocketMessagingService.broadcastNewResult((Participation) participation, result);
+
+        if (participation instanceof StudentParticipation) {
+            // do not try to report results for template or solution participations
+            ltiNewResultService.onNewResult((ProgrammingExerciseStudentParticipation) participation);
+        }
     }
 }

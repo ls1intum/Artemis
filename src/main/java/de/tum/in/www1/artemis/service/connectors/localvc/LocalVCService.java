@@ -56,7 +56,7 @@ public class LocalVCService extends AbstractVersionControlService {
     private final Logger log = LoggerFactory.getLogger(LocalVCService.class);
 
     @Value("${artemis.version-control.url}")
-    private URL localVCServerUrl;
+    private URL localVCBaseUrl;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCBasePath;
@@ -110,19 +110,20 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public void deleteRepository(VcsRepositoryUrl repositoryUrl) {
 
-        Path localPath = urlService.getLocalVCPathFromRepositoryUrl(repositoryUrl, localVCBasePath);
+        LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(repositoryUrl.toString(), localVCBaseUrl);
+        Path localRepositoryPath = localVCRepositoryUrl.getLocalRepositoryPath(localVCBasePath);
 
         try {
-            FileUtils.deleteDirectory(localPath.toFile());
+            FileUtils.deleteDirectory(localRepositoryPath.toFile());
         }
         catch (IOException e) {
-            throw new LocalVCException("Could not delete repository at " + localPath, e);
+            throw new LocalVCException("Could not delete repository at " + localRepositoryPath, e);
         }
     }
 
     @Override
     public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
-        return new LocalVCRepositoryUrl(projectKey, repositorySlug, localVCServerUrl);
+        return new LocalVCRepositoryUrl(projectKey, repositorySlug, localVCBaseUrl);
     }
 
     @Override
@@ -138,7 +139,8 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws LocalVCException {
-        String localRepositoryPath = urlService.getLocalVCPathFromRepositoryUrl(repositoryUrl, localVCBasePath).toString();
+        LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(repositoryUrl.toString(), localVCBaseUrl);
+        String localRepositoryPath = localVCRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toString();
         Map<String, Ref> remoteRepositoryRefs;
         try {
             remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localRepositoryPath).callAsMap();
@@ -207,7 +209,7 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public ConnectorHealth health() {
         ConnectorHealth health = new ConnectorHealth(true);
-        health.setAdditionalInfo(Map.of("url", localVCServerUrl));
+        health.setAdditionalInfo(Map.of("url", localVCBaseUrl));
         return health;
     }
 
@@ -225,9 +227,9 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     private void createRepository(String projectKey, String repositorySlug) throws LocalVCException {
 
-        LocalVCRepositoryUrl localVCUrl = new LocalVCRepositoryUrl(projectKey, repositorySlug, localVCServerUrl);
+        LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(projectKey, repositorySlug, localVCBaseUrl);
 
-        Path remoteDirPath = urlService.getLocalVCPathFromRepositoryUrl(localVCUrl, localVCBasePath);// localVCUrl.getLocalPath(localVCBasePath);
+        Path remoteDirPath = localVCRepositoryUrl.getLocalRepositoryPath(localVCBasePath);
 
         log.debug("Creating local git repository {} in folder {}", repositorySlug, remoteDirPath);
 

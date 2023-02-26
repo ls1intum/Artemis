@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,43 +137,5 @@ public class UrlService {
             projectKey = pathComponents[2];
         }
         return projectKey;
-    }
-
-    /**
-     * Gets the local VC path from the given repository URL.
-     *
-     * @param vcsRepositoryUrl The repository url object.
-     * @param localVCBasePath  The base path for the local VC (defined as an environment variable at artemis.version-control.local-vcs-repo-path).
-     * @return The path pointing to the repository in the local file system.
-     */
-    public Path getLocalVCPathFromRepositoryUrl(VcsRepositoryUrl vcsRepositoryUrl, String localVCBasePath) {
-        String projectKey = getProjectKeyFromRepositoryUrl(vcsRepositoryUrl);
-        String repositorySlug = getRepositorySlugFromUrl(vcsRepositoryUrl.getURI());
-        return Paths.get(localVCBasePath, projectKey, repositorySlug + ".git");
-    }
-
-    /**
-     * Returns whether the URL contains "practice" in the repository slug.
-     *
-     * @param vcsRepositoryUrl The repository url object.
-     * @return true if the repository slug contains "practice", false otherwise.
-     */
-    public boolean getIsPracticeRepositoryFromRepositoryUrl(VcsRepositoryUrl vcsRepositoryUrl) {
-        String projectKey = getProjectKeyFromRepositoryUrl(vcsRepositoryUrl);
-        String repositorySlug = getRepositorySlugFromUrl(vcsRepositoryUrl.getURI());
-        return repositorySlug.toLowerCase().replace(projectKey.toLowerCase() + "-", "").startsWith("practice-");
-    }
-
-    /**
-     * Returns the repository type or username from the repository slug.
-     *
-     * @param vcsRepositoryUrl The repository url object.
-     * @return The repository type or username (e.g. "exercise" for the template repository, "artemis_test_user_1" for artemis_test_user_1's repository).
-     */
-    public String getRepositoryTypeOrUserNameFromRepositoryUrl(VcsRepositoryUrl vcsRepositoryUrl) {
-        String projectKey = getProjectKeyFromRepositoryUrl(vcsRepositoryUrl);
-        String repositorySlug = getRepositorySlugFromUrl(vcsRepositoryUrl.getURI());
-        String repositoryTypeOrUserNameWithPracticePrefix = repositorySlug.toLowerCase().replace(projectKey.toLowerCase() + "-", "");
-        return repositoryTypeOrUserNameWithPracticePrefix.replace("practice-", "");
     }
 }

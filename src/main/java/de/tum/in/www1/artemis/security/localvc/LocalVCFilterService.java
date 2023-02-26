@@ -1,12 +1,13 @@
 package de.tum.in.www1.artemis.security.localvc;
 
-import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Base64;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -15,19 +16,15 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCBadRequestException;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
+import de.tum.in.www1.artemis.exception.localvc.*;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -50,8 +47,6 @@ public class LocalVCFilterService {
 
     private final UserRepository userRepository;
 
-    private final UrlService urlService;
-
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
@@ -62,15 +57,17 @@ public class LocalVCFilterService {
 
     private final RepositoryAccessService repositoryAccessService;
 
+    @Value("${artemis.version-control.url}")
+    private URL localVCBaseUrl;
+
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
-    public LocalVCFilterService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, UrlService urlService,
-            ProgrammingExerciseService programmingExerciseService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+    public LocalVCFilterService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, ProgrammingExerciseService programmingExerciseService,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, RepositoryAccessService repositoryAccessService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
-        this.urlService = urlService;
         this.programmingExerciseService = programmingExerciseService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -83,11 +80,15 @@ public class LocalVCFilterService {
      * @param repositoryActionType Indicates whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
      * @throws LocalVCAuthException For when the user cannot be authenticated or is not authorized to access the repository.
      */
-    public void authenticateAndAuthorizeGitRequest(HttpServletRequest servletRequest, RepositoryActionType repositoryActionType) throws LocalVCAuthException {
+    public void authenticateAndAuthorizeGitRequest(HttpServletRequest servletRequest, RepositoryActionType repositoryActionType) {
 
         long timeNanoStart = System.nanoTime();
 
         String basicAuthCredentials = checkAuthorizationHeader(servletRequest.getHeader(LocalVCFilterService.AUTHORIZATION_HEADER));
+
+        if (basicAuthCredentials.split(":").length != 2) {
+            throw new LocalVCAuthException();
+        }
 
         String username = basicAuthCredentials.split(":")[0];
         String password = basicAuthCredentials.split(":")[1];
@@ -104,17 +105,17 @@ public class LocalVCFilterService {
             return;
         }
 
-        VcsRepositoryUrl url;
+        LocalVCRepositoryUrl url;
         try {
-            url = new VcsRepositoryUrl(servletRequest.getRequestURL().toString().replace("/info/refs", ""));
+            url = new LocalVCRepositoryUrl(servletRequest.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
         }
-        catch (URISyntaxException e) {
+        catch (LocalVCException e) {
             throw new LocalVCBadRequestException("Badly formed Local Git URI: " + servletRequest.getRequestURL().toString().replace("/info/refs", ""), e);
         }
 
-        String projectKey = urlService.getProjectKeyFromRepositoryUrl(url);
-        String repositoryTypeOrUserName = urlService.getRepositoryTypeOrUserNameFromRepositoryUrl(url);
-        boolean isTestRunRepository = urlService.getIsPracticeRepositoryFromRepositoryUrl(url);
+        String projectKey = url.getProjectKey();
+        String repositoryTypeOrUserName = url.getRepositoryTypeOrUserName();
+        boolean isTestRunRepository = url.isPracticeRepository();
 
         ProgrammingExercise exercise;
 
