@@ -72,8 +72,6 @@ public class FileResource {
 
     private final ExamUserRepository examUserRepository;
 
-    private final ExamRepository examRepository;
-
     private final AuthorizationCheckService authorizationCheckService;
 
     private final JHipsterProperties jHipsterProperties;
@@ -81,7 +79,7 @@ public class FileResource {
     public FileResource(AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
             AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExamUserRepository examUserRepository, ExamRepository examRepository, JHipsterProperties jHipsterProperties) {
+            ExamUserRepository examUserRepository, JHipsterProperties jHipsterProperties) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -92,7 +90,6 @@ public class FileResource {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.examRepository = examRepository;
         this.examUserRepository = examUserRepository;
         this.jHipsterProperties = jHipsterProperties;
     }
