@@ -3,7 +3,7 @@ import { NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
-import { ExamUserDTO } from 'app/entities/exam-user-dto.mode';
+import { ExamUserDTO } from 'app/entities/exam-user-dto.model';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';

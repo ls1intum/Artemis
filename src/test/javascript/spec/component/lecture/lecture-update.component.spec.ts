@@ -21,6 +21,7 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('LectureUpdateComponent', () => {
     let lectureUpdateWizardComponentFixture: ComponentFixture<LectureUpdateWizardComponent>;
@@ -49,6 +50,7 @@ describe('LectureUpdateComponent', () => {
                 MockComponent(LectureUpdateWizardComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(MarkdownEditorComponent),
+                MockComponent(DocumentationButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(HtmlForMarkdownPipe),

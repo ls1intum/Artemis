@@ -338,7 +338,7 @@ public class StudentExamService {
                     wasEmptyProgrammingParticipation = true;
                     latestSubmission = prepareProgrammingSubmission(latestSubmission, studentParticipation);
                 }
-                if ((latestSubmission.isPresent() && latestSubmission.get().isEmpty()) || wasEmptyProgrammingParticipation) {
+                if (latestSubmission.isPresent() && (latestSubmission.get().isEmpty() || wasEmptyProgrammingParticipation)) {
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
                         // required so that the submission is counted in the assessment dashboard
                         latestSubmission.get().submitted(true);
@@ -371,8 +371,7 @@ public class StudentExamService {
      * @return the latestSubmission
      */
     public Optional<Submission> prepareProgrammingSubmission(Optional<Submission> latestSubmission, StudentParticipation studentParticipation) {
-        if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise
-                && ((ProgrammingExercise) studentParticipation.getExercise()).areManualResultsAllowed()) {
+        if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise programmingExercise && programmingExercise.areManualResultsAllowed()) {
             submissionService.addEmptyProgrammingSubmissionToParticipation(studentParticipation);
             return studentParticipation.findLatestSubmission();
         }
@@ -470,6 +469,7 @@ public class StudentExamService {
         User student = studentExam.getUser();
 
         for (Exercise exercise : studentExam.getExercises()) {
+            // NOTE: the following code is performed in parallel threads, therefore we need to set the authorization here
             SecurityUtils.setAuthorizationObject();
             // NOTE: it's not ideal to invoke the next line several times (2000 student exams with 10 exercises would lead to 20.000 database calls to find all participations).
             // One optimization could be that we load all participations per exercise once (or per exercise) into a large list (10 * 2000 = 20.000 participations) and then check if
@@ -501,11 +501,12 @@ public class StudentExamService {
                         // Note: only unlock the programming exercise student repository for the affected user (Important: Do NOT invoke unlockAll)
                         programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
                     }
-                    log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(), student.getId());
+                    log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(),
+                            student.getParticipantIdentifier());
                 }
                 catch (Exception ex) {
-                    log.warn("FAILED: Start exercise for student exam {} and exercise {} and student {} with exception: {}", studentExam.getId(), exercise.getId(), student.getId(),
-                            ex.getMessage(), ex);
+                    log.warn("FAILED: Start exercise for student exam {} and exercise {} and student {} with exception: {}", studentExam.getId(), exercise.getId(),
+                            student.getParticipantIdentifier(), ex.getMessage(), ex);
                 }
             }
         }
@@ -602,53 +603,9 @@ public class StudentExamService {
     }
 
     /**
-     * Deletes a test run.
-     * In case the participation is not referenced by other test runs, the participation, submission, build plans and repositories are deleted as well.
-     *
-     * @param testRunId the id of the test run
-     * @return the deleted test run
-     */
-    public StudentExam deleteTestRun(Long testRunId) {
-        var testRun = studentExamRepository.findByIdWithExercisesElseThrow(testRunId);
-        User instructor = testRun.getUser();
-        var participations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructor.getId(),
-                testRun.getExercises());
-        testRun.getExercises().forEach(exercise -> {
-            var relevantParticipation = exercise.findParticipation(participations);
-            if (relevantParticipation != null) {
-                exercise.setStudentParticipations(Set.of(relevantParticipation));
-            }
-            else {
-                exercise.setStudentParticipations(new HashSet<>());
-            }
-        });
-
-        List<StudentExam> otherTestRunsOfInstructor = studentExamRepository.findAllTestRunsWithExercisesByExamIdForUser(testRun.getExam().getId(), instructor.getId()).stream()
-                .filter(studentExam -> !studentExam.getId().equals(testRunId)).toList();
-
-        // We cannot delete participations which are referenced by other test runs. (an instructor is free to create as many test runs as he likes)
-        var testRunExercises = testRun.getExercises();
-        // Collect all distinct exercises of other instructor test runs
-        var allInstructorTestRunExercises = otherTestRunsOfInstructor.stream().flatMap(tr -> tr.getExercises().stream()).distinct().toList();
-        // Collect exercises which are not referenced by other test runs. Their participations can be safely deleted
-        var exercisesToBeDeleted = testRunExercises.stream().filter(exercise -> !allInstructorTestRunExercises.contains(exercise)).toList();
-
-        for (final Exercise exercise : exercisesToBeDeleted) {
-            // Only delete participations that exist (and were not deleted in some other way)
-            if (!exercise.getStudentParticipations().isEmpty()) {
-                participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true, true);
-            }
-        }
-
-        // Delete the test run student exam
-        studentExamRepository.deleteById(testRunId);
-        return testRun;
-    }
-
-    /**
      * Generates a new test exam for the student and stores it in the database
      *
-     * @param exam    the exam with loaded exercie groups and exercise for which the StudentExam should be created
+     * @param exam    the exam with loaded exercise groups and exercises for which the StudentExam should be created
      * @param student the corresponding student
      * @return a StudentExam for the student and exam
      */
@@ -663,7 +620,6 @@ public class StudentExamService {
         log.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), exam.getId());
 
         return studentExam;
-
     }
 
     /**

@@ -39,6 +39,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     template: '',
@@ -85,6 +86,7 @@ describe('Exam Update Component', () => {
                     DummyComponent,
                     MockPipe(ArtemisTranslatePipe),
                     MockComponent(HelpIconComponent),
+                    MockComponent(DocumentationButtonComponent),
                     MockDirective(CustomMinDirective),
                     MockDirective(CustomMaxDirective),
                     MockDirective(FeatureToggleDirective),
@@ -491,6 +493,7 @@ describe('Exam Update Component', () => {
                     MockComponent(ButtonComponent),
                     MockComponent(HelpIconComponent),
                     MockComponent(DifficultyBadgeComponent),
+                    MockComponent(DocumentationButtonComponent),
                     MockDirective(FeatureToggleDirective),
                 ],
                 providers: [

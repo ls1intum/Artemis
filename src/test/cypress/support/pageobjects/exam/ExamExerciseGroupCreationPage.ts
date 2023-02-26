@@ -1,8 +1,10 @@
 import { Exam } from 'app/entities/exam.model';
-import { artemis } from '../../ArtemisTesting';
-import multipleChoiceTemplate from '../../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
+import { courseManagementRequest } from '../../artemis';
+import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { BASE_API, EXERCISE_TYPE, PUT } from '../../constants';
 import { POST } from '../../constants';
+import { AdditionalData, Exercise } from './ExamParticipation';
+import { generateUUID } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam exercise group creation page.
@@ -28,27 +30,35 @@ export class ExamExerciseGroupCreationPage {
         cy.wait('@updateExerciseGroup');
     }
 
-    addGroupWithExercise(exam: Exam, title: string, exerciseType: EXERCISE_TYPE, processResponse: (data: any) => void) {
-        const courseManagementRequests = artemis.requests.courseManagement;
-        courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
+    addGroupWithExercise(exerciseArray: Array<Exercise>, exam: Exam, exerciseType: EXERCISE_TYPE, additionalData?: AdditionalData) {
+        this.handleAddGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, (response) => {
+            if (exerciseType == EXERCISE_TYPE.Quiz) {
+                additionalData!.quizExerciseID = response.body.quizQuestions![0].id;
+            }
+            this.addExerciseToArray(exerciseArray, response, additionalData);
+        });
+    }
+
+    handleAddGroupWithExercise(exam: Exam, title: string, exerciseType: EXERCISE_TYPE, processResponse: (data: any) => void) {
+        courseManagementRequest.addExerciseGroupForExam(exam).then((groupResponse) => {
             switch (exerciseType) {
                 case EXERCISE_TYPE.Text:
-                    courseManagementRequests.createTextExercise({ exerciseGroup: groupResponse.body }, title).then((response) => {
+                    courseManagementRequest.createTextExercise({ exerciseGroup: groupResponse.body }, title).then((response) => {
                         processResponse(response);
                     });
                     break;
                 case EXERCISE_TYPE.Modeling:
-                    courseManagementRequests.createModelingExercise({ exerciseGroup: groupResponse.body }, title).then((response) => {
+                    courseManagementRequest.createModelingExercise({ exerciseGroup: groupResponse.body }, title).then((response) => {
                         processResponse(response);
                     });
                     break;
                 case EXERCISE_TYPE.Quiz:
-                    courseManagementRequests.createQuizExercise({ exerciseGroup: groupResponse.body }, [multipleChoiceTemplate], title).then((response) => {
+                    courseManagementRequest.createQuizExercise({ exerciseGroup: groupResponse.body }, [multipleChoiceTemplate], title).then((response) => {
                         processResponse(response);
                     });
                     break;
                 case EXERCISE_TYPE.Programming:
-                    courseManagementRequests
+                    courseManagementRequest
                         .createProgrammingExercise({ exerciseGroup: groupResponse.body }, undefined, false, undefined, undefined, title, undefined, 'de.test')
                         .then((response) => {
                             processResponse(response);
@@ -56,5 +66,9 @@ export class ExamExerciseGroupCreationPage {
                     break;
             }
         });
+    }
+
+    addExerciseToArray(exerciseArray: Array<Exercise>, response: any, additionalData?: AdditionalData) {
+        exerciseArray.push({ ...response.body, additionalData });
     }
 }
