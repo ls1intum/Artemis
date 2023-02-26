@@ -72,7 +72,17 @@ public class BuildPlanResource {
         return ResponseEntity.ok().body(buildPlan);
     }
 
-    // ToDo
-    // @PutMapping("/programming-exercises/{exerciseId}/build-plan")
-    // setBuildPlan(@PathVariable Long exerciseId, @RequestBody BuildPlan buildPlan)
+    @PutMapping("/programming-exercises/{exerciseId}/build-plan")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<BuildPlan> setBuildPlan(@PathVariable Long exerciseId, @RequestBody BuildPlan buildPlan) {
+        log.debug("REST request to set build plan for programming exercise with id {}", exerciseId);
+
+        final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Could not find connected exercise for build plan."));
+
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
+
+        buildPlan = buildPlanRepository.save(buildPlan);
+        return ResponseEntity.ok(buildPlan);
+    }
 }
