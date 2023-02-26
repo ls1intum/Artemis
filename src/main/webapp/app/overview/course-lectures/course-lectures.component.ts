@@ -86,7 +86,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     private onCourseLoad() {
-        this.groupLectures(this.DUE_DATE_DESC);
+        this.groupLectures(this.DUE_DATE_ASC);
     }
 
     public groupLectures(selectedOrder: number): void {
