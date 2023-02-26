@@ -26,7 +26,14 @@ describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;
     const user1 = { id: 1, name: 'name', login: 'login' } as User;
     const user2 = { id: 2, login: 'user2' } as User;
-    const examWithCourse: Exam = { course, id: 2, examUsers: [{ user: user1 }, { user: user2 }] } as Exam;
+    const examWithCourse: Exam = {
+        course,
+        id: 2,
+        examUsers: [
+            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
+            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
+        ],
+    } as Exam;
 
     const route = {
         snapshot: { paramMap: convertToParamMap({ courseId: course.id }) },
@@ -88,7 +95,7 @@ describe('ExamStudentsComponent', () => {
 
     it('should handle auto-complete for unregistered user', () => {
         const user3 = { id: 3, login: 'user3' } as User;
-        const student3 = { login: 'user3', registrationNumber: '1234567' } as StudentDTO;
+        const student3 = { login: 'user3', firstName: 'student2', lastName: 'student2', registrationNumber: '1234567' } as StudentDTO;
         const callbackSpy = jest.fn();
         const flashSpy = jest.spyOn(component, 'flashRowClass');
         const reloadSpy = jest.spyOn(component, 'reloadExamWithRegisteredUsers');
@@ -99,7 +106,7 @@ describe('ExamStudentsComponent', () => {
         fixture.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, user3.login);
-        expect(component.allRegisteredUsers).toEqual([{ ...user1, user: user1 }, { ...user2, user: user2 }, { ...user3 }]);
+        expect(examServiceStub).toHaveBeenCalledOnce();
         expect(reloadSpy).toHaveBeenCalledOnce();
         expect(callbackSpy).not.toHaveBeenCalled();
         expect(flashSpy).toHaveBeenCalledOnce();
@@ -125,7 +132,11 @@ describe('ExamStudentsComponent', () => {
 
     it('should reload with only registered users', () => {
         // Same id is intentional: Simulate one user got removed
-        const examWithOneUser = { course, id: 2, examUsers: [{ user: user2 }] };
+        const examWithOneUser = {
+            course,
+            id: 2,
+            examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 }],
+        };
         const examServiceStub = jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
         fixture.detectChanges();
 
@@ -134,24 +145,38 @@ describe('ExamStudentsComponent', () => {
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(component.exam).toEqual(examWithOneUser);
-        expect(component.allRegisteredUsers).toEqual([{ ...user2, user: user2 }]);
+        expect(component.allRegisteredUsers).toEqual([
+            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
+        ]);
     });
 
     it('should remove users from the exam', () => {
         const examServiceStub = jest.spyOn(examManagementService, 'removeStudentFromExam').mockReturnValue(of(new HttpResponse()));
         fixture.detectChanges();
-        component.allRegisteredUsers = [{ user: user1 }, { user: user2 }];
+        component.allRegisteredUsers = [
+            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
+            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
+        ];
 
-        component.removeFromExam({ user: user2 }, { deleteParticipationsAndSubmission: false });
+        component.removeFromExam(
+            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
+            { deleteParticipationsAndSubmission: false },
+        );
         fixture.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, user2.login, false);
-        expect(component.allRegisteredUsers).toEqual([{ user: user1 }]);
+        expect(component.allRegisteredUsers).toEqual([
+            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
+        ]);
     });
 
     it('should register all enrolled students of the course to the exam', () => {
         const examServiceStubAddAll = jest.spyOn(examManagementService, 'addAllStudentsOfCourseToExam').mockReturnValue(of(new HttpResponse<void>()));
-        const examWithOneUser = { course, id: 2, examUsers: [{ user: user2 }] };
+        const examWithOneUser = {
+            course,
+            id: 2,
+            examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 }],
+        };
         const examServiceStub = jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
         fixture.detectChanges();
 
@@ -160,13 +185,18 @@ describe('ExamStudentsComponent', () => {
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(examServiceStubAddAll).toHaveBeenCalledWith(course.id, examWithCourse.id);
-        expect(component.allRegisteredUsers).toEqual([{ ...user2, user: user2 }]);
+        expect(component.allRegisteredUsers).toEqual([
+            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
+        ]);
     });
 
     it('should remove all users from the exam', () => {
         const examServiceStub = jest.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse()));
         fixture.detectChanges();
-        component.allRegisteredUsers = [user1, user2];
+        component.allRegisteredUsers = [
+            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
+            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
+        ];
 
         component.removeAllStudents({ deleteParticipationsAndSubmission: false });
         fixture.detectChanges();
@@ -178,7 +208,10 @@ describe('ExamStudentsComponent', () => {
     it('should remove all users from the exam with participaations', () => {
         const examServiceStub = jest.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse()));
         fixture.detectChanges();
-        component.allRegisteredUsers = [user1, user2];
+        component.allRegisteredUsers = [
+            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
+            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
+        ];
 
         component.removeAllStudents({ deleteParticipationsAndSubmission: true });
         fixture.detectChanges();
