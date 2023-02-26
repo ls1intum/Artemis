@@ -11,6 +11,7 @@
             "500": "Interner Serverfehler."
         },
         "cannotDeleteYourself": "Du kannst nicht deinen eigenen Account löschen!",
+        "examExerciseNotIncludedInScore": "Eine Klausuraufgabe muss im Ergebnis enthalten sein!",
         "fileUploadSavingError": "Fehler! Der Upload schlug fehl. Stelle sicher, dass eine Internetverbindung besteht!",
         "concurrencyFailure": "Ein:e Nutzer:in hat diese Daten zeitgleich mit dir geändert. Deine Änderungen wurden abgelehnt.",
         "validation": "Validierungsfehler auf dem Server.",

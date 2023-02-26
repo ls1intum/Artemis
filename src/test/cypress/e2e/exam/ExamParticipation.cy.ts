@@ -6,7 +6,7 @@ import { Course } from 'app/entities/course.model';
 import { generateUUID } from '../../support/utils';
 import { EXERCISE_TYPE } from '../../support/constants';
 import { courseManagementRequest, examExerciseGroupCreation, examNavigation, examParticipation, examStartEnd } from '../../support/artemis';
-import { AdditionalData, Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
+import { Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
 import { Interception } from 'cypress/types/net-stubbing';
 import { admin, studentOne, studentThree, studentTwo } from '../../support/users';
 
@@ -40,13 +40,13 @@ describe('Exam participation', () => {
                 .build();
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Text, { textFixture });
 
-                addGroupWithExercise(exam, EXERCISE_TYPE.Programming, { submission });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Programming, { submission });
 
-                addGroupWithExercise(exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 });
 
-                addGroupWithExercise(exam, EXERCISE_TYPE.Modeling);
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Modeling);
 
                 courseManagementRequest.registerStudentForExam(exam, studentOne);
                 courseManagementRequest.registerStudentForExam(exam, studentTwo);
@@ -127,7 +127,7 @@ describe('Exam participation', () => {
                 .build();
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Text, { textFixture });
 
                 courseManagementRequest.registerStudentForExam(exam, studentOne);
                 courseManagementRequest.generateMissingIndividualExams(exam);
@@ -158,16 +158,3 @@ describe('Exam participation', () => {
         }
     });
 });
-
-function addGroupWithExercise(exam: Exam, exerciseType: EXERCISE_TYPE, additionalData?: AdditionalData) {
-    examExerciseGroupCreation.addGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, (response) => {
-        if (exerciseType == EXERCISE_TYPE.Quiz) {
-            additionalData!.quizExerciseID = response.body.quizQuestions![0].id;
-        }
-        addExerciseToArray(exerciseType, response, additionalData);
-    });
-}
-
-function addExerciseToArray(type: EXERCISE_TYPE, response: any, additionalData?: AdditionalData) {
-    exerciseArray.push({ title: response.body.title, type, id: response.body.id, additionalData });
-}
