@@ -133,7 +133,7 @@ public class StudentExamResource {
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesAndSessionsElseThrow(studentExamId);
 
         examService.loadQuizExercisesForStudentExam(studentExam);
 
@@ -169,7 +169,10 @@ public class StudentExamResource {
         log.debug("REST request to get all student exams for exam : {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        return ResponseEntity.ok(studentExamRepository.findByExamId(examId));
+        var studentExams = studentExamRepository.findByExamIdWithSessions(examId);
+        // reduce payload
+        studentExams.forEach(studentExam -> studentExam.setExam(null));
+        return ResponseEntity.ok(studentExams);
     }
 
     /**

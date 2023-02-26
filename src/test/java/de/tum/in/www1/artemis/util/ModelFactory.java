@@ -1351,6 +1351,8 @@ public class ModelFactory {
         TutorialGroupsConfiguration tutorialGroupsConfiguration = new TutorialGroupsConfiguration();
         tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(start.format(DateTimeFormatter.ISO_LOCAL_DATE));
         tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(end.format(DateTimeFormatter.ISO_LOCAL_DATE));
+        tutorialGroupsConfiguration.setUsePublicTutorialGroupChannels(true);
+        tutorialGroupsConfiguration.setUseTutorialGroupChannels(true);
         return tutorialGroupsConfiguration;
     }
 

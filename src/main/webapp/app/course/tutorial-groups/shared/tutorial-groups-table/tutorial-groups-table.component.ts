@@ -18,6 +18,9 @@ export class TutorialGroupsTableComponent implements OnChanges {
     showIdColumn = false;
 
     @Input()
+    showChannelColumn = false;
+
+    @Input()
     tutorialGroups: TutorialGroup[] = [];
 
     @Input()
