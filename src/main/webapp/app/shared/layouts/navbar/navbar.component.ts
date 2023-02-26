@@ -558,7 +558,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 } else if (this.lastRouteUrlSegment === 'code-editor' && segment === 'new') {
                     // - This route is bogus and needs to be replaced in the future, display no crumb
                     break;
-                } else if (this.lastRouteUrlSegment === 'programming-exercises' && segment === 'import') {
+                } else if (
+                    (this.lastRouteUrlSegment === 'programming-exercises' ||
+                        this.lastRouteUrlSegment === 'text-exercises' ||
+                        this.lastRouteUrlSegment === 'modeling-exercises' ||
+                        this.lastRouteUrlSegment === 'file-upload-exercises') &&
+                    segment === 'import'
+                ) {
                     // - This route is bogus and needs to be replaced in the future, display no crumb
                     break;
                 } else if (this.lastRouteUrlSegment === 'exercise-groups') {
