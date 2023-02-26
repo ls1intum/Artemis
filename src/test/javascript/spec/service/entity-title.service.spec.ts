@@ -36,9 +36,6 @@ describe('EntityTitleService', () => {
         { type: EntityType.DIAGRAM, ids: [1], url: 'apollon-diagrams/1' },
         { type: EntityType.EXAM, ids: [1], url: 'exams/1' },
         { type: EntityType.ORGANIZATION, ids: [1], url: 'organizations/1' },
-        { type: EntityType.TUTORIAL_GROUP, ids: [1], url: 'tutorial-groups/1' },
-        { type: EntityType.EXERCISE_GROUP, ids: [1], url: 'exerciseGroups/1' },
-        { type: EntityType.LEARNING_GOAL, ids: [1], url: 'learning-goals/1' },
     ])(
         'fires a request to fetch the title after 3 seconds',
         fakeAsync(({ type, ids, url }: { type: EntityType; ids: number[]; url: string }) => {
@@ -53,10 +50,7 @@ describe('EntityTitleService', () => {
             tick(2500);
             expect(result).toBe('Test Entity');
             expect(httpSpy).toHaveBeenCalledOnce();
-            expect(httpSpy).toHaveBeenCalledWith(`${SERVER_API_URL}api/${url}/title`, {
-                observe: 'response',
-                responseType: 'text',
-            });
+            expect(httpSpy).toHaveBeenCalledWith(`${SERVER_API_URL}api/${url}/title`, { observe: 'response', responseType: 'text' });
         }),
     );
 

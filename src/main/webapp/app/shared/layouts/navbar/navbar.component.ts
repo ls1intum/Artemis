@@ -463,9 +463,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.routeExamId = Number(segment);
                 this.addResolvedTitleAsCrumb(EntityType.EXAM, [this.routeExamId], currentPath, segment);
                 break;
-            case 'exercise-groups':
-                this.addResolvedTitleAsCrumb(EntityType.EXERCISE_GROUP, [Number(segment)], currentPath, segment);
-                break;
             case 'organization-management':
                 this.addResolvedTitleAsCrumb(EntityType.ORGANIZATION, [Number(segment)], currentPath, segment);
                 break;
@@ -488,6 +485,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             // No breadcrumbs for those segments
             case 'goal-management':
             case 'unit-management':
+            case 'exercise-groups':
             case 'student-exams':
             case 'test-runs':
             case 'mc-question-statistic':
@@ -560,13 +558,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 } else if (this.lastRouteUrlSegment === 'code-editor' && segment === 'new') {
                     // - This route is bogus and needs to be replaced in the future, display no crumb
                     break;
-                } else if (
-                    (this.lastRouteUrlSegment === 'programming-exercises' ||
-                        this.lastRouteUrlSegment === 'modeling-exercises' ||
-                        this.lastRouteUrlSegment === 'text-exercises' ||
-                        this.lastRouteUrlSegment === 'file-upload-exercises') &&
-                    segment === 'import'
-                ) {
+                } else if (this.lastRouteUrlSegment === 'programming-exercises' && segment === 'import') {
                     // - This route is bogus and needs to be replaced in the future, display no crumb
                     break;
                 } else if (this.lastRouteUrlSegment === 'exercise-groups') {
@@ -623,12 +615,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * @param segment the current url segment to add a breadcrumb for
      */
     private addResolvedTitleAsCrumb(type: EntityType, ids: number[], uri: string, segment: string): void {
-        // For exercise groups we need to remove the id from the URL as we cannot link to a specific exercise group.
-        if (type === EntityType.EXERCISE_GROUP) {
-            const indexOfExerciseGroupId: number = uri.lastIndexOf('/') - 1;
-            uri = uri.slice(0, indexOfExerciseGroupId);
-        }
-
         // Insert the segment until we fetched a title from the server to insert at the correct index
         let crumb = this.addBreadcrumb(uri, segment, false);
 

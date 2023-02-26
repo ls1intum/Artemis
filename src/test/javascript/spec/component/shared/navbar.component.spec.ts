@@ -193,18 +193,7 @@ describe('NavbarComponent', () => {
         expect(component.breadcrumbs).toHaveLength(1);
         expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
     });
-    it('should remove id from uri for exercise group breadcrumb', () => {
-        const testUrl = '/course-management/1/exams/1/exercise-groups/1/import';
-        const exerciseGroupCrumb = {
-            label: 'Test Exercise_group',
-            translate: false,
-            uri: '/course-management/1/exams/1/exercise-groups/',
-        };
-        router.setUrl(testUrl);
-        fixture.detectChanges();
-        expect(component.breadcrumbs).toHaveLength(6);
-        expect(component.breadcrumbs[5]).toEqual(exerciseGroupCrumb);
-    });
+
     it('should ignore query parameters', () => {
         const testUrl = '/course-management?query=param';
         router.setUrl(testUrl);
@@ -610,32 +599,29 @@ describe('NavbarComponent', () => {
 
             fixture.detectChanges();
 
-            expect(entityTitleServiceStub).toHaveBeenCalledTimes(3);
+            expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
             expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
             expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXAM, [2]);
-            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE_GROUP, [3]);
 
             const exerciseGroupsCrumb = {
                 label: 'artemisApp.examManagement.exerciseGroups',
                 translate: true,
                 uri: '/course-management/1/exams/2/exercise-groups/',
             };
-
             const createCrumb = {
                 label: 'global.generic.create',
                 translate: true,
                 uri: '/course-management/1/exams/2/exercise-groups/3/quiz-exercises/new/',
             };
 
-            expect(component.breadcrumbs).toHaveLength(7);
+            expect(component.breadcrumbs).toHaveLength(6);
 
             expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
             expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs[2]).toEqual({ label: 'artemisApp.examManagement.title', translate: true, uri: '/course-management/1/exams/' } as MockBreadcrumb);
             expect(component.breadcrumbs[3]).toEqual({ label: 'Test Exam', translate: false, uri: '/course-management/1/exams/2/' } as MockBreadcrumb);
             expect(component.breadcrumbs[4]).toEqual(exerciseGroupsCrumb);
-            expect(component.breadcrumbs[5]).toEqual({ label: 'Test Exercise_group', translate: false, uri: '/course-management/1/exams/2/exercise-groups/' } as MockBreadcrumb);
-            expect(component.breadcrumbs[6]).toEqual(createCrumb);
+            expect(component.breadcrumbs[5]).toEqual(createCrumb);
         });
 
         it('exam exercise plagiarism', () => {
@@ -644,20 +630,14 @@ describe('NavbarComponent', () => {
 
             fixture.detectChanges();
 
-            expect(entityTitleServiceStub).toHaveBeenCalledTimes(4);
+            expect(entityTitleServiceStub).toHaveBeenCalledTimes(3);
             expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
             expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXAM, [2]);
-            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE_GROUP, [3]);
             expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [4]);
 
             const exerciseGroupsCrumb = {
                 label: 'artemisApp.examManagement.exerciseGroups',
                 translate: true,
-                uri: '/course-management/1/exams/2/exercise-groups/',
-            };
-            const exerciseGroupCrumb = {
-                label: 'Test Exercise_group',
-                translate: false,
                 uri: '/course-management/1/exams/2/exercise-groups/',
             };
             const exerciseCrumb = {
@@ -671,16 +651,15 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/exams/2/exercise-groups/3/quiz-exercises/4/plagiarism/',
             };
 
-            expect(component.breadcrumbs).toHaveLength(8);
+            expect(component.breadcrumbs).toHaveLength(7);
 
             expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
             expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs[2]).toEqual({ label: 'artemisApp.examManagement.title', translate: true, uri: '/course-management/1/exams/' } as MockBreadcrumb);
             expect(component.breadcrumbs[3]).toEqual({ label: 'Test Exam', translate: false, uri: '/course-management/1/exams/2/' } as MockBreadcrumb);
             expect(component.breadcrumbs[4]).toEqual(exerciseGroupsCrumb);
-            expect(component.breadcrumbs[5]).toEqual(exerciseGroupCrumb);
-            expect(component.breadcrumbs[6]).toEqual(exerciseCrumb);
-            expect(component.breadcrumbs[7]).toEqual(plagiarismCrumb);
+            expect(component.breadcrumbs[5]).toEqual(exerciseCrumb);
+            expect(component.breadcrumbs[6]).toEqual(plagiarismCrumb);
         });
     });
 

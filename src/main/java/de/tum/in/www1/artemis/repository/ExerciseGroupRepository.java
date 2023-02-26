@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -33,20 +32,6 @@ public interface ExerciseGroupRepository extends JpaRepository<ExerciseGroup, Lo
     @EntityGraph(type = LOAD, attributePaths = { "exam", "exercises" })
     @Query("SELECT e FROM ExerciseGroup e WHERE e.exam.id = :#{#examId}")
     List<ExerciseGroup> findWithExamAndExercisesByExamId(@Param("examId") Long examId);
-
-    /**
-     * Returns the title of the exercise group with the given id.
-     *
-     * @param exerciseGroupId the id of the exercise group
-     * @return the name/title of the exercise group or null if the exercise group does not exist
-     */
-    @Query("""
-            SELECT exerciseGroup.title
-            FROM ExerciseGroup exerciseGroup
-            WHERE exerciseGroup.id = :exerciseGroupId
-            """)
-    @Cacheable(cacheNames = "exerciseGroupTitle", key = "#exerciseGroupId", unless = "#result == null")
-    String getExerciseGroupTitle(@Param("exerciseGroupId") Long exerciseGroupId);
 
     /**
      * Get one exerciseGroup by id with the corresponding exam.

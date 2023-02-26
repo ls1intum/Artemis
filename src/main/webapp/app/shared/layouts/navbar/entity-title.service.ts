@@ -13,7 +13,6 @@ export enum EntityType {
     ORGANIZATION = 'ORGANIZATION',
     EXAM = 'EXAM',
     TUTORIAL_GROUP = 'TUTORIAL_GROUP',
-    EXERCISE_GROUP = 'EXERCISE_GROUP',
 }
 
 const FETCH_FALLBACK_TIMEOUT = 3000;
@@ -126,20 +125,13 @@ export class EntityTitleService {
             case EntityType.TUTORIAL_GROUP:
                 resourceUrl += 'tutorial-groups';
                 break;
-            case EntityType.EXERCISE_GROUP:
-                resourceUrl += 'exerciseGroups';
         }
 
-        this.http
-            .get(`${SERVER_API_URL}${resourceUrl}/${ids[0]}/title`, {
-                observe: 'response',
-                responseType: 'text',
-            })
-            .subscribe((response: HttpResponse<string>) => {
-                if (response.body) {
-                    this.setTitle(type, ids, response.body);
-                }
-            });
+        this.http.get(`${SERVER_API_URL}${resourceUrl}/${ids[0]}/title`, { observe: 'response', responseType: 'text' }).subscribe((response: HttpResponse<string>) => {
+            if (response.body) {
+                this.setTitle(type, ids, response.body);
+            }
+        });
     }
 
     /**
