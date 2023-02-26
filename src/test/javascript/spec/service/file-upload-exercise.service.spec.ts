@@ -85,6 +85,18 @@ describe('FileUploadExercise Service', () => {
         req.flush(returnedFromService);
         tick();
     }));
+    it('should import a file upload exercise', () => {
+        const fileUploadExerciseReturned = { ...elemDefault };
+        fileUploadExerciseReturned.id = 123;
+        service
+            .import(fileUploadExerciseReturned)
+            .pipe(take(1))
+            .subscribe((resp) => {
+                expect(resp.body).toEqual(fileUploadExerciseReturned);
+            });
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush(fileUploadExerciseReturned);
+    });
 
     it('should return a list of FileUploadExercise', fakeAsync(() => {
         const returnedFromService = Object.assign(
