@@ -12,7 +12,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.*;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -1168,11 +1171,11 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     private static Stream<Arguments> getGetParticipationsubmittedNotEndedQuizParameters() {
         return Stream.of(
-                Arguments.of(QuizMode.SYNCHRONIZED, true), 
-                Arguments.of(QuizMode.SYNCHRONIZED, false), 
+                Arguments.of(QuizMode.SYNCHRONIZED, true),
+                Arguments.of(QuizMode.SYNCHRONIZED, false),
                 Arguments.of(QuizMode.BATCHED, true),
-                Arguments.of(QuizMode.BATCHED, false), 
-                Arguments.of(QuizMode.INDIVIDUAL, true), 
+                Arguments.of(QuizMode.BATCHED, false),
+                Arguments.of(QuizMode.INDIVIDUAL, true),
                 Arguments.of(QuizMode.INDIVIDUAL, false)
         );
     }
