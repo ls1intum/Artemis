@@ -49,6 +49,7 @@
                     [course]="course"
                     [tutorialGroupClickHandler]="onTutorialGroupSelected"
                     [showIdColumn]="true"
+                    [showChannelColumn]="configuration.useTutorialGroupChannels! && course.postsEnabled!"
                     [timeZone]="course.timeZone"
                 >
                     <ng-template let-tutorialGroup>

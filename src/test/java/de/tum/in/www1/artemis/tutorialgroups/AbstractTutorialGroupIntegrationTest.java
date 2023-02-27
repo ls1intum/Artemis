@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -18,13 +19,15 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.tutorialgroups.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.*;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.util.CourseTestService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -69,6 +72,15 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     @Autowired
     TutorialGroupService tutorialGroupService;
+
+    @Autowired
+    ChannelRepository channelRepository;
+
+    @Autowired
+    ConversationParticipantRepository conversationParticipantRepository;
+
+    @Autowired
+    TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
     Long exampleCourseId;
 
@@ -141,6 +153,8 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         tutorialGroupsConfiguration.setCourse(courseRepository.findById(courseId).get());
         tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(firstAugustMonday.toString());
         tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toString());
+        tutorialGroupsConfiguration.setUseTutorialGroupChannels(true);
+        tutorialGroupsConfiguration.setUsePublicTutorialGroupChannels(true);
         return tutorialGroupsConfiguration;
     }
 
@@ -258,10 +272,57 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         assertThat(tutorialGroupSessionToCheck.getStatusExplanation()).isEqualTo(expectedStatusExplanation);
     }
 
-    void assertConfigurationStructure(TutorialGroupsConfiguration configuration, LocalDate expectedPeriodStart, LocalDate expectedPeriodEnd, Long courseId) {
+    void assertConfigurationStructure(TutorialGroupsConfiguration configuration, LocalDate expectedPeriodStart, LocalDate expectedPeriodEnd, Long courseId,
+            Boolean expectedChannelModeEnabled, Boolean expectedChannelsPublic) {
         assertThat(configuration.getCourse().getId()).isEqualTo(courseId);
         assertThat(LocalDate.parse(configuration.getTutorialPeriodStartInclusive())).isEqualTo(expectedPeriodStart);
         assertThat(LocalDate.parse(configuration.getTutorialPeriodEndInclusive())).isEqualTo(expectedPeriodEnd);
+        assertThat(configuration.getUseTutorialGroupChannels()).isEqualTo(expectedChannelModeEnabled);
+        assertThat(configuration.getUsePublicTutorialGroupChannels()).isEqualTo(expectedChannelsPublic);
+    }
+
+    Channel asserTutorialGroupChannelIsCorrectlyConfigured(TutorialGroup tutorialGroup) {
+        var configuration = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(tutorialGroup.getCourse().getId()).getTutorialGroupsConfiguration();
+
+        Function<TutorialGroup, String> expectedTutorialGroupName = (TutorialGroup tg) -> {
+            var cleanedTitle = tg.getTitle().replaceAll("\\s", "-").toLowerCase();
+            return "$" + cleanedTitle.substring(0, Math.min(cleanedTitle.length(), 19));
+        };
+        var tutorialGroupFromDb = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroup.getId());
+
+        var channelOptional = tutorialGroupRepository.getTutorialGroupChannel(tutorialGroupFromDb.getId());
+        assertThat(channelOptional).isPresent();
+        var channel = channelOptional.get();
+        assertThat(channel.getName()).isEqualTo(expectedTutorialGroupName.apply(tutorialGroupFromDb));
+        assertThat(channel.getIsPublic()).isEqualTo(configuration.getUsePublicTutorialGroupChannels());
+        assertThat(channel.getIsArchived()).isFalse();
+        assertThat(channel.getCreator()).isNull();
+        assertThat(channel.getIsAnnouncementChannel()).isFalse();
+
+        var members = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
+        var moderators = members.stream().filter(ConversationParticipant::getIsModerator).collect(Collectors.toSet());
+        var nonModerators = members.stream().filter(participant -> !participant.getIsModerator()).collect(Collectors.toSet());
+
+        var registeredStudents = tutorialGroupFromDb.getRegistrations().stream().map(TutorialGroupRegistration::getStudent).collect(Collectors.toSet());
+        if (registeredStudents.size() > 0) {
+            assertThat(nonModerators.stream().map(ConversationParticipant::getUser).collect(Collectors.toSet())).containsExactlyInAnyOrderElementsOf(registeredStudents);
+        }
+        else {
+            assertThat(nonModerators).isEmpty();
+        }
+
+        if (tutorialGroupFromDb.getTeachingAssistant() != null) {
+            assertThat(moderators.stream().map(ConversationParticipant::getUser).collect(Collectors.toSet())).containsExactlyInAnyOrder(tutorialGroupFromDb.getTeachingAssistant());
+        }
+        else {
+            assertThat(moderators).isEmpty();
+        }
+        return channel;
+    }
+
+    void assertTutorialGroupChannelDoesNotExist(TutorialGroup tutorialGroup) {
+        var channelOptional = tutorialGroupRepository.getTutorialGroupChannel(tutorialGroup.getId());
+        assertThat(channelOptional).isEmpty();
     }
 
     public static class RandomTutorialGroupGenerator {

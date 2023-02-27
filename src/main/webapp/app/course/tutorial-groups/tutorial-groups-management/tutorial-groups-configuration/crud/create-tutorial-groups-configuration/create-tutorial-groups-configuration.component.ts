@@ -60,8 +60,10 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
     }
 
     createTutorialsGroupConfiguration(formData: TutorialGroupsConfigurationFormData) {
-        const { period } = formData;
+        const { period, usePublicTutorialGroupChannels, useTutorialGroupChannels } = formData;
         this.isLoading = true;
+        this.newTutorialGroupsConfiguration.useTutorialGroupChannels = useTutorialGroupChannels;
+        this.newTutorialGroupsConfiguration.usePublicTutorialGroupChannels = usePublicTutorialGroupChannels;
         this.tutorialGroupsConfigurationService
             .create(this.newTutorialGroupsConfiguration, this.course.id!, period ?? [])
             .pipe(

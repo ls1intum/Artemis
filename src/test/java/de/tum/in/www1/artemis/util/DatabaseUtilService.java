@@ -4,8 +4,7 @@ import static com.google.gson.JsonParser.parseString;
 import static de.tum.in.www1.artemis.util.ModelFactory.DEFAULT_BRANCH;
 import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
 import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -2880,8 +2879,10 @@ public class DatabaseUtilService {
         return course;
     }
 
-    public List<FileUploadExercise> createFourFileUploadExercisesWithCourse() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+    public List<FileUploadExercise> createFourFileUploadExercisesWithCourseWithCustomUserGroupAssignment(String studentGroupName, String teachingAssistantGroupName,
+            String editorGroupName, String instructorGroupName) {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), studentGroupName, teachingAssistantGroupName, editorGroupName,
+                instructorGroupName);
         int courseSizeBefore = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).size();
         courseRepo.save(course);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
@@ -2905,7 +2906,18 @@ public class DatabaseUtilService {
     }
 
     public Course addCourseWithFourFileUploadExercise() {
-        var fileUploadExercises = createFourFileUploadExercisesWithCourse();
+        var fileUploadExercises = createFourFileUploadExercisesWithCourseWithCustomUserGroupAssignment("tumuser", "tutor", "editor", "instructor");
+        return addFileUploadExercisesToCourse(fileUploadExercises);
+    }
+
+    public Course addCourseWithFourFileUploadExercisesAndCustomUserGroups(String studentGroupName, String teachingAssistantGroupName, String editorGroupName,
+            String instructorGroupName) {
+        var fileUploadExercises = createFourFileUploadExercisesWithCourseWithCustomUserGroupAssignment(studentGroupName, teachingAssistantGroupName, editorGroupName,
+                instructorGroupName);
+        return addFileUploadExercisesToCourse(fileUploadExercises);
+    }
+
+    private Course addFileUploadExercisesToCourse(List<FileUploadExercise> fileUploadExercises) {
         assertThat(fileUploadExercises).as("created four exercises").hasSize(4);
         exerciseRepo.saveAll(fileUploadExercises);
         long courseId = fileUploadExercises.get(0).getCourseViaExerciseGroupOrCourseMember().getId();
