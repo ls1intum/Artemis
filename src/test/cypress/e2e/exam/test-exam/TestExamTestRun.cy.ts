@@ -1,14 +1,14 @@
 import { Exam } from 'app/entities/exam.model';
-import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
-import submission from '../../fixtures/exercise/programming/build_error/submission.json';
+import submission from '../../../fixtures/exercise/programming/build_error/submission.json';
 import { Course } from 'app/entities/course.model';
-import { generateUUID } from '../../support/utils';
-import { EXERCISE_TYPE } from '../../support/constants';
-import { Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
+import { generateUUID } from '../../../support/utils';
+import { EXERCISE_TYPE } from '../../../support/constants';
+import { Exercise } from '../../../support/pageobjects/exam/ExamParticipation';
 import { Interception } from 'cypress/types/net-stubbing';
-import { courseManagementRequest, examExerciseGroupCreation, examManagement, examNavigation, examParticipation, examTestRun } from '../../support/artemis';
-import { admin, instructor } from '../../support/users';
+import { courseManagementRequest, examExerciseGroupCreation, examManagement, examNavigation, examParticipation, examTestRun } from '../../../support/artemis';
+import { admin, instructor } from '../../../support/users';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
@@ -16,7 +16,7 @@ const examTitle = 'exam' + generateUUID();
 
 const exerciseArray: Array<Exercise> = [];
 
-describe('Exam test run', () => {
+describe('Test exam test run', () => {
     let course: Course;
     let exam: Exam;
     let testRun: any;
@@ -27,6 +27,7 @@ describe('Exam test run', () => {
             course = convertCourseAfterMultiPart(response);
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
+                .testExam()
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().add(1, 'days'))
                 .endDate(dayjs().add(3, 'days'))
@@ -49,7 +50,7 @@ describe('Exam test run', () => {
     beforeEach('Create test run instance', () => {
         cy.login(instructor);
         // TODO: API call does not work yet, for now we use the UI to create the test run
-        // courseManagementRequests.createExamTestRun(exam, exerciseArray).then((response: any) => {
+        // courseManagementRequest.createExamTestRun(exam, exerciseArray).then((response: any) => {
         //     testRun = response.body;
         // });
         cy.visit(`/course-management/${course.id}/exams/${exam.id}`);
@@ -87,7 +88,8 @@ describe('Exam test run', () => {
         });
     });
 
-    it('Change test run working time', () => {
+    // Skip since this functionality is not yet supported
+    it.skip('Change test run working time', () => {
         const hour = 1;
         const minutes = 20;
         const seconds = 45;
