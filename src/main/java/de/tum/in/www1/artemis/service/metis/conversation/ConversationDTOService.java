@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.*;
@@ -35,11 +36,14 @@ public class ConversationDTOService {
 
     private final ChannelAuthorizationService channelAuthorizationService;
 
+    private final TutorialGroupRepository tutorialGroupRepository;
+
     public ConversationDTOService(UserRepository userRepository, ConversationParticipantRepository conversationParticipantRepository,
-            ChannelAuthorizationService channelAuthorizationService) {
+            ChannelAuthorizationService channelAuthorizationService, TutorialGroupRepository tutorialGroupRepository) {
         this.userRepository = userRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelAuthorizationService = channelAuthorizationService;
+        this.tutorialGroupRepository = tutorialGroupRepository;
     }
 
     /**
@@ -99,6 +103,11 @@ public class ConversationDTOService {
         setDTOPropertiesBasedOnParticipant(channelDTO, participantOptional);
         setDTOCreatorProperty(requestingUser, channel, channelDTO);
         channelDTO.setNumberOfMembers(conversationParticipantRepository.countByConversationId(channel.getId()));
+        var tutorialGroup = tutorialGroupRepository.findByTutorialGroupChannelId(channel.getId());
+        tutorialGroup.ifPresent(tg -> {
+            channelDTO.setTutorialGroupId(tg.getId());
+            channelDTO.setTutorialGroupTitle(tg.getTitle());
+        });
         return channelDTO;
     }
 
@@ -192,7 +201,7 @@ public class ConversationDTOService {
             conversationDTO.setIsCreator(conversation.getCreator().getId().equals(requestingUser.getId()));
         }
         else {
-            log.error("Unexpected Behaviour: Conversation {} has no creator", conversation.getId());
+            // Is the case for conversations created by the system such as tutorial group channels
             conversationDTO.setIsCreator(false);
         }
     }

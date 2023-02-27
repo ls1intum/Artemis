@@ -62,7 +62,7 @@ public class LearningGoalRelation extends DomainObject {
         /**
          * The tail learning goal matches the head learning goal (e.g., a duplicate).
          */
-        MATCHES;
+        MATCHES
     }
 
     @Converter

@@ -10,6 +10,16 @@
                 </ng-container>
                 {{ getConversationName(activeConversation, true) }}
             </span>
+            <ng-container *ngIf="getAsChannel(activeConversation) as channel">
+                <a
+                    (click)="clear()"
+                    *ngIf="channel.tutorialGroupId && channel.tutorialGroupTitle"
+                    class="btn btn-info btn-sm ms-2"
+                    [routerLink]="['/courses', course.id, 'tutorial-groups', channel.tutorialGroupId]"
+                    role="button"
+                    >{{ 'artemisApp.entities.tutorialGroup.channelReverse' | artemisTranslate : { title: channel.tutorialGroupTitle } }}</a
+                >
+            </ng-container>
         </h4>
         <button type="button" class="btn-close" (click)="clear()"></button>
     </div>
