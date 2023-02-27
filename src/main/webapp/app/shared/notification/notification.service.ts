@@ -17,9 +17,11 @@ import {
     NEW_COURSE_POST_TITLE,
     NEW_EXERCISE_POST_TITLE,
     NEW_LECTURE_POST_TITLE,
+    NEW_MESSAGE_TITLE,
     NEW_REPLY_FOR_COURSE_POST_TITLE,
     NEW_REPLY_FOR_EXERCISE_POST_TITLE,
     NEW_REPLY_FOR_LECTURE_POST_TITLE,
+    NEW_REPLY_MESSAGE_TITLE,
     Notification,
 } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
@@ -71,6 +73,7 @@ export class NotificationService {
         if (notification.target) {
             const target = JSON.parse(notification.target);
             const targetCourseId = target.course || notification.course?.id;
+            const targetConversationId = target.conversation;
 
             if (notification.title === 'Quiz started') {
                 this.router.navigate([target.mainPage, targetCourseId, 'quiz-exercises', target.id, 'live']);
@@ -90,6 +93,8 @@ export class NotificationService {
                 const queryParams: Params = MetisService.getQueryParamsForLectureOrExercisePost(target.id);
                 const routeComponents: RouteComponents = MetisService.getLinkForLecturePost(targetCourseId, target.lecture ?? target.lectureId);
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
+            } else if (notification.title === NEW_MESSAGE_TITLE || notification.title === NEW_REPLY_MESSAGE_TITLE) {
+                this.router.navigateByUrl(`/${target.mainPage}/${targetCourseId}/messages?conversationId=${targetConversationId}`);
             } else {
                 this.router.navigate([target.mainPage, targetCourseId, target.entity, target.id]);
             }

@@ -94,9 +94,9 @@ export const TUTORIAL_GROUP_ASSIGNED_TITLE = 'You have been assigned to lead a t
 
 export const TUTORIAL_GROUP_UNASSIGNED_TITLE = 'You have been unassigned from leading a tutorial group';
 
-export const NEW_MESSAGE_TITLE = 'New Message';
+export const NEW_MESSAGE_TITLE = 'New message';
 
-export const NEW_REPLY_MESSAGE_TITLE = 'New Reply Message';
+export const NEW_REPLY_MESSAGE_TITLE = 'New message reply in conversation';
 
 // edge case: has no separate notificationType. Is created based on EXERCISE_UPDATED for exam exercises
 export const LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = 'Live Exam Exercise Update';
