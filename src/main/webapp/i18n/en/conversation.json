@@ -204,7 +204,7 @@
                         "placeholder": "e.g. tech-support",
                         "requiredValidationError": "Name is required!",
                         "maxLengthValidationError": "Name can be max {{ max }} characters long!",
-                        "regexValidationError": "Names can only contain lowercase letters, numbers, and dashes."
+                        "regexValidationError": "Names can only contain lowercase letters, numbers, and dashes. Only Artemis can create channels that start with a $."
                     },
                     "descriptionInput": {
                         "label": "Description (optional)",
