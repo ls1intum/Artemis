@@ -268,6 +268,15 @@
             "updated": "Aufgabengruppe bearbeitet",
             "deleted": "Aufgabengruppe mit Titel {{ param }} gelöscht"
         },
+        "examSession": {
+            "id": "ID",
+            "sessionToken": "Sitzungsschlüssel",
+            "userAgent": "User Agent",
+            "browserFingerprintHash": "Browser-Fingerabdruck",
+            "instanceId": "Browserinstanz-ID",
+            "ipAddress": "IP-Adresse",
+            "createdDate": "Erstellungsdatum"
+        },
         "studentExams": {
             "title": "Klausuren",
             "generateStudentExams": "Individuelle Klausuren erstellen",
@@ -285,6 +294,7 @@
             "started": "Gestartet",
             "submitted": "Abgegeben",
             "submissionDate": "Abgabedatum",
+            "examSessions": "Sitzungen",
             "grade": "Note",
             "gradeBeforeBonus": "Note vor Bonus",
             "gradeAfterBonus": "Note nach Bonus",
@@ -737,7 +747,8 @@
             "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert.",
             "toggleSuccessful": "Der Abgabestatus wurde erfolgreich geändert.",
             "togglefailed": "Der Abgabestatus konnte nicht geändert werden!",
-            "hasComplaint": "Beschwerde existiert"
+            "hasComplaint": "Beschwerde existiert",
+            "noSessions": "Keine Sitzungen"
         },
         "studentExam": {
             "submitSuccessful": "Deine Klausur wurde erfolgreich abgegeben. Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden. Halte dich an die Klausuranweisungen deiner Lehrenden.",

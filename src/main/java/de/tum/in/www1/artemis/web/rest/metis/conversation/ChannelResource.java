@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 
@@ -47,9 +48,11 @@ public class ChannelResource extends ConversationManagementResource {
 
     private final ConversationService conversationService;
 
+    private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+
     public ChannelResource(ChannelService channelService, ChannelRepository channelRepository, ChannelAuthorizationService channelAuthorizationService,
             AuthorizationCheckService authorizationCheckService, ConversationDTOService conversationDTOService, CourseRepository courseRepository, UserRepository userRepository,
-            ConversationService conversationService) {
+            ConversationService conversationService, TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
         super(courseRepository);
         this.channelService = channelService;
         this.channelRepository = channelRepository;
@@ -58,6 +61,7 @@ public class ChannelResource extends ConversationManagementResource {
         this.conversationDTOService = conversationDTOService;
         this.userRepository = userRepository;
         this.conversationService = conversationService;
+        this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
     }
 
     /**
@@ -108,7 +112,11 @@ public class ChannelResource extends ConversationManagementResource {
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(channelDTO.getDescription());
 
-        var createdChannel = channelService.createChannel(course, channelToCreate);
+        if (channelToCreate.getName() != null && channelToCreate.getName().trim().startsWith("$")) {
+            throw new BadRequestAlertException("User generated channels cannot start with $", "channel", "channelNameInvalid");
+        }
+
+        var createdChannel = channelService.createChannel(course, channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDto(requestingUser, createdChannel));
     }
 
@@ -132,6 +140,11 @@ public class ChannelResource extends ConversationManagementResource {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
         }
         channelAuthorizationService.isAllowedToUpdateChannel(originalChannel, requestingUser);
+
+        if (channelDTO.getName() != null && channelDTO.getName().trim().startsWith("$")) {
+            throw new BadRequestAlertException("User generated channels cannot start with $", "channel", "channelNameInvalid");
+        }
+
         var updatedChannel = channelService.updateChannel(originalChannel.getId(), courseId, channelDTO);
         return ResponseEntity.ok().body(conversationDTOService.convertChannelToDto(requestingUser, updatedChannel));
     }
@@ -154,6 +167,11 @@ public class ChannelResource extends ConversationManagementResource {
         }
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         channelAuthorizationService.isAllowedToDeleteChannel(channel, requestingUser);
+
+        tutorialGroupChannelManagementService.getTutorialGroupBelongingToChannel(channel).ifPresentOrElse(tutorialGroup -> {
+            throw new BadRequestAlertException("The channel belongs to tutorial group " + tutorialGroup.getTitle(), CHANNEL_ENTITY_NAME, "channel.tutorialGroup.mismatch");
+        }, Optional::empty);
+
         conversationService.deleteConversation(channel);
         return ResponseEntity.ok().build();
     }
