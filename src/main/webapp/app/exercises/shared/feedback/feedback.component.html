@@ -123,7 +123,10 @@
 
     <!-- No content fallback -->
     <ng-template #noFeedbacksContainer>
-        <pre jhiTranslate="artemisApp.result.noResultDetails">No result details available</pre>
+        <h4 jhiTranslate="artemisApp.result.noResultDetails">No result details available</h4>
+        <p *ngIf="isOnlyCompilationTested" class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested">
+            Your code compiled successfully. There are currently no tests visible.
+        </p>
     </ng-template>
 </div>
 <div class="modal-footer">
