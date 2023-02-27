@@ -11,6 +11,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { takeUntil } from 'rxjs/operators';
+import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 
 @Component({
     selector: 'jhi-tutorial-groups-management',
@@ -23,6 +24,8 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
     courseId: number;
     course: Course;
     isAtLeastInstructor = false;
+
+    configuration: TutorialGroupsConfiguration;
 
     isLoading = false;
     tutorialGroups: TutorialGroup[] = [];
@@ -84,9 +87,9 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
                     });
                     this.tutorialGroups = tutorialGroups;
 
-                    const configuration = configurationRes.body!;
-                    if (configuration.tutorialGroupFreePeriods) {
-                        this.tutorialGroupFreeDays = configuration.tutorialGroupFreePeriods;
+                    this.configuration = configurationRes.body!;
+                    if (this.configuration.tutorialGroupFreePeriods) {
+                        this.tutorialGroupFreeDays = this.configuration.tutorialGroupFreePeriods;
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

@@ -65,6 +65,8 @@ export class TutorialGroupsConfigurationService {
         return Object.assign({}, tutorialGroupsConfiguration, {
             tutorialPeriodStartInclusive: toISO8601DateString(period[0]),
             tutorialPeriodEndInclusive: toISO8601DateString(period[1]),
+            useTutorialGroupChannels: tutorialGroupsConfiguration.useTutorialGroupChannels,
+            usePublicTutorialGroupChannels: tutorialGroupsConfiguration.usePublicTutorialGroupChannels,
         });
     }
 }
