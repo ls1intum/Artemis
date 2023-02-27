@@ -115,7 +115,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
         auxRepo.configureRepos("auxLocalRepo", "auxOriginRepo");
 
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService, programmingExerciseStudentParticipationRepository);
+        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         programmingExerciseTestService.setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
     }
 

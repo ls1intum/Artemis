@@ -686,7 +686,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         final var repositorySlug = (programmingExercise.getProjectKey() + "-" + studentLogin).toLowerCase();
         bitbucketRequestMockProvider.mockSetStudentRepositoryPermission(repositorySlug, programmingExercise.getProjectKey(), studentLogin,
                 VersionControlRepositoryPermission.REPO_READ);
-        mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
+        mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true);
         Result result = new Result().rated(false);
         programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(5));
         programmingExerciseRepository.save(programmingExercise);

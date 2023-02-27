@@ -1,9 +1,12 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
+import { Course } from 'app/entities/course.model';
 
 export interface TutorialGroupsConfigurationFormData {
     period?: Date[];
+    usePublicTutorialGroupChannels?: boolean;
+    useTutorialGroupChannels?: boolean;
 }
 
 @Component({
@@ -15,11 +18,18 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
     @Input()
     formData: TutorialGroupsConfigurationFormData = {
         period: undefined,
+        usePublicTutorialGroupChannels: false,
+        useTutorialGroupChannels: false,
     };
     @Input() isEditMode = false;
     @Output() formSubmitted: EventEmitter<TutorialGroupsConfigurationFormData> = new EventEmitter<TutorialGroupsConfigurationFormData>();
 
+    @Input()
+    course: Course;
+
     faCalendarAlt = faCalendarAlt;
+
+    existingChannelSetting?: boolean;
 
     form: FormGroup;
 
@@ -27,6 +37,14 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
 
     get periodControl() {
         return this.form.get('period');
+    }
+
+    get useTutorialGroupChannelsControl() {
+        return this.form.get('useTutorialGroupChannels');
+    }
+
+    get usePublicTutorialGroupChannelsControl() {
+        return this.form.get('usePublicTutorialGroupChannels');
     }
 
     get isSubmitPossible() {
@@ -43,7 +61,18 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
         }
     }
     private setFormValues(formData: TutorialGroupsConfigurationFormData) {
+        this.existingChannelSetting = formData.useTutorialGroupChannels;
         this.form.patchValue(formData);
+    }
+
+    get showChannelDeletionWarning() {
+        if (!this.isEditMode) {
+            return false;
+        }
+        if (this.existingChannelSetting === undefined) {
+            return false;
+        }
+        return this.existingChannelSetting && this.useTutorialGroupChannelsControl?.value === false;
     }
 
     private initializeForm() {
@@ -53,6 +82,8 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
 
         this.form = this.fb.group({
             period: [undefined, Validators.required],
+            useTutorialGroupChannels: [false],
+            usePublicTutorialGroupChannels: [false],
         });
     }
 
