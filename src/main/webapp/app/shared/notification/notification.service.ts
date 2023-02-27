@@ -208,9 +208,6 @@ export class NotificationService {
     private subscribeToConversationNotificationUpdates(conversations: Conversation[]): void {
         conversations.forEach((conversation) => {
             const conversationTopic = '/topic/conversation/' + conversation.id + '/notifications';
-            console.log(this.router.url);
-            console.log('courses/' + conversation.course?.id + '/messages');
-            console.log(this.router.url.includes('courses/' + conversation.course?.id + '/messages'));
             if (!this.subscribedTopics.includes(conversationTopic) && !this.router.url.includes('courses/' + conversation.course?.id + '/messages')) {
                 this.subscribedTopics.push(conversationTopic);
                 this.jhiWebsocketService.subscribe(conversationTopic);

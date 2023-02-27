@@ -75,7 +75,7 @@ public class NotificationResource {
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         var tutorialGroupIds = tutorialGroupService.findAllForNotifications(currentUser).stream().map(DomainObject::getId).collect(Collectors.toSet());
-        var conversationIds = conversationService.findAllConversationsForNotifications(currentUser).stream().map(DomainObject::getId).collect(Collectors.toSet());
+        var conversationIds = conversationService.findAllConversationsForNotifications(currentUser, true).stream().map(DomainObject::getId).collect(Collectors.toSet());
 
         log.debug("REST request to get all Notifications for current user {} filtered by settings", currentUser);
         Set<NotificationSetting> notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());

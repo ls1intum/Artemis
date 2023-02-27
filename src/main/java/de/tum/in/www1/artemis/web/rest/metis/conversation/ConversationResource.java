@@ -176,6 +176,6 @@ public class ConversationResource {
     public List<Conversation> getAllConversationsForNotifications() {
         log.debug("REST request to get all tutorial groups for which the current user should receive notifications");
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        return conversationService.findAllConversationsForNotifications(user);
+        return conversationService.findAllConversationsForNotifications(user, false);
     }
 }

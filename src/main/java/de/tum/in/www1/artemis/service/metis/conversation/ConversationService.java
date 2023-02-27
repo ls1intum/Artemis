@@ -393,7 +393,10 @@ public class ConversationService {
      * @param user The user for which to find the courses.
      * @return A list of conversations for which the user should receive notifications.
      */
-    public List<Conversation> findAllConversationsForNotifications(User user) {
+    public List<Conversation> findAllConversationsForNotifications(User user, boolean unreadConversationsOnly) {
+        if (unreadConversationsOnly) {
+            return conversationRepository.findAllUnreadConversationsWhereUserIsParticipant(user.getId());
+        }
         return conversationRepository.findAllWhereUserIsParticipant(user.getId());
     }
 }

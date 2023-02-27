@@ -29,7 +29,6 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "course" })
-
     @Query("""
             SELECT DISTINCT c
             FROM Conversation c
@@ -38,4 +37,14 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
             WHERE (user.id = :userId)
             """)
     List<Conversation> findAllWhereUserIsParticipant(@Param("userId") Long userId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "course" })
+    @Query("""
+            SELECT DISTINCT c
+            FROM Conversation c
+                LEFT JOIN FETCH c.conversationParticipants conversationParticipants
+                LEFT JOIN FETCH conversationParticipants.user user
+            WHERE (user.id = :userId AND conversationParticipants.unreadMessagesCount > 0)
+            """)
+    List<Conversation> findAllUnreadConversationsWhereUserIsParticipant(@Param("userId") Long userId);
 }
