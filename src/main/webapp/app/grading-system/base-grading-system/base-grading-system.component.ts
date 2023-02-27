@@ -407,7 +407,6 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      * Sets the inclusivity for all grade steps based on the lowerBoundInclusivity property
      * Called before a post/put request
      *
-     * @param gradeSteps the grade steps which will be adjusted
      * @abstract
      */
     abstract setInclusivity(): void;
