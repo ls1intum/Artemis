@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @RestController
@@ -37,12 +38,15 @@ public class TutorialGroupsConfigurationResource {
 
     private final CourseRepository courseRepository;
 
+    private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     public TutorialGroupsConfigurationResource(TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository, CourseRepository courseRepository,
-            AuthorizationCheckService authorizationCheckService) {
+            TutorialGroupChannelManagementService tutorialGroupChannelManagementService, AuthorizationCheckService authorizationCheckService) {
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
         this.courseRepository = courseRepository;
+        this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.authorizationCheckService = authorizationCheckService;
     }
 
@@ -88,6 +92,11 @@ public class TutorialGroupsConfigurationResource {
         var persistedConfiguration = tutorialGroupsConfigurationRepository.save(tutorialGroupsConfiguration);
         course.setTutorialGroupsConfiguration(persistedConfiguration);
         courseRepository.save(course);
+
+        if (persistedConfiguration.getUseTutorialGroupChannels()) {
+            tutorialGroupChannelManagementService.createTutorialGroupsChannelsForAllTutorialGroupsOfCourse(course);
+        }
+
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "tutorial-groups-configuration/" + tutorialGroupsConfiguration.getId())).body(persistedConfiguration);
     }
 
@@ -110,6 +119,10 @@ public class TutorialGroupsConfigurationResource {
         }
         isValidTutorialGroupConfiguration(updatedTutorialGroupConfiguration);
         var configurationFromDatabase = this.tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(updatedTutorialGroupConfiguration.getId());
+
+        var useTutorialGroupChannelSettingChanged = configurationFromDatabase.getUseTutorialGroupChannels() != updatedTutorialGroupConfiguration.getUseTutorialGroupChannels();
+        var usePublicChannelSettingChanged = configurationFromDatabase.getUsePublicTutorialGroupChannels() != updatedTutorialGroupConfiguration.getUsePublicTutorialGroupChannels();
+
         if (configurationFromDatabase.getCourse().getTimeZone() == null) {
             throw new BadRequestException("The course has no time zone");
         }
@@ -118,8 +131,26 @@ public class TutorialGroupsConfigurationResource {
 
         configurationFromDatabase.setTutorialPeriodEndInclusive(updatedTutorialGroupConfiguration.getTutorialPeriodEndInclusive());
         configurationFromDatabase.setTutorialPeriodStartInclusive(updatedTutorialGroupConfiguration.getTutorialPeriodStartInclusive());
+        configurationFromDatabase.setUseTutorialGroupChannels(updatedTutorialGroupConfiguration.getUseTutorialGroupChannels());
+        configurationFromDatabase.setUsePublicTutorialGroupChannels(updatedTutorialGroupConfiguration.getUsePublicTutorialGroupChannels());
 
         var persistedConfiguration = tutorialGroupsConfigurationRepository.save(configurationFromDatabase);
+
+        if (useTutorialGroupChannelSettingChanged) {
+            log.debug("Tutorial group channel setting changed, updating tutorial group channels for course: {}", configurationFromDatabase.getCourse().getId());
+            if (persistedConfiguration.getUseTutorialGroupChannels()) {
+                tutorialGroupChannelManagementService.createTutorialGroupsChannelsForAllTutorialGroupsOfCourse(configurationFromDatabase.getCourse());
+            }
+            else {
+                tutorialGroupChannelManagementService.removeTutorialGroupChannelsForCourse(configurationFromDatabase.getCourse());
+            }
+        }
+        if (usePublicChannelSettingChanged) {
+            log.debug("Tutorial group channel public setting changed, updating tutorial group channels for course: {}", configurationFromDatabase.getCourse().getId());
+            if (updatedTutorialGroupConfiguration.getUseTutorialGroupChannels()) {
+                tutorialGroupChannelManagementService.changeChannelModeForCourse(configurationFromDatabase.getCourse(), persistedConfiguration.getUsePublicTutorialGroupChannels());
+            }
+        }
         return ResponseEntity.ok(persistedConfiguration);
     }
 

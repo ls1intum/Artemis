@@ -17,6 +17,9 @@ export class TutorialGroupsTableStubComponent {
     showIdColumn = false;
 
     @Input()
+    showChannelColumn = false;
+
+    @Input()
     tutorialGroups: TutorialGroup[] = [];
 
     @Input()
@@ -39,6 +42,9 @@ export class TutorialGroupsTableStubComponent {
             <div *ngIf="showIdColumn">
                 <span>{{ tutorialGroup.id }}</span>
             </div>
+            <div *ngIf="showChannelColumn">
+                <span>{{ tutorialGroup?.channel?.name || '' }}</span>
+            </div>
             <div *ngIf="extraColumn">
                 <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
             </div>
@@ -48,6 +54,9 @@ export class TutorialGroupsTableStubComponent {
 export class TutorialGroupRowStubComponent {
     @Input()
     showIdColumn = false;
+
+    @Input()
+    showChannelColumn = false;
 
     @Input() extraColumn: TemplateRef<any>;
 

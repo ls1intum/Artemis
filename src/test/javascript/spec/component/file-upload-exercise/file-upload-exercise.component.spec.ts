@@ -14,12 +14,17 @@ import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('FileUploadExercise Management Component', () => {
     let comp: FileUploadExerciseComponent;
     let fixture: ComponentFixture<FileUploadExerciseComponent>;
     let service: CourseExerciseService;
     let fileUploadExerciseService: FileUploadExerciseService;
+    let modalService: NgbModal;
 
     const course: Course = { id: 123 } as Course;
     const fileUploadExercise = new FileUploadExercise(course, undefined);
@@ -36,6 +41,7 @@ describe('FileUploadExercise Management Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
             .overrideTemplate(FileUploadExerciseComponent, '')
@@ -45,6 +51,7 @@ describe('FileUploadExercise Management Component', () => {
         comp = fixture.componentInstance;
         service = TestBed.inject(CourseExerciseService);
         fileUploadExerciseService = TestBed.inject(FileUploadExerciseService);
+        modalService = TestBed.inject(NgbModal);
 
         comp.fileUploadExercises = [fileUploadExercise];
     });
@@ -90,6 +97,18 @@ describe('FileUploadExercise Management Component', () => {
         comp.deleteFileUploadExercise(456);
         expect(fileUploadExerciseService.delete).toHaveBeenCalledWith(456);
         expect(fileUploadExerciseService.delete).toHaveBeenCalledOnce();
+    });
+    it('should open import modal', () => {
+        const mockReturnValue = {
+            result: Promise.resolve({ id: 456 } as FileUploadExercise),
+            componentInstance: {},
+        } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+
+        comp.openImportModal();
+        expect(modalService.open).toHaveBeenCalledWith(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledOnce();
+        expect(mockReturnValue.componentInstance.exerciseType).toEqual(ExerciseType.FILE_UPLOAD);
     });
 
     it('should return exercise id', () => {
