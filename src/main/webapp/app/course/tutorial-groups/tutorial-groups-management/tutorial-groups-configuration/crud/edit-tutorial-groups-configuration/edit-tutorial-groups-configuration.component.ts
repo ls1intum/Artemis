@@ -57,6 +57,8 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
                                 this.tutorialGroupsConfiguration.tutorialPeriodStartInclusive!.toDate(),
                                 this.tutorialGroupsConfiguration.tutorialPeriodEndInclusive!.toDate(),
                             ],
+                            useTutorialGroupChannels: this.tutorialGroupsConfiguration.useTutorialGroupChannels,
+                            usePublicTutorialGroupChannels: this.tutorialGroupsConfiguration.usePublicTutorialGroupChannels,
                         };
                     }
                 },
@@ -71,9 +73,11 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
     }
 
     updateTutorialGroupsConfiguration(formData: TutorialGroupsConfigurationFormData) {
-        const { period } = formData;
+        const { period, useTutorialGroupChannels, usePublicTutorialGroupChannels } = formData;
 
         this.isLoading = true;
+        this.tutorialGroupsConfiguration.useTutorialGroupChannels = useTutorialGroupChannels;
+        this.tutorialGroupsConfiguration.usePublicTutorialGroupChannels = usePublicTutorialGroupChannels;
         this.tutorialGroupsConfigurationService
             .update(this.course.id!, this.tutorialGroupConfigurationId, this.tutorialGroupsConfiguration, period ?? [])
             .pipe(

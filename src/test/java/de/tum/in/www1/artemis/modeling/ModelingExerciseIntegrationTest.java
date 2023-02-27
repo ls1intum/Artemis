@@ -338,11 +338,15 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
         Course course2 = database.addEmptyCourse();
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
-        modelingExerciseRepository.save(modelingExercise);
-        modelingExercise.setCourse(course2);
+        ModelingExercise modelingExerciseToImport = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
+                course1);
+        modelingExerciseRepository.save(modelingExerciseToImport);
+        modelingExerciseToImport.setCourse(course2);
 
-        request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        var importedExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExerciseToImport.getId(), modelingExerciseToImport, ModelingExercise.class,
+                HttpStatus.CREATED);
+        assertThat(importedExercise).usingRecursiveComparison()
+                .ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate").isEqualTo(modelingExerciseToImport);
     }
 
     @Test

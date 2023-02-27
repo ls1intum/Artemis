@@ -132,16 +132,16 @@ public class AutomaticTextAssessmentConflictService {
     public Set<TextSubmission> getConflictingSubmissions(long feedbackId) {
         List<FeedbackConflict> feedbackConflicts = this.feedbackConflictRepository.findAllWithEagerFeedbackResultAndSubmissionByFeedbackId(feedbackId);
         Set<TextSubmission> textSubmissionSet = feedbackConflicts.stream().map(conflict -> {
+            TextSubmission textSubmission;
             if (conflict.getFirstFeedback().getId() == feedbackId) {
-                TextSubmission textSubmission = (TextSubmission) conflict.getSecondFeedback().getResult().getSubmission();
+                textSubmission = (TextSubmission) conflict.getSecondFeedback().getResult().getSubmission();
                 textSubmission.setResults(List.of(conflict.getSecondFeedback().getResult()));
-                return textSubmission;
             }
             else {
-                TextSubmission textSubmission = (TextSubmission) conflict.getFirstFeedback().getResult().getSubmission();
+                textSubmission = (TextSubmission) conflict.getFirstFeedback().getResult().getSubmission();
                 textSubmission.setResults(List.of(conflict.getFirstFeedback().getResult()));
-                return textSubmission;
             }
+            return textSubmission;
         }).collect(Collectors.toSet());
         final var allTextBlocks = textBlockRepository.findAllBySubmissionIdIn(textSubmissionSet.stream().map(TextSubmission::getId).collect(Collectors.toSet()));
         final var textBlockGroupedBySubmissionId = allTextBlocks.stream().collect(Collectors.groupingBy(block -> block.getSubmission().getId(), Collectors.toSet()));

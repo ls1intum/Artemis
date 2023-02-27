@@ -14,13 +14,13 @@ import com.thoughtworks.qdox.model.*;
  */
 public class JavaClassDiff {
 
-    private JavaClass solutionClass;
+    private final JavaClass solutionClass;
 
-    private JavaClass templateClass;
+    private final JavaClass templateClass;
 
-    private String name;
+    private final String name;
 
-    private String packageName;
+    private final String packageName;
 
     boolean isInterfaceDifferent;
 
