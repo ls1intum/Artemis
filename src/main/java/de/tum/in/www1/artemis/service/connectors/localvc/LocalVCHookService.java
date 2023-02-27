@@ -155,6 +155,10 @@ public class LocalVCHookService {
         // Trigger a build of the solution repository.
         CompletableFuture<LocalCIBuildResultNotificationDTO> futureSolutionBuildResult = localCIExecutorService.addBuildJobToQueue(participation);
         futureSolutionBuildResult.thenAccept(buildResult -> {
+            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+            // Therefore, a mock auth object has to be created.
+            SecurityUtils.setAuthorizationObject();
+
             // Process the result.
             Optional<Result> optResult = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
             if (optResult.isEmpty()) {
