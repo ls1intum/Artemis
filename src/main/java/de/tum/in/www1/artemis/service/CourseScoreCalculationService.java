@@ -252,7 +252,7 @@ public class CourseScoreCalculationService {
                     .toList();
 
             StudentScoresDTO studentScoresOfExerciseType = calculateCourseScoreForStudent(course, userId, studentParticipationsOfExerciseType,
-                    maxAndReachablePointsOfExerciseType.maxPoints, maxAndReachablePoints.reachablePoints, plagiarismCasesOfExerciseType);
+                    maxAndReachablePointsOfExerciseType.maxPoints, maxAndReachablePointsOfExerciseType.reachablePoints, plagiarismCasesOfExerciseType);
             CourseScoresDTO scoresOfExerciseType = new CourseScoresDTO(maxAndReachablePointsOfExerciseType.maxPoints, maxAndReachablePointsOfExerciseType.reachablePoints,
                     studentScoresOfExerciseType);
             scoresPerExerciseType.put(exerciseType.getExerciseTypeAsString(), scoresOfExerciseType);
