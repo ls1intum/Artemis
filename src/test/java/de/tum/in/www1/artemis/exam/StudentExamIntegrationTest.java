@@ -2422,6 +2422,30 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRetrieveOwnStudentExam_noInformationLeaked() throws Exception {
+        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        Exam exam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
+        StudentExam studentExam = database.addStudentExam(exam);
+        studentExam.setUser(student1);
+        studentExamRepository.save(studentExam);
+
+        StudentExam receivedStudentExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
+        assertThat(receivedStudentExam.getExercises()).isEmpty();
+        assertThat(receivedStudentExam.getExam().getStudentExams()).isEmpty();
+        assertThat(receivedStudentExam.getExam().getExamUsers()).isEmpty();
+        assertThat(receivedStudentExam.getExam().getExerciseGroups()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRetrieveOwnStudentExam_notBeforeStartDate() throws Exception {
+        exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
+        examRepository.save(exam1);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRetrieveOwnStudentExam_noStudentExam() throws Exception {
         Exam exam = database.addExam(course1);
         User student1 = database.getUserByLogin(TEST_PREFIX + "student1");

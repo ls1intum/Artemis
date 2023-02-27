@@ -109,7 +109,7 @@ export class ExamParticipationService {
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      */
-    public loadStudentExam(courseId: number, examId: number): Observable<StudentExam> {
+    public getStudentExamForStart(courseId: number, examId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/start';
         return this.httpClient.get<StudentExam>(url).pipe(
             map((studentExam: StudentExam) => {

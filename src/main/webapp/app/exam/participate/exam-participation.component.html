@@ -141,8 +141,7 @@
     </div>
     <ng-template #noTutor>
         <div class="alert alert-danger">
-            <h6 *ngIf="!testExam" jhiTranslate="artemisApp.examParticipation.noStudentExam"></h6>
-            <h6 *ngIf="testExam" jhiTranslate="artemisApp.examParticipation.noFurtherAttempts"></h6>
+            <h6 [jhiTranslate]="'artemisApp.examParticipation.' + (testExam ? 'noFurtherAttempts' : 'noStudentExam')"></h6>
         </div>
     </ng-template>
 </ng-container>

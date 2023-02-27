@@ -230,7 +230,7 @@
             "exerciseName": "Name",
             "noStudentExam": "Du bist nicht für die Klausur angemeldet. Bitte wende dich an die entsprechende Lehrkraft.",
             "noFurtherAttempts": "Derzeit sind keine weiteren Versuche für die Testklausur möglich. Um deine Abgabe zu betrachten, navigiere zur Klausurseite ",
-            "atLeastTutorStudentExam": "Da du kein Student bist, kannst du nicht an der Klausur teilnehmen:",
+            "atLeastTutorStudentExam": "Da du nicht Studierende:r bist, kannst du nicht an der Klausur teilnehmen:",
             "goToExamManagement": "Zur Klausurverwaltung gehen",
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",

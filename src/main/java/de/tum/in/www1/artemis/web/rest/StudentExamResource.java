@@ -734,10 +734,13 @@ public class StudentExamResource {
     @GetMapping("/courses/{courseId}/exams/{examId}/own-student-exam")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentExam> retrieveOwnStudentExam(@PathVariable Long courseId, @PathVariable Long examId) {
-        examAccessService.checkIsStudentInExam(courseId, examId);
+        examAccessService.checkIsStudentInExamElseThrow(courseId, examId);
         Exam exam = examRepository.findByIdElseThrow(examId);
         if (exam.isTestExam()) {
-            throw new BadRequestException("You cannot retreive the student exam of a test exam");
+            throw new BadRequestException("You cannot retrieve the student exam of a test exam");
+        }
+        else if (exam.getVisibleDate() == null || ZonedDateTime.now().isBefore(exam.getVisibleDate())) {
+            throw new AccessForbiddenException("You cannot retrieve the student exam before the start date");
         }
 
         User student = userRepository.getUser();

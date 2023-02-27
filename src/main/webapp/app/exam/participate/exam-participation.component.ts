@@ -189,7 +189,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     error: () => (this.loadingExam = false),
                 });
             } else {
-                this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe({
+                this.examParticipationService.getStudentExamForStart(this.courseId, this.examId).subscribe({
                     next: (studentExam) => {
                         this.handleStudentExam(studentExam);
                     },
@@ -424,7 +424,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                                 },
                             });
                         } else {
-                            this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe({
+                            this.examParticipationService.getStudentExamForStart(this.courseId, this.examId).subscribe({
                                 next: (existingExam: StudentExam) => {
                                     this.studentExam = existingExam;
                                 },
