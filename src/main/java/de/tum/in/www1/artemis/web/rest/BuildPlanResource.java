@@ -50,26 +50,16 @@ public class BuildPlanResource {
         final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Could not find connected exercise for build plan."));
 
-        if (!programmingExercise.hasBuildPlanAccessSecretSet() || !secret.equals(programmingExercise.getBuildPlanAccessSecret())) {
+        // authorization when called from the build plan editor UI can be checked via the user token,
+        // if the endpoint was called from the continuous integration system, the secret is checked
+        if (secret == null) {
+            authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
+        }
+        else if (!programmingExercise.hasBuildPlanAccessSecretSet() || !secret.equals(programmingExercise.getBuildPlanAccessSecret())) {
             throw new AccessForbiddenException();
         }
 
         return ResponseEntity.ok().body(buildPlan.getBuildPlan());
-    }
-
-    @GetMapping("/programming-exercises/{exerciseId}/build-plan")
-    @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<BuildPlan> getBuildPlan(@PathVariable Long exerciseId) {
-        log.debug("REST request to get build plan for programming exercise with id {}", exerciseId);
-
-        final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(exerciseId);
-        // orElseThrow is safe here since the query above ensures that we find a build plan that is attached to that exercise
-        final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("Could not find connected exercise for build plan."));
-
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
-
-        return ResponseEntity.ok().body(buildPlan);
     }
 
     @PutMapping("/programming-exercises/{exerciseId}/build-plan")
@@ -80,9 +70,14 @@ public class BuildPlanResource {
         final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Could not find connected exercise for build plan."));
 
+        // ToDo: fetch the exercise with exerciseId fresh from the database and check access there:
+        // ToDo: the user might have edited the JSON for `buildPlan` manually and connected unrelated exercises
+
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
+        // ToDo: a build plan might be connected to multiple exercises, but we only want to change it for `programmingExercise` here
         buildPlan = buildPlanRepository.save(buildPlan);
+
         return ResponseEntity.ok(buildPlan);
     }
 }
