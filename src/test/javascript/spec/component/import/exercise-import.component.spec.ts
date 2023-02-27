@@ -23,6 +23,7 @@ import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pag
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
+import { FileUploadExercisePagingService } from 'app/exercises/file-upload/manage/file-upload-exercise-paging.service';
 
 describe('ExerciseImportComponent', () => {
     let fixture: ComponentFixture<ExerciseImportComponent>;
@@ -260,6 +261,7 @@ describe('ExerciseImportComponent', () => {
         [ExerciseType.TEXT, TextExercisePagingService],
         [ExerciseType.MODELING, ModelingExercisePagingService],
         [ExerciseType.QUIZ, QuizExercisePagingService],
+        [ExerciseType.FILE_UPLOAD, FileUploadExercisePagingService],
     ])(
         'uses the correct paging service',
         fakeAsync((exerciseType: ExerciseType, expectedPagingService: typeof PagingService) => {

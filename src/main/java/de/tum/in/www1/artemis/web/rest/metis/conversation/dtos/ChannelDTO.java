@@ -28,6 +28,18 @@ public class ChannelDTO extends ConversationDTO {
      */
     private Boolean isChannelModerator;
 
+    // property not taken from entity
+    /**
+     * The id of the tutorial group that is associated with the channel, if any
+     */
+    private Long tutorialGroupId;
+
+    // property not taken from entity
+    /**
+     * The name of the tutorial group that is associated with the channel, if any
+     */
+    private String tutorialGroupTitle;
+
     public ChannelDTO(Channel channel) {
         super(channel, "channel");
         this.name = channel.getName();
@@ -106,10 +118,26 @@ public class ChannelDTO extends ConversationDTO {
         this.isChannelModerator = isChannelModerator;
     }
 
+    public Long getTutorialGroupId() {
+        return tutorialGroupId;
+    }
+
+    public void setTutorialGroupId(Long tutorialGroupId) {
+        this.tutorialGroupId = tutorialGroupId;
+    }
+
+    public String getTutorialGroupTitle() {
+        return tutorialGroupTitle;
+    }
+
+    public void setTutorialGroupTitle(String tutorialGroupTitle) {
+        this.tutorialGroupTitle = tutorialGroupTitle;
+    }
+
     @Override
     public String toString() {
         return "ChannelDTO{" + "name='" + name + '\'' + ", description='" + description + '\'' + ", topic='" + topic + '\'' + ", isPublic=" + isPublic + ", isAnnouncementChannel="
                 + isAnnouncementChannel + ", isArchived=" + isArchived + ", isChannelModerator=" + isChannelModerator + ", hasChannelModerationRights=" + hasChannelModerationRights
-                + "}" + super.toString();
+                + ", tutorialGroupId=" + tutorialGroupId + ", tutorialGroupTitle=" + tutorialGroupTitle + "}" + super.toString();
     }
 }

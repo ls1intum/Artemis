@@ -24,6 +24,8 @@ public interface TutorialGroupRegistrationRepository extends JpaRepository<Tutor
 
     Set<TutorialGroupRegistration> findAllByTutorialGroupAndType(TutorialGroup tutorialGroup, TutorialGroupRegistrationType type);
 
+    Set<TutorialGroupRegistration> findAllByTutorialGroup(TutorialGroup tutorialGroup);
+
     @Modifying
     @Transactional
     // ok because of delete
