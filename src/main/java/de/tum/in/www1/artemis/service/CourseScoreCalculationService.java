@@ -176,10 +176,12 @@ public class CourseScoreCalculationService {
         for (Exercise exercise : course.getExercises()) {
             exercise.setCourse(course);
             StudentParticipation exerciseParticipation;
-            // This method is used in the CourseResource where the course is first fetched with lazy participations, and participations are then fetched separately and added to the
-            // course if found.
+            // This method is used in the CourseResource where the course is first fetched with lazy participations, and participations are then fetched separately in the
+            // CourseService
+            // and added to the course if found.
             // If no participations are found for the course, no value is set to the course's participations and trying to access them here would throw a
-            // LazyInitializationException.
+            // LazyInitializationException. This is why we first need to check if the participations are initialized before adding them to the list of participations.
+            // If they are not initialized, this means that there are no participations for this exercise and user.
             if (Hibernate.isInitialized(exercise.getStudentParticipations())) {
                 exerciseParticipation = exercise.getStudentParticipations().iterator().next();
                 exerciseParticipation.setExercise(exercise);
