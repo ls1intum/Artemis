@@ -14,7 +14,6 @@ import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Team } from 'app/entities/team.model';
-import { post } from '../helpers/sample/metis-sample-data';
 
 describe('AccountService', () => {
     let accountService: AccountService;
