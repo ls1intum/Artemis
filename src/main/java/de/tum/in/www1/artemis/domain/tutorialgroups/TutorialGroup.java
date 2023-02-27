@@ -17,6 +17,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 
 @Entity
 @Table(name = "tutorial_group")
@@ -97,6 +99,12 @@ public class TutorialGroup extends DomainObject {
     @Transient
     private TutorialGroupSession nextSession;
 
+    /**
+     * This transient field is set to the dto of the channel of this tutorial group
+     */
+    @Transient
+    private ChannelDTO channel;
+
     @OneToOne(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "tutorialGroup", allowSetters = true)
     private TutorialGroupSchedule tutorialGroupSchedule;
@@ -105,6 +113,11 @@ public class TutorialGroup extends DomainObject {
     @JsonIgnoreProperties(value = "tutorialGroup, tutorialGroupSchedule", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<TutorialGroupSession> tutorialGroupSessions = new HashSet<>();
+
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "tutorial_group_channel_id")
+    @JsonIgnore // we send the DTO as a transient field instead
+    private Channel tutorialGroupChannel;
 
     public TutorialGroupSchedule getTutorialGroupSchedule() {
         return tutorialGroupSchedule;
@@ -274,6 +287,25 @@ public class TutorialGroup extends DomainObject {
 
     public void setNextSession(TutorialGroupSession nextSession) {
         this.nextSession = nextSession;
+    }
+
+    @JsonIgnore
+    public Channel getTutorialGroupChannel() {
+        return tutorialGroupChannel;
+    }
+
+    public void setTutorialGroupChannel(Channel tutorialGroupChannel) {
+        this.tutorialGroupChannel = tutorialGroupChannel;
+    }
+
+    @JsonIgnore(false)
+    @JsonProperty
+    public ChannelDTO getChannel() {
+        return channel;
+    }
+
+    public void setChannel(ChannelDTO channel) {
+        this.channel = channel;
     }
 
     /**

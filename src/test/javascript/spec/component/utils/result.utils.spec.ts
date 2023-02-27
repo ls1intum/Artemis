@@ -1,4 +1,4 @@
-import { ResultTemplateStatus, getResultIconClass, getTextColorClass, getUnreferencedFeedback, onlyShowSuccessfulCompileStatus } from 'app/exercises/shared/result/result.utils';
+import { ResultTemplateStatus, getResultIconClass, getTextColorClass, getUnreferencedFeedback, isOnlyCompilationTested } from 'app/exercises/shared/result/result.utils';
 import { FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -17,7 +17,11 @@ describe('ResultUtils', () => {
 
     it.each([
         {
-            result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER }, { type: FeedbackType.MANUAL }], testCaseCount: 0 },
+            result: {
+                participation: { exercise: { type: ExerciseType.PROGRAMMING } },
+                feedbacks: [{ type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER }, { type: FeedbackType.MANUAL }],
+                testCaseCount: 0,
+            } as Result,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: true,
         },
@@ -37,7 +41,7 @@ describe('ResultUtils', () => {
             expected: false,
         },
     ])('should correctly determine if compilation is tested', ({ result, templateStatus, expected }) => {
-        expect(onlyShowSuccessfulCompileStatus(result, templateStatus!)).toBe(expected);
+        expect(isOnlyCompilationTested(result, templateStatus!)).toBe(expected);
     });
 
     it.each([
@@ -55,14 +59,20 @@ describe('ResultUtils', () => {
         },
         { result: { score: undefined, successful: true }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-success' },
         { result: { score: undefined, successful: false }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
-        { result: { score: MIN_SCORE_GREEN }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-success' },
-        { result: { score: MIN_SCORE_ORANGE }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'result-orange' },
+        { result: { score: MIN_SCORE_GREEN, testCaseCount: 1 }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-success' },
+        { result: { score: MIN_SCORE_ORANGE, testCaseCount: 1 }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'result-orange' },
         { result: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
+        {
+            result: { score: 1, participation: { exercise: { type: ExerciseType.PROGRAMMING } } } as Result,
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: 'text-success',
+        },
     ])('should correctly determine text color class', ({ result, templateStatus, expected }) => {
         expect(getTextColorClass(result, templateStatus!)).toBe(expected);
     });
 
     it.each([
+        { result: { participation: { exercise: { type: ExerciseType.PROGRAMMING } } } as Result, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faCheckCircle },
         { result: undefined, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faQuestionCircle },
         {
             result: { submission: { submissionExerciseType: SubmissionExerciseType.PROGRAMMING, buildFailed: true }, assessmentType: AssessmentType.AUTOMATIC },
@@ -74,7 +84,6 @@ describe('ResultUtils', () => {
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faQuestionCircle,
         },
-        { result: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faCheckCircle },
         {
             result: { score: undefined, successful: true, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
             templateStatus: ResultTemplateStatus.HAS_RESULT,

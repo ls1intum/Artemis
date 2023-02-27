@@ -124,13 +124,13 @@ public class Lti10Service {
     public String createUsernameFromLaunchRequest(LtiLaunchRequestDTO launchRequest, OnlineCourseConfiguration onlineCourseConfiguration) {
         String username;
 
-        if (!StringUtils.isEmpty(launchRequest.getExt_user_username())) {
+        if (StringUtils.hasLength(launchRequest.getExt_user_username())) {
             username = launchRequest.getExt_user_username();
         }
-        else if (!StringUtils.isEmpty(launchRequest.getLis_person_sourcedid())) {
+        else if (StringUtils.hasLength(launchRequest.getLis_person_sourcedid())) {
             username = launchRequest.getLis_person_sourcedid();
         }
-        else if (!StringUtils.isEmpty(launchRequest.getUser_id())) {
+        else if (StringUtils.hasLength(launchRequest.getUser_id())) {
             username = launchRequest.getUser_id();
         }
         else {
@@ -158,10 +158,10 @@ public class Lti10Service {
      * @return the last name for the LTI user
      */
     public String getUserLastNameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
-        if (!StringUtils.isEmpty(launchRequest.getLis_person_name_family())) {
+        if (StringUtils.hasLength(launchRequest.getLis_person_name_family())) {
             return launchRequest.getLis_person_name_family();
         }
-        else if (!StringUtils.isEmpty(launchRequest.getLis_person_sourcedid())) {
+        else if (StringUtils.hasLength(launchRequest.getLis_person_sourcedid())) {
             return launchRequest.getLis_person_sourcedid();
         }
         return "";

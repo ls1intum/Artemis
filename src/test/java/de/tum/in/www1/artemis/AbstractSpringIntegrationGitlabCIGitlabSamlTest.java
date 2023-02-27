@@ -391,7 +391,7 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) throws URISyntaxException {
+    public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) {
         // Not needed here.
     }
 
