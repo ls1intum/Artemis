@@ -134,6 +134,17 @@ describe('ConversationPermissionUtils', () => {
             it('can delete self created channel as tutor', () => {
                 expect(canDeleteChannel({ isAtLeastInstructor: false, isAtLeastTutor: true } as Course, channelWhereModerator)).toBeTrue();
             });
+
+            const tutorialGroupChannel = generateExampleChannelDTO({
+                hasChannelModerationRights: false,
+                isChannelModerator: false,
+                isCreator: false,
+                tutorialGroupId: 1,
+                tutorialGroupTitle: 'test',
+            });
+            it('can not delete tutorial group channel', () => {
+                expect(canDeleteChannel(courseWithCorrectRights, tutorialGroupChannel)).toBeFalse();
+            });
         });
 
         describe('can grant channel moderator role', () => {
