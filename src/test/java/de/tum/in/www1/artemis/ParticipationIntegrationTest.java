@@ -1167,7 +1167,13 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     private static Stream<Arguments> getGetParticipationsubmittedNotEndedQuizParameters() {
-        return Stream.of(Arguments.of(QuizMode.SYNCHRONIZED, true), Arguments.of(QuizMode.SYNCHRONIZED, false), Arguments.of(QuizMode.BATCHED, true),
-                Arguments.of(QuizMode.BATCHED, false), Arguments.of(QuizMode.INDIVIDUAL, true), Arguments.of(QuizMode.INDIVIDUAL, false));
+        return Stream.of(
+                Arguments.of(QuizMode.SYNCHRONIZED, true), 
+                Arguments.of(QuizMode.SYNCHRONIZED, false), 
+                Arguments.of(QuizMode.BATCHED, true),
+                Arguments.of(QuizMode.BATCHED, false), 
+                Arguments.of(QuizMode.INDIVIDUAL, true), 
+                Arguments.of(QuizMode.INDIVIDUAL, false)
+        );
     }
 }
