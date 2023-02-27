@@ -1,7 +1,7 @@
 import { Exam } from 'app/entities/exam.model';
 import { ExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
-import submission from '../../../fixtures/exercise/programming/build_error/submission.json';
+import submission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
 import { Course } from 'app/entities/course.model';
 import { generateUUID } from '../../../support/utils';
 import { EXERCISE_TYPE } from '../../../support/constants';

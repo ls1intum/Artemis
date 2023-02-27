@@ -2,7 +2,7 @@ import { Interception } from 'cypress/types/net-stubbing';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamBuilder, ProgrammingExerciseAssessmentType, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
-import partiallySuccessful from '../../fixtures/exercise/programming/partially_successful/submission.json';
+import partiallySuccessful from '../../fixtures/exercise/programming/java/partially_successful/submission.json';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import {
     courseAssessment,
@@ -48,7 +48,7 @@ describe('Exam assessment', () => {
     // For some reason the typing of cypress gets slower the longer the test runs, so we test the programming exercise first
     describe('Programming exercise assessment', () => {
         before('Prepare exam', () => {
-            examEnd = dayjs().add(2.5, 'minutes');
+            examEnd = dayjs().add(3, 'minutes');
             prepareExam(examEnd, EXERCISE_TYPE.Programming);
         });
 
@@ -103,7 +103,7 @@ describe('Exam assessment', () => {
 
     describe('Text exercise assessment', () => {
         before('Prepare exam', () => {
-            examEnd = dayjs().add(30, 'seconds');
+            examEnd = dayjs().add(35, 'seconds');
             prepareExam(examEnd, EXERCISE_TYPE.Text);
         });
 

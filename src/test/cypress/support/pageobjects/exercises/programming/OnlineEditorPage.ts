@@ -1,5 +1,5 @@
-import { DELETE } from '../../../constants';
 import { courseList, courseOverview } from '../../../artemis';
+import { DELETE } from '../../../constants';
 import { BASE_API, GET, POST } from '../../../constants';
 import { CypressCredentials } from '../../../users';
 import { getExercise } from '../../../utils';
@@ -34,14 +34,30 @@ export class OnlineEditorPage {
      */
     typeSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, packageName: string) {
         for (const newFile of submission.files) {
-            this.createFileInRootPackage(exerciseID, newFile.name, packageName);
-            cy.fixture(newFile.path).then(($fileContent) => {
-                const sanitizedContent = this.sanitizeInput($fileContent, packageName);
-                this.focusCodeEditor(exerciseID).type(sanitizedContent, { delay: 8 });
+            const fileExtension = newFile.name.split('.').pop();
+            // Change the file extension to txt, to avoid the online editor to do some auto indention etc.
+            const fileName = newFile.name.replace(fileExtension!, 'txt');
+            this.createFileInRootPackage(exerciseID, fileName, packageName);
+            cy.fixture(newFile.path).then((fileContent) => {
+                const sanitizedContent = this.sanitizeInput(fileContent, packageName);
+                // Split the text to each line, so we can type each line at a time and jump to the beginning of the line every time
+                const lines = sanitizedContent.split(/\r?\n/);
+                this.focusCodeEditor(exerciseID);
+                lines.forEach((line: string) => {
+                    if (line == '') {
+                        cy.focused().type('\n');
+                    } else {
+                        cy.focused().type('{home}');
+                        cy.focused().type(line, { delay: 4 });
+                        cy.focused().type('\n');
+                    }
+                });
                 // Delete the remaining content which has been automatically added by the code editor.
                 // We simply send as many {del} keystrokes as the file has characters. This shouldn't increase the test runtime by too long since we set the delay to 0.
                 const deleteRemainingContent = '{del}'.repeat(sanitizedContent.length);
                 cy.focused().type(deleteRemainingContent, { delay: 0 });
+                // Rename the file back to the original name
+                this.renameFile(exerciseID, fileName, newFile.name);
             });
         }
         cy.wait(1000);
@@ -54,6 +70,17 @@ export class OnlineEditorPage {
      */
     private sanitizeInput(input: string, packageName: string) {
         return input.replace(/\${packageName}/g, packageName).replace(/{/g, '{{}');
+    }
+
+    /**
+     * Renames a file in the filebrowser.
+     * @param exerciseID the ID of the exercise
+     * @param oldName the old file name
+     * @param newName the new file name
+     */
+    renameFile(exerciseID: number, oldName: string, newName: string) {
+        this.findFile(exerciseID, oldName).find('#file-browser-file-edit').click();
+        getExercise(exerciseID).find('.list-group-item__input').clear().type(newName).wait(500).type('{enter}').wait(500);
     }
 
     /**
