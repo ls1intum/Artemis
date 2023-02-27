@@ -136,8 +136,7 @@ public class TutorialGroupService {
         sessions.stream()
                 .filter(tutorialGroupSession -> TutorialGroupSessionStatus.ACTIVE.equals(tutorialGroupSession.getStatus())
                         && tutorialGroupSession.getEnd().isBefore(ZonedDateTime.now()))
-                .sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed())
-                .limit(3)
+                .sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed()).limit(3)
                 .map(tutorialGroupSession -> Optional.ofNullable(tutorialGroupSession.getAttendanceCount())).flatMap(Optional::stream).mapToInt(attendance -> attendance).average()
                 .ifPresentOrElse(value -> {
                     tutorialGroup.setAverageAttendance((int) Math.round(value));
