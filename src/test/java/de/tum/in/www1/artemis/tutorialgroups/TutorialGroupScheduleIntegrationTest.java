@@ -198,7 +198,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         // when
         tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
         tutorialGroup.setCapacity(2000);
-        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum");
+        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + tutorialGroup.getId(), dto, TutorialGroup.class, HttpStatus.OK);
 
         // then
@@ -221,7 +221,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         // when
         tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
         tutorialGroup.getTutorialGroupSchedule().setLocation("updated");
-        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum");
+        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + tutorialGroup.getId(), dto, TutorialGroup.class, HttpStatus.OK);
 
         // then
