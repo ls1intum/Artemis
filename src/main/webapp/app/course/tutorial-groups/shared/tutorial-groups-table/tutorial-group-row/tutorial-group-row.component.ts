@@ -17,6 +17,9 @@ export class TutorialGroupRowComponent {
     @Input()
     showIdColumn = false;
 
+    @Input()
+    showChannelColumn = false;
+
     @Input() extraColumn: TemplateRef<any>;
 
     @Input() tutorialGroup: TutorialGroup;

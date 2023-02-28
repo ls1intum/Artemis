@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { cloneDeep } from 'lodash-es';
 import { Submission } from 'app/entities/submission.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { faCheckCircle, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -104,7 +104,7 @@ describe('ResultComponent', () => {
         expect(component.result!.participation).toEqual(participation1);
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-danger');
-        expect(component.resultIconClass).toEqual(faCheckCircle);
+        expect(component.resultIconClass).toEqual(faTimesCircle);
         expect(component.resultString).toBe('artemisApp.result.resultString.nonProgramming');
         expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
     });
