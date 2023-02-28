@@ -213,11 +213,18 @@ export class NotificationService {
     private subscribeToConversationNotificationUpdates(conversations: Conversation[]): void {
         conversations.forEach((conversation) => {
             const conversationTopic = '/topic/conversation/' + conversation.id + '/notifications';
-            if (!this.subscribedTopics.includes(conversationTopic) && !this.router.url.includes('courses/' + conversation.course?.id + '/messages')) {
+            if (!this.subscribedTopics.includes(conversationTopic)) {
                 this.subscribedTopics.push(conversationTopic);
                 this.jhiWebsocketService.subscribe(conversationTopic);
                 this.jhiWebsocketService.receive(conversationTopic).subscribe((notification: Notification) => {
-                    this.addNotificationToObserver(notification);
+                    if (notification.target) {
+                        const target = JSON.parse(notification.target);
+                        const targetCourseId = target.course;
+                        // Only add notification if it is not from the current user and the user is not already in the messages tab
+                        if (notification.author?.id !== this.accountService.userIdentity?.id && !this.router.url.includes(`courses/${targetCourseId}/messages`)) {
+                            this.addNotificationToObserver(notification);
+                        }
+                    }
                 });
             }
         });
