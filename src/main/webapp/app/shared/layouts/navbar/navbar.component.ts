@@ -562,7 +562,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     (this.lastRouteUrlSegment === 'programming-exercises' ||
                         this.lastRouteUrlSegment === 'text-exercises' ||
                         this.lastRouteUrlSegment === 'modeling-exercises' ||
-                        this.lastRouteUrlSegment === 'file-upload-exercises') &&
+                        this.lastRouteUrlSegment === 'file-upload-exercises' ||
+                        this.lastRouteUrlSegment === 'quiz-exercises') &&
                     segment === 'import'
                 ) {
                     // - This route is bogus and needs to be replaced in the future, display no crumb
