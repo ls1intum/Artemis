@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -26,10 +27,14 @@ public class BuildPlanResource {
 
     private final BuildPlanRepository buildPlanRepository;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     private final AuthorizationCheckService authorizationCheckService;
 
-    public BuildPlanResource(BuildPlanRepository buildPlanRepository, AuthorizationCheckService authorizationCheckService) {
+    public BuildPlanResource(BuildPlanRepository buildPlanRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            AuthorizationCheckService authorizationCheckService) {
         this.buildPlanRepository = buildPlanRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
 
@@ -67,15 +72,12 @@ public class BuildPlanResource {
     public ResponseEntity<BuildPlan> setBuildPlan(@PathVariable Long exerciseId, @RequestBody BuildPlan buildPlan) {
         log.debug("REST request to set build plan for programming exercise with id {}", exerciseId);
 
-        final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("Could not find connected exercise for build plan."));
-
-        // ToDo: fetch the exercise with exerciseId fresh from the database and check access there:
-        // ToDo: the user might have edited the JSON for `buildPlan` manually and connected unrelated exercises
+        final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
-        // ToDo: a build plan might be connected to multiple exercises, but we only want to change it for `programmingExercise` here
+        buildPlanRepository.disconnectBuildPlanFromExercise(programmingExercise);
+        buildPlan.addProgrammingExercise(programmingExercise);
         buildPlan = buildPlanRepository.save(buildPlan);
 
         return ResponseEntity.ok(buildPlan);
