@@ -2157,7 +2157,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Ensure that all registered students have a StudentResult
         Set<Long> studentIdsWithStudentResults = examScores.studentResults().stream().map(ExamScoresDTO.StudentResult::userId).collect(Collectors.toSet());
-        Set<User> registeredUsers = exam.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
+        Set<User> registeredUsers = exam.getRegisteredUsers();
         Set<Long> registeredUsersIds = registeredUsers.stream().map(User::getId).collect(Collectors.toSet());
         assertThat(studentIdsWithStudentResults).isEqualTo(registeredUsersIds);
 
@@ -2285,7 +2285,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         final ProgrammingExercise programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().iterator().next();
 
-        var usersOfExam = exam.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
+        var usersOfExam = exam.getRegisteredUsers();
         mockDeleteProgrammingExercise(programmingExercise, usersOfExam);
 
         await().until(() -> participantScoreScheduleService.isIdle());

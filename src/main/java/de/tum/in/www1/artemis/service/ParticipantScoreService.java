@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
@@ -62,7 +61,7 @@ public class ParticipantScoreService {
         Set<Exercise> includedExercises = exercisesOfExam.stream().filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED))
                 .collect(Collectors.toSet());
 
-        Set<User> registeredUsers = exam.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
+        Set<User> registeredUsers = exam.getRegisteredUsers();
 
         return calculateScores(includedExercises, registeredUsers, (double) exam.getExamMaxPoints());
     }
