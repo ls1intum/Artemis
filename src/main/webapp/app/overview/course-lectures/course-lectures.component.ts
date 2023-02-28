@@ -53,7 +53,6 @@ export class CourseLecturesComponent implements OnInit, OnDestroy, AfterViewInit
     // Provides the control configuration to be read and used by "CourseOverviewComponent"
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
-        useIndentation: true,
     };
 
     constructor(
