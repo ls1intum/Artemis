@@ -100,6 +100,9 @@ export class CourseLecturesComponent implements OnInit, OnDestroy, AfterViewInit
         this.paramSubscription.unsubscribe();
     }
 
+    /**
+     * Loads the sorting order from local storage
+     */
     private loadSortingOrder() {
         const orderInStorage = this.localStorage.retrieve(SortFilterStorageKey.ORDER);
         const parsedOrderInStorage = Object.keys(LectureSortingOrder).find((exerciseOrder) => exerciseOrder === orderInStorage);
