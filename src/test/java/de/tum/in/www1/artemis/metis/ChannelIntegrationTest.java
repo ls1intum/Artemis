@@ -5,22 +5,33 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 class ChannelIntegrationTest extends AbstractConversationTest {
+
+    @Autowired
+    TutorialGroupRepository tutorialGroupRepository;
+
+    @Autowired
+    TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
     private static final String TEST_PREFIX = "chtest";
 
@@ -184,6 +195,31 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         assertThat(channelRepository.findById(channel.getId())).isEmpty();
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.DELETE, channel.getId(), "instructor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.DELETE);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteTutorialGroupChannel_asInstructor_shouldReturnBadRequest(boolean isPublicChannel) throws Exception {
+        // given
+        var channel = createChannel(isPublicChannel);
+        var tutorialGroup = database.createTutorialGroup(exampleCourseId, "tg-channel-test", "LoremIpsum", 10, false, "Garching", Language.ENGLISH,
+                userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of());
+        var channelFromDatabase = channelRepository.findById(channel.getId()).get();
+
+        tutorialGroup.setTutorialGroupChannel(channelFromDatabase);
+        tutorialGroup = tutorialGroupRepository.save(tutorialGroup);
+
+        // when
+        database.changeUser(testPrefix + "instructor2");
+        request.delete("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), HttpStatus.BAD_REQUEST);
+        // then
+        assertThat(channelRepository.findById(channel.getId())).isNotEmpty();
+        verifyNoParticipantTopicWebsocketSent();
+
+        // cleanup
+        tutorialGroupChannelManagementService.deleteTutorialGroupChannel(tutorialGroup);
+        tutorialGroupRepository.deleteById(tutorialGroup.getId());
     }
 
     @ParameterizedTest

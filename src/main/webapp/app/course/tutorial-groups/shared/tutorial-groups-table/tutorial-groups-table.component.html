@@ -59,6 +59,9 @@
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.nextSession' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
+                <th *ngIf="showChannelColumn">
+                    <a class="th-link" [routerLink]="['/courses', course.id!, 'messages']">{{ 'artemisApp.entities.tutorialGroup.channel' | artemisTranslate }}</a>
+                </th>
                 <th *ngIf="extraColumn"></th>
             </tr>
         </thead>
@@ -72,6 +75,7 @@
                 [course]="course"
                 [extraColumn]="extraColumn"
                 [showIdColumn]="showIdColumn"
+                [showChannelColumn]="showChannelColumn"
                 [tutorialGroupClickHandler]="tutorialGroupClickHandler"
                 [timeZone]="timeZone"
             ></tr>
