@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="b-fein" id="20230227191919">
+        <!-- only link the long feedback from the other side to reduce table size -->
+        <addColumn tableName="feedback">
+            <column name="has_long_feedback_text" type="boolean" defaultValueBoolean="false"/>
+        </addColumn>
+
+        <createTable tableName="long_feedback_text">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="feedback_text" type="longtext">
+                <constraints nullable="false" />
+            </column>
+            <column name="feedback_id" type="bigint">
+                <constraints foreignKeyName="fk_feedback_id" referencedTableName="feedback" referencedColumnNames="id" nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>
