@@ -12,7 +12,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercises/shared/participation/participation.utils';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
@@ -180,11 +180,18 @@ export const evaluateTemplateStatus = (
 
 /**
  * Checks if only compilation was tested. This is the case, when a successful result is present with 0 of 0 passed tests
- *
+ * This could be because all test cases are only visible after the due date.
  */
-export const onlyShowSuccessfulCompileStatus = (result: Result | undefined, templateStatus: ResultTemplateStatus): boolean => {
+export const isOnlyCompilationTested = (result: Result | undefined, templateStatus: ResultTemplateStatus): boolean => {
     const zeroTests = !result?.testCaseCount;
-    return templateStatus !== ResultTemplateStatus.NO_RESULT && templateStatus !== ResultTemplateStatus.IS_BUILDING && !isBuildFailed(result?.submission) && zeroTests;
+    const isProgrammingExercise: boolean = result?.participation?.exercise?.type === ExerciseType.PROGRAMMING;
+    return (
+        templateStatus !== ResultTemplateStatus.NO_RESULT &&
+        templateStatus !== ResultTemplateStatus.IS_BUILDING &&
+        !isBuildFailed(result?.submission) &&
+        zeroTests &&
+        isProgrammingExercise
+    );
 };
 
 /**
@@ -211,6 +218,10 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
 
     if (result?.score === undefined) {
         return result?.successful ? 'text-success' : 'text-danger';
+    }
+
+    if (isOnlyCompilationTested(result, templateStatus)) {
+        return 'text-success';
     }
 
     if (result.score >= MIN_SCORE_GREEN) {
@@ -241,7 +252,7 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
         return faQuestionCircle;
     }
 
-    if (onlyShowSuccessfulCompileStatus(result, templateStatus)) {
+    if (isOnlyCompilationTested(result, templateStatus)) {
         return faCheckCircle;
     }
 

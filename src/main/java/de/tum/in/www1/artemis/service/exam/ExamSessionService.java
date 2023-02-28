@@ -48,7 +48,7 @@ public class ExamSessionService {
         examSession.setBrowserFingerprintHash(fingerprint);
         examSession.setUserAgent(userAgent);
         examSession.setInstanceId(instanceId);
-        examSession.setIpAddress(ipAddress);
+        examSession.setIpAddressFromIpAddress(ipAddress);
         examSession = examSessionRepository.save(examSession);
         return examSession;
     }

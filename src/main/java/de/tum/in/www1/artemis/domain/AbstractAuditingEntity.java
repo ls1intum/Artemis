@@ -27,7 +27,6 @@ public abstract class AbstractAuditingEntity extends DomainObject {
 
     @CreatedDate
     @Column(name = "created_date", updatable = false)
-    @JsonIgnore
     private Instant createdDate = Instant.now();
 
     @LastModifiedBy

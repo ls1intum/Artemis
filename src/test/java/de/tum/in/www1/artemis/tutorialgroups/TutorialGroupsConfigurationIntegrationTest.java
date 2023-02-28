@@ -116,7 +116,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
                 TutorialGroupsConfiguration.class, HttpStatus.CREATED);
         // then
         assertThat(configurationFromRequest).isNotNull();
-        this.assertConfigurationStructure(configurationFromRequest, firstAugustMonday, firstSeptemberMonday, courseId);
+        this.assertConfigurationStructure(configurationFromRequest, firstAugustMonday, firstSeptemberMonday, courseId, true, true);
     }
 
     @Test
@@ -154,7 +154,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId) + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
         // then
         configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
-        this.assertConfigurationStructure(configuration, firstAugustMonday, firstSeptemberMonday, courseId);
+        this.assertConfigurationStructure(configuration, firstAugustMonday, firstSeptemberMonday, courseId, true, true);
     }
 
     /**
@@ -180,6 +180,40 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         // the exercise is now indirectly connected to the configuration and jackson will try to deserialize the configuration
         textExercise.setCourse(course);
         request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateCourse_switchUseTutorialGroupSetting_shouldCreateAndThenDeleteTutorialGroupChannels() throws Exception {
+        // given
+        var configuration = databaseUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
+        var tutorialGroupWithSchedule = setUpTutorialGroupWithSchedule(courseId, "tutor1");
+        this.assertConfigurationStructure(configuration, firstAugustMonday, firstSeptemberMonday, courseId, true, true);
+        asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupWithSchedule);
+        // when
+        configuration.setUseTutorialGroupChannels(false);
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId) + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
+        // then
+        configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
+        this.assertConfigurationStructure(configuration, firstAugustMonday, firstSeptemberMonday, courseId, false, true);
+        assertTutorialGroupChannelDoesNotExist(tutorialGroupWithSchedule);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateCourse_switchUsePublicChannelsSetting_shouldSwitchChannelModeOfTutorialGroupChannels() throws Exception {
+        // given
+        var configuration = databaseUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
+        var tutorialGroupWithSchedule = setUpTutorialGroupWithSchedule(courseId, "tutor1");
+        this.assertConfigurationStructure(configuration, firstAugustMonday, firstSeptemberMonday, courseId, true, true);
+        asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupWithSchedule);
+        // when
+        configuration.setUsePublicTutorialGroupChannels(false);
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId) + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
+        // then
+        configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
+        this.assertConfigurationStructure(configuration, firstAugustMonday, firstSeptemberMonday, courseId, true, false);
+        asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupWithSchedule);
     }
 
     @Test
