@@ -48,7 +48,7 @@
         <dropColumn tableName="feedback" columnName="visibility" />
         <dropColumn tableName="feedback" columnName="type" />
 
-        <renameColumn tableName="feedback" oldColumnName="visibility_int" newColumnName="visibility" />
-        <renameColumn tableName="feedback" oldColumnName="type_int" newColumnName="type" />
+        <renameColumn tableName="feedback" oldColumnName="visibility_int" newColumnName="visibility" columnDataType="tinyint"/>
+        <renameColumn tableName="feedback" oldColumnName="type_int" newColumnName="type" columnDataType="tinyint"/>
     </changeSet>
 </databaseChangeLog>
