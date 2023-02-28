@@ -22,6 +22,8 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -64,10 +66,15 @@ public class FileUploadExerciseResource {
 
     private final FileUploadSubmissionExportService fileUploadSubmissionExportService;
 
+    private final FileUploadExerciseImportService fileUploadExerciseImportService;
+
+    private final FileUploadExerciseService fileUploadExerciseService;
+
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
-            ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService) {
+            ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
+            FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -79,6 +86,8 @@ public class FileUploadExerciseResource {
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
         this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
+        this.fileUploadExerciseImportService = fileUploadExerciseImportService;
+        this.fileUploadExerciseService = fileUploadExerciseService;
     }
 
     /**
@@ -110,6 +119,42 @@ public class FileUploadExerciseResource {
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId())).body(result);
     }
 
+    /**
+     * POST file-upload-exercises/import: Imports an existing file upload exercise into an existing course
+     * <p>
+     * This will import the whole exercise except for the participations and dates.
+     * Referenced entities will get cloned and assigned a new id.
+     * Uses {@link FileUploadExerciseImportService}.
+     *
+     * @param sourceId                   The ID of the original exercise which should get imported
+     * @param importedFileUploadExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
+     * @throws URISyntaxException When the URI of the response entity is invalid
+     *
+     * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
+     *         (403) if the user is not at least an editor in the target course.
+     */
+    @PostMapping("file-upload-exercises/import/{sourceId}")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<FileUploadExercise> importFileUploadExercise(@PathVariable long sourceId, @RequestBody FileUploadExercise importedFileUploadExercise)
+            throws URISyntaxException {
+
+        if (sourceId <= 0 || (importedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedFileUploadExercise.getExerciseGroup() == null)) {
+            throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
+        }
+        importedFileUploadExercise.checkCourseAndExerciseGroupExclusivity("File Upload Exercise");
+
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var originalFileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(sourceId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedFileUploadExercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalFileUploadExercise, user);
+        // validates general settings: points, dates, exam score included completely
+        importedFileUploadExercise.validateGeneralSettings();
+
+        final var newFileUploadExercise = fileUploadExerciseImportService.importFileUploadExercise(originalFileUploadExercise, importedFileUploadExercise);
+        fileUploadExerciseRepository.save(newFileUploadExercise);
+        return ResponseEntity.created(new URI("/api/file-upload-exercises/" + newFileUploadExercise.getId())).body(newFileUploadExercise);
+    }
+
     private boolean isFilePatternValid(FileUploadExercise exercise) {
         // a file ending should consist of a comma separated list of 1-5 characters / digits
         // when an empty string "" is passed in the exercise the file-pattern is null when it arrives in the rest endpoint
@@ -139,6 +184,23 @@ public class FileUploadExerciseResource {
             throw new BadRequestAlertException("The file pattern is invalid. Please use a comma separated list with actual file endings without dots (e.g. 'png, pdf').",
                     ENTITY_NAME, "filepattern.invalid");
         }
+    }
+
+    /**
+     * Search for all file-upload exercises by id, title and course title. The result is pageable since there
+     * might be hundreds of exercises in the DB.
+     *
+     * @param search         The pageable search containing the page size, page number and query string
+     * @param isCourseFilter Whether to search in the courses for exercises
+     * @param isExamFilter   Whether to search in the groups for exercises
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("file-upload-exercises")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<SearchResultPageDTO<FileUploadExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search,
+            @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter) {
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(fileUploadExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
 
     /**
