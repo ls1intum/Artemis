@@ -204,6 +204,7 @@
             "connect": "Connect",
             "editSelected": "Edit selected",
             "editInEditor": "Edit in editor",
+            "editBuildPlan": "Edit build plan",
             "editInIntelliJ": "Edit in IntelliJ",
             "editEntity": "Edit {{entity}}",
             "exampleSubmissions": "Example submissions",
