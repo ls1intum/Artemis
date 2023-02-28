@@ -10,7 +10,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { Course } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
+import { CourseLecturesComponent, LectureSortingOrder } from 'app/overview/course-lectures/course-lectures.component';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -121,5 +121,40 @@ describe('CourseLectures', () => {
             const lectures = courseLecturesComponentFixture.debugElement.queryAll(By.directive(CourseLectureRowStubComponent));
             expect(lectures).toHaveLength(3);
         });
+    }));
+
+    it('should sort and flip sort order correctly', fakeAsync(() => {
+        courseLecturesComponentFixture.detectChanges();
+
+        const checkLectureOrder = (lectures: Lecture[] | undefined, order: LectureSortingOrder) => {
+            if (!lectures) {
+                return true;
+            }
+
+            for (let i = 0; i < lectures.length - 1; i++) {
+                const firstLecture = lectures[i];
+                const secondLecture = lectures[i + 1];
+
+                const firstStartDate = firstLecture.startDate ? firstLecture.startDate.valueOf() : dayjs().valueOf();
+                const secondStartDate = secondLecture.startDate ? secondLecture.startDate.valueOf() : dayjs().valueOf();
+
+                if (order === courseLecturesComponent.ASC) {
+                    expect(firstStartDate).toBeLessThanOrEqual(secondStartDate);
+                } else {
+                    expect(firstStartDate).toBeGreaterThanOrEqual(secondStartDate);
+                }
+            }
+        };
+
+        expect(courseLecturesComponent.sortingOrder).toEqual(courseLecturesComponent.ASC);
+        expect(checkLectureOrder(course.lectures, courseLecturesComponent.ASC)).toBeTruthy();
+
+        courseLecturesComponent.flipOrder();
+        expect(courseLecturesComponent.sortingOrder).toEqual(courseLecturesComponent.DESC);
+        expect(checkLectureOrder(course.lectures, courseLecturesComponent.DESC)).toBeTruthy();
+
+        courseLecturesComponent.flipOrder();
+        expect(courseLecturesComponent.sortingOrder).toEqual(courseLecturesComponent.ASC);
+        expect(checkLectureOrder(course.lectures, courseLecturesComponent.ASC)).toBeTruthy();
     }));
 });
