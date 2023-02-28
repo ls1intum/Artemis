@@ -61,11 +61,11 @@ public class Feedback extends DomainObject {
     @Column(name = "positive")
     private Boolean positive;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.ORDINAL)
     @Column(name = "type")
     private FeedbackType type;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.ORDINAL)
     @Column(name = "visibility")
     private Visibility visibility;
 
