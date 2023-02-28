@@ -126,35 +126,46 @@ describe('CourseLectures', () => {
     it('should sort and flip sort order correctly', fakeAsync(() => {
         courseLecturesComponentFixture.detectChanges();
 
-        const checkLectureOrder = (lectures: Lecture[] | undefined, order: LectureSortingOrder) => {
-            if (!lectures) {
-                return true;
-            }
-
-            for (let i = 0; i < lectures.length - 1; i++) {
-                const firstLecture = lectures[i];
-                const secondLecture = lectures[i + 1];
-
-                const firstStartDate = firstLecture.startDate ? firstLecture.startDate.valueOf() : dayjs().valueOf();
-                const secondStartDate = secondLecture.startDate ? secondLecture.startDate.valueOf() : dayjs().valueOf();
+        const checkSortingOrder = (order: LectureSortingOrder) => {
+            const groups = Object.keys(courseLecturesComponent.weeklyLecturesGrouped);
+            for (let i = 0; i < groups.length - 1; i++) {
+                const firstGroup = groups[i];
+                const secondGroup = groups[i + 1];
 
                 if (order === courseLecturesComponent.ASC) {
-                    expect(firstStartDate).toBeLessThanOrEqual(secondStartDate);
+                    expect(firstGroup < secondGroup).toBeTruthy();
                 } else {
-                    expect(firstStartDate).toBeGreaterThanOrEqual(secondStartDate);
+                    expect(firstGroup > secondGroup).toBeTruthy();
+                }
+            }
+
+            // check if the lectures are sorted correctly inside the groups
+            for (const group of groups) {
+                const lectures = courseLecturesComponent.weeklyLecturesGrouped[group].lectures;
+                for (let i = 0; i < lectures.length - 1; i++) {
+                    const firstLecture = lectures[i];
+                    const secondLecture = lectures[i + 1];
+                    const firstStartDate = firstLecture.startDate ? firstLecture.startDate.valueOf() : dayjs().valueOf();
+                    const secondStartDate = secondLecture.startDate ? secondLecture.startDate.valueOf() : dayjs().valueOf();
+
+                    if (order === courseLecturesComponent.ASC) {
+                        expect(firstStartDate).toBeLessThanOrEqual(secondStartDate);
+                    } else {
+                        expect(firstStartDate).toBeGreaterThanOrEqual(secondStartDate);
+                    }
                 }
             }
         };
 
         expect(courseLecturesComponent.sortingOrder).toEqual(courseLecturesComponent.ASC);
-        expect(checkLectureOrder(course.lectures, courseLecturesComponent.ASC)).toBeTruthy();
+        checkSortingOrder(courseLecturesComponent.ASC);
 
         courseLecturesComponent.flipOrder();
         expect(courseLecturesComponent.sortingOrder).toEqual(courseLecturesComponent.DESC);
-        expect(checkLectureOrder(course.lectures, courseLecturesComponent.DESC)).toBeTruthy();
+        checkSortingOrder(courseLecturesComponent.DESC);
 
         courseLecturesComponent.flipOrder();
         expect(courseLecturesComponent.sortingOrder).toEqual(courseLecturesComponent.ASC);
-        expect(checkLectureOrder(course.lectures, courseLecturesComponent.ASC)).toBeTruthy();
+        checkSortingOrder(courseLecturesComponent.ASC);
     }));
 });
