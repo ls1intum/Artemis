@@ -24,7 +24,7 @@ public interface ExamUserRepository extends JpaRepository<ExamUser, Long> {
             WHERE eu.exam.id = :examId
                AND eu.user.id = :userId
             """)
-    ExamUser findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
+    Optional<ExamUser> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exam" })
     Optional<ExamUser> findWithExamById(long examUserId);
