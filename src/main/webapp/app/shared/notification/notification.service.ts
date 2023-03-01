@@ -13,6 +13,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification.model';
 import {
+    CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE,
     NEW_ANNOUNCEMENT_POST_TITLE,
     NEW_COURSE_POST_TITLE,
     NEW_EXERCISE_POST_TITLE,
@@ -93,7 +94,11 @@ export class NotificationService {
                 const queryParams: Params = MetisService.getQueryParamsForLectureOrExercisePost(target.id);
                 const routeComponents: RouteComponents = MetisService.getLinkForLecturePost(targetCourseId, target.lecture ?? target.lectureId);
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
-            } else if (notification.title === NEW_MESSAGE_TITLE || notification.title === NEW_REPLY_MESSAGE_TITLE) {
+            } else if (
+                notification.title === NEW_MESSAGE_TITLE ||
+                notification.title === NEW_REPLY_MESSAGE_TITLE ||
+                notification.title === CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE
+            ) {
                 this.router.navigateByUrl(`/${target.mainPage}/${targetCourseId}/messages?conversationId=${targetConversationId}`);
             } else {
                 this.router.navigate([target.mainPage, targetCourseId, target.entity, target.id]);
@@ -170,11 +175,16 @@ export class NotificationService {
                     this.subscribedTopics.push(userTopic);
                     this.jhiWebsocketService.subscribe(userTopic);
                     this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
-                        this.addNotificationToObserver(notification);
+                        // only add notification to observer if it is not a one-to-one conversation creation notification
+                        if (notification.title !== CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE) {
+                            this.addNotificationToObserver(notification);
+                        }
+
                         if (notification.target) {
                             const target = JSON.parse(notification.target);
                             const message = target.message;
-                            // Only add notification if it is not a conversation creation notification or if the user is already in the conversation
+
+                            // subscribe to newly created conversation topic
                             if (message === 'conversation-creation') {
                                 const conversationId = target.conversation;
                                 const conversationTopic = '/topic/conversation/' + conversationId + '/notifications';
@@ -191,7 +201,14 @@ export class NotificationService {
         this.subscribedTopics.push(conversationTopic);
         this.jhiWebsocketService.subscribe(conversationTopic);
         this.jhiWebsocketService.receive(conversationTopic).subscribe((notification: Notification) => {
-            this.addNotificationToObserver(notification);
+            if (notification.target) {
+                const target = JSON.parse(notification.target);
+                const targetCourseId = target.course;
+                // Do not add if under messages tab of specific course
+                if (!this.router.url.includes(`courses/${targetCourseId}/messages`)) {
+                    this.addNotificationToObserver(notification);
+                }
+            }
         });
     }
 

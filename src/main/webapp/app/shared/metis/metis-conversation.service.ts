@@ -169,7 +169,6 @@ export class MetisConversationService implements OnDestroy {
         return creation$.pipe(
             tap((conversation: HttpResponse<ConversationDto>) => {
                 this.activeConversation = conversation.body!;
-                this.notificationService.subscribeToNotificationUpdates();
             }),
             catchError((res: HttpErrorResponse) => {
                 onError(this.alertService, res);
