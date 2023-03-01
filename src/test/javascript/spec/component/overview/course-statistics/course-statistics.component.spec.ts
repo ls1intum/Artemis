@@ -443,6 +443,27 @@ describe('CourseStatisticsComponent', () => {
         expect(debugElement.nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.totalPoints ');
     });
 
+    it('should set the course after being notified about a course update', () => {
+        comp.courseId = course.id!;
+        fixture.detectChanges();
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        // Should not have found a course yet.
+        expect(comp.course).toBeUndefined();
+
+        const courseToSubscribeTo = { ...course };
+        courseToSubscribeTo.exercises = [...modelingExercises];
+        courseStorageService.setCourses([courseToSubscribeTo]);
+
+        const updateCourseSpy = jest.spyOn(courseStorageService, 'updateCourse');
+
+        courseStorageService.notifyCourseUpdatesSubscribers(courseToSubscribeTo);
+
+        expect(comp.course).toEqual(courseToSubscribeTo);
+        expect(updateCourseSpy).toHaveBeenCalledWith(courseToSubscribeTo);
+    });
+
     it('should delegate the user correctly', () => {
         const clickEvent = { exerciseId: 42 };
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
