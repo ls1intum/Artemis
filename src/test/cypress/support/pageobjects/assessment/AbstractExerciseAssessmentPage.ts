@@ -1,4 +1,4 @@
-import { BASE_API, EXERCISE_TYPE, PUT } from '../../constants';
+import { BASE_API, ExerciseType, PUT } from '../../constants';
 
 /**
  * Parent class for all exercise assessment pages.
@@ -24,27 +24,27 @@ export abstract class AbstractExerciseAssessmentPage {
         return cy.wait('@submitAssessment');
     }
 
-    rejectComplaint(response: string, examMode: boolean, exerciseType: EXERCISE_TYPE) {
+    rejectComplaint(response: string, examMode: boolean, exerciseType: ExerciseType) {
         return this.handleComplaint(response, false, exerciseType, examMode);
     }
 
-    acceptComplaint(response: string, examMode: boolean, exerciseType: EXERCISE_TYPE) {
+    acceptComplaint(response: string, examMode: boolean, exerciseType: ExerciseType) {
         return this.handleComplaint(response, true, exerciseType, examMode);
     }
 
-    private handleComplaint(response: string, accept: boolean, exerciseType: EXERCISE_TYPE, examMode: boolean) {
-        if (exerciseType !== EXERCISE_TYPE.Modeling && !examMode) {
+    private handleComplaint(response: string, accept: boolean, exerciseType: ExerciseType, examMode: boolean) {
+        if (exerciseType !== ExerciseType.MODELING && !examMode) {
             cy.get('#show-complaint').click();
         }
         cy.get('#responseTextArea').type(response, { parseSpecialCharSequences: false });
         switch (exerciseType) {
-            case EXERCISE_TYPE.Programming:
+            case ExerciseType.PROGRAMMING:
                 cy.intercept(PUT, BASE_API + 'programming-submissions/*/assessment-after-complaint').as('complaintAnswer');
                 break;
-            case EXERCISE_TYPE.Text:
+            case ExerciseType.TEXT:
                 cy.intercept(PUT, BASE_API + 'participations/*/submissions/*/text-assessment-after-complaint').as('complaintAnswer');
                 break;
-            case EXERCISE_TYPE.Modeling:
+            case ExerciseType.MODELING:
                 cy.intercept(PUT, BASE_API + 'complaint-responses/complaint/*/resolve').as('complaintAnswer');
                 break;
             default:

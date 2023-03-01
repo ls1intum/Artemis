@@ -15,12 +15,16 @@ export const USER_ID_SELECTOR = 'USERID';
 // Timeformat
 export const TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss.SSS';
 
-// Exercise types
-export enum EXERCISE_TYPE {
-    Text = 'text',
-    Modeling = 'modeling',
-    Quiz = 'quiz',
-    Programming = 'programming',
+// ExerciseType
+// Copied from app/entities/exercise.model
+export enum ExerciseType {
+    PROGRAMMING = 'programming',
+    MODELING = 'modeling',
+    QUIZ = 'quiz',
+    TEXT = 'text',
+    FILE_UPLOAD = 'file-upload',
+}
+
 // ProgrammingLanguage
 // Copied from app/entities/programming-exercise.model
 export enum ProgrammingLanguage {

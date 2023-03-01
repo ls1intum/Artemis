@@ -4,7 +4,7 @@ import dayjs from 'dayjs/esm';
 import javaSubmission from '../../fixtures/exercise/programming/java/all_successful/submission.json';
 import { Course } from 'app/entities/course.model';
 import { generateUUID } from '../../support/utils';
-import { EXERCISE_TYPE } from '../../support/constants';
+import { ExerciseType } from '../../support/constants';
 import { courseManagementRequest, examExerciseGroupCreation, examNavigation, examParticipation, examStartEnd, textExerciseEditor } from '../../support/artemis';
 import { Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
 import { Interception } from 'cypress/types/net-stubbing';
@@ -41,13 +41,13 @@ describe('Exam participation', () => {
                 .build();
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Text, { textFixture });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, ExerciseType.TEXT, { textFixture });
 
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Programming, { submission: javaSubmission });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, ExerciseType.PROGRAMMING, { submission: javaSubmission });
 
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, ExerciseType.QUIZ, { quizExerciseID: 0 });
 
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Modeling);
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, ExerciseType.MODELING);
 
                 courseManagementRequest.registerStudentForExam(exam, studentOne);
                 courseManagementRequest.registerStudentForExam(exam, studentTwo);
@@ -68,7 +68,7 @@ describe('Exam participation', () => {
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
                 examParticipation.verifyExerciseTitleOnFinalPage(exercise.id, exercise.title);
-                if (exercise.type === EXERCISE_TYPE.Text) {
+                if (exercise.type === ExerciseType.TEXT) {
                     examParticipation.verifyTextExerciseOnFinalPage(exercise.additionalData!.textFixture!);
                 }
             }
@@ -82,7 +82,7 @@ describe('Exam participation', () => {
                 const exercise = exerciseArray[j];
                 // Skip programming exercise this time to save execution time
                 // (we also need to use the navigation bar here, since programming  exercises do not have a "Save and continue" button)
-                if (exercise.type == EXERCISE_TYPE.Programming) {
+                if (exercise.type == ExerciseType.PROGRAMMING) {
                     examNavigation.openExerciseAtIndex(j + 1);
                 } else {
                     examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
@@ -98,7 +98,7 @@ describe('Exam participation', () => {
                 const exercise = exerciseArray[j];
                 // Skip programming exercise this time to save execution time
                 // (we also need to use the navigation bar here, since programming  exercises do not have a "Save and continue" button)
-                if (exercise.type == EXERCISE_TYPE.Programming) {
+                if (exercise.type == ExerciseType.PROGRAMMING) {
                     continue;
                 } else {
                     examNavigation.openExerciseOverview();
@@ -128,7 +128,7 @@ describe('Exam participation', () => {
                 .build();
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Text, { textFixture });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, ExerciseType.TEXT, { textFixture });
 
                 courseManagementRequest.registerStudentForExam(exam, studentOne);
                 courseManagementRequest.registerStudentForExam(exam, studentTwo);
@@ -214,7 +214,7 @@ describe('Exam participation', () => {
                 .build();
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Text, { textFixture });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, ExerciseType.TEXT, { textFixture });
 
                 courseManagementRequest.registerStudentForExam(exam, studentOne);
                 courseManagementRequest.generateMissingIndividualExams(exam);

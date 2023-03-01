@@ -23,7 +23,7 @@ import {
     textExerciseEditor,
 } from '../../support/artemis';
 import { admin, instructor, studentOne, tutor } from '../../support/users';
-import { EXERCISE_TYPE } from '../../support/constants';
+import { ExerciseType } from '../../support/constants';
 
 let exam: Exam;
 let exerciseGroup: ExerciseGroup;
@@ -147,7 +147,7 @@ describe('Exam assessment', () => {
 
         it('Complaints about modeling exercises assessment', () => {
             if (modelingAssessmentSuccessful) {
-                handleComplaint(true, EXERCISE_TYPE.Modeling);
+                handleComplaint(true, ExerciseType.MODELING);
             }
         });
     });
@@ -192,7 +192,7 @@ describe('Exam assessment', () => {
 
         it('Complaints about text exercises assessment', () => {
             if (textAssessmentSuccessful) {
-                handleComplaint(false, EXERCISE_TYPE.Text);
+                handleComplaint(false, ExerciseType.TEXT);
             }
         });
     });
@@ -273,7 +273,7 @@ function prepareExam(end: dayjs.Dayjs, resultDate = end.add(1, 'seconds')) {
     });
 }
 
-function handleComplaint(reject: boolean, exerciseType: EXERCISE_TYPE) {
+function handleComplaint(reject: boolean, exerciseType: ExerciseType) {
     const complaintText = 'Lorem ipsum dolor sit amet';
     const complaintResponseText = ' consetetur sadipscing elitr';
 
@@ -295,7 +295,7 @@ function handleComplaint(reject: boolean, exerciseType: EXERCISE_TYPE) {
     } else {
         examAssessment.acceptComplaint(complaintResponseText, true, exerciseType);
     }
-    if (exerciseType == EXERCISE_TYPE.Modeling) {
+    if (exerciseType == ExerciseType.MODELING) {
         cy.get('.message').should('contain.text', 'Response to complaint has been submitted');
     } else {
         cy.get('.message').should('contain.text', 'The assessment was updated successfully.');

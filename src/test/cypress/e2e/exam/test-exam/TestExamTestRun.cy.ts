@@ -1,14 +1,14 @@
-import { Exam } from 'app/entities/exam.model';
-import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import dayjs from 'dayjs/esm';
 import submission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
-import { Course } from 'app/entities/course.model';
-import { generateUUID } from '../../../support/utils';
-import { EXERCISE_TYPE } from '../../../support/constants';
-import { Exercise } from '../../../support/pageobjects/exam/ExamParticipation';
-import { Interception } from 'cypress/types/net-stubbing';
 import { courseManagementRequest, examExerciseGroupCreation, examManagement, examNavigation, examParticipation, examTestRun } from '../../../support/artemis';
+import { ExerciseType } from '../../../support/constants';
+import { Exercise } from '../../../support/pageobjects/exam/ExamParticipation';
+import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, instructor } from '../../../support/users';
+import { generateUUID } from '../../../support/utils';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { Interception } from 'cypress/types/net-stubbing';
+import dayjs from 'dayjs/esm';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
@@ -36,13 +36,13 @@ describe('Test exam test run', () => {
                 .build();
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Text, { textFixture });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, ExerciseType.TEXT, { textFixture });
 
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Programming, { submission, practiceMode: true });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, ExerciseType.PROGRAMMING, { submission, practiceMode: true });
 
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, ExerciseType.QUIZ, { quizExerciseID: 0 });
 
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Modeling);
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, ExerciseType.MODELING);
             });
         });
     });
@@ -127,7 +127,7 @@ describe('Test exam test run', () => {
         for (let j = 0; j < exerciseArray.length; j++) {
             const exercise = exerciseArray[j];
             examParticipation.verifyExerciseTitleOnFinalPage(exercise.id, exercise.title);
-            if (exercise.type === EXERCISE_TYPE.Text) {
+            if (exercise.type === ExerciseType.TEXT) {
                 examParticipation.verifyTextExerciseOnFinalPage(exercise.additionalData!.textFixture!);
             }
         }
