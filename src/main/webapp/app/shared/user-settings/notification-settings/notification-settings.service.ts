@@ -100,7 +100,12 @@ export class NotificationSettingsService {
      * @return true if this notification (title) is activated in the settings, else return false
      */
     public isNotificationAllowedBySettings(notification: Notification, notificationTitleActivationMap: Map<string, boolean>): boolean {
-        if (notification instanceof GroupNotification || notification.notificationType === NotificationType.GROUP || notification.notificationType === NotificationType.SINGLE) {
+        if (
+            notification instanceof GroupNotification ||
+            notification.notificationType === NotificationType.GROUP ||
+            notification.notificationType === NotificationType.SINGLE ||
+            NotificationType.CONVERSATION
+        ) {
             if (notification.title) {
                 return notificationTitleActivationMap.get(notification.title) ?? true;
             }
