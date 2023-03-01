@@ -1,7 +1,7 @@
 import { Exam } from 'app/entities/exam.model';
 import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
-import submission from '../../fixtures/exercise/programming/java/build_error/submission.json';
+import javaSubmission from '../../fixtures/exercise/programming/java/build_error/submission.json';
 import { Course } from 'app/entities/course.model';
 import { generateUUID } from '../../support/utils';
 import { EXERCISE_TYPE } from '../../support/constants';
@@ -37,7 +37,7 @@ describe('Exam test run', () => {
                 exam = examResponse.body;
                 examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Text, { textFixture });
 
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Programming, { submission, practiceMode: true });
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Programming, { submission: javaSubmission, practiceMode: true });
 
                 examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 });
 

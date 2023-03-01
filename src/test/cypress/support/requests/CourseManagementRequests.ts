@@ -6,8 +6,10 @@ import { Exercise as CypressExercise } from 'src/test/cypress/support/pageobject
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { BASE_API, DELETE, EXERCISE_TYPE, GET, POST, PUT } from '../constants';
-import programmingExerciseTemplate from '../../fixtures/exercise/programming/java/template.json';
+import { BASE_API, DELETE, EXERCISE_TYPE, GET, POST, PUT, ProgrammingLanguage } from '../constants';
+import javaProgrammingExerciseTemplate from '../../fixtures/exercise/programming/java/template.json';
+import pythonProgrammingExerciseTemplate from '../../fixtures/exercise/programming/python/template.json';
+import cProgrammingExerciseTemplate from '../../fixtures/exercise/programming/c/template.json';
 import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
 import day from 'dayjs/esm';
@@ -113,10 +115,21 @@ export class CourseManagementRequests {
         dueDate = day().add(1, 'day'),
         title = 'Cypress programming exercise ' + generateUUID(),
         programmingShortName = 'cypress' + generateUUID(),
+        programmingLanguage = ProgrammingLanguage.JAVA,
         packageName = 'de.test',
         assessmentDate = day().add(2, 'days'),
         assessmentType = CypressAssessmentType.AUTOMATIC,
     ): Cypress.Chainable<Cypress.Response<ProgrammingExercise>> {
+        let programmingExerciseTemplate = {};
+
+        if (programmingLanguage == ProgrammingLanguage.PYTHON) {
+            programmingExerciseTemplate = pythonProgrammingExerciseTemplate;
+        } else if (programmingLanguage == ProgrammingLanguage.C) {
+            programmingExerciseTemplate = cProgrammingExerciseTemplate;
+        } else if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            programmingExerciseTemplate = javaProgrammingExerciseTemplate;
+        }
+
         const template = {
             ...programmingExerciseTemplate,
             title,
@@ -138,6 +151,7 @@ export class CourseManagementRequests {
             exercise.maxStaticCodeAnalysisPenalty = scaMaxPenalty;
         }
 
+        exercise.programmingLanguage = programmingLanguage;
         exercise.testwiseCoverageEnabled = recordTestwiseCoverage;
 
         return cy.request({

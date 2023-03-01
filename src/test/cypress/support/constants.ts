@@ -21,4 +21,17 @@ export enum EXERCISE_TYPE {
     Modeling = 'modeling',
     Quiz = 'quiz',
     Programming = 'programming',
+// ProgrammingLanguage
+// Copied from app/entities/programming-exercise.model
+export enum ProgrammingLanguage {
+    JAVA = 'JAVA',
+    PYTHON = 'PYTHON',
+    C = 'C',
+    HASKELL = 'HASKELL',
+    KOTLIN = 'KOTLIN',
+    VHDL = 'VHDL',
+    ASSEMBLER = 'ASSEMBLER',
+    SWIFT = 'SWIFT',
+    OCAML = 'OCAML',
+    EMPTY = 'EMPTY',
 }

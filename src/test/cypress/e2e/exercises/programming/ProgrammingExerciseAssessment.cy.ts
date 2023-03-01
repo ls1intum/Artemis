@@ -94,7 +94,19 @@ describe('Programming exercise assessment', () => {
             dueDate = dayjs().add(25, 'seconds');
             assessmentDueDate = dueDate.add(30, 'seconds');
             courseManagementRequest
-                .createProgrammingExercise({ course }, undefined, false, dayjs(), dueDate, undefined, undefined, undefined, assessmentDueDate, CypressAssessmentType.SEMI_AUTOMATIC)
+                .createProgrammingExercise(
+                    { course },
+                    undefined,
+                    false,
+                    dayjs(),
+                    dueDate,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    assessmentDueDate,
+                    CypressAssessmentType.SEMI_AUTOMATIC,
+                )
                 .then((programmingResponse) => {
                     exercise = programmingResponse.body;
                 });

@@ -1,6 +1,6 @@
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import scaSubmission from '../../../fixtures/exercise/programming/java/static_code_analysis/submission.json';
+import javaScaSubmission from '../../../fixtures/exercise/programming/java/static_code_analysis/submission.json';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { courseManagementRequest, programmingExerciseEditor, programmingExerciseScaFeedback, programmingExercisesScaConfig } from '../../../support/artemis';
 import { admin, studentOne } from '../../../support/users';
@@ -44,8 +44,8 @@ describe('Static code analysis tests', () => {
      * Makes a submission, which passes all tests, but has some static code analysis issues.
      */
     function makeSuccessfulSubmissionWithScaErrors(exerciseID: number) {
-        programmingExerciseEditor.makeSubmissionAndVerifyResults(exerciseID, exercise.packageName!, scaSubmission, () => {
-            programmingExerciseEditor.getResultScore().contains(scaSubmission.expectedResult).and('be.visible').click();
+        programmingExerciseEditor.makeSubmissionAndVerifyResults(exerciseID, exercise.packageName!, javaScaSubmission, () => {
+            programmingExerciseEditor.getResultScore().contains(javaScaSubmission.expectedResult).and('be.visible').click();
             programmingExerciseScaFeedback.shouldShowPointChart();
             // We have to verify those static texts here. If we don't verify those messages the only difference between the SCA and normal programming exercise
             // tests is the score, which hardly verifies the SCA functionality

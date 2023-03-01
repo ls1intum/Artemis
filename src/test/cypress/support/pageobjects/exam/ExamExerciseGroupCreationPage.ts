@@ -59,7 +59,7 @@ export class ExamExerciseGroupCreationPage {
                     break;
                 case EXERCISE_TYPE.Programming:
                     courseManagementRequest
-                        .createProgrammingExercise({ exerciseGroup: groupResponse.body }, undefined, false, undefined, undefined, title, undefined, 'de.test')
+                        .createProgrammingExercise({ exerciseGroup: groupResponse.body }, undefined, false, undefined, undefined, title, undefined, undefined, 'de.test')
                         .then((response) => {
                             processResponse(response);
                         });
