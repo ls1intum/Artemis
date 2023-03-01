@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -71,6 +72,9 @@ public class SingleUserNotificationService {
             case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED -> createNotification(
                     ((TutorialGroupNotificationSubject) notificationSubject).tutorialGroup, notificationType, ((TutorialGroupNotificationSubject) notificationSubject).users,
                     ((TutorialGroupNotificationSubject) notificationSubject).responsibleUser);
+            // Conversation creation related
+            case CONVERSATION_CREATE_ONE_TO_ONE_CHAT -> createNotification(((ConversationCreationNotificationSubject) notificationSubject).conversation, notificationType,
+                    ((ConversationCreationNotificationSubject) notificationSubject).users, ((ConversationCreationNotificationSubject) notificationSubject).responsibleUser);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
         saveAndSend(singleUserNotification, notificationSubject);
@@ -291,6 +295,24 @@ public class SingleUserNotificationService {
      */
     public void notifyTutorAboutUnassignmentFromTutorialGroup(TutorialGroup tutorialGroup, User tutorToContact, User responsibleUser) {
         notifyRecipientWithNotificationType(new TutorialGroupNotificationSubject(tutorialGroup, Set.of(tutorToContact), responsibleUser), TUTORIAL_GROUP_UNASSIGNED, null, null);
+    }
+
+    /**
+     * Record to store conversation, users and responsible user in one notification subject.
+     */
+    public record ConversationCreationNotificationSubject(Conversation conversation, Set<User> users, User responsibleUser) {
+    }
+
+    /**
+     * Notify a student that they have new direct conversation.
+     *
+     * @param conversation    the conversation the student has been added for
+     * @param student         the student that has been registered for the tutorial group
+     * @param responsibleUser the user that has registered the student for the tutorial group
+     */
+    public void notifyUserAboutNewOneToOneChatCreation(Conversation conversation, User student, User responsibleUser) {
+        notifyRecipientWithNotificationType(new ConversationCreationNotificationSubject(conversation, Set.of(student), responsibleUser), CONVERSATION_CREATE_ONE_TO_ONE_CHAT, null,
+                null);
     }
 
     /**

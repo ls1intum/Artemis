@@ -5,6 +5,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
 public class NotificationTargetFactory {
@@ -30,6 +31,10 @@ public class NotificationTargetFactory {
     public static final String NEW_MESSAGE_TEXT = "new-message";
 
     public static final String MESSAGE_TEXT = "message";
+
+    public static final String CONVERSATION_TEXT = "conversation";
+
+    public static final String CONVERSATION_CREATION_TEXT = "conversation-creation";
 
     public static final String ATTACHMENT_UPDATED_TEXT = "attachmentUpdated";
 
@@ -242,6 +247,19 @@ public class NotificationTargetFactory {
     public static NotificationTarget createConversationMessageTarget(Post message, Long courseId) {
         var notificationTarget = new NotificationTarget(NEW_MESSAGE_TEXT, message.getId(), MESSAGE_TEXT, courseId, COURSES_TEXT);
         notificationTarget.setConversationId(message.getConversation().getId());
+        return notificationTarget;
+    }
+
+    /**
+     * Create a NotificationTarget for notifications related to a conversation creation.
+     *
+     * @param conversation that is related to the notification
+     * @param courseId     of the course to which the tutorial group belongs
+     * @return the created NotificationTarget
+     */
+    public static NotificationTarget createConversationCreationTarget(Conversation conversation, Long courseId) {
+        var notificationTarget = new NotificationTarget(CONVERSATION_CREATION_TEXT, conversation.getId(), CONVERSATION_TEXT, courseId, COURSES_TEXT);
+        notificationTarget.setConversationId(conversation.getId());
         return notificationTarget;
     }
 

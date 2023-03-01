@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.OneToOneChatService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.OneToOneChatAuthorizationService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 
@@ -39,14 +40,18 @@ public class OneToOneChatResource {
 
     private final ConversationService conversationService;
 
-    public OneToOneChatResource(OneToOneChatAuthorizationService oneToOneChatAuthorizationService, ConversationDTOService conversationDTOService, UserRepository userRepository,
-            CourseRepository courseRepository, OneToOneChatService oneToOneChatService, ConversationService conversationService) {
+    private final SingleUserNotificationService singleUserNotificationService;
+
+    public OneToOneChatResource(SingleUserNotificationService singleUserNotificationService, OneToOneChatAuthorizationService oneToOneChatAuthorizationService,
+            ConversationDTOService conversationDTOService, UserRepository userRepository, CourseRepository courseRepository, OneToOneChatService oneToOneChatService,
+            ConversationService conversationService) {
         this.oneToOneChatAuthorizationService = oneToOneChatAuthorizationService;
         this.conversationDTOService = conversationDTOService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.oneToOneChatService = oneToOneChatService;
         this.conversationService = conversationService;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -76,6 +81,8 @@ public class OneToOneChatResource {
         var userB = chatMembers.get(1);
 
         var oneToOneChat = oneToOneChatService.startOneToOneChat(course, userA, userB);
+        var userToBeNotified = userA.getLogin().equals(requestingUser.getLogin()) ? userB : userA;
+        singleUserNotificationService.notifyUserAboutNewOneToOneChatCreation(oneToOneChat, userToBeNotified, requestingUser);
         return ResponseEntity.created(new URI("/api/one-to-one-chats/" + oneToOneChat.getId())).body(conversationDTOService.convertOneToOneChatToDto(requestingUser, oneToOneChat));
     }
 }

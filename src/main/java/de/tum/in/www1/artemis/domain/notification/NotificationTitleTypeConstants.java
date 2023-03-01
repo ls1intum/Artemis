@@ -83,7 +83,9 @@ public class NotificationTitleTypeConstants {
 
     public static final String NEW_MESSAGE_TITLE = "New message";
 
-    public static final String MESSAGE_REPLY_IN_CONVERSATION = "New message reply in conversation";
+    public static final String MESSAGE_REPLY_IN_CONVERSATION_TITLE = "New message reply in conversation";
+
+    public static final String CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE = "New one-to-one chat";
 
     // bidirectional map
     private static final BiMap<NotificationType, String> NOTIFICATION_TYPE_AND_TITLE_MAP = new ImmutableBiMap.Builder<NotificationType, String>()
@@ -103,7 +105,8 @@ public class NotificationTitleTypeConstants {
             .put(TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE).put(TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_DELETED_TITLE)
             .put(TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_UPDATED_TITLE).put(TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE)
             .put(TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_ASSIGNED_TITLE).put(TUTORIAL_GROUP_UNASSIGNED, TUTORIAL_GROUP_UNASSIGNED_TITLE)
-            .put(CONVERSATION_NEW_MESSAGE, NEW_MESSAGE_TITLE).put(CONVERSATION_NEW_REPLY_MESSAGE, MESSAGE_REPLY_IN_CONVERSATION).build();
+            .put(CONVERSATION_NEW_MESSAGE, NEW_MESSAGE_TITLE).put(CONVERSATION_NEW_REPLY_MESSAGE, MESSAGE_REPLY_IN_CONVERSATION_TITLE)
+            .put(CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE).build();
 
     /**
      * Finds the corresponding NotificationType for the provided notification title

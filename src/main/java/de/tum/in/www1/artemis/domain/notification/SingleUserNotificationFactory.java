@@ -11,6 +11,8 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
@@ -191,6 +193,62 @@ public class SingleUserNotificationFactory {
                         "You have been unassigned from leading the tutorial group " + tutorialGroup.getTitle() + " by " + responsibleForAction.getName() + ".");
                 notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true, true));
             }
+            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+        }
+        return notification;
+    }
+
+    /**
+     * Creates an instance of SingleUserNotification for conversation creation.
+     *
+     * @param conversation         to which the notification is related
+     * @param notificationType     type of the notification that should be created
+     * @param users                who should be notified or are related to the notification
+     * @param responsibleForAction the user who is responsible for the action that triggered the notification
+     * @return an instance of SingleUserNotification
+     */
+    public static SingleUserNotification createNotification(Conversation conversation, NotificationType notificationType, Set<User> users, User responsibleForAction) {
+        var title = findCorrespondingNotificationTitleOrThrow(notificationType);
+        if (users.isEmpty()) {
+            throw new IllegalArgumentException("No users provided for notification");
+        }
+        SingleUserNotification notification;
+        switch (notificationType) {
+            case CONVERSATION_CREATE_ONE_TO_ONE_CHAT -> {
+                OneToOneChat oneToOneChat = (OneToOneChat) conversation;
+                var student = users.stream().findAny().orElseThrow();
+                notification = new SingleUserNotification(student, title, "You have new direct message from " + oneToOneChat.getCreator().getName());
+                notification.setTransientAndStringTarget(createConversationCreationTarget(oneToOneChat, oneToOneChat.getCourse().getId()));
+            }
+            // case CONVERSATION_CREATE_GROUP_CHAT -> {
+            // var student = users.stream().findAny().orElseThrow();
+            // notification = new SingleUserNotification(student, title,
+            // "You have been deregistered from the tutorial group " + tutorialGroup.getTitle() + " by " + responsibleForAction.getName() + ".");
+            // notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), false, true));
+            // }
+            // case CONVERSATION_ADD_USER_GROUP_CHAT -> {
+            // if (tutorialGroup.getTeachingAssistant() == null) {
+            // throw new IllegalArgumentException("The tutorial group " + tutorialGroup.getTitle() + " does not have a tutor to which a notification could be sent.");
+            // }
+            // var student = users.stream().findAny();
+            // var studentName = student.isPresent() ? student.get().getName() : "";
+            //
+            // notification = new SingleUserNotification(tutorialGroup.getTeachingAssistant(), title,
+            // "The student " + studentName + " has been registered to your tutorial group " + tutorialGroup.getTitle() + " by " + responsibleForAction.getName() + ".");
+            // notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true, true));
+            // }
+            // case CONVERSATION_ADD_USER_CHANNEL -> {
+            // if (tutorialGroup.getTeachingAssistant() == null) {
+            // throw new IllegalArgumentException("The tutorial group " + tutorialGroup.getTitle() + " does not have a tutor to which a notification could be sent.");
+            // }
+            //
+            // var student = users.stream().findAny();
+            // var studentName = student.isPresent() ? student.get().getName() : "";
+            //
+            // notification = new SingleUserNotification(tutorialGroup.getTeachingAssistant(), title, "The student " + studentName
+            // + " has been deregistered from your tutorial group " + tutorialGroup.getTitle() + " by " + responsibleForAction.getName() + ".");
+            // notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true, true));
+            // }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
         return notification;

@@ -45,4 +45,6 @@ export enum SettingId {
 
     // user notification setting group
     NOTIFICATION__USER_NOTIFICATION__CONVERSATION_MESSAGE = 'notification.user-notification.conversation-message',
+
+    NOTIFICATION__USER_NOTIFICATION__CONVERSATION_CREATION_ONE_TO_ONE = 'notification.user-notification.conversation-creation-one-to-one',
 }

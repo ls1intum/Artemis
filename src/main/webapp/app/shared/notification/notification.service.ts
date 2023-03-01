@@ -171,9 +171,27 @@ export class NotificationService {
                     this.jhiWebsocketService.subscribe(userTopic);
                     this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
                         this.addNotificationToObserver(notification);
+                        if (notification.target) {
+                            const target = JSON.parse(notification.target);
+                            const message = target.message;
+                            // Only add notification if it is not a conversation creation notification or if the user is already in the conversation
+                            if (message === 'conversation-creation') {
+                                const conversationId = target.conversation;
+                                const conversationTopic = '/topic/conversation/' + conversationId + '/notifications';
+                                this.subscribeToNewlyCreatedConversation(conversationTopic);
+                            }
+                        }
                     });
                 }
             }
+        });
+    }
+
+    private subscribeToNewlyCreatedConversation(conversationTopic: string): void {
+        this.subscribedTopics.push(conversationTopic);
+        this.jhiWebsocketService.subscribe(conversationTopic);
+        this.jhiWebsocketService.receive(conversationTopic).subscribe((notification: Notification) => {
+            this.addNotificationToObserver(notification);
         });
     }
 
