@@ -2,7 +2,7 @@ version: "2"
 services:
     jira:
         container_name: artemis_jira
-        image: ghcr.io/ls1intum/artemis-jira:9.4.0
+        image: ghcr.io/ls1intum/artemis-jira:9.4.3
         volumes:
           - artemis-jira:/var/atlassian/application-data/jira
         ports:
