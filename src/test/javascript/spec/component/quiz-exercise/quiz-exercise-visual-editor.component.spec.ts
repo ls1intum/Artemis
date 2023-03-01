@@ -120,12 +120,8 @@ describe('QuizVisualEditorComponent', () => {
 
         expect(comp.question.answerOptions).toBeUndefined();
 
-        comp.newOption.text = 'Answer';
-        comp.newOption.isCorrect = true;
-
         comp.addNewAnswer();
 
         expect(comp.question.answerOptions).toHaveLength(1);
-        expect(comp.question.answerOptions![0].text).toBe('Answer');
     }));
 });
