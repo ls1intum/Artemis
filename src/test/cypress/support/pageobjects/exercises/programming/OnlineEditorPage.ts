@@ -86,12 +86,21 @@ export class OnlineEditorPage {
     }
 
     /**
-     * Submits the currently saved files by clicking on the submit button.
+     * Submits the currently saved files by clicking on the submit button and expect GRADED result label.
      * @param exerciseID the ID of the exercise
      */
     submit(exerciseID: number) {
         getExercise(exerciseID).find('#submit_button').click();
         getExercise(exerciseID).find('#result-score-badge', { timeout: 200000 }).should('contain.text', 'GRADED').and('be.visible');
+    }
+
+    /**
+     * Submits the currently saved files by clicking on the submit button and expect PRACTICE result label.
+     * @param exerciseID the ID of the exercise
+     */
+    submitPractice(exerciseID: number) {
+        getExercise(exerciseID).find('#submit_button').click();
+        getExercise(exerciseID).find('#result-score-badge', { timeout: 200000 }).should('contain.text', 'PRACTICE').and('be.visible');
     }
 
     /**

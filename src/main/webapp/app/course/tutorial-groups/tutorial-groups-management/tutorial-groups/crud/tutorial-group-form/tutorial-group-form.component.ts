@@ -26,6 +26,7 @@ export interface TutorialGroupFormData {
     language?: Language;
     campus?: string;
     notificationText?: string; // Only in edit mode
+    updateTutorialGroupChannelName?: boolean; // Only in edit mode
     schedule?: ScheduleFormData;
 }
 
@@ -78,6 +79,8 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     @ViewChild('scheduleForm') scheduleFormComponent: ScheduleFormComponent;
     existingScheduleFormDate: ScheduleFormData | undefined;
 
+    existingTitle: string | undefined;
+
     // icons
     faSave = faSave;
 
@@ -118,6 +121,10 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
         return this.form.get('notificationText');
     }
 
+    get updateTutorialGroupChannelNameControl() {
+        return this.form.get('updateTutorialGroupChannelName');
+    }
+
     get isSubmitPossible() {
         if (this.configureSchedule) {
             // check all controls
@@ -133,6 +140,19 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
                 this.campusControl!.invalid
             );
         }
+    }
+
+    get showUpdateChannelNameCheckbox() {
+        if (!this.isEditMode) {
+            return false;
+        }
+        if (!this.existingTitle) {
+            return false;
+        }
+        if (!this.titleControl?.value) {
+            return false;
+        }
+        return this.existingTitle !== this.titleControl!.value;
     }
 
     get showScheduledChangedWarning() {
@@ -225,6 +245,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
 
         if (this.isEditMode) {
             this.form.addControl('notificationText', new FormControl(undefined, [Validators.maxLength(1000)]));
+            this.form.addControl('updateTutorialGroupChannelName', new FormControl(true));
         }
     }
 
@@ -234,6 +255,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
         }
         this.configureSchedule = !!formData.schedule;
         this.existingScheduleFormDate = formData.schedule;
+        this.existingTitle = formData.title;
         this.additionalInformation = formData.additionalInformation;
         this.form.patchValue(formData);
     }

@@ -120,10 +120,10 @@ public class Lti13Service {
     public String createUsernameFromLaunchRequest(OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
         String username;
 
-        if (!StringUtils.isEmpty(ltiIdToken.getPreferredUsername())) {
+        if (StringUtils.hasLength(ltiIdToken.getPreferredUsername())) {
             username = ltiIdToken.getPreferredUsername();
         }
-        else if (!StringUtils.isEmpty(ltiIdToken.getGivenName()) && !StringUtils.isEmpty(ltiIdToken.getFamilyName())) {
+        else if (StringUtils.hasLength(ltiIdToken.getGivenName()) && StringUtils.hasLength(ltiIdToken.getFamilyName())) {
             username = ltiIdToken.getGivenName() + ltiIdToken.getFamilyName();
         }
         else {
@@ -208,7 +208,7 @@ public class Lti13Service {
     }
 
     private String getScoresUrl(String lineItemUrl) {
-        if (StringUtils.isEmpty(lineItemUrl)) {
+        if (!StringUtils.hasLength(lineItemUrl)) {
             return null;
         }
         StringBuilder builder = new StringBuilder(lineItemUrl);
