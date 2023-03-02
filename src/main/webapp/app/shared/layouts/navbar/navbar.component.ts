@@ -311,6 +311,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         participant_scores: 'artemisApp.participantScores.pageTitle',
         course_statistics: 'statistics.course_statistics_title',
         grading_system: 'artemisApp.gradingSystem.title',
+        grading_key: 'artemisApp.gradingSystem.title',
         exercise_statistics: 'exercise-statistics.title',
         tutor_effort_statistics: 'artemisApp.textExercise.tutorEffortStatistics.title',
         text_cluster_statistics: 'artemisApp.textExercise.clusterStatistics.title',
@@ -532,6 +533,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'sa-question-statistic':
             case 'test-exam':
             case 'participate':
+            case 'overview':
                 break;
             case 'example-submissions':
                 // Hide example submission dashboard for non instructor users
