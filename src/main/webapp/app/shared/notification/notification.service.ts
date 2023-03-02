@@ -13,6 +13,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification.model';
 import {
+    CONVERSATION_CREATE_GROUP_CHAT_TITLE,
     CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE,
     NEW_ANNOUNCEMENT_POST_TITLE,
     NEW_COURSE_POST_TITLE,
@@ -175,8 +176,10 @@ export class NotificationService {
                     this.subscribedTopics.push(userTopic);
                     this.jhiWebsocketService.subscribe(userTopic);
                     this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
+                        console.log(user);
+                        console.log(notification);
                         // only add notification to observer if it is not a one-to-one conversation creation notification
-                        if (notification.title !== CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE) {
+                        if (notification.title !== CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE && user.id !== notification.author?.id) {
                             this.addNotificationToObserver(notification);
                         }
 
@@ -197,6 +200,10 @@ export class NotificationService {
         });
     }
 
+    private isUnderMessagesTabOfSpecificCourse(targetCourseId: string): boolean {
+        return this.router.url.includes(`courses/${targetCourseId}/messages`);
+    }
+
     private subscribeToNewlyCreatedConversation(conversationTopic: string): void {
         this.subscribedTopics.push(conversationTopic);
         this.jhiWebsocketService.subscribe(conversationTopic);
@@ -205,7 +212,7 @@ export class NotificationService {
                 const target = JSON.parse(notification.target);
                 const targetCourseId = target.course;
                 // Do not add if under messages tab of specific course
-                if (!this.router.url.includes(`courses/${targetCourseId}/messages`)) {
+                if (!this.isUnderMessagesTabOfSpecificCourse(targetCourseId)) {
                     this.addNotificationToObserver(notification);
                 }
             }
@@ -256,7 +263,7 @@ export class NotificationService {
                         const target = JSON.parse(notification.target);
                         const targetCourseId = target.course;
                         // Only add notification if it is not from the current user and the user is not already in the messages tab
-                        if (notification.author?.id !== this.accountService.userIdentity?.id && !this.router.url.includes(`courses/${targetCourseId}/messages`)) {
+                        if (notification.author?.id !== this.accountService.userIdentity?.id && !this.isUnderMessagesTabOfSpecificCourse(targetCourseId)) {
                             this.addNotificationToObserver(notification);
                         }
                     }

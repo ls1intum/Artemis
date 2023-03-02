@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.CONVERSATION_CREATE_GROUP_CHAT_TITLE;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE;
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -15,6 +18,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -73,7 +78,8 @@ public class SingleUserNotificationService {
                     ((TutorialGroupNotificationSubject) notificationSubject).tutorialGroup, notificationType, ((TutorialGroupNotificationSubject) notificationSubject).users,
                     ((TutorialGroupNotificationSubject) notificationSubject).responsibleUser);
             // Conversation creation related
-            case CONVERSATION_CREATE_ONE_TO_ONE_CHAT -> createNotification(((ConversationCreationNotificationSubject) notificationSubject).conversation, notificationType,
+            case CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_GROUP_CHAT -> createNotification(
+                    ((ConversationCreationNotificationSubject) notificationSubject).conversation, notificationType,
                     ((ConversationCreationNotificationSubject) notificationSubject).users, ((ConversationCreationNotificationSubject) notificationSubject).responsibleUser);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
@@ -310,9 +316,18 @@ public class SingleUserNotificationService {
      * @param student         the student that has been registered for the tutorial group
      * @param responsibleUser the user that has registered the student for the tutorial group
      */
-    public void notifyUserAboutNewOneToOneChatCreation(Conversation conversation, User student, User responsibleUser) {
-        notifyRecipientWithNotificationType(new ConversationCreationNotificationSubject(conversation, Set.of(student), responsibleUser), CONVERSATION_CREATE_ONE_TO_ONE_CHAT, null,
-                null);
+    public void notifyUserAboutNewChatCreation(Conversation conversation, User student, User responsibleUser) {
+        if (conversation instanceof OneToOneChat) {
+            notifyRecipientWithNotificationType(new ConversationCreationNotificationSubject(conversation, Set.of(student), responsibleUser), CONVERSATION_CREATE_ONE_TO_ONE_CHAT,
+                    null, null);
+        }
+        else if (conversation instanceof GroupChat) {
+            notifyRecipientWithNotificationType(new ConversationCreationNotificationSubject(conversation, Set.of(student), responsibleUser), CONVERSATION_CREATE_GROUP_CHAT, null,
+                    null);
+        }
+        else {
+            throw new IllegalArgumentException("Conversation is not a OneToOneChat or GroupChat");
+        }
     }
 
     /**
@@ -323,13 +338,24 @@ public class SingleUserNotificationService {
      * @param notificationSubject which information will be extracted to create the email
      */
     private void saveAndSend(SingleUserNotification notification, Object notificationSubject) {
-        singleUserNotificationRepository.save(notification);
+        // do not save notifications that are not relevant for the user
+        if (shouldNotificationBeSaved(notification.getTitle())) {
+            singleUserNotificationRepository.save(notification);
+        }
         // we only want to notify one individual user therefore we can check the settings and filter preemptively
         boolean isAllowedBySettings = notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient(), WEBAPP);
         if (isAllowedBySettings) {
             messagingTemplate.convertAndSend(notification.getTopic(), notification);
             prepareSingleUserNotificationEmail(notification, notificationSubject);
         }
+    }
+
+    private boolean shouldNotificationBeSaved(String notificationTitle) {
+        if (Objects.equals(notificationTitle, CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE)) {
+            return false;
+        }
+        else
+            return !Objects.equals(notificationTitle, CONVERSATION_CREATE_GROUP_CHAT_TITLE);
     }
 
     /**

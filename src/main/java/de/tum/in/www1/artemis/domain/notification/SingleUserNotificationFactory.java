@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
@@ -219,13 +220,16 @@ public class SingleUserNotificationFactory {
                 var student = users.stream().findAny().orElseThrow();
                 notification = new SingleUserNotification(student, title, "You have new direct message from " + oneToOneChat.getCreator().getName());
                 notification.setTransientAndStringTarget(createConversationCreationTarget(oneToOneChat, oneToOneChat.getCourse().getId()));
+                notification.setAuthor(responsibleForAction);
             }
-            // case CONVERSATION_CREATE_GROUP_CHAT -> {
-            // var student = users.stream().findAny().orElseThrow();
-            // notification = new SingleUserNotification(student, title,
-            // "You have been deregistered from the tutorial group " + tutorialGroup.getTitle() + " by " + responsibleForAction.getName() + ".");
-            // notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), false, true));
-            // }
+            case CONVERSATION_CREATE_GROUP_CHAT -> {
+                var student = users.stream().findAny().orElseThrow();
+                var groupChat = (GroupChat) conversation;
+                notification = new SingleUserNotification(student, title,
+                        "You have been added to new group chat " + groupChat.getName() + " by " + responsibleForAction.getName() + ".");
+                notification.setTransientAndStringTarget(createConversationCreationTarget(groupChat, groupChat.getCourse().getId()));
+                notification.setAuthor(responsibleForAction);
+            }
             // case CONVERSATION_ADD_USER_GROUP_CHAT -> {
             // if (tutorialGroup.getTeachingAssistant() == null) {
             // throw new IllegalArgumentException("The tutorial group " + tutorialGroup.getTitle() + " does not have a tutor to which a notification could be sent.");

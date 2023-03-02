@@ -82,7 +82,9 @@ public class OneToOneChatResource {
 
         var oneToOneChat = oneToOneChatService.startOneToOneChat(course, userA, userB);
         var userToBeNotified = userA.getLogin().equals(requestingUser.getLogin()) ? userB : userA;
-        singleUserNotificationService.notifyUserAboutNewOneToOneChatCreation(oneToOneChat, userToBeNotified, requestingUser);
+        singleUserNotificationService.notifyUserAboutNewChatCreation(oneToOneChat, userToBeNotified, requestingUser);
+        // also send notification to the author in order for the author to subscribe to the new chat (this notification won't be saved and shown to author)
+        singleUserNotificationService.notifyUserAboutNewChatCreation(oneToOneChat, requestingUser, requestingUser);
         return ResponseEntity.created(new URI("/api/one-to-one-chats/" + oneToOneChat.getId())).body(conversationDTOService.convertOneToOneChatToDto(requestingUser, oneToOneChat));
     }
 }

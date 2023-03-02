@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.GroupChatService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.GroupChatAuthorizationService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
@@ -47,8 +48,11 @@ public class GroupChatResource {
 
     private final ConversationDTOService conversationDTOService;
 
-    public GroupChatResource(UserRepository userRepository, CourseRepository courseRepository, GroupChatAuthorizationService groupChatAuthorizationService,
-            ConversationService conversationService, GroupChatService groupChatService, GroupChatRepository groupChatRepository, ConversationDTOService conversationDTOService) {
+    private final SingleUserNotificationService singleUserNotificationService;
+
+    public GroupChatResource(SingleUserNotificationService singleUserNotificationService, UserRepository userRepository, CourseRepository courseRepository,
+            GroupChatAuthorizationService groupChatAuthorizationService, ConversationService conversationService, GroupChatService groupChatService,
+            GroupChatRepository groupChatRepository, ConversationDTOService conversationDTOService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.groupChatAuthorizationService = groupChatAuthorizationService;
@@ -56,6 +60,7 @@ public class GroupChatResource {
         this.groupChatService = groupChatService;
         this.groupChatRepository = groupChatRepository;
         this.conversationDTOService = conversationDTOService;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -83,6 +88,7 @@ public class GroupChatResource {
         }
 
         var groupChat = groupChatService.startGroupChat(course, chatMembers);
+        chatMembers.forEach(user -> singleUserNotificationService.notifyUserAboutNewChatCreation(groupChat, user, requestingUser));
 
         conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, groupChat, chatMembers);
 
