@@ -13,7 +13,7 @@ import {
     textExerciseEditor,
 } from '../../artemis';
 import { Interception } from 'cypress/types/net-stubbing';
-import { CypressCredentials } from '../../../support/users';
+import { CypressCredentials } from '../../users';
 import { ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEditorPage';
 
 /**
@@ -22,7 +22,9 @@ import { ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEd
 export class ExamParticipation {
     /**
      * Makes a submission in a provided exercise
-     * @param examTitle the exam title to confirm the deletion
+     * @param exerciseID the id of the exercise
+     * @param exerciseType the type of the exercise
+     * @param additionalData additional data such as the expected score
      */
     makeSubmission(exerciseID: number, exerciseType: EXERCISE_TYPE, additionalData?: AdditionalData) {
         switch (exerciseType) {
@@ -36,7 +38,7 @@ export class ExamParticipation {
                 this.makeQuizExerciseSubmission(exerciseID, additionalData!.quizExerciseID!);
                 break;
             case EXERCISE_TYPE.Programming:
-                this.makeProgrammingExerciseSubmission(exerciseID, additionalData!.submission!);
+                this.makeProgrammingExerciseSubmission(exerciseID, additionalData!.submission!, additionalData!.practiceMode);
                 break;
         }
     }
@@ -48,13 +50,17 @@ export class ExamParticipation {
         cy.wait(1000);
     }
 
-    private makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission) {
+    private makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, practiceMode = false) {
         programmingExerciseEditor.toggleCompressFileTree(exerciseID);
         programmingExerciseEditor.deleteFile(exerciseID, 'Client.java');
         programmingExerciseEditor.deleteFile(exerciseID, 'BubbleSort.java');
         programmingExerciseEditor.deleteFile(exerciseID, 'MergeSort.java');
         programmingExerciseEditor.typeSubmission(exerciseID, submission, 'de.test');
-        programmingExerciseEditor.submit(exerciseID);
+        if (practiceMode) {
+            programmingExerciseEditor.submitPractice(exerciseID);
+        } else {
+            programmingExerciseEditor.submit(exerciseID);
+        }
         programmingExerciseEditor.getResultScoreFromExercise(exerciseID).contains(submission.expectedResult).and('be.visible');
     }
 
@@ -117,6 +123,7 @@ export class AdditionalData {
     submission?: ProgrammingExerciseSubmission;
     expectedScore?: number;
     textFixture?: string;
+    practiceMode?: boolean;
 }
 
 export type Exercise = {
