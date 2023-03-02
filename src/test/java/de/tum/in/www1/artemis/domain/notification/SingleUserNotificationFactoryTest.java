@@ -70,6 +70,8 @@ class SingleUserNotificationFactoryTest {
 
     private String expectedText;
 
+    private String expectedPlaceholderValues;
+
     private NotificationTarget expectedTransientTarget;
 
     private NotificationPriority expectedPriority;
@@ -197,6 +199,8 @@ class SingleUserNotificationFactoryTest {
     private void checkNotification() {
         assertThat(createdNotification.getTitle()).as("Created notification title should be equal to the expected one").isEqualTo(expectedTitle);
         assertThat(createdNotification.getText()).as("Created notification text should be equal to the expected one").isEqualTo(expectedText);
+        assertThat(createdNotification.getTextIsPlaceholder()).as("Created notification placeholder flag should match expected one").isEqualTo(true);
+        assertThat(createdNotification.getPlaceholderValues()).as("Created notification placeholder values should match expected one").isEqualTo(expectedPlaceholderValues);
         assertThat(createdNotification.getTarget()).as("Created notification target should be equal to the expected one").isEqualTo(expectedTransientTarget.toJsonString());
         assertThat(createdNotification.getPriority()).as("Created notification priority should be equal to the expected one").isEqualTo(expectedPriority);
         assertThat(createdNotification.getAuthor()).as("Created notification author should be equal to the expected one").isEqualTo(user);
@@ -210,7 +214,7 @@ class SingleUserNotificationFactoryTest {
     void createNotification_withNotificationType_NewReplyForExercisePost() {
         notificationType = NEW_REPLY_FOR_EXERCISE_POST;
         expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
-        expectedText = POST_NOTIFICATION_TEXT;
+        expectedText = NEW_REPLY;
         expectedPriority = MEDIUM;
         expectedTransientTarget = createExercisePostTarget(post, course);
         createAndCheckPostNotification();
@@ -224,7 +228,7 @@ class SingleUserNotificationFactoryTest {
     void createNotification_withNotificationType_NewReplyForLecturePost() {
         notificationType = NEW_REPLY_FOR_LECTURE_POST;
         expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
-        expectedText = POST_NOTIFICATION_TEXT;
+        expectedText = NEW_REPLY;
         expectedPriority = MEDIUM;
         expectedTransientTarget = createLecturePostTarget(post, course);
         createAndCheckPostNotification();
@@ -238,7 +242,7 @@ class SingleUserNotificationFactoryTest {
     void createNotification_withNotificationType_NewReplyForCoursePost() {
         notificationType = NEW_REPLY_FOR_COURSE_POST;
         expectedTitle = NEW_REPLY_FOR_COURSE_POST_TITLE;
-        expectedText = POST_NOTIFICATION_TEXT;
+        expectedText = NEW_REPLY;
         expectedPriority = MEDIUM;
         expectedTransientTarget = createCoursePostTarget(post, course);
         createAndCheckPostNotification();
@@ -254,7 +258,8 @@ class SingleUserNotificationFactoryTest {
     void createNotification_withNotificationType_FileSubmitSuccessful() {
         notificationType = FILE_SUBMISSION_SUCCESSFUL;
         expectedTitle = FILE_SUBMISSION_SUCCESSFUL_TITLE;
-        expectedText = "Your file for the exercise \"" + exercise.getTitle() + "\" was successfully submitted.";
+        expectedText = FILE_SUBMISSION_SUCCESSFUL_TEXT;
+        expectedPlaceholderValues = "[\"" + exercise.getTitle() + "\"]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createExerciseTarget(exercise, FILE_SUBMISSION_SUCCESSFUL_TITLE);
         createAndCheckExerciseNotification();
@@ -268,7 +273,8 @@ class SingleUserNotificationFactoryTest {
     void createNotification_withNotificationType_() {
         notificationType = EXERCISE_SUBMISSION_ASSESSED;
         expectedTitle = EXERCISE_SUBMISSION_ASSESSED_TITLE;
-        expectedText = "Your submission for the " + exercise.getExerciseType().getExerciseTypeAsReadableString() + " exercise \"" + exercise.getTitle() + "\" has been assessed.";
+        expectedText = EXERCISE_SUBMISSION_ASSESSED_TEXT;
+        expectedPlaceholderValues = "[\"" + exercise.getExerciseType().getExerciseTypeAsReadableString() + "\",\"" + exercise.getTitle() + "\"]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createExerciseTarget(exercise, EXERCISE_SUBMISSION_ASSESSED_TITLE);
         createAndCheckExerciseNotification();
@@ -284,8 +290,8 @@ class SingleUserNotificationFactoryTest {
     void createNotification_withNotificationType_NewPlagiarismCaseStudent() {
         notificationType = NEW_PLAGIARISM_CASE_STUDENT;
         expectedTitle = NEW_PLAGIARISM_CASE_STUDENT_TITLE;
-        expectedText = "New plagiarism case concerning the " + plagiarismCase.getExercise().getExerciseType().toString().toLowerCase() + " exercise \""
-                + plagiarismCase.getExercise().getTitle() + "\".";
+        expectedText = NEW_PLAGIARISM_CASE_STUDENT_TEXT;
+        expectedPlaceholderValues = "[\"" + plagiarismCase.getExercise().getExerciseType().toString().toLowerCase() + "\",\"" + plagiarismCase.getExercise().getTitle() + "\"]";
         expectedPriority = HIGH;
         expectedTransientTarget = createPlagiarismCaseTarget(plagiarismCase.getId(), COURSE_ID);
         createAndCheckPlagiarismNotification();
@@ -299,8 +305,8 @@ class SingleUserNotificationFactoryTest {
     void createNotification_withNotificationType_PlagiarismCaseVerdictStudent() {
         notificationType = PLAGIARISM_CASE_VERDICT_STUDENT;
         expectedTitle = PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;
-        expectedText = "Your plagiarism case concerning the " + plagiarismCase.getExercise().getExerciseType().toString().toLowerCase() + " exercise \""
-                + plagiarismCase.getExercise().getTitle() + "\"" + " has a verdict.";
+        expectedText = PLAGIARISM_CASE_VERDICT_STUDENT_TEXT;
+        expectedPlaceholderValues = "[\"" + plagiarismCase.getExercise().getExerciseType().toString().toLowerCase() + "\",\"" + plagiarismCase.getExercise().getTitle() + "\"]";
         expectedPriority = HIGH;
         expectedTransientTarget = createPlagiarismCaseTarget(plagiarismCase.getId(), COURSE_ID);
         createAndCheckPlagiarismNotification();
@@ -309,11 +315,12 @@ class SingleUserNotificationFactoryTest {
     /// Test for Notifications based on Tutorial Groups
     @ParameterizedTest
     @MethodSource("provideTutorialGroupTestParameters")
-    void createNotification_withNotificationType_TutorialGroupNotifications(NotificationType notificationType, String expectedTitle, String expectedText, User responsibleUser,
-            Boolean isManagement, Boolean isDetailPage) {
+    void createNotification_withNotificationType_TutorialGroupNotifications(NotificationType notificationType, String expectedTitle, String expectedText,
+        String expectedPlaceholderValues, User responsibleUser, Boolean isManagement, Boolean isDetailPage) {
         this.notificationType = notificationType;
         this.expectedTitle = expectedTitle;
         this.expectedText = expectedText;
+        this.expectedPlaceholderValues = expectedPlaceholderValues;
         expectedPriority = MEDIUM;
         expectedTransientTarget = createTutorialGroupTarget(tutorialGroup, COURSE_ID, isManagement, isDetailPage);
         createAndCheckTutorialGroupNotification(responsibleUser);
@@ -322,24 +329,20 @@ class SingleUserNotificationFactoryTest {
     private static Stream<Arguments> provideTutorialGroupTestParameters() {
         return Stream.of(
                 Arguments.of(TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE,
-                        "You have been registered to the tutorial group " + tutorialGroup.getTitle() + " by " + teachingAssistant.getName() + ".", teachingAssistant, false, true),
+                        TUTORIAL_GROUP_REGISTRATION_STUDENT_TEXT, "[\"" + tutorialGroup.getTitle() + "\",\"" + teachingAssistant.getName() + "\"]", teachingAssistant, false, true),
                 Arguments.of(TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE,
-                        "You have been deregistered from the tutorial group " + tutorialGroup.getTitle() + " by " + teachingAssistant.getName() + ".", teachingAssistant, false,
+                        TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TEXT, "[\"" + tutorialGroup.getTitle() + "\",\"" + teachingAssistant.getName() + "\"]", teachingAssistant, false,
                         true),
                 Arguments.of(TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE,
-                        "The student " + tutorialGroupStudent.getName() + " has been registered to your tutorial group " + tutorialGroup.getTitle() + " by " + instructor.getName()
-                                + ".",
-                        instructor, true, true),
+                        TUTORIAL_GROUP_REGISTRATION_TUTOR_TEXT, "[\"" + tutorialGroupStudent.getName() + "\",\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
                 Arguments.of(TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE,
-                        "The student " + tutorialGroupStudent.getName() + " has been deregistered from your tutorial group " + tutorialGroup.getTitle() + " by "
-                                + instructor.getName() + ".",
-                        instructor, true, true),
+                        TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TEXT, "[\"" + tutorialGroupStudent.getName() + "\",\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
                 Arguments.of(TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE,
-                        "1 students have been registered to your tutorial group " + tutorialGroup.getTitle() + " by " + instructor.getName() + ".", instructor, true, true),
+                        TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TEXT, "[\"" + 1 + "\",\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
                 Arguments.of(TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_ASSIGNED_TITLE,
-                        "You have been assigned to lead the tutorial group " + tutorialGroup.getTitle() + " by " + instructor.getName() + ".", instructor, true, true),
+                        TUTORIAL_GROUP_ASSIGNED_TEXT, "[\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
                 Arguments.of(TUTORIAL_GROUP_UNASSIGNED, TUTORIAL_GROUP_UNASSIGNED_TITLE,
-                        "You have been unassigned from leading the tutorial group " + tutorialGroup.getTitle() + " by " + instructor.getName() + ".", instructor, true, true));
+                        TUTORIAL_GROUP_UNASSIGNED_TEXT, "[\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true));
     }
 
 }
