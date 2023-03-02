@@ -118,14 +118,17 @@ public abstract class Notification extends DomainObject {
      *                                   We convert it to a json string, so we can store it in the database
      */
     public void setPlaceholderValues(String[] notificationTextValues) {
-        String jsonString = null;
-        try {
-            jsonString = new ObjectMapper().writeValueAsString(notificationTextValues);
+        if (notificationTextValues  == null || notificationTextValues.length == 0) {
+            this.placeholderValues = null;
+        } else {
+            String jsonString = null;
+            try {
+                jsonString = new ObjectMapper().writeValueAsString(notificationTextValues);
+            } catch (JsonProcessingException exception) {
+                System.err.println(exception.getMessage());
+            }
+            this.placeholderValues = jsonString;
         }
-        catch (JsonProcessingException exception) {
-            System.err.println(exception.getMessage());
-        }
-        this.placeholderValues = jsonString;
     }
 
     public ZonedDateTime getNotificationDate() {
