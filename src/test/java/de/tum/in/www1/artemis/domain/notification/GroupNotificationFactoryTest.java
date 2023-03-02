@@ -10,7 +10,6 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFacto
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 

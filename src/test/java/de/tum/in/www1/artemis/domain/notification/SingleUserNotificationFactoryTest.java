@@ -316,7 +316,7 @@ class SingleUserNotificationFactoryTest {
     @ParameterizedTest
     @MethodSource("provideTutorialGroupTestParameters")
     void createNotification_withNotificationType_TutorialGroupNotifications(NotificationType notificationType, String expectedTitle, String expectedText,
-        String expectedPlaceholderValues, User responsibleUser, Boolean isManagement, Boolean isDetailPage) {
+            String expectedPlaceholderValues, User responsibleUser, Boolean isManagement, Boolean isDetailPage) {
         this.notificationType = notificationType;
         this.expectedTitle = expectedTitle;
         this.expectedText = expectedText;
@@ -328,21 +328,20 @@ class SingleUserNotificationFactoryTest {
 
     private static Stream<Arguments> provideTutorialGroupTestParameters() {
         return Stream.of(
-                Arguments.of(TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE,
-                        TUTORIAL_GROUP_REGISTRATION_STUDENT_TEXT, "[\"" + tutorialGroup.getTitle() + "\",\"" + teachingAssistant.getName() + "\"]", teachingAssistant, false, true),
-                Arguments.of(TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE,
-                        TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TEXT, "[\"" + tutorialGroup.getTitle() + "\",\"" + teachingAssistant.getName() + "\"]", teachingAssistant, false,
-                        true),
-                Arguments.of(TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE,
-                        TUTORIAL_GROUP_REGISTRATION_TUTOR_TEXT, "[\"" + tutorialGroupStudent.getName() + "\",\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
-                Arguments.of(TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE,
-                        TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TEXT, "[\"" + tutorialGroupStudent.getName() + "\",\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
-                Arguments.of(TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE,
-                        TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TEXT, "[\"" + 1 + "\",\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
-                Arguments.of(TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_ASSIGNED_TITLE,
-                        TUTORIAL_GROUP_ASSIGNED_TEXT, "[\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
-                Arguments.of(TUTORIAL_GROUP_UNASSIGNED, TUTORIAL_GROUP_UNASSIGNED_TITLE,
-                        TUTORIAL_GROUP_UNASSIGNED_TEXT, "[\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true));
+                Arguments.of(TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE, TUTORIAL_GROUP_REGISTRATION_STUDENT_TEXT,
+                        "[\"" + tutorialGroup.getTitle() + "\",\"" + teachingAssistant.getName() + "\"]", teachingAssistant, false, true),
+                Arguments.of(TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE, TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TEXT,
+                        "[\"" + tutorialGroup.getTitle() + "\",\"" + teachingAssistant.getName() + "\"]", teachingAssistant, false, true),
+                Arguments.of(TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE, TUTORIAL_GROUP_REGISTRATION_TUTOR_TEXT,
+                        "[\"" + tutorialGroupStudent.getName() + "\",\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
+                Arguments.of(TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TEXT,
+                        "[\"" + tutorialGroupStudent.getName() + "\",\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
+                Arguments.of(TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE, TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TEXT,
+                        "[\"" + 1 + "\",\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
+                Arguments.of(TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_ASSIGNED_TITLE, TUTORIAL_GROUP_ASSIGNED_TEXT,
+                        "[\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
+                Arguments.of(TUTORIAL_GROUP_UNASSIGNED, TUTORIAL_GROUP_UNASSIGNED_TITLE, TUTORIAL_GROUP_UNASSIGNED_TEXT,
+                        "[\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true));
     }
 
 }

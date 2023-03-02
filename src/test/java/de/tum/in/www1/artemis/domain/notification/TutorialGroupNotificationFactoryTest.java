@@ -50,15 +50,15 @@ class TutorialGroupNotificationFactoryTest {
     @Test
     void createNotification_TutorialGroupDeleted() {
         var notificationFromFactory = TutorialGroupNotificationFactory.createTutorialGroupNotification(tutorialGroup, NotificationType.TUTORIAL_GROUP_DELETED);
-        checkNotification(notificationFromFactory, tutorialGroup, TUTORIAL_GROUP_DELETED_TITLE, TUTORIAL_GROUP_DELETED_TEXT,
-                true, "[\"" + TUTORIAL_GROUP_TITLE + "\"]", NotificationType.TUTORIAL_GROUP_DELETED, createTutorialGroupTarget(tutorialGroup, COURSE_ID, false, false));
+        checkNotification(notificationFromFactory, tutorialGroup, TUTORIAL_GROUP_DELETED_TITLE, TUTORIAL_GROUP_DELETED_TEXT, true, "[\"" + TUTORIAL_GROUP_TITLE + "\"]",
+                NotificationType.TUTORIAL_GROUP_DELETED, createTutorialGroupTarget(tutorialGroup, COURSE_ID, false, false));
     }
 
     @Test
     void createNotification_TutorialGroupUpdated() {
         var notificationFromFactory = TutorialGroupNotificationFactory.createTutorialGroupNotification(tutorialGroup, NotificationType.TUTORIAL_GROUP_UPDATED);
-        checkNotification(notificationFromFactory, tutorialGroup, TUTORIAL_GROUP_UPDATED_TITLE, TUTORIAL_GROUP_UPDATED_TEXT,
-                true, "[\"" + tutorialGroup.getTitle() + "\"]", NotificationType.TUTORIAL_GROUP_UPDATED, createTutorialGroupTarget(tutorialGroup, COURSE_ID, false, true));
+        checkNotification(notificationFromFactory, tutorialGroup, TUTORIAL_GROUP_UPDATED_TITLE, TUTORIAL_GROUP_UPDATED_TEXT, true, "[\"" + tutorialGroup.getTitle() + "\"]",
+                NotificationType.TUTORIAL_GROUP_UPDATED, createTutorialGroupTarget(tutorialGroup, COURSE_ID, false, true));
     }
 
     private void checkNotification(TutorialGroupNotification tutorialGroupNotification, TutorialGroup expectedTutorialGroup, String expectedTitle, String expectedText,
