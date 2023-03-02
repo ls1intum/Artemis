@@ -58,7 +58,6 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.RepositoryCheckoutPath;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import tech.jhipster.config.JHipsterConstants;
 
 @Service
 @Profile("bamboo")
@@ -172,9 +171,9 @@ public class BambooBuildPlanService {
          */
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
 
-        // Do not run the builds in extra docker containers if the dev-profile is active
+        // TODO: maybe add a bamboo profile flag to not run the builds in extra docker containers? instead of binding this to the dev profile
         // Xcode has no dockerfile, it only runs on agents (e.g. sb2-agent-0050562fddde)
-        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && !ProjectType.XCODE.equals(projectType)) {
+        if (!ProjectType.XCODE.equals(projectType)) {
             defaultJob.dockerConfiguration(dockerConfigurationFor(programmingLanguage, Optional.ofNullable(projectType)));
         }
         switch (programmingLanguage) {
