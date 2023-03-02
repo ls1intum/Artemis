@@ -28,6 +28,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Volume;
@@ -82,9 +83,8 @@ public class LocalCIBuildJobService {
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
-                // by
-                // the creation of a file "results_extracted.txt" in the container's root directory.
-                .withCmd("sh", "-c", "while [ ! -f /results_extracted.txt ]; do sleep 0.5; done")
+                // by the creation of a file "stop_container.txt" in the container's root directory.
+                .withCmd("sh", "-c", "while [ ! -f /stop_container.txt ]; do sleep 0.5; done")
                 // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
                 // "docker exec -it <container-id> /bin/bash".
                 .exec();
@@ -95,7 +95,8 @@ public class LocalCIBuildJobService {
         dockerClient.startContainerCmd(container.getId()).exec();
 
         // The "sh script.sh" command specified here is run inside the container as an additional process. This command runs in the background, independent of the container's
-        // main process. The execution command can run concurrently with the main process.
+        // main process. The execution command can run concurrently with the main process. This setup with the ExecCreateCmdResponse gives us the ability to wait in code until the
+        // command has finished before trying to extract the results.
         ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(container.getId()).withAttachStdout(true).withAttachStderr(true).withCmd("sh", "script.sh").exec();
 
         // Start the command and wait for it to complete.
@@ -141,7 +142,9 @@ public class LocalCIBuildJobService {
             testVC = new LocalCIBuildResultNotificationDTO.LocalCIVCSDTO(testRepoCommitHash, TEST_REPO_NAME, "main", List.of());
         }
         catch (IOException e) {
-            throw new LocalCIException("Could not read commit hash from .git folder", e);
+            // Could not read commit hash from .git folder. Stop the container and return a build results that indicates that the build failed.
+            stopContainer(dockerClient, container.getId());
+            return constructBuildResult(List.of(), List.of(), buildStartedDate, buildCompletedDate, "build-failed", false, null, null);
         }
 
         // When Gradle is used as the build tool, the test results are located in /repositories/test-repository/build/test-resuls/test/TEST-*.xml.
@@ -158,12 +161,19 @@ public class LocalCIBuildJobService {
         }
 
         // Get an input stream of the test result files.
-        TarArchiveInputStream testResultsTarInputStream = new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(container.getId(), testResultsPath).exec());
+        TarArchiveInputStream testResultsTarInputStream;
+        try {
+            testResultsTarInputStream = new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(container.getId(), testResultsPath).exec());
+        }
+        catch (NotFoundException e) {
+            // If the test results are not found, this means that something went wrong during the build and testing of the submission.
+            // Stop the container and return a build results that indicates that the build failed.
+            stopContainer(dockerClient, container.getId());
 
-        // Create a file "results_extracted.txt" in the root directory of the container to indicate that the test results have been extracted. The container's main process is
-        // waiting for this file to appear and then stops the main process, thus stopping and removing the container.
-        ExecCreateCmdResponse createResultsExtractedFileCmdResponse = dockerClient.execCreateCmd(container.getId()).withCmd("touch", "results_extracted.txt").exec();
-        dockerClient.execStartCmd(createResultsExtractedFileCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
+            return constructBuildResult(List.of(), List.of(), buildStartedDate, buildCompletedDate, "build-failed", false, assignmentVC, testVC);
+        }
+
+        stopContainer(dockerClient, container.getId());
 
         LocalCIBuildResultNotificationDTO buildResult;
         try {
@@ -176,6 +186,14 @@ public class LocalCIBuildJobService {
         log.info("Building and testing submission for repository {} took {}", participation.getRepositoryUrl(), TimeLogUtil.formatDurationFrom(timeNanoStart));
 
         return buildResult;
+    }
+
+    private void stopContainer(DockerClient dockerClient, String containerId) {
+        // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
+        // for some other reason.
+        // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
+        ExecCreateCmdResponse createResultsExtractedFileCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("touch", "stop_container.txt").exec();
+        dockerClient.execStartCmd(createResultsExtractedFileCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
     }
 
     private LocalCIBuildResultNotificationDTO parseTestResults(TarArchiveInputStream testResultsTarInputStream, ProjectType projectType, ZonedDateTime buildStartedDate,
@@ -252,10 +270,16 @@ public class LocalCIBuildJobService {
             }
         }
 
+        return constructBuildResult(failedTests, successfulTests, buildStartedDate, buildCompletedDate, "Some description", isBuildSuccessful, assignmentVC, testVC);
+    }
+
+    private LocalCIBuildResultNotificationDTO constructBuildResult(List<LocalCIBuildResultNotificationDTO.LocalCITestJobDTO> failedTests,
+            List<LocalCIBuildResultNotificationDTO.LocalCITestJobDTO> successfulTests, ZonedDateTime buildStartedDate, ZonedDateTime buildCompletedDate, String description,
+            boolean isBuildSuccessful, LocalCIBuildResultNotificationDTO.LocalCIVCSDTO assignmentVC, LocalCIBuildResultNotificationDTO.LocalCIVCSDTO testVC) {
         LocalCIBuildResultNotificationDTO.LocalCIJobDTO job = new LocalCIBuildResultNotificationDTO.LocalCIJobDTO(1, failedTests, successfulTests, List.of(), List.of(), List.of());
 
         LocalCIBuildResultNotificationDTO.LocalCITestSummaryDTO testSummary = new LocalCIBuildResultNotificationDTO.LocalCITestSummaryDTO(
-                (int) ChronoUnit.SECONDS.between(buildStartedDate, buildCompletedDate), 0, failedTests.size(), 0, 0, successfulTests.size(), "some description", 0, 0,
+                (int) ChronoUnit.SECONDS.between(buildStartedDate, buildCompletedDate), 0, failedTests.size(), 0, 0, successfulTests.size(), description, 0, 0,
                 failedTests.size() + successfulTests.size(), 0);
 
         LocalCIBuildResultNotificationDTO.LocalCIBuildDTO build = new LocalCIBuildResultNotificationDTO.LocalCIBuildDTO(false, 0, "Some reason for this build", buildCompletedDate,

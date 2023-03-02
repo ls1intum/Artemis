@@ -138,6 +138,12 @@ public class LocalCIBuildResultNotificationDTO extends AbstractBuildResultNotifi
         return repo.map(LocalCIVCSDTO::id);
     }
 
+    @JsonIgnore
+    @Override
+    public String getDescription() {
+        return getBuild().testSummary().description;
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record LocalCIBuildDTO(boolean artifact, int number, String reason, ZonedDateTime buildCompletedDate, boolean successful, LocalCITestSummaryDTO testSummary,

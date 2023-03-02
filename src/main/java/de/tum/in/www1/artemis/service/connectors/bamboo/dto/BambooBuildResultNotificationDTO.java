@@ -136,6 +136,12 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
         return repo.map(BambooVCSDTO::id);
     }
 
+    @JsonIgnore
+    @Override
+    public String getDescription() {
+        return getBuild().testSummary().description;
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record BambooBuildDTO(boolean artifact, int number, String reason, ZonedDateTime buildCompletedDate, boolean successful, BambooTestSummaryDTO testSummary,
