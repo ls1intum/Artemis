@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -20,7 +19,6 @@ import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
-import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -30,21 +28,11 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 @Profile("localci")
 public class LocalCIService extends AbstractContinuousIntegrationService {
 
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCBasePath;
-
     private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
-    private final UrlService urlService;
-
-    private final LocalCIExecutorService localCIExecutorService;
-
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, UrlService urlService,
-            LocalCIExecutorService localCIExecutorService) {
+            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
-        this.urlService = urlService;
-        this.localCIExecutorService = localCIExecutorService;
     }
 
     @Override
@@ -65,8 +53,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation, String branch) {
-        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
-        // TODO: Set publishBuildPlanUrl to false for all programming exercises created for local VC and local CI.
+        // Empty implementation. Not needed for local CI.
     }
 
     @Override
@@ -159,10 +146,8 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     @Override
     public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
-        final var cleanPlanName = getCleanPlanName(targetPlanName);
-        final var targetPlanKey = targetProjectKey + "-" + cleanPlanName;
-        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
-        return targetPlanKey;
+        final String cleanPlanName = getCleanPlanName(targetPlanName);
+        return targetProjectKey + "-" + cleanPlanName;
     }
 
     @Override

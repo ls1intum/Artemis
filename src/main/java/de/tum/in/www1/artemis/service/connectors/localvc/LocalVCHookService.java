@@ -225,8 +225,6 @@ public class LocalVCHookService {
             submission.getParticipation().setSubmissions(null);
             programmingMessagingService.notifyUserAboutSubmission(submission);
 
-            // Programming exercise was removed from the participation by the notifyUserAboutSubmission method.
-            participation.setProgrammingExercise(exercise);
             // Trigger the build for the new submission on the local CI system.
             continuousIntegrationTriggerService.ifPresent(service -> service.triggerBuild(participation));
         }

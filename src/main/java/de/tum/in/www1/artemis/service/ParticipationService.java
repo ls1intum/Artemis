@@ -240,16 +240,13 @@ public class ParticipationService {
     private StudentParticipation startProgrammingParticipation(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate) {
         // Step 1b) configure the student repository (e.g. access right, etc.)
         participation = configureRepository(exercise, participation);
-        // TODO: Remove when local CI is implemented.
-        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
-            // Step 2a) create the build plan (based on the BASE build plan)
-            participation = copyBuildPlan(participation);
-            // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
-            participation = configureBuildPlan(participation);
-            // Step 2c) we might need to perform an empty commit (as a workaround, depending on the CI system) here, because it should not trigger a new programming submission
-            // (when the web hook was already initialized, see below)
-            continuousIntegrationService.get().performEmptySetupCommit(participation);
-        }
+        // Step 2a) create the build plan (based on the BASE build plan)
+        participation = copyBuildPlan(participation);
+        // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
+        participation = configureBuildPlan(participation);
+        // Step 2c) we might need to perform an empty commit (as a workaround, depending on the CI system) here, because it should not trigger a new programming submission
+        // (when the web hook was already initialized, see below)
+        continuousIntegrationService.get().performEmptySetupCommit(participation);
         // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
         // Step 3) configure the web hook of the student repository
         participation = configureRepositoryWebHook(participation);

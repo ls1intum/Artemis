@@ -50,12 +50,15 @@ public class ProgrammingMessagingService {
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
-            // no need to send all exercise details here
+            // No need to send all exercise details here. Remove the exercise from the participation and add it again after sending the message as it is needed by some methods for
+            // further processing.
+            Exercise exercise = submission.getParticipation().getExercise();
             submission.getParticipation().setExercise(null);
             studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission));
+            submission.getParticipation().setExercise(exercise);
         }
 
-        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+        if (submission.getParticipation() != null && !(submission.getParticipation() instanceof StudentParticipation) && submission.getParticipation().getExercise() != null) {
             var topicDestination = getExerciseTopicForTAAndAbove(submission.getParticipation().getExercise().getId());
             messagingTemplate.convertAndSend(topicDestination, submission);
         }
