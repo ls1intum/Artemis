@@ -39,6 +39,20 @@ public class TutorialGroupsConfiguration extends DomainObject {
     @NotNull
     private String tutorialPeriodEndInclusive;
 
+    /**
+     * If true, tutorial groups channel will be created for each tutorial group. If false, they will not be created.
+     */
+    @Column(name = "use_tutorial_group_channels")
+    @NotNull
+    private Boolean useTutorialGroupChannels;
+
+    /**
+     * If true, the created tutorial group channels will be public. If false, they will be private.
+     */
+    @Column(name = "use_public_tutorial_group_channels")
+    @NotNull
+    private Boolean usePublicTutorialGroupChannels;
+
     @OneToMany(mappedBy = "tutorialGroupsConfiguration", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "tutorialGroupsConfiguration", allowSetters = true)
     private Set<TutorialGroupFreePeriod> tutorialGroupFreePeriods = new HashSet<>();
@@ -93,5 +107,21 @@ public class TutorialGroupsConfiguration extends DomainObject {
 
     public void setTutorialGroupFreePeriods(Set<TutorialGroupFreePeriod> tutorialGroupFreePeriods) {
         this.tutorialGroupFreePeriods = tutorialGroupFreePeriods;
+    }
+
+    public Boolean getUseTutorialGroupChannels() {
+        return useTutorialGroupChannels;
+    }
+
+    public void setUseTutorialGroupChannels(Boolean useTutorialGroupChannels) {
+        this.useTutorialGroupChannels = useTutorialGroupChannels;
+    }
+
+    public Boolean getUsePublicTutorialGroupChannels() {
+        return usePublicTutorialGroupChannels;
+    }
+
+    public void setUsePublicTutorialGroupChannels(Boolean tutorialGroupChannelsPublic) {
+        this.usePublicTutorialGroupChannels = tutorialGroupChannelsPublic;
     }
 }

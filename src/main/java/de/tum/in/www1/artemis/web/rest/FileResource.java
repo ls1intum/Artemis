@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.activation.MimetypesFileTypeMap;
 
@@ -41,6 +42,7 @@ import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.lecture.AttachmentUnitResource;
+import tech.jhipster.config.JHipsterProperties;
 
 /**
  * REST controller for managing Files.
@@ -75,10 +77,12 @@ public class FileResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final JHipsterProperties jHipsterProperties;
+
     public FileResource(AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
             AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExamUserRepository examUserRepository, ExamRepository examRepository) {
+            ExamUserRepository examUserRepository, ExamRepository examRepository, JHipsterProperties jHipsterProperties) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -91,6 +95,7 @@ public class FileResource {
         this.authorizationCheckService = authorizationCheckService;
         this.examRepository = examRepository;
         this.examUserRepository = examUserRepository;
+        this.jHipsterProperties = jHipsterProperties;
     }
 
     /**
@@ -307,7 +312,7 @@ public class FileResource {
         ExamUser examUser = examUserRepository.findById(examUserId).orElseThrow();
         Exam exam = examRepository.findById(examUser.getExam().getId()).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, exam.getCourse(), null);
-        return buildFileResponse(Path.of(FilePathService.getStudentImageFilePath()).toString(), filename);
+        return buildFileResponse(Path.of(FilePathService.getStudentImageFilePath()).toString(), filename, true);
     }
 
     /**
@@ -407,6 +412,18 @@ public class FileResource {
      * @return response entity
      */
     private ResponseEntity<byte[]> buildFileResponse(String path, String filename) {
+        return buildFileResponse(path, filename, false);
+    }
+
+    /**
+     * Builds the response with headers, body and content type for specified path and file name
+     *
+     * @param path     to the file
+     * @param filename the name of the file
+     * @param cache    true if the response should contain a header that allows caching; false otherwise
+     * @return response entity
+     */
+    private ResponseEntity<byte[]> buildFileResponse(String path, String filename, boolean cache) {
         try {
             var actualPath = Path.of(path, filename).toString();
             var file = fileService.getFileForPath(actualPath);
@@ -432,7 +449,12 @@ public class FileResource {
                 MimetypesFileTypeMap fileTypeMap = new MimetypesFileTypeMap();
                 mimeType = fileTypeMap.getContentType(filename);
             }
-            return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mimeType)).header("filename", filename).body(file);
+            var response = ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mimeType)).header("filename", filename);
+            if (cache) {
+                var cacheControl = CacheControl.maxAge(jHipsterProperties.getHttp().getCache().getTimeToLiveInDays(), TimeUnit.DAYS).cachePublic();
+                response = response.cacheControl(cacheControl);
+            }
+            return response.body(file);
         }
         catch (IOException ex) {
             log.error("Failed to download file: {} on path: {}", filename, path, ex);
