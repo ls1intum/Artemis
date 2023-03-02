@@ -370,7 +370,7 @@ public class ResultResource {
             throw new AccessForbiddenException("participation", participationId);
         }
 
-        return new ResponseEntity<>(resultService.getFeedbacksForResult(result), HttpStatus.OK);
+        return new ResponseEntity<>(resultService.filterFeedbacksForClient(result), HttpStatus.OK);
     }
 
     /**

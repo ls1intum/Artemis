@@ -258,7 +258,7 @@ public class CourseScoreCalculationService {
      * @param exercise the exercise whose assessment state should be determined
      */
     private boolean isAssessmentDone(Exercise exercise) {
-        boolean isNonAutomaticAssessmentDone = !isAssessedAutomatically(exercise) && (exerciseDateService.isAfterAssessmentDueDate(exercise));
+        boolean isNonAutomaticAssessmentDone = !isAssessedAutomatically(exercise) && exerciseDateService.isAfterAssessmentDueDate(exercise);
         return isNonAutomaticAssessmentDone || isAutomaticAssessmentDone(exercise);
     }
 
