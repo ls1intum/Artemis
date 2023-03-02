@@ -111,8 +111,10 @@ export function canDeleteChannel(course: Course, channelDTO: ChannelDTO): boolea
     const isCreator = channelDTO.isCreator;
     const isInstructor = course.isAtLeastInstructor;
     const isChannelModerator = channelDTO.isChannelModerator;
+    // tutorial group channels can not be deleted by a user
+    const isTutorialGroupChannel = !!channelDTO.tutorialGroupId || !!channelDTO.tutorialGroupTitle;
 
-    return !!isInstructor || !!(isChannelModerator && isCreator);
+    return !isTutorialGroupChannel && (!!isInstructor || !!(isChannelModerator && isCreator));
 }
 
 export function canCreateChannel(course: Course): boolean {

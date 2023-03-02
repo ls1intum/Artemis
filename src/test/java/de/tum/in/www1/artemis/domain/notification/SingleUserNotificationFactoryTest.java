@@ -80,8 +80,6 @@ class SingleUserNotificationFactoryTest {
 
     private NotificationType notificationType;
 
-    private User user = null;
-
     private static User cheatingUser;
 
     private static final String USER_LOGIN = "de27sms";
@@ -176,7 +174,7 @@ class SingleUserNotificationFactoryTest {
      * Calls the real createNotification method of the singleUserNotificationFactory and tests if the result is correct for Exercise notifications.
      */
     private void createAndCheckExerciseNotification() {
-        createdNotification = createNotification(exercise, notificationType, user);
+        createdNotification = createNotification(exercise, notificationType, null);
         checkNotification();
     }
 
@@ -184,7 +182,7 @@ class SingleUserNotificationFactoryTest {
      * Calls the real createNotification method of the singleUserNotificationFactory and tests if the result is correct for plagiarism related notifications.
      */
     private void createAndCheckPlagiarismNotification() {
-        createdNotification = createNotification(plagiarismCase, notificationType, cheatingUser, user);
+        createdNotification = createNotification(plagiarismCase, notificationType, cheatingUser, null);
         checkNotification();
     }
 
@@ -203,7 +201,7 @@ class SingleUserNotificationFactoryTest {
         assertThat(createdNotification.getPlaceholderValues()).as("Created notification placeholder values should match expected one").isEqualTo(expectedPlaceholderValues);
         assertThat(createdNotification.getTarget()).as("Created notification target should be equal to the expected one").isEqualTo(expectedTransientTarget.toJsonString());
         assertThat(createdNotification.getPriority()).as("Created notification priority should be equal to the expected one").isEqualTo(expectedPriority);
-        assertThat(createdNotification.getAuthor()).as("Created notification author should be equal to the expected one").isEqualTo(user);
+        assertThat(createdNotification.getAuthor()).as("Created notification author should be equal to the expected one").isEqualTo(null);
     }
 
     /**

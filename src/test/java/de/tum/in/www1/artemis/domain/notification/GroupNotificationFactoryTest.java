@@ -59,7 +59,7 @@ class GroupNotificationFactoryTest {
 
     private static AnswerPost answerPost;
 
-    private User user = new User();
+    private final User user = new User();
 
     private String expectedTitle;
 
@@ -75,11 +75,12 @@ class GroupNotificationFactoryTest {
 
     private NotificationType notificationType;
 
-    private GroupNotificationType groupNotificationType = GroupNotificationType.STUDENT;
+    private final GroupNotificationType groupNotificationType = GroupNotificationType.STUDENT;
 
     private static String notificationText = "notification text";
 
-    private static List<String> archiveErrors = List.of("archive error 1", "archive error 2");
+
+    private static final List<String> archiveErrors = List.of("archive error 1", "archive error 2");
 
     private enum Base {
         ATTACHMENT, EXERCISE, POST, COURSE, EXAM
