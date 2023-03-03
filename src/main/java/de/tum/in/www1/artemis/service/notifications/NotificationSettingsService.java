@@ -71,9 +71,11 @@ public class NotificationSettingsService {
     // user notification setting group
     public static final String NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE = "notification.user-notification.conversation-message";
 
-    public static final String NOTIFICATION__USER_NOTIFICATION__CONVERSATION_CREATION_ONE_TO_ONE = "notification.user-notification.conversation-creation-one-to-one";
+    public static final String NOTIFICATION__USER_NOTIFICATION__CONVERSATION_ONE_TO_ONE = "notification.user-notification.conversation-one-to-one";
 
-    public static final String NOTIFICATION__USER_NOTIFICATION__CONVERSATION_CREATION_GROUP = "notification.user-notification.conversation-creation-group";
+    public static final String NOTIFICATION__USER_NOTIFICATION__CONVERSATION_GROUP = "notification.user-notification.conversation-group";
+
+    public static final String NOTIFICATION__USER_NOTIFICATION__CONVERSATION_CHANNEL = "notification.user-notification.conversation-channel";
 
     // if webapp or email is not explicitly set for a specific setting -> no support for this communication channel for this setting
     // this has to match the properties in the notification settings structure file on the client that hides the related UI elements
@@ -106,9 +108,9 @@ public class NotificationSettingsService {
             new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED),
             new NotificationSetting(true, false, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN),
             // user new message notification setting group
-            new NotificationSetting(true, false, NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE),
-            new NotificationSetting(true, false, NOTIFICATION__USER_NOTIFICATION__CONVERSATION_CREATION_ONE_TO_ONE),
-            new NotificationSetting(true, false, NOTIFICATION__USER_NOTIFICATION__CONVERSATION_CREATION_GROUP)));
+            new NotificationSetting(true, false, NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE)));
+    // new NotificationSetting(true, false, NOTIFICATION__USER_NOTIFICATION__CONVERSATION_CREATION_ONE_TO_ONE),
+    // new NotificationSetting(true, false, NOTIFICATION__USER_NOTIFICATION__CONVERSATION_CREATION_GROUP)));
 
     /**
      * This is the place where the mapping between SettingId and NotificationTypes happens on the server side
@@ -135,9 +137,10 @@ public class NotificationSettingsService {
             Map.entry(NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION,
                     new NotificationType[] { TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT }),
             Map.entry(NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN, new NotificationType[] { TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED }),
-            Map.entry(NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE, new NotificationType[] { CONVERSATION_NEW_MESSAGE, CONVERSATION_NEW_REPLY_MESSAGE }),
-            Map.entry(NOTIFICATION__USER_NOTIFICATION__CONVERSATION_CREATION_ONE_TO_ONE, new NotificationType[] { CONVERSATION_CREATE_ONE_TO_ONE_CHAT }),
-            Map.entry(NOTIFICATION__USER_NOTIFICATION__CONVERSATION_CREATION_GROUP, new NotificationType[] { CONVERSATION_CREATE_GROUP_CHAT }));
+            Map.entry(NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE,
+                    new NotificationType[] { CONVERSATION_NEW_MESSAGE, CONVERSATION_NEW_REPLY_MESSAGE, CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_GROUP_CHAT }));
+    // Map.entry(NOTIFICATION__USER_NOTIFICATION__CONVERSATION_CREATION_ONE_TO_ONE, new NotificationType[] { CONVERSATION_CREATE_ONE_TO_ONE_CHAT }),
+    // Map.entry(NOTIFICATION__USER_NOTIFICATION__CONVERSATION_CREATION_GROUP, new NotificationType[] { CONVERSATION_CREATE_GROUP_CHAT }));
 
     // This set has to equal the UI configuration in the client notification settings structure file!
     private static final Set<NotificationType> NOTIFICATION_TYPES_WITH_EMAIL_SUPPORT = Set.of(EXERCISE_RELEASED, EXERCISE_PRACTICE, ATTACHMENT_CHANGE, NEW_ANNOUNCEMENT_POST,

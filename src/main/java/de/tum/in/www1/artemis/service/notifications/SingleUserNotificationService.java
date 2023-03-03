@@ -339,7 +339,7 @@ public class SingleUserNotificationService {
      */
     private void saveAndSend(SingleUserNotification notification, Object notificationSubject) {
         // do not save notifications that are not relevant for the user
-        if (shouldNotificationBeSaved(notification.getTitle())) {
+        if (shouldNotificationBeSaved(notification)) {
             singleUserNotificationRepository.save(notification);
         }
         // we only want to notify one individual user therefore we can check the settings and filter preemptively
@@ -350,12 +350,16 @@ public class SingleUserNotificationService {
         }
     }
 
-    private boolean shouldNotificationBeSaved(String notificationTitle) {
-        if (Objects.equals(notificationTitle, CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE)) {
+    private boolean shouldNotificationBeSaved(SingleUserNotification notification) {
+        if (Objects.equals(notification.getTitle(), CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE)) {
             return false;
         }
-        else
-            return !Objects.equals(notificationTitle, CONVERSATION_CREATE_GROUP_CHAT_TITLE);
+        else if (Objects.equals(notification.getTitle(), CONVERSATION_CREATE_GROUP_CHAT_TITLE)) {
+            return (!Objects.equals(notification.getAuthor().getLogin(), notification.getRecipient().getLogin()));
+        }
+        else {
+            return true;
+        }
     }
 
     /**
