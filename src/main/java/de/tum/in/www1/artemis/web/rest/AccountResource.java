@@ -141,6 +141,8 @@ public class AccountResource {
         User user = userRepository.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
         user.setVisibleRegistrationNumber();
         UserDTO userDTO = new UserDTO(user);
+        // we set this value on purpose here
+        userDTO.setVcsAccessToken(user.getVcsAccessToken());
         log.info("GET /account {} took {}ms", user.getLogin(), System.currentTimeMillis() - start);
         return userDTO;
     }
