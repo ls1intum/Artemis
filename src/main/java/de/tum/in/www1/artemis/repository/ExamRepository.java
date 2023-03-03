@@ -195,7 +195,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                 LEFT JOIN FETCH exam.studentExams studentExams
                 LEFT JOIN FETCH exam.exerciseGroups exerciseGroups
                 LEFT JOIN FETCH exerciseGroups.exercises
-            WHERE (exam.id = :#{#examId})
+            WHERE exam.id = :examId
             """)
     Exam findOneWithEagerExercisesGroupsAndStudentExams(@Param("examId") long examId);
 
@@ -210,8 +210,8 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             SELECT CASE WHEN COUNT(exam) > 0 THEN true ELSE false END
             FROM Exam exam
                 LEFT JOIN exam.examUsers examUsers
-            WHERE exam.id = :#{#examId}
-                AND examUsers.user.id = :#{#userId}
+            WHERE exam.id = :examId
+                AND examUsers.user.id = :userId
             """)
     boolean isUserRegisteredForExam(@Param("examId") long examId, @Param("userId") long userId);
 
@@ -219,7 +219,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             SELECT exam.id, count(registeredUsers)
             FROM Exam exam
                 LEFT JOIN exam.examUsers registeredUsers
-            WHERE exam.id in :#{#examIds}
+            WHERE exam.id in :examIds
             GROUP BY exam.id
             """)
     List<long[]> countExamUsersByExamIds(@Param("examIds") List<Long> examIds);
@@ -228,7 +228,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             SELECT count(studentExam)
             FROM StudentExam studentExam
             WHERE studentExam.testRun = FALSE
-                AND studentExam.exam.id = :#{#examId}
+                AND studentExam.exam.id = :examId
             """)
     long countGeneratedStudentExamsByExamWithoutTestRuns(@Param("examId") long examId);
 

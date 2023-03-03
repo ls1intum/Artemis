@@ -70,7 +70,7 @@ public class LtiService {
      */
     public void authenticateLtiUser(String email, String username, String firstName, String lastName, boolean requireExistingUser) throws InternalAuthenticationServiceException {
 
-        if (StringUtils.isEmpty(email)) {
+        if (!StringUtils.hasLength(email)) {
             throw new InternalAuthenticationServiceException("No email address sent by launch request. Please make sure the user has an accessible email address.");
         }
 

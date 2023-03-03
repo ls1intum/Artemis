@@ -80,7 +80,7 @@ public class GitUtilService {
             reinitializeRemoteRepository();
         }
         catch (IOException | GitAPIException ex) {
-            System.out.println(ex);
+            ex.printStackTrace();
         }
     }
 
