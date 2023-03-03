@@ -2458,4 +2458,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         StudentExam studentExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
         assertThat(studentExam).isNull();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRetrieveOwnStudentExam_instructor() throws Exception {
+        StudentExam receivedStudentExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
+        assertThat(receivedStudentExam).isNull();
+    }
 }

@@ -734,7 +734,7 @@ public class StudentExamResource {
     @GetMapping("/courses/{courseId}/exams/{examId}/own-student-exam")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentExam> retrieveOwnStudentExam(@PathVariable Long courseId, @PathVariable Long examId) {
-        examAccessService.checkIsStudentInExamElseThrow(courseId, examId);
+        examAccessService.checkIsAtLeastStudentInExamElseThrow(courseId, examId);
         Exam exam = examRepository.findByIdElseThrow(examId);
         if (exam.isTestExam()) {
             throw new BadRequestException("You cannot retrieve the student exam of a test exam");

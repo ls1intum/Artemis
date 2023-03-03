@@ -279,12 +279,10 @@ public class ExamAccessService {
      * @param courseId The id of the course
      * @param examId   The id of the exam
      */
-    public void checkIsStudentInExamElseThrow(Long courseId, Long examId) {
+    public void checkIsAtLeastStudentInExamElseThrow(Long courseId, Long examId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authorizationCheckService.isStudentInCourse(course, currentUser)) {
-            throw new AccessForbiddenException("Exam", examId);
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
         checkExamBelongsToCourseElseThrow(courseId, examId);
     }
 

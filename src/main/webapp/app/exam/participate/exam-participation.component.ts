@@ -194,15 +194,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.handleStudentExam(studentExam);
                     },
                     error: () => {
-                        const course = this.courseCalculationService.getCourse(this.courseId);
-                        if (!course) {
-                            this.courseService.find(this.courseId).subscribe((courseResponse) => {
-                                this.isAtLeastTutor = courseResponse.body?.isAtLeastTutor;
-                            });
-                        } else {
-                            this.isAtLeastTutor = course.isAtLeastTutor;
-                        }
-                        this.loadingExam = false;
+                        this.handleNoStudentExam();
                     },
                 });
             }
@@ -586,6 +578,22 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         } else {
             this.loadingExam = false;
         }
+    }
+
+    /**
+     * Handles the case when there is no student exam. Here we have to check if the user is at least tutor to show the redirect to the exam management page.
+     * This check is not done in the normal case due to performance reasons of 2000 students sending additional requests
+     */
+    handleNoStudentExam() {
+        const course = this.courseCalculationService.getCourse(this.courseId);
+        if (!course) {
+            this.courseService.find(this.courseId).subscribe((courseResponse) => {
+                this.isAtLeastTutor = courseResponse.body?.isAtLeastTutor;
+            });
+        } else {
+            this.isAtLeastTutor = course.isAtLeastTutor;
+        }
+        this.loadingExam = false;
     }
 
     /**

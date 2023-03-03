@@ -113,8 +113,8 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
 
         this.loadStudentExam();
         if ((!this.studentExam || !this.studentExam.submitted) && !this.exam.testExam) {
-            this.examState = ExamState.CLOSED;
             // Exam is over and student did not participate. We can cancel the subscription
+            this.examState = ExamState.CLOSED;
             this.cancelExamStateSubscription();
             return;
         }
