@@ -18,9 +18,10 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { StudentDTO } from 'app/entities/student-dto.model';
 import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ExamUserDTO } from 'app/entities/exam-user-dto.model';
+import { ExamUser } from 'app/entities/exam-user.model';
 
 describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;
@@ -95,7 +96,7 @@ describe('ExamStudentsComponent', () => {
 
     it('should handle auto-complete for unregistered user', () => {
         const user3 = { id: 3, login: 'user3' } as User;
-        const student3 = { login: 'user3', firstName: 'student2', lastName: 'student2', registrationNumber: '1234567' } as StudentDTO;
+        const student3 = { login: 'user3', firstName: 'student2', lastName: 'student2', registrationNumber: '1234567' } as ExamUserDTO;
         const callbackSpy = jest.fn();
         const flashSpy = jest.spyOn(component, 'flashRowClass');
         const reloadSpy = jest.spyOn(component, 'reloadExamWithRegisteredUsers');
@@ -135,7 +136,7 @@ describe('ExamStudentsComponent', () => {
         const examWithOneUser = {
             course,
             id: 2,
-            examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 }],
+            examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 } as ExamUser],
         };
         const examServiceStub = jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
         fixture.detectChanges();
@@ -156,7 +157,7 @@ describe('ExamStudentsComponent', () => {
         component.allRegisteredUsers = [
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
-        ];
+        ] as ExamUser[];
 
         component.removeFromExam(
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
@@ -175,7 +176,7 @@ describe('ExamStudentsComponent', () => {
         const examWithOneUser = {
             course,
             id: 2,
-            examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 }],
+            examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 } as ExamUser],
         };
         const examServiceStub = jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
         fixture.detectChanges();
@@ -196,7 +197,7 @@ describe('ExamStudentsComponent', () => {
         component.allRegisteredUsers = [
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
-        ];
+        ] as ExamUser[];
 
         component.removeAllStudents({ deleteParticipationsAndSubmission: false });
         fixture.detectChanges();
@@ -211,7 +212,7 @@ describe('ExamStudentsComponent', () => {
         component.allRegisteredUsers = [
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
-        ];
+        ] as ExamUser[];
 
         component.removeAllStudents({ deleteParticipationsAndSubmission: true });
         fixture.detectChanges();
