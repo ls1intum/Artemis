@@ -58,6 +58,8 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Service
 public class ExamService {
 
+    private static final int EXAM_ACTIVE_DAYS = 7;
+
     @Value("${artemis.course-archives-path}")
     private String examArchivesDirPath;
 
@@ -1228,7 +1230,8 @@ public class ExamService {
      */
     public Page<Exam> getAllActiveExams(final Pageable pageable, final User user) {
         // active exam means that exam has visible date in the past 7 days or next 7 days.
-        return examRepository.findAllActiveExamsInCoursesWhereInstructor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(7), ZonedDateTime.now().plusDays(7));
+        return examRepository.findAllActiveExamsInCoursesWhereInstructor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(EXAM_ACTIVE_DAYS),
+                ZonedDateTime.now().plusDays(EXAM_ACTIVE_DAYS));
     }
 
     /**
