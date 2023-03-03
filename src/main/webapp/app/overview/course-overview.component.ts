@@ -2,7 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy
 import { Course } from 'app/entities/course.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription, forkJoin, takeUntil } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
@@ -76,6 +76,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private tutorialGroupService: TutorialGroupsService,
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
         private metisConversationService: MetisConversationService,
+        private router: Router,
     ) {}
 
     async ngOnInit() {
@@ -175,6 +176,27 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     /**
+     * Determines whether the user can register for the course by fetching all courses they can register for
+     */
+    canRegisterForCourse(): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            this.courseService.findAllToRegister().subscribe({
+                next: (res: HttpResponse<Course[]>) => {
+                    const coursesToRegister = res.body!;
+                    const coursesToRegisterIds = coursesToRegister.map((course) => course.id);
+                    const canRegister = coursesToRegisterIds.includes(this.courseId);
+                    resolve(canRegister);
+                },
+                error: reject,
+            });
+        });
+    }
+
+    redirectToCourseRegistrationPage() {
+        this.router.navigate(['courses', this.courseId, 'register']);
+    }
+
+    /**
      * Fetch the course from the server including all exercises, lectures, exams and learning goals
      * @param refresh Whether this is a force refresh (displays loader animation)
      */
@@ -186,7 +208,15 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 this.course = this.courseCalculationService.getCourse(this.courseId);
                 setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
             },
-            error: (error: HttpErrorResponse) => {
+            error: async (error: HttpErrorResponse) => {
+                if (error.status === 403) {
+                    const canRegister = await this.canRegisterForCourse();
+                    if (canRegister) {
+                        this.redirectToCourseRegistrationPage();
+                        // no need to show the permission error
+                        return;
+                    }
+                }
                 const errorMessage = error.headers.get('X-artemisApp-message')!;
                 this.alertService.addAlert({
                     type: AlertType.DANGER,
