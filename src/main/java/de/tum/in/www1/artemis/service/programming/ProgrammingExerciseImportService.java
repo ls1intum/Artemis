@@ -169,6 +169,10 @@ public class ProgrammingExerciseImportService {
 
         updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, solutionParticipation,
                 targetExerciseProjectKey, newExercise);
+
+        // update notifications of all base build plans
+        continuousIntegrationService.get().fixBuildPlanNotification(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), newExercise.getVcsTemplateRepositoryUrl());
+        continuousIntegrationService.get().fixBuildPlanNotification(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), newExercise.getVcsTemplateRepositoryUrl());
     }
 
     private void updateAuxiliaryRepositoriesForNewExercise(List<AuxiliaryRepository> newRepositories, List<AuxiliaryRepository> oldRepositories,

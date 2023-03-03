@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
+import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry.BuildJobPartDuration;
 
 import java.io.IOException;
@@ -7,6 +8,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.jsoup.Jsoup;
 import org.slf4j.Logger;
@@ -17,6 +20,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.w3c.dom.Document;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.offbytwo.jenkins.JenkinsServer;
@@ -50,6 +54,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Value("${jenkins.use-crumb:#{true}}")
     private boolean useCrumb;
+
+    @Value("${server.url}")
+    private String artemisServerUrl;
 
     private final JenkinsBuildPlanService jenkinsBuildPlanService;
 
@@ -117,6 +124,45 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
             String newDefaultBranch, Optional<List<String>> optionalTriggeredByRepositories) {
         jenkinsBuildPlanService.updateBuildPlanRepositories(buildProjectKey, buildPlanKey, newRepoUrl, existingRepoUrl);
+    }
+
+    @Override
+    public List<Long> getAllArtemisBuildPlanServerNotificationIds(String buildPlanKey) {
+        return null;
+    }
+
+    @Override
+    public void deleteBuildPlanServerNotificationId(String buildPlanKey, Long serverNotificationId) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public void createBuildPlanServerNotification(String buildPlanKey, String serverNotificationUrl) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public void fixBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
+        String jobName = buildPlanKey.replace(projectKey + "-", "");
+        Document config;
+        try {
+            config = jenkinsJobService.getJobConfig(projectKey, jobName);
+        }
+        catch (IOException e) {
+            log.error("Could not fix build plan notification for build plan " + buildPlanKey + " in project " + projectKey, e);
+            return;
+        }
+        String stringConfig = config.getTextContent();
+        Pattern pattern = Pattern.compile("(.*?notificationUrl: ')(.+?)('.*?)");
+        Matcher matcher = pattern.matcher(stringConfig);
+        String newStringConfig = matcher.replaceAll("$1" + artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH + "$3");
+        config.setTextContent(newStringConfig);
+        try {
+            jenkinsJobService.updateJob(projectKey, jobName, config);
+        }
+        catch (IOException e) {
+            log.error("Could not fix build plan notification for build plan " + buildPlanKey + " in project " + projectKey, e);
+        }
     }
 
     @Override

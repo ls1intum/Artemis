@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.gitlabci;
 
+import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
+
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -147,7 +149,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             updateVariable(repositoryPath, VARIABLE_CUSTOM_FEEDBACK_DIR_NAME, "TODO");
             updateVariable(repositoryPath, VARIABLE_NOTIFICATION_PLUGIN_DOCKER_IMAGE_NAME, notificationPluginDockerImage);
             updateVariable(repositoryPath, VARIABLE_NOTIFICATION_SECRET_NAME, artemisAuthenticationTokenValue);
-            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_URL_NAME, artemisServerUrl.toExternalForm() + "/api/public/programming-exercises/new-result");
+            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_URL_NAME, artemisServerUrl.toExternalForm() + NEW_RESULT_RESOURCE_API_PATH);
             updateVariable(repositoryPath, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, exercise.getBranch());
             updateVariable(repositoryPath, VARIABLE_TEST_GIT_BRANCH_NAME, exercise.getBranch());
             updateVariable(repositoryPath, VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME, urlService.getRepositorySlugFromRepositoryUrlString(exercise.getTestRepositoryUrl()));
@@ -323,6 +325,32 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
             String newDefaultBranch, Optional<List<String>> optionalTriggeredByRepositories) {
         log.error("Unsupported action: GitLabCIService.updatePlanRepository()");
+    }
+
+    @Override
+    public List<Long> getAllArtemisBuildPlanServerNotificationIds(String buildPlanKey) {
+        return null;
+    }
+
+    @Override
+    public void deleteBuildPlanServerNotificationId(String buildPlanKey, Long serverNotificationId) {
+
+    }
+
+    @Override
+    public void createBuildPlanServerNotification(String buildPlanKey, String serverNotificationUrl) {
+
+    }
+
+    @Override
+    public void fixBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
+        try {
+            updateVariable(getRepositoryPath(repositoryUrl), VARIABLE_NOTIFICATION_URL_NAME, artemisServerUrl.toExternalForm() + NEW_RESULT_RESOURCE_API_PATH);
+        }
+        catch (GitLabApiException e) {
+            log.error("Error while updating the notification url for the build plan " + buildPlanKey, e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
