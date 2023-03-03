@@ -425,6 +425,19 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    // Import File Upload Exercise
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/import/:exerciseId',
+        component: FileUploadExerciseUpdateComponent,
+        resolve: {
+            fileUploadExercise: FileUploadExerciseManagementResolve,
+        },
+        data: {
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.fileUploadExercise.home.importLabel',
+        },
+        canActivate: [UserRouteAccessService],
+    },
     // Create Quiz Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/new',
