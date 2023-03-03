@@ -1,14 +1,15 @@
 <div>
-    <h4 class="d-flex mb-3 flex-wrap justify-content-end">
-        <span class="mb-1 me-auto">
+    <div class="d-flex mb-3 flex-wrap justify-content-end">
+        <h4 class="mb-1 me-auto">
             <span *ngIf="course && !showHeading">{{ course.title }} - </span>
             <span *ngIf="fileUploadExercises && showHeading && !filter.isEmpty() && fileUploadExercises.length">
                 {{ getAmountOfExercisesString(filteredFileUploadExercises) }} /
             </span>
             <span *ngIf="fileUploadExercises && showHeading">{{ getAmountOfExercisesString(fileUploadExercises) }} </span>
             <span jhiTranslate="artemisApp.fileUploadExercise.home.title">File Upload Exercises</span>
-        </span>
-        <a
+        </h4>
+
+        <button
             *ngIf="course && course.isAtLeastEditor"
             class="btn btn-primary jh-create-entity create-file-upload-exercise text-truncate mb-1 me-1"
             [routerLink]="['/course-management', course.id, 'file-upload-exercises', 'new']"
@@ -16,7 +17,7 @@
         >
             <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.fileUploadExercise.home.createLabel"> Create File Upload Exercise </span>
-        </a>
+        </button>
         <button
             *ngIf="course?.isAtLeastEditor"
             id="jh-import-entity"
@@ -26,7 +27,7 @@
             <fa-icon [icon]="faPlus"></fa-icon>
             <span class="hidden-sm-down" jhiTranslate="artemisApp.fileUploadExercise.home.importLabel"> Import new file upload exercise </span>
         </button>
-    </h4>
+    </div>
     <div class="row"></div>
     <br />
     <div class="table-responsive" *ngIf="fileUploadExercises && filteredFileUploadExercises.length > 0">
