@@ -26,7 +26,7 @@ public class ChannelService {
 
     public static final String CHANNEL_ENTITY_NAME = "messages.channel";
 
-    private static final String CHANNEL_NAME_REGEX = "^[a-z0-9-]{1}[a-z0-9-]{0,20}$";
+    private static final String CHANNEL_NAME_REGEX = "^[a-z0-9$]{1}[a-z0-9-]{0,20}$";
 
     private final ConversationParticipantRepository conversationParticipantRepository;
 
@@ -45,7 +45,7 @@ public class ChannelService {
     }
 
     /**
-     * Grans the channel moderator role to the given user for the given channel
+     * Grants the channel moderator role to the given user for the given channel
      *
      * @param channel      the channel
      * @param usersToGrant the users to grant the channel moderator role
@@ -107,30 +107,33 @@ public class ChannelService {
      *
      * @param course  the course to create the channel for
      * @param channel the channel to create
+     * @param creator the creator of the channel, if set a participant will be created for the creator
      * @return the created channel
      */
-    public Channel createChannel(Course course, Channel channel) {
+    public Channel createChannel(Course course, Channel channel, Optional<User> creator) {
         if (StringUtils.hasText(channel.getName())) {
             channel.setName(StringUtils.trimAllWhitespace(channel.getName().toLowerCase()));
         }
-        final User user = this.userRepository.getUserWithGroupsAndAuthorities();
-        channel.setCreator(user);
+        channel.setCreator(creator.orElse(null));
         channel.setCourse(course);
         channel.setIsArchived(false);
         this.channelIsValidOrThrow(course.getId(), channel);
         var savedChannel = channelRepository.save(channel);
-        var conversationParticipantOfRequestingUser = new ConversationParticipant();
-        // set the last reading time of a participant in the past when creating conversation for the first time!
-        conversationParticipantOfRequestingUser.setLastRead(ZonedDateTime.now().minusYears(2));
-        conversationParticipantOfRequestingUser.setUnreadMessagesCount(0L);
-        conversationParticipantOfRequestingUser.setUser(user);
-        conversationParticipantOfRequestingUser.setConversation(savedChannel);
-        // Creator is a moderator. Special case, because creator is the only moderator that can not be revoked the role
-        conversationParticipantOfRequestingUser.setIsModerator(true);
-        conversationParticipantOfRequestingUser = conversationParticipantRepository.save(conversationParticipantOfRequestingUser);
-        savedChannel.getConversationParticipants().add(conversationParticipantOfRequestingUser);
-        savedChannel = channelRepository.save(savedChannel);
-        conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, savedChannel, Set.of(user));
+
+        if (creator.isPresent()) {
+            var conversationParticipantOfRequestingUser = new ConversationParticipant();
+            // set the last reading time of a participant in the past when creating conversation for the first time!
+            conversationParticipantOfRequestingUser.setLastRead(ZonedDateTime.now().minusYears(2));
+            conversationParticipantOfRequestingUser.setUnreadMessagesCount(0L);
+            conversationParticipantOfRequestingUser.setUser(creator.get());
+            conversationParticipantOfRequestingUser.setConversation(savedChannel);
+            // Creator is a moderator. Special case, because creator is the only moderator that can not be revoked the role
+            conversationParticipantOfRequestingUser.setIsModerator(true);
+            conversationParticipantOfRequestingUser = conversationParticipantRepository.save(conversationParticipantOfRequestingUser);
+            savedChannel.getConversationParticipants().add(conversationParticipantOfRequestingUser);
+            savedChannel = channelRepository.save(savedChannel);
+            conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, savedChannel, Set.of(creator.get()));
+        }
         return savedChannel;
     }
 

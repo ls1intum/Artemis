@@ -12,6 +12,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 
 type filter = 'all' | 'registered';
 
@@ -26,11 +27,11 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
     @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
-        useIndentation: true,
     };
     tutorialGroups: TutorialGroup[] = [];
     courseId: number;
     course: Course;
+    configuration?: TutorialGroupsConfiguration;
     isLoading = false;
     tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
 
@@ -92,6 +93,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe((course) => {
                 this.course = course;
+                this.configuration = course?.tutorialGroupsConfiguration;
                 this.setFreeDays();
                 this.setTutorialGroups();
             })
@@ -126,6 +128,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
             return false;
         } else {
             this.course = cachedCourse;
+            this.configuration = this.course?.tutorialGroupsConfiguration;
             this.setFreeDays();
             return true;
         }
@@ -184,6 +187,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
             .subscribe({
                 next: (course: Course) => {
                     this.course = course;
+                    this.configuration = this.course?.tutorialGroupsConfiguration;
                     this.setFreeDays();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
