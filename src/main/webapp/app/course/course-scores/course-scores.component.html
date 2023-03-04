@@ -17,13 +17,7 @@
             <div class="text-center">
                 <h4 jhiTranslate="artemisApp.instructorDashboard.courseScoreChart.scoreDistribution">Course score distribution</h4>
             </div>
-            <jhi-participant-scores-distribution
-                *ngIf="scoresToDisplay"
-                [gradingScale]="gradingScale"
-                [scores]="scoresToDisplay"
-                [scoreToHighlight]="valueToHighlight"
-                (onSelect)="accessParticipantScores()"
-            >
+            <jhi-participant-scores-distribution *ngIf="scoresToDisplay" [gradingScale]="gradingScale" [scores]="scoresToDisplay" [scoreToHighlight]="valueToHighlight">
             </jhi-participant-scores-distribution>
         </div>
         <div class="col-lg-3 mt-3">
