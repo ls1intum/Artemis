@@ -9,7 +9,6 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { Course } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
 import { CourseLecturesComponent, LectureSortingOrder } from 'app/overview/course-lectures/course-lectures.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
