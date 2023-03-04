@@ -225,6 +225,10 @@ public class UserDTO extends AuditingEntityDTO {
         this.guidedTourSettings = guidedTourSettings;
     }
 
+    public String getVcsAccessToken() {
+        return vcsAccessToken;
+    }
+
     /**
      * Only set this token if it is absolutely necessary in the client, otherwise this might reveal secret information
      *
