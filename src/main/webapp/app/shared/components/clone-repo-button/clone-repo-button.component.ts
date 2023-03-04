@@ -103,10 +103,6 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     }
 
     getHttpOrSshRepositoryUrl(insertPlaceholder = true): string {
-        if (this.localVCEnabled) {
-            // For local git repositories, the user name is requested when the user runs the command from their local git client.
-            return this.getRepositoryUrl();
-        }
         if (this.useSsh) {
             return this.getSshCloneUrl(this.getRepositoryUrl()) || this.getRepositoryUrl();
         }
