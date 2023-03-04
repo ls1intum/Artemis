@@ -13,6 +13,6 @@ public record CourseScoresForExamBonusSourceDTO(double maxPoints, double reachab
     public Map<Long, BonusSourceResultDTO> toBonusSourceResultMap() {
         return studentScores.stream().collect(
                 Collectors.toMap(StudentScoresForExamBonusSourceDTO::getStudentId, studentScore -> new BonusSourceResultDTO(studentScore.getAbsolutePointsEligibleForBonus(),
-                        studentScore.getMostSeverePlagiarismVerdict(), studentScore.getPresentationScore(), presentationScoreThreshold, studentScore.hasParticipated())));
+                        studentScore.getMostSeverePlagiarismVerdict(), studentScore.getPresentationScore(), presentationScoreThreshold, studentScore.isHasParticipated())));
     }
 }

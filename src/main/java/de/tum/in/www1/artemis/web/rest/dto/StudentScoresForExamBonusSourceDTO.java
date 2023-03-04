@@ -60,7 +60,7 @@ public class StudentScoresForExamBonusSourceDTO extends StudentScoresDTO {
         this.mostSeverePlagiarismVerdict = mostSeverePlagiarismVerdict;
     }
 
-    public boolean hasParticipated() {
+    public boolean isHasParticipated() {
         return hasParticipated;
     }
 }

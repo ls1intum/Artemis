@@ -129,38 +129,39 @@ public class CourseScoreCalculationService {
 
         Course course = courseExercises.iterator().next().getCourseViaExerciseGroupOrCourseMember();
 
-        List<StudentScoresForExamBonusSourceDTO> studentScoresForExamBonusSource = new ArrayList<>();
-
-        studentIdToParticipations.entrySet().parallelStream().forEach(entry -> {
-            StudentScoresDTO studentScores = calculateCourseScoreForStudent(course, entry.getKey(), entry.getValue(), maxAndReachablePoints.maxPoints,
-                    maxAndReachablePoints.reachablePoints, plagiarismCases);
-
-            boolean presentationScorePassed;
-            PlagiarismVerdict mostSeverePlagiarismVerdict = null;
-            boolean hasParticipated;
-            PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
-            if (entry.getValue().isEmpty()) {
-                presentationScorePassed = false;
-                hasParticipated = false;
-            }
-            else if (plagiarismMapping.studentHasVerdict(entry.getKey(), PlagiarismVerdict.PLAGIARISM)) {
-                presentationScorePassed = false;
-                mostSeverePlagiarismVerdict = PlagiarismVerdict.PLAGIARISM;
-                hasParticipated = true;
-            }
-            else {
-                presentationScorePassed = isPresentationScoreSufficientForBonus(studentScores.getPresentationScore(), course.getPresentationScore());
-                Map<Long, PlagiarismCase> plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(entry.getKey());
-                mostSeverePlagiarismVerdict = findMostServerePlagiarismVerdict(plagiarismCasesForStudent.values());
-                hasParticipated = true;
-            }
-            studentScoresForExamBonusSource
-                    .add(new StudentScoresForExamBonusSourceDTO(studentScores.getAbsoluteScore(), studentScores.getRelativeScore(), studentScores.getCurrentRelativeScore(),
-                            studentScores.getPresentationScore(), entry.getKey(), presentationScorePassed, mostSeverePlagiarismVerdict, hasParticipated));
-        });
+        List<StudentScoresForExamBonusSourceDTO> studentScoresForExamBonusSource = studentIdToParticipations.entrySet().parallelStream()
+                .map(entry -> constructStudentScoresForExamBonusSourceDTO(course, entry, maxAndReachablePoints, plagiarismCases)).toList();
 
         return new CourseScoresForExamBonusSourceDTO(maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints, course.getPresentationScore(),
                 studentScoresForExamBonusSource);
+    }
+
+    private StudentScoresForExamBonusSourceDTO constructStudentScoresForExamBonusSourceDTO(Course course, Map.Entry<Long, List<StudentParticipation>> entry,
+            MaxAndReachablePoints maxAndReachablePoints, List<PlagiarismCase> plagiarismCases) {
+        StudentScoresDTO studentScores = calculateCourseScoreForStudent(course, entry.getKey(), entry.getValue(), maxAndReachablePoints.maxPoints,
+                maxAndReachablePoints.reachablePoints, plagiarismCases);
+
+        boolean presentationScorePassed;
+        PlagiarismVerdict mostSeverePlagiarismVerdict = null;
+        boolean hasParticipated;
+        PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
+        if (entry.getValue().isEmpty()) {
+            presentationScorePassed = false;
+            hasParticipated = false;
+        }
+        else if (plagiarismMapping.studentHasVerdict(entry.getKey(), PlagiarismVerdict.PLAGIARISM)) {
+            presentationScorePassed = false;
+            mostSeverePlagiarismVerdict = PlagiarismVerdict.PLAGIARISM;
+            hasParticipated = true;
+        }
+        else {
+            presentationScorePassed = isPresentationScoreSufficientForBonus(studentScores.getPresentationScore(), course.getPresentationScore());
+            Map<Long, PlagiarismCase> plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(entry.getKey());
+            mostSeverePlagiarismVerdict = findMostServerePlagiarismVerdict(plagiarismCasesForStudent.values());
+            hasParticipated = true;
+        }
+        return new StudentScoresForExamBonusSourceDTO(studentScores.getAbsoluteScore(), studentScores.getRelativeScore(), studentScores.getCurrentRelativeScore(),
+                studentScores.getPresentationScore(), entry.getKey(), presentationScorePassed, mostSeverePlagiarismVerdict, hasParticipated);
     }
 
     /**
