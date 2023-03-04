@@ -6,8 +6,20 @@ import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { faAngleDown, faAngleUp, faSortAmountDown, faSortAmountUp } from '@fortawesome/free-solid-svg-icons';
+import { LocalStorageService } from 'ngx-webstorage';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { faAngleDown, faAngleUp, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+
+export enum LectureSortingOrder {
+    ASC = 1,
+    DESC = -1,
+}
+
+enum SortFilterStorageKey {
+    ORDER = 'artemis.course.lectures.order',
+}
 
 @Component({
     selector: 'jhi-course-lectures',
@@ -15,8 +27,6 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseLecturesComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
-    public readonly DUE_DATE_ASC = 1;
-    public readonly DUE_DATE_DESC = -1;
     private courseId: number;
     private paramSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
@@ -27,24 +37,35 @@ export class CourseLecturesComponent implements OnInit, OnDestroy, AfterViewInit
 
     public exerciseCountMap: Map<string, number>;
 
+    readonly ASC = LectureSortingOrder.ASC;
+    readonly DESC = LectureSortingOrder.DESC;
+
     // Icons
-    faSortAmountUp = faSortAmountUp;
-    faSortAmountDown = faSortAmountDown;
+    faSortNumericDown = faSortNumericDown;
+    faSortNumericUp = faSortNumericUp;
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
+
+    sortingOrder: LectureSortingOrder;
 
     // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
     @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
     // Provides the control configuration to be read and used by "CourseOverviewComponent"
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
-        useIndentation: true,
     };
 
-    constructor(private courseStorageService: CourseStorageService, private translateService: TranslateService, private route: ActivatedRoute) {}
+    constructor(
+        private courseStorageService: CourseStorageService,
+        private translateService: TranslateService,
+        private exerciseService: ExerciseService,
+        private route: ActivatedRoute,
+        private localStorage: LocalStorageService,
+    ) {}
 
     ngOnInit() {
         this.exerciseCountMap = new Map<string, number>();
+        this.loadSortingOrder();
         this.paramSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
@@ -59,7 +80,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy, AfterViewInit
         });
 
         this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
-            this.groupLectures(this.DUE_DATE_DESC);
+            this.groupLectures();
         });
     }
 
@@ -76,17 +97,35 @@ export class CourseLecturesComponent implements OnInit, OnDestroy, AfterViewInit
         this.paramSubscription.unsubscribe();
     }
 
-    private onCourseLoad() {
-        this.groupLectures(this.DUE_DATE_DESC);
+    /**
+     * Loads the sorting order from local storage
+     */
+    private loadSortingOrder() {
+        const orderInStorage = this.localStorage.retrieve(SortFilterStorageKey.ORDER);
+        const parsedOrderInStorage = Object.keys(LectureSortingOrder).find((exerciseOrder) => exerciseOrder === orderInStorage);
+        this.sortingOrder = parsedOrderInStorage ? (+parsedOrderInStorage as LectureSortingOrder) : LectureSortingOrder.ASC;
     }
 
-    public groupLectures(selectedOrder: number): void {
+    private onCourseLoad() {
+        this.groupLectures();
+    }
+
+    /**
+     * Reorders all displayed lectures
+     */
+    flipOrder() {
+        this.sortingOrder = this.sortingOrder === this.ASC ? this.DESC : this.ASC;
+        this.localStorage.store(SortFilterStorageKey.ORDER, this.sortingOrder.toString());
+        this.groupLectures();
+    }
+
+    public groupLectures(): void {
         this.weeklyLecturesGrouped = {};
         this.weeklyIndexKeys = [];
         const groupedLectures = {};
         const indexKeys: string[] = [];
         const courseLectures = this.course?.lectures ? [...this.course!.lectures] : [];
-        const sortedLectures = this.sortLectures(courseLectures, selectedOrder);
+        const sortedLectures = this.sortLectures(courseLectures, this.sortingOrder);
         const notAssociatedLectures: Lecture[] = [];
         sortedLectures.forEach((lecture) => {
             const dateValue = lecture.startDate ? dayjs(lecture.startDate) : undefined;
