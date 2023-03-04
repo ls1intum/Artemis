@@ -11,6 +11,7 @@
             "cardExerciseLabel": "Next Exercise:",
             "register": {
                 "signUp": "Register for a course",
+                "signUpDetail": "Register for the course",
                 "registerSuccessful": "Registration successful",
                 "signUpForCourse": "Register",
                 "cancel": "Cancel",

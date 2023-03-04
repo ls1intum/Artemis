@@ -22,6 +22,13 @@ const routes: Routes = [
         path: 'courses/register',
         loadChildren: () => import('./course-registration/course-registration.module').then((m) => m.CourseRegistrationModule),
     },
+    // /courses/:courseId/register is special,
+    // because we won't have access to the course object before the user is registered
+    {
+        path: 'courses/:courseId/register',
+        loadChildren: () => import('./course-registration/course-registration-detail/course-registration-detail.module').then((m) => m.CourseRegistrationDetailModule),
+    },
+    // General course subpages for course-registered users
     {
         path: 'courses/:courseId',
         component: CourseOverviewComponent,

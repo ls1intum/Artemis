@@ -11,6 +11,7 @@
             "cardExerciseLabel": "Nächste Übung:",
             "register": {
                 "signUp": "Für einen Kurs anmelden",
+                "signUpDetail": "Anmeldung für den Kurs",
                 "registerSuccessful": "Anmeldung erfolgreich",
                 "signUpForCourse": "Anmelden",
                 "cancel": "Abbrechen",
