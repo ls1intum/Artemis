@@ -185,11 +185,11 @@ public class QuizBatchService {
             if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
                 return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
             }
-            else if (quizExercise.getQuizMode() == QuizMode.BATCHED) {
+            else {
                 return quizBatchRepository.findAllByQuizExerciseAndStudentLogin(quizExercise, login).stream().findFirst();
             }
         }
-        if (quizExercise.getQuizBatches() != null && batchIdOptional.isPresent()) {
+        if (quizExercise.getQuizBatches() != null) {
             final Long batchId = batchIdOptional.get();
             return quizExercise.getQuizBatches().stream().filter(quizBatch -> Objects.equals(quizBatch.getId(), batchId)).findAny().or(() -> quizBatchRepository.findById(batchId));
         }
