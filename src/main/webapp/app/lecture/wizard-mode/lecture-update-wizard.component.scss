@@ -1,22 +1,4 @@
-.step {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: gray;
-    margin-left: 2%;
-    margin-right: 2%;
-}
-
-.completed {
-    background: #3e8acc;
-}
-
-.current {
-    background: #3e8acc;
-    opacity: 0.5;
-}
-
-.form-step + .form-step:before {
+.form-step + .form-step::before {
     content: '';
     display: block;
     height: 1px;
@@ -72,7 +54,7 @@
         z-index: 2;
         font-size: 2em;
 
-        & > fa-icon {
+        & > .step-icon {
             cursor: pointer;
             background-color: var(--programming-exercise-instruction-step-wizard-card-header-background);
             width: 30px;

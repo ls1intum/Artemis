@@ -41,7 +41,6 @@ import { CourseManagementExerciseRowComponent } from './overview/course-manageme
 import { CourseManagementOverviewStatisticsComponent } from './overview/course-management-overview-statistics.component';
 import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
-import { ArtemisCourseParticipantScoresModule } from 'app/course/course-participant-scores/course-participant-scores.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { CourseManagementStatisticsComponent } from 'app/course/manage/course-management-statistics.component';
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
@@ -98,7 +97,6 @@ import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lt
         ArtemisSharedPipesModule,
         ArtemisTutorParticipationGraphModule,
         ArtemisMarkdownModule,
-        ArtemisCourseParticipantScoresModule,
         ArtemisSharedComponentModule,
         UserImportModule,
         LineChartModule,

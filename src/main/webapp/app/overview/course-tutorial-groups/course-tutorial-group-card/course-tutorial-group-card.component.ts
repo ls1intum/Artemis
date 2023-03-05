@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, HostListener, Input } from '@angula
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
 import { Router } from '@angular/router';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-course-tutorial-group-card',
@@ -13,16 +14,19 @@ import { Router } from '@angular/router';
 })
 export class CourseTutorialGroupCardComponent {
     @Input()
-    courseId: number;
+    course: Course;
     @Input()
     tutorialGroup: TutorialGroup;
+
+    @Input()
+    showChannelLink = false;
 
     // icons
     faPersonChalkboard = faPersonChalkboard;
 
     @HostListener('click', ['$event'])
     onCardClicked() {
-        this.router.navigate(['/courses', this.courseId, 'tutorial-groups', this.tutorialGroup.id]);
+        this.router.navigate(['/courses', this.course.id!, 'tutorial-groups', this.tutorialGroup.id]);
     }
 
     constructor(private router: Router) {}

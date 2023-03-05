@@ -18,9 +18,15 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
     }
 
     group(feedbackItems: FeedbackItem[], exercise: Exercise): FeedbackNode[] {
-        return getAllFeedbackGroups(exercise) //
+        const feedbackGroups = getAllFeedbackGroups(exercise)
             .map((group: FeedbackGroup) => group.addAllItems(feedbackItems.filter(group.shouldContain)))
             .filter((group: FeedbackGroup) => !group.isEmpty());
+
+        if (feedbackGroups.length === 1) {
+            feedbackGroups[0].open = true;
+        }
+
+        return feedbackGroups;
     }
 
     /**

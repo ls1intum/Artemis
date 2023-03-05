@@ -196,7 +196,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.exam = new Exam();
         studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
         studentExam.workingTime = 100;
-        const studentExamWithExercises = { id: 1 };
+        const studentExamWithExercises = { id: 1, numberOfExamSessions: 0 };
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(of(studentExam));
         const loadStudentExamWithExercisesForSummary = jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
@@ -453,7 +453,7 @@ describe('ExamParticipationComponent', () => {
             alertSuccessSpy = jest.spyOn(alertService, 'success');
             alertErrorSpy = jest.spyOn(alertService, 'error');
             artemisDatePipeSpy = jest.spyOn(artemisDatePipe, 'transform');
-            comp.studentExam = { id: 3, workingTime: 420 };
+            comp.studentExam = { id: 3, workingTime: 420, numberOfExamSessions: 0 };
             comp.studentExamId = comp.studentExam.id!;
         });
 
