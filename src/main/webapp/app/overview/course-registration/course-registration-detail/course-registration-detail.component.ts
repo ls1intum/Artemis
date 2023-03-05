@@ -1,9 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 
 @Component({
@@ -11,18 +8,11 @@ import { Course } from 'app/entities/course.model';
     templateUrl: './course-registration-detail.component.html',
 })
 export class CourseRegistrationDetailComponent implements OnInit {
-    userIsAllowedToRegister = false;
     loading = false;
     course: Course | null = null;
     courseLoading = true;
 
-    constructor(
-        private accountService: AccountService,
-        private courseService: CourseManagementService,
-        private profileService: ProfileService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-    ) {}
+    constructor(private accountService: AccountService, private courseService: CourseManagementService) {}
 
     ngOnInit(): void {
         console.log('course registration detail init');
