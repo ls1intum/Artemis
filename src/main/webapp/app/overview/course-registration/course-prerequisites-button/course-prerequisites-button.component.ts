@@ -1,13 +1,13 @@
 import { Component, Input } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-prerequisites-modal.component';
+import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
-    selector: 'jhi-course-registration-prerequisites-button',
-    templateUrl: './course-registration-prerequisites-button.component.html',
+    selector: 'jhi-course-prerequisites-button',
+    templateUrl: './course-prerequisites-button.component.html',
 })
-export class CourseRegistrationPrerequisitesButtonComponent {
+export class CoursePrerequisitesButtonComponent {
     @Input() course: Course;
 
     constructor(private modalService: NgbModal) {}

@@ -4,6 +4,6 @@
 </div>
 <ng-template #courseLoaded>
     <h4>{{ course?.title }}</h4>
-    <jhi-course-registration-prerequisites-button [course]="course"></jhi-course-registration-prerequisites-button>
+    <jhi-course-prerequisites-button [course]="course"></jhi-course-prerequisites-button>
     <jhi-course-registration-button [course]="course" (onRegistration)="redirectToCoursePage()"></jhi-course-registration-button>
 </ng-template>
