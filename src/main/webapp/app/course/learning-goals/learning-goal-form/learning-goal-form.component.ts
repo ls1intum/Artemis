@@ -94,6 +94,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     form: FormGroup;
     selectedLectureInDropdown: Lecture;
     selectedLectureUnitsInTable: LectureUnit[] = [];
+    suggestedTaxonomies: string[] = [];
 
     faTimes = faTimes;
 
@@ -175,6 +176,28 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
 
     selectLectureInDropdown(lecture: Lecture) {
         this.selectedLectureInDropdown = lecture;
+    }
+
+    /**
+     * Needed to keep the order in keyvalue pipe
+     */
+    keepOrder = () => {
+        return 0;
+    };
+
+    /**
+     * Suggest some taxonomies based on keywords used in the description
+     * @param event The description input change event
+     */
+    descriptionChanged(event: Event) {
+        this.suggestedTaxonomies = [];
+        const description = (event.target as HTMLInputElement).value;
+        for (const taxonomy in this.learningGoalTaxonomy) {
+            const keywords = this.translateService.instant('artemisApp.learningGoal.keywords.' + taxonomy.toLowerCase()).split(', ');
+            if (keywords.some((keyword: string) => description.includes(keyword))) {
+                this.suggestedTaxonomies.push(this.translateService.instant('artemisApp.learningGoal.taxonomies.' + taxonomy.toLowerCase()));
+            }
+        }
     }
 
     selectLectureUnitInTable(lectureUnit: LectureUnit) {
