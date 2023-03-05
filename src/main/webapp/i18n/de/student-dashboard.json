@@ -13,6 +13,7 @@
                 "signUp": "Kursanmeldung",
                 "registerSuccessful": "Anmeldung erfolgreich",
                 "registerForCourse": "Anmelden",
+                "notInCourseButCanRegister": "Du bist nicht in diesem Kurs, kannst dich aber anmelden.",
                 "cancel": "Abbrechen",
                 "coursePrerequisites": "Voraussetzungen",
                 "noCourse": "Keine Kurse für eine Anmeldung verfügbar",
