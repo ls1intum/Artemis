@@ -1,3 +1,3 @@
-<button *ngIf="course.prerequisites" class="btn btn-secondary" (click)="showPrerequisites(course.id!)">
+<button *ngIf="course.prerequisites?.length" class="btn btn-secondary" (click)="showPrerequisites(course.id!)">
     {{ 'artemisApp.studentDashboard.register.coursePrerequisites' | artemisTranslate }}
 </button>
