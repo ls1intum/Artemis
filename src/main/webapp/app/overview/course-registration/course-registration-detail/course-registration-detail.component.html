@@ -1,4 +1,8 @@
-<div>
-    <h3>{{ 'artemisApp.studentDashboard.register.signUpDetail' | artemisTranslate }}</h3>
-    <!-- use userIsAllowedToRegister -->
+<h3>{{ 'artemisApp.studentDashboard.register.signUp' | artemisTranslate }}</h3>
+<!-- use userIsAllowedToRegister -->
+<div *ngIf="courseLoading; else courseLoaded">
+    <span>{{ 'artemisApp.studentDashboard.register.courseLoading' | artemisTranslate }}</span>
 </div>
+<ng-template #courseLoaded>
+    <h4>{{ course?.title }}</h4>
+</ng-template>

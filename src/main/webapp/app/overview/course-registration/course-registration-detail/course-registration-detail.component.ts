@@ -14,6 +14,7 @@ export class CourseRegistrationDetailComponent implements OnInit {
     userIsAllowedToRegister = false;
     loading = false;
     course: Course | null = null;
+    courseLoading = true;
 
     constructor(
         private accountService: AccountService,
@@ -25,5 +26,9 @@ export class CourseRegistrationDetailComponent implements OnInit {
 
     ngOnInit(): void {
         console.log('course registration detail init');
+        this.courseService.find(1).subscribe((courseResponse) => {
+            this.course = courseResponse.body!;
+            this.courseLoading = false;
+        });
     }
 }

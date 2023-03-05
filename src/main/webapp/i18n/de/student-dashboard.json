@@ -10,14 +10,14 @@
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung:",
             "register": {
-                "signUp": "Für einen Kurs anmelden",
-                "signUpDetail": "Anmeldung für den Kurs",
+                "signUp": "Kursanmeldung",
                 "registerSuccessful": "Anmeldung erfolgreich",
                 "signUpForCourse": "Anmelden",
                 "cancel": "Abbrechen",
                 "coursePrerequisites": "Voraussetzungen",
                 "noCourse": "Keine Kurse für eine Registrierung verfügbar",
-                "courseLoading": "Kurse werden geladen...",
+                "courseLoading": "Kurs wird geladen...",
+                "coursesLoading": "Kurse werden geladen...",
                 "courseSignupConfirmationTitle": "Bestätigung der Kursteilnahme"
             },
             "course": "Kurs"
