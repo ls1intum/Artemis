@@ -379,6 +379,27 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/{courseId}/for-registration : get a single courses that the current user can register to.
+     * Decided by the start and end date and if the registrationEnabled flag is set correctly
+     *
+     * @return the active course
+     */
+    @GetMapping("courses/{courseId}/for-registration")
+    @PreAuthorize("hasRole('USER')")
+    public Course getCourseToRegister(@PathVariable long courseId) {
+        log.debug("REST request to get a currently active course for registration");
+        User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
+
+        Course course = courseRepository.findSingleCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(courseId);
+        // check that the user can at least register to one organization of the course
+        if (course.getOrganizations() != null && !course.getOrganizations().isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
+            throw new AccessForbiddenException("User is not member of any organization of this course. Cannot register user");
+        }
+
+        return course;
+    }
+
+    /**
      * GET /courses/for-registration : get all courses that the current user can register to.
      * Decided by the start and end date and if the registrationEnabled flag is set correctly
      *

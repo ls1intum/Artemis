@@ -1,8 +1,9 @@
 <h3>{{ 'artemisApp.studentDashboard.register.signUp' | artemisTranslate }}</h3>
-<!-- use userIsAllowedToRegister -->
-<div *ngIf="courseLoading; else courseLoaded">
+<div *ngIf="loading; else courseLoaded">
     <span>{{ 'artemisApp.studentDashboard.register.courseLoading' | artemisTranslate }}</span>
 </div>
 <ng-template #courseLoaded>
     <h4>{{ course?.title }}</h4>
+    <jhi-course-registration-prerequisites-button [course]="course"></jhi-course-registration-prerequisites-button>
+    <jhi-course-registration-button [course]="course" (onRegistration)="redirectToCoursePage()"></jhi-course-registration-button>
 </ng-template>

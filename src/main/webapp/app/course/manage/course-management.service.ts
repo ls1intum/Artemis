@@ -219,6 +219,15 @@ export class CourseManagementService {
     }
 
     /**
+     * finds a single course that can be registered to (with limited information)
+     */
+    findOneToRegister(courseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/for-registration`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
+    }
+
+    /**
      * register to the course with the provided unique identifier using a POST request
      * NB: the body is null, because the server can identify the user anyway
      * @param courseId - the id of the course

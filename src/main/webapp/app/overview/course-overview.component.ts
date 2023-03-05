@@ -176,18 +176,27 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     /**
-     * Determines whether the user can register for the course by fetching all courses they can register for
+     * Determines whether the user can register for the course by trying to fetch
+     * the for-registration version of the course from the server.
      */
     canRegisterForCourse(): Promise<boolean> {
         return new Promise((resolve, reject) => {
-            this.courseService.findAllToRegister().subscribe({
-                next: (res: HttpResponse<Course[]>) => {
-                    const coursesToRegister = res.body!;
-                    const coursesToRegisterIds = coursesToRegister.map((course) => course.id);
-                    const canRegister = coursesToRegisterIds.includes(this.courseId);
-                    resolve(canRegister);
+            this.courseService.findOneToRegister(this.courseId).subscribe({
+                next: (res: HttpResponse<Course>) => {
+                    if (res.status === 200) {
+                        resolve(true);
+                    } else {
+                        resolve(false);
+                    }
                 },
-                error: reject,
+                error: (error: HttpErrorResponse) => {
+                    // for 403, the user is not allowed to register for the course
+                    if (error.status === 403) {
+                        resolve(false);
+                    } else {
+                        reject(error);
+                    }
+                },
             });
         });
     }

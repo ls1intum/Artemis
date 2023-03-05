@@ -127,6 +127,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals", "prerequisites" })
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
 
+    @Query("select distinct course from Course course left join fetch course.organizations organizations left join fetch course.prerequisites prerequisites where (course.startDate is null or course.startDate <= :now) and (course.endDate is null or course.endDate >= :now) and course.onlineCourse = false and course.registrationEnabled = true and course.id = :courseId")
+    Optional<Course> findSingleCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
+
     @Query("select distinct course from Course course left join fetch course.organizations organizations left join fetch course.prerequisites prerequisites where (course.startDate is null or course.startDate <= :now) and (course.endDate is null or course.endDate >= :now) and course.onlineCourse = false and course.registrationEnabled = true")
     List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
 
@@ -274,6 +277,16 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     default List<Course> findAllActiveWithLectures() {
         return findAllActiveWithLectures(ZonedDateTime.now());
+    }
+
+    /**
+     * Get a single course to register with eagerly loaded organizations and prerequisites.
+     *
+     * @return the course entity
+     */
+    default Course findSingleCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(long courseId) {
+        return findSingleCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(courseId, ZonedDateTime.now())
+                .orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**
