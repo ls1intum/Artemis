@@ -121,8 +121,14 @@ public class BuildLogStatisticsEntry extends DomainObject {
                 return null;
             }
             else {
-                return Math.toIntExact(ChronoUnit.SECONDS.between(from, to));
+                int durationInSecond = Math.toIntExact(ChronoUnit.SECONDS.between(from, to));
+                // limit the data type to avoid database exceptions
+                return limitSmallInt(durationInSecond);
             }
+        }
+
+        public int limitSmallInt(int value) {
+            return Math.max(0, Math.min(value, 65535));
         }
     }
 }
