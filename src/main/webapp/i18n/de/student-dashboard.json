@@ -12,13 +12,13 @@
             "register": {
                 "signUp": "Kursanmeldung",
                 "registerSuccessful": "Anmeldung erfolgreich",
-                "signUpForCourse": "Anmelden",
+                "registerForCourse": "Anmelden",
                 "cancel": "Abbrechen",
                 "coursePrerequisites": "Voraussetzungen",
-                "noCourse": "Keine Kurse für eine Registrierung verfügbar",
+                "noCourse": "Keine Kurse für eine Anmeldung verfügbar",
                 "courseLoading": "Kurs wird geladen...",
                 "coursesLoading": "Kurse werden geladen...",
-                "courseSignupConfirmationTitle": "Bestätigung der Kursteilnahme"
+                "courseSignupConfirmationTitle": "Bestätigung der Kursanmeldung"
             },
             "course": "Kurs"
         },

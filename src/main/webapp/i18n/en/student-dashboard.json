@@ -12,7 +12,7 @@
             "register": {
                 "signUp": "Course Registration",
                 "registerSuccessful": "Registration successful",
-                "signUpForCourse": "Register",
+                "registerForCourse": "Register",
                 "cancel": "Cancel",
                 "coursePrerequisites": "Prerequisites",
                 "noCourse": "No courses available for registration",
