@@ -1,8 +1,9 @@
-package de.tum.in.www1.artemis.service.connectors.localvc;
+package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -27,73 +28,89 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationTriggerService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIExecutorService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationPushService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-/**
- * Contains methods used by the LocalVCPostPushHook.
- */
 @Service
-@Profile("localvc")
-public class LocalVCHookService {
+@Profile("localci")
+public class LocalCIPushService implements ContinuousIntegrationPushService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalVCHookService.class);
+    private final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
 
-    @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
-
-    private final ProgrammingExerciseService programmingExerciseService;
-
-    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
-
-    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
     private final ProgrammingMessagingService programmingMessagingService;
 
+    private final ProgrammingTriggerService programmingTriggerService;
+
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
     private final LocalCIExecutorService localCIExecutorService;
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
-    private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final ProgrammingTriggerService programmingTriggerService;
+    private final LocalCITriggerService localCITriggerService;
 
-    public LocalVCHookService(ProgrammingExerciseService programmingExerciseService,
+    @Value("${artemis.version-control.url}")
+    private URL localVCBaseUrl;
+
+    public LocalCIPushService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionService programmingSubmissionService,
+            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, LocalCIExecutorService localCIExecutorService,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
-            ProgrammingTriggerService programmingTriggerService) {
-        this.programmingExerciseService = programmingExerciseService;
-        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
-        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, LocalCIExecutorService localCIExecutorService,
+            ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            LocalCITriggerService localCITriggerService) {
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
+        this.programmingTriggerService = programmingTriggerService;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.localCIExecutorService = localCIExecutorService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
-        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
-        this.programmingTriggerService = programmingTriggerService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.localCITriggerService = localCITriggerService;
     }
 
+    /**
+     * Trigger the respective build and process the results.
+     *
+     * @param commitHash the hash of the last commit.
+     * @param repository the remote repository which was pushed to.
+     */
+    @Override
     public void processNewPush(String commitHash, Repository repository) {
         long timeNanoStart = System.nanoTime();
+
+        if (commitHash == null) {
+            try (Git git = new Git(repository)) {
+                RevCommit latestCommit = git.log().setMaxCount(1).call().iterator().next();
+                commitHash = latestCommit.getName();
+            }
+            catch (GitAPIException e) {
+                log.error("Could not retrieve latest commit from repository {}.", repository.getDirectory().toPath());
+                return;
+            }
+        }
 
         Path repositoryFolderPath = repository.getDirectory().toPath();
 
         LocalVCRepositoryUrl localVCRepositoryUrl;
+
         try {
             localVCRepositoryUrl = new LocalVCRepositoryUrl(repositoryFolderPath, localVCBaseUrl);
         }
@@ -108,7 +125,14 @@ public class LocalVCHookService {
         ProgrammingExercise exercise;
 
         try {
-            exercise = programmingExerciseService.findOneByProjectKey(projectKey, false);
+            List<ProgrammingExercise> exercises;
+            exercises = programmingExerciseRepository.findByProjectKey(projectKey);
+
+            if (exercises.size() != 1) {
+                throw new EntityNotFoundException("No exercise or multiple exercises found for the given project key: " + projectKey);
+            }
+
+            exercise = exercises.get(0);
         }
         catch (EntityNotFoundException e) {
             // This should never happen, as the unambiguous exercise is already retrieved in the LocalVCPushFilter.
@@ -226,7 +250,7 @@ public class LocalVCHookService {
             programmingMessagingService.notifyUserAboutSubmission(submission);
 
             // Trigger the build for the new submission on the local CI system.
-            continuousIntegrationTriggerService.ifPresent(service -> service.triggerBuild(participation));
+            localCITriggerService.triggerBuild(participation);
         }
         catch (Exception ex) {
             log.error("Exception encountered when trying to create a new submission for participation {} with the following commit: {}", participation.getId(), commit, ex);

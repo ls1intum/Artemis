@@ -3,9 +3,6 @@ package de.tum.in.www1.artemis.service.connectors;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 
-/**
- * Abstract service for managing entities related to continuous integration.
- */
 public interface ContinuousIntegrationTriggerService {
 
     /**

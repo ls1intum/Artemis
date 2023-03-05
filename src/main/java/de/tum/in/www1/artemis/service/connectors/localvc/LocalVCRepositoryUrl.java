@@ -62,6 +62,12 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
     }
 
     public LocalVCRepositoryUrl(Path repositoryPath, URL localVCServerUrl) {
+        if (repositoryPath.getFileName().toString().equals(".git")) {
+            // This is the case when a local repository path is passed instead of a path to a remote repository in the "local-vcs-repos" folder.
+            // In this case we remove the ".git" suffix.
+            repositoryPath = repositoryPath.getParent();
+        }
+
         String projectKey = repositoryPath.getParent().getFileName().toString();
         String repositorySlug = repositoryPath.getFileName().toString().replace(".git", "");
         if (!repositorySlug.toLowerCase().startsWith(projectKey.toLowerCase())) {

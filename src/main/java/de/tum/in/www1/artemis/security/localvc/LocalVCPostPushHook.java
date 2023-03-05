@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.security.localvc;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Optional;
 
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.PostReceiveHook;
@@ -9,17 +10,17 @@ import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
 
 import de.tum.in.www1.artemis.exception.localvc.LocalVCBadRequestException;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCHookService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationPushService;
 
 /**
  * Contains an onPostReceive method that is called by JGit after a push has been received (i.e. after the pushed files were successfully written to disk).
  */
 public class LocalVCPostPushHook implements PostReceiveHook {
 
-    private final LocalVCHookService localVCHookService;
+    private final Optional<ContinuousIntegrationPushService> continuousIntegrationPushService;
 
-    public LocalVCPostPushHook(LocalVCHookService localVCHookService) {
-        this.localVCHookService = localVCHookService;
+    public LocalVCPostPushHook(Optional<ContinuousIntegrationPushService> continuousIntegrationPushService) {
+        this.continuousIntegrationPushService = continuousIntegrationPushService;
     }
 
     @Override
@@ -48,6 +49,6 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
         Repository repository = rp.getRepository();
 
-        localVCHookService.processNewPush(commitHash, repository);
+        continuousIntegrationPushService.ifPresent(service -> service.processNewPush(commitHash, repository));
     }
 }
