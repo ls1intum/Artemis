@@ -2,7 +2,7 @@
     content: '';
     display: block;
     height: 1px;
-    background: gray;
+    background: var(--secondary);
     margin-bottom: 1rem;
 }
 
@@ -55,14 +55,12 @@
         font-size: 2em;
 
         & > .step-icon {
-            cursor: pointer;
             background-color: var(--programming-exercise-instruction-step-wizard-card-header-background);
             width: 30px;
             height: 30px;
             text-align: center;
             padding: 6px 0;
             font-size: 12px;
-            line-height: 1.428571429;
             border-radius: 15px;
             border-color: var(--programming-exercise-instruction-step-wizard-btn-border-color);
         }
