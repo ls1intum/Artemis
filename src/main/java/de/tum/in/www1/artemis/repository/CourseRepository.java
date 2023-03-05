@@ -282,6 +282,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     /**
      * Get a single course to register with eagerly loaded organizations and prerequisites.
      *
+     * @param courseId the id of the course
      * @return the course entity
      */
     default Course findSingleCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(long courseId) {

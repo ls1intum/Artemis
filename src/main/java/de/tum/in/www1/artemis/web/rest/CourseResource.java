@@ -382,6 +382,7 @@ public class CourseResource {
      * GET /courses/{courseId}/for-registration : get a single courses that the current user can register to.
      * Decided by the start and end date and if the registrationEnabled flag is set correctly
      *
+     * @param courseId the id of the course to retrieve
      * @return the active course
      */
     @GetMapping("courses/{courseId}/for-registration")
