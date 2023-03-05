@@ -51,30 +51,6 @@ public class PushNotificationDeviceConfiguration {
 
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        PushNotificationDeviceConfiguration that = (PushNotificationDeviceConfiguration) o;
-        return token.equals(that.token) && deviceType == that.deviceType && expirationDate.equals(that.expirationDate) && Arrays.equals(secretKey, that.secretKey)
-                && owner.equals(that.owner);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = Objects.hash(token, deviceType, expirationDate, owner);
-        result = 31 * result + Arrays.hashCode(secretKey);
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "PushNotificationDeviceConfiguration{" + "token='" + token + '\'' + ", deviceType=" + deviceType + ", expirationDate=" + expirationDate + ", secretKey="
-                + Arrays.toString(secretKey) + ", owner=" + owner + '}';
-    }
-
     public String getToken() {
         return token;
     }
@@ -113,5 +89,29 @@ public class PushNotificationDeviceConfiguration {
 
     public void setOwner(User owner) {
         this.owner = owner;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        PushNotificationDeviceConfiguration that = (PushNotificationDeviceConfiguration) o;
+        return token.equals(that.token) && deviceType == that.deviceType && expirationDate.equals(that.expirationDate) && Arrays.equals(secretKey, that.secretKey)
+                && owner.equals(that.owner);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(token, deviceType, expirationDate, owner);
+        result = 31 * result + Arrays.hashCode(secretKey);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "PushNotificationDeviceConfiguration{" + "token='" + token + '\'' + ", deviceType=" + deviceType + ", expirationDate=" + expirationDate + ", secretKey="
+                + Arrays.toString(secretKey) + ", owner=" + owner + '}';
     }
 }

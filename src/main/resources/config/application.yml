@@ -34,7 +34,7 @@ artemis:
     external-system-request:
         batch-size: 50  # wait the time below after 50 requests
         batch-waiting-time: 30000   # in ms = 30s
-    push-notification-relay: http://hermes-sandbox.artemis.cit.tum.de
+    push-notification-relay: https://hermes-sandbox.artemis.cit.tum.de
 
     continuous-integration:
         # Defines the used docker images for certain programming languages.

@@ -58,7 +58,7 @@ public class ApplePushNotificationService extends PushNotificationService {
 
     @Async
     void sendRelayRequest(RestTemplate restTemplate, RelayNotificationRequest request, String relayServerBaseUrl) {
-        RetryTemplate template = RetryTemplate.builder().exponentialBackoff(1000, 2, 60 * 1000).retryOn(RestClientException.class).maxAttempts(40).build();
+        RetryTemplate template = RetryTemplate.builder().exponentialBackoff(1000, 4, 60 * 1000).retryOn(RestClientException.class).maxAttempts(4).build();
 
         try {
             template.execute((RetryCallback<Void, RestClientException>) context -> {

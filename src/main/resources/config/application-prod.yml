@@ -20,7 +20,7 @@ management:
                 enabled: false
 
 artemis:
-    push-notification-relay: http://hermes.artemis.cit.tum.de
+    push-notification-relay: https://hermes.artemis.cit.tum.de
 
 spring:
     devtools:
