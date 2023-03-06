@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, HostListener, Input } from '@angula
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
 import { Router } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-course-tutorial-group-card',
@@ -24,6 +24,7 @@ export class CourseTutorialGroupCardComponent {
     // icons
     faPersonChalkboard = faPersonChalkboard;
 
+    readonly isMessagingEnabled = isMessagingEnabled;
     @HostListener('click', ['$event'])
     onCardClicked() {
         this.router.navigate(['/courses', this.course.id!, 'tutorial-groups', this.tutorialGroup.id]);

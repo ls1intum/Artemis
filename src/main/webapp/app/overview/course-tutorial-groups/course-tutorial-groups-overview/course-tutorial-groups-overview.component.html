@@ -6,7 +6,7 @@
                 [tutorialGroups]="tutorialGroups"
                 [course]="course"
                 [tutorialGroupClickHandler]="onTutorialGroupSelected"
-                [showChannelColumn]="configuration?.useTutorialGroupChannels! && course.postsEnabled!"
+                [showChannelColumn]="configuration?.useTutorialGroupChannels! && isMessagingEnabled(course)"
             >
             </jhi-tutorial-groups-table>
         </ng-container>
