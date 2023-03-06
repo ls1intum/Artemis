@@ -118,6 +118,7 @@ public class User extends AbstractAuditingEntity implements Participant {
      * It will e.g. be included in the repository clone URL.
      */
     @Nullable
+    @JsonIgnore
     @Column(name = "vcs_access_token")
     private String vcsAccessToken = null;
 
