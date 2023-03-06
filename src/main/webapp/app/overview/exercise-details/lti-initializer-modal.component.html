@@ -4,11 +4,10 @@
     </div>
     <div class="modal-body">
         <span jhiTranslate="artemisApp.lti.initialization.body.welcome">Welcome to Artemis! We have automatically created an account for you.</span>
-        <div class="row mb-3 mt-3">
+        <div class="d-flex mb-3 mt-3">
             <label class="col-sm-2 col-form-label" for="userPassword"> <span jhiTranslate="artemisApp.lti.initialization.body.passwordLabel">Your password</span>: </label>
-            <div class="col-sm-10">
-                <input id="userPassword" type="text" class="form-control" disabled [(ngModel)]="password" />
-            </div>
+            <input id="userPassword" type="text" class="form-control" disabled [(ngModel)]="password" />
+            <jhi-copy-icon-button [copyText]="password"></jhi-copy-icon-button>
         </div>
         <p>
             <span jhiTranslate="artemisApp.lti.initialization.body.passwordHint">

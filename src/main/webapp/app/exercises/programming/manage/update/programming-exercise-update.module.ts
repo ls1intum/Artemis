@@ -18,6 +18,19 @@ import { ArtemisTableModule } from 'app/shared/table/table.module';
 import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
 import { SubmissionPolicyUpdateModule } from 'app/exercises/shared/submission-policy/submission-policy-update.module';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
+import { ProgrammingExerciseUpdateWizardComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
+import { ProgrammingExerciseUpdateWizardStepComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-step.component';
+import { ProgrammingExerciseUpdateWizardInformationComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-information.component';
+import { ProgrammingExerciseUpdateWizardDifficultyComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-difficulty.component';
+import { ProgrammingExerciseUpdateWizardLanguageComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-language.component';
+import { ProgrammingExerciseUpdateWizardProblemComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-problem.component';
+import { ProgrammingExerciseUpdateWizardGradingComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-grading.component';
+import { ProgrammingExerciseUpdateWizardBottomBarComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-bottom-bar.component';
+import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
+import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-difficulty.component';
+import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
+import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
+import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-problem.component';
 
 @NgModule({
     imports: [
@@ -39,10 +52,23 @@ import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-p
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,
+        ProgrammingExerciseUpdateWizardComponent,
+        ProgrammingExerciseUpdateWizardStepComponent,
+        ProgrammingExerciseUpdateWizardInformationComponent,
+        ProgrammingExerciseUpdateWizardDifficultyComponent,
+        ProgrammingExerciseUpdateWizardLanguageComponent,
+        ProgrammingExerciseUpdateWizardGradingComponent,
+        ProgrammingExerciseUpdateWizardProblemComponent,
+        ProgrammingExerciseUpdateWizardBottomBarComponent,
+        ProgrammingExerciseInformationComponent,
+        ProgrammingExerciseDifficultyComponent,
+        ProgrammingExerciseLanguageComponent,
+        ProgrammingExerciseGradingComponent,
+        ProgrammingExerciseProblemComponent,
         ProgrammingExercisePlansAndRepositoriesPreviewComponent,
         AddAuxiliaryRepositoryButtonComponent,
         RemoveAuxiliaryRepositoryButtonComponent,
     ],
-    exports: [ProgrammingExerciseUpdateComponent, ProgrammingExercisePlansAndRepositoriesPreviewComponent],
+    exports: [ProgrammingExerciseUpdateComponent, ProgrammingExerciseUpdateWizardComponent, ProgrammingExercisePlansAndRepositoriesPreviewComponent],
 })
 export class ArtemisProgrammingExerciseUpdateModule {}
