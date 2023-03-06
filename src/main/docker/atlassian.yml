@@ -66,7 +66,9 @@ services:
         image: ghcr.io/ls1intum/artemis-bamboo-build-agent:8.2.5
         pull_policy: always
         volumes:
-            - artemis-bamboo-build-agent:/var/atlassian/application-data/bamboo-agent
+            # The following path needs to be the same absolute path on the host because of the docker socket:
+            # https://confluence.atlassian.com/bamkb/bamboo-in-docker-build-fails-due-to-a-missing-working-directory-when-using-docker-runner-1027119339.html
+            - /var/atlassian/application-data/bamboo-agent:/var/atlassian/application-data/bamboo-agent
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             BAMBOO_SERVER: "http://bamboo:8085"
