@@ -115,7 +115,7 @@
                 "newPlagiarismCaseStudent": "Neuer Plagiatsfall für die {{ placeholderValues.0 }} Aufgabe \"{{ placeholderValues.1 }}\".",
                 "plagiarismCaseVerdictStudent": "Dein Plagiatsfall für die {{ placeholderValues.0 }} Aufgabe \"{{ placeholderValues.1 }}\" hat ein Urteil.",
                 "tutorialGroupRegistrationStudent": "Du wurdest für die Übungsgruppe {{ placeholderValues.0 }} von {{ placeholderValues.1 }} registriert.",
-                "tutorialGroupDeregistrationStudent": "Du wurdest von der Übungsgruppe {{ placeholderValues.0 }} von {{ placeholderValues.1 }} entregistriert.",
+                "tutorialGroupDeregistrationStudent": "Du wurdest von der Übungsgruppe {{ placeholderValues.0 }} von {{ placeholderValues.1 }} abgemeldet.",
                 "tutorialGroupRegistrationTutor": "Der Student {{ placeholderValues.0 }} wurde zu deiner Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} registriert.",
                 "tutorialGroupDeregistrationTutor": "Der Student {{ placeholderValues.0 }} wurde von deiner Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} entregistriert.",
                 "tutorialGroupMultipleRegistrationTutor": "{{ placeholderValues.0 }} Studenten wurden für deine Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} registriert.",
