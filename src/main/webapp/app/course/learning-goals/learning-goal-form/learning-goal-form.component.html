@@ -29,7 +29,6 @@
                     id="description"
                     rows="6"
                     formControlName="description"
-                    (change)="descriptionChanged($event)"
                     [placeholder]="'artemisApp.learningGoal.createLearningGoal.descriptionPlaceholder' | artemisTranslate"
                 ></textarea>
                 <div *ngIf="descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)" class="alert alert-danger">
