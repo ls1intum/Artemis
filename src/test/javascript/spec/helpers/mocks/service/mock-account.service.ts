@@ -6,6 +6,8 @@ import { Exercise } from 'app/entities/exercise.model';
 
 export class MockAccountService implements IAccountService {
     identity = () => Promise.resolve({ id: 99 } as User);
+    getAndClearPrefilledUsername = () => 'prefilledUsername';
+    setPrefilledUsername = (username: string) => ({});
     hasAnyAuthority = (authorities: any[]) => Promise.resolve(true);
     hasAnyAuthorityDirect = (authorities: any[]) => authorities.length !== 0;
     getAuthenticationState = () => of({ id: 99 } as User);
