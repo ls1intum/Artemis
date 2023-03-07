@@ -83,7 +83,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
         final String content = "filesystem";
         setupJavaFiles(content);
 
-        Resource[] resources = resourceLoaderService.getResources(jenkinsFilesystemPaths.get(0).getParent().resolve("*.txt"));
+        Resource[] resources = resourceLoaderService.getResources(jenkinsFilesystemPaths.get(0).getParent(), "*.txt");
         assertThat(resources).hasSize(2);
 
         for (final Resource resource : resources) {
@@ -101,7 +101,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
         final Path path2 = Path.of("templates", "java", "p2.txt");
         FileUtils.writeStringToFile(path2.toFile(), content, Charset.defaultCharset());
 
-        Resource[] resources = resourceLoaderService.getResources(Path.of("templates", "java", "*.txt"));
+        Resource[] resources = resourceLoaderService.getResources(Path.of("templates", "java"), "*.txt");
         assertThat(resources).hasSize(1);
 
         final String actualContent = Files.readString(resources[0].getFile().toPath());
@@ -110,7 +110,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     void testLoadNonExistingResources() {
-        Resource[] resources = resourceLoaderService.getResources(Path.of("non", "existing", "*"));
+        Resource[] resources = resourceLoaderService.getResources(Path.of("non", "existing"), "*");
         assertThat(resources).isNotNull().isEmpty();
     }
 

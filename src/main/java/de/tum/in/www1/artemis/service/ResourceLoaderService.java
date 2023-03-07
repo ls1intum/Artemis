@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -24,6 +25,8 @@ import org.springframework.stereotype.Service;
 public class ResourceLoaderService {
 
     private static final Logger log = LoggerFactory.getLogger(ResourceLoaderService.class);
+
+    private static final String ALL_FILES_GLOB = "**" + File.pathSeparator + "*.*";
 
     @Value("${artemis.template-path:#{null}}")
     private Optional<Path> templateFileSystemPath;
@@ -68,24 +71,38 @@ public class ResourceLoaderService {
     }
 
     /**
+     * Recursively loads the resources from the specified directory.
+     * <p>
+     * Only relative paths are allowed.
+     *
+     * @param basePath A relative path pattern to a resource.
+     * @return The resources located by the specified pathPattern.
+     */
+    @Nonnull
+    public Resource[] getResources(final Path basePath) {
+        return getResources(basePath, ALL_FILES_GLOB);
+    }
+
+    /**
      * Loads the resources from the specified path pattern.
      * <p>
      * Only relative paths are allowed.
      * <p>
      * Examples for path patterns: {@code some/path/*.sh}, {@code base/**}.
      *
-     * @param pathPattern A relative path pattern to a resource.
+     * @param basePath A relative path pattern to a resource.
+     * @param pattern  A pattern that limits which files in the directory of the base path are matched.
      * @return The resources located by the specified pathPattern.
      */
     @Nonnull
-    public Resource[] getResources(final Path pathPattern) {
-        checkValidPathElseThrow(pathPattern);
+    public Resource[] getResources(final Path basePath, final String pattern) {
+        checkValidPathElseThrow(basePath);
 
         Resource[] resources = null;
 
         // Try to load from filesystem if override is allowed for pathPattern
-        if (isOverrideAllowed(pathPattern)) {
-            final String resourceLocation = getFileResourceLocation(pathPattern);
+        if (isOverrideAllowed(basePath)) {
+            final String resourceLocation = getFileResourceLocation(basePath, pattern);
             try {
                 resources = resourceLoader.getResources(resourceLocation);
             }
@@ -96,7 +113,7 @@ public class ResourceLoaderService {
 
         // If loading from filesystem is not allowed or was not successful, load from classpath
         if (resources == null || resources.length == 0) {
-            final String resourceLocation = getClassPathResourceLocation(pathPattern);
+            final String resourceLocation = getClassPathResourceLocation(basePath, pattern);
             try {
                 resources = resourceLoader.getResources(resourceLocation);
             }
@@ -118,8 +135,16 @@ public class ResourceLoaderService {
         return "file:" + resolveResourcePath(resourcePath).toString();
     }
 
+    private String getFileResourceLocation(final Path resourcePath, final String pathPattern) {
+        return "file:" + resolveResourcePath(resourcePath).toString() + File.pathSeparator + pathPattern;
+    }
+
     private String getClassPathResourceLocation(final Path resourcePath) {
         return "classpath:/" + resourcePath.toString();
+    }
+
+    private String getClassPathResourceLocation(final Path resourcePath, final String pathPattern) {
+        return "classpath:/" + resourcePath.toString() + File.pathSeparator + pathPattern;
     }
 
     private Path resolveResourcePath(final Path resource) {

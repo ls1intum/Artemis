@@ -471,11 +471,11 @@ public class BambooBuildPlanService {
 
     private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, final Optional<Path> projectTypeSubDirectory,
             final Map<String, String> replacements, final boolean sequentialBuildRuns, final boolean getScaTasks) {
-        final Path scriptPattern = getScriptPattern(programmingLanguage, projectTypeSubDirectory, sequentialBuildRuns, getScaTasks);
+        final Path scriptBasePath = getScriptPattern(programmingLanguage, projectTypeSubDirectory, sequentialBuildRuns, getScaTasks);
 
         try {
             List<Task<?, ?>> tasks = new ArrayList<>();
-            final var scriptResources = Arrays.asList(resourceLoaderService.getResources(scriptPattern));
+            final var scriptResources = Arrays.asList(resourceLoaderService.getResources(scriptBasePath, "*.sh"));
             scriptResources.sort(Comparator.comparing(Resource::getFilename));
             for (final var resource : scriptResources) {
                 // 1_some_description.sh --> "some description"
@@ -535,7 +535,7 @@ public class BambooBuildPlanService {
             projectTypeDir = "regularRuns";
         }
 
-        return pattern.resolve(projectTypeDir).resolve("*.sh");
+        return pattern.resolve(projectTypeDir);
     }
 
     /**

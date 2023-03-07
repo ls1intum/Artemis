@@ -29,8 +29,6 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 @Service
 public class ProgrammingExerciseRepositoryService {
 
-    private static final Path ALL_FILES_GLOB = Path.of("**", "*.*");
-
     private static final String TEST_FILES_PATH = "testFiles";
 
     private static final String TEST_DIR = "test";
@@ -118,8 +116,8 @@ public class ProgrammingExerciseRepositoryService {
         final Repository repo = gitService.getOrCheckoutRepository(repoUrl, true);
 
         // Get path, files and prefix for the programming-language dependent files. They are copied first.
-        final Path generalTemplatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()).resolve(projectTypeTemplateDir)
-                .resolve(ALL_FILES_GLOB);
+        final Path generalTemplatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage())
+                .resolve(projectTypeTemplateDir);
         Resource[] resources = resourceLoaderService.getResources(generalTemplatePath);
 
         Path prefix = Path.of(programmingLanguage).resolve(projectTypeTemplateDir);
@@ -133,9 +131,9 @@ public class ProgrammingExerciseRepositoryService {
                     projectType);
             final String projectTypePath = projectType.name().toLowerCase();
             final Path generalProjectTypePrefix = Path.of(programmingLanguage, projectTypePath);
-            final Path projectTypeTemplatePath = programmingLanguageProjectTypePath.resolve(projectTypeTemplateDir).resolve(ALL_FILES_GLOB);
-
             final Path projectTypeSpecificPrefix = generalProjectTypePrefix.resolve(projectTypeTemplateDir);
+            final Path projectTypeTemplatePath = programmingLanguageProjectTypePath.resolve(projectTypeTemplateDir);
+
             final Resource[] projectTypeSpecificResources = resourceLoaderService.getResources(projectTypeTemplatePath);
 
             if (ProjectType.XCODE.equals(projectType)) {
@@ -301,7 +299,7 @@ public class ProgrammingExerciseRepositoryService {
         else {
             projectTemplatePath = projectTemplatePath.resolve("maven");
         }
-        projectTemplatePath = projectTemplatePath.resolve("projectTemplate").resolve(ALL_FILES_GLOB);
+        projectTemplatePath = projectTemplatePath.resolve("projectTemplate");
 
         final Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
         // keep the folder structure
@@ -342,7 +340,7 @@ public class ProgrammingExerciseRepositoryService {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path projectTypeTemplatePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType)
                 .resolve(TEST_DIR);
-        final Path projectTypeProjectTemplatePath = projectTypeTemplatePath.resolve("projectTemplate").resolve(ALL_FILES_GLOB);
+        final Path projectTypeProjectTemplatePath = projectTypeTemplatePath.resolve("projectTemplate");
 
         try {
             final Resource[] projectTypeProjectTemplate = resourceLoaderService.getResources(projectTypeProjectTemplatePath);
@@ -366,7 +364,7 @@ public class ProgrammingExerciseRepositoryService {
             final Map<String, Boolean> sectionsMap) throws IOException {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
-        final Path testFilePath = templatePath.resolve(TEST_FILES_PATH).resolve(ALL_FILES_GLOB);
+        final Path testFilePath = templatePath.resolve(TEST_FILES_PATH);
         final Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
         final String packagePath = repoLocalPath.resolve(TEST_DIR).resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath().toString();
 
@@ -407,7 +405,7 @@ public class ProgrammingExerciseRepositoryService {
     }
 
     private void setupStaticCodeAnalysisConfigFiles(final RepositoryResources resources, final Path templatePath, final Path repoLocalPath) throws IOException {
-        final Path staticCodeAnalysisConfigPath = templatePath.resolve("staticCodeAnalysisConfig").resolve(ALL_FILES_GLOB);
+        final Path staticCodeAnalysisConfigPath = templatePath.resolve("staticCodeAnalysisConfig");
         final Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
         fileService.copyResources(staticCodeAnalysisResources, resources.prefix.toString(), repoLocalPath.toString(), true);
     }
@@ -530,7 +528,7 @@ public class ProgrammingExerciseRepositoryService {
             Files.copy(stagePomXml.get().getInputStream(), buildStagePath.resolve(POM_XML));
         }
 
-        final Path buildStageResourcesPath = templatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory).resolve(ALL_FILES_GLOB);
+        final Path buildStageResourcesPath = templatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory);
         final Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
         fileService.copyResources(buildStageResources, resourcePrefix.toString(), packagePath, false);
 
@@ -541,7 +539,7 @@ public class ProgrammingExerciseRepositoryService {
 
     private void overwriteStageFilesForProjectType(final Path resourcePrefix, final Path projectTemplatePath, final Path buildStageTemplateSubDirectory, final String packagePath)
             throws IOException {
-        final Path buildStageResourcesPath = projectTemplatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory).resolve(ALL_FILES_GLOB);
+        final Path buildStageResourcesPath = projectTemplatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory);
         try {
             final Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
             fileService.copyResources(buildStageResources, resourcePrefix.toString(), packagePath, false);
