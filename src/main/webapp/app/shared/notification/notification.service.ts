@@ -13,6 +13,8 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification.model';
 import {
+    CONVERSATION_ADD_USER_CHANNEL_TITLE,
+    CONVERSATION_ADD_USER_GROUP_CHAT_TITLE,
     CONVERSATION_CREATE_GROUP_CHAT_TITLE,
     CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE,
     NEW_ANNOUNCEMENT_POST_TITLE,
@@ -98,7 +100,10 @@ export class NotificationService {
             } else if (
                 notification.title === NEW_MESSAGE_TITLE ||
                 notification.title === NEW_REPLY_MESSAGE_TITLE ||
-                notification.title === CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE
+                notification.title === CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE ||
+                notification.title === CONVERSATION_CREATE_GROUP_CHAT_TITLE ||
+                notification.title === CONVERSATION_ADD_USER_CHANNEL_TITLE ||
+                notification.title === CONVERSATION_ADD_USER_GROUP_CHAT_TITLE
             ) {
                 this.router.navigateByUrl(`/${target.mainPage}/${targetCourseId}/messages?conversationId=${targetConversationId}`);
             } else {
@@ -176,13 +181,11 @@ export class NotificationService {
                     this.subscribedTopics.push(userTopic);
                     this.jhiWebsocketService.subscribe(userTopic);
                     this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
-                        console.log(user);
-                        console.log(notification);
-                        // only add notification to observer if it is not a one-to-one conversation creation notification
+                        // Do not add notification to observer if it is a one-to-one conversation creation notification
+                        // and if the author is the current user
                         if (notification.title !== CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE && user.id !== notification.author?.id) {
                             this.addNotificationToObserver(notification);
                         }
-
                         if (notification.target) {
                             const target = JSON.parse(notification.target);
                             const message = target.message;
@@ -193,6 +196,13 @@ export class NotificationService {
                                 const conversationTopic = '/topic/conversation/' + conversationId + '/notifications';
                                 this.subscribeToNewlyCreatedConversation(conversationTopic);
                             }
+
+                            // unsubscribe from deleted conversation topic
+                            if (message === 'conversation-deletion') {
+                                const conversationId = target.conversation;
+                                const conversationTopic = '/topic/conversation/' + conversationId + '/notifications';
+                                this.unsubscribeFromDeletedConversation(conversationTopic);
+                            }
                         }
                     });
                 }
@@ -200,10 +210,25 @@ export class NotificationService {
         });
     }
 
+    /**
+     * Check if user is under messages tab.
+     * @returns {boolean} true if user is under messages tab, false otherwise
+     */
     private isUnderMessagesTabOfSpecificCourse(targetCourseId: string): boolean {
         return this.router.url.includes(`courses/${targetCourseId}/messages`);
     }
 
+    /**
+     * Unsubscribe from deleted conversation topic (e.g. when user deletes a conversation or when user is removed from conversation)
+     */
+    private unsubscribeFromDeletedConversation(conversationTopic: string): void {
+        this.jhiWebsocketService.unsubscribe(conversationTopic);
+        this.subscribedTopics = this.subscribedTopics.filter((topic) => topic !== conversationTopic);
+    }
+
+    /**
+     * Subscribe to newly created conversation topic (e.g. when user is added to a new conversation)
+     */
     private subscribeToNewlyCreatedConversation(conversationTopic: string): void {
         this.subscribedTopics.push(conversationTopic);
         this.jhiWebsocketService.subscribe(conversationTopic);

@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -88,7 +89,8 @@ public class GroupChatResource {
         }
 
         var groupChat = groupChatService.startGroupChat(course, chatMembers);
-        chatMembers.forEach(user -> singleUserNotificationService.notifyUserAboutNewChatCreation(groupChat, user, requestingUser));
+        chatMembers.forEach(user -> singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChat, user, requestingUser,
+                NotificationType.CONVERSATION_CREATE_GROUP_CHAT));
 
         conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, groupChat, chatMembers);
 
@@ -140,6 +142,8 @@ public class GroupChatResource {
         groupChatAuthorizationService.isAllowedToAddUsersToGroupChat(groupChatFromDatabase, requestingUser);
         var usersToRegister = conversationService.findUsersInDatabase(userLogins);
         conversationService.registerUsersToConversation(course, usersToRegister, groupChatFromDatabase, Optional.of(MAX_GROUP_CHAT_PARTICIPANTS));
+        usersToRegister.forEach(user -> singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChatFromDatabase, user, requestingUser,
+                NotificationType.CONVERSATION_ADD_USER_GROUP_CHAT));
         return ResponseEntity.ok().build();
     }
 
@@ -168,6 +172,9 @@ public class GroupChatResource {
         var usersToDeRegister = conversationService.findUsersInDatabase(userLogins);
         conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, groupChatFromDatabase);
         // ToDo: Discuss if we should delete the group chat if it has no participants left, but maybe we want to keep it for data analysis purposes
+
+        usersToDeRegister.forEach(user -> singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChatFromDatabase, user, requestingUser,
+                NotificationType.CONVERSATION_REMOVE_USER_GROUP_CHAT));
         return ResponseEntity.ok().build();
     }
 

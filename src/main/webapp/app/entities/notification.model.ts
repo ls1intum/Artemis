@@ -103,5 +103,9 @@ export const CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE = 'New one-to-one chat';
 
 export const CONVERSATION_CREATE_GROUP_CHAT_TITLE = 'New group chat';
 
+export const CONVERSATION_ADD_USER_CHANNEL_TITLE = 'You have been added to a channel';
+
+export const CONVERSATION_ADD_USER_GROUP_CHAT_TITLE = 'You have been added to a group chat';
+
 // edge case: has no separate notificationType. Is created based on EXERCISE_UPDATED for exam exercises
 export const LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = 'Live Exam Exercise Update';

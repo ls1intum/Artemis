@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
@@ -82,9 +83,11 @@ public class OneToOneChatResource {
 
         var oneToOneChat = oneToOneChatService.startOneToOneChat(course, userA, userB);
         var userToBeNotified = userA.getLogin().equals(requestingUser.getLogin()) ? userB : userA;
-        singleUserNotificationService.notifyUserAboutNewChatCreation(oneToOneChat, userToBeNotified, requestingUser);
+        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(oneToOneChat, userToBeNotified, requestingUser,
+                NotificationType.CONVERSATION_CREATE_ONE_TO_ONE_CHAT);
         // also send notification to the author in order for the author to subscribe to the new chat (this notification won't be saved and shown to author)
-        singleUserNotificationService.notifyUserAboutNewChatCreation(oneToOneChat, requestingUser, requestingUser);
+        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(oneToOneChat, requestingUser, requestingUser,
+                NotificationType.CONVERSATION_CREATE_ONE_TO_ONE_CHAT);
         return ResponseEntity.created(new URI("/api/one-to-one-chats/" + oneToOneChat.getId())).body(conversationDTOService.convertOneToOneChatToDto(requestingUser, oneToOneChat));
     }
 }

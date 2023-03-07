@@ -10,7 +10,9 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
@@ -200,6 +202,34 @@ public class SingleUserNotificationFactory {
     }
 
     /**
+     * Creates an instance of SingleUserNotification for message replies.
+     *
+     * @param answerPost           to which the notification is related
+     * @param notificationType     type of the notification that should be created
+     * @param users                who should be notified or are related to the notification
+     * @param responsibleForAction the user who is responsible for the action that triggered the notification
+     * @return an instance of SingleUserNotification
+     */
+    public static SingleUserNotification createNotification(AnswerPost answerPost, NotificationType notificationType, Set<User> users, User responsibleForAction) {
+        var title = findCorrespondingNotificationTitleOrThrow(notificationType);
+        if (users.isEmpty()) {
+            throw new IllegalArgumentException("No users provided for notification");
+        }
+        SingleUserNotification notification;
+        if (notificationType == NotificationType.CONVERSATION_NEW_REPLY_MESSAGE) {
+            var user = users.stream().findAny().orElseThrow();
+            notification = new SingleUserNotification(user, title,
+                    "You have new reply in a message by " + responsibleForAction.getName() + " in course (" + answerPost.getPost().getConversation().getCourse().getTitle() + ").");
+            notification.setTransientAndStringTarget(createMessageReplyTarget(answerPost, answerPost.getPost().getConversation().getCourse().getId()));
+            notification.setAuthor(responsibleForAction);
+        }
+        else {
+            throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+        }
+        return notification;
+    }
+
+    /**
      * Creates an instance of SingleUserNotification for conversation creation.
      *
      * @param conversation         to which the notification is related
@@ -217,42 +247,60 @@ public class SingleUserNotificationFactory {
         switch (notificationType) {
             case CONVERSATION_CREATE_ONE_TO_ONE_CHAT -> {
                 OneToOneChat oneToOneChat = (OneToOneChat) conversation;
-                var student = users.stream().findAny().orElseThrow();
-                notification = new SingleUserNotification(student, title, "You have new direct message from " + oneToOneChat.getCreator().getName());
+                var user = users.stream().findAny().orElseThrow();
+                // text is null because the notification is not shown
+                notification = new SingleUserNotification(user, title, null);
                 notification.setTransientAndStringTarget(createConversationCreationTarget(oneToOneChat, oneToOneChat.getCourse().getId()));
                 notification.setAuthor(responsibleForAction);
             }
-            case CONVERSATION_CREATE_GROUP_CHAT -> {
-                var student = users.stream().findAny().orElseThrow();
+            case CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT -> {
+                var user = users.stream().findAny().orElseThrow();
                 var groupChat = (GroupChat) conversation;
-                notification = new SingleUserNotification(student, title,
-                        "You have been added to new group chat " + groupChat.getName() + " by " + responsibleForAction.getName() + ".");
+                notification = new SingleUserNotification(user, title,
+                        "You have been added to a new group chat by " + responsibleForAction.getName() + " in course (" + groupChat.getCourse().getTitle() + ").");
                 notification.setTransientAndStringTarget(createConversationCreationTarget(groupChat, groupChat.getCourse().getId()));
                 notification.setAuthor(responsibleForAction);
             }
-            // case CONVERSATION_ADD_USER_GROUP_CHAT -> {
-            // if (tutorialGroup.getTeachingAssistant() == null) {
-            // throw new IllegalArgumentException("The tutorial group " + tutorialGroup.getTitle() + " does not have a tutor to which a notification could be sent.");
-            // }
-            // var student = users.stream().findAny();
-            // var studentName = student.isPresent() ? student.get().getName() : "";
-            //
-            // notification = new SingleUserNotification(tutorialGroup.getTeachingAssistant(), title,
-            // "The student " + studentName + " has been registered to your tutorial group " + tutorialGroup.getTitle() + " by " + responsibleForAction.getName() + ".");
-            // notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true, true));
-            // }
-            // case CONVERSATION_ADD_USER_CHANNEL -> {
-            // if (tutorialGroup.getTeachingAssistant() == null) {
-            // throw new IllegalArgumentException("The tutorial group " + tutorialGroup.getTitle() + " does not have a tutor to which a notification could be sent.");
-            // }
-            //
-            // var student = users.stream().findAny();
-            // var studentName = student.isPresent() ? student.get().getName() : "";
-            //
-            // notification = new SingleUserNotification(tutorialGroup.getTeachingAssistant(), title, "The student " + studentName
-            // + " has been deregistered from your tutorial group " + tutorialGroup.getTitle() + " by " + responsibleForAction.getName() + ".");
-            // notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true, true));
-            // }
+            case CONVERSATION_ADD_USER_CHANNEL -> {
+                var user = users.stream().findAny().orElseThrow();
+                var channel = (Channel) conversation;
+                notification = new SingleUserNotification(user, title,
+                        "You have been added to channel (" + channel.getName() + ") by " + responsibleForAction.getName() + " in course (" + channel.getCourse().getTitle() + ").");
+                notification.setTransientAndStringTarget(createConversationCreationTarget(channel, channel.getCourse().getId()));
+                notification.setAuthor(responsibleForAction);
+            }
+            case CONVERSATION_REMOVE_USER_CHANNEL -> {
+                var user = users.stream().findAny().orElseThrow();
+                var channel = (Channel) conversation;
+                notification = new SingleUserNotification(user, title, "You have been removed from channel (" + channel.getName() + ") by " + responsibleForAction.getName()
+                        + " in course (" + channel.getCourse().getTitle() + ").");
+                notification.setTransientAndStringTarget(createConversationDeletionTarget(channel, channel.getCourse().getId()));
+                notification.setAuthor(responsibleForAction);
+            }
+            case CONVERSATION_REMOVE_USER_GROUP_CHAT -> {
+                var user = users.stream().findAny().orElseThrow();
+                var groupChat = (GroupChat) conversation;
+                notification = new SingleUserNotification(user, title,
+                        "You have been removed from group chat by " + responsibleForAction.getName() + " in course (" + groupChat.getCourse().getTitle() + ").");
+                notification.setTransientAndStringTarget(createConversationDeletionTarget(groupChat, groupChat.getCourse().getId()));
+                notification.setAuthor(responsibleForAction);
+            }
+            case CONVERSATION_DELETE_GROUP_CHAT -> {
+                var user = users.stream().findAny().orElseThrow();
+                var groupChat = (GroupChat) conversation;
+                notification = new SingleUserNotification(user, title,
+                        "A group chat has been deleted by " + responsibleForAction.getName() + " in course (" + groupChat.getCourse().getTitle() + ").");
+                notification.setTransientAndStringTarget(createConversationDeletionTarget(groupChat, groupChat.getCourse().getId()));
+                notification.setAuthor(responsibleForAction);
+            }
+            case CONVERSATION_DELETE_CHANNEL -> {
+                var user = users.stream().findAny().orElseThrow();
+                var channel = (Channel) conversation;
+                notification = new SingleUserNotification(user, title,
+                        channel.getName() + " channel has been deleted by " + responsibleForAction.getName() + " in course (" + channel.getCourse().getTitle() + ").");
+                notification.setTransientAndStringTarget(createConversationDeletionTarget(channel, channel.getCourse().getId()));
+                notification.setAuthor(responsibleForAction);
+            }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
         return notification;

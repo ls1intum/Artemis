@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.CONVERSATION_CREATE_GROUP_CHAT_TITLE;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
 
@@ -16,10 +15,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
-import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -78,9 +76,11 @@ public class SingleUserNotificationService {
                     ((TutorialGroupNotificationSubject) notificationSubject).tutorialGroup, notificationType, ((TutorialGroupNotificationSubject) notificationSubject).users,
                     ((TutorialGroupNotificationSubject) notificationSubject).responsibleUser);
             // Conversation creation related
-            case CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_GROUP_CHAT -> createNotification(
-                    ((ConversationCreationNotificationSubject) notificationSubject).conversation, notificationType,
-                    ((ConversationCreationNotificationSubject) notificationSubject).users, ((ConversationCreationNotificationSubject) notificationSubject).responsibleUser);
+            case CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT, CONVERSATION_ADD_USER_CHANNEL, CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_CHANNEL, CONVERSATION_DELETE_CHANNEL, CONVERSATION_DELETE_GROUP_CHAT -> createNotification(
+                    ((ConversationNotificationSubject) notificationSubject).conversation, notificationType, ((ConversationNotificationSubject) notificationSubject).users,
+                    ((ConversationNotificationSubject) notificationSubject).responsibleUser);
+            case CONVERSATION_NEW_REPLY_MESSAGE -> createNotification(((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType,
+                    ((NewReplyNotificationSubject) notificationSubject).users, ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
         saveAndSend(singleUserNotification, notificationSubject);
@@ -306,28 +306,35 @@ public class SingleUserNotificationService {
     /**
      * Record to store conversation, users and responsible user in one notification subject.
      */
-    public record ConversationCreationNotificationSubject(Conversation conversation, Set<User> users, User responsibleUser) {
+    public record ConversationNotificationSubject(Conversation conversation, Set<User> users, User responsibleUser) {
     }
 
     /**
-     * Notify a student that they have new direct conversation.
-     *
-     * @param conversation    the conversation the student has been added for
-     * @param student         the student that has been registered for the tutorial group
-     * @param responsibleUser the user that has registered the student for the tutorial group
+     * Record to store Answer post, users and responsible user in one notification subject.
      */
-    public void notifyUserAboutNewChatCreation(Conversation conversation, User student, User responsibleUser) {
-        if (conversation instanceof OneToOneChat) {
-            notifyRecipientWithNotificationType(new ConversationCreationNotificationSubject(conversation, Set.of(student), responsibleUser), CONVERSATION_CREATE_ONE_TO_ONE_CHAT,
-                    null, null);
-        }
-        else if (conversation instanceof GroupChat) {
-            notifyRecipientWithNotificationType(new ConversationCreationNotificationSubject(conversation, Set.of(student), responsibleUser), CONVERSATION_CREATE_GROUP_CHAT, null,
-                    null);
-        }
-        else {
-            throw new IllegalArgumentException("Conversation is not a OneToOneChat or GroupChat");
-        }
+    public record NewReplyNotificationSubject(AnswerPost answerPost, Set<User> users, User responsibleUser) {
+    }
+
+    /**
+     * Notify a user about new chat creation or conversation deletion.
+     *
+     * @param conversation    the conversation the student has been added for or removed from
+     * @param user            the user that has been added for the conversation or removed from the conversation
+     * @param responsibleUser the responsibleUser that has registered/removed the user for the conversation
+     */
+    public void notifyUserAboutConversationCreationOrDeletion(Conversation conversation, User user, User responsibleUser, NotificationType notificationType) {
+        notifyRecipientWithNotificationType(new ConversationNotificationSubject(conversation, Set.of(user), responsibleUser), notificationType, null, null);
+    }
+
+    /**
+     * Notify a user about new message reply in a conversation.
+     *
+     * @param answerPost      the answerPost of the user involved
+     * @param user            the user that is involved in the message reply
+     * @param responsibleUser the responsibleUser sending the message reply
+     */
+    public void notifyUserAboutNewMessageReply(AnswerPost answerPost, User user, User responsibleUser) {
+        notifyRecipientWithNotificationType(new NewReplyNotificationSubject(answerPost, Set.of(user), responsibleUser), CONVERSATION_NEW_REPLY_MESSAGE, null, null);
     }
 
     /**
@@ -354,12 +361,18 @@ public class SingleUserNotificationService {
         if (Objects.equals(notification.getTitle(), CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE)) {
             return false;
         }
-        else if (Objects.equals(notification.getTitle(), CONVERSATION_CREATE_GROUP_CHAT_TITLE)) {
+        else if (Objects.equals(notification.getTitle(), CONVERSATION_CREATE_GROUP_CHAT_TITLE) || Objects.equals(notification.getTitle(), CONVERSATION_DELETE_GROUP_CHAT_TITLE)
+                || Objects.equals(notification.getTitle(), CONVERSATION_DELETE_CHANNEL_TITLE) || Objects.equals(notification.getTitle(), CONVERSATION_ADD_USER_CHANNEL_TITLE)
+                || Objects.equals(notification.getTitle(), CONVERSATION_ADD_USER_GROUP_CHAT_TITLE)
+                || Objects.equals(notification.getTitle(), CONVERSATION_REMOVE_USER_CHANNEL_TITLE)
+                || Objects.equals(notification.getTitle(), CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE)) {
             return (!Objects.equals(notification.getAuthor().getLogin(), notification.getRecipient().getLogin()));
         }
-        else {
-            return true;
+        else if (Objects.equals(notification.getTitle(), MESSAGE_REPLY_IN_CONVERSATION_TITLE)) {
+            return (!Objects.equals(notification.getAuthor().getLogin(), notification.getRecipient().getLogin()));
         }
+        else
+            return false;
     }
 
     /**

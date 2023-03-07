@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest.metis;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Optional;
 
 import javax.validation.Valid;
 
@@ -17,7 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
 import de.tum.in.www1.artemis.service.notifications.ConversationNotificationService;
@@ -59,13 +59,21 @@ public class ConversationMessageResource {
         Post createdMessage = conversationMessagingService.createMessage(courseId, post);
         // creation of message posts should not trigger entity creation alert
 
-        Optional<Conversation> conversation = conversationRepository.findById(createdMessage.getConversation().getId());
-        if (conversation.isPresent()) {
-            // needed in order
-            createdMessage.setConversation(conversation.get());
-            String notificationText = "New message from " + createdMessage.getAuthor().getName() + " in course (" + createdMessage.getConversation().getCourse().getTitle() + ")";
-            conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationText);
+        String notificationText = "";
+        if (createdMessage.getConversation() instanceof Channel) {
+            notificationText = "New message in " + ((Channel) createdMessage.getConversation()).getName() + " channel from " + createdMessage.getAuthor().getName() + " in course ("
+                    + createdMessage.getConversation().getCourse().getTitle() + ")";
         }
+        else if (createdMessage.getConversation() instanceof GroupChat) {
+            notificationText = "New message in group chat from " + createdMessage.getAuthor().getName() + " in course (" + createdMessage.getConversation().getCourse().getTitle()
+                    + ")";
+        }
+        else {
+            notificationText = "New direct message from " + createdMessage.getAuthor().getName() + " in course (" + createdMessage.getConversation().getCourse().getTitle() + ")";
+        }
+        conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationText);
+
+        createdMessage.setConversation(null);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessage.getId())).body(createdMessage);
     }
 

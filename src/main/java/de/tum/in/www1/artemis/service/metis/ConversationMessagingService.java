@@ -93,7 +93,7 @@ public class ConversationMessagingService extends PostingService {
 
         var createdMessage = conversationMessageRepository.save(newMessage);
         broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course);
-
+        createdMessage.setConversation(conversation);
         if (conversation instanceof OneToOneChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
             if (getNumberOfPosts == 1) { // first message in one to one chat --> notify all participants that a conversation with them has been created

@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 public class ConversationNotification extends Notification {
 
     @JsonIgnore
-    public static final Set<NotificationType> CONVERSATION_NOTIFICATION_TYPES = Set.of(CONVERSATION_NEW_MESSAGE, CONVERSATION_NEW_REPLY_MESSAGE);
+    public static final Set<NotificationType> CONVERSATION_NOTIFICATION_TYPES = Set.of(CONVERSATION_NEW_MESSAGE);
 
     @ManyToOne
     @JoinColumn(name = "message_id")
