@@ -96,7 +96,7 @@
         },
         "singleUserNotification": {
             "title": {
-                "exerciseSubmissionAssessed": "Aufgaben Abgabe bewertet",
+                "exerciseSubmissionAssessed": "Übungsabgabe bewertet",
                 "fileSubmissionSuccessful": "Dateiabgabe erfolgreich",
                 "newPlagiarismCaseStudent": "Neuer Plagiarismusfall",
                 "plagiarismCaseVerdictStudent": "Urteil zu deinem Plagiarismusfall",
