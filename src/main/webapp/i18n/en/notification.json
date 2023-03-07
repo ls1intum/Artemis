@@ -130,7 +130,7 @@
             },
             "text": {
                 "tutorialGroupDeleted": "The tutorial group {{ placeholderValues.0 }} has been deleted.",
-                "tutorialGroupUpdated": "The tutorial group {{ placeholderValues.0 }} has been deleted."
+                "tutorialGroupUpdated": "The tutorial group {{ placeholderValues.0 }} has been updated."
             }
         }
     }
