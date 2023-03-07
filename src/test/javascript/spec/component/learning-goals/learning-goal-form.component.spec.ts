@@ -13,7 +13,6 @@ import { MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ArtemisTestModule } from '../../test.module';
-import { By } from '@angular/platform-browser';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -115,12 +114,12 @@ describe('LearningGoalFormComponent', () => {
         expect(learningGoalFormComponent.selectedLectureUnitsInTable).toEqual(formData.connectedLectureUnits);
     });
 
-    it('should suggest taxonomy when description is changed', () => {
-        const descriptionChangedSpy = jest.spyOn(learningGoalFormComponent, 'descriptionChanged');
+    it.each(['title', 'description'])('should suggest taxonomy when input is changed', (inputField: string) => {
+        const suggestTaxonomySpy = jest.spyOn(learningGoalFormComponent, 'suggestTaxonomies');
         const translateSpy = jest.spyOn(translateService, 'instant').mockImplementation((key) => {
             switch (key) {
                 case 'artemisApp.learningGoal.keywords.remember':
-                    return 'something';
+                    return 'Something';
                 case 'artemisApp.learningGoal.keywords.understand':
                     return 'invent, build';
                 default:
@@ -129,11 +128,11 @@ describe('LearningGoalFormComponent', () => {
         });
         learningGoalFormComponentFixture.detectChanges();
 
-        const input = learningGoalFormComponentFixture.debugElement.query(By.css('#description'));
-        input.nativeElement.value = 'Create or build and implement something!';
-        input.triggerEventHandler('change', { target: input.nativeElement });
+        const input = learningGoalFormComponentFixture.nativeElement.querySelector(`#${inputField}`);
+        input.value = 'Building a tool: create a plan and implement something!';
+        input.dispatchEvent(new Event('input'));
 
-        expect(descriptionChangedSpy).toHaveBeenCalledOnce();
+        expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(8);
         expect(learningGoalFormComponent.suggestedTaxonomies).toEqual(['artemisApp.learningGoal.taxonomies.remember', 'artemisApp.learningGoal.taxonomies.understand']);
     });
