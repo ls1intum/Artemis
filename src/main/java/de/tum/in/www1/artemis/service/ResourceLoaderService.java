@@ -26,7 +26,7 @@ public class ResourceLoaderService {
 
     private static final Logger log = LoggerFactory.getLogger(ResourceLoaderService.class);
 
-    private static final String ALL_FILES_GLOB = "**" + File.pathSeparator + "*.*";
+    private static final String ALL_FILES_GLOB = "**" + File.separator + "*.*";
 
     @Value("${artemis.template-path:#{null}}")
     private Optional<Path> templateFileSystemPath;
@@ -88,7 +88,7 @@ public class ResourceLoaderService {
      * <p>
      * Only relative paths are allowed.
      * <p>
-     * Examples for path patterns: {@code some/path/*.sh}, {@code base/**}.
+     * Examples for path patterns: {@code *.sh}, {@code base/**}.
      *
      * @param basePath A relative path pattern to a resource.
      * @param pattern  A pattern that limits which files in the directory of the base path are matched.
@@ -136,7 +136,7 @@ public class ResourceLoaderService {
     }
 
     private String getFileResourceLocation(final Path resourcePath, final String pathPattern) {
-        return "file:" + resolveResourcePath(resourcePath).toString() + File.pathSeparator + pathPattern;
+        return "file:" + resolveResourcePath(resourcePath).toString() + File.separator + pathPattern;
     }
 
     private String getClassPathResourceLocation(final Path resourcePath) {
@@ -144,7 +144,7 @@ public class ResourceLoaderService {
     }
 
     private String getClassPathResourceLocation(final Path resourcePath, final String pathPattern) {
-        return "classpath:/" + resourcePath.toString() + File.pathSeparator + pathPattern;
+        return "classpath:/" + resourcePath.toString() + File.separator + pathPattern;
     }
 
     private Path resolveResourcePath(final Path resource) {
