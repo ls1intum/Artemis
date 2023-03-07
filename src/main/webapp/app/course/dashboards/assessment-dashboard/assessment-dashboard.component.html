@@ -14,8 +14,8 @@
                 <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
             </div>
         </div>
-        <div *ngIf="!isExamMode" class="col-12 col-lg-5">
-            <div class="d-flex justify-content-lg-end">
+        <div class="col-12 col-lg-5">
+            <div *ngIf="!isExamMode" class="d-flex justify-content-lg-end">
                 <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn btn-info btn-md">
                     <fa-icon [icon]="faTable"></fa-icon>
                     <span jhiTranslate="entity.action.scores">Scores</span>
