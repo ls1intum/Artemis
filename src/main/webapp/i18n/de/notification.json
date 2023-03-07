@@ -130,7 +130,7 @@
             },
             "text": {
                 "tutorialGroupDeleted": "Die Übungsgruppe {{ placeholderValues.0 }} wurde gelöscht.",
-                "tutorialGroupUpdated": "Die Übungsgruppe {{ placeholderValues.0 }} wurde gelöscht."
+                "tutorialGroupUpdated": "Die Übungsgruppe {{ placeholderValues.0 }} wurde aktualisiert."
             }
         }
     }
