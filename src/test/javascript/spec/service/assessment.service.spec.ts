@@ -19,37 +19,37 @@ describe('Assessment Service', () => {
     const exerciseAutomatic = { teamMode: false, assessmentType: AssessmentType.AUTOMATIC } as Exercise;
     const teamExercise = { teamMode: true, assessmentType: AssessmentType.MANUAL } as Exercise;
     describe('isAllowedToModifyFeedback', () => {
-        it('should show during assessment', () => {
+        it.each([[exercise], [exerciseAutomatic]])('should show during assessment', (exercise: Exercise) => {
             const isAllowedBeforeDueDate = isAllowedToModifyFeedback(false, true, false, resultLock, undefined, exercise);
             const isAllowedAfterDueDate = isAllowedToModifyFeedback(false, true, true, resultLock, undefined, exercise);
             expect(isAllowedBeforeDueDate).toBeTrue();
             expect(isAllowedAfterDueDate).toBeTrue();
         });
 
-        it('should hide after assessment without complaint', () => {
+        it.each([[exercise], [exerciseAutomatic]])('should hide after assessment without complaint', (exercise: Exercise) => {
             const isAllowed = isAllowedToModifyFeedback(false, true, true, result, undefined, exercise);
             expect(isAllowed).toBeFalse();
         });
 
-        it('should show correctly after assessment with complaint', () => {
+        it.each([[exercise], [exerciseAutomatic]])('should show correctly after assessment with complaint', (exercise: Exercise) => {
             const isAllowedAssessor = isAllowedToModifyFeedback(false, true, true, result, complaint, exercise);
             const isAllowedNotAssessor = isAllowedToModifyFeedback(false, false, true, result, complaint, exercise);
             expect(isAllowedAssessor).toBeFalse();
             expect(isAllowedNotAssessor).toBeTrue();
         });
 
-        it('should hide for feedback requests', () => {
+        it.each([[exercise], [exerciseAutomatic]])('should hide for feedback requests', (exercise: Exercise) => {
             complaint.result = result;
             const isAllowed = isAllowedToModifyFeedback(false, true, true, result, feedbackRequest, exercise);
             expect(isAllowed).toBeFalse();
         });
 
-        it('should hide if no complaint is set', () => {
+        it.each([[exercise], [exerciseAutomatic]])('should hide if no complaint is set', (exercise: Exercise) => {
             const isAllowed = isAllowedToModifyFeedback(false, true, true, result, undefined, exercise);
             expect(isAllowed).toBeFalse();
         });
 
-        it('should show if no complaint is set and the assessment is still running', () => {
+        it.each([[exercise], [exerciseAutomatic]])('should show if no complaint is set and the assessment is still running', (exercise: Exercise) => {
             const isAllowedSubmitted = isAllowedToModifyFeedback(false, true, false, resultLock, undefined, exercise);
             const isAllowedNotSubmitted = isAllowedToModifyFeedback(false, true, false, result, undefined, exercise);
             expect(isAllowedSubmitted).toBeTrue();
