@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Delete image
-        uses: bots-house/ghcr-delete-image-action@v1.0.1
+        uses: bots-house/ghcr-delete-image-action@v1.1.0
         with:
           owner: ${{ github.repository_owner }}
           name: artemis
