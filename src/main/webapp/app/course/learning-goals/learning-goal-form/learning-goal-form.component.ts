@@ -197,7 +197,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         const description = this.descriptionControl?.value?.toLowerCase() ?? '';
         for (const taxonomy in this.learningGoalTaxonomy) {
             const keywords = this.translateService.instant('artemisApp.learningGoal.keywords.' + taxonomy.toLowerCase()).split(', ');
-            keywords.append(this.translateService.instant('artemisApp.learningGoal.taxonomies.' + taxonomy.toLowerCase()));
+            keywords.push(this.translateService.instant('artemisApp.learningGoal.taxonomies.' + taxonomy.toLowerCase()));
             if (keywords.map((keyword: string) => keyword.toLowerCase()).some((keyword: string) => title.includes(keyword) || description.includes(keyword))) {
                 this.suggestedTaxonomies.push(this.translateService.instant('artemisApp.learningGoal.taxonomies.' + taxonomy.toLowerCase()));
             }

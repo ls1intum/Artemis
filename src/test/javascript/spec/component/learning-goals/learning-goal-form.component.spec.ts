@@ -133,7 +133,7 @@ describe('LearningGoalFormComponent', () => {
         input.dispatchEvent(new Event('input'));
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
-        expect(translateSpy).toHaveBeenCalledTimes(8);
+        expect(translateSpy).toHaveBeenCalledTimes(14);
         expect(learningGoalFormComponent.suggestedTaxonomies).toEqual(['artemisApp.learningGoal.taxonomies.remember', 'artemisApp.learningGoal.taxonomies.understand']);
     });
 });
