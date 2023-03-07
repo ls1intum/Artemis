@@ -42,11 +42,12 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
     @Query("SELECT distinct cluster FROM TextCluster cluster LEFT JOIN FETCH cluster.blocks b LEFT JOIN FETCH b.submission blocksub LEFT JOIN FETCH blocksub.results WHERE cluster.id IN :#{#clusterIds}")
     List<TextCluster> findAllByIdsWithEagerTextBlocks(@Param("clusterIds") Set<Long> clusterIds);
 
+    // feedback.type = 3 == FeedbackType.AUTOMATIC
     @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.TextClusterStatisticsDTO(
                 textblock.cluster.id,
                 count(DISTINCT textblock.id),
-                SUM(case when feedback.type = 'AUTOMATIC' then 1 else 0 end)
+                SUM(case when feedback.type = 3 then 1 else 0 end)
             )
             FROM TextBlock textblock
             LEFT JOIN Submission submission ON textblock.submission.id = submission.id
