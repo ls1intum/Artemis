@@ -103,7 +103,7 @@
                 "tutorialGroupRegistrationStudent": "Du wurdest für eine Übungsgruppe registriert",
                 "tutorialGroupDeregistrationStudent": "Du wurdest von einer Übungsgruppe entregistriert",
                 "tutorialGroupRegistrationTutor": "Ein Student wurde für deine Übungsgruppe registriert",
-                "tutorialGroupDeregistrationTutor": "Ein Student wurde aus deiner Übungsgruppe entregistriert",
+                "tutorialGroupDeregistrationTutor": "Ein Student wurde von deiner Übungsgruppe abgemeldet",
                 "tutorialGroupMultipleRegistrationTutor": "Mehrere Studenten wurden zu deiner Übungsgruppe registriert",
                 "tutorialGroupAssigned": "Du wurdest zugeteilt eine Übungsgruppe zu leiten",
                 "tutorialGroupUnassigned": "Dir wurde die Leitung einer Übungsgruppe entzogen"
