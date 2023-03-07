@@ -146,7 +146,7 @@ describe('UsersImportButtonComponent', () => {
 
                 expect(component.usersToImport).toHaveLength(5);
 
-                let expectedStudentDTOs: StudentDTO[];
+                let expectedStudentDTOs: ExamUserDTO[];
                 if (testFileName.localeCompare('TUMonlineCourseExport.csv') === 0) {
                     expectedStudentDTOs = [
                         { registrationNumber: '01234567', firstName: 'Max Moritz', lastName: 'Mustermann', login: '', email: 'max-moritz.mustermann@example.com' },
