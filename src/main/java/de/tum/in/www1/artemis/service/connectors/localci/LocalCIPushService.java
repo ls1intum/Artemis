@@ -43,7 +43,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Profile("localci")
 public class LocalCIPushService implements ContinuousIntegrationPushService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
+    private final Logger log = LoggerFactory.getLogger(LocalCIPushService.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 

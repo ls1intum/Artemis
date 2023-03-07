@@ -1,11 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
@@ -13,12 +10,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 
@@ -32,15 +31,18 @@ public class LocalCIExecutorService {
 
     private final LocalCIBuildJobService localCIBuildJobService;
 
+    private final ResourceLoaderService resourceLoaderService;
+
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCBasePath;
 
-    public LocalCIExecutorService(ExecutorService executorService, LocalCIBuildJobService localCIBuildJobService) {
+    public LocalCIExecutorService(ExecutorService executorService, LocalCIBuildJobService localCIBuildJobService, ResourceLoaderService resourceLoaderService) {
         this.executorService = executorService;
         this.localCIBuildJobService = localCIBuildJobService;
+        this.resourceLoaderService = resourceLoaderService;
     }
 
     /**
@@ -81,19 +83,15 @@ public class LocalCIExecutorService {
             throw new LocalCIException("Programming language " + programmingLanguage + " is not supported by local CI.");
         }
 
-        // TODO: Check if there is an easier way to do this and if not find out why this is necessary.
-        InputStream scriptInputStream = getClass().getResourceAsStream("/templates/localci/java/build_and_run_tests.sh");
-        if (scriptInputStream == null) {
-            throw new LocalCIException("Could not find build script for local CI.");
-        }
+        Resource script = resourceLoaderService.getResource("templates/localci/java/build_and_run_tests.sh");
         Path scriptPath;
         try {
-            scriptPath = Files.createTempFile("build_and_run_tests", ".sh");
-            Files.copy(scriptInputStream, scriptPath, StandardCopyOption.REPLACE_EXISTING);
+            scriptPath = script.getFile().toPath();
         }
         catch (IOException e) {
-            throw new LocalCIException("Could not create temporary file for build script.");
+            throw new LocalCIException("Could not retrieve build script.");
         }
+
         return scriptPath;
     }
 }
