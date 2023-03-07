@@ -79,7 +79,6 @@ class GroupNotificationFactoryTest {
 
     private static String notificationText = "notification text";
 
-
     private static final List<String> archiveErrors = List.of("archive error 1", "archive error 2");
 
     private enum Base {
