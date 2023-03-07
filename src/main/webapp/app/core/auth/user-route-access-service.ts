@@ -1,6 +1,5 @@
 import { Injectable, isDevMode } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
-import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/orion-version-validator.service';
@@ -16,7 +15,6 @@ export class UserRouteAccessService implements CanActivate {
         private accountService: AccountService,
         private alertService: AlertService,
         private stateStorageService: StateStorageService,
-        private localStorage: LocalStorageService,
         private orionVersionValidator: OrionVersionValidator,
     ) {}
 
@@ -77,7 +75,9 @@ export class UserRouteAccessService implements CanActivate {
         const regexPattern = new RegExp(/\/courses\/\d+\/exercises\/\d+/g);
         if (regexPattern.test(state.url)) {
             if (route.queryParams['ltiSuccessLoginRequired']) {
-                this.alertService.success('artemisApp.lti.ltiSuccessLoginRequired', { user: route.queryParams['ltiSuccessLoginRequired'] });
+                const username = route.queryParams['ltiSuccessLoginRequired'];
+                this.alertService.success('artemisApp.lti.ltiSuccessLoginRequired', { user: username });
+                this.accountService.setPrefilledUsername(username);
                 return state.url.split('?')[0]; // Removes the query parameters from the url so this is only done once
             }
         }
