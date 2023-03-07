@@ -117,7 +117,7 @@
                 "tutorialGroupRegistrationStudent": "Du wurdest für die Übungsgruppe {{ placeholderValues.0 }} von {{ placeholderValues.1 }} registriert.",
                 "tutorialGroupDeregistrationStudent": "Du wurdest von der Übungsgruppe {{ placeholderValues.0 }} von {{ placeholderValues.1 }} abgemeldet.",
                 "tutorialGroupRegistrationTutor": "Der Student {{ placeholderValues.0 }} wurde zu deiner Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} registriert.",
-                "tutorialGroupDeregistrationTutor": "Der Student {{ placeholderValues.0 }} wurde von deiner Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} entregistriert.",
+                "tutorialGroupDeregistrationTutor": "Der Student {{ placeholderValues.0 }} wurde von deiner Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} abgemeldet.",
                 "tutorialGroupMultipleRegistrationTutor": "{{ placeholderValues.0 }} Studenten wurden für deine Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} registriert.",
                 "tutorialGroupAssigned": "Du wurdest von {{ placeholderValues.1 }} zugeteilt die Übungsgruppe {{ placeholderValues.0 }} zu leiten.",
                 "tutorialGroupUnassigned": "Dir wurde die Leitung von Übungsgruppe {{ placeholderValues.0 }} von {{ placeholderValues.1 }} entzogen."
