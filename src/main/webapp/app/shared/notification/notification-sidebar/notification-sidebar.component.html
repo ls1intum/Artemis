@@ -51,9 +51,7 @@
             <div class="notification-item p-3" *ngFor="let notification of sortedNotifications" (click)="startNotification(notification)">
                 <div>
                     <h5 class="fw-medium">
-                        {{
-                            notification.title | artemisTranslate : { placeholderValues: getParsedPlaceholderValues(notification) }
-                        }}
+                        {{ notification.title | artemisTranslate : { placeholderValues: getParsedPlaceholderValues(notification) } }}
                         <span class="badge ms-1 bg-primary" *ngIf="lastNotificationRead && notification.notificationDate?.isAfter(lastNotificationRead)"> new </span>
                     </h5>
                     <div
