@@ -112,7 +112,7 @@
                 "newReply": "Auf deinen Beitrag wurde geantwortet",
                 "exerciseSubmissionAssessed": "Deine Abgabe für die \"{{ placeholderValues.0 }}\" Aufgabe \"{{ placeholderValues.1 }}\" wurde bewertet.",
                 "fileSubmissionSuccessful": "Deine Datei für die Aufgabe \"{{ placeholderValues.0 }}\" wurde erfolgreich eingereicht.",
-                "newPlagiarismCaseStudent": "Neuer Plagiarismusfall für die {{ placeholderValues.0 }} Aufgabe \"{{ placeholderValues.1 }}\".",
+                "newPlagiarismCaseStudent": "Neuer Plagiatsfall für die {{ placeholderValues.0 }} Aufgabe \"{{ placeholderValues.1 }}\".",
                 "plagiarismCaseVerdictStudent": "Dein Plagiarismusfall für die {{ placeholderValues.0 }} Aufgabe \"{{ placeholderValues.1 }}\" hat ein Urteil.",
                 "tutorialGroupRegistrationStudent": "Du wurdest für die Übungsgruppe {{ placeholderValues.0 }} von {{ placeholderValues.1 }} registriert.",
                 "tutorialGroupDeregistrationStudent": "Du wurdest von der Übungsgruppe {{ placeholderValues.0 }} von {{ placeholderValues.1 }} entregistriert.",
