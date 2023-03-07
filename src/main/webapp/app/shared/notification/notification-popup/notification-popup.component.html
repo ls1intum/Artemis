@@ -18,9 +18,7 @@
             <ng-template #displayNormalNotificationTitle>
                 <h5 class="pe-4">
                     {{
-                        notification.textIsPlaceholder
-                            ? (notification.title | artemisTranslate : { placeholderValues: getParsedPlaceholderValues(notification) })
-                            : notification.title
+                            notification.title | artemisTranslate : { placeholderValues: getParsedPlaceholderValues(notification) }
                     }}
                 </h5>
             </ng-template>

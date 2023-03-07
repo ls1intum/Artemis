@@ -52,9 +52,7 @@
                 <div>
                     <h5 class="fw-medium">
                         {{
-                            notification.textIsPlaceholder
-                                ? (notification.title | artemisTranslate : { placeholderValues: getParsedPlaceholderValues(notification) })
-                                : notification.title
+                            notification.title | artemisTranslate : { placeholderValues: getParsedPlaceholderValues(notification) }
                         }}
                         <span class="badge ms-1 bg-primary" *ngIf="lastNotificationRead && notification.notificationDate?.isAfter(lastNotificationRead)"> new </span>
                     </h5>
