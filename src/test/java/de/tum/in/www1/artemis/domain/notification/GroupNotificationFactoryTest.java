@@ -7,7 +7,7 @@ import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactor
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.EXERCISE_RELEASED_TEXT;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.EXERCISE_UPDATED_TEXT;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
@@ -238,7 +238,7 @@ class GroupNotificationFactoryTest {
     void createNotificationBasedOnExercise_withNotificationType_ExerciseCreated() {
         notificationType = EXERCISE_RELEASED;
         expectedTitle = EXERCISE_RELEASED_TITLE;
-        expectedText = NotificationTitleTypeConstants.EXERCISE_RELEASED_TEXT;
+        expectedText = NotificationConstants.EXERCISE_RELEASED_TEXT;
         expectedPlaceholderValues = "[\"" + exercise.getTitle() + "\"]";
         expectedTransientTarget = createExerciseTarget(exercise, EXERCISE_RELEASED_TEXT);
         expectedPriority = MEDIUM;
@@ -327,7 +327,7 @@ class GroupNotificationFactoryTest {
     void createNotificationBasedOnExercise_withNotificationType_ExerciseUpdated_CourseExercise() {
         notificationType = EXERCISE_UPDATED;
         expectedTitle = EXERCISE_UPDATED_TITLE;
-        expectedText = NotificationTitleTypeConstants.EXERCISE_UPDATED_TEXT;
+        expectedText = NotificationConstants.EXERCISE_UPDATED_TEXT;
         expectedPlaceholderValues = "[\"" + exercise.getTitle() + "\"]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createExerciseTarget(exercise, EXERCISE_UPDATED_TEXT);
