@@ -19,7 +19,6 @@ import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import dayjs from 'dayjs/esm';
 import { NavigationEnd, Router } from '@angular/router';
-import { NotificationService } from 'app/shared/notification/notification.service';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE
@@ -56,7 +55,6 @@ export class MetisConversationService implements OnDestroy {
         private accountService: AccountService,
         private alertService: AlertService,
         private router: Router,
-        private notificationService: NotificationService,
     ) {
         this.accountService.identity().then((user: User) => {
             this.userId = user.id!;

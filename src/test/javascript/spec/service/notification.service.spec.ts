@@ -23,6 +23,9 @@ import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.se
 import { TutorialGroupsNotificationService } from 'app/course/tutorial-groups/services/tutorial-groups-notification.service';
 import { MockProvider } from 'ng-mocks';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { CourseConversationsNotificationsService } from 'app/overview/course-conversations-notifications-service';
+import { OneToOneChat } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
 describe('Notification Service', () => {
     let notificationService: NotificationService;
@@ -36,6 +39,10 @@ describe('Notification Service', () => {
     let tutorialGroupNotificationService: TutorialGroupsNotificationService;
     let getTutorialGroupsForNotificationsSpy: jest.SpyInstance;
     let tutorialGroup: TutorialGroup;
+
+    let conversationNotificationService: CourseConversationsNotificationsService;
+    let getConversationsForNotificationsSpy: jest.SpyInstance;
+    let conversation: TutorialGroup;
 
     let wsQuizExerciseSubject: Subject<QuizExercise | undefined>;
 
@@ -80,6 +87,14 @@ describe('Notification Service', () => {
 
     const tutorialGroupNotification = generateTutorialGroupNotification();
 
+    const generateConversationsNotification = () => {
+        const generatedNotification = { title: 'New message', text: 'This is a simple new message notification' } as Notification;
+        generatedNotification.notificationDate = dayjs();
+        return generatedNotification;
+    };
+
+    const conversationNotification = generateConversationsNotification();
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, TranslateTestingModule, RouterTestingModule.withRoutes([])],
@@ -92,6 +107,7 @@ describe('Notification Service', () => {
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
                 { provide: MetisService, useClass: MockMetisService },
                 MockProvider(TutorialGroupsNotificationService),
+                MockProvider(CourseConversationsNotificationsService),
             ],
         })
             .compileComponents()
@@ -111,6 +127,12 @@ describe('Notification Service', () => {
                 tutorialGroup = new TutorialGroup();
                 tutorialGroup.id = 99;
                 getTutorialGroupsForNotificationsSpy = jest.spyOn(tutorialGroupNotificationService, 'getTutorialGroupsForNotifications').mockReturnValue(of([]));
+
+                conversationNotificationService = TestBed.inject(CourseConversationsNotificationsService);
+
+                conversation = new OneToOneChat();
+                conversation.id = 99;
+                getConversationsForNotificationsSpy = jest.spyOn(conversationNotificationService, 'getConversationsForNotifications').mockReturnValue(of([]));
 
                 courseManagementService = TestBed.inject(CourseManagementService);
                 cmCoursesSubject = new Subject<[Course] | undefined>();
