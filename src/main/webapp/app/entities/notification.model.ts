@@ -14,7 +14,7 @@ export class Notification implements BaseEntity {
     public notificationType?: NotificationType;
     public title?: string;
     public text?: string;
-    public textIsPlaceholder?: string;
+    public textIsPlaceholder?: boolean;
     public placeholderValues?: string;
     public notificationDate?: dayjs.Dayjs;
     public target?: string;
@@ -100,3 +100,5 @@ export const TUTORIAL_GROUP_UNASSIGNED_TITLE = 'artemisApp.singleUserNotificatio
 
 // edge case: has no separate notificationType. Is created based on EXERCISE_UPDATED for exam exercises
 export const LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = 'artemisApp.groupNotification.title.liveExamExerciseUpdate';
+
+export const QUIZ_EXERCISE_STARTED_TEXT = 'artemisApp.groupNotification.text.quizExerciseStarted';

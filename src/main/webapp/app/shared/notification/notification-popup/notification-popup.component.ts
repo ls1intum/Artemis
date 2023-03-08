@@ -3,7 +3,7 @@ import { IsActiveMatchOptions, Router, UrlTree } from '@angular/router';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification } from 'app/entities/notification.model';
+import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification, QUIZ_EXERCISE_STARTED_TITLE } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -80,7 +80,7 @@ export class NotificationPopupComponent implements OnInit {
             const target = JSON.parse(notification.target);
             if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
                 return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.exam]);
-            } else if (notification.title === 'Quiz started' && target.status) {
+            } else if (notification.title === QUIZ_EXERCISE_STARTED_TITLE && target.status) {
                 return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.id, target.status]);
             } else {
                 return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.id]);
@@ -98,7 +98,7 @@ export class NotificationPopupComponent implements OnInit {
     private addNotification(notification: Notification): void {
         // Only add a notification if it does not already exist.
         if (notification && !this.notifications.some(({ id }) => id === notification.id)) {
-            if (notification.title === 'Quiz started') {
+            if (notification.title === QUIZ_EXERCISE_STARTED_TITLE) {
                 this.addQuizNotification(notification);
                 this.setRemovalTimeout(notification);
             }

@@ -19,6 +19,7 @@ import {
     NEW_REPLY_FOR_EXERCISE_POST_TITLE,
     NEW_REPLY_FOR_LECTURE_POST_TITLE,
     Notification,
+    QUIZ_EXERCISE_STARTED_TEXT,
     QUIZ_EXERCISE_STARTED_TITLE,
 } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
@@ -220,8 +221,10 @@ export class NotificationService {
 
     private static createNotificationFromStartedQuizExercise(quizExercise: QuizExercise): GroupNotification {
         return {
-            title: 'Quiz started',
-            text: 'Quiz "' + quizExercise.title + '" just started.',
+            title: QUIZ_EXERCISE_STARTED_TITLE,
+            text: QUIZ_EXERCISE_STARTED_TEXT,
+            textIsPlaceholder: true,
+            placeholderValues: '["' + quizExercise.title + '"]',
             notificationDate: dayjs(),
             target: JSON.stringify({
                 course: quizExercise.course!.id,
