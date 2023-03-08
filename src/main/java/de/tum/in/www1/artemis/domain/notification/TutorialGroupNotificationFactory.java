@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createTutorialGroupTarget;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createTutorialGroupTarget;
 
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
