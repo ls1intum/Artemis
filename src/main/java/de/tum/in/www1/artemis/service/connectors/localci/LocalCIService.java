@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -30,15 +33,27 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
+    private final LocalCITriggerService localCITriggerService;
+
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, LocalCITriggerService localCITriggerService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
+        this.localCITriggerService = localCITriggerService;
     }
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
-        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
+        // For Bamboo and Jenkins, this method is called for the template and the solution repository and creates and publishes a new build plan which results in a new build being
+        // triggered.
+        // For local CI, a build plan must not be created, because all the information for building a submission and running tests is contained in the participation.
+        // However, we trigger a build for the template and solution participation here so the creator of an exercise gets build results for both right after creating the exercise.
+        if (planKey.equals(TEMPLATE.getName())) {
+            localCITriggerService.triggerBuild(programmingExercise.getTemplateParticipation());
+        }
+        else if (planKey.equals(SOLUTION.getName())) {
+            localCITriggerService.triggerBuild(programmingExercise.getSolutionParticipation());
+        }
     }
 
     @Override

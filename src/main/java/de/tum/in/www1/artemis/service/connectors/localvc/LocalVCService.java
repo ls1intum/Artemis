@@ -87,7 +87,7 @@ public class LocalVCService extends AbstractVersionControlService {
 
     @Override
     protected void addWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName) {
-        // Webhooks must not be added for the local git server. The LocalVCPostPushHook notifies Artemis on every push.
+        // Webhooks must not be added for the local VC system. The LocalVCPostPushHook notifies Artemis on every push.
     }
 
     @Override
@@ -285,11 +285,12 @@ public class LocalVCService extends AbstractVersionControlService {
     public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject) throws LocalVCException {
         // The local CIS will provide an eventObject that contains the push date.
         JsonNode node = new ObjectMapper().convertValue(eventObject, JsonNode.class);
-        String dateString = node.get("date").asText(null);
+        String dateString;
         try {
+            dateString = node.get("date").asText(null);
             return ZonedDateTime.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
         }
-        catch (DateTimeParseException e) {
+        catch (NullPointerException | DateTimeParseException e) {
             throw new LocalVCException("Unable to get the push date from participation.", e);
         }
     }

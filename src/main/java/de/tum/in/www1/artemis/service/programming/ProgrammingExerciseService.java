@@ -188,14 +188,7 @@ public class ProgrammingExerciseService {
         // Save programming exercise to prevent transient exception
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        // The local VCS (profile "localvc") cannot be integrated with Bamboo
-        // and Jenkins (e.g. to automatically trigger build plans on push).
-        // We will only allow "localvc" together with the "localci" profile.
-        // Until the local CIS is implemented, build plans are not set up at all when "localvc" is used.
-        // TODO: Remove check once local CI is implemented.
-        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
-            setupBuildPlansForNewExercise(programmingExercise);
-        }
+        setupBuildPlansForNewExercise(programmingExercise);
 
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);

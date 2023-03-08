@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -25,8 +23,6 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 @Profile("localci")
 public class LocalCIResultService extends AbstractContinuousIntegrationResultService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIResultService.class);
-
     public LocalCIResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
             TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
@@ -40,7 +36,6 @@ public class LocalCIResultService extends AbstractContinuousIntegrationResultSer
 
     @Override
     public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
-        log.info("Request body: {}", requestBody);
         if (!(requestBody instanceof LocalCIBuildResultNotificationDTO localCIBuildResult)) {
             throw new LocalCIException("The request body is not of type LocalCIBuildResultNotificationDTO");
         }
