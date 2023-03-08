@@ -136,9 +136,8 @@ public class ParticipationService {
             participation.setExercise(exercise);
         }
 
-        if (exercise instanceof ProgrammingExercise) {
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
             // fetch again to get additional objects
-            var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
             participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, initializationDate == null);
         }
         else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
@@ -212,11 +211,11 @@ public class ParticipationService {
      * Start a programming exercise participation (which does not exist yet) by creating and configuring a student git repository (step 1) and a student build plan (step 2)
      * based on the templates in the given programming exercise
      *
-     * @param exercise              the programming exercise that the currently active user (student) wants to start
-     * @param participation         inactive participation
-     * @param setInitializationDate flag if the InitializationDate should be set to the current time
+     * @param exercise                           the programming exercise that the currently active user (student) wants to start
+     * @param participation                      inactive participation
+     * @param setInitializationDate              flag if the InitializationDate should be set to the current time
      * @param optionalGradedStudentParticipation the graded participation of that student, if present
-     * @param useGradedParticipation flag if the graded student participation should be used as baseline for the new repository
+     * @param useGradedParticipation             flag if the graded student participation should be used as baseline for the new repository
      * @return started participation
      */
     private StudentParticipation startPracticeMode(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate,
@@ -258,13 +257,13 @@ public class ParticipationService {
     }
 
     /**
-     * This method is triggered when a student starts the practice mode of a programming exercise. It creates a Participation which connects the corresponding student and exercise. Additionally, it configures
-     * repository / build plan related stuff.
+     * This method is triggered when a student starts the practice mode of a programming exercise. It creates a Participation which connects the corresponding student and exercise.
+     * Additionally, it configures repository / build plan related stuff.
      *
-     * @param exercise the exercise which is started, a programming exercise needs to have the template and solution participation eagerly loaded
-     * @param participant the user or team who starts the exercise
+     * @param exercise                           the exercise which is started, a programming exercise needs to have the template and solution participation eagerly loaded
+     * @param participant                        the user or team who starts the exercise
      * @param optionalGradedStudentParticipation the optional graded participation before the deadline
-     * @param useGradedParticipation flag if the graded student participation should be used as baseline for the new repository
+     * @param useGradedParticipation             flag if the graded student participation should be used as baseline for the new repository
      * @return the participation connecting the given exercise and user
      */
     public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation,
@@ -514,7 +513,7 @@ public class ParticipationService {
     /**
      * Get one participation (in any state) by its participant and exercise.
      *
-     * @param exercise the exercise for which to find a participation
+     * @param exercise    the exercise for which to find a participation
      * @param participant the participant for which to find a participation
      * @return the participation of the given participant and exercise in any state
      */
@@ -533,9 +532,9 @@ public class ParticipationService {
     /**
      * Get one participation (in any state) by its participant and exercise.
      *
-     * @param exercise the exercise for which to find a participation
+     * @param exercise    the exercise for which to find a participation
      * @param participant the short name of the team
-     * @param testRun the indicator if it should be a testRun participation
+     * @param testRun     the indicator if it should be a testRun participation
      * @return the participation of the given team and exercise in any state
      */
     public Optional<StudentParticipation> findOneByExerciseAndParticipantAnyStateAndTestRun(Exercise exercise, Participant participant, boolean testRun) {
@@ -706,9 +705,9 @@ public class ParticipationService {
     /**
      * Delete the participation by participationId.
      *
-     * @param participationId  the participationId of the entity
-     * @param deleteBuildPlan  determines whether the corresponding build plan should be deleted as well
-     * @param deleteRepository determines whether the corresponding repository should be deleted as well
+     * @param participationId         the participationId of the entity
+     * @param deleteBuildPlan         determines whether the corresponding build plan should be deleted as well
+     * @param deleteRepository        determines whether the corresponding repository should be deleted as well
      * @param deleteParticipantScores false if the participant scores have already been bulk deleted, true by default otherwise
      */
     public void delete(long participationId, boolean deleteBuildPlan, boolean deleteRepository, boolean deleteParticipantScores) {
@@ -742,7 +741,7 @@ public class ParticipationService {
     /**
      * Remove all results and submissions of the given participation. Will do nothing if invoked with a participation without results/submissions.
      *
-     * @param participationId the id of the participation to delete results/submissions from.
+     * @param participationId         the id of the participation to delete results/submissions from.
      * @param deleteParticipantScores false if the participant scores have already been bulk deleted, true by default otherwise
      */
     public void deleteResultsAndSubmissionsOfParticipation(Long participationId, boolean deleteParticipantScores) {

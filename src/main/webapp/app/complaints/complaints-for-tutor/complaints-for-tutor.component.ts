@@ -13,6 +13,8 @@ import { Submission } from 'app/entities/submission.model';
 import { isAllowedToRespondToComplaintAction } from 'app/assessment/assessment.service';
 import { Course } from 'app/entities/course.model';
 
+export type AssessmentAfterComplaint = { complaintResponse: ComplaintResponse; onSuccess: () => void; onError: () => void };
+
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
     templateUrl: './complaints-for-tutor.component.html',
@@ -27,7 +29,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     @Input() submission: Submission | undefined;
     // Indicates that the assessment should be updated after a complaint. Includes the corresponding complaint
     // that should be sent to the server along with the assessment update.
-    @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
+    @Output() updateAssessmentAfterComplaint = new EventEmitter<AssessmentAfterComplaint>();
     complaintText?: string;
     handled: boolean;
     complaintResponse: ComplaintResponse = new ComplaintResponse();
@@ -145,6 +147,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             this.alertService.error('artemisApp.complaintResponse.noText');
             return;
         }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         if (this.complaintResponse.responseText.length > this.course?.maxComplaintResponseTextLimit!) {
             this.alertService.error('artemisApp.complaint.exceededComplaintResponseTextLimit', {
                 maxComplaintRespondTextLimit: this.course?.maxComplaintResponseTextLimit,
@@ -162,10 +165,19 @@ export class ComplaintsForTutorComponent implements OnInit {
         if (acceptComplaint && this.complaint.complaintType === ComplaintType.COMPLAINT) {
             // Tell the parent (assessment) component to update the corresponding result if the complaint was accepted.
             // The complaint is sent along with the assessment update by the parent to avoid additional requests.
-            this.updateAssessmentAfterComplaint.emit(this.complaintResponse);
-            this.handled = true;
-            this.showLockDuration = false;
-            this.lockedByCurrentUser = false;
+            this.isLoading = true;
+            this.updateAssessmentAfterComplaint.emit({
+                complaintResponse: this.complaintResponse,
+                onSuccess: () => {
+                    this.isLoading = false;
+                    this.handled = true;
+                    this.showLockDuration = false;
+                    this.lockedByCurrentUser = false;
+                },
+                onError: () => {
+                    this.isLoading = false;
+                },
+            });
         } else {
             // If the complaint was rejected or it was a more feedback request, just the complaint response is updated.
             this.resolveComplaint();

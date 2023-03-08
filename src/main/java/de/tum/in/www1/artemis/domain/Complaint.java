@@ -38,15 +38,8 @@ public class Complaint extends DomainObject {
     private ZonedDateTime submittedTime;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "complaint_type")
-    private ComplaintType complaintType;
-
-    // TODO: delete in the next major release
-    @Deprecated
-    @Column(name = "result_before_complaint")
-    @Lob
-    @JsonIgnore
-    private String resultBeforeComplaint;
+    @Column(name = "complaint_type", nullable = false)
+    private ComplaintType complaintType = ComplaintType.COMPLAINT;      // default value
 
     @OneToOne(mappedBy = "complaint")
     @JsonIgnoreProperties(value = "complaint", allowGetters = true)
@@ -150,6 +143,7 @@ public class Complaint extends DomainObject {
 
     /**
      * allows to set the participant independent whether it is a team or user
+     *
      * @param participant either a team or user
      */
     public void setParticipant(Participant participant) {
@@ -179,6 +173,7 @@ public class Complaint extends DomainObject {
 
     /**
      * Filters out the reviewer, if the user was not the reviewer
+     *
      * @param user - the user for which the reviewer should not be deleted
      */
     public void filterForeignReviewer(User user) {

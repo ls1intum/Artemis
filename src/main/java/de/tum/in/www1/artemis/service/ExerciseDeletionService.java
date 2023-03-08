@@ -117,28 +117,21 @@ public class ExerciseDeletionService {
      * Delete the exercise by id and all its participations.
      *
      * @param exerciseId                   the exercise to be deleted
-     * @param deleteStudentReposBuildPlans whether the student repos and build plans should be deleted (can be true for programming exercises and should be false for all other exercise types)
-     * @param deleteBaseReposBuildPlans    whether the template and solution repos and build plans should be deleted (can be true for programming exercises and should be false for all other exercise types)
+     * @param deleteStudentReposBuildPlans whether the student repos and build plans should be deleted (can be true for programming exercises and should be false for all other
+     *                                         exercise types)
+     * @param deleteBaseReposBuildPlans    whether the template and solution repos and build plans should be deleted (can be true for programming exercises and should be false for
+     *                                         all other exercise types)
      */
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findByIdWithLearningGoalsElseThrow(exerciseId);
 
         log.debug("Checking if exercise {} is modeling exercise", exercise.getId());
-        if (exercise instanceof ModelingExercise) {
+        if (exercise instanceof ModelingExercise modelingExercise) {
             log.info("Deleting clusters, elements and cancel scheduled operations of exercise {}", exercise.getId());
 
-            modelingExerciseService.deleteClustersAndElements((ModelingExercise) exercise);
+            modelingExerciseService.deleteClustersAndElements(modelingExercise);
             modelingExerciseService.cancelScheduledOperations(exerciseId);
         }
-
-        // Remove the connection to learning goals
-        var updatedLearningGoals = new HashSet<LearningGoal>();
-        for (LearningGoal learningGoal : exercise.getLearningGoals()) {
-            learningGoal = learningGoalRepository.findByIdWithExercisesElseThrow(learningGoal.getId());
-            learningGoal.removeExercise(exercise);
-            updatedLearningGoals.add(learningGoal);
-        }
-        learningGoalRepository.saveAll(updatedLearningGoals);
 
         // delete all exercise units linking to the exercise
         List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithLearningGoalsBidirectional(exerciseId);

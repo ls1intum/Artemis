@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.config;
 
 import java.util.*;
+import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -13,6 +16,8 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 @ConfigurationProperties(prefix = "artemis.continuous-integration.build")
 public class ProgrammingLanguageConfiguration {
 
+    private final Logger log = LoggerFactory.getLogger(ProgrammingLanguageConfiguration.class);
+
     private static final ProjectType DEFAULT_PROJECT_TYPE = ProjectType.PLAIN;
 
     private static final ProjectType MAVEN_PROJECT_TYPE = ProjectType.MAVEN_MAVEN;
@@ -22,7 +27,13 @@ public class ProgrammingLanguageConfiguration {
     private Map<ProgrammingLanguage, Map<ProjectType, String>> images = new EnumMap<>(ProgrammingLanguage.class);
 
     /**
+     * Contains all the docker run arguments obtained from the spring properties
+     */
+    private List<DockerFlag> defaultDockerFlags;
+
+    /**
      * Set the map of languages to build images.
+     * (Method implicitly called by spring with the yaml configs as parameter)
      *
      * @param buildImages the map of languages to build images
      */
@@ -30,6 +41,36 @@ public class ProgrammingLanguageConfiguration {
         final var languageSpecificBuildImages = loadImages(buildImages);
         checkImageForAllProgrammingLanguagesDefined(languageSpecificBuildImages);
         images = languageSpecificBuildImages;
+        log.info("Loaded Docker image configuration: {}", images);
+    }
+
+    /**
+     * Returns a list of CLI parameters that should be passed to a {@code docker run} command.
+     * <p>
+     * Options and their value are two individual CLI parameters in this representation.
+     * E.g., {@code --cpus 2 -p 8080:80} is represented as {@code [--cpus, "2", -p, "8080:80"]}.
+     * All option values are quoted to prevent accidental splitting.
+     *
+     * @return The list of CLI parameters.
+     */
+    public List<String> getDefaultDockerFlags() {
+        return defaultDockerFlags.stream().flatMap(this::buildDockerFlag).toList();
+    }
+
+    private Stream<String> buildDockerFlag(final DockerFlag dockerFlag) {
+        // the flag value might contain spaces, quoting to prevent splitting
+        return Stream.of(dockerFlag.flag(), "\"" + dockerFlag.value() + "\"");
+    }
+
+    /**
+     * Sets the default docker run arguments based on the spring configuration
+     * (Method implicitly called by spring with the yaml configs as parameter)
+     *
+     * @param dockerFlags key value pairs of run arguments
+     */
+    public void setDefaultDockerFlags(final List<DockerFlag> dockerFlags) {
+        log.info("Set Docker flags to {}", dockerFlags);
+        this.defaultDockerFlags = dockerFlags;
     }
 
     /**
@@ -148,5 +189,16 @@ public class ProgrammingLanguageConfiguration {
             case FACT -> ProjectType.FACT;
             case GCC -> ProjectType.GCC;
         };
+    }
+
+    /**
+     * A key-value pair of a CLI flag and its value for a {@code docker run} command.
+     * <p>
+     * E.g., the CLI option {@code --cpus 2} is represented as flag {@code --cpus} and value {@code 2}.
+     *
+     * @param flag  The option name.
+     * @param value The option value.
+     */
+    public record DockerFlag(String flag, String value) {
     }
 }

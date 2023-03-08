@@ -70,10 +70,9 @@ public class ResultService {
     /**
      * Handle the manual creation of a new result potentially including feedback
      *
-     * @param result newly created Result
+     * @param result                            newly created Result
      * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
-     * @param ratedResult override value for rated property of result
-     *
+     * @param ratedResult                       override value for rated property of result
      * @return updated result with eagerly loaded Submission and Feedback items.
      */
     public Result createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback, boolean ratedResult) {
@@ -113,7 +112,9 @@ public class ResultService {
      * Deletes result with corresponding complaint and complaint response
      *
      * @param result                      the result to delete
-     * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole participation or exercise is deleted, the participant scores have been deleted before and clearing is not necessary, then this value should be false
+     * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole
+     *                                        participation or exercise is deleted, the participant scores have been deleted before and clearing is not necessary, then this value
+     *                                        should be false
      */
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
@@ -126,7 +127,9 @@ public class ResultService {
      * Deletes result with corresponding complaint and complaint response
      *
      * @param resultId                    the id of the result for which all references should be deleted
-     * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole participation or exercise is deleted, the participant scores have been deleted before and clearing is not necessary, then this value should be false
+     * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole
+     *                                        participation or exercise is deleted, the participant scores have been deleted before and clearing is not necessary, then this value
+     *                                        should be false
      */
     public void deleteResultReferences(Long resultId, boolean shouldClearParticipantScore) {
         log.debug("Delete result references {}", resultId);
@@ -141,7 +144,7 @@ public class ResultService {
     /**
      * Create a new example result for the provided submission ID.
      *
-     * @param submissionId The ID of the submission (that is connected to an example submission) for which a result should get created
+     * @param submissionId                      The ID of the submission (that is connected to an example submission) for which a result should get created
      * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
      * @return The newly created (and empty) example result
      */
@@ -166,9 +169,9 @@ public class ResultService {
      *
      * If the result is not saved (shouldSave = false), the caller is responsible to save the result (which will persist the feedback changes as well)
      *
-     * @param result           the result with should be saved with the given feedback
-     * @param feedbackList     new feedback items which replace the existing feedback
-     * @param shouldSave       whether the result should be saved or not
+     * @param result       the result with should be saved with the given feedback
+     * @param feedbackList new feedback items which replace the existing feedback
+     * @param shouldSave   whether the result should be saved or not
      * @return the updated (and potentially saved) result
      */
     public Result storeFeedbackInResult(@NotNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
@@ -185,9 +188,9 @@ public class ResultService {
      *
      * If the result is not saved (shouldSave = false), the caller is responsible to save the result (which will persist the feedback changes as well)
      *
-     * @param result           the result with should be saved with the given feedback
-     * @param feedbackList     new feedback items which should be added to the feedback
-     * @param shouldSave       whether the result should be saved or not
+     * @param result       the result with should be saved with the given feedback
+     * @param feedbackList new feedback items which should be added to the feedback
+     * @param shouldSave   whether the result should be saved or not
      * @return the updated (and potentially saved) result
      */
     @NotNull
@@ -200,7 +203,7 @@ public class ResultService {
     /**
      * Returns a list of feedbacks that is filtered for students depending on the settings and the time.
      *
-     * @param result    the result for which the feedback elements should be returned
+     * @param result the result for which the feedback elements should be returned
      * @return the list of filtered feedbacks
      */
     public List<Feedback> getFeedbacksForResult(Result result) {
@@ -229,13 +232,12 @@ public class ResultService {
                 feedbacks = feedbacks.stream().filter(feedback -> feedback.getType() != null && feedback.getType() == FeedbackType.AUTOMATIC).toList();
             }
         }
+
         // remove unnecessary data to keep the json payload smaller
         for (Feedback feedback : feedbacks) {
-            if (feedback.getResult() != null) {
-                feedback.getResult().setSubmission(null);
-                feedback.getResult().setParticipation(null);
-            }
+            feedback.setResult(null);
         }
+
         return feedbacks;
     }
 

@@ -6,7 +6,7 @@ import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-n
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TutorialGroupsRegistrationImportDialog } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
+import { TutorialGroupsRegistrationImportDialogComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 
 describe('TutorialGroupsImportButtonComponent', () => {
     let component: TutorialGroupsImportButtonComponent;
@@ -41,8 +41,6 @@ describe('TutorialGroupsImportButtonComponent', () => {
             result: Promise.resolve(),
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-
-        fixture.detectChanges();
         const openDialogSpy = jest.spyOn(component, 'openTutorialGroupImportDialog');
 
         const importFinishSpy = jest.spyOn(component.importFinished, 'emit');
@@ -55,7 +53,7 @@ describe('TutorialGroupsImportButtonComponent', () => {
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledTimes(2);
-            expect(modalOpenSpy).toHaveBeenCalledWith(TutorialGroupsRegistrationImportDialog, { backdrop: 'static', scrollable: false, size: 'xl' });
+            expect(modalOpenSpy).toHaveBeenCalledWith(TutorialGroupsRegistrationImportDialogComponent, { backdrop: 'static', scrollable: false, size: 'xl', animation: false });
             expect(mockModalRef.componentInstance.courseId).toEqual(exampleCourseId);
             expect(importFinishSpy).toHaveBeenCalledOnce();
         });

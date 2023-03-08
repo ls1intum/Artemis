@@ -14,6 +14,7 @@
         </div>
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
+            <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
             <jhi-category-selector
                 [categories]="exerciseCategories"
                 [existingCategories]="existingCategories"
@@ -173,6 +174,15 @@
             <span *ngIf="fileUploadExercise.exampleSolutionPublicationDateError" class="invalid-feedback">{{
                 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate
             }}</span>
+        </div>
+        <div class="form-group" *ngIf="!isExamMode">
+            <jhi-learning-goal-selection
+                id="learning-goals"
+                [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
+                [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
+                [(ngModel)]="fileUploadExercise.learningGoals"
+                name="learningGoals"
+            ></jhi-learning-goal-selection>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>

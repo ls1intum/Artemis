@@ -28,43 +28,64 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @Query("""
-            SELECT e FROM Exercise e
-            LEFT JOIN FETCH e.categories
-            WHERE e.course.id = :#{#courseId}
+            SELECT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.categories
+            WHERE e.course.id = :courseId
             """)
     Set<Exercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
     @Query("""
-                SELECT e
-                FROM Exercise e LEFT JOIN FETCH e.categories WHERE
-                e.id IN :exerciseIds
+            SELECT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.categories
+            WHERE e.course.id IN :courseIds
             """)
-    Set<Exercise> findByExerciseIdWithCategories(@Param("exerciseIds") Set<Long> exerciseIds);
+    Set<Exercise> findByCourseIdsWithCategories(@Param("courseIds") Set<Long> courseIds);
 
     @Query("""
-            SELECT e FROM Exercise e
-            WHERE e.course.id = :#{#courseId}
+            SELECT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.categories
+            WHERE e.id IN :exerciseIds
+            """)
+    Set<Exercise> findByExerciseIdsWithCategories(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    @Query("""
+            SELECT e
+            FROM Exercise e
+            WHERE e.course.id = :courseId
             	AND e.mode = 'TEAM'
             """)
     Set<Exercise> findAllTeamExercisesByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
-            SELECT e FROM Exercise e
-            WHERE e.course.id = :#{#courseId}
+            SELECT e
+            FROM Exercise e
+            WHERE e.course.id = :courseId
             """)
     Set<Exercise> findAllExercisesByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
-            SELECT e FROM Exercise e
-            LEFT JOIN FETCH e.learningGoals
+            SELECT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.learningGoals
             WHERE e.id = :exerciseId
             """)
     Optional<Exercise> findByIdWithLearningGoals(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT e FROM Exercise e
+                LEFT JOIN FETCH e.learningGoals lg
+                LEFT JOIN FETCH lg.exercises
+            WHERE e.id = :exerciseId
+            """)
+    Optional<Exercise> findByIdWithLearningGoalsBidirectional(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT e FROM Exercise e
             WHERE e.course.testCourse = FALSE
-            	AND e.dueDate >= :#{#now}
+            	AND e.dueDate >= :now
             ORDER BY e.dueDate ASC
             """)
     Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDate(@Param("now") ZonedDateTime now);
@@ -72,7 +93,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("""
             SELECT e FROM Exercise e
             WHERE e.course.testCourse = FALSE
-            	AND e.releaseDate >= :#{#now}
+            	AND e.releaseDate >= :now
             ORDER BY e.dueDate ASC
             """)
     Set<Exercise> findAllExercisesWithCurrentOrUpcomingReleaseDate(@Param("now") ZonedDateTime now);
@@ -80,15 +101,16 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("""
             SELECT e FROM Exercise e
             WHERE e.course.testCourse = FALSE
-            	AND e.assessmentDueDate >= :#{#now}
+            	AND e.assessmentDueDate >= :now
             ORDER BY e.dueDate ASC
             """)
     Set<Exercise> findAllExercisesWithCurrentOrUpcomingAssessmentDueDate(@Param("now") ZonedDateTime now);
 
     /**
      * Select Exercise for Course ID WHERE there does exist an LtiOutcomeUrl for the current user (-> user has started exercise once using LTI)
+     *
      * @param courseId the id of the course
-     * @param login the login of the corresponding user
+     * @param login    the login of the corresponding user
      * @return list of exercises
      */
     @Query("""
@@ -135,7 +157,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
 
     /**
-     *
      * @param courseId - course id of the exercises we want to fetch
      * @return all exercise-ids which belong to the course
      */
@@ -148,37 +169,37 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     /**
      * calculates the average score and the participation rate of students for each given individual course exercise
      * by using the last result (rated or not)
+     *
      * @param exerciseIds - exercise ids to count the statistics for
      * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
      */
     @Query("""
-                SELECT
+            SELECT
                 e.id,
                 AVG(r.score),
                 Count(Distinct p.student.id),
                 (SELECT count(distinct u.id)
-                FROM User u
-            WHERE
-            e.course.studentGroupName member of u.groups
-            AND e.course.teachingAssistantGroupName not member of u.groups
-            AND (e.course.editorGroupName IS NULL OR  e.course.editorGroupName not member of u.groups)
-            AND e.course.instructorGroupName not member of u.groups
-            )
+                    FROM User u
+                    WHERE
+                    e.course.studentGroupName member of u.groups
+                    AND e.course.teachingAssistantGroupName not member of u.groups
+                    AND (e.course.editorGroupName IS NULL OR  e.course.editorGroupName not member of u.groups)
+                    AND e.course.instructorGroupName not member of u.groups
+                )
             FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
             WHERE e.id IN :exerciseIds
-            AND e.course.studentGroupName member of p.student.groups
-            AND e.course.teachingAssistantGroupName not member of p.student.groups
-            AND (e.course.editorGroupName IS NULL OR e.course.editorGroupName not member of p.student.groups)
-            AND e.course.instructorGroupName not member of p.student.groups
-            AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
-            AND
-                s.id = (
+                AND e.course.studentGroupName member of p.student.groups
+                AND e.course.teachingAssistantGroupName not member of p.student.groups
+                AND (e.course.editorGroupName IS NULL OR e.course.editorGroupName not member of p.student.groups)
+                AND e.course.instructorGroupName not member of p.student.groups
+                AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
+                AND s.id = (
                     SELECT max(s2.id)
                     FROM Submission s2 JOIN s2.results r2
                     WHERE s2.participation.id = s.participation.id
-                    AND r2.score IS NOT NULL AND r2.completionDate IS NOT NULL
+                        AND r2.score IS NOT NULL AND r2.completionDate IS NOT NULL
                     )
-                GROUP BY e.id
+            GROUP BY e.id
                 """)
     List<Object[]> calculateStatisticsForIndividualCourseExercises(@Param("exerciseIds") List<Long> exerciseIds);
 
@@ -191,25 +212,24 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      */
     @Query("""
             SELECT
-            e.id,
-            AVG(sc.lastScore),
-            Count(Distinct p.student.id),
-            (SELECT count(distinct u.id)
-            FROM User u
-            WHERE
-            e.course.studentGroupName member of u.groups
-            AND e.course.teachingAssistantGroupName not member of u.groups
-            AND (e.course.editorGroupName IS NULL OR  e.course.editorGroupName not member of u.groups)
-            AND e.course.instructorGroupName not member of u.groups
-            )
-
+                e.id,
+                AVG(sc.lastScore),
+                Count(Distinct p.student.id),
+                (   SELECT count(distinct u.id)
+                    FROM User u
+                    WHERE
+                        e.course.studentGroupName member of u.groups
+                        AND e.course.teachingAssistantGroupName not member of u.groups
+                        AND (e.course.editorGroupName IS NULL OR  e.course.editorGroupName not member of u.groups)
+                        AND e.course.instructorGroupName not member of u.groups
+                )
             FROM Exercise e JOIN e.studentParticipations p, StudentScore sc
             WHERE e.id IN :exerciseIds
-            AND sc.exercise = e AND sc.user = p.student
-            AND e.course.studentGroupName member of p.student.groups
-            AND e.course.teachingAssistantGroupName not member of p.student.groups
-            AND (e.course.editorGroupName IS NULL OR e.course.editorGroupName not member of p.student.groups)
-            AND e.course.instructorGroupName not member of p.student.groups
+                AND sc.exercise = e AND sc.user = p.student
+                AND e.course.studentGroupName member of p.student.groups
+                AND e.course.teachingAssistantGroupName not member of p.student.groups
+                AND (e.course.editorGroupName IS NULL OR e.course.editorGroupName not member of p.student.groups)
+                AND e.course.instructorGroupName not member of p.student.groups
             GROUP BY e.id
             """)
     List<Object[]> calculateExerciseStatisticsForIndividualCourseUsingParticipationTable(@Param("exerciseIds") List<Long> exerciseIds);
@@ -222,44 +242,43 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
      */
     @Query("""
-                SELECT
+            SELECT
                 e.id,
-            AVG(r.score),
+                AVG(r.score),
                 Count(Distinct p.team.id),
-                (SELECT count(distinct t.id)
-                 FROM Team t JOIN t.students st2
-                 WHERE st2.id IN (
-                 SELECT DISTINCT u.id
-                FROM User u
-                WHERE
-                e.course.studentGroupName member of u.groups
-                AND e.course.teachingAssistantGroupName not member of u.groups
-                AND (e.course.editorGroupName IS NULL OR  e.course.editorGroupName not member of u.groups)
-                AND e.course.instructorGroupName not member of u.groups
-             )
-            )
+                (   SELECT count(distinct t.id)
+                    FROM Team t JOIN t.students st2
+                    WHERE st2.id IN (
+                        SELECT DISTINCT u.id
+                        FROM User u
+                        WHERE e.course.studentGroupName member of u.groups
+                            AND e.course.teachingAssistantGroupName not member of u.groups
+                            AND (e.course.editorGroupName IS NULL OR  e.course.editorGroupName not member of u.groups)
+                            AND e.course.instructorGroupName not member of u.groups
+                            AND t.exercise.id IN :exerciseIds
+                    )
+                )
             FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r JOIN p.team.students st
             WHERE e.id IN :exerciseIds
-            AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
-            AND
-            st.id IN (
-                 SELECT DISTINCT u.id
-                FROM User u
-                WHERE
-                e.course.studentGroupName member of u.groups
-                AND e.course.teachingAssistantGroupName not member of u.groups
-                AND (e.course.editorGroupName IS NULL OR e.course.editorGroupName not member of u.groups)
-                AND e.course.instructorGroupName not member of u.groups
-             )
-             AND
-            s.id = (
-                SELECT max(s2.id)
-                FROM Submission s2 JOIN s2.results r2
-                WHERE s2.participation.id = s.participation.id
-                AND r2.score IS NOT NULL AND r2.completionDate IS NOT NULL
+                AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
+                AND
+                st.id IN (
+                    SELECT DISTINCT u.id
+                    FROM User u
+                    WHERE e.course.studentGroupName member of u.groups
+                        AND e.course.teachingAssistantGroupName not member of u.groups
+                        AND (e.course.editorGroupName IS NULL OR e.course.editorGroupName not member of u.groups)
+                        AND e.course.instructorGroupName not member of u.groups
+                    )
+                AND
+                s.id = (
+                    SELECT max(s2.id)
+                    FROM Submission s2 JOIN s2.results r2
+                    WHERE s2.participation.id = s.participation.id
+                        AND r2.score IS NOT NULL AND r2.completionDate IS NOT NULL
                 )
             GROUP BY e.id
-                """)
+            """)
     List<Object[]> calculateStatisticsForTeamCourseExercises(@Param("exerciseIds") List<Long> exerciseIds);
 
     /**
@@ -270,35 +289,32 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
      */
     @Query("""
-                SELECT
+            SELECT
                 e.id,
-            AVG(ts.lastScore),
-            Count(Distinct p.team.id),
-            (SELECT count(distinct t.id)
-             FROM Team t JOIN t.students st2
-             WHERE st2.id IN (
-                 SELECT DISTINCT u.id
-                FROM User u
-                WHERE
-                e.course.studentGroupName member of u.groups
-                AND e.course.teachingAssistantGroupName not member of u.groups
-                AND (e.course.editorGroupName IS NULL OR  e.course.editorGroupName not member of u.groups)
-                AND e.course.instructorGroupName not member of u.groups
-             )
-            )
+                AVG(ts.lastScore),
+                Count(Distinct p.team.id),
+                (   SELECT count(distinct t.id)
+                    FROM Team t JOIN t.students st2
+                    WHERE st2.id IN (
+                        SELECT DISTINCT u.id
+                        FROM User u
+                        WHERE e.course.studentGroupName member of u.groups
+                            AND e.course.teachingAssistantGroupName not member of u.groups
+                            AND (e.course.editorGroupName IS NULL OR  e.course.editorGroupName not member of u.groups)
+                            AND e.course.instructorGroupName not member of u.groups
+                    )
+                )
             FROM Exercise e JOIN e.studentParticipations p JOIN p.team.students st, TeamScore ts
             WHERE e.id IN :exerciseIds
-            AND ts.exercise = e AND ts.team = p.team
-            AND
-            st.id IN (
-                 SELECT DISTINCT u.id
-                FROM User u
-                WHERE
-                e.course.studentGroupName member of u.groups
-                AND e.course.teachingAssistantGroupName not member of u.groups
-                AND (e.course.editorGroupName IS NULL OR e.course.editorGroupName not member of u.groups)
-                AND e.course.instructorGroupName not member of u.groups
-             )
+                AND ts.exercise = e AND ts.team = p.team
+                AND st.id IN (
+                    SELECT DISTINCT u.id
+                    FROM User u
+                    WHERE e.course.studentGroupName member of u.groups
+                        AND e.course.teachingAssistantGroupName not member of u.groups
+                        AND (e.course.editorGroupName IS NULL OR e.course.editorGroupName not member of u.groups)
+                        AND e.course.instructorGroupName not member of u.groups
+                    )
             GROUP BY e.id
             """)
     List<Object[]> calculateExerciseStatisticsForTeamCourseExercisesUsingParticipationTable(@Param("exerciseIds") List<Long> exerciseIds);
@@ -337,7 +353,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * Fetches the exercises for a course with an assessment due date (or due date if without assessment due date) in the future
      *
      * @param courseId the course to get the exercises for
-     * @param now the current date time
+     * @param now      the current date time
      * @return a set of exercises
      */
     @Query("""
@@ -353,7 +369,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * Fetches the exercises for a course with a passed assessment due date (or due date if without assessment due date)
      *
      * @param courseId the course to get the exercises for
-     * @param now the current date time
+     * @param now      the current date time
      * @return a set of exercises
      */
     @Query("""
@@ -369,7 +385,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * Finds all exercises that should be part of the summary email (e.g. weekly summary)
      * Exercises should have been released, not yet ended, and the release should be in the time frame [daysAgo,now]
      *
-     * @param now the current date time
+     * @param now     the current date time
      * @param daysAgo the current date time minus the wanted number of days (the used interval) (e.g. for weeklySummaries -> daysAgo = 7)
      * @return all exercises that should be part of the summary (email)
      */
@@ -431,6 +447,11 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @NotNull
     default Exercise findByIdWithLearningGoalsElseThrow(Long exerciseId) throws EntityNotFoundException {
         return findByIdWithLearningGoals(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+    }
+
+    @NotNull
+    default Exercise findByIdWithLearningGoalsBidirectionalElseThrow(Long exerciseId) throws EntityNotFoundException {
+        return findByIdWithLearningGoalsBidirectional(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
     /**
@@ -510,8 +531,9 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     /**
      * Converts the row data from the exercise statistic query into the corresponding DTO
+     *
      * @param exerciseIdToRawStatisticQueryData map from exerciseId to query data
-     * @param exercise exercise
+     * @param exercise                          exercise
      * @return converted DTO
      */
     private CourseExerciseStatisticsDTO convertRawStatisticQueryDataToDTO(Map<Long, Object[]> exerciseIdToRawStatisticQueryData, Exercise exercise) {

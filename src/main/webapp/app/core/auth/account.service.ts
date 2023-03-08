@@ -73,7 +73,7 @@ export class AccountService implements IAccountService {
         return this.http.get<User>(SERVER_API_URL + 'api/account', { observe: 'response' });
     }
 
-    save(user: User): Observable<HttpResponse<{}>> {
+    save(user: User): Observable<HttpResponse<any>> {
         return this.http.put(SERVER_API_URL + 'api/account', user, { observe: 'response' });
     }
 
@@ -160,7 +160,8 @@ export class AccountService implements IAccountService {
                     return this.userIdentity;
                 }),
                 catchError(() => {
-                    if (this.websocketService.stompClient && this.websocketService.stompClient.connected) {
+                    // this will be called during logout
+                    if (this.websocketService.isConnected()) {
                         this.websocketService.disconnect();
                     }
                     this.userIdentity = undefined;
@@ -292,7 +293,7 @@ export class AccountService implements IAccountService {
      *
      * @param languageKey The new languageKey
      */
-    updateLanguage(languageKey: String): Observable<void> {
+    updateLanguage(languageKey: string): Observable<void> {
         return this.http.post<void>(`${SERVER_API_URL}api/account/change-language`, languageKey);
     }
 }

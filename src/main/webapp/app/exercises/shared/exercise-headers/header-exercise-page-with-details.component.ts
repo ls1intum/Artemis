@@ -1,4 +1,5 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
@@ -64,6 +65,8 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     // Icons
     faQuestionCircle = faQuestionCircle;
 
+    constructor(private sortService: SortService) {}
+
     ngOnInit() {
         this.exerciseCategories = this.exercise.categories || [];
 
@@ -101,8 +104,14 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         if (this.submissionPolicy) {
             this.countSubmissions();
         }
-        if (this.studentParticipation?.results?.[0].rated) {
-            this.achievedPoints = roundValueSpecifiedByCourseSettings((this.studentParticipation?.results?.[0].score! * this.exercise.maxPoints!) / 100, this.course);
+        if (this.studentParticipation?.results?.length) {
+            // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
+            this.sortService.sortByProperty(this.studentParticipation.results, 'id', false);
+
+            const latestRatedResult = this.studentParticipation.results.filter((result) => result.rated).first();
+            if (latestRatedResult) {
+                this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course);
+            }
         }
     }
 

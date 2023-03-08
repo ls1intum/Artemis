@@ -18,7 +18,6 @@
                 }
             },
             "detail": {
-                "title": "Bewertung",
                 "feedback": "Feedback",
                 "feedbackForTask": "Feedback for task: {{ taskName }}",
                 "codeIssue": {
@@ -32,10 +31,8 @@
                 "test": {
                     "name": "Test Case",
                     "noInfo": "No result information for {{ name }}",
-                    "passed": "Test {{ name }} passed",
-                    "failed": "Test {{ name }} failed",
-                    "passedTest": "1 passed test",
-                    "passedTests": "{{ number }} passed tests"
+                    "passed": "{{ name }} passed",
+                    "failed": "{{ name }} failed"
                 }
             },
             "noResult": "No result",
@@ -55,9 +52,9 @@
             "successful": "Successful",
             "buildArtifact": "Build Artifact",
             "buildError": "Build Error:",
-            "score": "Score {{score}}%",
+            "score": "Your overall score is {{score}}%",
             "scorePercentage": "Score (in %)",
-            "scoreWithPoints": "Score {{score}}%, {{points}} points",
+            "scoreWithPoints": "Your score is {{score}}%, {{points}} points",
             "currentScore": "Current Score",
             "rated": "Rated",
             "assessmentType": "Assessment Type",

@@ -5,6 +5,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-post-footer',
@@ -12,6 +13,9 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
     styleUrls: ['./post-footer.component.scss'],
 })
 export class PostFooterComponent extends PostingFooterDirective<Post> implements OnInit, OnChanges, OnDestroy, AfterContentChecked {
+    @Input() lastReadDate?: dayjs.Dayjs;
+    @Input()
+    readOnlyMode = false;
     @Input() previewMode: boolean;
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post context
@@ -30,6 +34,7 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
 
     // ng-container to render createEditAnswerPostComponent
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
+    @ViewChild('createAnswerPostModal') createAnswerPostModalComponent: AnswerPostCreateEditModalComponent;
 
     constructor(private metisService: MetisService, protected changeDetector: ChangeDetectorRef) {
         super();
@@ -113,4 +118,11 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
      * by this means, Angular determines which answerPost in the collection of answerPosts has to be reloaded/destroyed on changes
      */
     answerPostTrackByFn = (index: number, answerPost: AnswerPost): number => answerPost.id!;
+
+    /**
+     * Open create answer modal
+     */
+    openCreateAnswerPostModal() {
+        this.createAnswerPostModalComponent.open();
+    }
 }

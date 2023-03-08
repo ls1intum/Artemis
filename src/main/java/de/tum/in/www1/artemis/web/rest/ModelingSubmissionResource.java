@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import javax.validation.Valid;
@@ -140,9 +139,9 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * only return all the modeling submissions where the tutor has a result associated.
      * In case of exam exercise, it filters out all test run submissions.
      *
-     * @param exerciseId id of the exercise for which the modeling submission should be returned
+     * @param exerciseId      id of the exercise for which the modeling submission should be returned
      * @param correctionRound - correctionRound for which the submissions' results should be fetched
-     * @param submittedOnly if true, it returns only submission with submitted flag set to true
+     * @param submittedOnly   if true, it returns only submission with submitted flag set to true
      * @param assessedByTutor if true, it returns only the submissions which are assessed by the current user as a tutor
      * @return a list of modeling submissions
      */
@@ -163,10 +162,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * In case an instructors calls, the resultId is used first. In case the resultId is not set, the correctionRound is used.
      * In case neither resultId nor correctionRound is set, the first correctionRound is used.
      *
-     * @param submissionId the id of the modelingSubmission to retrieve
+     * @param submissionId    the id of the modelingSubmission to retrieve
      * @param correctionRound correction round for which we prepare the submission
-     * @param resultId the resultId for which we want to get the submission
-     * @param withoutResults No result will be created or loaded and the exercise won't be locked when this is set so plagiarism detection doesn't lock results
+     * @param resultId        the resultId for which we want to get the submission
+     * @param withoutResults  No result will be created or loaded and the exercise won't be locked when this is set so plagiarism detection doesn't lock results
      * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission for the given id, or with status 404 (Not Found) if the modelingSubmission could not be
      *         found
      */
@@ -228,8 +227,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * GET /modeling-submission-without-assessment : get one modeling submission without assessment, for course exercises with first correction round and automatic
      * assessment enabled
      *
-     * @param exerciseId id of the exercise for which the modeling submission should be returned
-     * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
+     * @param exerciseId      id of the exercise for which the modeling submission should be returned
+     * @param lockSubmission  optional value to define if the submission should be locked and has the value of false if not set manually
      * @param correctionRound correctionRound for which submissions without a result should be returned
      * @return the ResponseEntity with status 200 (OK) and a modeling submission without assessment in body
      */
@@ -258,7 +257,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         var submission = modelingSubmissionService.findRandomSubmissionWithoutExistingAssessment(lockSubmission, correctionRound, modelingExercise, isExamMode)
             .orElse(null);
 
-        if (Objects.nonNull(submission)) {
+        if (submission != null) {
             // needed to show the grading criteria in the assessment view
             List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
             modelingExercise.setGradingCriteria(gradingCriteria);

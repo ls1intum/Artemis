@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -36,6 +37,8 @@ public abstract class PostingService {
 
     final LectureRepository lectureRepository;
 
+    final ConversationParticipantRepository conversationParticipantRepository;
+
     final AuthorizationCheckService authorizationCheckService;
 
     private final SimpMessageSendingOperations messagingTemplate;
@@ -45,13 +48,15 @@ public abstract class PostingService {
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate) {
+            AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate,
+            ConversationParticipantRepository conversationParticipantRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.messagingTemplate = messagingTemplate;
+        this.conversationParticipantRepository = conversationParticipantRepository;
     }
 
     /**
@@ -89,7 +94,8 @@ public abstract class PostingService {
             messagingTemplate.convertAndSend(specificTopicName, postDTO);
         }
         else if (postDTO.getPost().getConversation() != null) {
-            postDTO.getPost().getConversation().getConversationParticipants().forEach(conversationParticipant -> {
+            var participants = this.conversationParticipantRepository.findConversationParticipantByConversationId(postDTO.getPost().getConversation().getId());
+            participants.forEach(conversationParticipant -> {
                 messagingTemplate.convertAndSendToUser(conversationParticipant.getUser().getLogin(),
                         genericTopicName + "/conversations/" + postDTO.getPost().getConversation().getId(), postDTO);
             });
@@ -143,6 +149,7 @@ public abstract class PostingService {
 
     /**
      * helper method that fetches groups and authorities of all posting authors in a list of Posts
+     *
      * @param postsInCourse list of posts whose authors are populated with their groups, authorities, and authorRole
      */
     void setAuthorRoleOfPostings(List<Post> postsInCourse) {
@@ -170,6 +177,7 @@ public abstract class PostingService {
 
     /**
      * helper method that assigns authorRoles of postings in accordance to user groups and authorities
+     *
      * @param posting       posting to assign authorRole
      * @param postingCourse course that the post belongs to, must be explicitly fetched and provided to handle new post creation case
      */

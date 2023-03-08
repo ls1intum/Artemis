@@ -308,6 +308,10 @@ public class ExamResource {
             throw new BadRequestAlertException("For real exams, the visible date has to be before the start date and the start date has to be before the end date", ENTITY_NAME,
                     "examTimes");
         }
+
+        if (exam.getExampleSolutionPublicationDate() != null && exam.getExampleSolutionPublicationDate().isBefore(exam.getEndDate())) {
+            throw new BadRequestAlertException("Example solutions cannot be published before the end date of an exam.", ENTITY_NAME, "examTimes");
+        }
     }
 
     /**
@@ -339,7 +343,7 @@ public class ExamResource {
      * @param exam the exam to be checked
      */
     private void checkExamPointsAndCorrectionRoundsElseThrow(Exam exam) {
-        if (exam.getMaxPoints() <= 0) {
+        if (exam.getExamMaxPoints() <= 0) {
             throw new BadRequestAlertException("An exam cannot have negative points.", ENTITY_NAME, "negativePoints");
         }
 
@@ -356,7 +360,7 @@ public class ExamResource {
      * GET /exams : Find all exams the user is allowed to access
      *
      * @param withExercises if only exams with at least one exercise Groups should be considered
-     * @param search Pageable with all relevant information
+     * @param search        Pageable with all relevant information
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
     @GetMapping("exams")
@@ -660,7 +664,8 @@ public class ExamResource {
     }
 
     /**
-     * POST /courses/:courseId/exams/:examId/students/:studentLogin : Add one single given user (based on the login) to the students of the exam so that the student can access the exam
+     * POST /courses/:courseId/exams/:examId/students/:studentLogin : Add one single given user (based on the login) to the students of the exam so that the student can access the
+     * exam
      *
      * @param courseId     the id of the course
      * @param examId       the id of the exam
@@ -977,7 +982,6 @@ public class ExamResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentExam> getStudentExamForStart(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam {} for conduction", examId);
-
         StudentExam exam = examAccessService.getExamInCourseElseThrow(courseId, examId);
         return ResponseEntity.ok(exam);
     }
@@ -1028,7 +1032,7 @@ public class ExamResource {
      * @param courseId the id of the course
      * @param examId   the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body or NotFound if it could not be
-     * determined
+     *         determined
      */
     @GetMapping("courses/{courseId}/exams/{examId}/latest-end-date")
     @PreAuthorize("hasRole('TA')")

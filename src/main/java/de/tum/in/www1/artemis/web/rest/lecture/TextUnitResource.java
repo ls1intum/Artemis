@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.TextUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.LearningGoalProgressService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -40,24 +41,28 @@ public class TextUnitResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, AuthorizationCheckService authorizationCheckService) {
+    private final LearningGoalProgressService learningGoalProgressService;
+
+    public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, AuthorizationCheckService authorizationCheckService,
+            LearningGoalProgressService learningGoalProgressService) {
         this.lectureRepository = lectureRepository;
         this.textUnitRepository = textUnitRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.learningGoalProgressService = learningGoalProgressService;
     }
 
     /**
      * GET lectures/:lectureId/text-units/:textUnitId : gets the text unit with the specified id
      *
      * @param textUnitId the id of the textUnit to retrieve
-     * @param lectureId the id of the lecture to which the unit belongs
+     * @param lectureId  the id of the lecture to which the unit belongs
      * @return the ResponseEntity with status 200 (OK) and with body the text unit, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/text-units/{textUnitId}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextUnit> getTextUnit(@PathVariable Long textUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get TextUnit : {}", textUnitId);
-        Optional<TextUnit> optionalTextUnit = textUnitRepository.findById(textUnitId);
+        Optional<TextUnit> optionalTextUnit = textUnitRepository.findByIdWithLearningGoals(textUnitId);
         if (optionalTextUnit.isEmpty()) {
             throw new EntityNotFoundException("TextUnit");
         }
@@ -72,31 +77,39 @@ public class TextUnitResource {
     /**
      * PUT /lectures/:lectureId/text-units : Updates an existing text unit
      *
-     * @param lectureId      the id of the lecture to which the text unit belongs to update
-     * @param textUnit the text unit to update
+     * @param lectureId    the id of the lecture to which the text unit belongs to update
+     * @param textUnitForm the text unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated textUnit
      */
     @PutMapping("/lectures/{lectureId}/text-units")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<TextUnit> updateTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnit) {
-        log.debug("REST request to update an text unit : {}", textUnit);
-        if (textUnit.getId() == null) {
+    public ResponseEntity<TextUnit> updateTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnitForm) {
+        log.debug("REST request to update an text unit : {}", textUnitForm);
+        if (textUnitForm.getId() == null) {
             throw new BadRequestAlertException("A text unit must have an ID to be updated", ENTITY_NAME, "idNull");
         }
+
+        var textUnit = textUnitRepository.findByIdWithLearningGoalsBidirectional(textUnitForm.getId()).orElseThrow();
+
         if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
             throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
 
-        TextUnit result = textUnitRepository.save(textUnit);
+        textUnitForm.setId(textUnit.getId());
+        textUnitForm.setLecture(textUnit.getLecture());
+        TextUnit result = textUnitRepository.save(textUnitForm);
+
+        learningGoalProgressService.updateProgressByLearningObjectAsync(result);
+
         return ResponseEntity.ok(result);
     }
 
     /**
      * POST /lectures/:lectureId/text-units : creates a new text unit.
      *
-     * @param lectureId      the id of the lecture to which the text unit should be added
-     * @param textUnit the text unit that should be created
+     * @param lectureId the id of the lecture to which the text unit should be added
+     * @param textUnit  the text unit that should be created
      * @return the ResponseEntity with status 201 (Created) and with body the new text unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -122,6 +135,8 @@ public class TextUnitResource {
         lecture.addLectureUnit(textUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
         TextUnit persistedTextUnit = (TextUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
+
+        learningGoalProgressService.updateProgressByLearningObjectAsync(persistedTextUnit);
 
         return ResponseEntity.created(new URI("/api/text-units/" + persistedTextUnit.getId())).body(persistedTextUnit);
     }

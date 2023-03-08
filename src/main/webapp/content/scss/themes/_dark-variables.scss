@@ -35,9 +35,9 @@ $dark: $gray-800;
 
 $min-contrast-ratio: 1.9;
 
-$body-color: $white;
+$body-color: $gray-100;
 $text-muted: $gray-600;
-$body-bg: $gray-900;
+$body-bg: $gray-800;
 
 $input-color: $gray-800;
 $input-border-color: $body-bg;
@@ -237,6 +237,10 @@ $md-file-input-border-color: $border-color;
 $md-resize-icon-color: $gray-400;
 
 // Metis
+$metis-conversation-sidebar: $gray-500;
+$metis-conversation-sidebar-active: $gray-100;
+$metis-conversation-sidebar-button-background-hover: $gray-700;
+
 $metis-light-gray: #979797;
 $metis-gray: #6a737d;
 $metis-blue: $link-color;
@@ -444,8 +448,6 @@ $exam-students-dropdown-item-already-registered-background-hover-color: #daf2e0;
 $exam-students-datatable-row-newly-registered-background-color: $neutral-dark-l-20;
 
 // Data table
-$data-table-icon-right: white;
-$data-table-icon-down: white;
 $data-table-transitioning-container-active-background-color: rgba(0, 0, 0, 0.5);
 $data-table-dropdown-item-selected-background-color: $primary;
 
@@ -578,3 +580,11 @@ $graph-black: rgb(229, 229, 229);
 // User-Management
 $user-management-background-color: rgba($white, 0.02);
 $user-management-border-color: rgba($white, 0.15);
+
+// Learning Goal Rings
+$learning-goal-rings-red: $red;
+$learning-goal-rings-red-bg: transparentize($learning-goal-rings-red, 0.8);
+$learning-goal-rings-green: $green;
+$learning-goal-rings-green-bg: transparentize($learning-goal-rings-green, 0.8);
+$learning-goal-rings-blue: $blue;
+$learning-goal-rings-blue-bg: transparentize($learning-goal-rings-blue, 0.8);

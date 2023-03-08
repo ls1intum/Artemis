@@ -50,12 +50,13 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         return newExercise;
     }
 
-    /** This helper method copies all attributes of the {@code importedExercise} into the new exercise.
+    /**
+     * This helper method copies all attributes of the {@code importedExercise} into the new exercise.
      * Here we ignore all external entities as well as the start-, end-, and assessment due date.
      * Also fills {@code gradingInstructionCopyTracker}.
      *
-     * @param importedExercise The exercise from which to copy the basis
-     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
+     * @param importedExercise              The exercise from which to copy the basis
+     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return the cloned TextExercise basis
      */
     @NotNull
@@ -70,23 +71,25 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         return newExercise;
     }
 
-    /** This functions does a hard copy of the example submissions contained in {@code templateExercise}.
+    /**
+     * This functions does a hard copy of the example submissions contained in {@code templateExercise}.
      * To copy the corresponding Submission entity this function calls {@link #copySubmission(Submission, Map)}
      *
      * @param templateExercise {TextExercise} The original exercise from which to fetch the example submissions
-     * @param newExercise The new exercise in which we will insert the example submissions
+     * @param newExercise      The new exercise in which we will insert the example submissions
      * @return The cloned set of example submissions
      */
     Set<ExampleSubmission> copyExampleSubmission(Exercise templateExercise, Exercise newExercise) {
         return copyExampleSubmission(templateExercise, newExercise, new HashMap<>());
     }
 
-    /** This functions does a hard copy of the example submissions contained in {@code templateExercise}.
+    /**
+     * This functions does a hard copy of the example submissions contained in {@code templateExercise}.
      * To copy the corresponding Submission entity this function calls {@link #copySubmission(Submission, Map)}
      *
-     * @param templateExercise {TextExercise} The original exercise from which to fetch the example submissions
-     * @param newExercise The new exercise in which we will insert the example submissions
-     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
+     * @param templateExercise              {TextExercise} The original exercise from which to fetch the example submissions
+     * @param newExercise                   The new exercise in which we will insert the example submissions
+     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned set of example submissions
      */
     Set<ExampleSubmission> copyExampleSubmission(Exercise templateExercise, Exercise newExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
@@ -111,8 +114,8 @@ public class ModelingExerciseImportService extends ExerciseImportService {
      * This helper function does a hard copy of the {@code originalSubmission} and stores the values in {@code newSubmission}.
      * To copy the submission results this function calls {@link ExerciseImportService#copyExampleResult(Result, Submission, Map)} respectively.
      *
-     * @param originalSubmission  The original submission to be copied.
-     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
+     * @param originalSubmission            The original submission to be copied.
+     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned submission
      */
     Submission copySubmission(Submission originalSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {

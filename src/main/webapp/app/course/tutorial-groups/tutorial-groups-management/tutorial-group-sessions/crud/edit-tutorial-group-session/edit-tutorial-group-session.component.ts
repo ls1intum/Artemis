@@ -1,19 +1,23 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy } from '@angular/core';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { AlertService } from 'app/core/util/alert.service';
-import { finalize } from 'rxjs/operators';
+import { finalize, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-session',
     templateUrl: './edit-tutorial-group-session.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EditTutorialGroupSessionComponent {
+export class EditTutorialGroupSessionComponent implements OnDestroy {
+    ngUnsubscribe = new Subject<void>();
+
     @Input()
     tutorialGroup: TutorialGroup;
 
@@ -62,6 +66,7 @@ export class EditTutorialGroupSessionComponent {
                 finalize(() => {
                     this.isLoading = false;
                 }),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: () => {
@@ -87,5 +92,10 @@ export class EditTutorialGroupSessionComponent {
 
     clear() {
         this.activeModal.dismiss();
+    }
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 }

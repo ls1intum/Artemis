@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResour
 import static javax.persistence.Persistence.getPersistenceUtil;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -107,8 +108,10 @@ public class TutorialGroupService {
         Optional<TutorialGroupSession> nextSessionOptional = Optional.empty();
         if (getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
             // determine the next session
+            // we show currently running sessions and up to 30 minutes after the end of the session so that students can still join and tutors can easily update the attendance of
+            // the session
             nextSessionOptional = tutorialGroup.getTutorialGroupSessions().stream().filter(session -> session.getStatus() == TutorialGroupSessionStatus.ACTIVE)
-                    .filter(session -> session.getStart().isAfter(ZonedDateTime.now())).min(Comparator.comparing(TutorialGroupSession::getStart));
+                    .filter(session -> session.getEnd().plus(30, ChronoUnit.MINUTES).isAfter(ZonedDateTime.now())).min(Comparator.comparing(TutorialGroupSession::getStart));
         }
         else {
             var nextSessions = tutorialGroupSessionRepository.findNextSessionsOfStatus(tutorialGroup.getId(), ZonedDateTime.now(), TutorialGroupSessionStatus.ACTIVE);
@@ -143,7 +146,7 @@ public class TutorialGroupService {
         }
         tutorialGroupRegistrationRepository.delete(existingRegistration.get());
         singleUserNotificationService.notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, student, responsibleUser);
-        if (!Objects.isNull(tutorialGroup.getTeachingAssistant()) && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
+        if (tutorialGroup.getTeachingAssistant() != null && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
             singleUserNotificationService.notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student, responsibleUser);
         }
     }
@@ -169,7 +172,7 @@ public class TutorialGroupService {
         TutorialGroupRegistration newRegistration = new TutorialGroupRegistration(student, tutorialGroup, registrationType);
         tutorialGroupRegistrationRepository.save(newRegistration);
         singleUserNotificationService.notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student, responsibleUser);
-        if (!Objects.isNull(tutorialGroup.getTeachingAssistant()) && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
+        if (tutorialGroup.getTeachingAssistant() != null && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
             singleUserNotificationService.notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student, responsibleUser);
         }
     }
@@ -188,7 +191,7 @@ public class TutorialGroupService {
                 singleUserNotificationService.notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student, responsibleUser);
             }
 
-            if (!Objects.isNull(tutorialGroup.getTeachingAssistant()) && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
+            if (tutorialGroup.getTeachingAssistant() != null && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
                 singleUserNotificationService.notifyTutorAboutMultipleRegistrationsToTutorialGroup(tutorialGroup, studentsToRegister, responsibleUser);
             }
         }
@@ -231,11 +234,11 @@ public class TutorialGroupService {
      * Important to note: A registration must contain a title of the tutorial group, but it must not contain a student.
      *
      * <ul>
-     *     <li> Only title -> Create Tutorial Group with the given title if it not exists
-     *     <li> Title and student -> Create Tutorial Group with given title if not exists AND register student.
-     *     <ul>
-     *         <li> If student is already registered in a tutorial group of the same course, the student will be deregistered from the old tutorial group.
-     *     </ul>
+     * <li>Only title -> Create Tutorial Group with the given title if it not exists
+     * <li>Title and student -> Create Tutorial Group with given title if not exists AND register student.
+     * <ul>
+     * <li>If student is already registered in a tutorial group of the same course, the student will be deregistered from the old tutorial group.
+     * </ul>
      * </ul>
      *
      * @param course        The course to import the registrations for.

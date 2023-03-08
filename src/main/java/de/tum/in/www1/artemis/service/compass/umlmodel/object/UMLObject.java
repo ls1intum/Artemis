@@ -151,7 +151,8 @@ public class UMLObject extends UMLElement {
     }
 
     /**
-     * Get the number of elements of this UML object. The total number includes the number of child elements (i.e. the attributes and methods of the object) and the UML object itself.
+     * Get the number of elements of this UML object. The total number includes the number of child elements (i.e. the attributes and methods of the object) and the UML object
+     * itself.
      *
      * @return the number of elements of the object
      */

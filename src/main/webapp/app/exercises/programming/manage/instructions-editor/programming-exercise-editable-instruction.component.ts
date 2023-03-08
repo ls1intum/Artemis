@@ -69,11 +69,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
+    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set participation(participation: Participation) {
         this.participationValue = participation;
         this.participationChange.emit(this.participationValue);
     }
 
+    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set exercise(exercise: ProgrammingExercise) {
         if (this.programmingExercise && exercise.problemStatement !== this.programmingExercise.problemStatement) {
             this.unsavedChanges = true;

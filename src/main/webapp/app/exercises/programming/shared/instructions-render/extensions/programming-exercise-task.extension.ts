@@ -1,7 +1,7 @@
 import { EmbeddedViewRef, Injectable, Injector, ViewContainerRef } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { ShowdownExtension } from 'showdown';
-// tslint:disable-next-line:max-line-length
+// eslint-disable-next-line max-len
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { Result } from 'app/entities/result.model';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
@@ -113,7 +113,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                             completeString: testMatch[0],
                             taskName: testMatch[1],
                             // split the names by "," only when there is not a closing bracket without a previous opening bracket
-                            tests: testMatch[2].split(/,(?![^(]*?\))/).map((s) => s.trim()),
+                            tests: testMatch[2] ? testMatch[2].split(/,(?![^(]*?\))/).map((s) => s.trim()) : [],
                         };
                     });
                 const tasksWithParticipationId: TaskArrayWithExercise = {

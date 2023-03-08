@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
@@ -15,9 +17,7 @@ import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
-import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
@@ -170,12 +170,16 @@ describe('ProgrammingExercise Management Component', () => {
     });
 
     it('should open import modal', () => {
-        const mockReturnValue = { result: Promise.resolve({ id: 456 } as ProgrammingExercise) } as NgbModalRef;
+        const mockReturnValue = {
+            result: Promise.resolve({ id: 456 } as ProgrammingExercise),
+            componentInstance: {},
+        } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
         comp.openImportModal();
-        expect(modalService.open).toHaveBeenCalledWith(ProgrammingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledWith(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
         expect(modalService.open).toHaveBeenCalledOnce();
+        expect(mockReturnValue.componentInstance.exerciseType).toEqual(ExerciseType.PROGRAMMING);
     });
 
     it('should open edit selected modal', () => {
@@ -184,15 +188,6 @@ describe('ProgrammingExercise Management Component', () => {
 
         comp.openEditSelectedModal();
         expect(modalService.open).toHaveBeenCalledWith(ProgrammingExerciseEditSelectedComponent, { size: 'xl', backdrop: 'static' });
-        expect(modalService.open).toHaveBeenCalledOnce();
-    });
-
-    it('should open repo export modal', () => {
-        const mockReturnValue = { componentInstance: {} } as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
-
-        comp.openRepoExportModal();
-        expect(modalService.open).toHaveBeenCalledWith(ProgrammingAssessmentRepoExportDialogComponent, { size: 'lg', backdrop: 'static' });
         expect(modalService.open).toHaveBeenCalledOnce();
     });
 

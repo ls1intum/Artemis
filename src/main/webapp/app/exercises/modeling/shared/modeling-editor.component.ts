@@ -73,7 +73,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                 mode: ApollonMode.Modelling,
                 readonly: this.readOnly,
                 type: this.diagramType || UMLDiagramType.ClassDiagram,
-                scale: 0.75,
+                scale: 0.8,
             });
 
             this.modelSubscription = this.apollonEditor.subscribeToModelChange((model: UMLModel) => {
@@ -102,7 +102,8 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             const newScroll = document.getElementsByTagName('html')[0].scrollTop;
             if (newScroll !== this.htmlScroll) {
                 const copy = this.htmlScroll;
-                // @ts-ignore behavior 'instant' works with safari
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore (behavior 'instant' works with safari)
                 requestAnimationFrame(() => window.scrollTo({ top: copy, left: 0, behavior: 'instant' }));
             }
         };

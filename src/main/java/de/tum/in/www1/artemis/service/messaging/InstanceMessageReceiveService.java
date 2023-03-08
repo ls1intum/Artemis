@@ -35,7 +35,7 @@ public class InstanceMessageReceiveService {
 
     private final NotificationScheduleService notificationScheduleService;
 
-    private final ParticipantScoreSchedulerService participantScoreSchedulerService;
+    private final ParticipantScoreScheduleService participantScoreScheduleService;
 
     private final Optional<AtheneScheduleService> atheneScheduleService;
 
@@ -55,7 +55,7 @@ public class InstanceMessageReceiveService {
             ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService,
             ExamMonitoringScheduleService examMonitoringScheduleService, TextExerciseRepository textExerciseRepository, ExerciseRepository exerciseRepository,
             Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance, UserRepository userRepository, UserScheduleService userScheduleService,
-            NotificationScheduleService notificationScheduleService, ParticipantScoreSchedulerService participantScoreSchedulerService) {
+            NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.examMonitoringScheduleService = examMonitoringScheduleService;
@@ -67,7 +67,7 @@ public class InstanceMessageReceiveService {
         this.userRepository = userRepository;
         this.userScheduleService = userScheduleService;
         this.notificationScheduleService = notificationScheduleService;
-        this.participantScoreSchedulerService = participantScoreSchedulerService;
+        this.participantScoreScheduleService = participantScoreScheduleService;
 
         hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -212,6 +212,7 @@ public class InstanceMessageReceiveService {
 
     /**
      * Unlocks all repositories that do not have an individual due date before now
+     *
      * @param exerciseId the id of the programming exercises where the repos should be unlocked
      */
     public void processUnlockAllRepositoriesWithoutEarlierIndividualDueDate(Long exerciseId) {
@@ -226,6 +227,7 @@ public class InstanceMessageReceiveService {
 
     /**
      * Locks all repositories that do not have an individual due date after now
+     *
      * @param exerciseId the id of the programming exercises where the repos should be locked
      */
     public void processLockAllRepositoriesWithoutLaterIndividualDueDate(Long exerciseId) {
@@ -272,9 +274,14 @@ public class InstanceMessageReceiveService {
         examMonitoringScheduleService.cancelExamMonitoringTask(examId);
     }
 
+    public void processExamWorkingTimeChangeDuringConduction(Long studentExamId) {
+        log.info("Received reschedule of student exam during conduction {}", studentExamId);
+        programmingExerciseScheduleService.rescheduleStudentExamDuringConduction(studentExamId);
+    }
+
     public void processScheduleParticipantScore(Long exerciseId, Long participantId, Long resultIdToBeDeleted) {
         log.info("Received schedule participant score for exercise {} and participant {} (result to be deleted: {})", exerciseId, participantId, resultIdToBeDeleted);
-        participantScoreSchedulerService.scheduleTask(exerciseId, participantId, resultIdToBeDeleted);
+        participantScoreScheduleService.scheduleTask(exerciseId, participantId, resultIdToBeDeleted);
     }
 
 }

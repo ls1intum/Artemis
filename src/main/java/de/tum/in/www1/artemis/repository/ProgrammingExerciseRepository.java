@@ -14,16 +14,14 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -33,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * Spring Data JPA repository for the ProgrammingExercise entity.
  */
 @Repository
-public interface ProgrammingExerciseRepository extends JpaRepository<ProgrammingExercise, Long> {
+public interface ProgrammingExerciseRepository extends JpaRepository<ProgrammingExercise, Long>, JpaSpecificationExecutor<ProgrammingExercise> {
 
     /**
      * Does a max join on the result table for each participation by result id (the newer the result id, the newer the result).
@@ -59,14 +57,19 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             "submissionPolicy" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "learningGoals", "auxiliaryRepositories",
+            "submissionPolicy" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndLearningGoalsById(Long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationSubmissionsAndResultsById(Long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
+            "auxiliaryRepositories" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "testCases")
     Optional<ProgrammingExercise> findWithTestCasesById(Long exerciseId);
@@ -79,6 +82,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * Returns all programming exercises with its test cases
+     *
      * @return all programming exercises
      */
     @Query("SELECT p FROM ProgrammingExercise p LEFT JOIN FETCH p.testCases")
@@ -86,6 +90,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * Returns all programming exercises with their hints and tasks
+     *
      * @return all programming exercises
      */
     @Query("""
@@ -135,10 +140,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             select distinct pe from ProgrammingExercise pe
             left join pe.studentParticipations participation
-            where pe.releaseDate > :#{#now}
-                or pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#now}
-                or pe.dueDate > :#{#now}
-                or (participation.individualDueDate is not null and participation.individualDueDate > :#{#now})
+            where pe.releaseDate > :now
+                or pe.buildAndTestStudentSubmissionsAfterDueDate > :now
+                or pe.dueDate > :now
+                or (participation.individualDueDate is not null and participation.individualDueDate > :now)
             """)
     List<ProgrammingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 
@@ -213,55 +218,12 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     Optional<ProgrammingExercise> findByParticipationId(@Param("participationId") Long participationId);
 
     @Query("""
-                SELECT exercise FROM ProgrammingExercise exercise
-            WHERE (exercise.id IN
-                    (SELECT courseExercise.id FROM ProgrammingExercise courseExercise
-                    WHERE (courseExercise.course.instructorGroupName IN :groups OR courseExercise.course.editorGroupName IN :groups)
-                    AND (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%))
-                OR exercise.id IN
-                    (SELECT examExercise.id FROM ProgrammingExercise examExercise
-                    WHERE (examExercise.exerciseGroup.exam.course.instructorGroupName IN :groups OR examExercise.exerciseGroup.exam.course.editorGroupName IN :groups)
-                    AND (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
-                        """)
-    Page<ProgrammingExercise> queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups,
-            Pageable pageable);
-
-    @Query("""
-            SELECT courseExercise FROM ProgrammingExercise courseExercise
-            WHERE (courseExercise.course.instructorGroupName IN :groups OR courseExercise.course.editorGroupName IN :groups)
-            AND (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%)
-                """)
-    Page<ProgrammingExercise> queryBySearchTermInAllCoursesWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
-
-    @Query("""
-            SELECT examExercise FROM ProgrammingExercise examExercise
-            WHERE (examExercise.exerciseGroup.exam.course.instructorGroupName IN :groups OR examExercise.exerciseGroup.exam.course.editorGroupName IN :groups)
-            AND (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)
-                """)
-    Page<ProgrammingExercise> queryBySearchTermInAllExamsWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
-
-    @Query("""
-            SELECT exercise FROM ProgrammingExercise exercise
-            WHERE (exercise.id IN
-                    (SELECT courseExercise.id FROM ProgrammingExercise courseExercise
-                    WHERE (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%))
-                OR exercise.id IN
-                    (SELECT examExercise.id FROM ProgrammingExercise examExercise
-                    WHERE (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
-                        """)
-    Page<ProgrammingExercise> queryBySearchTermInAllCoursesAndExams(@Param("searchTerm") String searchTerm, Pageable pageable);
-
-    @Query("""
-            SELECT courseExercise FROM ProgrammingExercise courseExercise
-            WHERE (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%)
-                """)
-    Page<ProgrammingExercise> queryBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
-
-    @Query("""
-            SELECT examExercise FROM ProgrammingExercise examExercise
-            WHERE (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)
-                """)
-    Page<ProgrammingExercise> queryBySearchTermInAllExams(@Param("searchTerm") String searchTerm, Pageable pageable);
+            SELECT pe FROM ProgrammingExercise pe
+            LEFT JOIN pe.studentParticipations pep
+            LEFT JOIN FETCH pe.templateParticipation tp
+            WHERE pep.id = :#{#participationId}
+            """)
+    Optional<ProgrammingExercise> findByStudentParticipationIdWithTemplateParticipation(@Param("participationId") Long participationId);
 
     @Query("""
             SELECT p FROM ProgrammingExercise p
@@ -296,7 +258,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT DISTINCT pe FROM ProgrammingExercise pe
             LEFT JOIN pe.testCases tc
-            WHERE pe.dueDate > :#{#now}
+            WHERE pe.dueDate > :now
                 AND pe.buildAndTestStudentSubmissionsAfterDueDate IS NULL
                 AND tc.visibility = 'AFTER_DUE_DATE'
             """)
@@ -392,8 +354,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * We therefore have to check here if any submission of the student was submitted before the deadline.
      *
      * @param examId the exam id we are interested in
-     * @return the number of the latest submissions belonging to a participation belonging to the exam id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
-     *         due date at all (only exercises with manual or semi-automatic correction are considered)
+     * @return the number of the latest submissions belonging to a participation belonging to the exam id, which have the submitted flag set to true and the submission date before
+     *         the exercise due date, or no exercise due date at all (only exercises with manual or semi-automatic correction are considered)
      */
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
@@ -410,7 +372,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * We therefore have to check here if any submission of the student was submitted before the deadline.
      *
      * @param exerciseIds the exercise ids of the course we are interested in
-     * @return the number of submissions belonging to the course id, which have the submitted flag set to true (only exercises with manual or semi-automatic correction are considered)
+     * @return the number of submissions belonging to the course id, which have the submitted flag set to true (only exercises with manual or semi-automatic correction are
+     *         considered)
      */
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
@@ -502,7 +465,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     /**
      * Find a programming exercise by its id, including template and solution but without results.
      * TODO: we should remove this method later on and use 'findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow' in all places,
-     *  they have same functionality.
+     * they have same functionality.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
@@ -555,18 +518,18 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * @param exerciseId     the exercise we are interested in
+     * @param exerciseId the exercise we are interested in
      * @return the number of programming submissions which should be assessed
-     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
+     *         We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
      */
     default long countLegalSubmissionsByExerciseIdSubmitted(Long exerciseId) {
         return countLegalSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
     }
 
     /**
-     * @param exerciseId     the exercise we are interested in
+     * @param exerciseId the exercise we are interested in
      * @return the number of assessed programming submissions
-     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
+     *         We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
      */
     default long countAssessmentsByExerciseIdSubmitted(Long exerciseId) {
         return countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
@@ -585,6 +548,13 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 
+    @NotNull
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndLearningGoalsElseThrow(long programmingExerciseId)
+            throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndLearningGoalsById(programmingExerciseId);
+        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
     /**
      * Find a programming exercise by its id, with eagerly loaded template and solution participation, submissions and results
      *
@@ -593,8 +563,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     @NotNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationSubmissionsAndResultsElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationSubmissionsAndResultsById(programmingExerciseId);
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesElseThrow(long programmingExerciseId)
+            throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesById(programmingExerciseId);
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 
@@ -614,6 +585,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     /**
      * Retrieve the programming exercise from a programming exercise participation. In case the programming exercise is null or not initialized,
      * this method will load it properly from the database and connect it to the participation
+     *
      * @param participation the programming exercise participation for which the programming exercise should be found
      * @return the programming exercise
      */
@@ -635,7 +607,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * Validate the programming exercise title.
      * 1. Check presence and length of exercise title
      * 2. Find forbidden patterns in exercise title
-     *  @param programmingExercise Programming exercise to be validated
+     *
+     * @param programmingExercise Programming exercise to be validated
      * @param course              Course of the programming exercise
      */
     default void validateTitle(ProgrammingExercise programmingExercise, Course course) {
@@ -664,7 +637,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * 2. Check presence and length of course short name
      * 3. Find forbidden patterns in exercise short name
      * 4. Check that the short name doesn't already exist withing course or exam exercises
-     *  @param programmingExercise Programming exercise to be validated
+     *
+     * @param programmingExercise Programming exercise to be validated
      * @param course              Course of the programming exercise
      */
     default void validateCourseAndExerciseShortName(ProgrammingExercise programmingExercise, Course course) {
@@ -698,11 +672,19 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * Validate the general course settings.
      * 1. Validate the title
      * 2. Validate the course and programming exercise short name.
-     *  @param programmingExercise Programming exercise to be validated
+     *
+     * @param programmingExercise Programming exercise to be validated
      * @param course              Course of the programming exercise
      */
     default void validateCourseSettings(ProgrammingExercise programmingExercise, Course course) {
         validateTitle(programmingExercise, course);
         validateCourseAndExerciseShortName(programmingExercise, course);
+    }
+
+    default void generateBuildPlanAccessSecretIfNotExists(ProgrammingExercise exercise) {
+        if (!exercise.hasBuildPlanAccessSecretSet()) {
+            exercise.generateAndSetBuildPlanAccessSecret();
+            save(exercise);
+        }
     }
 }

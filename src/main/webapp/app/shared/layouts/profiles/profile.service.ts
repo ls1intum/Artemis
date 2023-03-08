@@ -80,6 +80,8 @@ export class ProfileService {
                         profileInfo.externalCredentialProvider = data.externalCredentialProvider;
                         profileInfo.externalPasswordResetLinkMap = data.externalPasswordResetLinkMap;
 
+                        profileInfo.git = data.git;
+
                         return profileInfo;
                     }),
                 )

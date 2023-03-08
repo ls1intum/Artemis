@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course, CourseGroup, Language } from 'app/entities/course.model';
@@ -7,7 +7,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, OperatorFunction, Subject, catchError, concat, finalize, forkJoin, map, merge, of } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
-import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, takeUntil } from 'rxjs/operators';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import {
     ScheduleFormComponent,
@@ -33,13 +33,14 @@ export class UserWithLabel extends User {
     label: string;
 }
 
-export const titleRegex: RegExp = new RegExp('^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$');
+export const titleRegex = new RegExp('^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$');
 
 @Component({
     selector: 'jhi-tutorial-group-form',
     templateUrl: './tutorial-group-form.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TutorialGroupFormComponent implements OnInit, OnChanges {
+export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy {
     @Input()
     formData: TutorialGroupFormData = {
         title: undefined,
@@ -80,6 +81,8 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     // icons
     faSave = faSave;
 
+    ngUnsubscribe = new Subject<void>();
+
     constructor(
         private fb: FormBuilder,
         private courseManagementService: CourseManagementService,
@@ -117,8 +120,10 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
     get isSubmitPossible() {
         if (this.configureSchedule) {
+            // check all controls
             return !this.form.invalid;
         } else {
+            // only check the parts of the form not covered by the schedule form
             return !(
                 this.titleControl!.invalid ||
                 this.teachingAssistantControl!.invalid ||
@@ -155,6 +160,11 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         this.getTeachingAssistantsInCourse();
         this.getUniqueCampusValuesOfCourse();
         this.initializeForm();
+    }
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 
     ngOnChanges(): void {
@@ -276,6 +286,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
                 finalize(() => {
                     this.teachingAssistantsAreLoading = false;
                 }),
+                takeUntil(this.ngUnsubscribe),
             ),
         ).subscribe((users: User[]) => {
             this.teachingAssistants = users.map((user) => this.createUserWithLabel(user));
@@ -294,6 +305,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
                 finalize(() => {
                     this.campusAreLoading = false;
                 }),
+                takeUntil(this.ngUnsubscribe),
             ),
         ).subscribe((campus: string[]) => {
             this.campus = campus;

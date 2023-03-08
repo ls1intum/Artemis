@@ -3,7 +3,7 @@
         "exam": {
             "overview": {
                 "start": "Beginn: {{start}}",
-                "duration": "Arbeitzeit:",
+                "duration": "Arbeitszeit:",
                 "maxPoints": "Erreichbare Punkte: {{points}}",
                 "upcoming": "Demnächst stattfindende Klausur",
                 "imminent": "Die Klausur beginnt in",
@@ -47,6 +47,7 @@
                 "noCommitHash": "Es hat kein Commit stattgefunden",
                 "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}",
                 "viewResult": " Ergebnis ansehen",
+                "viewExampleSolution": "Beispiellösung anzeigen",
                 "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere die entsprechende Lehrkraft.",
                 "points": {
                     "exercise": "Aufgabe",
@@ -92,6 +93,7 @@
             "publishResultsDate": "Veröffentlichung der Ergebnisse",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
+            "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung",
             "duration": "Dauer",
             "nrOfStudents": "Anzahl registrierter Studierender",
             "created": "Neue Klausur erstellt",
@@ -236,7 +238,9 @@
             "continueAfterHandInEarlyDescription": "Du willst doch nicht vorzeitig abgeben?",
             "handInEarlyNoticeFirstSentence": "Du bist dabei die Klausur vorzeitig abzugeben.",
             "handInEarlyNoticeSecondSentence": "Du kannst danach nicht mehr an der Klausur teilnehmen.",
-            "namePlaceholder": "Trage deinen vollen Namen hier ein"
+            "namePlaceholder": "Trage deinen vollen Namen hier ein",
+            "workingTimeIncreased": "Das Ende der Arbeitszeit wurde verlängert bis {{ date }}.",
+            "workingTimeDecreased": "Das Ende der Arbeitszeit wurde verkürzt bis {{ date }}."
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
@@ -327,8 +331,10 @@
                 "configuration": "Klausurkonfiguration",
                 "conduction": "Klausurdurchführung",
                 "assessment": "Klausurbewertung und Klausureinsicht",
+                "assessmentEmptyDates": "Wenn du ein Datum leer lässt, wird dieser Schritt nicht stattfinden",
                 "exercises": "Klausuraufgaben",
-                "text": "Klausurtexte"
+                "text": "Klausurtexte",
+                "examSolutions": "Klausurlösungen"
             },
             "title": "Klausurverwaltung",
             "createExam": "Erstelle eine neue Klausur",
@@ -353,6 +359,7 @@
             "courseName": "Kursname",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
+            "exampleSolutionPublicationDateTooltip": "Studierende können die Beispiellösungen für alle Aufgaben in der Klausur ab diesem Zeitpunkt einsehen, wenn sie an der Klausur teilgenommen haben. Zum Deaktivieren leer lassen.",
             "studentReviewEnabled": "Klausureinsicht ist möglich",
             "maxPoints": {
                 "title": "Erreichbare Punktzahl",
@@ -376,7 +383,7 @@
             "testExam": {
                 "realExam": "Klausur",
                 "testExam": "Testklausur",
-                "examMode": "Exammodus",
+                "examMode": "Modus",
                 "examModeTooltip": "Testklausuren können von Studierenden an einem frei wählbaren Zeitpunkt innerhalb des Bearbeitungsfensters begonnen werden, zur Durchführung steht die gewählte Arbeitszeit zur Verfügung. Nach dem Durchlauf erhalten die Studierenden automatisiertes Feedback. HINWEIS: Der Modus kann nach der Erstellung nicht mehr geändert werden!",
                 "startDate": "Beginn Bearbeitungsfenster",
                 "endDate": "Ende Bearbeitungsfenster",

@@ -4,9 +4,8 @@ import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise
 import { ArtemisTestModule } from '../test.module';
 import { MockFileUploadExerciseService } from '../helpers/mocks/service/mock-file-upload-exercise.service';
 import { SubmissionExportButtonComponent } from 'app/exercises/shared/submission-export/submission-export-button.component';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { MockDirective } from 'ng-mocks';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -113,9 +112,9 @@ describe('Exercise detail common actions Component', () => {
         const fileUploadExerciseService = fixture.debugElement.injector.get(FileUploadExerciseService);
         const modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
 
-        const deleteTextExerciseService = jest.spyOn(textExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<{}>));
-        const deleteFileUploadExerciseStub = jest.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<{}>));
-        const deleteModelingExerciseService = jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<{}>));
+        const deleteTextExerciseService = jest.spyOn(textExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
+        const deleteFileUploadExerciseStub = jest.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
+        const deleteModelingExerciseService = jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
 
         comp.course = course;
 
