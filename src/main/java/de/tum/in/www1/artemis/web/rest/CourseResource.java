@@ -8,7 +8,6 @@ import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -31,6 +30,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -54,7 +55,6 @@ import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -65,12 +65,6 @@ import tech.jhipster.web.util.PaginationUtil;
 public class CourseResource {
 
     private final Logger log = LoggerFactory.getLogger(CourseResource.class);
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
-    @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
-    private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
 
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
@@ -280,29 +274,7 @@ public class CourseResource {
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         log.debug("REST request to register {} for Course {}", user.getName(), course.getTitle());
-        if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "registrationNotAllowed",
-                    "Registration with this username is not allowed. Cannot register user")).body(null);
-        }
-        if (course.getStartDate() != null && course.getStartDate().isAfter(now())) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "courseNotStarted", "The course has not yet started. Cannot register user"))
-                    .body(null);
-        }
-        if (course.getEndDate() != null && course.getEndDate().isBefore(now())) {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "courseAlreadyFinished", "The course has already finished. Cannot register user"))
-                    .body(null);
-        }
-        if (!Boolean.TRUE.equals(course.isRegistrationEnabled())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "registrationDisabled",
-                    "The course does not allow registration. Cannot register user")).body(null);
-        }
-        if (course.getOrganizations() != null && !course.getOrganizations().isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "registrationNotAllowed",
-                    "User is not member of any organization of this course. Cannot register user")).body(null);
-        }
-        courseService.registerUserForCourse(user, course);
+        courseService.registerUserForCourseOrThrow(user, course);
         return ResponseEntity.ok(user);
     }
 
@@ -387,14 +359,14 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/for-registration")
     @PreAuthorize("hasRole('USER')")
-    public Course getCourseToRegister(@PathVariable long courseId) {
+    public Course getCourseForRegistration(@PathVariable long courseId) {
         log.debug("REST request to get a currently active course for registration");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-
         Course course = courseRepository.findSingleCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(courseId);
+
         // check that the user can at least register to one organization of the course
-        if (course.getOrganizations() != null && !course.getOrganizations().isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
-            throw new AccessForbiddenException("User is not member of any organization of this course. Cannot register user");
+        if (!courseService.isUserAllowedToSelfRegisterForCourse(user, course)) {
+            throw new AccessForbiddenException("You are not allowed to register for this course, so you cannot see it.");
         }
 
         return course;
@@ -408,21 +380,20 @@ public class CourseResource {
      */
     @GetMapping("courses/for-registration")
     @PreAuthorize("hasRole('USER')")
-    public List<Course> getAllCoursesToRegister() {
-        log.debug("REST request to get all currently active Courses that are not online courses");
+    public List<Course> getAllCoursesForRegistration() {
+        log.debug("REST request to get all currently active courses that are not online courses");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
         List<Course> allRegisteredCourses = courseService.findAllActiveForUser(user);
-        List<Course> allCoursesToRegister = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites();
-        return allCoursesToRegister.stream().filter(course -> {
-            // further, check if the course has been assigned to any organization and if yes,
-            // check if user is member of at least one of them
-            if (course.getOrganizations() != null && !course.getOrganizations().isEmpty()) {
-                return courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course);
+        List<Course> allCoursesToPotentiallyRegister = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites();
+        // check whether registration is actually possible for each of the courses
+        return allCoursesToPotentiallyRegister.stream().filter(course -> {
+            // check that self-registration is allowed for the user in this course
+            if (!courseService.isUserAllowedToSelfRegisterForCourse(user, course)) {
+                return false;
             }
-            else {
-                return true;
-            }
+            // check that the user is not already registered to the course
+            return !allRegisteredCourses.contains(course);
         }).filter(course -> !allRegisteredCourses.contains(course)).toList();
     }
 
@@ -436,14 +407,26 @@ public class CourseResource {
     // TODO: we should rename this into courses/{courseId}/details
     @GetMapping("courses/{courseId}/for-dashboard")
     @PreAuthorize("hasRole('USER')")
-    public Course getCourseForDashboard(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean refresh) {
+    public ResponseEntity<Course> getCourseForDashboard(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean refresh) {
         long timeNanoStart = System.nanoTime();
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, refresh);
+        Course course;
+        try {
+            course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, refresh);
+        }
+        catch (AccessForbiddenException e) {
+            course = courseRepository.findSingleCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(courseId);
+            // maybe the user can register, then we can redirect to /courses/{courseId}/for-registration
+            if (courseService.isUserAllowedToSelfRegisterForCourse(user, course)) {
+                UriComponents redirectUri = UriComponentsBuilder.fromPath("/api/courses/{courseId}/for-registration").buildAndExpand(courseId);
+                return ResponseEntity.status(HttpStatus.FOUND).location(redirectUri.toUri()).build();
+            }
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found");
+        }
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user);
         logDuration(List.of(course), user, timeNanoStart);
-        return course;
+        return ResponseEntity.ok(course);
     }
 
     /**

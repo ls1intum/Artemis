@@ -196,6 +196,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.refreshingCourse = refresh;
         this.courseService.findOneForDashboard(this.courseId, refresh).subscribe({
             next: (res: HttpResponse<Course>) => {
+                console.log({ res });
                 this.courseCalculationService.updateCourse(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
                 setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration

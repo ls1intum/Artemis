@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.*;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
+import static java.time.ZonedDateTime.now;
 import static tech.jhipster.config.JHipsterConstants.*;
 
 import java.nio.file.Files;
@@ -11,6 +12,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -65,6 +67,9 @@ public class CourseService {
 
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
+
+    @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
+    private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
 
     private final Logger log = LoggerFactory.getLogger(CourseService.class);
 
@@ -413,12 +418,45 @@ public class CourseService {
     }
 
     /**
-     * Registers a user in a course by adding him to the student group of the course
+     * Return whether the user is allowed to self register for the given course.
+     *
+     * @param user   The user that wants to self register
+     * @param course The course to which the user wants to self register
+     */
+    public boolean isUserAllowedToSelfRegisterForCourse(User user, Course course) {
+        if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
+            log.info("Registration with this username is not allowed. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
+            return false;
+        }
+        if (course.getStartDate() != null && course.getStartDate().isAfter(now())) {
+            log.info("The course has not yet started. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
+            return false;
+        }
+        if (course.getEndDate() != null && course.getEndDate().isBefore(now())) {
+            log.info("The course has already finished. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
+            return false;
+        }
+        if (!Boolean.TRUE.equals(course.isRegistrationEnabled())) {
+            log.info("The course does not allow registration. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
+            return false;
+        }
+        if (course.getOrganizations() != null && !course.getOrganizations().isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
+            log.info("User is not member of any organization of this course. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Registers a user in a course by adding them to the student group of the course
      *
      * @param user   The user that should get added to the course
      * @param course The course to which the user should get added to
      */
-    public void registerUserForCourse(User user, Course course) {
+    public void registerUserForCourseOrThrow(User user, Course course) {
+        if (!isUserAllowedToSelfRegisterForCourse(user, course)) {
+            throw new AccessForbiddenException("You are not allowed to register for this course");
+        }
         userService.addUserToGroup(user, course.getStudentGroupName(), Role.STUDENT);
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
