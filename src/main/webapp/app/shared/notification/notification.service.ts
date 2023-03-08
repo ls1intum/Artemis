@@ -19,6 +19,7 @@ import {
     NEW_REPLY_FOR_EXERCISE_POST_TITLE,
     NEW_REPLY_FOR_LECTURE_POST_TITLE,
     Notification,
+    QUIZ_EXERCISE_STARTED_TITLE,
 } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -69,7 +70,7 @@ export class NotificationService {
             const target = JSON.parse(notification.target);
             const targetCourseId = target.course || notification.course?.id;
 
-            if (notification.title === 'Quiz started') {
+            if (notification.title === QUIZ_EXERCISE_STARTED_TITLE) {
                 this.router.navigate([target.mainPage, targetCourseId, 'quiz-exercises', target.id, 'live']);
             } else if (
                 notification.title === NEW_ANNOUNCEMENT_POST_TITLE ||
