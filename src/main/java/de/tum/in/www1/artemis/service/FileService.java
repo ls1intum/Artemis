@@ -1095,7 +1095,7 @@ public class FileService implements DisposableBean {
             return new CommonsMultipartFile(fileItem);
         }
         catch (IOException e) {
-            log.warn("Could not convert file {}. Error message: {}", fileName, e.getMessage());
+            log.error("Could not convert file {}.", fileName, e);
             throw new InternalServerErrorException("Error while converting byte[] to MultipartFile by using CommonsMultipartFile");
         }
     }
