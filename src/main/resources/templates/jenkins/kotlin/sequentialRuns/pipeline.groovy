@@ -52,6 +52,7 @@ void postBuildTasks() {
     mkdir results
     cp structural/target/surefire-reports/*.xml $WORKSPACE/results/ || true
     cp behavior/target/surefire-reports/*.xml $WORKSPACE/results/ || true
+    sed -i 's/[^[:print:]]/�/g' $WORKSPACE/results/*.xml || true
     '''
 }
 

@@ -66,9 +66,12 @@ private void staticCodeAnalysis() {
  * Called by Jenkins.
  */
 void postBuildTasks() {
-    sh 'rm -rf results'
-    sh 'mkdir results'
-    sh 'cp build/test-results/test/*.xml $WORKSPACE/results/ || true'
+    sh '''
+    rm -rf results
+    mkdir results
+    cp build/test-results/test/*.xml $WORKSPACE/results/ || true
+    sed -i 's/[^[:print:]]/�/g' $WORKSPACE/results/*.xml || true
+    '''
 }
 
 // very important, do not remove
