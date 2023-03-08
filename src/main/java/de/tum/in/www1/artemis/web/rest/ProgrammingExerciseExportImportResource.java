@@ -23,6 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.Course;
@@ -47,6 +48,7 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -199,6 +201,50 @@ public class ProgrammingExerciseExportImportResource {
             return ResponseEntity.internalServerError()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to import programming exercise")).build();
         }
+    }
+
+    @PostMapping(UPLOAD_FILE)
+    @PreAuthorize("hasRole('EDITOR')")
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<ProgrammingExercise> uploadFileForImport(@RequestPart("file") MultipartFile file, @RequestParam("courseId") long courseForImportId) {
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var course = courseService.findByIdElseThrow(courseForImportId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+        ProgrammingExercise newExercise = new ProgrammingExercise();
+        try {
+
+            newExercise = programmingExerciseImportService.processUploadedFile(file, course);
+        }
+        catch (Exception e) {
+            throw new InternalServerErrorException("Error uploading file for import");
+
+        }
+
+        // return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle()))
+        // .body(importedProgrammingExercise);
+        return ResponseEntity.ok().body(newExercise);
+
+    }
+
+    @PostMapping(IMPORT_FROM_FILE)
+    @PreAuthorize("hasRole('EDITOR')")
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<ProgrammingExercise> importProgrammingExerciseFromFile(@RequestBody ProgrammingExercise programmingExercise) {
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var course = courseService.findByIdElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+        try {
+
+            return ResponseEntity.ok(programmingExerciseImportService.importProgrammingExerciseFromFile(programmingExercise));
+
+        }
+        catch (Exception e) {
+            throw new InternalServerErrorException("Error importing exercise from file");
+        }
+
+        // return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle()))
+        // .body(importedProgrammingExercise);
+
     }
 
     /**

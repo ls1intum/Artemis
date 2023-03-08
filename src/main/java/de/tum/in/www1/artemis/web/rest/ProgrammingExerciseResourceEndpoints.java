@@ -12,6 +12,10 @@ public final class ProgrammingExerciseResourceEndpoints {
 
     public static final String IMPORT = PROGRAMMING_EXERCISES + "/import/{sourceExerciseId}";
 
+    public static final String IMPORT_FROM_FILE = PROGRAMMING_EXERCISES + "/import-from-file";
+
+    public static final String UPLOAD_FILE = PROGRAMMING_EXERCISES + "/upload-file";
+
     public static final String PROGRAMMING_EXERCISE = PROGRAMMING_EXERCISES + "/{exerciseId}";
 
     public static final String PROBLEM = PROGRAMMING_EXERCISE + "/problem-statement";

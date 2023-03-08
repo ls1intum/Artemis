@@ -3,13 +3,23 @@ package de.tum.in.www1.artemis.service.programming;
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
-import java.io.IOException;
+import java.io.*;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
@@ -24,6 +34,7 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class ProgrammingExerciseImportService {
@@ -115,6 +126,27 @@ public class ProgrammingExerciseImportService {
         catch (GitAPIException | IOException e) {
             log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newExercise.getTitle(), e);
         }
+    }
+
+    private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path templateRepository, Path solutionRepository, Path testRepository)
+            throws IOException, GitAPIException {
+        // TODO activate again
+        // versionControlService.get().createProjectForExercise(newExercise);
+        // versionControlService.get().createRepository(newExercise.getProjectKey(), newExercise.generateRepositoryName(RepositoryType.TEMPLATE), null);
+        // versionControlService.get().createRepository(newExercise.getProjectKey(), newExercise.generateRepositoryName(RepositoryType.SOLUTION), null);
+        // versionControlService.get().createRepository(newExercise.getProjectKey(), newExercise.generateRepositoryName(RepositoryType.TESTS), null);
+        // versionControlService.get().createProjectForExercise(newExercise);
+        // programmingExerciseService.initParticipations(newExercise);
+        Repository templateRepo = new Repository(templateRepository.toString(), newExercise.getVcsTemplateRepositoryUrl());
+        Repository solutionRepo = new Repository(solutionRepository.toString(), newExercise.getVcsSolutionRepositoryUrl());
+        Repository testRepo = new Repository(testRepository.toString(), newExercise.getVcsTestRepositoryUrl());
+        gitService.stageAllChanges(templateRepo);
+        gitService.stageAllChanges(solutionRepo);
+        gitService.stageAllChanges(testRepo);
+        gitService.commitAndPush(templateRepo, "Import template from file", true, null);
+        gitService.commitAndPush(solutionRepo, "Import solution from file", true, null);
+        gitService.commitAndPush(testRepo, "Import tests from file", true, null);
+
     }
 
     /**
@@ -291,5 +323,163 @@ public class ProgrammingExerciseImportService {
 
         programmingExerciseService.scheduleOperations(importedProgrammingExercise.getId());
         return importedProgrammingExercise;
+    }
+
+    public ProgrammingExercise processUploadedFile(MultipartFile multipartFile, Course course) throws Exception {
+        deleteDirectory(Path.of("imported-exercise-dir").toFile());
+        Path path = Files.createDirectory(Path.of("imported-exercise-dir"));
+        log.error(path.toString());
+        Path exerciseFilePath = Files.createTempFile(path, "exercise", ".zip");
+        multipartFile.transferTo(exerciseFilePath);
+        extractZipFileRecursively(exerciseFilePath);
+
+        try (Stream<Path> stream = Files.walk(path)) {
+            stream.forEach(f -> log.error(f.getFileName().toString()));
+        }
+
+        var exerciseDetailsFileName = findJsonFileAndReturnFileName(path);
+        ProgrammingExercise importedProgrammingExercise = parseJsonFile(Path.of(exerciseFilePath.toString().substring(0, exerciseFilePath.toString().length() - 4)),
+                exerciseDetailsFileName);
+
+        importedProgrammingExercise.setCourse(course);
+        importedProgrammingExercise.setDueDate(null);
+        importedProgrammingExercise.setAssessmentDueDate(null);
+        importedProgrammingExercise.setStartDate(null);
+        importedProgrammingExercise.setReleaseDate(null);
+        importedProgrammingExercise.setTestRepositoryUrl(null);
+        importedProgrammingExercise.setId(null);
+        return importedProgrammingExercise;
+
+    }
+
+    private void extractZipFileRecursively(Path zipPath) throws IOException {
+        int BUFFER = 2048;
+
+        File zipFile = zipPath.toFile();
+        ZipFile zip = new ZipFile(zipPath.toFile());
+        String newPath = zipFile.getAbsolutePath().substring(0, zipFile.getAbsolutePath().length() - 4);
+
+        new File(newPath).mkdir();
+        Enumeration<? extends ZipEntry> zipFileEntries = zip.entries();
+
+        // Process each entry
+        while (zipFileEntries.hasMoreElements()) {
+            // grab a zip file entry
+            ZipEntry entry = zipFileEntries.nextElement();
+            String currentEntry = entry.getName();
+            java.io.File destFile = new java.io.File(newPath, currentEntry);
+            File destinationParent = destFile.getParentFile();
+
+            // create the parent directory structure if needed
+            destinationParent.mkdirs();
+
+            if (!entry.isDirectory()) {
+                BufferedInputStream is = new BufferedInputStream(zip.getInputStream(entry));
+                int currentByte;
+                // establish buffer for writing file
+                byte[] data = new byte[BUFFER];
+
+                // write the current file to disk
+                FileOutputStream fos = new FileOutputStream(destFile);
+                BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER);
+
+                // read and write until last byte is encountered
+                while ((currentByte = is.read(data, 0, BUFFER)) != -1) {
+                    dest.write(data, 0, currentByte);
+                }
+                dest.flush();
+                dest.close();
+                is.close();
+            }
+
+            if (currentEntry.endsWith(".zip")) {
+                // found a zip file, try to open
+                extractZipFileRecursively(destFile.toPath());
+            }
+        }
+    }
+
+    private ProgrammingExercise parseJsonFile(Path dirPath, String fileName) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.findAndRegisterModules();
+
+        try {
+            return objectMapper.readValue(dirPath.resolve(fileName).toFile(), ProgrammingExercise.class);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+            throw new BadRequestAlertException("The exercise.json file is not valid", "programmingExercise", "exercisejsonnotvalid");
+        }
+    }
+
+    private Path retrieveRepositoryDirectoryPath(Path dirPath, String repoType) {
+        List<Path> result;
+        try (Stream<Path> walk = Files.walk(dirPath)) {
+            result = walk.filter(Files::isDirectory).filter(f -> f.getFileName().toString().endsWith("-" + repoType)).filter(f -> !f.getFileName().endsWith(".zip")).toList();
+        }
+        catch (IOException e) {
+            throw new BadRequestAlertException("Could not read the directory", "programmingExercise", "couldnotreaddirectory");
+        }
+        log.error("result: " + result);
+        if (result.size() != 1) {
+            throw new IllegalArgumentException(
+                    "There are either no or more than one sub-directories containing " + repoType + " in their name. Please make sure that there is exactly one.");
+        }
+
+        return result.get(0);
+    }
+
+    private Path retrieveTemplateRepositoryDirectoryName(Path dirPath) {
+        return retrieveRepositoryDirectoryPath(dirPath, "exercise");
+
+    }
+
+    private Path retrieveSolutionRepositoryDirectoryName(Path dirPath) {
+        return retrieveRepositoryDirectoryPath(dirPath, "solution");
+    }
+
+    private Path retrieveTestRepositoryDirectoryName(Path dirPath) {
+        return retrieveRepositoryDirectoryPath(dirPath, "tests");
+
+    }
+
+    private String findJsonFileAndReturnFileName(Path dirPath) throws IOException {
+        // if (!Files.isDirectory(dirPath)) {
+        // throw new IllegalArgumentException("Path must be a directory!");
+        // }
+        List<String> result;
+        try (Stream<Path> stream = Files.walk(dirPath)) {
+            result = stream.filter(Files::isRegularFile).map(f -> f.getFileName().toString()).filter(name -> name.startsWith("Exercise-Details"))
+                    .filter(name -> name.endsWith(".json")).toList();
+        }
+
+        if (result.size() != 1) {
+            log.error(String.valueOf(result.size()));
+            throw new IllegalArgumentException("There are either no or more than one json file in the directory!");
+        }
+
+        return result.get(0);
+    }
+
+    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise importedProgrammingExercise) throws GitAPIException, IOException {
+        var basePath = Path.of("imported-exercise-dir");
+        var templateRepositoryDirectoryName = retrieveTemplateRepositoryDirectoryName(basePath).resolve(".git");
+        var solutionRepositoryDirectoryName = retrieveSolutionRepositoryDirectoryName(basePath).resolve(".git");
+        var testRepositoryDirectoryName = retrieveTestRepositoryDirectoryName(basePath).resolve(".git");
+        importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(importedProgrammingExercise);
+        importRepositoriesFromFile(importedProgrammingExercise, templateRepositoryDirectoryName, solutionRepositoryDirectoryName, testRepositoryDirectoryName);
+        deleteDirectory(basePath.toFile());
+        return importedProgrammingExercise;
+    }
+
+    public boolean deleteDirectory(File file) {
+        File[] children = file.listFiles();
+        if (children != null) {
+            for (File child : children) {
+                deleteDirectory(child);
+            }
+        }
+        return file.delete();
     }
 }

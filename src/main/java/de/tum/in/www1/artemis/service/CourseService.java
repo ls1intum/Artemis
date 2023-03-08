@@ -236,6 +236,10 @@ public class CourseService {
         return course;
     }
 
+    public Course findByIdElseThrow(Long courseId) {
+        return courseRepository.findByIdElseThrow(courseId);
+    }
+
     /**
      * Get all courses for the given user
      *
