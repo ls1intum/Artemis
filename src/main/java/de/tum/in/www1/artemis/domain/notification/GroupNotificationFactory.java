@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.EXERCISE_UPDATED_TEXT;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 
 import java.util.List;
 
@@ -86,7 +86,7 @@ public class GroupNotificationFactory {
         switch (notificationType) {
             case EXERCISE_RELEASED -> {
                 title = EXERCISE_RELEASED_TITLE;
-                text = NotificationTitleTypeConstants.EXERCISE_RELEASED_TEXT;
+                text = NotificationConstants.EXERCISE_RELEASED_TEXT;
                 textIsPlaceholder = true;
                 placeholderValues = new String[] { exercise.getTitle() };
             }
@@ -111,7 +111,7 @@ public class GroupNotificationFactory {
                 }
                 else {
                     title = EXERCISE_UPDATED_TITLE;
-                    text = NotificationTitleTypeConstants.EXERCISE_UPDATED_TEXT;
+                    text = NotificationConstants.EXERCISE_UPDATED_TEXT;
                     textIsPlaceholder = true;
                     placeholderValues = new String[] { exercise.getTitle() };
                 }

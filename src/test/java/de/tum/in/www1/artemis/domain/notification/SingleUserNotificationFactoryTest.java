@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.HIG
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.MEDIUM;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 import static org.assertj.core.api.Assertions.assertThat;
 

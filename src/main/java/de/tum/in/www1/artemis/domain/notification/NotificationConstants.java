@@ -7,7 +7,7 @@ import com.google.common.collect.ImmutableBiMap;
 
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 
-public class NotificationTitleTypeConstants {
+public class NotificationConstants {
 
     // Titles
     public static final String LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = "artemisApp.groupNotification.title.liveExamExerciseUpdate";
