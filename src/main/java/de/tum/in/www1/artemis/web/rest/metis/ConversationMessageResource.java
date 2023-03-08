@@ -73,7 +73,6 @@ public class ConversationMessageResource {
         }
         conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationText);
 
-        createdMessage.setConversation(null);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessage.getId())).body(createdMessage);
     }
 

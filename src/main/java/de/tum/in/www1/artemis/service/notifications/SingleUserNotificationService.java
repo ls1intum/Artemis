@@ -372,7 +372,7 @@ public class SingleUserNotificationService {
             return (!Objects.equals(notification.getAuthor().getLogin(), notification.getRecipient().getLogin()));
         }
         else
-            return false;
+            return true;
     }
 
     /**
