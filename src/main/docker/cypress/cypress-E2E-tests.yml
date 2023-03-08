@@ -67,23 +67,9 @@ services:
         # TODO: Ensure file-max limit in sysctl.conf (from ansible task)
         # TODO: Copy security-limits nginx.conf (from ansible task)
         # TODO: Copy systemd-limits nginx.conf (from ansible task)
-        image: nginx:latest
-        restart: "unless-stopped"
-        volumes:
-            - ./nginx-files/timeouts.conf:/etc/nginx/conf.d/timeouts.conf:ro
-            - ./nginx-files/artemis-nginx.conf:/etc/nginx/conf.d/artemis-nginx.conf:ro
-            - ./nginx-files/artemis-server.conf:/etc/nginx/includes/artemis-server.conf:ro
-            - ./nginx-files/dhparam.pem:/etc/nginx/dhparam.pem:ro
-            - ./nginx-files/nginx_502.html:/usr/share/nginx/html/502.html:ro
-            - ./nginx-files/70-artemis-setup.sh:/docker-entrypoint.d/70-artemis-setup.sh
-            - ../../../test/cypress/certs/artemis-nginx+4.pem:/certs/fullchain.pem:ro
-            - ../../../test/cypress/certs/artemis-nginx+4-key.pem:/certs/priv_key.pem:ro
-            #- ./pki:/etc/pki/nginx:ro
-            #- ./defaults/templates:/etc/nginx/templates:ro
-            #- ./defaults/nginx.conf:/etc/nginx/nginx.conf:ro
-            #- ./defaults/proxy.conf:/etc/nginx/proxy.conf:ro
-            #- ./defaults/ssl.conf:/etc/nginx/ssl.conf:ro
-            #- ./defaults/dhparam.pem:/etc/nginx/dhparam.pem:ro
+        extends:
+            file: ../nginx/nginx.yml
+            service: artemis-nginx
         ports:
             - 80:80
             - 443:443
@@ -92,11 +78,6 @@ services:
         depends_on:
             artemis-app:
                 condition: service_started
-        healthcheck:
-            test: service nginx status || exit 1
-            start_period: 30s
-        networks:
-            - artemis
 
     artemis-cypress:
         # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)

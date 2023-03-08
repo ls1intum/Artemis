@@ -18,6 +18,14 @@ services:
             file: mysql.yml
             service: mysql
         restart: on-failure:3
+    artemis-nginx:
+        extends:
+            file: ./nginx/nginx.yml
+            service: artemis-nginx
+        depends_on:
+            artemis-app:
+                condition: service_started
+        restart: on-failure:3
 
 networks:
     artemis:
