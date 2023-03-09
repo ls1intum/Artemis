@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
-import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.OCAML;
 import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.*;
-import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.XCODE;
 
 import java.util.List;
 
@@ -19,16 +17,15 @@ public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguag
 
     public LocalCIProgrammingLanguageFeatureService() {
         // Must be extended once a new programming language is added
-        programmingLanguageFeatures.put(EMPTY, new ProgrammingLanguageFeature(EMPTY, false, false, false, false, false, List.of()));
-        programmingLanguageFeatures.put(JAVA,
-                new ProgrammingLanguageFeature(JAVA, false, false, true, true, false, List.of(PLAIN_GRADLE, GRADLE_GRADLE, PLAIN_MAVEN, MAVEN_MAVEN)));
-        programmingLanguageFeatures.put(PYTHON, new ProgrammingLanguageFeature(PYTHON, false, false, true, false, false, List.of()));
-        programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, false, true, false, false, List.of(FACT, GCC)));
-        programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, false, false, false, false, true, List.of()));
-        programmingLanguageFeatures.put(KOTLIN, new ProgrammingLanguageFeature(KOTLIN, false, false, true, true, false, List.of()));
-        programmingLanguageFeatures.put(VHDL, new ProgrammingLanguageFeature(VHDL, false, false, false, false, false, List.of()));
-        programmingLanguageFeatures.put(ASSEMBLER, new ProgrammingLanguageFeature(ASSEMBLER, false, false, false, false, false, List.of()));
-        programmingLanguageFeatures.put(SWIFT, new ProgrammingLanguageFeature(SWIFT, false, false, true, true, false, List.of(PLAIN, XCODE)));
-        programmingLanguageFeatures.put(OCAML, new ProgrammingLanguageFeature(OCAML, false, false, false, false, true, List.of()));
+        programmingLanguageFeatures.put(EMPTY, new ProgrammingLanguageFeature(EMPTY, false, false, false, false, false, List.of(), false, false));
+        programmingLanguageFeatures.put(JAVA, new ProgrammingLanguageFeature(JAVA, false, false, true, true, false, List.of(PLAIN_GRADLE, GRADLE_GRADLE), false, false));
+        // Local CI is not supporting Python at the moment.
+        // Local CI is not supporting C at the moment.
+        // Local CI is not supporting Haskell at the moment.
+        // Local CI is not supporting Kotlin at the moment.
+        // Local CI is not supporting VHDL at the moment.
+        // Local CI is not supporting Assembler at the moment.
+        // Local CI is not supporting Swift at the moment.
+        // Local CI is not supporting OCAML at the moment.
     }
 }

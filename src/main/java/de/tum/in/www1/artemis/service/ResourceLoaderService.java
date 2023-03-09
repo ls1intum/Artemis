@@ -166,7 +166,6 @@ public class ResourceLoaderService {
             }
         }
         throw new IllegalArgumentException("Unsupported protocol: " + resourceUrl.getProtocol());
-
     }
 
     /**

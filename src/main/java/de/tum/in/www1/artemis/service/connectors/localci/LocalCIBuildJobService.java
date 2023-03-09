@@ -6,7 +6,9 @@ import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -143,7 +145,7 @@ public class LocalCIBuildJobService {
         }
         catch (IOException e) {
             // Could not read commit hash from .git folder. Stop the container and return a build results that indicates that the build failed.
-            stopContainer(dockerClient, container.getId());
+            stopContainer(dockerClient, container.getId(), scriptPath);
             return constructBuildResult(List.of(), List.of(), buildStartedDate, buildCompletedDate, "build-failed", false, null, null);
         }
 
@@ -168,12 +170,12 @@ public class LocalCIBuildJobService {
         catch (NotFoundException e) {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
             // Stop the container and return a build results that indicates that the build failed.
-            stopContainer(dockerClient, container.getId());
+            stopContainer(dockerClient, container.getId(), scriptPath);
 
             return constructBuildResult(List.of(), List.of(), buildStartedDate, buildCompletedDate, "build-failed", false, assignmentVC, testVC);
         }
 
-        stopContainer(dockerClient, container.getId());
+        stopContainer(dockerClient, container.getId(), scriptPath);
 
         LocalCIBuildResultNotificationDTO buildResult;
         try {
@@ -188,12 +190,23 @@ public class LocalCIBuildJobService {
         return buildResult;
     }
 
-    private void stopContainer(DockerClient dockerClient, String containerId) {
+    private void stopContainer(DockerClient dockerClient, String containerId, Path scriptPath) {
         // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
         ExecCreateCmdResponse createResultsExtractedFileCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("touch", "stop_container.txt").exec();
         dockerClient.execStartCmd(createResultsExtractedFileCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
+
+        // If the script was created as a temporary file, delete it.
+        Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
+        if (scriptPath.startsWith(tempDir)) {
+            try {
+                Files.delete(scriptPath);
+            }
+            catch (IOException e) {
+                log.error("Could not delete temporary file {}", scriptPath);
+            }
+        }
     }
 
     private LocalCIBuildResultNotificationDTO parseTestResults(TarArchiveInputStream testResultsTarInputStream, ProjectType projectType, ZonedDateTime buildStartedDate,
@@ -283,7 +296,7 @@ public class LocalCIBuildJobService {
                 failedTests.size() + successfulTests.size(), 0);
 
         LocalCIBuildResultNotificationDTO.LocalCIBuildDTO build = new LocalCIBuildResultNotificationDTO.LocalCIBuildDTO(false, 0, "Some reason for this build", buildCompletedDate,
-                isBuildSuccessful, testSummary, List.of(assignmentVC, testVC), List.of(job));
+                isBuildSuccessful, testSummary, (assignmentVC != null && testVC != null ? List.of(assignmentVC, testVC) : List.of()), List.of(job));
 
         return new LocalCIBuildResultNotificationDTO(null, null, null, build);
     }

@@ -89,7 +89,7 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
     @Input() languageStepInputs: LanguageStepInputs;
     @Input() gradingStepInputs: GradingStepInputs;
     @Input() problemStepInputs: ProblemStepInputs;
-    @Input() localVCEnabled: boolean;
+    @Input() auxiliaryRepositoriesSupported: boolean;
 
     constructor(protected activatedRoute: ActivatedRoute) {}
 

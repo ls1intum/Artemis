@@ -15,5 +15,5 @@ export class ProgrammingExerciseInformationComponent {
 
     @Input() shouldHidePreview = false;
     @Input() infoInputs: InfoStepInputs;
-    @Input() localVCEnabled = false;
+    @Input() auxiliaryRepositoriesSupported = false;
 }
