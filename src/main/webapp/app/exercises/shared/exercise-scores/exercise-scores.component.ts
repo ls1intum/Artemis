@@ -84,6 +84,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     isAdmin = false;
 
+    localVCEnabled = false;
+
     // Icons
     faDownload = faDownload;
     faSync = faSync;
@@ -172,6 +174,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     this.results.map<ProgrammingExerciseStudentParticipation>((result) => result.participation as ProgrammingExerciseStudentParticipation),
                     (this.exercise as ProgrammingExercise).projectKey,
                 );
+                this.localVCEnabled = profileInfo.activeProfiles.includes('localvc');
             });
         }
         this.isLoading = false;

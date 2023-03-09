@@ -29,9 +29,11 @@ public class ProgrammingLanguageFeature {
 
     private final boolean publishBuildPlanUrlAllowed;
 
+    private final boolean testwiseCoverageReportSupported;
+
     public ProgrammingLanguageFeature(ProgrammingLanguage programmingLanguage, boolean sequentialTestRuns, boolean staticCodeAnalysis, boolean plagiarismCheckSupported,
             boolean packageNameRequired, boolean checkoutSolutionRepositoryAllowed, List<ProjectType> projectTypes, boolean auxiliaryRepositoriesSupported,
-            boolean publishBuildPlanUrlAllowed) {
+            boolean publishBuildPlanUrlAllowed, boolean testwiseCoverageReportSupported) {
         this.programmingLanguage = programmingLanguage;
         this.sequentialTestRuns = sequentialTestRuns;
         this.staticCodeAnalysis = staticCodeAnalysis;
@@ -41,6 +43,7 @@ public class ProgrammingLanguageFeature {
         this.projectTypes = projectTypes;
         this.auxiliaryRepositoriesSupported = auxiliaryRepositoriesSupported;
         this.publishBuildPlanUrlAllowed = publishBuildPlanUrlAllowed;
+        this.testwiseCoverageReportSupported = testwiseCoverageReportSupported;
     }
 
     public ProgrammingLanguage getProgrammingLanguage() {
@@ -105,5 +108,9 @@ public class ProgrammingLanguageFeature {
 
     public boolean isPublishBuildPlanUrlAllowed() {
         return publishBuildPlanUrlAllowed;
+    }
+
+    public boolean isTestwiseCoverageReportSupported() {
+        return testwiseCoverageReportSupported;
     }
 }

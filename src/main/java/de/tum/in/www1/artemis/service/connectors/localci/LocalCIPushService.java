@@ -226,7 +226,6 @@ public class LocalCIPushService implements ContinuousIntegrationPushService {
                 participation = solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
             }
             else {
-                // TODO: Figure out what to do in case of a test run.
                 boolean isPracticeRepository = localVCRepositoryUrl.isPracticeRepository();
                 participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRun(exercise, repositoryTypeOrUserName,
                         isPracticeRepository, true);

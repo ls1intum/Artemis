@@ -110,6 +110,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public checkoutSolutionRepositoryAllowed = false;
     public sequentialTestRunsAllowed = false;
     public publishBuildPlanUrlAllowed = false;
+    public testwiseCoverageReportSupported = false;
     public auxiliaryRepositoriesSupported = false;
     public auxiliaryRepositoriesValid = true;
 
@@ -240,6 +241,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.checkoutSolutionRepositoryAllowed = programmingLanguageFeature.checkoutSolutionRepositoryAllowed;
         this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
         this.publishBuildPlanUrlAllowed = programmingLanguageFeature.publishBuildPlanUrlAllowed;
+        this.testwiseCoverageReportSupported = programmingLanguageFeature.testwiseCoverageReportSupported;
         console.log(programmingLanguageFeature);
         this.auxiliaryRepositoriesSupported = programmingLanguageFeature.auxiliaryRepositoriesSupported;
         // filter out MAVEN_MAVEN and GRADLE_GRADLE because they are not directly selectable but only via a checkbox

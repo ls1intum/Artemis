@@ -290,6 +290,13 @@ public class ProgrammingExerciseResource {
                     .body(null);
         }
 
+        // Check if testwise coverage report is enabled
+        if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && !programmingLanguageFeature.isTestwiseCoverageReportSupported()) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "Testwise coverage report is not supported for this language", "testwiseCoverageReportNotSupported"))
+                    .body(null);
+        }
+
         programmingExerciseRepository.validateCourseSettings(programmingExercise, course);
         validateStaticCodeAnalysisSettings(programmingExercise);
 

@@ -256,10 +256,15 @@
                     [width]="470"
                 >
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a *ngIf="getRepositoryLink(value)" class="btn btn-primary btn-sm me-1" href="{{ getRepositoryLink(value) }}">
-                            <fa-icon [icon]="faCodeBranch" class="me-1"></fa-icon>
-                            Repository
-                        </a>
+                        <ng-container *ngIf="getRepositoryLink(value)">
+                            <a *ngIf="!localVCEnabled; else repoCloneButton" class="btn btn-primary btn-sm me-1" href="{{ getRepositoryLink(value) }}">
+                                <fa-icon [icon]="faCodeBranch" class="me-1"></fa-icon>
+                                Repository
+                            </a>
+                            <ng-template #repoCloneButton>
+                                <jhi-clone-repo-button class="me-1" [smallButtons]="true" [repositoryUrl]="getRepositoryLink(value) || ''"></jhi-clone-repo-button>
+                            </ng-template>
+                        </ng-container>
                         <a *ngIf="buildPlanId(value)" target="_blank" rel="noreferrer" href="{{ value.participation.buildPlanUrl }}" class="btn btn-primary btn-sm me-1">
                             <fa-icon class="me-1" [icon]="farFileCode"></fa-icon>
                             Build plan
