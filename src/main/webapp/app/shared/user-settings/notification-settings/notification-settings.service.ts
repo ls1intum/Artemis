@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { GroupNotification } from 'app/entities/group-notification.model';
 import {
     ATTACHMENT_CHANGE_TITLE,
     COURSE_ARCHIVE_STARTED_TITLE,
@@ -24,9 +25,8 @@ import {
     TUTORIAL_GROUP_UNASSIGNED_TITLE,
     TUTORIAL_GROUP_UPDATED_TITLE,
 } from 'app/entities/notification.model';
-import { GroupNotification } from 'app/entities/group-notification.model';
-import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationSettingsService {

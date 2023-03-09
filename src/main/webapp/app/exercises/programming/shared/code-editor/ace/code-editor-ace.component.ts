@@ -17,6 +17,8 @@ import 'brace/theme/dreamweaver';
 import 'brace/theme/dracula';
 import { AceEditorComponent, MAX_TAB_SIZE } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import { fromPairs, pickBy } from 'lodash-es';
+import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription, fromEvent, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
@@ -24,8 +26,6 @@ import { CodeEditorFileService } from 'app/exercises/programming/shared/code-edi
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { TextChange } from 'app/entities/text-change.model';
-import { LocalStorageService } from 'ngx-webstorage';
-import { fromPairs, pickBy } from 'lodash-es';
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { faFileAlt } from '@fortawesome/free-regular-svg-icons';

@@ -1,11 +1,11 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { SystemNotification } from 'app/entities/system-notification.model';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<SystemNotification>;
 type EntityArrayResponseType = HttpResponse<SystemNotification[]>;

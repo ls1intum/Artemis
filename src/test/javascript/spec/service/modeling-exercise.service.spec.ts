@@ -1,20 +1,20 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { take } from 'rxjs/operators';
-import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
-import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import dayjs from 'dayjs/esm';
-import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
-import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
-import * as helper from 'app/shared/util/download.util';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { MockRouter } from '../helpers/mocks/mock-router';
+import { TranslateService } from '@ngx-translate/core';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
+import * as helper from 'app/shared/util/download.util';
+import dayjs from 'dayjs/esm';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { lastValueFrom } from 'rxjs';
+import { take } from 'rxjs/operators';
+import { MockRouter } from '../helpers/mocks/mock-router';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 
 describe('ModelingExercise Service', () => {
     let service: ModelingExerciseService;

@@ -1,12 +1,12 @@
 import { Component, Input } from '@angular/core';
-import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-exercise-trigger-build-button.component';
+import { faRedo } from '@fortawesome/free-solid-svg-icons';
+import { AlertService } from 'app/core/util/alert.service';
+import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
-import { SubmissionType } from 'app/entities/submission.model';
-import { faRedo } from '@fortawesome/free-solid-svg-icons';
+import { catchError } from 'rxjs/operators';
+import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-exercise-trigger-build-button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-student-trigger-build-button',

@@ -1,11 +1,11 @@
+import { ActivatedRoute } from '@angular/router';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
-import * as shape from 'd3-shape';
+import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
 import { NgxChartsEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import * as shape from 'd3-shape';
+import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
 import { ExamActionService } from '../exam-action.service';
-import { ActivatedRoute } from '@angular/router';
-import dayjs from 'dayjs/esm';
-import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
 
 export abstract class ChartComponent {
     // Subscriptions

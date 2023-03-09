@@ -1,22 +1,22 @@
-import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
+import { Directive, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Course } from 'app/entities/course.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { Post } from 'app/entities/metis/post.model';
+import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { Post } from 'app/entities/metis/post.model';
+import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject } from 'rxjs';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
-import { Directive, EventEmitter, Input, Output } from '@angular/core';
-import { By } from '@angular/platform-browser';
-import { Course } from 'app/entities/course.model';
 
 const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 

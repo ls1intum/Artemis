@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
 describe('IncludedInScoreBadge', () => {
     let component: IncludedInScoreBadgeComponent;

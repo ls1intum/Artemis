@@ -1,6 +1,6 @@
-import { FeedbackNodeComponent } from 'app/exercises/shared/feedback/node/feedback-node.component';
-import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { FeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
+import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackNodeComponent } from 'app/exercises/shared/feedback/node/feedback-node.component';
 
 describe('FeedbackNodeComponent', () => {
     let component: FeedbackNodeComponent;

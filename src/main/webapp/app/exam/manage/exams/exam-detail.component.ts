@@ -1,19 +1,19 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject } from 'rxjs';
-import { Exam } from 'app/entities/exam.model';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { ButtonSize } from 'app/shared/components/button.component';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import dayjs from 'dayjs/esm';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
+import { ActivatedRoute, Router } from '@angular/router';
 import { faAward, faClipboard, faEye, faFlaskVial, faHeartBroken, faListAlt, faThList, faTimes, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { Exam } from 'app/entities/exam.model';
 import { GradeType } from 'app/entities/grading-scale.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { ButtonSize } from 'app/shared/components/button.component';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import dayjs from 'dayjs/esm';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-exam-detail',

@@ -1,19 +1,19 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { faSort, faSortDown, faSortUp, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { SolutionEntryDetailsModalComponent } from 'app/exercises/programming/hestia/generation-overview/solution-entry-details-modal/solution-entry-details-modal.component';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseTestCaseType } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { AlertService } from 'app/core/util/alert.service';
-import { Subject } from 'rxjs';
-import { faSort, faSortDown, faSortUp, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
 import { ManualSolutionEntryCreationModalComponent } from 'app/exercises/programming/hestia/generation-overview/manual-solution-entry-creation-modal/manual-solution-entry-creation-modal.component';
-import { SortingOrder } from 'app/shared/table/pageable-table';
+import { SolutionEntryDetailsModalComponent } from 'app/exercises/programming/hestia/generation-overview/solution-entry-details-modal/solution-entry-details-modal.component';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
 import { ProgrammingExerciseSolutionEntryService } from 'app/exercises/shared/exercise-hint/services/programming-exercise-solution-entry.service';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SortingOrder } from 'app/shared/table/pageable-table';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-solution-entry-generation-step',

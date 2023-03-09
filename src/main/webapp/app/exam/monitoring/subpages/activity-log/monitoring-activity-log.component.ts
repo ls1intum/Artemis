@@ -1,10 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Exam } from 'app/entities/exam.model';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
+import { Exam } from 'app/entities/exam.model';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
+import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-monitoring-activity-log',

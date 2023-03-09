@@ -1,20 +1,20 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
-import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { Exam } from 'app/entities/exam.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { SubmissionType } from 'app/entities/submission.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { faAngleDown, faAngleRight, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/theme.service';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { Exam } from 'app/entities/exam.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { SubmissionType } from 'app/entities/submission.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-exam-participation-summary',

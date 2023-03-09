@@ -1,14 +1,14 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation } from '@angular/core';
-import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { FromToElement, TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
 import { DomainChange, DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { FileWithHasMatch } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
+import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
+import { FromToElement, TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { escape } from 'lodash-es';
 
 type FilesWithType = { [p: string]: FileType };

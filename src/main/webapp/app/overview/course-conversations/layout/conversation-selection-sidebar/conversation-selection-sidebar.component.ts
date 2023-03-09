@@ -1,25 +1,25 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import interact from 'interactjs';
 import { faChevronLeft, faChevronRight, faComments, faCompress, faExpand, faFilter, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 
-import { EMPTY, Subject, from, map, takeUntil } from 'rxjs';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { AccountService } from 'app/core/auth/account.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
-import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { Channel, ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { GroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
-import { AccountService } from 'app/core/auth/account.service';
-import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { OneToOneChatDTO, isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
+import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
-import { catchError, debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import interact from 'interactjs';
+import { EMPTY, Subject, from, map, takeUntil } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 
 interface SearchQuery {
     searchTerm: string;

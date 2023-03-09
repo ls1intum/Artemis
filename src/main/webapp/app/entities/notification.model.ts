@@ -1,6 +1,6 @@
-import dayjs from 'dayjs/esm';
-import { BaseEntity } from 'app/shared/model/base-entity';
 import { User } from 'app/core/user/user.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
+import dayjs from 'dayjs/esm';
 
 export enum NotificationType {
     SYSTEM = 'system',

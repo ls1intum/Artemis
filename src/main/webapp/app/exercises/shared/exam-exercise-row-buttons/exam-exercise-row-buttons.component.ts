@@ -1,19 +1,19 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject } from 'rxjs';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faBook, faExclamationTriangle, faEye, faFileExport, faFileSignature, faPencilAlt, faSignal, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { EventManager } from 'app/core/util/event-manager.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs/esm';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { EventManager } from 'app/core/util/event-manager.service';
-import { faBook, faExclamationTriangle, faEye, faFileExport, faFileSignature, faPencilAlt, faSignal, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
+import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
+import dayjs from 'dayjs/esm';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',

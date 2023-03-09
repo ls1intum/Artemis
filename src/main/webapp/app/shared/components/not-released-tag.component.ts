@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
-import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/entities/exercise.model';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-not-released-tag',

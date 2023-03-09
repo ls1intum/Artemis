@@ -1,9 +1,9 @@
 import { ChangeDetectorRef } from '@angular/core';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { round } from 'app/shared/util/utils';
-import { QuizStatistic } from 'app/entities/quiz/quiz-statistic.model';
 import { TranslateService } from '@ngx-translate/core';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { QuizStatistic } from 'app/entities/quiz/quiz-statistic.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { round } from 'app/shared/util/utils';
 
 export abstract class QuizStatistics {
     data: number[] = [];

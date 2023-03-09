@@ -1,9 +1,9 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { convertDateFromServer, toISO8601DateString } from 'app/utils/date.utils';
-import { map } from 'rxjs/operators';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { convertDateFromServer, toISO8601DateString } from 'app/utils/date.utils';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<TutorialGroupFreePeriod>;
 

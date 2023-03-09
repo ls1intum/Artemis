@@ -1,24 +1,24 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
-import { ArtemisTestModule } from '../../test.module';
-import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { InitializationState } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { Subject } from 'rxjs';
-import dayjs from 'dayjs/esm';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
+import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { Subject } from 'rxjs';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('JhiStartPracticeModeButtonComponent', () => {
     let comp: StartPracticeModeButtonComponent;

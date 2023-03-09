@@ -1,3 +1,4 @@
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import {
     AfterViewInit,
     ChangeDetectorRef,
@@ -12,27 +13,7 @@ import {
     ViewChild,
     ViewEncapsulation,
 } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
-import { DragState } from 'app/entities/quiz/drag-state.enum';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
-import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
-import { DragItem } from 'app/entities/quiz/drag-item.model';
-import { DropLocation } from 'app/entities/quiz/drop-location.model';
-import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
-import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
-import { cloneDeep } from 'lodash-es';
-import { round } from 'app/shared/util/utils';
-import { MAX_SIZE_UNIT } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import { debounceTime, filter } from 'rxjs/operators';
-import { ImageLoadingStatus, SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
+import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 import {
     faAngleDown,
     faAngleRight,
@@ -50,9 +31,28 @@ import {
     faUnlink,
     faUpload,
 } from '@fortawesome/free-solid-svg-icons';
-import { faFileImage } from '@fortawesome/free-regular-svg-icons';
-import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
+import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
+import { DragItem } from 'app/entities/quiz/drag-item.model';
+import { DragState } from 'app/entities/quiz/drag-state.enum';
+import { DropLocation } from 'app/entities/quiz/drop-location.model';
+import { MAX_SIZE_UNIT } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
+import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
+import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
+import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { ImageLoadingStatus, SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
+import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
+import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
+import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
+import { round } from 'app/shared/util/utils';
+import { cloneDeep } from 'lodash-es';
+import { debounceTime, filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',

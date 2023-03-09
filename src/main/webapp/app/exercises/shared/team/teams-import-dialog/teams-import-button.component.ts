@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Team } from 'app/entities/team.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { Exercise } from 'app/entities/exercise.model';
+import { Team } from 'app/entities/team.model';
+import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-teams-import-button',

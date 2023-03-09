@@ -1,18 +1,18 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/core/util/alert.service';
+import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
+import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
+import { GradingScale } from 'app/entities/grading-scale.model';
+import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { GradingScale } from 'app/entities/grading-scale.model';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
-import { catchError, finalize, tap } from 'rxjs/operators';
-import { faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { Subject, forkJoin, of } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
 import { PageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
-import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { Subject, forkJoin, of } from 'rxjs';
+import { catchError, finalize, tap } from 'rxjs/operators';
 
 export enum BonusStrategyOption {
     GRADES,

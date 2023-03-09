@@ -1,25 +1,25 @@
+import { HttpResponse } from '@angular/common/http';
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { NgbAccordion, NgbModal, NgbModalRef, NgbPanel, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { Edge } from '@swimlane/ngx-graph';
+import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { LearningGoalManagementComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-management.component';
+import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
+import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+import { CourseLearningGoalProgress, LearningGoal } from 'app/entities/learningGoal.model';
+import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { of } from 'rxjs';
-import { CourseLearningGoalProgress, LearningGoal } from 'app/entities/learningGoal.model';
-import { LearningGoalManagementComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-management.component';
-import { ActivatedRoute } from '@angular/router';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { RouterTestingModule } from '@angular/router/testing';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { HttpResponse } from '@angular/common/http';
-import { AccountService } from 'app/core/auth/account.service';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ArtemisTestModule } from '../../test.module';
 import { LearningGoalCardStubComponent } from './learning-goal-card-stub.component';
-import { NgbAccordion, NgbModal, NgbModalRef, NgbPanel, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/util/alert.service';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
-import { Edge } from '@swimlane/ngx-graph';
-import { Component } from '@angular/core';
 
 // eslint-disable-next-line @angular-eslint/component-selector
 @Component({ selector: 'ngx-graph', template: '' })

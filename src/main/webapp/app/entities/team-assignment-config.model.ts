@@ -1,5 +1,5 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
 import { Exercise } from 'app/entities/exercise.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
 
 export class TeamAssignmentConfig implements BaseEntity {
     public id?: number;

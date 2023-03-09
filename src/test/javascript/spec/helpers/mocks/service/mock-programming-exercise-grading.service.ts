@@ -1,12 +1,12 @@
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-category.model';
 import {
     IProgrammingExerciseGradingService,
     ProgrammingExerciseTestCaseUpdate,
     StaticCodeAnalysisCategoryUpdate,
 } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
-import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-category.model';
-import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 
 export class MockProgrammingExerciseGradingService implements IProgrammingExerciseGradingService {
     private testCaseSubject = new BehaviorSubject<ProgrammingExerciseTestCase[] | undefined>(undefined);

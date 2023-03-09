@@ -1,14 +1,14 @@
 import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
-import { Result } from 'app/entities/result.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
-import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { ActivatedRoute } from '@angular/router';
-import { ComplaintType } from 'app/entities/complaint.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { TranslateService } from '@ngx-translate/core';
-import { faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { faSquareCaretRight } from '@fortawesome/free-regular-svg-icons';
+import { faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ComplaintType } from 'app/entities/complaint.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Result } from 'app/entities/result.model';
+import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.

@@ -1,16 +1,16 @@
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { Lecture } from 'app/entities/lecture.model';
+import { AttachmentService } from 'app/lecture/attachment.service';
+import { LectureService } from 'app/lecture/lecture.service';
+import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { FileService } from 'app/shared/http/file.service';
 import dayjs from 'dayjs/esm';
 import { Subject } from 'rxjs';
-import { FileService } from 'app/shared/http/file.service';
-import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-import { AttachmentService } from 'app/lecture/attachment.service';
-import { faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
-import { LectureService } from 'app/lecture/lecture.service';
 
 @Component({
     selector: 'jhi-lecture-attachments',

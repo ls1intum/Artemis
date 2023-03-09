@@ -1,26 +1,26 @@
 /* eslint-disable max-len */
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { CourseManagementComponent } from './course-management.component';
-import { CourseDetailComponent } from './detail/course-detail.component';
-import { CourseUpdateComponent } from './course-update.component';
-import { CourseManagementExercisesComponent } from './course-management-exercises.component';
-import { Authority } from 'app/shared/constants/authority.constants';
-import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
-import { LearningGoalManagementComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-management.component';
 import { CreateLearningGoalComponent } from 'app/course/learning-goals/create-learning-goal/create-learning-goal.component';
 import { EditLearningGoalComponent } from 'app/course/learning-goals/edit-learning-goal/edit-learning-goal.component';
-import { CourseManagementStatisticsComponent } from './course-management-statistics.component';
-import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
-import { isOrion } from 'app/shared/orion/orion';
-import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
-import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
+import { LearningGoalManagementComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-management.component';
 import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
+import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
+import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
+import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 import { TutorialGroupManagementResolve } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-management-resolve.service';
 import { TutorialGroupsChecklistComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-checklist/tutorial-groups-checklist.component';
 import { CreateTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
-import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
-import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
+import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
+import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
+import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { isOrion } from 'app/shared/orion/orion';
+import { CourseManagementExercisesComponent } from './course-management-exercises.component';
+import { CourseManagementStatisticsComponent } from './course-management-statistics.component';
+import { CourseManagementComponent } from './course-management.component';
+import { CourseUpdateComponent } from './course-update.component';
+import { CourseDetailComponent } from './detail/course-detail.component';
 
 export const courseManagementState: Routes = [
     {

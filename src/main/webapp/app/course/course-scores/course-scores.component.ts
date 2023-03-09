@@ -1,35 +1,24 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription, forkJoin, of } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
-import dayjs from 'dayjs/esm';
-import { sum } from 'lodash-es';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ExportToCsv } from 'export-to-csv';
-import { Exercise, ExerciseType, IncludedInOverallScore, exerciseTypes } from 'app/entities/exercise.model';
-import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from '../manage/course-management.service';
-import { SortService } from 'app/shared/service/sort.service';
-import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { average, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { captureException } from '@sentry/browser';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
-import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
-import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
-import { mean, median, standardDeviation } from 'simple-statistics';
-import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
-import { CsvExportOptions } from 'app/shared/export/export-modal.component';
-import { ButtonSize } from 'app/shared/components/button.component';
-import * as XLSX from 'xlsx';
+import { captureException } from '@sentry/browser';
 import { VERSION } from 'app/app.constants';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
+import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { Course } from 'app/entities/course.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, exerciseTypes } from 'app/entities/exercise.model';
+import { GradeStep } from 'app/entities/grade-step.model';
+import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { ButtonSize } from 'app/shared/components/button.component';
+import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
 import { ExcelExportRowBuilder } from 'app/shared/export/excel-export-row-builder';
-import { ExportRow, ExportRowBuilder } from 'app/shared/export/export-row-builder';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import {
     BONUS_KEY,
     COURSE_OVERALL_POINTS_KEY,
@@ -43,10 +32,21 @@ import {
     SCORE_KEY,
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { GradeStep } from 'app/entities/grade-step.model';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
-import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { CsvExportOptions } from 'app/shared/export/export-modal.component';
+import { ExportRow, ExportRowBuilder } from 'app/shared/export/export-row-builder';
+import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
+import { SortService } from 'app/shared/service/sort.service';
+import { average, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import dayjs from 'dayjs/esm';
+import { ExportToCsv } from 'export-to-csv';
+import { sum } from 'lodash-es';
+import { Subscription, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { mean, median, standardDeviation } from 'simple-statistics';
+import * as XLSX from 'xlsx';
+import { CourseManagementService } from '../manage/course-management.service';
 
 export enum HighlightType {
     AVERAGE = 'average',

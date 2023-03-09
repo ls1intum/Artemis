@@ -1,16 +1,16 @@
 import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
-import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
-import { Subject } from 'rxjs';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
+import { StringCountService } from 'app/exercises/text/participate/string-count.service';
+import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-text-editor-exam',

@@ -1,16 +1,16 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
+import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-clone-repo-button',

@@ -1,6 +1,6 @@
-import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
 export const programmingExerciseFail: GuidedTour = {

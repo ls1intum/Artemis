@@ -1,7 +1,6 @@
-import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
-import { EXERCISE_TYPE } from '../../constants';
-import { getExercise } from '../../utils';
+import { Exam } from 'app/entities/exam.model';
+import { Interception } from 'cypress/types/net-stubbing';
 import {
     courseList,
     courseOverview,
@@ -12,8 +11,9 @@ import {
     quizExerciseMultipleChoice,
     textExerciseEditor,
 } from '../../artemis';
-import { Interception } from 'cypress/types/net-stubbing';
+import { EXERCISE_TYPE } from '../../constants';
 import { CypressCredentials } from '../../users';
+import { getExercise } from '../../utils';
 import { ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEditorPage';
 
 /**

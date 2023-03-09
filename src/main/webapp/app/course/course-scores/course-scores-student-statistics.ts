@@ -1,8 +1,8 @@
 import { User } from 'app/core/user/user.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { GradeStep } from 'app/entities/grade-step.model';
-import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 export class CourseScoresStudentStatistics {
     user: User;

@@ -1,25 +1,25 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
-import { Subject, forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { HttpErrorResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs/esm';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faAngleDown, faAngleUp, faCheckDouble, faFileUpload, faFont, faKeyboard, faPlus, faProjectDiagram, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faAngleDown, faAngleUp, faCheckDouble, faFileUpload, faFont, faKeyboard, faPlus, faProjectDiagram, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
+import { onError } from 'app/shared/util/global.utils';
+import dayjs from 'dayjs/esm';
+import { Subject, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exercise-groups',

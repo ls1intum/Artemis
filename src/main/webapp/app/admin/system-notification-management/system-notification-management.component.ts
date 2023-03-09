@@ -1,19 +1,19 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, Subscription } from 'rxjs';
-import { User } from 'app/core/user/user.model';
+import { faEye, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from 'app/core/auth/account.service';
-import dayjs from 'dayjs/esm';
-import { onError } from 'app/shared/util/global.utils';
-import { SystemNotification } from 'app/entities/system-notification.model';
-import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
-import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
+import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ParseLinks } from 'app/core/util/parse-links.service';
-import { faEye, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { SystemNotification } from 'app/entities/system-notification.model';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { AdminSystemNotificationService } from 'app/shared/notification/system-notification/admin-system-notification.service';
+import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
+import { onError } from 'app/shared/util/global.utils';
+import dayjs from 'dayjs/esm';
+import { Subject, Subscription } from 'rxjs';
 
 enum NotificationState {
     SCHEDULED = 'SCHEDULED',

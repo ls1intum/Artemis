@@ -1,6 +1,6 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
 import { User } from 'app/core/user/user.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
 
 export enum TutorialGroupRegistrationType {
     SELF_REGISTRATION = 'SELF_REGISTRATION',

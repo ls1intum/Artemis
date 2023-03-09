@@ -1,8 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { Feedback } from 'app/entities/feedback.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { faLink, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { Feedback } from 'app/entities/feedback.model';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-grading-instruction-link-icon',

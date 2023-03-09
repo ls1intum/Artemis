@@ -1,13 +1,13 @@
-import { FeedbackItemService } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { Injectable } from '@angular/core';
-import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
+import { Exercise } from 'app/entities/exercise.model';
+import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
+import { FeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 import { getAllFeedbackGroups } from 'app/exercises/shared/feedback/group/programming-feedback-groups';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
-import { Exercise } from 'app/entities/exercise.model';
+import { FeedbackItemService } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
-import { FeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingFeedbackItemService implements FeedbackItemService {

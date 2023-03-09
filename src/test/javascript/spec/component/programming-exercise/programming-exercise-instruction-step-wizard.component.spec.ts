@@ -1,15 +1,15 @@
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { DebugElement } from '@angular/core';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
+import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
+import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { ArtemisTestModule } from '../../test.module';
-import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
-import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
-import { triggerChanges } from '../../helpers/utils/general.utils';
-import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { MockModule, MockPipe } from 'ng-mocks';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { triggerChanges } from '../../helpers/utils/general.utils';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
     let comp: ProgrammingExerciseInstructionStepWizardComponent;

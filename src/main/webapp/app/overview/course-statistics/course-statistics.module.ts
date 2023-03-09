@@ -1,14 +1,14 @@
 import { NgModule } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
-import { Authority } from 'app/shared/constants/authority.constants';
-import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { RouterModule, Routes } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ArtemisExerciseScoresChartModule } from 'app/overview/visualizations/exercise-scores-chart.module';
 import { BarChartModule, PieChartModule } from '@swimlane/ngx-charts';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
+import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
+import { ArtemisExerciseScoresChartModule } from 'app/overview/visualizations/exercise-scores-chart.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 const routes: Routes = [
     {

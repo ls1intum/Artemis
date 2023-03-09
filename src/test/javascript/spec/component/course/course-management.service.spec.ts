@@ -11,6 +11,7 @@ import { Course, CourseGroup } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { Organization } from 'app/entities/organization.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -20,7 +21,6 @@ import { take } from 'rxjs/operators';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;

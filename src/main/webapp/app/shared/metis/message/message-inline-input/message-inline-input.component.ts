@@ -1,9 +1,9 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { FormBuilder, Validators } from '@angular/forms';
-import { Post } from 'app/entities/metis/post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Post } from 'app/entities/metis/post.model';
+import { MetisService } from 'app/shared/metis/metis.service';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 import { PostingCreateEditDirective } from 'app/shared/metis/posting-create-edit.directive';
 import { LocalStorageService } from 'ngx-webstorage';

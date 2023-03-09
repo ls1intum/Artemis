@@ -1,12 +1,12 @@
 import { Routes } from '@angular/router';
 import { ActivateComponent } from 'app/account/activate/activate.component';
 import { PasswordComponent } from 'app/account/password/password.component';
-import { Authority } from 'app/shared/constants/authority.constants';
-import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { PasswordResetFinishComponent } from 'app/account/password-reset/finish/password-reset-finish.component';
 import { PasswordResetInitComponent } from 'app/account/password-reset/init/password-reset-init.component';
 import { RegisterComponent } from 'app/account/register/register.component';
 import { SettingsComponent } from 'app/account/settings/settings.component';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 export const accountState: Routes = [
     {

@@ -1,17 +1,17 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject } from 'rxjs';
-import { Team } from 'app/entities/team.model';
-import { TeamService } from 'app/exercises/shared/team/team.service';
-import { ButtonSize } from 'app/shared/components/button.component';
-import { Exercise } from 'app/entities/exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { Exercise } from 'app/entities/exercise.model';
+import { Team } from 'app/entities/team.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { TeamService } from 'app/exercises/shared/team/team.service';
+import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
+import { ButtonSize } from 'app/shared/components/button.component';
+import { Subject } from 'rxjs';
 
 export enum FilterProp {
     ALL = 'all',

@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockComponent, MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ProgrammingExerciseUpdateWizardProblemComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-problem.component';
-import { ProgrammingExercise, ProjectType } from 'app/entities/programming-exercise.model';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ProgrammingExercise, ProjectType } from 'app/entities/programming-exercise.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-problem.component';
+import { ProgrammingExerciseUpdateWizardProblemComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-problem.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { Observable, of } from 'rxjs';
 
 describe('ProgrammingExerciseWizardProblemComponent', () => {
     let wizardComponentFixture: ComponentFixture<ProgrammingExerciseUpdateWizardProblemComponent>;

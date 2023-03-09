@@ -1,13 +1,13 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ActivatedRoute } from '@angular/router';
 import { CodeHint, CodeHintGenerationStep } from 'app/entities/hestia/code-hint-model';
+import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CodeHintGenerationOverviewComponent } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-overview.component';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
-import { ActivatedRoute } from '@angular/router';
-import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('CodeHintGenerationOverview Component', () => {
     let comp: CodeHintGenerationOverviewComponent;

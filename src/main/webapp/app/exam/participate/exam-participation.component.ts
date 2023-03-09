@@ -1,40 +1,12 @@
-import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { Submission } from 'app/entities/submission.model';
-import { Exam } from 'app/entities/exam.model';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { BehaviorSubject, Observable, Subject, Subscription, of, throwError } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { TranslateService } from '@ngx-translate/core';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
-import dayjs from 'dayjs/esm';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { cloneDeep } from 'lodash-es';
-import { Course } from 'app/entities/course.model';
-import { captureException } from '@sentry/browser';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { captureException } from '@sentry/browser';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Course } from 'app/entities/course.model';
 import { ExamPage } from 'app/entities/exam-page.model';
-import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
-import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import {
     ConnectionUpdatedAction,
     ContinuedAfterHandedInEarlyAction,
@@ -44,9 +16,37 @@ import {
     StartedExamAction,
     SwitchedExerciseAction,
 } from 'app/entities/exam-user-activity.model';
-import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
+import { Exam } from 'app/entities/exam.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { InitializationState } from 'app/entities/participation/participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { Submission } from 'app/entities/submission.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
+import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
+import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
+import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import dayjs from 'dayjs/esm';
+import { cloneDeep } from 'lodash-es';
+import { BehaviorSubject, Observable, Subject, Subscription, of, throwError } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 

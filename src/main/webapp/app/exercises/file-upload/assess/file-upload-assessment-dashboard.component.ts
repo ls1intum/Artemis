@@ -1,20 +1,20 @@
-import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { map } from 'rxjs/operators';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
+import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
+import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
+import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tutor/abstract-assessment-dashboard';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
-import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tutor/abstract-assessment-dashboard';
+import { map } from 'rxjs/operators';
 
 @Component({
     templateUrl: './file-upload-assessment-dashboard.component.html',

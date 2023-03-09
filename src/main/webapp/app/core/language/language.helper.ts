@@ -3,11 +3,11 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 
-import { LANGUAGES } from './language.constants';
-import { BehaviorSubject, Observable } from 'rxjs';
 import { captureException } from '@sentry/browser';
-import { SessionStorageService } from 'ngx-webstorage';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
+import { SessionStorageService } from 'ngx-webstorage';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { LANGUAGES } from './language.constants';
 
 @Injectable({ providedIn: 'root' })
 export class JhiLanguageHelper {

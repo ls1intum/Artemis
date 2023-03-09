@@ -1,18 +1,18 @@
-import { Component, OnInit } from '@angular/core';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { CodeEditorInstructorBaseContainerComponent, REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
+import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
-import { OrionState } from 'app/shared/orion/orion';
-import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { OrionState } from 'app/shared/orion/orion';
+import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 
 @Component({
     selector: 'jhi-code-editor-instructor-orion',

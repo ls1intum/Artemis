@@ -1,6 +1,6 @@
-import { ModelingEditorComponent } from './modeling-editor.component';
 import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ModelingEditorComponent } from './modeling-editor.component';
 import { ModelingExplanationEditorComponent } from './modeling-explanation-editor.component';
 
 @NgModule({

@@ -1,5 +1,5 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/entities/course.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupFreePeriod } from './tutorial-group-free-day.model';
 

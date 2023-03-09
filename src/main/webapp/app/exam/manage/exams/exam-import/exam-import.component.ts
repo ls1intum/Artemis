@@ -1,18 +1,18 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
-import { debounceTime, switchMap, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { SortService } from 'app/shared/service/sort.service';
-import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
-import { Exam } from 'app/entities/exam.model';
-import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
+import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
+import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
+import { SortService } from 'app/shared/service/sort.service';
+import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { onError } from 'app/shared/util/global.utils';
+import { Subject } from 'rxjs';
+import { debounceTime, switchMap, tap } from 'rxjs/operators';
 
 enum TableColumn {
     ID = 'ID',

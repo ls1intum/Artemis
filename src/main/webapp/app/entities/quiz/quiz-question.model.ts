@@ -1,8 +1,8 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
 import { SafeHtml } from '@angular/platform-browser';
-import { QuizQuestionStatistic } from 'app/entities/quiz/quiz-question-statistic.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizQuestionStatistic } from 'app/entities/quiz/quiz-question-statistic.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
 
 export enum ScoringType {
     ALL_OR_NOTHING = 'ALL_OR_NOTHING',

@@ -1,10 +1,10 @@
-import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { EntityArrayResponseType as ExerciseEntityArrayResponseType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise } from 'app/entities/exercise.model';
-import { SortService } from 'app/shared/service/sort.service';
+import { Component, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { EntityArrayResponseType as ExerciseEntityArrayResponseType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-upcoming-exams-and-exercises',

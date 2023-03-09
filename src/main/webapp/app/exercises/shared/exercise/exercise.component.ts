@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Subject, Subscription } from 'rxjs';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { Subject, Subscription } from 'rxjs';
 
 @Component({ template: '' })
 export abstract class ExerciseComponent implements OnInit, OnDestroy {

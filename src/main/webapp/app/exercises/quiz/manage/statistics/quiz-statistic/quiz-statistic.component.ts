@@ -1,18 +1,18 @@
+import { HttpResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
-import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { Authority } from 'app/shared/constants/authority.constants';
-import { QuizStatistics } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
-import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
+import { QuizStatistics } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
+import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
+import { Authority } from 'app/shared/constants/authority.constants';
 import { round } from 'app/shared/util/utils';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-quiz-statistic',

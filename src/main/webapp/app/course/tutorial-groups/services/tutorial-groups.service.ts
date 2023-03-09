@@ -1,14 +1,14 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { Observable } from 'rxjs';
-import { StudentDTO } from 'app/entities/student-dto.model';
-import { convertDateFromServer } from 'app/utils/date.utils';
-import { map } from 'rxjs/operators';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
-import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
+import { StudentDTO } from 'app/entities/student-dto.model';
 import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';
+import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { convertDateFromServer } from 'app/utils/date.utils';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<TutorialGroup>;
 type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;

@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { combineLatest } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { Metrics, Thread } from 'app/admin/metrics/metrics.model';
+import { combineLatest } from 'rxjs';
 
 import { MetricsService } from './metrics.service';
-import { Metrics, Thread } from 'app/admin/metrics/metrics.model';
 
 @Component({
     selector: 'jhi-metrics',

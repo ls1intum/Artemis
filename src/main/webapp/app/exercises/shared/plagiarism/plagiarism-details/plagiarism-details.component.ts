@@ -1,13 +1,13 @@
 import { Component, Input } from '@angular/core';
-import { Subject } from 'rxjs';
-import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { Exercise } from 'app/entities/exercise.model';
+import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 
 // False-positives:
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-plagiarism-details',

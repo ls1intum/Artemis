@@ -1,50 +1,50 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren, ViewEncapsulation } from '@angular/core';
-import { QuizExerciseService } from './quiz-exercise.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { QuizBatch, QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
-import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
-import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
-import { TranslateService } from '@ngx-translate/core';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { Duration } from './quiz-exercise-interfaces';
-import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import dayjs from 'dayjs/esm';
 import { Location } from '@angular/common';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren, ViewEncapsulation } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise, IncludedInOverallScore, ValidationReason, resetDates } from 'app/entities/exercise.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { Course } from 'app/entities/course.model';
-import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
-import { cloneDeep } from 'lodash-es';
-import { Exam } from 'app/entities/exam.model';
+import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { QuizBatch, QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
+import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
 // False-positives:
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
+import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { round } from 'app/shared/util/utils';
-import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
-import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
+import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
+import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
+import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { onError } from 'app/shared/util/global.utils';
+import { round } from 'app/shared/util/utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import dayjs from 'dayjs/esm';
+import { cloneDeep } from 'lodash-es';
+import { Duration } from './quiz-exercise-interfaces';
+import { QuizExerciseService } from './quiz-exercise.service';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',

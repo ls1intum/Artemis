@@ -6,8 +6,8 @@
 
 import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
 import { NavigationStart, Router } from '@angular/router';
-import { VirtualScrollRenderEvent } from 'app/shared/virtual-scroll/virtual-scroll-render-event.class';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { VirtualScrollRenderEvent } from 'app/shared/virtual-scroll/virtual-scroll-render-event.class';
 
 @Component({
     selector: 'jhi-virtual-scroll',

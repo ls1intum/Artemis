@@ -1,14 +1,14 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { filter, throttleTime } from 'rxjs/operators';
-import { AlertService } from 'app/core/util/alert.service';
-import { SubmissionSyncPayload } from 'app/entities/submission-sync-payload.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { SubmissionSyncPayload } from 'app/entities/submission-sync-payload.model';
 import { Submission } from 'app/entities/submission.model';
 import { Observable } from 'rxjs';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { filter, throttleTime } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-team-submission-sync',

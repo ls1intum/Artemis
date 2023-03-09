@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { ActivateService } from './activate.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { mergeMap } from 'rxjs/operators';
+import { ActivateService } from './activate.service';
 
 @Component({
     selector: 'jhi-activate',

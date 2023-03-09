@@ -1,5 +1,5 @@
-import { Posting } from 'app/entities/metis/posting.model';
 import { Directive, Input, OnInit } from '@angular/core';
+import { Posting } from 'app/entities/metis/posting.model';
 
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit {

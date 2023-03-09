@@ -1,6 +1,6 @@
+import { SimpleChanges } from '@angular/core';
 import { CropperOptions, OutputFormat } from './cropper-options.interface';
 import { ImageTransform } from './image-transform.interface';
-import { SimpleChanges } from '@angular/core';
 
 export class CropperSettings {
     // From options

@@ -1,17 +1,17 @@
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { faArrowsRotate, faCode, faEye, faFont, faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { onError } from 'app/shared/util/global.utils';
 import { Subject, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
 import { ExerciseHintService } from '../shared/exercise-hint.service';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
-import { faArrowsRotate, faCode, faEye, faFont, faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-exercise-hint',

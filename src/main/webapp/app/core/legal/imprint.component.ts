@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
+import { ActivatedRoute } from '@angular/router';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 
 const imprintFile = 'imprint.html';

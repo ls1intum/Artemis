@@ -1,5 +1,5 @@
-import { ExportRowBuilder } from 'app/shared/export/export-row-builder';
 import { CsvDecimalSeparator } from 'app/shared/export/export-modal.component';
+import { ExportRowBuilder } from 'app/shared/export/export-row-builder';
 import { round } from 'app/shared/util/utils';
 
 /**

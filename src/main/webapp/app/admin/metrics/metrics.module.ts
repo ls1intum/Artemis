@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { MetricsComponent } from './metrics.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { JvmMemoryComponent } from './blocks/jvm-memory/jvm-memory.component';
 import { JvmThreadsComponent } from './blocks/jvm-threads/jvm-threads.component';
 import { MetricsCacheComponent } from './blocks/metrics-cache/metrics-cache.component';
@@ -9,7 +9,7 @@ import { MetricsGarbageCollectorComponent } from './blocks/metrics-garbagecollec
 import { MetricsModalThreadsComponent } from './blocks/metrics-modal-threads/metrics-modal-threads.component';
 import { MetricsRequestComponent } from './blocks/metrics-request/metrics-request.component';
 import { MetricsSystemComponent } from './blocks/metrics-system/metrics-system.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { MetricsComponent } from './metrics.component';
 
 @NgModule({
     imports: [ArtemisSharedModule],

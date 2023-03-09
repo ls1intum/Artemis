@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ProgrammingExerciseUpdateWizardGradingComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-grading.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { DefaultValueAccessor, NgModel } from '@angular/forms';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
+import { ProgrammingExerciseUpdateWizardGradingComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-grading.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { of } from 'rxjs';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingExerciseWizardGradingComponent', () => {
     let wizardComponentFixture: ComponentFixture<ProgrammingExerciseUpdateWizardGradingComponent>;

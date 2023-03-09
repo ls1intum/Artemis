@@ -1,8 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { FileType } from '../../programming/shared/code-editor/model/code-editor.model';
 import { map } from 'rxjs/operators';
+import { FileType } from '../../programming/shared/code-editor/model/code-editor.model';
 
 @Injectable({ providedIn: 'root' })
 export class RepositoryService {

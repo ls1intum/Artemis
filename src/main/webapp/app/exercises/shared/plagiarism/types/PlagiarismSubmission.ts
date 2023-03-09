@@ -1,5 +1,5 @@
-import { PlagiarismSubmissionElement } from './PlagiarismSubmissionElement';
 import { PlagiarismComparison } from './PlagiarismComparison';
+import { PlagiarismSubmissionElement } from './PlagiarismSubmissionElement';
 
 /**
  * Each `PlagiarismSubmission` refers to a submission that has been compared during plagiarism detection.

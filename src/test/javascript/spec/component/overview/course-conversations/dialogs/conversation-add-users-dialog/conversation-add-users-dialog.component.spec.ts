@@ -1,26 +1,26 @@
+import { HttpResponse } from '@angular/common/http';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { By } from '@angular/platform-browser';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { Course } from 'app/entities/course.model';
+import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { AddUsersFormData } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
+import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
+import { GroupChatIconComponent } from 'app/overview/course-conversations/other/group-chat-icon/group-chat-icon.component';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { Course } from 'app/entities/course.model';
-import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../helpers/conversationExampleModels';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { AddUsersFormData } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
-import { initializeDialog } from '../dialog-test-helpers';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
-import { GroupChatIconComponent } from 'app/overview/course-conversations/other/group-chat-icon/group-chat-icon.component';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { By } from '@angular/platform-browser';
-import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../helpers/conversationExampleModels';
+import { initializeDialog } from '../dialog-test-helpers';
 @Component({
     selector: 'jhi-conversation-add-users-form',
     template: '',

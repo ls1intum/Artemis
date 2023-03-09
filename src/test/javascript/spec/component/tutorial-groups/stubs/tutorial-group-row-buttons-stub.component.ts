@@ -1,7 +1,6 @@
-import { Component, EventEmitter, Output } from '@angular/core';
-import { Input } from '@angular/core';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Course } from 'app/entities/course.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 @Component({ selector: 'jhi-tutorial-group-row-buttons', template: '' })
 export class TutorialGroupRowButtonsStubComponent {

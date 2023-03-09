@@ -1,23 +1,23 @@
 import { ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
-import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
-import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import * as smoothscroll from 'smoothscroll-polyfill';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
-import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
+import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { cloneDeep } from 'lodash-es';
-import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
+import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
+import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { Submission } from 'app/entities/submission.model';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
+import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
+import { cloneDeep } from 'lodash-es';
+import * as smoothscroll from 'smoothscroll-polyfill';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',

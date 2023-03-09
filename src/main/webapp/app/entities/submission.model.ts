@@ -1,6 +1,6 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
 
 export const enum SubmissionType {

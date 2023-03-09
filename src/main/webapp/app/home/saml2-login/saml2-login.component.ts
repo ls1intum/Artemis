@@ -1,9 +1,9 @@
-import { Component, Input, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Component, Input, OnInit } from '@angular/core';
 import { LoginService } from 'app/core/login/login.service';
-import { Saml2Config } from 'app/home/saml2-login/saml2.config';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { Saml2Config } from 'app/home/saml2-login/saml2.config';
 
 @Component({
     selector: 'jhi-saml2-login',

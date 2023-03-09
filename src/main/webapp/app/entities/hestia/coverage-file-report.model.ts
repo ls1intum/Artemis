@@ -1,5 +1,5 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
 import { TestwiseCoverageReportEntry } from 'app/entities/hestia/testwise-coverage-report-entry.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
 
 export class CoverageFileReport implements BaseEntity {
     public id?: number;

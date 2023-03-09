@@ -1,9 +1,9 @@
 import { Component, ContentChild, EventEmitter, Input, OnInit, Output, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { faChevronRight, faMessage } from '@fortawesome/free-solid-svg-icons';
+import { Course } from 'app/entities/course.model';
+import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { Course } from 'app/entities/course.model';
 import { LocalStorageService } from 'ngx-webstorage';
 
 @Component({

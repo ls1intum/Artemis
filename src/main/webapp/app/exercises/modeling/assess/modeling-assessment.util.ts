@@ -1,6 +1,6 @@
-import { Result } from 'app/entities/result.model';
 import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { Feedback } from 'app/entities/feedback.model';
+import { Result } from 'app/entities/result.model';
 
 /**
  * Creates the labels for the assessment elements for displaying them in the modeling and assessment editor.

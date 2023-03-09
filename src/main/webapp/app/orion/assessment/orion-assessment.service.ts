@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
-import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { Submission } from 'app/entities/submission.model';
-import { OrionState } from 'app/shared/orion/orion';
-import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { Submission } from 'app/entities/submission.model';
+import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
+import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { OrionState } from 'app/shared/orion/orion';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 
 @Injectable({ providedIn: 'root' })
 export class OrionAssessmentService {

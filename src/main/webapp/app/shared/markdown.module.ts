@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @NgModule({

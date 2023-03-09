@@ -1,21 +1,21 @@
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course, CourseGroup, Language } from 'app/entities/course.model';
-import { User } from 'app/core/user/user.model';
-import { onError } from 'app/shared/util/global.utils';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, OperatorFunction, Subject, catchError, concat, finalize, forkJoin, map, merge, of } from 'rxjs';
-import { AlertService } from 'app/core/util/alert.service';
-import { debounceTime, distinctUntilChanged, filter, takeUntil } from 'rxjs/operators';
+import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { User } from 'app/core/user/user.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import {
     ScheduleFormComponent,
     ScheduleFormData,
 } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
+import { Course, CourseGroup, Language } from 'app/entities/course.model';
+import { onError } from 'app/shared/util/global.utils';
 import { isEqual } from 'lodash-es';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { faSave } from '@fortawesome/free-solid-svg-icons';
+import { Observable, OperatorFunction, Subject, catchError, concat, finalize, forkJoin, map, merge, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, takeUntil } from 'rxjs/operators';
 
 export interface TutorialGroupFormData {
     title?: string;

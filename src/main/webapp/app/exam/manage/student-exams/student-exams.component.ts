@@ -1,24 +1,24 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { Subscription } from 'rxjs';
-import { tap } from 'rxjs/operators';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
-import dayjs from 'dayjs/esm';
-import { AccountService } from 'app/core/auth/account.service';
-import { onError } from 'app/shared/util/global.utils';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { onError } from 'app/shared/util/global.utils';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import dayjs from 'dayjs/esm';
+import { Subscription } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 

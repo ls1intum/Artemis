@@ -1,5 +1,5 @@
-import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
 import { Feedback } from 'app/entities/feedback.model';
+import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 
 describe('FeedbackService', () => {

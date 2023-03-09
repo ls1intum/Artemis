@@ -1,19 +1,19 @@
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Course } from 'app/entities/course.model';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { SortService } from 'app/shared/service/sort.service';
-import { Exam } from 'app/entities/exam.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { Subject } from 'rxjs';
-import { User } from 'app/core/user/user.model';
-import { onError } from 'app/shared/util/global.utils';
 import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
+import { SortService } from 'app/shared/service/sort.service';
+import { onError } from 'app/shared/util/global.utils';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-test-run-management',

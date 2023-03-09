@@ -1,12 +1,12 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { faArrowRight, faCheckCircle, faCircleExclamation, faDotCircle, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Course } from 'app/entities/course.model';
+import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
-import { ExamChecklist } from 'app/entities/exam-checklist.model';
-import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
-import { Course } from 'app/entities/course.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import dayjs from 'dayjs/esm';
 
 export enum ExamReviewState {
     UNSET = 'unset',

@@ -1,22 +1,22 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
-import dayjs from 'dayjs/esm';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
+import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { TutorParticipation } from 'app/entities/participation/tutor-participation.model';
+import { Attachment } from 'app/entities/attachment.model';
 import { Course } from 'app/entities/course.model';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { Attachment } from 'app/entities/attachment.model';
-import { Post } from 'app/entities/metis/post.model';
-import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
-import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { Team } from 'app/entities/team.model';
-import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { Post } from 'app/entities/metis/post.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { TutorParticipation } from 'app/entities/participation/tutor-participation.model';
+import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
+import { Team } from 'app/entities/team.model';
 import { ExerciseInfo } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
+import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
+import dayjs from 'dayjs/esm';
 
 export enum DifficultyLevel {
     EASY = 'EASY',

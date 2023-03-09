@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
 import { DefaultValueAccessor, NgModel } from '@angular/forms';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
+import { ActivatedRoute } from '@angular/router';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/update/programming-exercise-plans-and-repositories-preview.component';
-import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
+import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/update/programming-exercise-plans-and-repositories-preview.component';
+import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { of } from 'rxjs';
 
 describe('ProgrammingExerciseInformationComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;

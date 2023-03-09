@@ -1,8 +1,8 @@
 import { Route } from '@angular/router';
-import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
-import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
 import { SystemNotificationManagementDetailComponent } from 'app/admin/system-notification-management/system-notification-management-detail.component';
 import { SystemNotificationManagementResolve } from 'app/admin/system-notification-management/system-notification-management-resolve.service';
+import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
+import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
 
 export const systemNotificationManagementRoute: Route[] = [
     {

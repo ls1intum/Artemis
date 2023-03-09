@@ -1,6 +1,6 @@
 import { ExerciseHintExplanationInterface } from 'app/entities/quiz/quiz-question.model';
-import { hintCommentIdentifier } from 'app/shared/markdown-editor/domainCommands/hint.command';
 import { explanationCommandIdentifier } from 'app/shared/markdown-editor/domainCommands/explanation.command';
+import { hintCommentIdentifier } from 'app/shared/markdown-editor/domainCommands/hint.command';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 
 const hintOrExpRegex = new RegExp(escapeStringForUseInRegex(`${explanationCommandIdentifier}`) + '|' + escapeStringForUseInRegex(`${hintCommentIdentifier}`), 'g');

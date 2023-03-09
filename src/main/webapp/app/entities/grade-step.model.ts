@@ -1,5 +1,5 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
 import { GradeType } from 'app/entities/grading-scale.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
 
 export class GradeStep implements BaseEntity {
     public id?: number;

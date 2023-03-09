@@ -1,22 +1,22 @@
-import { AfterViewChecked, Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ActivatedRoute, Router } from '@angular/router';
-import { User } from 'app/core/user/user.model';
-import { Credentials } from 'app/core/auth/auth-jwt.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { isOrion } from 'app/shared/orion/orion';
-import { ModalConfirmAutofocusComponent } from 'app/shared/orion/modal-confirm-autofocus/modal-confirm-autofocus.component';
-import { AccountService } from 'app/core/auth/account.service';
-import { LoginService } from 'app/core/login/login.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { StateStorageService } from 'app/core/auth/state-storage.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { PASSWORD_MIN_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
-import { EventManager } from 'app/core/util/event-manager.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AfterViewChecked, Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { PASSWORD_MIN_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
+import { AccountService } from 'app/core/auth/account.service';
+import { Credentials } from 'app/core/auth/auth-jwt.service';
+import { StateStorageService } from 'app/core/auth/state-storage.service';
+import { LoginService } from 'app/core/login/login.service';
+import { User } from 'app/core/user/user.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ModalConfirmAutofocusComponent } from 'app/shared/orion/modal-confirm-autofocus/modal-confirm-autofocus.component';
+import { isOrion } from 'app/shared/orion/orion';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 
 @Component({
     selector: 'jhi-home',

@@ -1,18 +1,18 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { Subject, finalize } from 'rxjs';
-import { BarControlConfiguration } from 'app/overview/tab-bar/tab-bar';
-import { Course } from 'app/entities/course.model';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { map, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
+import { Course } from 'app/entities/course.model';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { BarControlConfiguration } from 'app/overview/tab-bar/tab-bar';
+import { onError } from 'app/shared/util/global.utils';
+import { Subject, finalize } from 'rxjs';
+import { map, takeUntil } from 'rxjs/operators';
 
 type filter = 'all' | 'registered';
 

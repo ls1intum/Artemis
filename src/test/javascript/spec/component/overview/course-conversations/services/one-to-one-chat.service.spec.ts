@@ -1,13 +1,13 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { take } from 'rxjs/operators';
-import { generateOneToOneChatDTO } from '../helpers/conversationExampleModels';
 import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
+import { take } from 'rxjs/operators';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
-import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { generateOneToOneChatDTO } from '../helpers/conversationExampleModels';
 
 describe('OneToOneChatService', () => {
     let service: OneToOneChatService;

@@ -1,18 +1,18 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject, Subscription } from 'rxjs';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { faAngleDown, faAngleUp, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from './course-management.service';
-import { onError } from 'app/shared/util/global.utils';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
-import { AlertService } from 'app/core/util/alert.service';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { LectureService } from 'app/lecture/lecture.service';
-import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
-import { EventManager } from 'app/core/util/event-manager.service';
-import { faAngleDown, faAngleUp, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { onError } from 'app/shared/util/global.utils';
+import { Subject, Subscription } from 'rxjs';
+import { CourseManagementService } from './course-management.service';
 
 @Component({
     selector: 'jhi-course',

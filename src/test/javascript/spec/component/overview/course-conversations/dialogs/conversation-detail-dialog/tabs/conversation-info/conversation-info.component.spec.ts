@@ -1,23 +1,23 @@
+import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { ConversationInfoComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../helpers/conversationExampleModels';
 import { Course } from 'app/entities/course.model';
 import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { GroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { channelRegex } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
-import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { ConversationInfoComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
 import { GenericUpdateTextPropertyDialogComponent } from 'app/overview/course-conversations/dialogs/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../helpers/conversationExampleModels';
 const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
 examples.forEach((activeConversation) => {

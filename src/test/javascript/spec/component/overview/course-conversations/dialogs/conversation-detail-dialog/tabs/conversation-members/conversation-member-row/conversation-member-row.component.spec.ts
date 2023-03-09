@@ -1,27 +1,27 @@
+import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ConversationMemberRowComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-member-row/conversation-member-row.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { AccountService } from 'app/core/auth/account.service';
-import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../../helpers/conversationExampleModels';
-import { Course } from 'app/entities/course.model';
-import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { Course } from 'app/entities/course.model';
+import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { ConversationMemberRowComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-member-row/conversation-member-row.component';
 import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
-import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { HttpResponse } from '@angular/common/http';
+import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
-import { By } from '@angular/platform-browser';
 import { NgbDropdownMocksModule } from '../../../../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../../helpers/conversationExampleModels';
 const memberTemplate = {
     id: 1,
     login: 'login',

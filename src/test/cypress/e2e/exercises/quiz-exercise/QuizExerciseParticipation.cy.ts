@@ -1,8 +1,7 @@
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Course } from 'app/entities/course.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import {
     courseManagementRequest,
     courseOverview,
@@ -11,6 +10,7 @@ import {
     quizExerciseMultipleChoice,
     quizExerciseShortAnswerQuiz,
 } from '../../../support/artemis';
+import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, studentOne } from '../../../support/users';
 
 // Common primitives

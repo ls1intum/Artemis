@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 
 @Component({
     selector: 'jhi-solution-entry',

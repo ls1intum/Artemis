@@ -1,19 +1,19 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import '@angular/localize/init';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import {
     TutorialGroupsConfigurationFormComponent,
     TutorialGroupsConfigurationFormData,
 } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
-import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
-import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
-import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
 import { Course } from 'app/entities/course.model';
+import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
+import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
+import '@angular/localize/init';
 
 describe('TutorialGroupsConfigurationFormComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsConfigurationFormComponent>;

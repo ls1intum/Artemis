@@ -1,9 +1,15 @@
 import { Component, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
-import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { ActivatedRoute } from '@angular/router';
-import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/core/util/alert.service';
+import { Course } from 'app/entities/course.model';
+import { Feedback } from 'app/entities/feedback.model';
+import { Participation } from 'app/entities/participation/participation.model';
+import { Annotation, CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
+import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
+import { CodeEditorFileBrowserComponent, InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
+import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import {
     CommitState,
@@ -15,16 +21,10 @@ import {
     RenameFileChange,
     ResizeType,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { CodeEditorFileBrowserComponent, InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
-import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
-import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
-import { Annotation, CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
-import { Participation } from 'app/entities/participation/participation.model';
-import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
-import { Feedback } from 'app/entities/feedback.model';
-import { Course } from 'app/entities/course.model';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,

@@ -1,6 +1,6 @@
+import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Orientation, ResetParticipation } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 /**

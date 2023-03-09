@@ -1,23 +1,23 @@
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelDTO, getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { get } from 'lodash-es';
+import { AlertService } from 'app/core/util/alert.service';
+import { Course } from 'app/entities/course.model';
+import { ChannelDTO, getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { GroupChatDto, getAsGroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { channelRegex } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import {
     GenericUpdateTextPropertyDialogComponent,
     GenericUpdateTextPropertyTranslationKeys,
 } from 'app/overview/course-conversations/dialogs/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
-import { EMPTY, Subject, from, map, takeUntil } from 'rxjs';
-import { onError } from 'app/shared/util/global.utils';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
-import { channelRegex } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
+import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
+import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { canChangeChannelProperties, canChangeGroupChatProperties } from 'app/shared/metis/conversations/conversation-permissions.utils';
-import { GroupChatDto, getAsGroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
+import { onError } from 'app/shared/util/global.utils';
+import { get } from 'lodash-es';
+import { EMPTY, Subject, from, map, takeUntil } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 @Component({

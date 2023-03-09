@@ -1,21 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { Course } from 'app/entities/course.model';
+import { NgModel } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { Course } from 'app/entities/course.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import {
     ProgrammingExerciseInstructorTriggerAllDialogComponent,
     ProgrammingExerciseTriggerAllButtonComponent,
 } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { of } from 'rxjs';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { NgModel } from '@angular/forms';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('ProgrammingExercise Trigger All Button Component', () => {
     const course = { id: 123 } as Course;

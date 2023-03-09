@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { getCourseId } from 'app/entities/exercise.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 
 @Injectable({ providedIn: 'root' })
 export class QuizStatisticUtil {

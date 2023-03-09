@@ -1,3 +1,9 @@
+import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { EndedExamAction, ExamAction, ExamActionType, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { GraphColors } from 'app/entities/statistics.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 import {
     getColor,
     getCurrentExercisePerStudent,
@@ -8,14 +14,8 @@ import {
     insertNgxDataAndColorForExerciseMap,
     updateCurrentExerciseOfStudent,
 } from 'app/exam/monitoring/charts/monitoring-chart';
-import { GraphColors } from 'app/entities/statistics.model';
-import dayjs from 'dayjs/esm';
-import { EndedExamAction, ExamAction, ExamActionType, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
-import { Exam } from 'app/entities/exam.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import dayjs from 'dayjs/esm';
 import { createActions, createExamActionBasedOnType } from '../exam-monitoring-helper';
 
 describe('Monitoring charts helper methods', () => {

@@ -1,9 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { finalize } from 'rxjs/operators';
-import { LearningGoal } from 'app/entities/learningGoal.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService } from 'app/core/util/alert.service';
+import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+import { LearningGoal } from 'app/entities/learningGoal.model';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-course-prerequisites-modal',

@@ -1,11 +1,11 @@
 import { ChangeDetectorRef, Component, ElementRef, HostBinding, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable, OperatorFunction, Subject, catchError, map, of } from 'rxjs';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { debounceTime, distinctUntilChanged, filter, switchMap, takeUntil, tap } from 'rxjs/operators';
-import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
-import { NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { faX } from '@fortawesome/free-solid-svg-icons';
+import { NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
+import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Observable, OperatorFunction, Subject, catchError, map, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, switchMap, takeUntil, tap } from 'rxjs/operators';
 
 let selectorId = 0;
 

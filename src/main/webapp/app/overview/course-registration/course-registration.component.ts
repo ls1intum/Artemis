@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/entities/course.model';
+import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
+import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-prerequisites-modal.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { matchesRegexFully } from 'app/utils/regex.util';
-import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { AlertService } from 'app/core/util/alert.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-prerequisites-modal.component';
 
 @Component({
     selector: 'jhi-course-registration-selector',

@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
+import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 
 @Component({
     selector: 'jhi-programming-exercise-example-solution-repo-download',

@@ -1,12 +1,4 @@
 import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, QueryList, Renderer2, ViewChild, ViewChildren, ViewEncapsulation } from '@angular/core';
-import { Subscription, fromEvent } from 'rxjs';
-import { take, tap } from 'rxjs/operators';
-import { Direction, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
-import { GuidedTourService } from './guided-tour.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
-import { calculateLeftOffset, calculateTopOffset, isElementInViewPortHorizontally } from 'app/guided-tour/guided-tour.utils';
 import {
     faArrowsAlt,
     faCheck,
@@ -21,6 +13,14 @@ import {
     faPlayCircle,
     faVideo,
 } from '@fortawesome/free-solid-svg-icons';
+import { AccountService } from 'app/core/auth/account.service';
+import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { calculateLeftOffset, calculateTopOffset, isElementInViewPortHorizontally } from 'app/guided-tour/guided-tour.utils';
+import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
+import { Subscription, fromEvent } from 'rxjs';
+import { take, tap } from 'rxjs/operators';
+import { Direction, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
+import { GuidedTourService } from './guided-tour.service';
 
 @Component({
     selector: 'jhi-guided-tour',

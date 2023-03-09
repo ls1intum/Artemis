@@ -1,32 +1,6 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject } from 'rxjs';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { HttpErrorResponse } from '@angular/common/http';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
-import { TranslateService } from '@ngx-translate/core';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
-import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import dayjs from 'dayjs/esm';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { SortService } from 'app/shared/service/sort.service';
-import { Submission } from 'app/entities/submission.model';
-import { EventManager } from 'app/core/util/event-manager.service';
-import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
-import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
-import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
-import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import {
     faBook,
     faChartBar,
@@ -42,13 +16,39 @@ import {
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { Submission } from 'app/entities/submission.model';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report-modal.component';
+import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
-import { ButtonSize } from 'app/shared/components/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
+import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
+import { ButtonSize } from 'app/shared/components/button.component';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { SortService } from 'app/shared/service/sort.service';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import dayjs from 'dayjs/esm';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',

@@ -1,5 +1,5 @@
-import { sha1Hex } from 'app/shared/util/crypto.utils';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { sha1Hex } from 'app/shared/util/crypto.utils';
 
 export enum TextBlockType {
     AUTOMATIC = 'AUTOMATIC',

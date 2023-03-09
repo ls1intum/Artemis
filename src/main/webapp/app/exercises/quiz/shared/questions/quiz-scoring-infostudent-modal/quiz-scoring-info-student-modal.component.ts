@@ -1,17 +1,17 @@
 import { AfterViewInit, Component, Input } from '@angular/core';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { Result } from 'app/entities/result.model';
+import { AnswerOption } from 'app/entities/quiz/answer-option.model';
+import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
+import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
-import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { Result } from 'app/entities/result.model';
 
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',

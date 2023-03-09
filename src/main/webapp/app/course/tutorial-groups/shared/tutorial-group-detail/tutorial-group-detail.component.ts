@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef } from '@angular/core';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { Course, Language } from 'app/entities/course.model';
 import { SafeHtml } from '@angular/platform-browser';
+import { Course, Language } from 'app/entities/course.model';
+import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { getDayTranslationKey } from '../weekdays';
-import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 
 @Component({
     selector: 'jhi-tutorial-group-detail',

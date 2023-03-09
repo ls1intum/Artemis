@@ -1,9 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { round } from 'app/shared/util/utils';
-import { GraphColors } from 'app/entities/statistics.model';
-import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { GraphColors } from 'app/entities/statistics.model';
+import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
+import { round } from 'app/shared/util/utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 @Component({

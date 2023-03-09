@@ -1,5 +1,5 @@
-import { Conversation, ConversationDto, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { Conversation, ConversationDto, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 
 export class GroupChat extends Conversation {
     public name?: string; // max 20 characters

@@ -1,16 +1,16 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { onError } from 'app/shared/util/global.utils';
-import { LearningGoal } from 'app/entities/learningGoal.model';
-import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { finalize, switchMap, take } from 'rxjs/operators';
+import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { HttpErrorResponse } from '@angular/common/http';
-import { LectureService } from 'app/lecture/lecture.service';
-import { combineLatest, forkJoin } from 'rxjs';
-import { Lecture } from 'app/entities/lecture.model';
+import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { Lecture } from 'app/entities/lecture.model';
+import { LectureService } from 'app/lecture/lecture.service';
+import { onError } from 'app/shared/util/global.utils';
+import { combineLatest, forkJoin } from 'rxjs';
+import { finalize, switchMap, take } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-edit-learning-goal',

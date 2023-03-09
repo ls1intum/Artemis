@@ -1,5 +1,5 @@
-import { Subject } from 'rxjs';
 import { TemplateRef } from '@angular/core';
+import { Subject } from 'rxjs';
 
 export interface BarControlConfiguration {
     subject?: Subject<TemplateRef<any>>;

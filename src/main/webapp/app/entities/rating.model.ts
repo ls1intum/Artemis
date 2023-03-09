@@ -1,5 +1,5 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
 import { Result } from 'app/entities/result.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
 
 export class Rating implements BaseEntity {
     public id?: number;

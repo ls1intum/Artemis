@@ -1,16 +1,16 @@
+import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { Interception } from 'cypress/types/net-stubbing';
 import dayjs from 'dayjs/esm';
+import { examExerciseGroupCreation, examNavigation, examParticipation, examStartEnd } from 'src/test/cypress/support/artemis';
+import { Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
+import { courseManagementRequest } from 'src/test/cypress/support/requests/ArtemisRequests';
+import { admin, studentOne, studentThree, studentTwo } from 'src/test/cypress/support/users';
 import allSuccessful from '../../../fixtures/exercise/programming/all_successful/submission.json';
 import buildError from '../../../fixtures/exercise/programming/build_error/submission.json';
-import { Course } from 'app/entities/course.model';
-import { generateUUID } from '../../../support/utils';
 import { EXERCISE_TYPE } from '../../../support/constants';
-import { Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
-import { examExerciseGroupCreation, examNavigation, examParticipation, examStartEnd } from 'src/test/cypress/support/artemis';
-import { admin, studentOne, studentThree, studentTwo } from 'src/test/cypress/support/users';
-import { courseManagementRequest } from 'src/test/cypress/support/requests/ArtemisRequests';
-import { Interception } from 'cypress/types/net-stubbing';
+import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { generateUUID } from '../../../support/utils';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';

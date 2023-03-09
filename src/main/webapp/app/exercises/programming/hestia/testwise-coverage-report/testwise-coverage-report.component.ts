@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { CoverageFileReport } from 'app/entities/hestia/coverage-file-report.model';
+import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 
 @Component({
     selector: 'jhi-testwise-coverage-report',

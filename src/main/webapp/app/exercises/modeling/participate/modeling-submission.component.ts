@@ -1,11 +1,17 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { Selection, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ComplaintType } from 'app/entities/complaint.model';
+import { Course } from 'app/entities/course.model';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -17,9 +23,8 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
-import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { AccountService } from 'app/core/auth/account.service';
+import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -27,15 +32,10 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import { Subject, Subscription } from 'rxjs';
-import { omit } from 'lodash-es';
 import dayjs from 'dayjs/esm';
-import { AlertService } from 'app/core/util/alert.service';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
-import { Course } from 'app/entities/course.model';
+import { omit } from 'lodash-es';
+import { Subject, Subscription } from 'rxjs';
 import { getNamesForAssessments } from '../assess/modeling-assessment.util';
-import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-modeling-submission',

@@ -1,21 +1,21 @@
+import { HttpResponse } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { TextExerciseDetailComponent } from './text-exercise-detail.component';
-import { TextExerciseUpdateComponent } from './text-exercise-update.component';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { Injectable } from '@angular/core';
-import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
-import { filter, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
-import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
+import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { of } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
+import { TextExerciseDetailComponent } from './text-exercise-detail.component';
+import { TextExerciseUpdateComponent } from './text-exercise-update.component';
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseResolver implements Resolve<TextExercise> {

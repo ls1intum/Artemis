@@ -1,10 +1,10 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import { map } from 'rxjs/operators';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<ExerciseUnit>;
 type EntityArrayResponseType = HttpResponse<ExerciseUnit[]>;

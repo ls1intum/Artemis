@@ -12,8 +12,8 @@ import {
     ViewChild,
     ViewEncapsulation,
 } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
@@ -23,10 +23,10 @@ import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
-import { cloneDeep } from 'lodash-es';
-import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { markdownForHtml } from 'app/shared/util/markdown.conversion.util';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
+import { cloneDeep } from 'lodash-es';
+import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
 import { MAX_QUIZ_QUESTION_POINTS, MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 

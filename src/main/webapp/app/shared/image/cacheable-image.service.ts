@@ -1,11 +1,11 @@
-import { Injectable, OnDestroy } from '@angular/core';
-import { Cacheable, LocalStorageStrategy } from 'ts-cacheable';
 import { HttpClient } from '@angular/common/http';
-import { Observable, Subject, Subscription, UnaryFunction, pipe } from 'rxjs';
-import { distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
+import { Injectable, OnDestroy } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { SessionStorageStrategy } from 'app/shared/image/session-storage-strategy';
 import { blobToBase64String } from 'app/utils/blob-util';
+import { Observable, Subject, Subscription, UnaryFunction, pipe } from 'rxjs';
+import { distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
+import { Cacheable, LocalStorageStrategy } from 'ts-cacheable';
 
 const logoutSubject = new Subject<void>();
 

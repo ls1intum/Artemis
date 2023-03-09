@@ -1,22 +1,22 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { ActivatedRoute } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { faCheck, faInfo, faPrint, faUser } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { User } from 'app/core/user/user.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { getCourseFromExercise, getExerciseUrlSegment, getIcon } from 'app/entities/exercise.model';
+import { Post } from 'app/entities/metis/post.model';
+import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PageType } from 'app/shared/metis/metis.util';
-import { Post } from 'app/entities/metis/post.model';
-import { Subscription } from 'rxjs';
-import { AlertService } from 'app/core/util/alert.service';
-import { faCheck, faInfo, faPrint, faUser } from '@fortawesome/free-solid-svg-icons';
-import { ThemeService } from 'app/core/theme/theme.service';
 import { abbreviateString } from 'app/utils/text.utils';
-import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',

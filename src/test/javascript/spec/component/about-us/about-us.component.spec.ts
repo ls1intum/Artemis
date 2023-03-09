@@ -1,16 +1,16 @@
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTestModule } from '../../test.module';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { AboutUsComponent } from 'app/core/about-us/about-us.component';
 import { ActivatedRoute } from '@angular/router';
-import { StaticContentService } from 'app/shared/service/static-content.service';
+import { AboutUsComponent } from 'app/core/about-us/about-us.component';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
-import { BehaviorSubject, of } from 'rxjs';
-import { MockDirective, MockProvider } from 'ng-mocks';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ContributorModel } from 'app/core/about-us/models/contributor-model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { StaticContentService } from 'app/shared/service/static-content.service';
+import { MockDirective, MockProvider } from 'ng-mocks';
+import { BehaviorSubject, of } from 'rxjs';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('AboutUsComponent', () => {
     let fixture: ComponentFixture<AboutUsComponent>;

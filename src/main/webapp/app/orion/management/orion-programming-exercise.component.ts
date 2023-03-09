@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ExerciseView, OrionState } from 'app/shared/orion/orion';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 
 @Component({
     selector: 'jhi-orion-programming-exercise',

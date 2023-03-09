@@ -1,7 +1,7 @@
+import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Exercise } from 'app/entities/exercise.model';
 import { FeedbackChartService } from 'app/exercises/shared/feedback/chart/feedback-chart.service';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
-import { Exercise } from 'app/entities/exercise.model';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
 
 describe('FeedbackChartService', () => {
     let service: FeedbackChartService;

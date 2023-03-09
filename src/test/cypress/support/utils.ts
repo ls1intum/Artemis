@@ -1,7 +1,7 @@
-import utc from 'dayjs/esm/plugin/utc';
-import { TIME_FORMAT } from './constants';
-import { v4 as uuidv4 } from 'uuid';
 import day from 'dayjs/esm';
+import utc from 'dayjs/esm/plugin/utc';
+import { v4 as uuidv4 } from 'uuid';
+import { TIME_FORMAT } from './constants';
 
 // Add utc plugin to use the utc timezone
 day.extend(utc);

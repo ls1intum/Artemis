@@ -13,13 +13,13 @@ import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-impo
 import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { flatMap } from 'lodash-es';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { mockExercise, mockSourceExercise, mockSourceTeamStudents, mockSourceTeams, mockTeam, mockTeamStudents, mockTeams } from '../../helpers/mocks/service/mock-team.service';
-import { ArtemisTestModule } from '../../test.module';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('TeamsImportDialogComponent', () => {
     let comp: TeamsImportDialogComponent;

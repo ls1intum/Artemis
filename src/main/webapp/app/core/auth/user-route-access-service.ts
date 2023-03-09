@@ -2,11 +2,11 @@ import { Injectable, isDevMode } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
-import { OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/orion-version-validator.service';
-import { first, switchMap } from 'rxjs/operators';
-import { from, lastValueFrom, of } from 'rxjs';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { AlertService } from 'app/core/util/alert.service';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/orion-version-validator.service';
+import { from, lastValueFrom, of } from 'rxjs';
+import { first, switchMap } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class UserRouteAccessService implements CanActivate {

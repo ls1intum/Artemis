@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { Exercise } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-monitoring-exercise-detail',

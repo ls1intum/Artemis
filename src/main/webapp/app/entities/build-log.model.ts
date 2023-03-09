@@ -1,6 +1,6 @@
-import { safeUnescape } from 'app/shared/util/security.util';
-import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { safeUnescape } from 'app/shared/util/security.util';
 
 export enum BuildLogType {
     ERROR = 'ERROR',

@@ -1,9 +1,9 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { Exam } from 'app/entities/exam.model';
-import { insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
-import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
-import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
+import { Exam } from 'app/entities/exam.model';
+import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
+import { insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
+import { ExamActionService } from '../../exam-action.service';
 
 @Component({
     selector: 'jhi-exercise-submission-chart',

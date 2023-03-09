@@ -1,23 +1,22 @@
-import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
+import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockComponent, MockProvider } from 'ng-mocks';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
-import { ConversationSelectionSidebarComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-selection-sidebar.component';
+import { Course } from 'app/entities/course.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { Post } from 'app/entities/metis/post.model';
+import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { ConversationHeaderComponent } from 'app/overview/course-conversations/layout/conversation-header/conversation-header.component';
 import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
+import { ConversationSelectionSidebarComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-selection-sidebar.component';
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
-import { Course } from 'app/entities/course.model';
-import { EMPTY } from 'rxjs';
-import { BehaviorSubject } from 'rxjs';
-import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
-import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { Post } from 'app/entities/metis/post.model';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { BehaviorSubject, EMPTY } from 'rxjs';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
 const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
 examples.forEach((activeConversation) => {

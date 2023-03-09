@@ -1,19 +1,19 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { ExamSession } from 'app/entities/exam-session.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { LayoutService } from 'app/shared/breakpoints/layout.service';
-import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
-import dayjs from 'dayjs/esm';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { Subscription } from 'rxjs';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { CommitState, DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { map } from 'rxjs/operators';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
-import { ExamSession } from 'app/entities/exam-session.model';
-import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import { LayoutService } from 'app/shared/breakpoints/layout.service';
+import dayjs from 'dayjs/esm';
+import { Subscription } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',

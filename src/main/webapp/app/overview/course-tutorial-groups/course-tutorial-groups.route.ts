@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
-import { CourseTutorialGroupsComponent } from 'app/overview/course-tutorial-groups/course-tutorial-groups.component';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CourseTutorialGroupsOverviewComponent } from 'app/overview/course-tutorial-groups/course-tutorial-groups-overview/course-tutorial-groups-overview.component';
+import { CourseTutorialGroupsComponent } from 'app/overview/course-tutorial-groups/course-tutorial-groups.component';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 // parent: /courses/:courseId/tutorial-groups
 export const routes: Routes = [

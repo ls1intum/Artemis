@@ -1,24 +1,24 @@
-import { Injectable, OnDestroy } from '@angular/core';
-import { EMPTY, Observable, ReplaySubject, Subject, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Injectable, OnDestroy } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
-import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { AlertService } from 'app/core/util/alert.service';
-import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { onError } from 'app/shared/util/global.utils';
-import { Course } from 'app/entities/course.model';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
+import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
+import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
+import { onError } from 'app/shared/util/global.utils';
 import dayjs from 'dayjs/esm';
-import { NavigationEnd, Router } from '@angular/router';
+import { EMPTY, Observable, ReplaySubject, Subject, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE

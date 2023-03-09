@@ -1,5 +1,5 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/entities/course.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
 
 export class OnlineCourseConfiguration implements BaseEntity {
     public id?: number;

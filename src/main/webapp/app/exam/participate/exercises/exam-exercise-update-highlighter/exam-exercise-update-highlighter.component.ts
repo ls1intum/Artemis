@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { Subscription } from 'rxjs';
-import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Exercise } from 'app/entities/exercise.model';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Diff, DiffMatchPatch, DiffOperation } from 'diff-match-patch-typescript';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-exam-exercise-update-highlighter',

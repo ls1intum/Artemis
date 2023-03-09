@@ -1,16 +1,16 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy } from '@angular/core';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { finalize, takeUntil, tap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
-import { Course, CourseGroup } from 'app/entities/course.model';
-import { User } from 'app/core/user/user.model';
-import { AccountService } from 'app/core/auth/account.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
+import { Course, CourseGroup } from 'app/entities/course.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { onError } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
+import { finalize, takeUntil, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-registered-students',

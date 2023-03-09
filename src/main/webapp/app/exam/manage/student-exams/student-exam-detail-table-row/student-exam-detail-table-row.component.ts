@@ -1,12 +1,12 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
-import { Submission } from 'app/entities/submission.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import { Submission } from 'app/entities/submission.model';
+import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 @Component({
     /* eslint-disable-next-line  @angular-eslint/component-selector */

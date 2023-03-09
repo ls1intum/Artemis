@@ -1,20 +1,20 @@
-import { Component, Input, OnDestroy } from '@angular/core';
-import { AlertService } from 'app/core/util/alert.service';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { AddUsersFormData } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { Course } from 'app/entities/course.model';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { Component, Input, OnDestroy } from '@angular/core';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { Course } from 'app/entities/course.model';
 import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { getAsGroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { MAX_GROUP_CHAT_PARTICIPANTS } from 'app/shared/metis/conversations/conversation-settings';
-import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
-import { Subject, takeUntil } from 'rxjs';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
+import { AddUsersFormData } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
+import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { MAX_GROUP_CHAT_PARTICIPANTS } from 'app/shared/metis/conversations/conversation-settings';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
+import { onError } from 'app/shared/util/global.utils';
+import { Subject, takeUntil } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({

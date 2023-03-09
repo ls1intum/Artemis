@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { IsActiveMatchOptions, Router, UrlTree } from '@angular/router';
-import { NotificationService } from 'app/shared/notification/notification.service';
-import { User } from 'app/core/user/user.model';
-import { AccountService } from 'app/core/auth/account.service';
-import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification } from 'app/entities/notification.model';
-import { GroupNotification } from 'app/entities/group-notification.model';
-import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faCheckDouble, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { GroupNotification } from 'app/entities/group-notification.model';
+import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification } from 'app/entities/notification.model';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
 
 @Component({
     selector: 'jhi-notification-popup',

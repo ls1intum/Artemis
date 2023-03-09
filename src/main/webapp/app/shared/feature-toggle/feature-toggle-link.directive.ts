@@ -1,7 +1,7 @@
 import { Directive, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 @Directive({
     selector: '[jhiFeatureToggleLink]',

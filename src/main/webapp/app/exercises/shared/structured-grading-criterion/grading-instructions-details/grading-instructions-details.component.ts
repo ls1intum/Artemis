@@ -1,18 +1,18 @@
 import { AfterContentInit, ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
-import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
-import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
-import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
-import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
-import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
-import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
-import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
-import { Exercise } from 'app/entities/exercise.model';
-import { cloneDeep } from 'lodash-es';
 import { faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { Exercise } from 'app/entities/exercise.model';
+import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
+import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
+import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
+import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
+import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
+import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
+import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
+import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
+import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { cloneDeep } from 'lodash-es';
 
 @Component({
     selector: 'jhi-grading-instructions-details',

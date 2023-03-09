@@ -1,17 +1,17 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { EMPTY, Observable, Subject, debounceTime, distinctUntilChanged, finalize, from, map, takeUntil } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/util/alert.service';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
-import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
-import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
+import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { onError } from 'app/shared/util/global.utils';
+import { EMPTY, Observable, Subject, debounceTime, distinctUntilChanged, finalize, from, map, takeUntil } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 export type ChannelActionType = 'register' | 'deregister' | 'view' | 'create';

@@ -1,19 +1,19 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
-import dayjs from 'dayjs/esm';
-import { Lecture } from 'app/entities/lecture.model';
-import { FileService } from 'app/shared/http/file.service';
-import { Attachment } from 'app/entities/attachment.model';
-import { LectureService } from 'app/lecture/lecture.service';
-import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
-import { onError } from 'app/shared/util/global.utils';
-import { finalize } from 'rxjs/operators';
-import { AlertService } from 'app/core/util/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { AlertService } from 'app/core/util/alert.service';
+import { Attachment } from 'app/entities/attachment.model';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { LectureService } from 'app/lecture/lecture.service';
+import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
+import { FileService } from 'app/shared/http/file.service';
+import { onError } from 'app/shared/util/global.utils';
+import dayjs from 'dayjs/esm';
+import { finalize } from 'rxjs/operators';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;

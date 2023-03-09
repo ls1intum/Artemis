@@ -1,9 +1,9 @@
 import { Component, ViewChild } from '@angular/core';
-import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
-import { Feedback } from 'app/entities/feedback.model';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { Feedback } from 'app/entities/feedback.model';
+import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
+import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 
 @Component({
     selector: 'jhi-orion-course-management-exercises',

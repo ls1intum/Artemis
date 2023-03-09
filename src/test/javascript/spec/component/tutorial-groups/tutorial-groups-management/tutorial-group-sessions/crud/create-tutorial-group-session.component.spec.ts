@@ -1,25 +1,25 @@
 // eslint-disable-next-line max-len
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
-import { of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
-import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
+import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
+import { Course } from 'app/entities/course.model';
+import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
+import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import {
     formDataToTutorialGroupSessionDTO,
     generateExampleTutorialGroupSession,
     tutorialGroupSessionToTutorialGroupSessionFormData,
 } from '../../../helpers/tutorialGroupSessionExampleModels';
-import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupSessionFormStubComponent } from '../../../stubs/tutorial-group-session-form-stub.component';
-import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
-import { Course } from 'app/entities/course.model';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 describe('CreateTutorialGroupSessionComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupSessionComponent>;

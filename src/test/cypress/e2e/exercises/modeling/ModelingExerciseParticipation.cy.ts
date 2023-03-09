@@ -1,7 +1,7 @@
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { courseManagementRequest, courseOverview, modelingExerciseEditor } from '../../../support/artemis';
+import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, studentOne } from '../../../support/users';
 
 // Common primitives

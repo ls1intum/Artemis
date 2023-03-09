@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Organization } from 'app/entities/organization.model';
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { Organization } from 'app/entities/organization.model';
 
 @Component({
     selector: 'jhi-organization-management-update',

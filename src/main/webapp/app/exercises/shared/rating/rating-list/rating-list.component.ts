@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { RatingService } from 'app/exercises/shared/rating/rating.service';
-import { Rating } from 'app/entities/rating.model';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SortService } from 'app/shared/service/sort.service';
-import { ExerciseType } from 'app/entities/exercise.model';
 import { faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { Rating } from 'app/entities/rating.model';
+import { RatingService } from 'app/exercises/shared/rating/rating.service';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-rating-list',

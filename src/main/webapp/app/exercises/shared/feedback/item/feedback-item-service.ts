@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
-import { Feedback } from 'app/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
-import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { Exercise } from 'app/entities/exercise.model';
-import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
-import { getAllFeedbackGroups } from 'app/exercises/shared/feedback/group/feedback-groups';
+import { Feedback } from 'app/entities/feedback.model';
 import { FeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
+import { getAllFeedbackGroups } from 'app/exercises/shared/feedback/group/feedback-groups';
+import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 
 export interface FeedbackItemService {
     /**

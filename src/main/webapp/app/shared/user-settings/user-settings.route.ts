@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
-import { UserSettingsContainerComponent } from 'app/shared/user-settings/user-settings-container/user-settings-container.component';
-import { AccountInformationComponent } from 'app/shared/user-settings/account-information/account-information.component';
-import { NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { AccountInformationComponent } from 'app/shared/user-settings/account-information/account-information.component';
+import { NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
+import { UserSettingsContainerComponent } from 'app/shared/user-settings/user-settings-container/user-settings-container.component';
 
 export const userSettingsState: Routes = [
     {

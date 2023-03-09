@@ -1,14 +1,14 @@
+import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService } from 'app/core/util/alert.service';
+import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+import { LearningGoal } from 'app/entities/learningGoal.model';
+import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-prerequisites-modal.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { of } from 'rxjs';
-import { LearningGoal } from 'app/entities/learningGoal.model';
-import { HttpResponse } from '@angular/common/http';
-import { By } from '@angular/platform-browser';
-import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-prerequisites-modal.component';
-import { AlertService } from 'app/core/util/alert.service';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { LearningGoalCardStubComponent } from '../learning-goals/learning-goal-card-stub.component';
 
 describe('CoursePrerequisitesModal', () => {

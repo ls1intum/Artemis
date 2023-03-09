@@ -1,11 +1,11 @@
-import { Component, Input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
-import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ButtonType } from 'app/shared/components/button.component';
+import { Component, Input } from '@angular/core';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
+import { AlertService } from 'app/core/util/alert.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { ButtonType } from 'app/shared/components/button.component';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 /**
  * A button that re-evaluates all latest automatic results of the given programming exercise.

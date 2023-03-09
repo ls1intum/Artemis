@@ -1,19 +1,19 @@
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { convertDateFromServer } from 'app/utils/date.utils';
+import { AccountService } from 'app/core/auth/account.service';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { convertDateFromServer } from 'app/utils/date.utils';
+import { Observable, map } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {

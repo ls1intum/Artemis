@@ -1,17 +1,17 @@
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
+import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuestionStatisticComponent, blueColor, greenColor, redColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
-import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 @Component({
     selector: 'jhi-multiple-choice-question-statistic',

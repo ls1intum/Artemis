@@ -1,19 +1,19 @@
-import { Injectable } from '@angular/core';
-import { Observable, Subject, of, throwError } from 'rxjs';
-import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { catchError, map, tap } from 'rxjs/operators';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs/esm';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
-import { cloneDeep } from 'lodash-es';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { Injectable } from '@angular/core';
 import { captureException } from '@sentry/browser';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import dayjs from 'dayjs/esm';
+import { cloneDeep } from 'lodash-es';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { Observable, Subject, of, throwError } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 
 export type ButtonTooltipType = 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 

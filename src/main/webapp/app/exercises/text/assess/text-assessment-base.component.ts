@@ -1,17 +1,17 @@
-import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Component, OnInit } from '@angular/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { Feedback } from 'app/entities/feedback.model';
+import { Result } from 'app/entities/result.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { Result } from 'app/entities/result.model';
-import { AccountService } from 'app/core/auth/account.service';
-import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { Feedback } from 'app/entities/feedback.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 
 @Component({
     template: '',

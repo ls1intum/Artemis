@@ -1,11 +1,11 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { Exam } from 'app/entities/exam.model';
-import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
-import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
+import { Exam } from 'app/entities/exam.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/entities/statistics.model';
+import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { ExamActionService } from '../../exam-action.service';
 
 @Component({
     selector: 'jhi-exercise-detail-navigation-chart',

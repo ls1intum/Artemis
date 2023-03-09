@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { AssessmentDashboardComponent } from './assessment-dashboard.component';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { AssessmentDashboardComponent } from './assessment-dashboard.component';
 
 export const assessmentDashboardRoute: Routes = [
     {

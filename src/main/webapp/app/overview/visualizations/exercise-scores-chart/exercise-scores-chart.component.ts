@@ -1,19 +1,19 @@
-import { AfterViewInit, Component, Input, OnChanges } from '@angular/core';
-import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { onError } from 'app/shared/util/global.utils';
-import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
+import { AfterViewInit, Component, Input, OnChanges } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
-import { cloneDeep, sortBy } from 'lodash-es';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { round } from 'app/shared/util/utils';
-import { ExerciseType } from 'app/entities/exercise.model';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
-import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
+import { TranslateService } from '@ngx-translate/core';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { AlertService } from 'app/core/util/alert.service';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { GraphColors } from 'app/entities/statistics.model';
+import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
+import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
+import { onError } from 'app/shared/util/global.utils';
+import { round } from 'app/shared/util/utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { cloneDeep, sortBy } from 'lodash-es';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exercise-scores-chart',

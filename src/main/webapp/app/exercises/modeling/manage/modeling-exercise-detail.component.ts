@@ -1,22 +1,22 @@
+import { HttpResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
 import { UMLModel } from '@ls1intum/apollon';
-import { Subscription } from 'rxjs';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ModelingExerciseService } from './modeling-exercise.service';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
+import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { Course } from 'app/entities/course.model';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import dayjs from 'dayjs/esm';
-import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/entities/course.model';
-import { EventManager } from 'app/core/util/event-manager.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { Subscription } from 'rxjs';
+import { ModelingExerciseService } from './modeling-exercise.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',

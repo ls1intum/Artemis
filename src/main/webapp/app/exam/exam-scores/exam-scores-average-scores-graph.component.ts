@@ -1,17 +1,17 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Course } from 'app/entities/course.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { GraphColors } from 'app/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { ActivatedRoute } from '@angular/router';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/utils/navigation.utils';
-import { Course } from 'app/entities/course.model';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/utils/navigation.utils';
 
 type NameToValueMap = { [name: string]: any };
 

@@ -1,9 +1,9 @@
 import { Component, EventEmitter, HostBinding, Input, Output } from '@angular/core';
-import { Result } from 'app/entities/result.model';
+import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { Result } from 'app/entities/result.model';
 import { Submission } from 'app/entities/submission.model';
-import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 /**
  * The <jhi-assessment-layout> component provides the basic layout for an assessment page.

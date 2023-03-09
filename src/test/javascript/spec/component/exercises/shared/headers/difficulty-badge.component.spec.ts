@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DifficultyLevel } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 
 describe('DifficultyBadge', () => {
     let component: DifficultyBadgeComponent;

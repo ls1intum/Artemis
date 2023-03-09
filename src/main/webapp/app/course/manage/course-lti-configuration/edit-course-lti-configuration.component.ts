@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Course } from 'app/entities/course.model';
-import { finalize } from 'rxjs';
-import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { FormControl, FormGroup } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
-import { regexValidator } from 'app/shared/form/shortname-validator.directive';
-import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
+import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
+import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
+import { regexValidator } from 'app/shared/form/shortname-validator.directive';
+import { finalize } from 'rxjs';
 
 @Component({
     selector: 'jhi-edit-course-lti-configuration',

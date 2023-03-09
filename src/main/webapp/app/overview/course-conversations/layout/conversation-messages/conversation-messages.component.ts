@@ -14,18 +14,18 @@ import {
     ViewEncapsulation,
 } from '@angular/core';
 import { faCircleNotch, faEnvelope, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { Subject, map, takeUntil } from 'rxjs';
-import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
-import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { Channel, getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { GroupChat, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
-import { ButtonType } from 'app/shared/components/button.component';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { OneToOneChat, isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { Post } from 'app/entities/metis/post.model';
+import { ButtonType } from 'app/shared/components/button.component';
 import { canCreateNewMessageInConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { Subject, map, takeUntil } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 @Component({
     selector: 'jhi-conversation-messages',

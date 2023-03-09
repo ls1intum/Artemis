@@ -1,7 +1,7 @@
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Course } from 'app/entities/course.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
 /**
  * The UMLDiagramType enumeration. This has to be exactly the same as defined in Apollon (see diagram-type.d.ts)

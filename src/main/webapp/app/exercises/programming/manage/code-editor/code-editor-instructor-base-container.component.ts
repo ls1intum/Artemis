@@ -1,24 +1,24 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Observable, Subscription, of, throwError } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { catchError, filter, map, tap } from 'rxjs/operators';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { Participation } from 'app/entities/participation/participation.model';
-import { ButtonSize } from 'app/shared/components/button.component';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { Course } from 'app/entities/course.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { CodeEditorContainerComponent } from '../../shared/code-editor/container/code-editor-container.component';
-import { Course } from 'app/entities/course.model';
+import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ButtonSize } from 'app/shared/components/button.component';
+import { Observable, Subscription, of, throwError } from 'rxjs';
+import { catchError, filter, map, tap } from 'rxjs/operators';
+import { CodeEditorContainerComponent } from '../../shared/code-editor/container/code-editor-container.component';
 
 /**
  * Enumeration specifying the repository type

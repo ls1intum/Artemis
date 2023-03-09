@@ -1,11 +1,11 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { Injectable } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
+import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<ComplaintResponse>;
 

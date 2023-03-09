@@ -1,19 +1,19 @@
+import { HttpResponse } from '@angular/common/http';
 import { Component, Input, OnInit } from '@angular/core';
-import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
-import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { ActivatedRoute } from '@angular/router';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { ComplaintService } from 'app/complaints/complaint.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { ActivatedRoute } from '@angular/router';
-import { Course } from 'app/entities/course.model';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { Exam } from 'app/entities/exam.model';
-import { AccountService } from 'app/core/auth/account.service';
 import { Submission } from 'app/entities/submission.model';
-import { filter } from 'rxjs/operators';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
-import { HttpResponse } from '@angular/common/http';
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-complaint-student-view',

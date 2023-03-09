@@ -1,11 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
-import { Course } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { AccountService } from 'app/core/auth/account.service';
-import { SortService } from 'app/shared/service/sort.service';
-import { Exam } from 'app/entities/exam.model';
 import { faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons';
+import { AccountService } from 'app/core/auth/account.service';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-tutor-leaderboard',

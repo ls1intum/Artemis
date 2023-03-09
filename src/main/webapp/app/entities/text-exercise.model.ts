@@ -1,7 +1,7 @@
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
 export class TextExercise extends Exercise {
     public exampleSolution?: string;

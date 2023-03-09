@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
-import { Subscription } from 'rxjs';
-import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { CourseManagementStatisticsDTO } from './course-management-statistics-dto';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { Subscription } from 'rxjs';
+import { CourseManagementStatisticsDTO } from './course-management-statistics-dto';
 
 @Component({
     selector: 'jhi-course-management-statistics',

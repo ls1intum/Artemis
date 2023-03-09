@@ -1,18 +1,18 @@
 import { ChangeDetectorRef, Component, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
-import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { DragAndDropQuestionStatistic } from 'app/entities/quiz/drag-and-drop-question-statistic.model';
+import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuestionStatisticComponent, blueColor, greenColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
-import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
+import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',

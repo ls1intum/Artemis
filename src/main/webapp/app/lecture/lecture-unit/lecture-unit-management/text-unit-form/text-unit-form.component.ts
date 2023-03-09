@@ -1,12 +1,12 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
-import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
+import { LearningGoal } from 'app/entities/learningGoal.model';
+import dayjs from 'dayjs/esm';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import { TranslateService } from '@ngx-translate/core';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { LearningGoal } from 'app/entities/learningGoal.model';
 
 export interface TextUnitFormData {
     name?: string;

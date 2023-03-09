@@ -1,6 +1,6 @@
+import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
 
 export enum HintType {
     TEXT = 'text',

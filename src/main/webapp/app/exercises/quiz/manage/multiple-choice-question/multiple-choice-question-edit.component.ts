@@ -1,19 +1,19 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { faAngleDown, faAngleRight, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
-import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
-import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/incorrectOptionCommand';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { ScoringType } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
+import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
 import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/correctOptionCommand';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
-import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
+import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
+import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
+import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/incorrectOptionCommand';
+import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
-import { faAngleDown, faAngleRight, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ScoringType } from 'app/entities/quiz/quiz-question.model';
-import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-multiple-choice-question-edit',

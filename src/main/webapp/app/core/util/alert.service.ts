@@ -1,14 +1,14 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, NgZone, SecurityContext } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
+import { IconDefinition, faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { captureException } from '@sentry/browser';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
-import { Subscription } from 'rxjs';
-import { captureException } from '@sentry/browser';
-import { IconDefinition, faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
+import { Subscription } from 'rxjs';
 
 export class AlertType {
     public static readonly SUCCESS = new AlertType(faCheckCircle, 'success', 'btn-success');

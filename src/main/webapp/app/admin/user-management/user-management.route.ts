@@ -1,8 +1,8 @@
 import { Route } from '@angular/router';
 import { UserManagementDetailComponent } from 'app/admin/user-management/user-management-detail.component';
-import { UserManagementComponent } from 'app/admin/user-management/user-management.component';
-import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';
 import { UserManagementResolve } from 'app/admin/user-management/user-management-resolve.service';
+import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';
+import { UserManagementComponent } from 'app/admin/user-management/user-management.component';
 
 export const userManagementRoute: Route[] = [
     {

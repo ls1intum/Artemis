@@ -1,19 +1,19 @@
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { FileUploadExerciseService } from './file-upload-exercise.service';
-import { filter } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
-import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import dayjs from 'dayjs/esm';
-import { onError } from 'app/shared/util/global.utils';
-import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { Course } from 'app/entities/course.model';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { onError } from 'app/shared/util/global.utils';
+import dayjs from 'dayjs/esm';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
+import { FileUploadExerciseService } from './file-upload-exercise.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',

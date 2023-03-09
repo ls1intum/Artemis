@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import dayjs from 'dayjs/esm';
 import { SortService } from 'app/shared/service/sort.service';
+import dayjs from 'dayjs/esm';
 
 type TestObject = {
     a: number;

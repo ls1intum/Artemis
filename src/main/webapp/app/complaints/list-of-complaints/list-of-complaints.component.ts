@@ -1,20 +1,20 @@
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { faExclamationTriangle, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
 import { ComplaintService } from 'app/complaints/complaint.service';
+import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { Observable, combineLatestWith } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { SortService } from 'app/shared/service/sort.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { TranslateService } from '@ngx-translate/core';
+import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { faExclamationTriangle, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { Observable, combineLatestWith } from 'rxjs';
 
 @Component({
     selector: 'jhi-complaint-list',

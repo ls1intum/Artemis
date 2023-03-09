@@ -1,20 +1,20 @@
+import { HttpResponse } from '@angular/common/http';
 import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import interact from 'interactjs';
+import { FormBuilder } from '@angular/forms';
+import { ActivatedRoute, Params, Router } from '@angular/router';
+import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { DisplayPriority, PageType, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
-import { Course } from 'app/entities/course.model';
-import { ActivatedRoute, Params, Router } from '@angular/router';
-import { combineLatest, map } from 'rxjs';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { HttpResponse } from '@angular/common/http';
-import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
-import { FormBuilder } from '@angular/forms';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { DisplayPriority, PageType, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
+import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import interact from 'interactjs';
+import { combineLatest, map } from 'rxjs';
 
 @Component({
     selector: 'jhi-discussion-section',

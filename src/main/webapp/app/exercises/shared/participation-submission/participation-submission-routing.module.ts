@@ -1,9 +1,9 @@
-import { RouterModule, Routes } from '@angular/router';
-import { ParticipationSubmissionComponent } from 'app/exercises/shared/participation-submission/participation-submission.component';
-import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { NgModule } from '@angular/core';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { RouterModule, Routes } from '@angular/router';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { exerciseTypes } from 'app/entities/exercise.model';
+import { ParticipationSubmissionComponent } from 'app/exercises/shared/participation-submission/participation-submission.component';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 const participationSubmissionRoutes: Routes = [
     ...exerciseTypes.map((exerciseType) => {

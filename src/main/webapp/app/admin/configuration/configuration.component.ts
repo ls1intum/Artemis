@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 
-import { ConfigurationService } from './configuration.service';
-import { Bean, PropertySource } from './configuration.model';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { Bean, PropertySource } from './configuration.model';
+import { ConfigurationService } from './configuration.service';
 
 @Component({
     selector: 'jhi-configuration',

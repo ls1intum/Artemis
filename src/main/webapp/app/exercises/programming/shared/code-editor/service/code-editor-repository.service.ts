@@ -1,7 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
-import { Observable, Subject, UnaryFunction, of, pipe, throwError } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import {
     CommitState,
     DomainChange,
@@ -13,11 +12,12 @@ import {
     RepositoryError,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
-import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { DomainDependentEndpointService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain-dependent-endpoint.service';
+import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { downloadFile } from 'app/shared/util/download.util';
+import { Observable, Subject, UnaryFunction, of, pipe, throwError } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 
 export interface ICodeEditorRepositoryFileService {
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;

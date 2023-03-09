@@ -1,19 +1,19 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExamUserAttendanceCheckDTO } from 'app/entities/exam-users-attendance-check-dto.model';
-import { SortService } from 'app/shared/service/sort.service';
-import { Subject, Subscription } from 'rxjs';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { faCheck, faInfoCircle, faPlus, faSort, faUpload, faUserSlash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { AccountService } from 'app/core/auth/account.service';
 import { UserService } from 'app/core/user/user.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { ExamUserAttendanceCheckDTO } from 'app/entities/exam-users-attendance-check-dto.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
-import { faCheck, faInfoCircle, faPlus, faSort, faUpload, faUserSlash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
+import { Subject, Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-exam-students-attendance-check',

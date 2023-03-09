@@ -1,14 +1,14 @@
+import { Location } from '@angular/common';
 import { Injectable } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { TextAssessmentEvent, TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { FeedbackType } from 'app/entities/feedback.model';
+import { TextAssessmentEvent, TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { TextBlockType } from 'app/entities/text-block.model';
-import { filter, tap } from 'rxjs/operators';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { Location } from '@angular/common';
+import { filter, tap } from 'rxjs/operators';
 
 /**
  * A service used to manage sending TextAssessmentEvent's to the server

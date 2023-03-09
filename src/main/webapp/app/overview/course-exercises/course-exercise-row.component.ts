@@ -1,17 +1,17 @@
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Component, HostBinding, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { Course } from 'app/entities/course.model';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
-import { Course } from 'app/entities/course.model';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { AccountService } from 'app/core/auth/account.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Exercise, ExerciseType, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/entities/exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Component({
     selector: 'jhi-course-exercise-row',

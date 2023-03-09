@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
-import { enterDate } from '../../utils';
 import { BASE_API, POST, PUT } from '../../constants';
+import { enterDate } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the course creation page.

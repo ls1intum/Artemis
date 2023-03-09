@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
-import { MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { SubmissionExportDialogComponent } from 'app/exercises/shared/submission-export/submission-export-dialog.component';
-import { SubmissionExportButtonComponent } from 'app/exercises/shared/submission-export/submission-export-button.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { SubmissionExportButtonComponent } from 'app/exercises/shared/submission-export/submission-export-button.component';
+import { SubmissionExportDialogComponent } from 'app/exercises/shared/submission-export/submission-export-dialog.component';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockPipe } from 'ng-mocks';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
+import { ArtemisTestModule } from '../../../test.module';
 
 class MockNgbModalRef {
     componentInstance = {

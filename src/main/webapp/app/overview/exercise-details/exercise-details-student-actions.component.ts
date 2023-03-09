@@ -1,23 +1,23 @@
+import { HttpClient } from '@angular/common/http';
 import { Component, ContentChild, HostBinding, Input, OnChanges, OnInit, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
-import { HttpClient } from '@angular/common/http';
-import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercises/shared/exercise/exercise.utils';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
-import { finalize } from 'rxjs/operators';
 import { faComment, faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import dayjs from 'dayjs/esm';
+import { AlertService } from 'app/core/util/alert.service';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { InitializationState } from 'app/entities/participation/participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercises/shared/exercise/exercise.utils';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
+import dayjs from 'dayjs/esm';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',

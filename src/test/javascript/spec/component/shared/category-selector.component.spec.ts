@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
-import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatChipInput, MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
-import { MatSelectModule } from '@angular/material/select';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { MatChipInput, MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
+import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 
 describe('Category Selector Component', () => {
     let comp: CategorySelectorComponent;

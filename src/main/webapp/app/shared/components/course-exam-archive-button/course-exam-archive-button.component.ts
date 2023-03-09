@@ -1,21 +1,21 @@
 import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { AlertService } from 'app/core/util/alert.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { TranslateService } from '@ngx-translate/core';
+import { faArchive, faCircleNotch, faDownload, faEraser } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { tap } from 'rxjs/operators';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs/esm';
-import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
-import { ButtonSize } from '../button.component';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { Subject } from 'rxjs';
-import { AccountService } from 'app/core/auth/account.service';
-import { faArchive, faCircleNotch, faDownload, faEraser } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
+import dayjs from 'dayjs/esm';
+import { Subject } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { ButtonSize } from '../button.component';
 
 export type CourseExamArchiveState = {
     exportState: 'COMPLETED' | 'RUNNING' | 'COMPLETED_WITH_WARNINGS';

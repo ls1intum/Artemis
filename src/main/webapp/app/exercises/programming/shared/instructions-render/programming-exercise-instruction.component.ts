@@ -1,26 +1,26 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewContainerRef } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { ShowdownExtension } from 'showdown';
-import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
-import { Observable, Subscription, merge, of } from 'rxjs';
+import { Feedback } from 'app/entities/feedback.model';
+import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
+import { Result } from 'app/entities/result.model';
+import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { TaskArray, TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { Participation } from 'app/entities/participation/participation.model';
-import { Feedback } from 'app/entities/feedback.model';
-import { ResultService } from 'app/exercises/shared/result/result.service';
-import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { problemStatementHasChanged } from 'app/exercises/shared/exercise/exercise.utils';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { Result } from 'app/entities/result.model';
-import { findLatestResult } from 'app/shared/util/utils';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
+import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
+import { ResultService } from 'app/exercises/shared/result/result.service';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { findLatestResult } from 'app/shared/util/utils';
+import { Observable, Subscription, merge, of } from 'rxjs';
+import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { ShowdownExtension } from 'showdown';
+import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',

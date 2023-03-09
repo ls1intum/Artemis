@@ -1,23 +1,23 @@
+import { HttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ParticipationType } from 'app/entities/participation/participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { SubmissionSyncPayload } from 'app/entities/submission-sync-payload.model';
+import { Submission } from 'app/entities/submission.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
 import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
 import { MockProvider } from 'ng-mocks';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
-import { AlertService } from 'app/core/util/alert.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
 import { SessionStorageService } from 'ngx-webstorage';
-import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
-import { HttpClient } from '@angular/common/http';
-import { Submission } from 'app/entities/submission.model';
 import { Observable, of } from 'rxjs';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { SubmissionSyncPayload } from 'app/entities/submission-sync-payload.model';
-import { User } from 'app/core/user/user.model';
-import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('Team Submission Sync Component', () => {
     let fixture: ComponentFixture<TeamSubmissionSyncComponent>;

@@ -1,17 +1,17 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Result } from 'app/entities/result.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { Complaint } from 'app/entities/complaint.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
+import { Component, Input, OnInit } from '@angular/core';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { SCORE_PATTERN } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { Complaint } from 'app/entities/complaint.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Result } from 'app/entities/result.model';
+import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { Observable } from 'rxjs';
 
 @Component({
     selector: 'jhi-external-submission-dialog',

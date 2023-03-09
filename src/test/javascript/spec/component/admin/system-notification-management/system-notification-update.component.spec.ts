@@ -5,13 +5,13 @@ import { ActivatedRoute } from '@angular/router';
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { AdminSystemNotificationService } from 'app/shared/notification/system-notification/admin-system-notification.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import dayjs from 'dayjs/esm';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import dayjs from 'dayjs/esm';
-import { AdminSystemNotificationService } from 'app/shared/notification/system-notification/admin-system-notification.service';
 
 describe('SystemNotificationManagementUpdateComponent', () => {
     let updateComponentFixture: ComponentFixture<SystemNotificationManagementUpdateComponent>;

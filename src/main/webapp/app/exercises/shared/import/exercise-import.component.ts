@@ -3,6 +3,7 @@ import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { FileUploadExercisePagingService } from 'app/exercises/file-upload/manage/file-upload-exercise-paging.service';
 import { ModelingExercisePagingService } from 'app/exercises/modeling/manage/modeling-exercise-paging.service';
 import { CodeAnalysisPagingService } from 'app/exercises/programming/manage/services/code-analysis-paging.service';
 import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
@@ -13,7 +14,6 @@ import { SortService } from 'app/shared/service/sort.service';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { Subject } from 'rxjs';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
-import { FileUploadExercisePagingService } from 'app/exercises/file-upload/manage/file-upload-exercise-paging.service';
 
 export type TableColumn = 'ID' | 'TITLE' | 'COURSE_TITLE' | 'EXAM_TITLE' | 'PROGRAMMING_LANGUAGE';
 

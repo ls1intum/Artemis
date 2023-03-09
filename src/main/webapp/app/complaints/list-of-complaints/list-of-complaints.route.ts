@@ -1,10 +1,10 @@
 import { Routes } from '@angular/router';
-import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
-import { ComplaintType } from 'app/entities/complaint.model';
-import { Authority } from 'app/shared/constants/authority.constants';
-import { exerciseTypes } from 'app/entities/exercise.model';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
+import { ComplaintType } from 'app/entities/complaint.model';
+import { exerciseTypes } from 'app/entities/exercise.model';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 export const listOfComplaintsRoute: Routes = [
     {

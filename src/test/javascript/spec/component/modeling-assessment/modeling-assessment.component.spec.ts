@@ -4,14 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { UMLDiagramType, UMLElement, UMLModel, UMLRelationship } from '@ls1intum/apollon';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
+import { ModelElementCount } from 'app/entities/modeling-submission.model';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ModelElementCount } from 'app/entities/modeling-submission.model';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 describe('ModelingAssessmentComponent', () => {
     let fixture: ComponentFixture<ModelingAssessmentComponent>;

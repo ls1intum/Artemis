@@ -1,15 +1,15 @@
-import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild, ViewEncapsulation } from '@angular/core';
-import { Observable, Subject, of } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { faDownload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { Course, CourseGroup } from 'app/entities/course.model';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { iconsAsHTML } from 'app/utils/icons.utils';
 import { ExportToCsv } from 'export-to-csv';
-import { faDownload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { Observable, Subject, of } from 'rxjs';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 const NAME_KEY = 'Name';
 const USERNAME_KEY = 'Username';

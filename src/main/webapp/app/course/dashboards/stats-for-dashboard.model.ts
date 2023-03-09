@@ -1,5 +1,5 @@
-import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
+import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 
 export class StatsForDashboard {
     public numberOfStudents = 0;

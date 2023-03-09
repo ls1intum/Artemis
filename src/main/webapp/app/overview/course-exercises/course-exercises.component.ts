@@ -1,27 +1,27 @@
 import { AfterViewInit, Component, OnChanges, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subject, Subscription } from 'rxjs';
+import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
-import { flatten, maxBy, sum } from 'lodash-es';
+import { User } from 'app/core/user/user.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
+import { ExerciseFilter as ExerciseFilterModel } from 'app/entities/exercise-filter.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
-import { isOrion } from 'app/shared/orion/orion';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
-import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
-import { User } from 'app/core/user/user.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
-import { ExerciseFilter as ExerciseFilterModel } from 'app/entities/exercise-filter.model';
+import { isOrion } from 'app/shared/orion/orion';
+import dayjs from 'dayjs/esm';
+import { flatten, maxBy, sum } from 'lodash-es';
+import { LocalStorageService } from 'ngx-webstorage';
+import { Subject, Subscription } from 'rxjs';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',

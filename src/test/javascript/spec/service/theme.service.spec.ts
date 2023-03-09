@@ -1,7 +1,7 @@
-import { THEME_LOCAL_STORAGE_KEY, THEME_OVERRIDE_ID, Theme, ThemeService } from 'app/core/theme/theme.service';
-import { MockLocalStorageService } from '../helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { THEME_LOCAL_STORAGE_KEY, THEME_OVERRIDE_ID, Theme, ThemeService } from 'app/core/theme/theme.service';
+import { LocalStorageService } from 'ngx-webstorage';
+import { MockLocalStorageService } from '../helpers/mocks/service/mock-local-storage.service';
 
 describe('ThemeService', () => {
     let service: ThemeService;

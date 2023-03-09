@@ -1,10 +1,16 @@
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription, forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { SortService } from 'app/shared/service/sort.service';
-import { ExportToCsv } from 'export-to-csv';
+import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
+import { captureException } from '@sentry/browser';
+import { VERSION } from 'app/app.constants';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { AlertService } from 'app/core/util/alert.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
+import { declareExerciseType } from 'app/entities/exercise.model';
+import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import {
     AggregatedExamResult,
     AggregatedExerciseGroupResult,
@@ -14,29 +20,11 @@ import {
     StudentResult,
     TableState,
 } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/util/alert.service';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { TranslateService } from '@ngx-translate/core';
-import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { captureException } from '@sentry/browser';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
-import { declareExerciseType } from 'app/entities/exercise.model';
-import { mean, median, standardDeviation } from 'simple-statistics';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Course } from 'app/entities/course.model';
 import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
 import { ExcelExportRowBuilder } from 'app/shared/export/excel-export-row-builder';
-import { CsvExportOptions } from 'app/shared/export/export-modal.component';
-import { ExportRow, ExportRowBuilder } from 'app/shared/export/export-row-builder';
-import * as XLSX from 'xlsx';
-import { VERSION } from 'app/app.constants';
 import {
     BONUS_GRADE_KEY,
     BONUS_KEY,
@@ -57,6 +45,18 @@ import {
     REGISTRATION_NUMBER_KEY,
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
+import { CsvExportOptions } from 'app/shared/export/export-modal.component';
+import { ExportRow, ExportRowBuilder } from 'app/shared/export/export-row-builder';
+import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
+import { SortService } from 'app/shared/service/sort.service';
+import { onError } from 'app/shared/util/global.utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { ExportToCsv } from 'export-to-csv';
+import { Subscription, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { mean, median, standardDeviation } from 'simple-statistics';
+import * as XLSX from 'xlsx';
 
 export enum MedianType {
     PASSED,

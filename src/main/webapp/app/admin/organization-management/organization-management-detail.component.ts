@@ -1,17 +1,17 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
-import { Organization } from 'app/entities/organization.model';
+import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
-import { Observable, Subject, Subscription, of } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { UserService } from 'app/core/user/user.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { Organization } from 'app/entities/organization.model';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { iconsAsHTML } from 'app/utils/icons.utils';
-import { UserService } from 'app/core/user/user.service';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { Observable, Subject, Subscription, of } from 'rxjs';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 const cssClasses = {
     alreadyMember: 'already-member',

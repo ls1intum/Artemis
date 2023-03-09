@@ -1,19 +1,19 @@
-import { Component, OnInit } from '@angular/core';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
-import { GradeStep } from 'app/entities/grade-step.model';
-import { ActivatedRoute } from '@angular/router';
-import { EntityResponseType, GradingSystemService } from 'app/grading-system/grading-system.service';
-import { ButtonSize } from 'app/shared/components/button.component';
-import { Observable, Subject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { catchError, finalize } from 'rxjs/operators';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { faExclamationTriangle, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { GradeStep } from 'app/entities/grade-step.model';
+import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { EntityResponseType, GradingSystemService } from 'app/grading-system/grading-system.service';
+import { ButtonSize } from 'app/shared/components/button.component';
 import { ExportToCsv } from 'export-to-csv';
-import { faExclamationTriangle, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { Observable, Subject, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 
 const csvColumnsGrade = Object.freeze({
     gradeName: 'gradeName',

@@ -1,20 +1,20 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { Subscription, forkJoin } from 'rxjs';
-import { tap } from 'rxjs/operators';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { faClipboard } from '@fortawesome/free-solid-svg-icons';
+import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs/esm';
-import { AccountService } from 'app/core/auth/account.service';
-import { onError } from 'app/shared/util/global.utils';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { faClipboard } from '@fortawesome/free-solid-svg-icons';
+import { onError } from 'app/shared/util/global.utils';
+import dayjs from 'dayjs/esm';
+import { Subscription, forkJoin } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exam-assessment-buttons',

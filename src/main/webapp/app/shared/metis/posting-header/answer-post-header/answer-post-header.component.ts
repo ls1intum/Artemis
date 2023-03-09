@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-header.directive';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { CourseWideContext } from '../../metis.util';
 import { faCheck, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-header.directive';
 import dayjs from 'dayjs/esm';
+import { CourseWideContext } from '../../metis.util';
 
 @Component({
     selector: 'jhi-answer-post-header',

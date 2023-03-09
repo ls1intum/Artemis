@@ -1,4 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faSquare, faSquareCheck } from '@fortawesome/free-regular-svg-icons';
 import {
     faDownload,
     faFile,
@@ -14,10 +16,8 @@ import {
     faFileWord,
 } from '@fortawesome/free-solid-svg-icons';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { FileService } from 'app/shared/http/file.service';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
-import { faSquare, faSquareCheck } from '@fortawesome/free-regular-svg-icons';
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { FileService } from 'app/shared/http/file.service';
 
 @Component({
     selector: 'jhi-attachment-unit',

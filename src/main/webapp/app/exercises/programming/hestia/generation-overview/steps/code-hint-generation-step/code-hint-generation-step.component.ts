@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { faWrench } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { CodeHint } from 'app/entities/hestia/code-hint-model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
 
 @Component({
     selector: 'jhi-code-hint-generation-step',

@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { faSquare, faSquareCheck } from '@fortawesome/free-regular-svg-icons';
 import { faVideo } from '@fortawesome/free-solid-svg-icons';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
-import urlParser from 'js-video-url-parser';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
-import { faSquare, faSquareCheck } from '@fortawesome/free-regular-svg-icons';
+import urlParser from 'js-video-url-parser';
 
 @Component({
     selector: 'jhi-video-unit',

@@ -1,25 +1,25 @@
-import { APP_INITIALIZER, ErrorHandler, LOCALE_ID, NgModule } from '@angular/core';
 import { DatePipe, registerLocaleData } from '@angular/common';
 import { HTTP_INTERCEPTORS, HttpClient, HttpClientModule } from '@angular/common/http';
+import locale from '@angular/common/locales/en';
+import { APP_INITIALIZER, ErrorHandler, LOCALE_ID, NgModule } from '@angular/core';
 import { Title } from '@angular/platform-browser';
+import { Router } from '@angular/router';
+import { NgbDateAdapter, NgbDatepickerConfig, NgbTooltipConfig } from '@ng-bootstrap/ng-bootstrap';
+import { MissingTranslationHandler, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TraceService } from '@sentry/angular';
+import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
+import { ArtemisVersionInterceptor, WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
+import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
-import { NgbDateAdapter, NgbDatepickerConfig, NgbTooltipConfig } from '@ng-bootstrap/ng-bootstrap';
-import { NgxWebstorageModule, SessionStorageService } from 'ngx-webstorage';
-import locale from '@angular/common/locales/en';
-import { MissingTranslationHandler, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
-import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
-import { ArtemisVersionInterceptor, WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
-import { missingTranslationHandler, translatePartialLoader } from './config/translation.config';
 import dayjs from 'dayjs/esm';
+import { NgxWebstorageModule, SessionStorageService } from 'ngx-webstorage';
+import { missingTranslationHandler, translatePartialLoader } from './config/translation.config';
 import './config/dayjs';
-import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { TraceService } from '@sentry/angular';
-import { Router } from '@angular/router';
 
 @NgModule({
     imports: [

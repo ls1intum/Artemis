@@ -1,10 +1,10 @@
 import { Component, Input, ViewContainerRef, ViewEncapsulation } from '@angular/core';
-import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { FormBuilder, Validators } from '@angular/forms';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { MetisService } from 'app/shared/metis/metis.service';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
+import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
 
 @Component({
     selector: 'jhi-answer-post-create-edit-modal',

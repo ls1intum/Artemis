@@ -1,11 +1,11 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
-import { GraphColors, Graphs } from 'app/entities/statistics.model';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
-import * as shape from 'd3-shape';
+import { GraphColors, Graphs } from 'app/entities/statistics.model';
 import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
+import * as shape from 'd3-shape';
 
 @Component({
     selector: 'jhi-course-management-overview-statistics',

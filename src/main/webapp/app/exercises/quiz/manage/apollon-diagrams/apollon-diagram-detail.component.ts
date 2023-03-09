@@ -1,16 +1,16 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { faDownload, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { AlertService } from 'app/core/util/alert.service';
+import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
+import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/apollon-quiz-exercise-generation.component';
 import { convertRenderedSVGToPNG } from './exercise-generation/svg-renderer';
-import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
-import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
-import { AlertService } from 'app/core/util/alert.service';
-import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
-import { TranslateService } from '@ngx-translate/core';
-import { faDownload, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',

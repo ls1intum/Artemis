@@ -1,17 +1,17 @@
 import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation, forwardRef } from '@angular/core';
-import { Command } from 'app/shared/markdown-editor/commands/command';
-import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
-import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
-import { ReferenceCommand } from 'app/shared/markdown-editor/commands/reference.command';
-import { UnderlineCommand } from 'app/shared/markdown-editor/commands/underline.command';
-import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
-import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
-import { LinkCommand } from 'app/shared/markdown-editor/commands/link.command';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
+import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
+import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
+import { Command } from 'app/shared/markdown-editor/commands/command';
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
 import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
+import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
+import { LinkCommand } from 'app/shared/markdown-editor/commands/link.command';
+import { ReferenceCommand } from 'app/shared/markdown-editor/commands/reference.command';
+import { UnderlineCommand } from 'app/shared/markdown-editor/commands/underline.command';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
+import { MetisService } from 'app/shared/metis/metis.service';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',

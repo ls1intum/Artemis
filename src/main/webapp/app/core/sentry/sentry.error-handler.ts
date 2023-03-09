@@ -2,8 +2,8 @@ import { ErrorHandler, Injectable } from '@angular/core';
 import { captureException, init, instrumentAngularRouting } from '@sentry/angular';
 import { BrowserTracing } from '@sentry/tracing';
 import { VERSION } from 'app/app.constants';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ArtemisDeduplicate } from 'app/core/sentry/deduplicate.sentry-integration';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 @Injectable({ providedIn: 'root' })
 export class SentryErrorHandler extends ErrorHandler {

@@ -1,12 +1,12 @@
 import { Component, Input } from '@angular/core';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Course } from 'app/entities/course.model';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { getAsGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 
 export enum ConversationDetailTabs {
     MEMBERS = 'members',

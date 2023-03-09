@@ -1,21 +1,21 @@
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { User } from 'app/core/user/user.model';
-import { Course, CourseGroup } from 'app/entities/course.model';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Observable, of } from 'rxjs';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { User } from 'app/core/user/user.model';
 import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/registered-students/registered-students.component';
+import { Course, CourseGroup } from 'app/entities/course.model';
 import { TutorialGroupRegistration, TutorialGroupRegistrationType } from 'app/entities/tutorial-group/tutorial-group-registration.model';
-import { ArtemisTestModule } from '../../../../test.module';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { Observable, of } from 'rxjs';
 import { LoadingIndicatorContainerStubComponent } from '../../../../helpers/stubs/loading-indicator-container-stub.component';
+import { ArtemisTestModule } from '../../../../test.module';
 
 @Component({ selector: 'jhi-course-group', template: '' })
 class CourseGroupStubComponent {

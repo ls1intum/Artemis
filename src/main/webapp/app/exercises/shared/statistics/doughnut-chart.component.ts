@@ -1,13 +1,13 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { ExerciseType } from 'app/entities/exercise.model';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { Course } from 'app/entities/course.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
+import { Course } from 'app/entities/course.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { GraphColors } from 'app/entities/statistics.model';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-doughnut-chart',

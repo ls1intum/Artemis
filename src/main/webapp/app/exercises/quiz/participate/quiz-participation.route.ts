@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 
-import { QuizParticipationComponent } from './quiz-participation.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { QuizParticipationComponent } from './quiz-participation.component';
 
 export const quizParticipationRoute: Routes = [
     {

@@ -1,18 +1,18 @@
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, ViewEncapsulation } from '@angular/core';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
+import { getDayTranslationKey } from 'app/course/tutorial-groups/shared/weekdays';
+import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
+import { Course } from 'app/entities/course.model';
+import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
+import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { onError } from 'app/shared/util/global.utils';
 import { EMPTY, Subject, from } from 'rxjs';
 import { catchError, finalize, map, takeUntil } from 'rxjs/operators';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import { Course } from 'app/entities/course.model';
-import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import { getDayTranslationKey } from 'app/course/tutorial-groups/shared/weekdays';
-import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
 
 @Component({
     selector: 'jhi-session-management',

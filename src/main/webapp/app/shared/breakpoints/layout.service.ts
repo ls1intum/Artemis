@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { BreakpointsService } from './breakpoints.service';
-import { map } from 'rxjs/operators';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { BreakpointsService } from './breakpoints.service';
 
 @Injectable({
     providedIn: 'root',

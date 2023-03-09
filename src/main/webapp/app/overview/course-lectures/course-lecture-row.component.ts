@@ -1,8 +1,8 @@
 import { Component, HostBinding, Input } from '@angular/core';
-import dayjs from 'dayjs/esm';
+import { faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-course-lecture-row',

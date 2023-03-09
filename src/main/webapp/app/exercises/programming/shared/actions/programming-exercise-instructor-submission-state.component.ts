@@ -1,12 +1,12 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { debounceTime, map, tap } from 'rxjs/operators';
-import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
-import { Subscription } from 'rxjs';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { faCircleNotch, faClock, faRedo } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise.utils';
 import { ButtonType } from 'app/shared/components/button.component';
-import { faCircleNotch, faClock, faRedo } from '@fortawesome/free-solid-svg-icons';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { Subscription } from 'rxjs';
+import { debounceTime, map, tap } from 'rxjs/operators';
 
 /**
  * This components provides two buttons to the instructor to interact with the students' submissions:

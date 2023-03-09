@@ -1,9 +1,9 @@
 import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { FeedbackConflict, FeedbackConflictType } from 'app/entities/feedback-conflict';
+import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 
 @Component({
     selector: 'jhi-text-assessment-area',

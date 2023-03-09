@@ -1,16 +1,22 @@
-import { Post } from 'app/entities/metis/post.model';
-import { PostService } from 'app/shared/metis/post.service';
-import { BehaviorSubject, Observable, ReplaySubject, map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { User } from 'app/core/user/user.model';
-import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/entities/course.model';
-import { Posting } from 'app/entities/metis/posting.model';
 import { Injectable, OnDestroy } from '@angular/core';
-import { AnswerPostService } from 'app/shared/metis/answer-post.service';
+import { Params } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Course } from 'app/entities/course.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { Lecture } from 'app/entities/lecture.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import { Post } from 'app/entities/metis/post.model';
+import { Posting } from 'app/entities/metis/posting.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { ReactionService } from 'app/shared/metis/reaction.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import {
     ContextInformation,
     CourseWideContext,
@@ -21,16 +27,10 @@ import {
     PostContextFilter,
     RouteComponents,
 } from 'app/shared/metis/metis.util';
-import { Exercise } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Params } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import { PostService } from 'app/shared/metis/post.service';
+import { ReactionService } from 'app/shared/metis/reaction.service';
 import dayjs from 'dayjs/esm';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
-import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { BehaviorSubject, Observable, ReplaySubject, map } from 'rxjs';
 
 @Injectable()
 export class MetisService implements OnDestroy {

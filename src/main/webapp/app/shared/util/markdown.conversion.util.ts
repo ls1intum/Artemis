@@ -1,7 +1,7 @@
-import showdown from 'showdown';
-import showdownKatex from 'showdown-katex';
-import showdownHighlight from 'showdown-highlight';
 import DOMPurify from 'dompurify';
+import showdown from 'showdown';
+import showdownHighlight from 'showdown-highlight';
+import showdownKatex from 'showdown-katex';
 
 /**
  * showdown will add the classes to the converted html

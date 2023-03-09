@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
 @Component({
     selector: 'jhi-file-upload-exercise-group-cell',

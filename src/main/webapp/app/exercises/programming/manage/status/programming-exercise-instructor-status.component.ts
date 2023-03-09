@@ -1,16 +1,16 @@
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
-import { Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { Result } from 'app/entities/result.model';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { Participation } from 'app/entities/participation/participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
-import { findLatestResult } from 'app/shared/util/utils';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Result } from 'app/entities/result.model';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { findLatestResult } from 'app/shared/util/utils';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-status',

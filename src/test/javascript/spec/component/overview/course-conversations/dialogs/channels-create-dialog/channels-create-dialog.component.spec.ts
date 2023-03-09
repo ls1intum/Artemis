@@ -1,13 +1,13 @@
+import { Component, EventEmitter, Output } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Course } from 'app/entities/course.model';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { ChannelFormData, ChannelType } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { Course } from 'app/entities/course.model';
-import { Component, EventEmitter, Output } from '@angular/core';
-import { ChannelFormData, ChannelType } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
-import { By } from '@angular/platform-browser';
-import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { initializeDialog } from '../dialog-test-helpers';
 
 @Component({

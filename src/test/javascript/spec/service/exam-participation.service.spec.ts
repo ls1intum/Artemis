@@ -1,24 +1,24 @@
-import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { take } from 'rxjs/operators';
-import dayjs from 'dayjs/esm';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
+import { GradeType } from 'app/entities/grading-scale.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { Result } from 'app/entities/result.model';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import dayjs from 'dayjs/esm';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { take } from 'rxjs/operators';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../test.module';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { Course } from 'app/entities/course.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { Result } from 'app/entities/result.model';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
-import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { GradeType } from 'app/entities/grading-scale.model';
 
 describe('Exam Participation Service', () => {
     let service: ExamParticipationService;

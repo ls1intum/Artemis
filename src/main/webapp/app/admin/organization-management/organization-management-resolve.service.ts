@@ -1,7 +1,7 @@
-import { Organization } from 'app/entities/organization.model';
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { Organization } from 'app/entities/organization.model';
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationManagementResolve implements Resolve<Organization> {

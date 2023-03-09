@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+import { faBan, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { faBan, faDownload } from '@fortawesome/free-solid-svg-icons';
 
 export enum CsvFieldSeparator {
     TAB = '\t',

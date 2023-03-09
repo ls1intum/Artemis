@@ -1,11 +1,11 @@
 import { ApplicationRef, Component, Input } from '@angular/core';
+import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
-import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
+import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',

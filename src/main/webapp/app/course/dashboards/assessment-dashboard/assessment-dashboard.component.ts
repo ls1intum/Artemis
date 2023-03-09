@@ -1,28 +1,28 @@
+import { HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { CourseManagementService } from '../../manage/course-management.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { User } from 'app/core/user/user.model';
+import { faClipboard, faHeartBroken, faSort, faTable } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from 'app/core/auth/account.service';
-import { HttpResponse } from '@angular/common/http';
-import { Exercise, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/entities/exercise.model';
-import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
-import { Course } from 'app/entities/course.model';
+import { User } from 'app/core/user/user.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
-import { FilterProp as TeamFilterProp } from 'app/exercises/shared/team/teams.component';
-import { SortService } from 'app/shared/service/sort.service';
+import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
+import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
+import { Exercise, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
-import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
-import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
-import { faClipboard, faHeartBroken, faSort, faTable } from '@fortawesome/free-solid-svg-icons';
+import { FilterProp as TeamFilterProp } from 'app/exercises/shared/team/teams.component';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
+import { SortService } from 'app/shared/service/sort.service';
+import { getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
+import { CourseManagementService } from '../../manage/course-management.service';
+import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 
 @Component({
     selector: 'jhi-assessment-dashboard',

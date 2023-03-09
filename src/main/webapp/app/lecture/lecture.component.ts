@@ -1,17 +1,17 @@
-import dayjs from 'dayjs/esm';
-import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { faFile, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService } from 'app/core/util/alert.service';
+import { Lecture } from 'app/entities/lecture.model';
+import { LectureImportComponent } from 'app/lecture/lecture-import.component';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { onError } from 'app/shared/util/global.utils';
+import dayjs from 'dayjs/esm';
+import { Subject } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { LectureService } from './lecture.service';
-import { Lecture } from 'app/entities/lecture.model';
-import { ActivatedRoute, Router } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/util/alert.service';
-import { faFile, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { LectureImportComponent } from 'app/lecture/lecture-import.component';
-import { Subject } from 'rxjs';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',

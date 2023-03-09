@@ -1,10 +1,10 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
-import { Course, Language } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
+import { Course, Language } from 'app/entities/course.model';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { TutorialGroupRegistration } from 'app/entities/tutorial-group/tutorial-group-registration.model';
 import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import { TutorialGroupRegistration } from 'app/entities/tutorial-group/tutorial-group-registration.model';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
 
 export class TutorialGroup implements BaseEntity {
     public id?: number;

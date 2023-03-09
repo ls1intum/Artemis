@@ -1,7 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Alert, AlertService } from 'app/core/util/alert.service';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { animate, group, style, transition, trigger } from '@angular/animations';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { Alert, AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-alert-overlay',

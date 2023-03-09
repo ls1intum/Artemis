@@ -1,15 +1,14 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { TutorEffort } from 'app/entities/tutor-effort.model';
+import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { createRequestOption } from 'app/shared/util/request.util';
-import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
-import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
-import { TutorEffort } from 'app/entities/tutor-effort.model';
-import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;

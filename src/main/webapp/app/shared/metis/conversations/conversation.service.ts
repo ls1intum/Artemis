@@ -1,17 +1,17 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import dayjs from 'dayjs/esm';
-import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
+import dayjs from 'dayjs/esm';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 type EntityArrayResponseType = HttpResponse<ConversationDto[]>;
 

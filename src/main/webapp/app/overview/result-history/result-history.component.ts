@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { Result } from 'app/entities/result.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { Result } from 'app/entities/result.model';
 import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 
 export const MAX_RESULT_HISTORY_LENGTH = 5;

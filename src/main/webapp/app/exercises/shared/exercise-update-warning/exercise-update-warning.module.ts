@@ -1,9 +1,9 @@
-import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { NgModule } from '@angular/core';
+import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
-import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @NgModule({
     declarations: [ExerciseUpdateWarningComponent],

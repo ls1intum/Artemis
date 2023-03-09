@@ -1,13 +1,13 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
-import { reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
-import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import { UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
-import { AlertService } from 'app/core/util/alert.service';
 import { faInfoCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { AlertService } from 'app/core/util/alert.service';
+import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
+import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
+import { UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
+import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 
 export enum NotificationSettingsCommunicationChannel {
     WEBAPP,

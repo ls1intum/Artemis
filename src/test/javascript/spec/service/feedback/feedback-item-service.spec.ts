@@ -1,8 +1,8 @@
-import { FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback } from 'app/entities/feedback.model';
-import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { FeedbackGroup, isFeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
+import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 
 describe('FeedbackItemService', () => {

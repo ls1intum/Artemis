@@ -1,23 +1,20 @@
-import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
-import dayjs from 'dayjs/esm';
-import { AccountService } from 'app/core/auth/account.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { Result } from 'app/entities/result.model';
-import { Complaint } from 'app/entities/complaint.model';
-import { ComplaintService } from 'app/complaints/complaint.service';
-import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { notUndefined, onError } from 'app/shared/util/global.utils';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess/text-submission-assessment.route';
-import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
+import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
+import { ComplaintService } from 'app/complaints/complaint.service';
+import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { Complaint } from 'app/entities/complaint.model';
+import { Course } from 'app/entities/course.model';
+import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/entities/result.model';
 import {
     getLatestSubmissionResult,
     getSubmissionResultByCorrectionRound,
@@ -25,15 +22,18 @@ import {
     setLatestSubmissionResult,
     setSubmissionResultByCorrectionRound,
 } from 'app/entities/submission.model';
-import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
-import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
-import { Course } from 'app/entities/course.model';
-import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess/text-submission-assessment.route';
+import { notUndefined, onError } from 'app/shared/util/global.utils';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-text-submission-assessment',

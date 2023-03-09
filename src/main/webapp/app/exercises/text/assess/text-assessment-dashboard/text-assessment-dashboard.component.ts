@@ -1,22 +1,22 @@
+import { HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
-import { HttpResponse } from '@angular/common/http';
-import { Result } from 'app/entities/result.model';
-import { TextAssessmentService } from '../text-assessment.service';
-import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { SortService } from 'app/shared/service/sort.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { map } from 'rxjs/operators';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/entities/result.model';
+import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
 import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tutor/abstract-assessment-dashboard';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
+import { SortService } from 'app/shared/service/sort.service';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { map } from 'rxjs/operators';
+import { TextAssessmentService } from '../text-assessment.service';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',

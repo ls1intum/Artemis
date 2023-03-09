@@ -1,10 +1,10 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { SolutionEntryComponent } from 'app/exercises/shared/exercise-hint/shared/solution-entry.component';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
-import { SolutionEntryComponent } from 'app/exercises/shared/exercise-hint/shared/solution-entry.component';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('Solution Entry Component', () => {
     let comp: SolutionEntryComponent;

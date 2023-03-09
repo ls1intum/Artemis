@@ -1,8 +1,8 @@
-import { of } from 'rxjs';
-import { Course } from 'app/entities/course.model';
 import { IAccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
+import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { of } from 'rxjs';
 
 export class MockAccountService implements IAccountService {
     identity = () => Promise.resolve({ id: 99 } as User);

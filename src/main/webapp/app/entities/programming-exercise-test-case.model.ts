@@ -1,6 +1,6 @@
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 export enum Visibility {
     Always = 'ALWAYS',

@@ -1,5 +1,5 @@
-import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 
 /**
  * UserSettingsStructures represent one entire displayable settings page with detailed information like descriptions, etc.

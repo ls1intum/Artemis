@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { Observable, Subject, combineLatest, merge, of } from 'rxjs';
+import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
-import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team } from 'app/entities/team.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { cloneDeep } from 'lodash-es';
-import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { Observable, Subject, combineLatest, merge, of } from 'rxjs';
+import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-team-owner-search',

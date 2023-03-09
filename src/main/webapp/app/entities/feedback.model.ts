@@ -1,8 +1,8 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
+import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { FeedbackConflict } from 'app/entities/feedback-conflict';
+import { BaseEntity } from 'app/shared/model/base-entity';
 import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
 
 export enum FeedbackHighlightColor {

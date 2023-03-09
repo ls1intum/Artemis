@@ -1,9 +1,9 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
-import { Reaction } from 'app/entities/metis/reaction.model';
-import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { faSmile } from '@fortawesome/free-regular-svg-icons';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Reaction } from 'app/entities/metis/reaction.model';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 
 @Component({
     selector: 'jhi-answer-post-reactions-bar',

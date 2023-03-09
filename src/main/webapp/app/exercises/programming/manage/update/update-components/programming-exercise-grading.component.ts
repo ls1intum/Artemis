@@ -1,10 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
-import { TranslateService } from '@ngx-translate/core';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { GradingStepInputs } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
 
 @Component({

@@ -1,11 +1,11 @@
-import dayjs from 'dayjs/esm';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { dayjsToString } from '../../../support/utils';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import dayjs from 'dayjs/esm';
+import { courseManagementRequest, modelingExerciseAssessment, modelingExerciseCreation, modelingExerciseEditor } from '../../../support/artemis';
 import { MODELING_EDITOR_CANVAS } from '../../../support/pageobjects/exercises/modeling/ModelingEditor';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { courseManagementRequest, modelingExerciseAssessment, modelingExerciseCreation, modelingExerciseEditor } from '../../../support/artemis';
 import { admin, instructor, studentOne } from '../../../support/users';
+import { dayjsToString } from '../../../support/utils';
 
 // Common primitives
 let course: Course;

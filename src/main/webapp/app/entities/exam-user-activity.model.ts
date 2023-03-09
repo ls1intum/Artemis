@@ -1,5 +1,5 @@
-import dayjs from 'dayjs/esm';
 import { BaseEntity } from 'app/shared/model/base-entity';
+import dayjs from 'dayjs/esm';
 
 /**
  * Defines the available actions a student can perform.

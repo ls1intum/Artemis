@@ -1,15 +1,15 @@
-import { ArtemisTestModule } from '../../test.module';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { BarChartModule } from '@swimlane/ngx-charts';
+import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('Test case distribution chart', () => {
     const programmingExercise = new ProgrammingExercise(undefined, undefined);

@@ -1,13 +1,13 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
+import { downloadStream } from 'app/shared/util/download.util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { createRequestOption } from 'app/shared/util/request.util';
-import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
-import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
-import { downloadStream } from 'app/shared/util/download.util';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;

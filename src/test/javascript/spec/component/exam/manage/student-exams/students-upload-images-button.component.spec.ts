@@ -1,12 +1,12 @@
-import { StudentsUploadImagesButtonComponent } from 'app/exam/manage/students/upload-images/students-upload-images-button.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
-import { TranslateModule } from '@ngx-translate/core';
-import { Exam } from 'app/entities/exam.model';
 import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateModule } from '@ngx-translate/core';
+import { AlertService } from 'app/core/util/alert.service';
+import { Exam } from 'app/entities/exam.model';
+import { StudentsUploadImagesButtonComponent } from 'app/exam/manage/students/upload-images/students-upload-images-button.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
+import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 
 describe('StudentsUploadImagesButtonComponent', () => {
     let fixture: ComponentFixture<StudentsUploadImagesButtonComponent>;

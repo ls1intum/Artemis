@@ -1,13 +1,13 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Team } from 'app/entities/team.model';
-import { TeamService } from 'app/exercises/shared/team/team.service';
-import { Exercise } from 'app/entities/exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { User } from 'app/core/user/user.model';
-import { ButtonSize } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { Exercise } from 'app/entities/exercise.model';
+import { Team } from 'app/entities/team.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { TeamService } from 'app/exercises/shared/team/team.service';
+import { ButtonSize } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-team',

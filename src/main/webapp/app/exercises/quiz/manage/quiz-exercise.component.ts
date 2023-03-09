@@ -1,22 +1,22 @@
-import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
-import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
-import { QuizExerciseService } from './quiz-exercise.service';
-import { AccountService } from 'app/core/auth/account.service';
+import { Component, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
-import { TranslateService } from '@ngx-translate/core';
+import { faEye, faFileExport, faPlayCircle, faPlus, faSignal, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { SortService } from 'app/shared/service/sort.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faEye, faFileExport, faPlayCircle, faPlus, faSignal, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
+import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { SortService } from 'app/shared/service/sort.service';
+import { QuizExerciseService } from './quiz-exercise.service';
 
 @Component({
     selector: 'jhi-quiz-exercise',

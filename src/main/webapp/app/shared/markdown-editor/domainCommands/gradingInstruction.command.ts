@@ -1,10 +1,10 @@
-import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/domainTag.command';
-import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
-import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
 import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
-import { addTextAtCursor } from 'app/shared/util/markdown.util';
+import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/domainTag.command';
+import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
 import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
 import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
+import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
+import { addTextAtCursor } from 'app/shared/util/markdown.util';
 
 export class GradingInstructionCommand extends DomainTagCommand {
     creditsCommand = new CreditsCommand();

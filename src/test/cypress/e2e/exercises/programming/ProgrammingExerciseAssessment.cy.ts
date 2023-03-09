@@ -1,7 +1,6 @@
-import { Interception } from 'cypress/types/net-stubbing';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { CypressAssessmentType, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Interception } from 'cypress/types/net-stubbing';
 import dayjs from 'dayjs/esm';
 import {
     courseAssessment,
@@ -13,6 +12,7 @@ import {
     programmingExerciseEditor,
     programmingExerciseFeedback,
 } from '../../../support/artemis';
+import { CypressAssessmentType, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
 
 describe('Programming exercise assessment', () => {

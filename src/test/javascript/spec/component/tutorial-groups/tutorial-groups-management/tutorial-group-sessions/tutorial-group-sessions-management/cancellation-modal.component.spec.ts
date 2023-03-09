@@ -1,17 +1,17 @@
+import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService } from 'app/core/util/alert.service';
+import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
+import { CancellationModalComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/cancellation-modal/cancellation-modal.component';
+import { Course } from 'app/entities/course.model';
+import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
-import { CancellationModalComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/cancellation-modal/cancellation-modal.component';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGroupSessionExampleModels';
-import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
-import { Course } from 'app/entities/course.model';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
+import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGroupSessionExampleModels';
 
 describe('CancellationModalComponent', () => {
     let fixture: ComponentFixture<CancellationModalComponent>;

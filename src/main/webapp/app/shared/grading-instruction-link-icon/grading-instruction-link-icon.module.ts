@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @NgModule({
     imports: [ArtemisSharedModule],

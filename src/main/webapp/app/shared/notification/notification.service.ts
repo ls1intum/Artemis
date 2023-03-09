@@ -1,14 +1,13 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, ReplaySubject } from 'rxjs';
-import dayjs from 'dayjs/esm';
-import { map } from 'rxjs/operators';
+import { Injectable } from '@angular/core';
 
-import { createRequestOption } from 'app/shared/util/request.util';
 import { Params, Router, UrlSerializer } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { TutorialGroupsNotificationService } from 'app/course/tutorial-groups/services/tutorial-groups-notification.service';
+import { Course } from 'app/entities/course.model';
 import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification.model';
 import {
     NEW_ANNOUNCEMENT_POST_TITLE,
@@ -20,14 +19,15 @@ import {
     NEW_REPLY_FOR_LECTURE_POST_TITLE,
     Notification,
 } from 'app/entities/notification.model';
-import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { RouteComponents } from 'app/shared/metis/metis.util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import { TutorialGroupsNotificationService } from 'app/course/tutorial-groups/services/tutorial-groups-notification.service';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import dayjs from 'dayjs/esm';
+import { Observable, ReplaySubject } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {

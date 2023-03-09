@@ -1,10 +1,10 @@
+import { HttpResponse } from '@angular/common/http';
 import { EntityResponseType, EntityResponseTypeArray, IComplaintService } from 'app/complaints/complaint.service';
 import { User } from 'app/core/user/user.model';
-import { Result } from 'app/entities/result.model';
-import { Observable, of } from 'rxjs';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { HttpResponse } from '@angular/common/http';
+import { Result } from 'app/entities/result.model';
+import { Observable, of } from 'rxjs';
 
 const complaintObject: Complaint = {
     complaintType: ComplaintType.COMPLAINT,

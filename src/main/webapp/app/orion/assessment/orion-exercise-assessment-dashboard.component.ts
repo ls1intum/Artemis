@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { Submission } from 'app/entities/submission.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Submission } from 'app/entities/submission.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { ActivatedRoute } from '@angular/router';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { onError } from 'app/shared/util/global.utils';
-import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 
 @Component({
     selector: 'jhi-orion-exercise-assessment-dashboard',

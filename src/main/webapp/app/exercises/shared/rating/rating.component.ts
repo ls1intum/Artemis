@@ -1,10 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Rating } from 'app/entities/rating.model';
+import { Result } from 'app/entities/result.model';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
-import { Result } from 'app/entities/result.model';
-import { Rating } from 'app/entities/rating.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-rating',

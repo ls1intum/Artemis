@@ -1,25 +1,25 @@
+import { Location } from '@angular/common';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
+import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { Location } from '@angular/common';
 
-import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { FeedbackConflict } from 'app/entities/feedback-conflict';
+import { Result } from 'app/entities/result.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { Result } from 'app/entities/result.model';
-import { FeedbackConflict } from 'app/entities/feedback-conflict';
-import { AccountService } from 'app/core/auth/account.service';
+import { TextSubmission } from 'app/entities/text-submission.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 
-import interact from 'interactjs';
 import dayjs from 'dayjs/esm';
+import interact from 'interactjs';
 import { lastValueFrom } from 'rxjs';
-import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-text-feedback-conflicts',

@@ -1,12 +1,4 @@
 import { ChangeDetectionStrategy, Component, Input, OnChanges } from '@angular/core';
-import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import dayjs from 'dayjs/esm';
-import { ExerciseRowType } from 'app/course/manage/overview/course-management-exercise-row.component';
-import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
-import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
-import { Course } from 'app/entities/course.model';
-import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import {
     faAngleDown,
     faAngleUp,
@@ -21,7 +13,15 @@ import {
     faTable,
     faUserCheck,
 } from '@fortawesome/free-solid-svg-icons';
+import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
+import { ExerciseRowType } from 'app/course/manage/overview/course-management-exercise-row.component';
+import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
+import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
+import { Course } from 'app/entities/course.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { CachingStrategy } from 'app/shared/image/secured-image.component';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-course-management-card',

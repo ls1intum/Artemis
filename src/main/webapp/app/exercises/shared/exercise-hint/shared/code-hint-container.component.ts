@@ -1,11 +1,10 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Subject } from 'rxjs';
-
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { CodeHint } from 'app/entities/hestia/code-hint-model';
-import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { CodeHint } from 'app/entities/hestia/code-hint-model';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
+import { Subject } from 'rxjs';
 
 /**
  * Component containing the solution entries for a {@link CodeHint}.

@@ -1,14 +1,14 @@
+import { HttpResponse } from '@angular/common/http';
 import { Component, Input, OnInit } from '@angular/core';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { catchError, tap } from 'rxjs/operators';
-import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { SubmissionExportOptions, SubmissionExportService } from './submission-export.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { of } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
+import { SubmissionExportOptions, SubmissionExportService } from './submission-export.service';
 
 @Component({
     selector: 'jhi-exercise-submission-export-dialog',

@@ -1,5 +1,5 @@
-import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
+import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 
 describe('QuizManageUtil', () => {
     let quizExercise: QuizExercise;

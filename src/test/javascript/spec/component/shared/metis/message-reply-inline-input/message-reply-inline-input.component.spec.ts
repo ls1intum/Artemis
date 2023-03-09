@@ -1,15 +1,15 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { MockModule, MockPipe } from 'ng-mocks';
-import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
-import { directMessageUser1, metisPostToCreateUser1 } from '../../../../helpers/sample/metis-sample-data';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/message-reply-inline-input/message-reply-inline-input.component';
-import { throwError } from 'rxjs';
-import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockModule, MockPipe } from 'ng-mocks';
 import { LocalStorageService } from 'ngx-webstorage';
+import { throwError } from 'rxjs';
+import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
+import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
+import { directMessageUser1, metisPostToCreateUser1 } from '../../../../helpers/sample/metis-sample-data';
 
 describe('MessageReplyInlineInputComponent', () => {
     let component: MessageReplyInlineInputComponent;

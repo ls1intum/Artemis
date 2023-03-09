@@ -1,22 +1,22 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, Subscription } from 'rxjs';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Exam } from 'app/entities/exam.model';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/util/alert.service';
-import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { SortService } from 'app/shared/service/sort.service';
-import { ExamInformationDTO } from 'app/entities/exam-information.model';
-import dayjs from 'dayjs/esm';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { faClipboard, faEye, faListAlt, faPlus, faSort, faThList, faTimes, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
+import { ExamInformationDTO } from 'app/entities/exam-information.model';
+import { Exam } from 'app/entities/exam.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { SortService } from 'app/shared/service/sort.service';
+import { onError } from 'app/shared/util/global.utils';
+import dayjs from 'dayjs/esm';
+import { Subject, Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-exam-management',

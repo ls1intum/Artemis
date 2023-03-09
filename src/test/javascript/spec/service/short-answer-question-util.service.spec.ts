@@ -1,12 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
-import { ArtemisTestModule } from '../test.module';
-import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
+import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
+import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
+import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { cloneDeep } from 'lodash-es';
+import { ArtemisTestModule } from '../test.module';
 
 describe('ShortAnswerQuestionUtil', () => {
     let service: ShortAnswerQuestionUtil;

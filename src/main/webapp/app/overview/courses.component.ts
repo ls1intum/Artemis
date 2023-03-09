@@ -1,23 +1,23 @@
-import { Component, OnChanges, OnDestroy, OnInit } from '@angular/core';
-import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from '../course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { Component, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { TeamService } from 'app/exercises/shared/team/team.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { Exercise } from 'app/entities/exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { TeamService } from 'app/exercises/shared/team/team.service';
-import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import dayjs from 'dayjs/esm';
-import { Exam } from 'app/entities/exam.model';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Router } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { CourseManagementService } from '../course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-overview',

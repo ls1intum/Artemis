@@ -1,17 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { ThemeService } from 'app/core/theme/theme.service';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
-import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
-import { ArtemisNavigationUtilService, findParamInRouteHierarchy } from 'app/utils/navigation.utils';
-import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
-import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
-import { ThemeService } from 'app/core/theme/theme.service';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
-import { map } from 'rxjs/operators';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
+import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
+import { ArtemisNavigationUtilService, findParamInRouteHierarchy } from 'app/utils/navigation.utils';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-grade-key-overview',

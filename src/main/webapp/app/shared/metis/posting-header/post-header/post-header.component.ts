@@ -1,11 +1,11 @@
 import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
-import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-header.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { CourseWideContext } from '../../metis.util';
-import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-header.directive';
 import dayjs from 'dayjs/esm';
+import { CourseWideContext } from '../../metis.util';
 
 @Component({
     selector: 'jhi-post-header',

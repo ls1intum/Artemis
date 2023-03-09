@@ -1,10 +1,10 @@
-import { Interception } from 'cypress/types/net-stubbing';
 import { Course } from 'app/entities/course.model';
-import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { Interception } from 'cypress/types/net-stubbing';
 import dayjs from 'dayjs/esm';
-import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import { courseManagement, courseManagementRequest, examCreation, examDetails, examManagement, navigationBar } from '../../support/artemis';
+import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin } from '../../support/users';
+import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
 
 // Common primitives
 const examData = {

@@ -1,15 +1,15 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { LearningGoal, LearningGoalProgress, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
-import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { onError } from 'app/shared/util/global.utils';
-import { HttpErrorResponse } from '@angular/common/http';
-import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import { AlertService } from 'app/core/util/alert.service';
+import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+import { LearningGoal, LearningGoalProgress, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
+import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
+import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-course-learning-goals-details',

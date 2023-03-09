@@ -1,5 +1,5 @@
-import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { BaseEntityWithTempId, CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
+import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 
 export class ShortAnswerSpot extends BaseEntityWithTempId implements CanBecomeInvalid {
     public width?: number;

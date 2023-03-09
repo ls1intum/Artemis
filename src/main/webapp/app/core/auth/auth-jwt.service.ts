@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Injectable } from '@angular/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { Observable, of } from 'rxjs';
 
 export class Credentials {
     constructor(public username: string, public password: string, public rememberMe: boolean) {}

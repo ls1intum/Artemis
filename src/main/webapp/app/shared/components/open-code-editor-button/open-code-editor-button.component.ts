@@ -1,9 +1,9 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-open-code-editor-button',

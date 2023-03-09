@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { PrivacyComponent } from 'app/core/legal/privacy.component';
 import { ImprintComponent } from 'app/core/legal/imprint.component';
+import { PrivacyComponent } from 'app/core/legal/privacy.component';
 
 const routes: Routes = [
     {

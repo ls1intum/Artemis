@@ -1,16 +1,16 @@
 import { Injectable } from '@angular/core';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { filter, map, tap } from 'rxjs/operators';
-import { Observable, Subject, Subscription } from 'rxjs';
-import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
-import { Participation } from 'app/entities/participation/participation.model';
 import { BuildLogEntryArray } from 'app/entities/build-log.model';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
-import { Result } from 'app/entities/result.model';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { Feedback } from 'app/entities/feedback.model';
+import { Participation } from 'app/entities/participation/participation.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { Result } from 'app/entities/result.model';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { Observable, Subject, Subscription } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
 
 /**
  * Notifies the IDE about a result, that is currently building and forwards incoming test results.

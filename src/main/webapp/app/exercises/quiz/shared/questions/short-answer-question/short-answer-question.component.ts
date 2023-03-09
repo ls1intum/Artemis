@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
-import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
-import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
-import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
+import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
+import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
+import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
+import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.constants';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 @Component({
     selector: 'jhi-short-answer-question',

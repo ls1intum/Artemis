@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @NgModule({
     imports: [ArtemisSharedModule],

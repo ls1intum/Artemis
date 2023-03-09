@@ -1,11 +1,11 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
-import { Observable, Subscription, map, startWith } from 'rxjs';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
+import { AfterContentChecked, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { MatChipInputEvent } from '@angular/material/chips';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { MatChipInputEvent } from '@angular/material/chips';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { Observable, Subscription, map, startWith } from 'rxjs';
 
 @Component({
     selector: 'jhi-post-tag-selector',

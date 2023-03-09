@@ -1,13 +1,13 @@
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AlertService } from 'app/core/util/alert.service';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { OnlineUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
-import { ActivatedRoute, Router } from '@angular/router';
 import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
-import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { finalize, switchMap, take } from 'rxjs/operators';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { combineLatest } from 'rxjs';
+import { finalize, switchMap, take } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-edit-online-unit',

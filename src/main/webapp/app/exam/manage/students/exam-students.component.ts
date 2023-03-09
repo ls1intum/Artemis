@@ -1,22 +1,22 @@
-import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExamUser } from 'app/entities/exam-user.model';
-import { Observable, Subject, Subscription, of } from 'rxjs';
+import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { faCheck, faInfoCircle, faPlus, faUpload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { UserService } from 'app/core/user/user.service';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { iconsAsHTML } from 'app/utils/icons.utils';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { ExamUser } from 'app/entities/exam-user.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
-import { faCheck, faInfoCircle, faPlus, faUpload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { iconsAsHTML } from 'app/utils/icons.utils';
 import dayjs from 'dayjs/esm';
+import { Observable, Subject, Subscription, of } from 'rxjs';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',

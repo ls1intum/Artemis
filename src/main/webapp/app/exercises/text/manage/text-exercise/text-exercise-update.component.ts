@@ -1,28 +1,28 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { TextExerciseService } from './text-exercise.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ExerciseMode, IncludedInOverallScore, resetDates } from 'app/entities/exercise.model';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
-import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
-import { switchMap, tap } from 'rxjs/operators';
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { cloneDeep } from 'lodash-es';
-import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { onError } from 'app/shared/util/global.utils';
-import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseMode, IncludedInOverallScore, resetDates } from 'app/entities/exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
+import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
+import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
+import { onError } from 'app/shared/util/global.utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { cloneDeep } from 'lodash-es';
+import { switchMap, tap } from 'rxjs/operators';
+import { TextExerciseService } from './text-exercise.service';
 
 @Component({
     selector: 'jhi-text-exercise-update',

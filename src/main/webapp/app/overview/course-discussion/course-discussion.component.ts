@@ -1,18 +1,18 @@
+import { HttpResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute, Params } from '@angular/router';
-import { CourseWideContext, PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
-import { Subscription, combineLatest } from 'rxjs';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
-import { FormBuilder } from '@angular/forms';
-import { HttpResponse } from '@angular/common/http';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { CourseWideContext, PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { Subscription, combineLatest } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-discussion',

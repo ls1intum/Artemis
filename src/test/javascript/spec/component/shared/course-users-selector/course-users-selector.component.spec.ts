@@ -1,18 +1,18 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/shared/course-users-selector/course-users-selector.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { Component, DebugElement, ViewChild } from '@angular/core';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { Component, DebugElement, ViewChild } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
+import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/shared/course-users-selector/course-users-selector.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
 
 @Component({
     template: `

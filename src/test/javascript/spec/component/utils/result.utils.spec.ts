@@ -1,12 +1,12 @@
-import { ResultTemplateStatus, getResultIconClass, getTextColorClass, getUnreferencedFeedback, isOnlyCompilationTested } from 'app/exercises/shared/result/result.utils';
-import { FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
-import { SubmissionExerciseType } from 'app/entities/submission.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
-import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
+import { ParticipationType } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
+import { SubmissionExerciseType } from 'app/entities/submission.model';
+import { ResultTemplateStatus, getResultIconClass, getTextColorClass, getUnreferencedFeedback, isOnlyCompilationTested } from 'app/exercises/shared/result/result.utils';
 
 describe('ResultUtils', () => {
     it('should filter out all non unreferenced feedbacks', () => {

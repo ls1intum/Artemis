@@ -1,5 +1,5 @@
-import { ShowdownExtension } from 'showdown';
 import { Observable } from 'rxjs';
+import { ShowdownExtension } from 'showdown';
 
 /**
  * The idea of this interface is to provide more information for an extension.

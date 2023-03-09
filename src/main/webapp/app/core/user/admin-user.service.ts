@@ -1,10 +1,9 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
-
-import { createRequestOption } from 'app/shared/util/request.util';
-import { User } from 'app/core/user/user.model';
+import { Injectable } from '@angular/core';
 import { UserFilter } from 'app/admin/user-management/user-management.component';
+import { User } from 'app/core/user/user.model';
+import { createRequestOption } from 'app/shared/util/request.util';
+import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class AdminUserService {

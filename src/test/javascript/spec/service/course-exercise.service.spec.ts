@@ -9,16 +9,16 @@ import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { of } from 'rxjs';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 describe('Course Management Service', () => {
     let service: CourseExerciseService;

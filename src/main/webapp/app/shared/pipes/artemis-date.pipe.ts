@@ -1,9 +1,9 @@
 import { OnDestroy, Pipe, PipeTransform } from '@angular/core';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
-import { Subscription } from 'rxjs';
-import dayjs from 'dayjs/esm';
 import { getDayTranslationKey } from 'app/course/tutorial-groups/shared/weekdays';
 import { dayOfWeekZeroSundayToZeroMonday } from 'app/utils/date.utils';
+import dayjs from 'dayjs/esm';
+import { Subscription } from 'rxjs';
 
 export const defaultLongDateTimeFormat = 'YYYY-MM-DD HH:mm:ss';
 

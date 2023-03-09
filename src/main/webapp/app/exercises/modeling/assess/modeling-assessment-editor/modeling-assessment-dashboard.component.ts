@@ -1,28 +1,28 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Subscription } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
-import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { ResultService } from 'app/exercises/shared/result/result.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { SortService } from 'app/shared/service/sort.service';
-import { Authority } from 'app/shared/constants/authority.constants';
-import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { Course } from 'app/entities/course.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
+import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tutor/abstract-assessment-dashboard';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ResultService } from 'app/exercises/shared/result/result.service';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { SortService } from 'app/shared/service/sort.service';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-assessment-dashboard',

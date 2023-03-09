@@ -1,21 +1,21 @@
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Exam } from 'app/entities/exam.model';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Observable } from 'rxjs';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { faBan, faCheckDouble, faExclamationTriangle, faFont, faSave } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/core/util/alert.service';
-import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import dayjs from 'dayjs/esm';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faBan, faCheckDouble, faExclamationTriangle, faFont, faSave } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-exam-update',

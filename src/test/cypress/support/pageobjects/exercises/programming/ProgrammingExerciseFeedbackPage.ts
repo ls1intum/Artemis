@@ -1,5 +1,5 @@
-import { OnlineEditorPage } from './OnlineEditorPage';
 import { AbstractExerciseFeedback } from '../AbstractExerciseFeedbackPage';
+import { OnlineEditorPage } from './OnlineEditorPage';
 
 /**
  * A class which encapsulates UI selectors and actions for a programming exercise feedback page.

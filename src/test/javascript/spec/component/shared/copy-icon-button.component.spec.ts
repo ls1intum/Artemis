@@ -1,10 +1,10 @@
+import { ClipboardModule } from '@angular/cdk/clipboard';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
-import { ClipboardModule } from '@angular/cdk/clipboard';
-import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('JhiCopyIconButtonComponent', () => {
     let component: CopyIconButtonComponent;

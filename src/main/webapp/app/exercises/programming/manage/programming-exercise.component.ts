@@ -1,29 +1,29 @@
-import { Component, ContentChild, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
-import { ProgrammingExerciseService } from './services/programming-exercise.service';
+import { Component, ContentChild, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
-import { TranslateService } from '@ngx-translate/core';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { onError } from 'app/shared/util/global.utils';
-import { AccountService } from 'app/core/auth/account.service';
+import { faBook, faCheckDouble, faDownload, faFileSignature, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { SortService } from 'app/shared/service/sort.service';
-import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
-import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
-import { faBook, faCheckDouble, faDownload, faFileSignature, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
+import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { SortService } from 'app/shared/service/sort.service';
+import { onError } from 'app/shared/util/global.utils';
+import { ProgrammingExerciseService } from './services/programming-exercise.service';
 
 @Component({
     selector: 'jhi-programming-exercise',

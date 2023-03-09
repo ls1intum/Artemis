@@ -1,18 +1,18 @@
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
-import { filter, tap } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
-import { head, orderBy } from 'lodash-es';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
-import { InitializationState, Participation } from 'app/entities/participation/participation.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { hasDeadlinePassed } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
-import { Result } from 'app/entities/result.model';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { SubmissionType } from 'app/entities/submission.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Result } from 'app/entities/result.model';
+import { SubmissionType } from 'app/entities/submission.model';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
+import { hasDeadlinePassed } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { head, orderBy } from 'lodash-es';
+import { Subscription } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).

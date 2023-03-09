@@ -1,19 +1,19 @@
 import { Component, Input, OnInit } from '@angular/core';
-import dayjs from 'dayjs/esm';
-import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { Exam } from 'app/entities/exam.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
-import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
+import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { Exam } from 'app/entities/exam.model';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
+import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { Result } from 'app/entities/result.model';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',

@@ -1,9 +1,9 @@
-import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { AlertService } from 'app/core/util/alert.service';
+import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { FeedbackCorrectionError } from 'app/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorParticipationService } from '../dashboards/tutor/tutor-participation.service';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
 
 export interface FeedbackMarker {
     markWrongFeedback(errors: FeedbackCorrectionError[]): void;

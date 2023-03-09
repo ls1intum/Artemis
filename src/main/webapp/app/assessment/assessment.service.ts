@@ -1,6 +1,6 @@
-import { Exercise } from 'app/entities/exercise.model';
-import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 
 /**

@@ -1,11 +1,11 @@
-import { Component, Input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Subject } from 'rxjs';
-import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { EventManager } from 'app/core/util/event-manager.service';
-import { faBook, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { Component, Input } from '@angular/core';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faBook, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-text-exercise-row-buttons',

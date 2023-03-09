@@ -1,11 +1,11 @@
 import { Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { TranslateService } from '@ngx-translate/core';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { GradeStep } from 'app/entities/grade-step.model';
+import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GraphColors } from 'app/entities/statistics.model';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 interface NgxClickEvent {
     name: string;

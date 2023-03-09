@@ -1,21 +1,21 @@
+import { HttpResponse } from '@angular/common/http';
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
-import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { Subscription } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
-import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
+import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-quiz-statistics-footer',

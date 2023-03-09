@@ -1,22 +1,22 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
+import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { PointCounter } from 'app/entities/quiz/point-counter.model';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { blueColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
-import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
-import { round } from 'app/shared/util/utils';
-import { QuizStatistics } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
-import { TranslateService } from '@ngx-translate/core';
-import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
+import { QuizStatistics } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
+import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { round } from 'app/shared/util/utils';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',

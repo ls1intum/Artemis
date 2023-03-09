@@ -1,12 +1,12 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ExerciseView, OrionState } from 'app/shared/orion/orion';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { Exercise } from 'app/entities/exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ExerciseView, OrionState } from 'app/shared/orion/orion';
+import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 
 @Component({
     selector: 'jhi-orion-exercise-details-student-actions',

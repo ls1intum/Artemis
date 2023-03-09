@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-import { LocalStorageService } from 'ngx-webstorage';
 import FingerprintJS, { GetResult } from '@fingerprintjs/fingerprintjs';
+import { LocalStorageService } from 'ngx-webstorage';
+import { BehaviorSubject } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 
 @Injectable({ providedIn: 'root' })

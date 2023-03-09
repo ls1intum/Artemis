@@ -1,5 +1,5 @@
-import { ModelingSubmissionElement } from './ModelingSubmissionElement';
 import { PlagiarismResult } from '../PlagiarismResult';
+import { ModelingSubmissionElement } from './ModelingSubmissionElement';
 
 /**
  * Result of the automatic plagiarism detection for modeling exercises.

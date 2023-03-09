@@ -1,26 +1,26 @@
-import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy, OnInit, QueryList, TemplateRef, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
-import { Course } from 'app/entities/course.model';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { CourseManagementService } from '../course/manage/course-management.service';
-import { ActivatedRoute } from '@angular/router';
-import { Subject, Subscription, forkJoin, takeUntil } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { TeamService } from 'app/exercises/shared/team/team.service';
-import { TeamAssignmentPayload } from 'app/entities/team.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import dayjs from 'dayjs/esm';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy, OnInit, QueryList, TemplateRef, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { faCircleNotch, faMessage, faSync } from '@fortawesome/free-solid-svg-icons';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
+import { Course } from 'app/entities/course.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { TeamAssignmentPayload } from 'app/entities/team.model';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { TeamService } from 'app/exercises/shared/team/team.service';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import dayjs from 'dayjs/esm';
+import { Subject, Subscription, forkJoin, takeUntil } from 'rxjs';
+import { CourseManagementService } from '../course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-course-overview',

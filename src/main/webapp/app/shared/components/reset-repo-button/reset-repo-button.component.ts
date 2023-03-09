@@ -1,14 +1,14 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faBackward } from '@fortawesome/free-solid-svg-icons';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercises/shared/exercise/exercise.utils';
-import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
+import { InitializationState } from 'app/entities/participation/participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercises/shared/exercise/exercise.utils';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-reset-repo-button',

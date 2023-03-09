@@ -1,7 +1,5 @@
-import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
-import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { generateUUID } from '../../../support/utils';
+import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import {
     courseManagement,
@@ -15,7 +13,9 @@ import {
     quizExerciseCreation,
     textExerciseCreation,
 } from '../../../support/artemis';
+import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne } from '../../../support/users';
+import { generateUUID } from '../../../support/utils';
 
 // Common primitives
 const uid = generateUUID();

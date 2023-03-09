@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { CodeHint, CodeHintGenerationStep } from 'app/entities/hestia/code-hint-model';
+import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-code-hint-generation-overview',

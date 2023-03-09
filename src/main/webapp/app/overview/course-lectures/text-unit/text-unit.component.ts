@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
+import { faSquare, faSquareCheck } from '@fortawesome/free-regular-svg-icons';
 import { faExternalLinkAlt, faScroll } from '@fortawesome/free-solid-svg-icons';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
-import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
-import { faSquare, faSquareCheck } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-text-unit',

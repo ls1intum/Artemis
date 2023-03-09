@@ -1,17 +1,17 @@
 import { ApollonEditor, SVG, UMLElementType, UMLModel, UMLModelElement, UMLRelationshipType } from '@ls1intum/apollon';
-import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
-import { convertRenderedSVGToPNG } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { lastValueFrom } from 'rxjs';
+import { ScoringType } from 'app/entities/quiz/quiz-question.model';
+import { convertRenderedSVGToPNG } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { round } from 'app/shared/util/utils';
+import dayjs from 'dayjs/esm';
+import { lastValueFrom } from 'rxjs';
 
 // Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
 export const MAX_SIZE_UNIT = 200;

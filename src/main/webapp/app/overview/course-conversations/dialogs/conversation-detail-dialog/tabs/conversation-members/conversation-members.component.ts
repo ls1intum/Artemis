@@ -1,19 +1,19 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { catchError, debounceTime, distinctUntilChanged, switchMap, takeUntil, tap } from 'rxjs/operators';
-import { AlertService } from 'app/core/util/alert.service';
-import { onError } from 'app/shared/util/global.utils';
-import { EMPTY, Subject, from, map } from 'rxjs';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { faMagnifyingGlass, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { AlertService } from 'app/core/util/alert.service';
+import { Course } from 'app/entities/course.model';
 import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { canAddUsersToConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { canAddUsersToConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { onError } from 'app/shared/util/global.utils';
+import { EMPTY, Subject, from, map } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, switchMap, takeUntil, tap } from 'rxjs/operators';
 
 interface SearchQuery {
     searchTerm: string;

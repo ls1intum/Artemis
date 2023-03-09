@@ -1,6 +1,6 @@
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
 export class FileUploadExercise extends Exercise {
     public filePattern?: string;

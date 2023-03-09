@@ -1,25 +1,25 @@
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { FileUploadExerciseService } from './file-upload-exercise.service';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseId, resetDates } from 'app/entities/exercise.model';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
-import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { cloneDeep } from 'lodash-es';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
-import { onError } from 'app/shared/util/global.utils';
-import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
 import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseId, resetDates } from 'app/entities/exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
+import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
+import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
+import { onError } from 'app/shared/util/global.utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { cloneDeep } from 'lodash-es';
 import { switchMap, tap } from 'rxjs/operators';
+import { FileUploadExerciseService } from './file-upload-exercise.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',

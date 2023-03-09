@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { Result } from 'app/entities/result.model';
+import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-assessment-progress-label',

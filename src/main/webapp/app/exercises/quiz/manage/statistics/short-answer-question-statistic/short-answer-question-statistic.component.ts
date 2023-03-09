@@ -1,18 +1,18 @@
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { ShortAnswerQuestionStatistic } from 'app/entities/quiz/short-answer-question-statistic.model';
+import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { QuestionStatisticComponent, blueColor, greenColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { ShortAnswerQuestionStatistic } from 'app/entities/quiz/short-answer-question-statistic.model';
-import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuestionStatisticComponent, blueColor, greenColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
-import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-short-answer-question-statistic',

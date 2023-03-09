@@ -1,13 +1,13 @@
-import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { Exam } from 'app/entities/exam.model';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
-import { Observable, filter, map, of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { Observable, filter, map, of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {

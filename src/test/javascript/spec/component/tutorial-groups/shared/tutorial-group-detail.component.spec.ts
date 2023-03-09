@@ -1,13 +1,13 @@
-import { TutorialGroupDetailComponent } from 'app/course/tutorial-groups/shared/tutorial-group-detail/tutorial-group-detail.component';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { Component, Input, ViewChild } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TutorialGroupDetailComponent } from 'app/course/tutorial-groups/shared/tutorial-group-detail/tutorial-group-detail.component';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
+import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
 class MockHeaderComponent {

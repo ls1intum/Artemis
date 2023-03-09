@@ -1,9 +1,9 @@
-import { RouterModule, Routes } from '@angular/router';
-import { ExerciseScoresComponent } from 'app/exercises/shared/exercise-scores/exercise-scores.component';
-import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { NgModule } from '@angular/core';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { RouterModule, Routes } from '@angular/router';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { exerciseTypes } from 'app/entities/exercise.model';
+import { ExerciseScoresComponent } from 'app/exercises/shared/exercise-scores/exercise-scores.component';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 const routes: Routes = [
     ...exerciseTypes.map((exerciseType) => {

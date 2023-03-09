@@ -1,9 +1,9 @@
-import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
-import { BaseEntity } from 'app/shared/model/base-entity';
+import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Result } from 'app/entities/result.model';
 import { Team } from 'app/entities/team.model';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
+import dayjs from 'dayjs/esm';
 
 export enum ComplaintType {
     COMPLAINT = 'COMPLAINT',

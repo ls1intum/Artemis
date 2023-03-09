@@ -1,19 +1,19 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService } from 'app/core/util/alert.service';
+import { Course } from 'app/entities/course.model';
 import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { Course } from 'app/entities/course.model';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
-import { onError } from 'app/shared/util/global.utils';
-import { EMPTY, Subject, from, takeUntil } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { canChangeChannelArchivalState, canDeleteChannel, canLeaveConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
-import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
-import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { onError } from 'app/shared/util/global.utils';
+import { EMPTY, Subject, from, takeUntil } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 @Component({

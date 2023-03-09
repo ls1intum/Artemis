@@ -1,18 +1,18 @@
+import { Location } from '@angular/common';
 import { Component, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Location } from '@angular/common';
+import { faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
-import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { CodeEditorInstructorBaseContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
-import { faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 
 @Component({
     selector: 'jhi-code-editor-instructor',

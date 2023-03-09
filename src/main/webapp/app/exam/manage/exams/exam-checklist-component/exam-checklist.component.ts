@@ -1,10 +1,10 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
-import { Exam } from 'app/entities/exam.model';
-import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ExamChecklist } from 'app/entities/exam-checklist.model';
+import { Exam } from 'app/entities/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 @Component({
     selector: 'jhi-exam-checklist',

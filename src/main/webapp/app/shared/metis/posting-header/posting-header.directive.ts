@@ -1,10 +1,10 @@
-import { Posting } from 'app/entities/metis/posting.model';
 import { Directive, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import dayjs from 'dayjs/esm';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
+import { Posting } from 'app/entities/metis/posting.model';
+import { MetisService } from 'app/shared/metis/metis.service';
 import { UserRole } from 'app/shared/metis/metis.util';
+import dayjs from 'dayjs/esm';
 
 @Directive()
 export abstract class PostingHeaderDirective<T extends Posting> implements OnInit {

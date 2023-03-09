@@ -1,7 +1,7 @@
 import { Component, ContentChild, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { faCircle } from '@fortawesome/free-solid-svg-icons';
-import { Subscription } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-connection-status',

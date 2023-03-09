@@ -1,5 +1,5 @@
-import { BASE_API, POST } from '../../constants';
 import { Dayjs } from 'dayjs/esm';
+import { BASE_API, POST } from '../../constants';
 
 export class LectureCreationPage {
     setTitle(title: string) {

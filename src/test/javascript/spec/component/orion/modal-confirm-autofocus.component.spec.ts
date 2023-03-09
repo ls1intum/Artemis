@@ -1,10 +1,10 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
-import { ModalConfirmAutofocusComponent } from 'app/shared/orion/modal-confirm-autofocus/modal-confirm-autofocus.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ModalConfirmAutofocusComponent } from 'app/shared/orion/modal-confirm-autofocus/modal-confirm-autofocus.component';
+import { MockProvider } from 'ng-mocks';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('ModalConfirmAutofocusComponent', () => {
     let fixture: ComponentFixture<ModalConfirmAutofocusComponent>;

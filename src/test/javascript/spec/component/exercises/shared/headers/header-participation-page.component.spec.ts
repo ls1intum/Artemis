@@ -1,20 +1,20 @@
 import { TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ParticipationType } from 'app/entities/participation/participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Result } from 'app/entities/result.model';
+import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
+import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
-import { ArtemisTestModule } from '../../../../test.module';
-import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
-import { Exam } from 'app/entities/exam.model';
-import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 import dayjs from 'dayjs/esm';
-import { Result } from 'app/entities/result.model';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { ArtemisTestModule } from '../../../../test.module';
 
 describe('HeaderParticipationPage', () => {
     let component: HeaderParticipationPageComponent;

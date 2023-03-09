@@ -1,22 +1,22 @@
 import { ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
-import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { CommitState, DomainType, EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import dayjs from 'dayjs/esm';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
-import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { CommitState, DomainType, EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
-import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
+import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import {
     CodeEditorBuildLogService,
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-programming-submission-exam',

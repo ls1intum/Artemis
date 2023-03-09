@@ -1,13 +1,13 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { Lecture } from 'app/entities/lecture.model';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { createRequestOption } from 'app/shared/util/request.util';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { createRequestOption } from 'app/shared/util/request.util';
-import { Lecture } from 'app/entities/lecture.model';
-import { AccountService } from 'app/core/auth/account.service';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
-import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 
 type EntityResponseType = HttpResponse<Lecture>;
 type EntityArrayResponseType = HttpResponse<Lecture[]>;

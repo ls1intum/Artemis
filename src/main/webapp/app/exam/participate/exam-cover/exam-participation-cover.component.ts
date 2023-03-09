@@ -1,18 +1,18 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { faArrowLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { Exam } from 'app/entities/exam.model';
-import { Course } from 'app/entities/course.model';
+import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
-import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
-import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
-import { faArrowLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-participation-cover',

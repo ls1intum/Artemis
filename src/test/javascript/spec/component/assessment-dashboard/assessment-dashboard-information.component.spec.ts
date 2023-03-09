@@ -1,17 +1,17 @@
-import { ArtemisTestModule } from '../../test.module';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { PieChartModule } from '@swimlane/ngx-charts';
 import {
     AssessmentDashboardInformationComponent,
     AssessmentDashboardInformationEntry,
 } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
-import { PieChartModule } from '@swimlane/ngx-charts';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
-import { TranslateService } from '@ngx-translate/core';
-import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { Course } from 'app/entities/course.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('AssessmentDashboardInformationComponent', () => {
     let component: AssessmentDashboardInformationComponent;

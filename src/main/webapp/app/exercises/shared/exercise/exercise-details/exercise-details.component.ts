@@ -1,10 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 @Component({
     selector: 'jhi-exercise-details',

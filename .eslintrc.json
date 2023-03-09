@@ -20,6 +20,9 @@
                 "plugin:@angular-eslint/recommended",
                 "plugin:@angular-eslint/template/process-inline-templates"
             ],
+            "plugins": [
+                "import"
+            ],
             "rules": {
                 "@angular-eslint/directive-selector": [
                     "warn",
@@ -51,12 +54,16 @@
                 "no-case-declarations": "off",
                 "prefer-const": "warn",
                 "prefer-spread": "warn",
-                "sort-imports": [
+                "import/order": [
                     "error",
                     {
-                        "ignoreDeclarationSort": true
+                        "alphabetize": {
+                            "order": "asc",
+                            "caseInsensitive": false
+                        }
                     }
-                ]
+                ],
+                "import/no-useless-path-segments": "warn"
             }
         },
         {

@@ -1,5 +1,5 @@
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.model';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 describe('Feedback', () => {
     describe('buildFeedbackTextForReview', () => {

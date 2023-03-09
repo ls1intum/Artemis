@@ -1,8 +1,8 @@
 import { Route } from '@angular/router';
-import { OrganizationManagementComponent } from 'app/admin/organization-management/organization-management.component';
-import { OrganizationManagementUpdateComponent } from 'app/admin/organization-management/organization-management-update.component';
 import { OrganizationManagementDetailComponent } from 'app/admin/organization-management/organization-management-detail.component';
 import { OrganizationManagementResolve } from 'app/admin/organization-management/organization-management-resolve.service';
+import { OrganizationManagementUpdateComponent } from 'app/admin/organization-management/organization-management-update.component';
+import { OrganizationManagementComponent } from 'app/admin/organization-management/organization-management.component';
 
 export const organizationMgmtRoute: Route[] = [
     {

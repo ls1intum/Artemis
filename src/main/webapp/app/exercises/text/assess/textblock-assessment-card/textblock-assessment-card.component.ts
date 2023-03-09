@@ -1,14 +1,14 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
-import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { FeedbackConflictType } from 'app/entities/feedback-conflict';
-import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
-import { FeedbackType } from 'app/entities/feedback.model';
-import { TextBlockType } from 'app/entities/text-block.model';
-import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
+import { FeedbackConflictType } from 'app/entities/feedback-conflict';
+import { FeedbackType } from 'app/entities/feedback.model';
+import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { TextBlockType } from 'app/entities/text-block.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
+import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 
 type OptionalTextBlockRef = TextBlockRef | undefined;
 

@@ -1,24 +1,24 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
 import { Interactable } from '@interactjs/core/Interactable';
+import { AlertService } from 'app/core/util/alert.service';
+import { Participation } from 'app/entities/participation/participation.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Result } from 'app/entities/result.model';
+import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
+import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise.utils';
+import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
+import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
+import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
+import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/testCase.command';
+import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import interact from 'interactjs';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
-import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
-import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/testCase.command';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
-import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
-import { Participation } from 'app/entities/participation/participation.model';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise.utils';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
-import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
-import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
-import { Result } from 'app/entities/result.model';
-import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',

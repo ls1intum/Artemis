@@ -1,23 +1,23 @@
-import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
-import { ModelingExerciseService } from './modeling-exercise.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faBook, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { onError } from 'app/shared/util/global.utils';
-import { SortService } from 'app/shared/service/sort.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faBook, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
+import { SortService } from 'app/shared/service/sort.service';
+import { onError } from 'app/shared/util/global.utils';
+import { ModelingExerciseService } from './modeling-exercise.service';
 
 @Component({
     selector: 'jhi-modeling-exercise',

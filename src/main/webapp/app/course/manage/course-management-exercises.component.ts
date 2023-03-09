@@ -1,10 +1,10 @@
 import { Component, ContentChild, OnInit, TemplateRef } from '@angular/core';
-import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from './course-management.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
+import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
+import { CourseManagementService } from './course-management.service';
 
 @Component({
     selector: 'jhi-course-management-exercises',

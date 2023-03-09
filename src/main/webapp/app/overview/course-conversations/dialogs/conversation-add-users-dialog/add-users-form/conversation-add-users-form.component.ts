@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 
 export interface AddUsersFormData {
     selectedUsers?: UserPublicInfoDTO[];

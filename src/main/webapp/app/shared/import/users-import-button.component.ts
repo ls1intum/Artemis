@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { UsersImportDialogComponent } from 'app/shared/import/users-import-dialog.component';
 import { CourseGroup } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { UsersImportDialogComponent } from 'app/shared/import/users-import-dialog.component';
 
 @Component({
     selector: 'jhi-user-import-button',

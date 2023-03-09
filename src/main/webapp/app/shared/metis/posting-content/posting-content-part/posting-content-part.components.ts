@@ -1,8 +1,8 @@
 import { Component, Input } from '@angular/core';
-import { PostingContentPart, ReferenceType } from '../../metis.util';
-import { FileService } from 'app/shared/http/file.service';
-import { faChalkboardUser, faCheckDouble, faFile, faFileUpload, faFont, faKeyboard, faMessage, faPaperclip, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faChalkboardUser, faCheckDouble, faFile, faFileUpload, faFont, faKeyboard, faMessage, faPaperclip, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
+import { FileService } from 'app/shared/http/file.service';
+import { PostingContentPart, ReferenceType } from '../../metis.util';
 
 @Component({
     selector: 'jhi-posting-content-part',

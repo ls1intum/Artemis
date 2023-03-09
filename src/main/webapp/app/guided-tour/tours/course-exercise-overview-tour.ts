@@ -1,6 +1,6 @@
-import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { TextTourStep, UserInterActionTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 
 export const courseExerciseOverviewTour: GuidedTour = {
     settingsKey: 'course_exercise_overview_tour',

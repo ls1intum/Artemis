@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { tap } from 'rxjs/operators';
 
 /**

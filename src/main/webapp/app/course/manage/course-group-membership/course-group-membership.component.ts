@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-import { Course, CourseGroup, courseGroups } from 'app/entities/course.model';
-import { User } from 'app/core/user/user.model';
-import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
+import { UserService } from 'app/core/user/user.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { UserService } from 'app/core/user/user.service';
-import { Subscription } from 'rxjs';
+import { Course, CourseGroup, courseGroups } from 'app/entities/course.model';
 import { capitalize } from 'lodash-es';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-group-membership',

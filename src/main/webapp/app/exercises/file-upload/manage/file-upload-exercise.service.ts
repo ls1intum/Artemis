@@ -1,11 +1,10 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { createRequestOption } from 'app/shared/util/request.util';
-import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 export type EntityResponseType = HttpResponse<FileUploadExercise>;
 export type EntityArrayResponseType = HttpResponse<FileUploadExercise[]>;

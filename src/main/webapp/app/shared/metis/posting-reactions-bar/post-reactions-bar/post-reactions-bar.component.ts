@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { Reaction } from 'app/entities/metis/reaction.model';
-import { Post } from 'app/entities/metis/post.model';
-import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
-import { DisplayPriority } from 'app/shared/metis/metis.util';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { faSmile } from '@fortawesome/free-regular-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Post } from 'app/entities/metis/post.model';
+import { Reaction } from 'app/entities/metis/reaction.model';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { DisplayPriority } from 'app/shared/metis/metis.util';
+import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 import dayjs from 'dayjs/esm';
 
 @Component({

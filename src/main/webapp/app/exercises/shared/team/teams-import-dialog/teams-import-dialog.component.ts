@@ -1,16 +1,16 @@
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { NgForm } from '@angular/forms';
+import { faBan, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject } from 'rxjs';
-import { TeamService } from 'app/exercises/shared/team/team.service';
-import { TeamImportStrategyType as ImportStrategy, Team } from 'app/entities/team.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { TeamImportStrategyType as ImportStrategy, Team } from 'app/entities/team.model';
+import { TeamService } from 'app/exercises/shared/team/team.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { flatMap } from 'lodash-es';
-import { User } from 'app/core/user/user.model';
-import { faBan, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-teams-import-dialog',

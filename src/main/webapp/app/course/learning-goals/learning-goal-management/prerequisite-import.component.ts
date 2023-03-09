@@ -1,13 +1,13 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { debounceTime, switchMap, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { SortService } from 'app/shared/service/sort.service';
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { LearningGoalPagingService } from 'app/course/learning-goals/learning-goal-paging.service';
+import { LearningGoal } from 'app/entities/learningGoal.model';
+import { SortService } from 'app/shared/service/sort.service';
+import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { Subject } from 'rxjs';
+import { debounceTime, switchMap, tap } from 'rxjs/operators';
 
 export enum TableColumn {
     ID = 'ID',

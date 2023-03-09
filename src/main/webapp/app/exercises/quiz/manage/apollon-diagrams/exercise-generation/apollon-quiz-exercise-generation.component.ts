@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { ApollonEditor } from '@ls1intum/apollon';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { ApollonEditor } from '@ls1intum/apollon';
-import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { Course } from 'app/entities/course.model';
+import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 
 @Component({
     selector: 'jhi-apollon-quiz-exercise-generation',

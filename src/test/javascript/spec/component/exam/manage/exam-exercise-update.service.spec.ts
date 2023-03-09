@@ -1,6 +1,6 @@
-import { ArtemisTestModule } from '../../../test.module';
-import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { TestBed } from '@angular/core/testing';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('Exam Exercise Update Service Tests', () => {
     let service: ExamExerciseUpdateService;

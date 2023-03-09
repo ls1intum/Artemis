@@ -1,26 +1,26 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject, Subscription } from 'rxjs';
-import { ParticipationService } from './participation.service';
-import { ActivatedRoute } from '@angular/router';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { tap } from 'rxjs/operators';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.utils';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { faCircleNotch, faEraser, faFilePowerpoint, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from 'app/core/auth/account.service';
-import dayjs from 'dayjs/esm';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.utils';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
-import { faCircleNotch, faEraser, faFilePowerpoint, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import dayjs from 'dayjs/esm';
+import { Subject, Subscription } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { ParticipationService } from './participation.service';
 
 enum FilterProp {
     ALL = 'all',

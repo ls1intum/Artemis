@@ -1,6 +1,8 @@
+import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
@@ -8,20 +10,17 @@ import { ExamUserAttendanceCheckDTO } from 'app/entities/exam-users-attendance-c
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamStudentsAttendanceCheckComponent } from 'app/exam/manage/students/verify-attendance-check/exam-students-attendance-check.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import dayjs from 'dayjs';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import dayjs from 'dayjs';
 
 describe('ExamStudentsAttendanceCheckComponent', () => {
     const course = { id: 1 } as Course;

@@ -1,18 +1,18 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
-import { Lecture } from 'app/entities/lecture.model';
-import { LearningGoal } from 'app/entities/learningGoal.model';
-import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
-import { onError } from 'app/shared/util/global.utils';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
-import { faLink, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
-import { LectureService } from 'app/lecture/lecture.service';
-import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { finalize } from 'rxjs/operators';
+import { Component, Input, OnInit } from '@angular/core';
+import { faLink, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/core/util/alert.service';
+import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
+import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+import { LearningGoal } from 'app/entities/learningGoal.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
+import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { Lecture } from 'app/entities/lecture.model';
+import { LectureService } from 'app/lecture/lecture.service';
+import { onError } from 'app/shared/util/global.utils';
+import { Observable, Subject } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-lecture-update-wizard-learning-goals',

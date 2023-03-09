@@ -1,12 +1,12 @@
 import { Directive } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
-import { ButtonType } from '../components/button.component';
-import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
-import { Subscription } from 'rxjs';
+import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { Subscription } from 'rxjs';
+import { ButtonType } from '../components/button.component';
 
 @Directive({
     providers: [MetisService],
