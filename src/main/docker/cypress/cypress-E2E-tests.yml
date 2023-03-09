@@ -106,6 +106,7 @@ services:
                 condition: service_healthy
         environment:
             CYPRESS_baseUrl: "https://artemis-nginx"
+            CYPRESS_video: "${bamboo_cypress_video_enabled}"
             CYPRESS_adminUsername: "${bamboo_artemis_admin_username}"
             CYPRESS_adminPassword: "${bamboo_artemis_admin_password}"
             CYPRESS_username: "${bamboo_cypress_username_template}"

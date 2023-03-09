@@ -13,22 +13,27 @@ import { MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ArtemisTestModule } from '../../test.module';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('LearningGoalFormComponent', () => {
     let learningGoalFormComponentFixture: ComponentFixture<LearningGoalFormComponent>;
     let learningGoalFormComponent: LearningGoalFormComponent;
 
+    let translateService: TranslateService;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule],
             declarations: [LearningGoalFormComponent, MockPipe(ArtemisTranslatePipe), MockPipe(KeysPipe)],
-            providers: [MockProvider(LearningGoalService), MockProvider(LectureUnitService)],
+            providers: [MockProvider(LearningGoalService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
                 learningGoalFormComponentFixture = TestBed.createComponent(LearningGoalFormComponent);
                 learningGoalFormComponent = learningGoalFormComponentFixture.componentInstance;
             });
+        translateService = TestBed.inject(TranslateService);
     });
 
     afterEach(() => {
@@ -107,5 +112,28 @@ describe('LearningGoalFormComponent', () => {
         expect(learningGoalFormComponent.titleControl?.value).toEqual(formData.title);
         expect(learningGoalFormComponent.descriptionControl?.value).toEqual(formData.description);
         expect(learningGoalFormComponent.selectedLectureUnitsInTable).toEqual(formData.connectedLectureUnits);
+    });
+
+    it.each(['title', 'description'])('should suggest taxonomy when input is changed', (inputField: string) => {
+        const suggestTaxonomySpy = jest.spyOn(learningGoalFormComponent, 'suggestTaxonomies');
+        const translateSpy = jest.spyOn(translateService, 'instant').mockImplementation((key) => {
+            switch (key) {
+                case 'artemisApp.learningGoal.keywords.remember':
+                    return 'Something';
+                case 'artemisApp.learningGoal.keywords.understand':
+                    return 'invent, build';
+                default:
+                    return key;
+            }
+        });
+        learningGoalFormComponentFixture.detectChanges();
+
+        const input = learningGoalFormComponentFixture.nativeElement.querySelector(`#${inputField}`);
+        input.value = 'Building a tool: create a plan and implement something!';
+        input.dispatchEvent(new Event('input'));
+
+        expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
+        expect(translateSpy).toHaveBeenCalledTimes(12);
+        expect(learningGoalFormComponent.suggestedTaxonomies).toEqual(['artemisApp.learningGoal.taxonomies.remember', 'artemisApp.learningGoal.taxonomies.understand']);
     });
 });

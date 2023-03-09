@@ -25,6 +25,8 @@ describe('StudentsUploadImagesDialogComponent', () => {
     const course: Course = { id: 1 };
     const exam: Exam = { course, id: 2, title: 'Exam Title' };
 
+    let ngbModal: NgbActiveModal;
+
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [FormsModule],
@@ -54,6 +56,8 @@ describe('StudentsUploadImagesDialogComponent', () => {
 
                 component.courseId = course.id!;
                 component.exam = exam;
+
+                ngbModal = TestBed.get(NgbActiveModal);
             });
     });
 
@@ -69,6 +73,18 @@ describe('StudentsUploadImagesDialogComponent', () => {
         await component.onPDFFileSelect(event);
 
         expect(component.notFoundUsers).toBeUndefined();
+    });
+
+    it('should call the function to cancel the dialog', () => {
+        const spyModalClose = jest.spyOn(ngbModal, 'dismiss');
+        component.clear();
+        expect(spyModalClose).toHaveBeenCalledOnce();
+    });
+
+    it('should call the function onFinish and then close the dialog', () => {
+        const spyModalClose = jest.spyOn(ngbModal, 'close');
+        component.onFinish();
+        expect(spyModalClose).toHaveBeenCalledOnce();
     });
 
     it('should upload and save images correctly', () => {
