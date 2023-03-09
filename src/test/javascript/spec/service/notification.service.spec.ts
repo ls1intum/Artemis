@@ -42,7 +42,7 @@ describe('Notification Service', () => {
 
     let conversationNotificationService: CourseConversationsNotificationsService;
     let getConversationsForNotificationsSpy: jest.SpyInstance;
-    let conversation: TutorialGroup;
+    let conversation: OneToOneChat;
 
     let wsQuizExerciseSubject: Subject<QuizExercise | undefined>;
 
@@ -211,6 +211,20 @@ describe('Notification Service', () => {
             expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
             expect(wsReceiveNotificationStub).toHaveBeenCalledOnce();
             wsNotificationSubject.next(tutorialGroupNotification);
+        }));
+
+        it('should subscribe to conversation notification updates and receive new message notifications', fakeAsync(() => {
+            getConversationsForNotificationsSpy = jest.spyOn(conversationNotificationService, 'getConversationsForNotifications').mockReturnValue(of([conversation]));
+
+            notificationService.subscribeToNotificationUpdates().subscribe((notification) => {
+                expect(notification).toEqual(conversationNotification);
+            });
+            expect(getConversationsForNotificationsSpy).toHaveBeenCalledOnce();
+            const notificationTopic = `/topic/conversation/${tutorialGroup.id}/notifications`;
+            expect(wsSubscribeStub).toHaveBeenCalledOnce();
+            expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
+            expect(wsReceiveNotificationStub).toHaveBeenCalledOnce();
+            wsNotificationSubject.next(conversationNotification);
         }));
 
         it('should subscribe to group notification updates and receive new group notification', fakeAsync(() => {
