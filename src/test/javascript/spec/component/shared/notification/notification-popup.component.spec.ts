@@ -28,6 +28,7 @@ describe('Notification Popup Component', () => {
     let accountService: AccountService;
     let examExerciseUpdateService: ExamExerciseUpdateService;
     let router: Router;
+    let artemisTranslatePipe: ArtemisTranslatePipe;
 
     const generateQuizNotification = (notificationId: number) => {
         const generatedNotification = {
@@ -61,6 +62,7 @@ describe('Notification Popup Component', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ExamExerciseUpdateService, useClass: MockExamExerciseUpdateService },
                 { provide: ExamParticipationService, useClass: MockExamParticipationService },
+                { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
             ],
         })
             .compileComponents()
@@ -70,6 +72,7 @@ describe('Notification Popup Component', () => {
                 notificationService = TestBed.inject(NotificationService);
                 accountService = TestBed.inject(AccountService);
                 examExerciseUpdateService = TestBed.inject(ExamExerciseUpdateService);
+                artemisTranslatePipe = TestBed.inject(ArtemisTranslatePipe);
                 router = TestBed.inject(Router);
             });
     });
