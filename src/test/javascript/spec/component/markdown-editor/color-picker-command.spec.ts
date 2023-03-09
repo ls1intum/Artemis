@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { ColorPickerCommand } from 'app/shared/markdown-editor/commands/colorPicker.command';

@@ -13,13 +13,13 @@ import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interc
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
 import dayjs from 'dayjs/esm';
 import { NgxWebstorageModule, SessionStorageService } from 'ngx-webstorage';
 import { missingTranslationHandler, translatePartialLoader } from './config/translation.config';
 import './config/dayjs';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
 @NgModule({
     imports: [

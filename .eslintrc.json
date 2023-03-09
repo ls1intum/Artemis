@@ -60,7 +60,8 @@
                         "alphabetize": {
                             "order": "asc",
                             "caseInsensitive": false
-                        }
+                        },
+                        "newlines-between": "never"
                     }
                 ],
                 "import/no-useless-path-segments": "warn"

@@ -1,7 +1,6 @@
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';

@@ -1,7 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
-
 import { SettingsComponent } from 'app/account/settings/settings.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';

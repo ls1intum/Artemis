@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-
 import { routes as modelingExerciseRoutes } from 'app/exercises/modeling/manage/modeling-exercise.route';
 import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';

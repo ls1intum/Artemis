@@ -1,9 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-
 import { ExternalUserPasswordResetModalComponent } from 'app/account/password-reset/external/external-user-password-reset-modal.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-
 import { accountState } from './account.route';
 import { ActivateComponent } from './activate/activate.component';
 import { PasswordStrengthBarComponent } from './password/password-strength-bar.component';

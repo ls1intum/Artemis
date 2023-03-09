@@ -9,7 +9,6 @@ import { EditVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-ma
 import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import dayjs from 'dayjs/esm';
-
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockRouter } from '../../../helpers/mocks/mock-router';

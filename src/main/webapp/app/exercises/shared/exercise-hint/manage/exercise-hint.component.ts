@@ -10,7 +10,6 @@ import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programmi
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-
 import { ExerciseHintService } from '../shared/exercise-hint.service';
 
 @Component({

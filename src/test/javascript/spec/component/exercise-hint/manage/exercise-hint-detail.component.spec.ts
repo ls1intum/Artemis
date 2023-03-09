@@ -3,7 +3,6 @@ import { ActivatedRoute } from '@angular/router';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseHintDetailComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-detail.component';
 import { of } from 'rxjs';
-
 import { ArtemisTestModule } from '../../../test.module';
 
 describe('ExerciseHint Management Detail Component', () => {

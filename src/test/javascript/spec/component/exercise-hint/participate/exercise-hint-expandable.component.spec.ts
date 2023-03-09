@@ -2,7 +2,6 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { TranslateService } from '@ngx-translate/core';
-
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseHintExpandableComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-expandable.component';

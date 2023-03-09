@@ -3,7 +3,6 @@ import { MetricsComponent } from 'app/admin/metrics/metrics.component';
 import { Metrics, ThreadDump } from 'app/admin/metrics/metrics.model';
 import { MetricsService } from 'app/admin/metrics/metrics.service';
 import { of } from 'rxjs';
-
 import { ArtemisTestModule } from '../../../test.module';
 
 describe('MetricsComponent', () => {

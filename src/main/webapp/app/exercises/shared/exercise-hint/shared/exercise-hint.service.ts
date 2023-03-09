@@ -1,6 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';

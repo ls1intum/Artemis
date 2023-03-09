@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { FullscreenCommand } from 'app/shared/markdown-editor/commands/fullscreen.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';

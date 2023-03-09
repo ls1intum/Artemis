@@ -5,7 +5,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { combineLatest } from 'rxjs';
-
 import { Audit } from './audit.model';
 import { AuditsService } from './audits.service';
 

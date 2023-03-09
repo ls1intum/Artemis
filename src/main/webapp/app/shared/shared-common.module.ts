@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { CloseCircleComponent } from 'app/shared/close-circle/close-circle.component';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';

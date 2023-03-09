@@ -5,7 +5,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
-
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
@@ -16,7 +15,6 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-
 import dayjs from 'dayjs/esm';
 import interact from 'interactjs';
 import { lastValueFrom } from 'rxjs';

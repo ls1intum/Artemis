@@ -3,7 +3,6 @@ import { FormBuilder } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { RegisterComponent } from 'app/account/register/register.component';
 import { RegisterService } from 'app/account/register/register.service';
-
 import { User } from 'app/core/user/user.model';
 import { EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/constants/error.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';

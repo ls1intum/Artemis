@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';

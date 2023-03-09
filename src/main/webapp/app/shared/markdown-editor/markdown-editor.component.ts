@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
+import { faAngleRight, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 // Note: this import has to be before the 'brace' imports
 import { Interactable } from '@interactjs/core/Interactable';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -35,8 +36,6 @@ import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import interact from 'interactjs';
 import { v4 as uuid } from 'uuid';
 import { DomainTagCommand } from './domainCommands/domainTag.command';
-import { faAngleRight, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-
 export enum MarkdownEditorHeight {
     INLINE = 100,
     SMALL = 200,

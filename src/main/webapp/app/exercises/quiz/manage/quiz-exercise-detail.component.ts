@@ -20,7 +20,6 @@ import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/q
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-
 // False-positives:
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';

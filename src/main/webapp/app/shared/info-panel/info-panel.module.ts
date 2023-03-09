@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { InfoPanelComponent } from './info-panel.component';
 

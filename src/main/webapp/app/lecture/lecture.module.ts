@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import { LectureDetailComponent } from 'app/lecture/lecture-detail.component';

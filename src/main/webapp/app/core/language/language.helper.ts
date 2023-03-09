@@ -2,7 +2,6 @@ import { Injectable, Renderer2, RendererFactory2 } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-
 import { captureException } from '@sentry/browser';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { SessionStorageService } from 'ngx-webstorage';

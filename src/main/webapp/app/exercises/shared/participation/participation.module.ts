@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';

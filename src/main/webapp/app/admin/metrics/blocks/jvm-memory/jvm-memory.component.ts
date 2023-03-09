@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-
 import { JvmMetrics } from 'app/admin/metrics/metrics.model';
 
 @Component({

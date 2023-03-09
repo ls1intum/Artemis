@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { examParticipationState } from 'app/exam/participate/exam-participation.route';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';

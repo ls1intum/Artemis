@@ -8,7 +8,6 @@ import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadExerciseComponent } from 'app/exercises/file-upload/manage/file-upload-exercise.component';
-
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';

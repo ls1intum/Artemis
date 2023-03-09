@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-
 import { AccountService } from 'app/core/auth/account.service';
 import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
 import { AlertService } from 'app/core/util/alert.service';

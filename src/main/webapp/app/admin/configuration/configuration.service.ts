@@ -2,7 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-
 import { Bean, Beans, ConfigProps, Env, PropertySource } from './configuration.model';
 
 @Injectable({ providedIn: 'root' })

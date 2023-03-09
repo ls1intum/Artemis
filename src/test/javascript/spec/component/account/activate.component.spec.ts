@@ -1,6 +1,5 @@
 import { TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-
 import { ActivateComponent } from 'app/account/activate/activate.component';
 import { ActivateService } from 'app/account/activate/activate.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
