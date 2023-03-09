@@ -247,7 +247,7 @@ public class ProgrammingExerciseImportBasicService {
             categoryCopy.setProgrammingExercise(targetExercise);
 
             categoryCopy = staticCodeAnalysisCategoryRepository.save(categoryCopy);
-            targetExercise.getStaticCodeAnalysisCategories().add(categoryCopy);
+            targetExercise.addStaticCodeAnalysisCategory(categoryCopy);
         });
     }
 
@@ -267,7 +267,7 @@ public class ProgrammingExerciseImportBasicService {
         newExercise.setNumberOfComplaints(null);
         newExercise.setTotalNumberOfAssessments(null);
 
-        disconnectRelatedEntities(newExercise);
+        newExercise.disconnectRelatedEntities();
 
         // copy the grading instructions to avoid issues with references to the original exercise
         newExercise.setGradingCriteria(newExercise.copyGradingCriteria(new HashMap<>()));
@@ -281,43 +281,6 @@ public class ProgrammingExerciseImportBasicService {
 
         if (newExercise.isTeamMode()) {
             newExercise.getTeamAssignmentConfig().setId(null);
-        }
-    }
-
-    /**
-     * Disconnect child entities from the exercise.
-     * <p>
-     * Just setting the collections to {@code null} breaks the automatic orphan removal in the database.
-     *
-     * @param newExercise The new exercise that should be created during import.
-     */
-    private void disconnectRelatedEntities(final ProgrammingExercise newExercise) {
-        if (newExercise.getExerciseHints() != null) {
-            newExercise.getExerciseHints().clear();
-        }
-        if (newExercise.getTestCases() != null) {
-            newExercise.getTestCases().clear();
-        }
-        if (newExercise.getStaticCodeAnalysisCategories() != null) {
-            newExercise.getStaticCodeAnalysisCategories().clear();
-        }
-        if (newExercise.getAttachments() != null) {
-            newExercise.getAttachments().clear();
-        }
-        if (newExercise.getPlagiarismCases() != null) {
-            newExercise.getPlagiarismCases().clear();
-        }
-        if (newExercise.getTutorParticipations() != null) {
-            newExercise.getTutorParticipations().clear();
-        }
-        if (newExercise.getExampleSubmissions() != null) {
-            newExercise.getExampleSubmissions().clear();
-        }
-        if (newExercise.getPosts() != null) {
-            newExercise.getPosts().clear();
-        }
-        if (newExercise.getStudentParticipations() != null) {
-            newExercise.getStudentParticipations().clear();
         }
     }
 

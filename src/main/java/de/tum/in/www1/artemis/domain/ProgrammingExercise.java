@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -565,6 +566,10 @@ public class ProgrammingExercise extends Exercise {
         this.staticCodeAnalysisCategories = staticCodeAnalysisCategories;
     }
 
+    public void addStaticCodeAnalysisCategory(final StaticCodeAnalysisCategory category) {
+        staticCodeAnalysisCategories.add(category);
+    }
+
     @JsonProperty("sequentialTestRuns")
     public boolean hasSequentialTestRuns() {
         return Objects.requireNonNullElse(sequentialTestRuns, false);
@@ -830,5 +835,15 @@ public class ProgrammingExercise extends Exercise {
 
     public void generateAndSetBuildPlanAccessSecret() {
         buildPlanAccessSecret = UUID.randomUUID().toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void disconnectRelatedEntities() {
+        Stream.of(exerciseHints, testCases, staticCodeAnalysisCategories).filter(Objects::nonNull).forEach(Collection::clear);
+
+        super.disconnectRelatedEntities();
     }
 }
