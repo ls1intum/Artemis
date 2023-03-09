@@ -114,6 +114,19 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             @Param("exerciseType") String exerciseTypeDiscriminator);
 
     @Query("""
+            SELECT COUNT(DISTINCT user.id)
+            FROM Exercise e
+            JOIN User user ON e.course.studentGroupName member of user.groups
+            WHERE e.course.testCourse = FALSE
+            	AND e.dueDate >= :#{#now}
+            	AND e.dueDate <= :#{#maxDate}
+                AND e.class = :#{#exerciseType}
+                AND user.login IN :#{#activeUserLogins}
+            """)
+    Integer countActiveStudentsInExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
+            @Param("exerciseType") String exerciseTypeDiscriminator, @Param("activeUserLogins") List<String> activeUserLogins);
+
+    @Query("""
             SELECT COUNT(e.id)
             FROM Exercise e
             WHERE e.course.testCourse = FALSE
@@ -135,6 +148,19 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             """)
     Integer countStudentsInExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
             @Param("exerciseType") String exerciseTypeDiscriminator);
+
+    @Query("""
+            SELECT COUNT(DISTINCT user.id)
+            FROM Exercise e
+            JOIN User user ON e.course.studentGroupName member of user.groups
+            WHERE e.course.testCourse = FALSE
+            	AND e.releaseDate >= :#{#now}
+            	AND e.releaseDate <= :#{#maxDate}
+                AND e.class = :#{#exerciseType}
+                AND user.login IN :#{#activeUserLogins}
+            """)
+    Integer countActiveStudentsInExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
+            @Param("exerciseType") String exerciseTypeDiscriminator, @Param("activeUserLogins") List<String> activeUserLogins);
 
     @Query("""
             SELECT e FROM Exercise e

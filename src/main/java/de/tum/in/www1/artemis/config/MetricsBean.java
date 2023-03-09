@@ -2,9 +2,12 @@ package de.tum.in.www1.artemis.config;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
+import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
+import de.tum.in.www1.artemis.repository.StatisticsRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.*;
@@ -55,9 +58,11 @@ public class MetricsBean {
 
     private final ExamRepository examRepository;
 
+    private final StatisticsRepository statisticsRepository;
+
     public MetricsBean(MeterRegistry meterRegistry, Environment env, TaskScheduler taskScheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
-            ExamRepository examRepository) {
+            ExamRepository examRepository, StatisticsRepository statisticsRepository) {
         this.meterRegistry = meterRegistry;
         this.env = env;
         this.taskScheduler = taskScheduler;
@@ -66,6 +71,7 @@ public class MetricsBean {
         this.webSocketHandler = websocketHandler;
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
+        this.statisticsRepository = statisticsRepository;
 
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
@@ -135,11 +141,19 @@ public class MetricsBean {
                         .strongReference(true).tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString())
                         .description("Number of exercises ending within the next minutes multiplied with students in the course").register(meterRegistry);
 
+                Gauge.builder("artemis.scheduled.exercises.due.student_multiplier.active.14", () -> this.getUpcomingDueExercisesCountWithActiveStudentMultiplier(range, exerciseType, 14))
+                        .strongReference(true).tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString())
+                        .description("Number of exercises ending within the next minutes multiplied with students in the course").register(meterRegistry);
+
                 Gauge.builder("artemis.scheduled.exercises.release.count", () -> this.getUpcomingReleasedExercisesCount(range, exerciseType)).strongReference(true)
                         .tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString()).description("Number of exercises starting within the next minutes")
                         .register(meterRegistry);
 
                 Gauge.builder("artemis.scheduled.exercises.release.student_multiplier", () -> this.getUpcomingReleasedExercisesCountWithStudentMultiplier(range, exerciseType))
+                        .strongReference(true).tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString())
+                        .description("Number of exercises starting within the next minutes multiplied with students in the course").register(meterRegistry);
+
+                Gauge.builder("artemis.scheduled.exercises.release.student_multiplier.active.14", () -> this.getUpcomingReleasedExercisesCountWithActiveStudentMultiplier(range, exerciseType, 14))
                         .strongReference(true).tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString())
                         .description("Number of exercises starting within the next minutes multiplied with students in the course").register(meterRegistry);
             }
@@ -181,6 +195,18 @@ public class MetricsBean {
         return exerciseRepository.countStudentsInExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(now, endDate, exerciseType.getDiscriminator());
     }
 
+    private double getUpcomingDueExercisesCountWithActiveStudentMultiplier(int minutes, ExerciseType exerciseType, int numberOfDaysToCountAsActive) {
+        SecurityUtils.setAuthorizationObject();
+
+        var now = ZonedDateTime.now();
+        var endDate = ZonedDateTime.now().plusMinutes(minutes);
+
+        var activeUsers = statisticsRepository.getActiveUsers(ZonedDateTime.now().minusDays(numberOfDaysToCountAsActive), ZonedDateTime.now());
+        var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).collect(Collectors.toList());
+
+        return exerciseRepository.countActiveStudentsInExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(now, endDate, exerciseType.getDiscriminator(), activeUserNames);
+    }
+
     private double getUpcomingReleasedExercisesCount(int minutes, ExerciseType exerciseType) {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
@@ -194,6 +220,19 @@ public class MetricsBean {
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
         return exerciseRepository.countStudentsInExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate, exerciseType.getDiscriminator());
     }
+
+    private double getUpcomingReleasedExercisesCountWithActiveStudentMultiplier(int minutes, ExerciseType exerciseType, int numberOfDaysToCountAsActive) {
+        SecurityUtils.setAuthorizationObject();
+
+        var now = ZonedDateTime.now();
+        var endDate = ZonedDateTime.now().plusMinutes(minutes);
+
+        var activeUsers = statisticsRepository.getActiveUsers(ZonedDateTime.now().minusDays(numberOfDaysToCountAsActive), ZonedDateTime.now());
+        var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).collect(Collectors.toList());
+
+        return exerciseRepository.countActiveStudentsInExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate, exerciseType.getDiscriminator(), activeUserNames);
+    }
+
 
     private double getUpcomingEndingExamCount(int minutes) {
         SecurityUtils.setAuthorizationObject();
