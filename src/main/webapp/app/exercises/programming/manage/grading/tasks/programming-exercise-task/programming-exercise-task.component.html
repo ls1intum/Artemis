@@ -1,0 +1,39 @@
+<div class="task">
+    <div class="task__head">
+        <button (click)="open = !open" class="task__collapse">
+            <fa-icon class="me-2" [icon]="open ? faAngleDown : faAngleRight"></fa-icon>
+        </button>
+
+        <div class="task__row">
+            <span class="task__field">{{ task.taskName }}</span>
+            <input type="number" class="form-control" min="0" [value]="task.weight" />
+            <input type="number" class="form-control" min="0" [value]="task.bonusMultiplier" />
+            <input type="number" class="form-control" min="0" [value]="task.bonusPoints" />
+            <select [ngModel]="task.visibility" class="form-select">
+                <option *ngFor="let s of taskVisibilityList" [value]="s.value">
+                    {{ 'artemisApp.programmingExerciseTestCase.visibility.' + s.name | artemisTranslate }}
+                </option>
+            </select>
+            <span class="task__field">Points</span>
+            <span class="task__field">Type</span>
+            <jhi-test-case-passed-builds-chart></jhi-test-case-passed-builds-chart>
+        </div>
+    </div>
+
+    <div *ngIf="open" class="task__body">
+        <div *ngFor="let test of task.testCases" class="task__row">
+            <span class="task__field ps-3">{{ test.testName }}</span>
+            <input type="number" class="form-control" min="0" [value]="test.weight" />
+            <input type="number" class="form-control" min="0" [value]="test.bonusMultiplier" />
+            <input type="number" class="form-control" min="0" [value]="test.bonusPoints" />
+            <select [ngModel]="test.visibility" class="form-select">
+                <option *ngFor="let s of testCaseVisibilityList" [value]="s.value">
+                    {{ 'artemisApp.programmingExerciseTestCase.visibility.' + s.name | artemisTranslate }}
+                </option>
+            </select>
+            <span class="task__field">Points</span>
+            <span class="task__field">Type</span>
+            <jhi-test-case-passed-builds-chart></jhi-test-case-passed-builds-chart>
+        </div>
+    </div>
+</div>

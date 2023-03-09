@@ -1,0 +1,27 @@
+.task {
+    &__head {
+        display: flex;
+    }
+    &__body {
+        display: flex;
+        flex-direction: column;
+        margin-left: 2rem;
+    }
+    &__field {
+        display: flex;
+        align-items: center;
+        overflow-wrap: anywhere;
+    }
+    &__row {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 0.5rem;
+        padding: 1rem;
+    }
+    &__collapse {
+        color: var(--bs-card-color);
+        background: none;
+        border: none;
+        width: 2rem;
+    }
+}

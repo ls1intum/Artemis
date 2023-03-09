@@ -22,7 +22,8 @@
             "visibility": {
                 "Always": "Immer",
                 "AfterDueDate": "Nach Einreichungsfrist",
-                "Never": "Nie"
+                "Never": "Nie",
+                "Mixed": "Verschieden"
             }
         }
     }
