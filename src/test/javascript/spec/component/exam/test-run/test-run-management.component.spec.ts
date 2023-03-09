@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
-import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -21,13 +21,14 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { AlertService } from 'app/core/util/alert.service';
+import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 
 describe('Test Run Management Component', () => {
     let component: TestRunManagementComponent;
@@ -48,7 +49,7 @@ describe('Test Run Management Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), FontAwesomeTestingModule, TranslateModule.forRoot(), HttpClientModule],
+            imports: [RouterTestingModule.withRoutes([]), FontAwesomeTestingModule, TranslateModule.forRoot(), HttpClientModule, NgbTooltipMocksModule],
 
             declarations: [
                 TestRunManagementComponent,
@@ -77,7 +78,7 @@ describe('Test Run Management Component', () => {
                 jest.spyOn(examManagementService, 'findAllTestRunsForExam').mockReturnValue(of(new HttpResponse({ body: studentExams })));
                 userSpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
                 jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
-                jest.spyOn(examManagementService, 'deleteTestRun').mockReturnValue(of(new HttpResponse({ body: {} })));
+                jest.spyOn(examManagementService, 'deleteTestRun').mockReturnValue(of());
             });
     });
 

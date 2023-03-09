@@ -48,11 +48,10 @@ public class ProgrammingSubmission extends Submission {
      * 2) An unknown error that caused the programming submission not to be created when the code commits have been pushed.
      * we can still get the commit hash from the payload of the CI build result and "reverse engineer" the programming submission object to be consistent
      *
-     * @param participation the corresponding participation to which the submission will correspond
+     * @param participation  the corresponding participation to which the submission will correspond
      * @param submissionDate the date when the commit was pushed to the version control server
-     * @param commitHash the hash of the corresponding commit in the git repository in the version control system
+     * @param commitHash     the hash of the corresponding commit in the git repository in the version control system
      * @return the newly created programming submission
-     *
      */
     @NotNull
     public static ProgrammingSubmission createFallbackSubmission(ProgrammingExerciseParticipation participation, ZonedDateTime submissionDate, String commitHash) {
@@ -120,9 +119,9 @@ public class ProgrammingSubmission extends Submission {
 
     @Override
     public int compareTo(Submission other) {
-        if (getSubmissionDate() == null || other.getSubmissionDate() == null
-                || other instanceof ProgrammingSubmission otherProgrammingSubmission && Objects.equals(getCommitHash(), otherProgrammingSubmission.getCommitHash())) {
-            // this case should not happen, but in the rare case we can compare the ids
+        if (getSubmissionDate() == null || other.getSubmissionDate() == null || Objects.equals(getSubmissionDate(), other.getSubmissionDate())
+                || (other instanceof ProgrammingSubmission otherProgrammingSubmission && Objects.equals(getCommitHash(), otherProgrammingSubmission.getCommitHash()))) {
+            // this case should not happen, but in the rare case we can compare the ids (in tests, the submission dates might be identical as ms are not stored in the database)
             // newer ids are typically later
             return getId().compareTo(other.getId());
         }

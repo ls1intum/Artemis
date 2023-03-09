@@ -46,7 +46,7 @@ public class PostResource {
      * @param courseId id of the course the post belongs to
      * @param post     post to create
      * @return ResponseEntity with status 201 (Created) containing the created post in the response body,
-     * or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PostMapping("courses/{courseId}/posts")
     @PreAuthorize("hasRole('USER')")
@@ -62,7 +62,7 @@ public class PostResource {
      * @param postId   id of the post to update
      * @param post     post to update
      * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
-     * or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PutMapping("courses/{courseId}/posts/{postId}")
     @PreAuthorize("hasRole('USER')")
@@ -74,11 +74,11 @@ public class PostResource {
     /**
      * PUT /courses/{courseId}/posts/{postId}/display-priority : Update the display priority of an existing post
      *
-     * @param courseId          id of the course the post belongs to
-     * @param postId            id of the post change the displayPriority for
-     * @param displayPriority   new enum value for displayPriority, i.e. either PINNED, ARCHIVED, NONE
+     * @param courseId        id of the course the post belongs to
+     * @param postId          id of the post change the displayPriority for
+     * @param displayPriority new enum value for displayPriority, i.e. either PINNED, ARCHIVED, NONE
      * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
-     * or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PutMapping("courses/{courseId}/posts/{postId}/display-priority")
     @PreAuthorize("hasRole('TA')")
@@ -92,7 +92,7 @@ public class PostResource {
      *
      * @param courseId id of the course the post belongs to
      * @return the ResponseEntity with status 200 (OK) and with body all tags for posts in that course,
-     * or 400 (Bad Request) if the checks on user or course validity fail
+     *         or 400 (Bad Request) if the checks on user or course validity fail
      */
     @GetMapping("courses/{courseId}/posts/tags")
     @PreAuthorize("hasRole('USER')")
@@ -104,11 +104,11 @@ public class PostResource {
     /**
      * GET /courses/{courseId}/posts : Get all posts for a course by its id
      *
-     * @param pageable                  pagination settings to fetch posts in smaller batches
-     * @param pagingEnabled             flag stating whether requesting component has paging enabled or not
-     * @param postContextFilter         request param for filtering posts
+     * @param pageable          pagination settings to fetch posts in smaller batches
+     * @param pagingEnabled     flag stating whether requesting component has paging enabled or not
+     * @param postContextFilter request param for filtering posts
      * @return ResponseEntity with status 200 (OK) and with body all posts for course, that match the specified context
-     * or 400 (Bad Request) if the checks on user, course or post validity fail
+     *         or 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @GetMapping("courses/{courseId}/posts")
     @PreAuthorize("hasRole('USER')")
@@ -127,7 +127,7 @@ public class PostResource {
      * @param courseId id of the course the post belongs to
      * @param postId   id of the post to delete
      * @return ResponseEntity with status 200 (OK),
-     * or 400 (Bad Request) if the checks on user, course or post validity fail
+     *         or 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @DeleteMapping("courses/{courseId}/posts/{postId}")
     @PreAuthorize("hasRole('USER')")

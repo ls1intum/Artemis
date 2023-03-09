@@ -1,9 +1,10 @@
 <div class="row justify-content-center">
     <div class="col">
         <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="save()">
-            <div *ngIf="!exam.id; else edit">
+            <div *ngIf="!exam.id; else edit" class="d-flex align-items-center">
                 <h4 *ngIf="!isImport">{{ 'artemisApp.examManagement.createExam' | artemisTranslate }}</h4>
                 <h4 *ngIf="isImport">{{ 'artemisApp.examManagement.importExam' | artemisTranslate }}</h4>
+                <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
             </div>
             <ng-template #edit>
                 <h4>{{ 'artemisApp.examManagement.editExam' | artemisTranslate }}</h4>
@@ -125,9 +126,9 @@
             <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.exercises">Exam Exercises</h5>
             <div class="row mb-3">
                 <div class="col-sm-6">
-                    <label class="form-check-label" for="maxPoints" jhiTranslate="artemisApp.examManagement.maxPoints.title">Maximum Number of Points in Exam</label>
+                    <label class="form-check-label" for="examMaxPoints" jhiTranslate="artemisApp.examManagement.maxPoints.title">Maximum Number of Points in Exam</label>
                     <fa-icon [icon]="faExclamationTriangle" class="text-warning" ngbTooltip="{{ 'artemisApp.examManagement.maxPoints.warning' | artemisTranslate }}"></fa-icon>
-                    <input id="maxPoints" name="maxPoints" class="form-control" type="number" min="1" [(ngModel)]="exam.maxPoints" />
+                    <input id="examMaxPoints" name="examMaxPoints" class="form-control" type="number" min="1" [(ngModel)]="exam.examMaxPoints" />
                 </div>
                 <div class="col-sm-6">
                     <label class="form-check-label" for="numberOfExercisesInExam" jhiTranslate="artemisApp.examManagement.numberOfExercisesInExam"
@@ -155,16 +156,8 @@
             <div *ngIf="!exam.testExam">
                 <hr />
                 <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessment">Exam Assessment</h5>
+                <h6 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessmentEmptyDates">If you leave a date blank, this exam step will not take place</h6>
                 <div class="row mb-3" *ngIf="!exam.testExam">
-                    <div class="col-sm-6">
-                        <jhi-date-time-picker
-                            labelName="{{ 'artemisApp.examManagement.publishResultsDate' | artemisTranslate }}"
-                            [(ngModel)]="exam.publishResultsDate"
-                            [error]="!isValidPublishResultsDate"
-                            name="publishResultsDate"
-                            id="publishResultsDate"
-                        ></jhi-date-time-picker>
-                    </div>
                     <div class="col-sm-6">
                         <label class="form-check-label" for="numberOfCorrectionRoundsInExam" jhiTranslate="artemisApp.examManagement.numberOfCorrectionRoundsInExam">
                             Number of correction rounds in Exam
@@ -178,6 +171,15 @@
                             max="2"
                             [(ngModel)]="exam.numberOfCorrectionRoundsInExam"
                         />
+                    </div>
+                    <div class="col-sm-6">
+                        <jhi-date-time-picker
+                            labelName="{{ 'artemisApp.examManagement.publishResultsDate' | artemisTranslate }}"
+                            [(ngModel)]="exam.publishResultsDate"
+                            [error]="!isValidPublishResultsDate"
+                            name="publishResultsDate"
+                            id="publishResultsDate"
+                        ></jhi-date-time-picker>
                     </div>
                 </div>
                 <div class="row mb-3">
@@ -200,6 +202,20 @@
                         ></jhi-date-time-picker>
                         <span *ngIf="!isValidExamStudentReviewEnd" class="invalid-feedback"> {{ 'artemisApp.examManagement.reviewDatesInvalidWarning' | artemisTranslate }}</span>
                     </div>
+                </div>
+            </div>
+            <hr />
+            <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.examSolutions">Exam Solutions</h5>
+            <div class="row mb-3">
+                <div class="col-sm-6">
+                    <jhi-date-time-picker
+                        class="form-element"
+                        name="exampleSolutionPublicationDate"
+                        labelName="{{ 'artemisApp.exam.exampleSolutionPublicationDate' | artemisTranslate }}"
+                        labelTooltip="{{ 'artemisApp.examManagement.exampleSolutionPublicationDateTooltip' | artemisTranslate }}"
+                        [(ngModel)]="exam.exampleSolutionPublicationDate"
+                        [error]="!isValidExampleSolutionPublicationDate"
+                    ></jhi-date-time-picker>
                 </div>
             </div>
             <hr />

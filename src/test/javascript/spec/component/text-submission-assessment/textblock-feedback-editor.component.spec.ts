@@ -7,7 +7,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
+import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
@@ -40,18 +40,16 @@ describe('TextblockFeedbackEditorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), TranslateTestingModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), TranslateTestingModule, MockDirective(NgbTooltip)],
             declarations: [
                 TextblockFeedbackEditorComponent,
                 AssessmentCorrectionRoundBadgeComponent,
                 MockComponent(TextblockFeedbackDropdownComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ConfirmIconComponent),
-                MockComponent(FaIconComponent),
                 MockComponent(FaLayersComponent),
                 MockComponent(GradingInstructionLinkIconComponent),
                 MockDirective(TranslateDirective),
-                MockDirective(NgbTooltip),
                 MockDirective(NgModel),
             ],
             providers: [
@@ -61,14 +59,7 @@ describe('TextblockFeedbackEditorComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
-        })
-            .overrideModule(ArtemisTestModule, {
-                remove: {
-                    declarations: [MockComponent(FaIconComponent), MockComponent(FaLayersComponent)],
-                    exports: [MockComponent(FaIconComponent), MockComponent(FaLayersComponent)],
-                },
-            })
-            .compileComponents();
+        }).compileComponents();
     });
 
     beforeEach(() => {

@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import javax.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -87,6 +88,11 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "project_key", table = "programming_exercise_details", nullable = false)
     private String projectKey;
 
+    @Size(max = 36)
+    @Nullable
+    @Column(name = "build_plan_access_secret", table = "programming_exercise_details", length = 36)
+    private String buildPlanAccessSecret;
+
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "template_participation_id")
     @JsonIgnoreProperties("programmingExercise")
@@ -129,6 +135,9 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "branch", table = "programming_exercise_details")
     private String branch;
+
+    @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
+    private boolean releaseTestsWithExampleSolution;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
@@ -287,6 +296,14 @@ public class ProgrammingExercise extends Exercise {
         return branch;
     }
 
+    public void setReleaseTestsWithExampleSolution(boolean releaseTestsWithExampleSolution) {
+        this.releaseTestsWithExampleSolution = releaseTestsWithExampleSolution;
+    }
+
+    public boolean isReleaseTestsWithExampleSolution() {
+        return releaseTestsWithExampleSolution;
+    }
+
     /**
      * Generates the full repository name for a given repository type.
      *
@@ -431,9 +448,9 @@ public class ProgrammingExercise extends Exercise {
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     /**
-     * Gets a URL of the  templateRepositoryUrl if there is one
+     * Gets a URL of the templateRepositoryUrl if there is one
      *
-     * @return a URL object of the  templateRepositoryUrl or null if there is no templateRepositoryUrl
+     * @return a URL object of the templateRepositoryUrl or null if there is no templateRepositoryUrl
      */
     @JsonIgnore
     public VcsRepositoryUrl getVcsTemplateRepositoryUrl() {
@@ -622,6 +639,7 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * Get all results of a student participation which are rated or unrated
+     *
      * @param participation The current participation
      * @return all results which are completed and are either automatic or manually assessed
      */
@@ -632,6 +650,7 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * Check if manual results are allowed for the exercise
+     *
      * @return true if manual results are allowed, false otherwise
      */
     public boolean areManualResultsAllowed() {
@@ -652,6 +671,7 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * This checks if the current result is rated and has a completion date.
+     *
      * @param result The current result
      * @return true if the result is manual and assessed, false otherwise
      */
@@ -698,7 +718,6 @@ public class ProgrammingExercise extends Exercise {
      * Sets the transient attribute "isLocalSimulation" if the exercises is a programming exercise
      * and the testRepositoryUrl contains the String "artemislocalhost" which is the indicator that the programming exercise has
      * no connection to a version control and continuous integration server
-     *
      */
     public void checksAndSetsIfProgrammingExerciseIsLocalSimulation() {
         if (getTestRepositoryUrl().contains("artemislocalhost")) {
@@ -709,7 +728,6 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Validates general programming exercise settings
      * 1. Validates the programming language
-     *
      */
     public void validateProgrammingSettings() {
 
@@ -784,11 +802,11 @@ public class ProgrammingExercise extends Exercise {
             throw new BadRequestAlertException("Assessment type is not manual", "Exercise", "invalidManualFeedbackSettings");
         }
 
-        if (Objects.isNull(this.getDueDate())) {
+        if (this.getDueDate() == null) {
             throw new BadRequestAlertException("Exercise due date is not set", "Exercise", "invalidManualFeedbackSettings");
         }
 
-        if (Objects.nonNull(this.buildAndTestStudentSubmissionsAfterDueDate)) {
+        if (this.buildAndTestStudentSubmissionsAfterDueDate != null) {
             throw new BadRequestAlertException("Cannot run tests after due date", "Exercise", "invalidManualFeedbackSettings");
         }
     }
@@ -799,5 +817,18 @@ public class ProgrammingExercise extends Exercise {
 
     public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
         this.exerciseHints = exerciseHints;
+    }
+
+    public boolean hasBuildPlanAccessSecretSet() {
+        return buildPlanAccessSecret != null && !buildPlanAccessSecret.isEmpty();
+    }
+
+    @Nullable
+    public String getBuildPlanAccessSecret() {
+        return buildPlanAccessSecret;
+    }
+
+    public void generateAndSetBuildPlanAccessSecret() {
+        buildPlanAccessSecret = UUID.randomUUID().toString();
     }
 }

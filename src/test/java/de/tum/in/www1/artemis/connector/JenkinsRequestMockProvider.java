@@ -78,6 +78,8 @@ public class JenkinsRequestMockProvider {
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private AutoCloseable closeable;
+
     public JenkinsRequestMockProvider(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
@@ -94,12 +96,19 @@ public class JenkinsRequestMockProvider {
         mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).bufferContent().build();
         shortTimeoutMockServer = MockRestServiceServer.bindTo(shortTimeoutRestTemplate).ignoreExpectOrder(true).bufferContent().build();
         this.jenkinsServer = jenkinsServer;
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
     }
 
-    public void reset() {
-        mockServer.reset();
-        shortTimeoutMockServer.reset();
+    public void reset() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
+        if (mockServer != null) {
+            mockServer.reset();
+        }
+        if (shortTimeoutMockServer != null) {
+            shortTimeoutMockServer.reset();
+        }
     }
 
     /**
@@ -120,11 +129,10 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockCreateBuildPlan(String projectKey, String planKey, boolean jobAlreadyExists) throws IOException {
-        var jobFolder = projectKey;
-        var job = jobFolder + "-" + planKey;
-        mockCreateJobInFolder(jobFolder, job, jobAlreadyExists);
-        mockGivePlanPermissions(jobFolder, job);
-        mockTriggerBuild(jobFolder, job, false);
+        var job = projectKey + "-" + planKey;
+        mockCreateJobInFolder(projectKey, job, jobAlreadyExists);
+        mockGivePlanPermissions(projectKey, job);
+        mockTriggerBuild(projectKey, job, false);
     }
 
     public void mockCreateJobInFolder(String jobFolder, String job, boolean jobAlreadyExists) throws IOException {

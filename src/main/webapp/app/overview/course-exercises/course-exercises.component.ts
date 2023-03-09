@@ -64,7 +64,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     private currentUser?: User;
     public course?: Course;
     public weeklyIndexKeys: string[];
-    public weeklyExercisesGrouped: object;
+    public weeklyExercisesGrouped: object; // TODO: convert into map
     public upcomingExercises: ExerciseWithDueDate[] = [];
     public exerciseCountMap: Map<string, number>;
 
@@ -95,7 +95,6 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     // Provides the control configuration to be read and used by "CourseOverviewComponent"
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
-        useIndentation: true,
     };
 
     constructor(

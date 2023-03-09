@@ -18,16 +18,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.thymeleaf.util.StringUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.LtiUserId;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
@@ -52,32 +50,27 @@ public class LtiService {
 
     private final JWTCookieService jwtCookieService;
 
-    private final LtiUserIdRepository ltiUserIdRepository;
-
     public LtiService(UserCreationService userCreationService, UserRepository userRepository, ArtemisAuthenticationProvider artemisAuthenticationProvider,
-            JWTCookieService jwtCookieService, LtiUserIdRepository ltiUserIdRepository) {
+            JWTCookieService jwtCookieService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.jwtCookieService = jwtCookieService;
-        this.ltiUserIdRepository = ltiUserIdRepository;
     }
 
     /**
      * Signs in the LTI user into the exercise app. If necessary, it will create a user.
      *
-     * @param email the user's email
-     * @param userId the user's id in the external LMS
-     * @param username the user's username if we create a new user
-     * @param firstName the user's firstname if we create a new user
-     * @param lastName the user's lastname if we create a new user
+     * @param email               the user's email
+     * @param username            the user's username if we create a new user
+     * @param firstName           the user's firstname if we create a new user
+     * @param lastName            the user's lastname if we create a new user
      * @param requireExistingUser false if it's not allowed to create new users
      * @throws InternalAuthenticationServiceException if no email is provided, or if no user can be authenticated, this exception will be thrown
      */
-    public void authenticateLtiUser(String email, String userId, String username, String firstName, String lastName, boolean requireExistingUser)
-            throws InternalAuthenticationServiceException {
+    public void authenticateLtiUser(String email, String username, String firstName, String lastName, boolean requireExistingUser) throws InternalAuthenticationServiceException {
 
-        if (StringUtils.isEmpty(email)) {
+        if (!StringUtils.hasLength(email)) {
             throw new InternalAuthenticationServiceException("No email address sent by launch request. Please make sure the user has an accessible email address.");
         }
 
@@ -91,23 +84,14 @@ public class LtiService {
             }
         }
 
-        // 2. Case: Existing mapping for LTI user id
-        final var optionalLtiUserId = ltiUserIdRepository.findByLtiUserId(userId);
-        if (optionalLtiUserId.isPresent()) {
-            final var user = optionalLtiUserId.get().getUser();
-            // Authenticate
-            SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
-            return;
-        }
-
-        // 3. Case: Lookup user with the LTI email address and sign in as this user
+        // 2. Case: Lookup user with the LTI email address and sign in as this user
         final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
         if (usernameLookupByEmail.isPresent()) {
             SecurityContextHolder.getContext().setAuthentication(loginUserByEmail(usernameLookupByEmail.get(), email));
             return;
         }
 
-        // 4. Case: Create new user if an existing user is not required
+        // 3. Case: Create new user if an existing user is not required
         if (!requireExistingUser) {
             SecurityContextHolder.getContext().setAuthentication(createNewUserFromLaunchRequest(email, username, firstName, lastName));
             return;
@@ -142,18 +126,14 @@ public class LtiService {
     }
 
     /**
-     * Handler for successful LTI auth. Maps the LTI user id to the user and adds the groups to the user
+     * Handler for successful LTI auth. Adds the groups to the user
      *
-     * @param user The user that is authenticated
-     * @param userId The userId in the external LMS
+     * @param user     The user that is authenticated
      * @param exercise Exercise to launch
      */
-    public void onSuccessfulLtiAuthentication(User user, String userId, Exercise exercise) {
+    public void onSuccessfulLtiAuthentication(User user, Exercise exercise) {
         // Make sure user is added to group for this exercise
         addUserToExerciseGroup(user, exercise.getCourseViaExerciseGroupOrCourseMember());
-
-        // Save LTI user ID to automatically sign in the next time
-        saveLtiUserId(user, userId);
     }
 
     /**
@@ -181,31 +161,10 @@ public class LtiService {
     }
 
     /**
-     * Save the User <-> LTI User ID mapping
-     *
-     * @param user            the user that should be saved
-     * @param ltiUserIdString the user id
-     */
-    private void saveLtiUserId(User user, String ltiUserIdString) {
-
-        if (ltiUserIdString == null || ltiUserIdString.isEmpty()) {
-            return;
-        }
-
-        LtiUserId ltiUserId = ltiUserIdRepository.findByUser(user).orElseGet(() -> {
-            LtiUserId newltiUserId = new LtiUserId();
-            newltiUserId.setUser(user);
-            return newltiUserId;
-        });
-        ltiUserId.setLtiUserId(ltiUserIdString);
-        ltiUserIdRepository.save(ltiUserId);
-    }
-
-    /**
      * Build the response for the LTI launch to include the necessary query params and the JWT cookie.
      *
      * @param uriComponentsBuilder the uri builder to add the query params to
-     * @param response the response to add the JWT cookie to
+     * @param response             the response to add the JWT cookie to
      */
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         User user = userRepository.getUser();
@@ -222,5 +181,15 @@ public class LtiService {
 
             uriComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
         }
+    }
+
+    /**
+     * Checks if a user was created as part of an LTI launch.
+     *
+     * @param user the user to check if
+     * @return true if the user was created as part of an LTI launch
+     */
+    public boolean isLtiCreatedUser(User user) {
+        return user.getGroups().contains(LTI_GROUP_NAME);
     }
 }

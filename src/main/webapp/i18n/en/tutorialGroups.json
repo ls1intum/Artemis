@@ -36,7 +36,10 @@
                 "registrations": "Registrations",
                 "schedule": "Schedule",
                 "sessions": "Sessions",
-                "nextSession": "Next Session"
+                "nextSession": "Next Session",
+                "channel": "Channel",
+                "channelWithName": "Channel: {{ channel }}",
+                "channelReverse": "Channel of the tutorial group {{ title }}"
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Day of Week",
@@ -55,7 +58,8 @@
                 "start": "Start",
                 "end": "End",
                 "status": "Status",
-                "location": "Location"
+                "location": "Location",
+                "attendance": "# of Attendees"
             },
             "tutorialFreePeriod": {
                 "date": "Date",
@@ -70,6 +74,10 @@
                     "requiredValidationError": "Title is required!",
                     "maxLengthValidationError": "Title can be max {{ max }} characters long!",
                     "regexValidationError": "Titles can only contain letters, numbers, spaces and dashes."
+                },
+                "updateChannelNameInput": {
+                    "label": "Update Channel Name",
+                    "explanation": "If there is a messages channel associated with this tutorial group, the name of the channel will be updated with the title of the tutorial group if you enable this option."
                 },
                 "teachingAssistantInput": {
                     "label": "Tutor",
@@ -192,6 +200,11 @@
                     "requiredValidationError": "You need to select a period!",
                     "parseError": "Period must be in the format 'YYYY-MM-DD - YYYY-MM-DD'",
                     "invalidRangeError": "Period must be a valid date range"
+                },
+                "useTutorialGroupChannelsInput": {
+                    "label": "Use Artemis managed Tutorial Group Channels",
+                    "channelDeletionWarning": "You have disabled the use of Artemis managed tutorial group channels. All channels that were created by Artemis will be deleted. Are you sure you want to do this?",
+                    "explanation": "If enabled, Artemis will create a dedicated channel for each tutorial group in the 'Messages' section of the course. The channel can still be managed manually but Artemis automatically performs some common management tasks. Artemis will automatically add and remove students from the channel when they register or unregister for the tutorial group. The assigned tutor of the tutorial group will be made a moderator of the channel. The channel will be deleted when the tutorial group is deleted. It can not be deleted manually. This option can be changed later."
                 }
             }
         },

@@ -77,9 +77,9 @@ public class SubmissionService {
     /**
      * Check that the user is allowed to make the submission
      *
-     * @param exercise      the exercise for which a submission should be saved
-     * @param submission    the submission that should be saved
-     * @param currentUser   the current user with groups and authorities
+     * @param exercise    the exercise for which a submission should be saved
+     * @param submission  the submission that should be saved
+     * @param currentUser the current user with groups and authorities
      */
     public void checkSubmissionAllowanceElseThrow(Exercise exercise, Submission submission, User currentUser) {
         // Fetch course from database to make sure client didn't change groups
@@ -139,11 +139,11 @@ public class SubmissionService {
     /**
      * Given an exercise id and a tutor id, it returns all the submissions where the tutor has a result associated.
      *
-     * @param exerciseId - the id of the exercise we are looking for
+     * @param exerciseId      - the id of the exercise we are looking for
      * @param correctionRound - the correction round we want our submission to have results for
-     * @param tutor - the tutor we are interested in
-     * @param examMode - flag should be set to ignore the test run submissions
-     * @param <T> the submission type
+     * @param tutor           - the tutor we are interested in
+     * @param examMode        - flag should be set to ignore the test run submissions
+     * @param <T>             the submission type
      * @return list of submissions
      */
     public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForCorrectionRoundAndExerciseIgnoreTestRuns(Long exerciseId, User tutor, boolean examMode,
@@ -200,15 +200,16 @@ public class SubmissionService {
     /**
      * Returns the next submission without result and with individual due date,
      * in the ordering of their individual due dates.
-     * @param exercise the exercise for which we want to retrieve a submission
-     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
+     *
+     * @param exercise        the exercise for which we want to retrieve a submission
+     * @param examMode        flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @param correctionRound the correction round we want our submission to have results for
      * @return the next submission, ordered by individual due date (the earliest first), without any manual result
      */
     public Optional<Submission> getNextAssessableSubmission(Exercise exercise, boolean examMode, int correctionRound) {
         var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
 
-        return assessableSubmissions.stream().filter(a -> Objects.nonNull(a.getParticipation().getIndividualDueDate()))
+        return assessableSubmissions.stream().filter(a -> a.getParticipation().getIndividualDueDate() != null)
                 .min(Comparator.comparing(a -> a.getParticipation().getIndividualDueDate()));
     }
 
@@ -218,9 +219,9 @@ public class SubmissionService {
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      * If {@code correctionRound} is bigger than 0, only submissions are shown for which the user has not assessed the first result.
      *
-     * @param exercise the exercise for which we want to retrieve a submission without manual result
+     * @param exercise        the exercise for which we want to retrieve a submission without manual result
      * @param correctionRound the correction round we want our submission to have results for
-     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param examMode        flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public Optional<Submission> getRandomAssessableSubmission(Exercise exercise, boolean examMode, int correctionRound) {
@@ -233,9 +234,9 @@ public class SubmissionService {
      * Get all currently locked submissions for all users in the given exam.
      * These are all submissions for which users started, but did not yet finish the assessment.
      *
-     * @param examId  - the exam id
-     * @param user    - the user trying to access the locked submissions
-     * @return        - list of submissions that have locked results in the exam
+     * @param examId - the exam id
+     * @param user   - the user trying to access the locked submissions
+     * @return - list of submissions that have locked results in the exam
      */
     public List<Submission> getLockedSubmissions(Long examId, User user) {
         List<Submission> submissions = submissionRepository.getLockedSubmissionsAndResultsByExamId(examId);
@@ -253,7 +254,7 @@ public class SubmissionService {
      * database without explicitly saving them.
      *
      * @param submission Submission to be modified.
-     * @param user the currently logged-in user which is used for hiding specific submission details based on instructor and teaching assistant rights
+     * @param user       the currently logged-in user which is used for hiding specific submission details based on instructor and teaching assistant rights
      */
     public void hideDetails(Submission submission, User user) {
         // do not send old submissions or old results to the client
@@ -283,6 +284,7 @@ public class SubmissionService {
 
     /**
      * Creates a new Result object, assigns it to the given submission and stores the changes to the database.
+     *
      * @param submission the submission for which a new result should be created
      * @return the newly created result
      */
@@ -298,6 +300,7 @@ public class SubmissionService {
 
     /**
      * Copy Feedbacks from one Result to another Result
+     *
      * @param newResult new result to copy feedback to
      * @param oldResult old result to copy feedback from
      * @return the list of newly created feedbacks
@@ -310,7 +313,8 @@ public class SubmissionService {
 
     /**
      * Copy feedback from a feedback list to a Result
-     * @param result the result to copy feedback to
+     *
+     * @param result    the result to copy feedback to
      * @param feedbacks the feedbacks which are copied
      */
     private void copyFeedbackToResult(Result result, List<Feedback> feedbacks) {
@@ -327,7 +331,7 @@ public class SubmissionService {
      * which the tutor can then edit. Assigns the newly created Result to the submission
      *
      * @param submission submission to which the new Result is assigned
-     * @param oldResult result to copy from
+     * @param oldResult  result to copy from
      * @return the newly created copy of the oldResult
      */
     public Result copyResultFromPreviousRoundAndSave(Submission submission, Result oldResult) {
@@ -345,8 +349,8 @@ public class SubmissionService {
      * The new result contains the updated feedback of the result the complaint belongs to.
      *
      * @param submission the submission where the original result and the result after the complaintResponse belong to
-     * @param oldResult the original result, before the response
-     * @param feedbacks the new feedbacks after the response
+     * @param oldResult  the original result, before the response
+     * @param feedbacks  the new feedbacks after the response
      * @return the newly created result
      */
     public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks) {
@@ -361,8 +365,8 @@ public class SubmissionService {
      * Copies the content of one result to another, and adds the second result to the submission.
      *
      * @param submission the submission which both results belong to, the newResult comes after the oldResult in the result list
-     * @param newResult the result where the content is set
-     * @param oldResult the result from which the content is copied from
+     * @param newResult  the result where the content is set
+     * @param oldResult  the result from which the content is copied from
      * @return the newResult
      */
     private Result copyResultContentAndAddToSubmission(Submission submission, Result newResult, Result oldResult) {
@@ -381,7 +385,7 @@ public class SubmissionService {
      * Make sure submission.results is loaded
      *
      * @param submission the parent submission of the result
-     * @param result the result which we want to save and order
+     * @param result     the result which we want to save and order
      * @return the result with correctly persisted relationship to its submission
      */
     public Result saveNewResult(Submission submission, final Result result) {
@@ -397,15 +401,17 @@ public class SubmissionService {
     }
 
     /**
-     * Add a result to the last {@link Submission} of a {@link StudentParticipation} if it does not exist yet, see {@link StudentParticipation#findLatestSubmission()}, with a feedback of type {@link FeedbackType#AUTOMATIC}.
-     * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment, see {@link StudentParticipationRepository#findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation}.
+     * Add a result to the last {@link Submission} of a {@link StudentParticipation} if it does not exist yet, see {@link StudentParticipation#findLatestSubmission()}, with a
+     * feedback of type {@link FeedbackType#AUTOMATIC}.
+     * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment, see
+     * {@link StudentParticipationRepository#findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation}.
      * Sets the feedback text and result score.
      *
      * @param studentParticipation the studentParticipation containing the latest result
-     * @param assessor the assessor
-     * @param score the score which should be set
-     * @param feedbackText the feedback text for the
-     * @param correctionRound the correction round (1 or 2)
+     * @param assessor             the assessor
+     * @param score                the score which should be set
+     * @param feedbackText         the feedback text for the
+     * @param correctionRound      the correction round (1 or 2)
      */
     public void addResultWithFeedbackByCorrectionRound(StudentParticipation studentParticipation, User assessor, double score, String feedbackText, int correctionRound) {
         if (studentParticipation.getExercise().isExamExercise()) {
@@ -480,8 +486,8 @@ public class SubmissionService {
     }
 
     /**
-     * Soft locks the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
-     * tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
+     * Soft locks the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e.
+     * the client will not allow tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
      *
      * @param submission the submission to lock
      */
@@ -509,8 +515,9 @@ public class SubmissionService {
 
     /**
      * Filters the submissions on each participation so that only the latest submission for each participation remains
+     *
      * @param participations Participations for which to reduce the submissions
-     * @param submittedOnly Flag whether to only consider submitted submissions when finding the latest one
+     * @param submittedOnly  Flag whether to only consider submitted submissions when finding the latest one
      */
     public void reduceParticipationSubmissionsToLatest(List<StudentParticipation> participations, boolean submittedOnly) {
         participations.forEach(participation -> {
@@ -529,8 +536,9 @@ public class SubmissionService {
     /**
      * Filters the submissions to contain only in-time submissions if there are any.
      * If not, the original list is returned.
+     *
      * @param submissions The submissions to filter
-     * @param <T> Placeholder for subclass of {@link Submission} e.g. {@link TextSubmission}
+     * @param <T>         Placeholder for subclass of {@link Submission} e.g. {@link TextSubmission}
      * @return The filtered list of submissions
      */
     protected <T extends Submission> List<T> selectOnlySubmissionsBeforeDueDate(List<T> submissions) {
@@ -545,6 +553,7 @@ public class SubmissionService {
 
     /**
      * Checks if the submission was created before the due date of the exercise.
+     *
      * @param submission a student’s submission
      * @return true, if the submission date was before the due date or the exercise has no due date.
      */
@@ -591,8 +600,8 @@ public class SubmissionService {
      *
      * @param exerciseId    - the id of the exercise we are interested into
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
-     * @param examMode - set flag to ignore exam test run submissions
-     * @param <T> the submission type
+     * @param examMode      - set flag to ignore exam test run submissions
+     * @param <T>           the submission type
      * @return a list of modeling submissions for the given exercise id
      */
     public <T extends Submission> List<T> getAllSubmissionsForExercise(Long exerciseId, boolean submittedOnly, boolean examMode) {
@@ -614,7 +623,7 @@ public class SubmissionService {
     /**
      * This method gets all complaints of an exercise and returns them together with their corresponding submission in a DTO
      *
-     * @param exerciseId the exerciseId of the exercise of which the complaints are fetched
+     * @param exerciseId          the exerciseId of the exercise of which the complaints are fetched
      * @param isAtLeastInstructor if the user is an instructor
      * @return a list of DTOs containing a complaint and its submission
      */
@@ -674,6 +683,7 @@ public class SubmissionService {
 
     /**
      * Helper method to prepare the complaint for the client
+     *
      * @param complaint the complaint which gets prepared
      */
     private void prepareComplaintAndSubmission(Complaint complaint, Submission submission) {

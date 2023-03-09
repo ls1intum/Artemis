@@ -1,0 +1,15 @@
+.channel-item {
+    .interaction {
+        visibility: hidden;
+    }
+
+    &:hover {
+        .interaction {
+            visibility: visible;
+        }
+    }
+
+    .long-text {
+        max-width: 600px;
+    }
+}

@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -40,6 +39,8 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
 class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "jiraauthintegration";
+
     @Value("${artemis.user-management.external.admin-group-name}")
     private String ADMIN_GROUP_NAME;
 
@@ -65,15 +66,12 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
     protected UserRepository userRepository;
 
     @Autowired
-    protected LtiUserIdRepository ltiUserIdRepository;
-
-    @Autowired
     protected LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
     @Autowired
     protected AuthorityRepository authorityRepository;
 
-    private static final String USERNAME = "student1";
+    private static final String USERNAME = TEST_PREFIX + "student1";
 
     protected ProgrammingExercise programmingExercise;
 
@@ -85,7 +83,9 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
     void setUp() {
         course = database.addCourseWithOneProgrammingExercise();
         database.addOnlineCourseConfigurationToCourse(course);
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
+
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
         doReturn(null).when(lti10Service).verifyRequest(any(), any());
 
@@ -94,12 +94,10 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         final var adminAuthority = new Authority(Role.ADMIN.getAuthority());
         final var taAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
-        jiraRequestMockProvider.enableMockingOfRequests();
-    }
 
-    @AfterEach
-    void teardown() {
-        database.resetDatabase();
+        userRepository.findOneByLogin(USERNAME).ifPresent(userRepository::delete);
+
+        jiraRequestMockProvider.enableMockingOfRequests();
     }
 
     @Test
@@ -112,9 +110,12 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
     @ValueSource(strings = { LTI_USER_EMAIL, LTI_USER_EMAIL_UPPER_CASE })
     @WithAnonymousUser
     void launchLtiRequest_authViaEmail_success(String launchEmail) throws Exception {
+        ltiOutcomeUrlRepository.deleteAll();
+
         final var username = "mrrobot";
+        userRepository.findOneByLogin(username).ifPresent(userRepository::delete);
         final var firstName = "Elliot";
-        final var groups = Set.of("allsec", "security", ADMIN_GROUP_NAME, course.getInstructorGroupName(), course.getTeachingAssistantGroupName());
+        final var groups = Set.of("allsec", "security", ADMIN_GROUP_NAME, course.getInstructorGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName());
         final var email = LTI_USER_EMAIL;
         ltiLaunchRequest.setLis_person_contact_email_primary(launchEmail);
         jiraRequestMockProvider.mockGetUsernameForEmail(launchEmail, email, username);
@@ -124,10 +125,8 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
 
         request.postForm("/api/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
         final var user = userRepository.findOneByLogin(username).orElseThrow();
-        final var ltiUser = ltiUserIdRepository.findAll().get(0);
-        final var ltiOutcome = ltiOutcomeUrlRepository.findAll().get(0);
-        assertThat(ltiUser.getUser()).isEqualTo(user);
-        assertThat(ltiUser.getLtiUserId()).isEqualTo(ltiLaunchRequest.getUser_id());
+        final var ltiOutcome = ltiOutcomeUrlRepository.findByUserAndExercise(user, programmingExercise).get();
+
         assertThat(ltiOutcome.getUser()).isEqualTo(user);
         assertThat(ltiOutcome.getExercise()).isEqualTo(programmingExercise);
         assertThat(ltiOutcome.getUrl()).isEqualTo(ltiLaunchRequest.getLis_outcome_service_url());

@@ -5,7 +5,7 @@
     <p *ngIf="!isTestExam">
         <span>
             {{ 'artemisApp.examManagement.checklist.introduction' | artemisTranslate }}
-            <a href="https://docs.artemis.ase.in.tum.de/user/exams/instructors_guide/">{{ 'artemisApp.examManagement.checklist.linkDescription' | artemisTranslate }}</a>
+            <a href="https://docs.artemis.cit.tum.de/user/exams/instructors_guide/">{{ 'artemisApp.examManagement.checklist.linkDescription' | artemisTranslate }}</a>
             {{ 'artemisApp.examManagement.checklist.introductionPart2' | artemisTranslate }}
         </span>
     </p>
@@ -134,13 +134,13 @@
                         <ul class="list-unstyled">
                             <li class="list-group-item border-1">
                                 <span>
-                                    <jhi-exam-checklist-check [checkAttribute]="!!exam.numberOfRegisteredUsers && exam.numberOfRegisteredUsers! > 0"></jhi-exam-checklist-check>
+                                    <jhi-exam-checklist-check [checkAttribute]="!!exam.numberOfExamUsers && exam.numberOfExamUsers! > 0"></jhi-exam-checklist-check>
                                     <span>{{ 'artemisApp.examManagement.checklist.textitems.leastonestudent' | artemisTranslate }}</span>
                                 </span>
                             </li>
                             <li class="list-group-item border-1">
                                 <span>{{ 'artemisApp.examManagement.checklist.textitems.studentsregistered' | artemisTranslate }}</span>
-                                <span> {{ exam.numberOfRegisteredUsers }} </span>
+                                <span> {{ exam.numberOfExamUsers }} </span>
                             </li>
                         </ul>
                     </td>
@@ -278,8 +278,8 @@
                     <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.conductExam' | artemisTranslate }}</span>
                     <hr />
                     <!-- Display number of registered students -->
-                    <div *ngIf="exam.numberOfRegisteredUsers">
-                        <span>{{ 'artemisApp.examManagement.checklist.textitems.studentsregistered' | artemisTranslate }} {{ exam.numberOfRegisteredUsers! }}</span>
+                    <div *ngIf="exam.numberOfExamUsers">
+                        <span>{{ 'artemisApp.examManagement.checklist.textitems.studentsregistered' | artemisTranslate }} {{ exam.numberOfExamUsers! }}</span>
                         <hr />
                     </div>
                     <!-- Display started exams-->
@@ -328,7 +328,7 @@
                 </td>
                 <td>
                     <a [routerLink]="['monitoring']" class="btn btn-info" id="monitoring-button-{{ exam.id }}" [jhiFeatureToggleLink]="FeatureToggle.ExamLiveStatistics">
-                        <fa-icon [icon]="faEye"></fa-icon>
+                        <fa-icon [icon]="faChartBar"></fa-icon>
                         <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examMonitoring' | artemisTranslate }}</span>
                     </a>
                 </td>

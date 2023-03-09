@@ -12,6 +12,7 @@ import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-course-discussion',
@@ -30,6 +31,9 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     pagingEnabled = true;
     itemsPerPage = ITEMS_PER_PAGE;
     page = 1;
+
+    documentationType = DocumentationType.Communications;
+
     forceReload = true;
     readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
@@ -88,7 +92,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             this.posts = posts;
             this.isLoading = false;
         });
-        this.totalItemsSubscription = this.metisService.totalItems.pipe().subscribe((totalItems: number) => {
+        this.totalItemsSubscription = this.metisService.totalNumberOfPosts.pipe().subscribe((totalItems: number) => {
             this.totalItems = totalItems;
         });
     }

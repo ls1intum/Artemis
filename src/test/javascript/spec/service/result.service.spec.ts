@@ -253,7 +253,7 @@ describe('ResultService', () => {
             const participation: StudentParticipation = { testRun: true, type: ParticipationType.STUDENT };
             const result: Result = {};
             expect(ResultService.evaluateBadge(participation, result)).toEqual({
-                badgeClass: 'bg-secondary',
+                class: 'bg-secondary',
                 text: 'artemisApp.result.practice',
                 tooltip: 'artemisApp.result.practiceTooltip',
             });
@@ -263,7 +263,7 @@ describe('ResultService', () => {
             const participation: Participation = {};
             const result: Result = { rated: true };
             expect(ResultService.evaluateBadge(participation, result)).toEqual({
-                badgeClass: 'bg-success',
+                class: 'bg-success',
                 text: 'artemisApp.result.graded',
                 tooltip: 'artemisApp.result.gradedTooltip',
             });
@@ -273,7 +273,7 @@ describe('ResultService', () => {
             const participation: Participation = {};
             const result: Result = { rated: false };
             expect(ResultService.evaluateBadge(participation, result)).toEqual({
-                badgeClass: 'bg-info',
+                class: 'bg-info',
                 text: 'artemisApp.result.notGraded',
                 tooltip: 'artemisApp.result.notGradedTooltip',
             });

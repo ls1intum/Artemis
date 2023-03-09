@@ -15,7 +15,19 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let gradeStep of gradeSteps; let i = index; let last = last" [class.highlighted]="gradeStep.gradeName == studentGrade">
+                    <tr *ngIf="plagiarismGrade === studentGrade" [class.highlighted]="plagiarismGrade === studentGrade">
+                        <td>{{ plagiarismGrade }}<jhi-help-icon placement="auto" text="artemisApp.gradingSystem.plagiarismGradeHelp"></jhi-help-icon></td>
+                        <!-- &mdash; is used to indicate that this special grade does not correspond to a numeric interval. -->
+                        <td>&mdash;</td>
+                        <td *ngIf="hasPointsSet()">&mdash;</td>
+                    </tr>
+                    <tr *ngIf="noParticipationGrade === studentGrade" [class.highlighted]="noParticipationGrade === studentGrade">
+                        <td>{{ noParticipationGrade }}<jhi-help-icon placement="auto" text="artemisApp.gradingSystem.noParticipationGradeHelp"></jhi-help-icon></td>
+                        <!-- &mdash; is used to indicate that this special grade does not correspond to a numeric interval. -->
+                        <td>&mdash;</td>
+                        <td *ngIf="hasPointsSet()">&mdash;</td>
+                    </tr>
+                    <tr *ngFor="let gradeStep of gradeSteps; let last = last" [class.highlighted]="gradeStep.gradeName == studentGrade || +gradeStep.gradeName === +studentGrade!">
                         <td>{{ gradeStep.gradeName }}</td>
                         <td>
                             <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.PERCENTAGE : last | safeHtml"></span>

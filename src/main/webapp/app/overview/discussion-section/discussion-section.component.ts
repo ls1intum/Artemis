@@ -141,7 +141,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         }
 
         // 3rd criterion
-        if (!!this.currentSortDirection) {
+        if (this.currentSortDirection) {
             const comparison = this.sortByDate(postA, postB, this.currentSortDirection);
             if (comparison !== 0) {
                 return comparison;
@@ -247,6 +247,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * helper method which returns the order which posts must be listed
      * @param postA     first post to compare
      * @param postB     second post to compare
+     * @param sortDirection ascending or descending
      * @return number   the order which posts must be listed
      */
     sortByDate = (postA: Post, postB: Post, sortDirection: SortDirection): number => {

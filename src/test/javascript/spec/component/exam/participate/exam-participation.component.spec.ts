@@ -30,6 +30,7 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -57,6 +58,8 @@ describe('ExamParticipationComponent', () => {
     let modelingSubmissionService: ModelingSubmissionService;
     let alertService: AlertService;
     let artemisServerDateService: ArtemisServerDateService;
+    let websocketService: JhiWebsocketService;
+    let artemisDatePipe: ArtemisDatePipe;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -76,6 +79,7 @@ describe('ExamParticipationComponent', () => {
                 MockDirective(TranslateDirective),
                 MockComponent(TestRunRibbonComponent),
                 MockComponent(ExamParticipationSummaryComponent),
+                MockPipe(ArtemisDatePipe),
             ],
             providers: [
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
@@ -95,6 +99,7 @@ describe('ExamParticipationComponent', () => {
                 MockProvider(TranslateService),
                 MockProvider(AlertService),
                 MockProvider(CourseExerciseService),
+                MockProvider(ArtemisDatePipe),
             ],
         })
             .compileComponents()
@@ -108,6 +113,8 @@ describe('ExamParticipationComponent', () => {
                 modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
                 alertService = TestBed.inject(AlertService);
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
+                websocketService = TestBed.inject(JhiWebsocketService);
+                artemisDatePipe = TestBed.inject(ArtemisDatePipe);
                 fixture.detectChanges();
                 comp.exam = new Exam();
             });
@@ -189,7 +196,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.exam = new Exam();
         studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
         studentExam.workingTime = 100;
-        const studentExamWithExercises = { id: 1 };
+        const studentExamWithExercises = { id: 1, numberOfExamSessions: 0 };
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(of(studentExam));
         const loadStudentExamWithExercisesForSummary = jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
@@ -314,7 +321,7 @@ describe('ExamParticipationComponent', () => {
             const studentParticipation = new StudentParticipation();
             if (withSubmission) {
                 let submission = new ProgrammingSubmission();
-                if ('modeling') {
+                if (type == 'modeling') {
                     submission = new ModelingSubmission();
                 }
                 studentParticipation.submissions = [submission];
@@ -434,6 +441,45 @@ describe('ExamParticipationComponent', () => {
         const exercise = new ProgrammingExercise(new Course(), undefined);
         comp.createParticipationForExercise(exercise);
         expect(courseExerciseServiceStub).toHaveBeenCalledOnce();
+    });
+
+    describe('websocket working time subscription', () => {
+        let alertSuccessSpy: jest.SpyInstance;
+        let alertErrorSpy: jest.SpyInstance;
+        let artemisDatePipeSpy: jest.SpyInstance;
+        const startDate = dayjs('2022-02-21T23:00:00+01:00');
+
+        beforeEach(() => {
+            alertSuccessSpy = jest.spyOn(alertService, 'success');
+            alertErrorSpy = jest.spyOn(alertService, 'error');
+            artemisDatePipeSpy = jest.spyOn(artemisDatePipe, 'transform');
+            comp.studentExam = { id: 3, workingTime: 420, numberOfExamSessions: 0 };
+            comp.studentExamId = comp.studentExam.id!;
+        });
+
+        it('should correctly increase working time', () => {
+            jest.spyOn(websocketService, 'receive').mockReturnValue(of(1337));
+            comp.initIndividualEndDates(startDate);
+            expect(comp.studentExam.workingTime).toBe(1337);
+            expect(artemisDatePipeSpy).toHaveBeenCalledWith(startDate.add(1337, 'seconds'), 'time');
+            expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.examParticipation.workingTimeIncreased', { date: undefined });
+        });
+
+        it('should correctly increase working time to next day', () => {
+            jest.spyOn(websocketService, 'receive').mockReturnValue(of(9001));
+            comp.initIndividualEndDates(startDate);
+            expect(comp.studentExam.workingTime).toBe(9001);
+            expect(artemisDatePipeSpy).toHaveBeenCalledWith(startDate.add(9001, 'seconds'), 'short');
+            expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.examParticipation.workingTimeIncreased', { date: undefined });
+        });
+
+        it('should correctly decrease working time', () => {
+            jest.spyOn(websocketService, 'receive').mockReturnValue(of(42));
+            comp.initIndividualEndDates(startDate);
+            expect(comp.studentExam.workingTime).toBe(42);
+            expect(artemisDatePipeSpy).toHaveBeenCalledWith(startDate.add(42, 'seconds'), 'time');
+            expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.examParticipation.workingTimeDecreased', { date: undefined });
+        });
     });
 
     describe('trigger save', () => {

@@ -1,29 +1,35 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { combineLatest, finalize } from 'rxjs';
+import { Subject, combineLatest, finalize } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
-import { faPencil, faPlus, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
+import { takeUntil } from 'rxjs/operators';
+import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 
 @Component({
     selector: 'jhi-tutorial-groups-management',
     templateUrl: './tutorial-groups-management.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TutorialGroupsManagementComponent implements OnInit {
+export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
+    ngUnsubscribe = new Subject<void>();
+
     courseId: number;
     course: Course;
     isAtLeastInstructor = false;
 
+    configuration: TutorialGroupsConfiguration;
+
     isLoading = false;
     tutorialGroups: TutorialGroup[] = [];
     faPlus = faPlus;
-    faPencil = faPencil;
     faUmbrellaBeach = faUmbrellaBeach;
 
     tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
@@ -34,10 +40,11 @@ export class TutorialGroupsManagementComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
+        private cdr: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
-        this.activatedRoute.data.subscribe(({ course }) => {
+        this.activatedRoute.data.pipe(takeUntil(this.ngUnsubscribe)).subscribe(({ course }) => {
             if (course) {
                 this.course = course;
                 this.courseId = course.id!;
@@ -45,6 +52,11 @@ export class TutorialGroupsManagementComponent implements OnInit {
                 this.loadTutorialGroups();
             }
         });
+    }
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 
     onTutorialGroupSelected = (tutorialGroup: TutorialGroup) => {
@@ -59,6 +71,7 @@ export class TutorialGroupsManagementComponent implements OnInit {
                 finalize(() => {
                     this.isLoading = false;
                 }),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: ([tutorialGroupsRes, configurationRes]) => {
@@ -74,12 +87,13 @@ export class TutorialGroupsManagementComponent implements OnInit {
                     });
                     this.tutorialGroups = tutorialGroups;
 
-                    const configuration = configurationRes.body!;
-                    if (configuration.tutorialGroupFreePeriods) {
-                        this.tutorialGroupFreeDays = configuration.tutorialGroupFreePeriods;
+                    this.configuration = configurationRes.body!;
+                    if (this.configuration.tutorialGroupFreePeriods) {
+                        this.tutorialGroupFreeDays = this.configuration.tutorialGroupFreePeriods;
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+            })
+            .add(() => this.cdr.detectChanges());
     }
 }

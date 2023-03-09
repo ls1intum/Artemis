@@ -10,6 +10,7 @@
         />
         <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSelectContext()"></jhi-button>
         <jhi-button class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()"></jhi-button>
+        <jhi-documentation-button [type]="documentationType" class="information-button"></jhi-documentation-button>
         <div *ngIf="createdPost">
             <button class="btn btn-md btn-primary ms-1" (click)="createEditModal.open()">
                 <fa-icon [icon]="faPlus"></fa-icon>
@@ -145,19 +146,16 @@
         <div class="col-12">
             <jhi-virtual-scroll
                 #virtualScrollContainer
+                [scrollPaddingTop]="325"
                 [items]="posts"
                 [minItemHeight]="126.7"
-                [containerHeight]="'500px'"
                 [collapsableHtmlClassNames]="['.answer-post', '.new-reply-inline-input']"
                 [endOfListReachedItemThreshold]="5"
                 [(forceReload)]="forceReload"
                 (onEndOfOriginalItemsReached)="fetchNextPage()"
             >
-                <jhi-posting-thread
-                    *ngFor="let post of virtualScrollContainer.domTreeItems; trackBy: postsTrackByFn"
-                    [post]="post"
-                    [showAnswers]="posts.length === 1"
-                ></jhi-posting-thread>
+                <jhi-posting-thread *ngFor="let post of virtualScrollContainer.domTreeItems; trackBy: postsTrackByFn" [post]="post" [showAnswers]="posts.length === 1">
+                </jhi-posting-thread>
                 <!-- spinner while loading posts -->
                 <div class="text-center">
                     <div *ngIf="isLoading" class="spinner-border mt-3" role="status"></div>

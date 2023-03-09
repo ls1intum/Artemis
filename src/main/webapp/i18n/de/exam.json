@@ -1,9 +1,30 @@
 {
     "artemisApp": {
         "exam": {
+            "examUsers": {
+                "uploadImage": "Bilder hochladen",
+                "uploadImageTooltip": "Hochladen von Bildern für die registrierten Studenten",
+                "introText": "Dieser Dialog kann zum Hochladen von PDF-Dateien und zum Extrahieren von Bildern für registrierte Studenten verwendet werden.",
+                "dialogText": "Jeder Eintrag in der Eingabedatei muss entweder einen Wert für die Matrikelnummer, das Login oder die E-Mail enthalten.\nDie Angaben zu Name und Vorname sind optional.",
+                "pdfExampleText": "Beispiel für ein gültiges PDF-Dateiformat:",
+                "pdfFile": {
+                    "label": ".pdf-Datei auswählen",
+                    "tooltip": "Bitte wählen Sie eine .pdf-Datei aus, die das Bild des registrierten Studenten und seine Matrikelnummer enthält."
+                },
+                "dialogTitle": "Bilder hochladen",
+                "allImagesSaved": "Alle Bilder wurden erfolgreich gespeichert.",
+                "plannedSeat": "Geplanter Sitz",
+                "plannedRoom": "Geplanter Raum",
+                "actualSeat": "Tatsächlicher Sitzplatz",
+                "actualRoom": "Tatsächlicher Raum",
+                "room": "Raum",
+                "seat": "Sitz",
+                "saveImages": "Bilder speichern",
+                "numberOfImagesSaved": "Gespeicherte Bilder"
+            },
             "overview": {
                 "start": "Beginn: {{start}}",
-                "duration": "Arbeitzeit:",
+                "duration": "Arbeitszeit:",
                 "maxPoints": "Erreichbare Punkte: {{points}}",
                 "upcoming": "Demnächst stattfindende Klausur",
                 "imminent": "Die Klausur beginnt in",
@@ -47,6 +68,7 @@
                 "noCommitHash": "Es hat kein Commit stattgefunden",
                 "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}",
                 "viewResult": " Ergebnis ansehen",
+                "viewExampleSolution": "Beispiellösung anzeigen",
                 "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere die entsprechende Lehrkraft.",
                 "points": {
                     "exercise": "Aufgabe",
@@ -92,6 +114,7 @@
             "publishResultsDate": "Veröffentlichung der Ergebnisse",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
+            "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung",
             "duration": "Dauer",
             "nrOfStudents": "Anzahl registrierter Studierender",
             "created": "Neue Klausur erstellt",
@@ -236,12 +259,23 @@
             "continueAfterHandInEarlyDescription": "Du willst doch nicht vorzeitig abgeben?",
             "handInEarlyNoticeFirstSentence": "Du bist dabei die Klausur vorzeitig abzugeben.",
             "handInEarlyNoticeSecondSentence": "Du kannst danach nicht mehr an der Klausur teilnehmen.",
-            "namePlaceholder": "Trage deinen vollen Namen hier ein"
+            "namePlaceholder": "Trage deinen vollen Namen hier ein",
+            "workingTimeIncreased": "Das Ende der Arbeitszeit wurde verlängert bis {{ date }}.",
+            "workingTimeDecreased": "Das Ende der Arbeitszeit wurde verkürzt bis {{ date }}."
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
             "updated": "Aufgabengruppe bearbeitet",
             "deleted": "Aufgabengruppe mit Titel {{ param }} gelöscht"
+        },
+        "examSession": {
+            "id": "ID",
+            "sessionToken": "Sitzungsschlüssel",
+            "userAgent": "User Agent",
+            "browserFingerprintHash": "Browser-Fingerabdruck",
+            "instanceId": "Browserinstanz-ID",
+            "ipAddress": "IP-Adresse",
+            "createdDate": "Erstellungsdatum"
         },
         "studentExams": {
             "title": "Klausuren",
@@ -260,6 +294,7 @@
             "started": "Gestartet",
             "submitted": "Abgegeben",
             "submissionDate": "Abgabedatum",
+            "examSessions": "Sitzungen",
             "grade": "Note",
             "gradeBeforeBonus": "Note vor Bonus",
             "gradeAfterBonus": "Note nach Bonus",
@@ -327,8 +362,10 @@
                 "configuration": "Klausurkonfiguration",
                 "conduction": "Klausurdurchführung",
                 "assessment": "Klausurbewertung und Klausureinsicht",
+                "assessmentEmptyDates": "Wenn du ein Datum leer lässt, wird dieser Schritt nicht stattfinden",
                 "exercises": "Klausuraufgaben",
-                "text": "Klausurtexte"
+                "text": "Klausurtexte",
+                "examSolutions": "Klausurlösungen"
             },
             "title": "Klausurverwaltung",
             "createExam": "Erstelle eine neue Klausur",
@@ -353,6 +390,7 @@
             "courseName": "Kursname",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
+            "exampleSolutionPublicationDateTooltip": "Studierende können die Beispiellösungen für alle Aufgaben in der Klausur ab diesem Zeitpunkt einsehen, wenn sie an der Klausur teilgenommen haben. Zum Deaktivieren leer lassen.",
             "studentReviewEnabled": "Klausureinsicht ist möglich",
             "maxPoints": {
                 "title": "Erreichbare Punktzahl",
@@ -376,7 +414,7 @@
             "testExam": {
                 "realExam": "Klausur",
                 "testExam": "Testklausur",
-                "examMode": "Exammodus",
+                "examMode": "Modus",
                 "examModeTooltip": "Testklausuren können von Studierenden an einem frei wählbaren Zeitpunkt innerhalb des Bearbeitungsfensters begonnen werden, zur Durchführung steht die gewählte Arbeitszeit zur Verfügung. Nach dem Durchlauf erhalten die Studierenden automatisiertes Feedback. HINWEIS: Der Modus kann nach der Erstellung nicht mehr geändert werden!",
                 "startDate": "Beginn Bearbeitungsfenster",
                 "endDate": "Ende Bearbeitungsfenster",
@@ -411,12 +449,25 @@
                 }
             },
             "examStudents": {
+                "imageChecked": "Bild wurde erfolgreich geprüft",
+                "imageNotChecked": "Bild wurde nicht geprüft",
+                "loginChecked": "Login wurde erfolgreich geprüft",
+                "loginNotChecked": "Login wurde nicht geprüft",
+                "nameChecked": "Name wurde erfolgreich geprüft",
+                "nameNotChecked": "Name wurde nicht geprüft",
+                "noSignature": "Keine Unterschrift",
+                "registrationNumberChecked": "Matrikelnummer wurde erfolgreich geprüft",
+                "registrationNumberNotChecked": "Matrikelnummer wurde nicht überprüft",
                 "registeredStudents": "Angemeldete Studierende",
+                "notCheckedStudents": "Nicht überprüfte Studierende",
                 "searchResults": "Suchergebnisse",
                 "usersPerPage": "{{number}} Studierende pro Seite",
                 "showAllUsers": "Alle Studierenden anzeigen",
                 "searchForUsers": "Studierende für diese Klausur anmelden durch Suchen nach Login oder Namen",
+                "searchStudents": "Studierende nach Namen oder Login suchen",
                 "searchNoResults": "Keine Studierenden gefunden",
+                "signingImagePath": "Unterschrift",
+                "checks": "Überprüfungen",
                 "login": "Login",
                 "name": "Name",
                 "firstName": "Vorname",
@@ -425,6 +476,10 @@
                 "registrationNumber": "Matrikelnummer",
                 "registerAllFromCourse": "Registriere alle Studierenden des Kurses",
                 "registerAllFromCourseTooltip": "Registriere alle zu diesem Kurs angemeldeten Studierende",
+                "verifyAttendanceTooltip": "Überprüfung der Anwesenheitskontrolle der Studierenden",
+                "verifyAttendanceBtn": "Anwesenheitskontrolle bestätigen",
+                "examNotStarted": "Die Prüfung hat noch nicht begonnen",
+                "verifyChecks": "Anwesenheitskontrollen überprüfen",
                 "removeFromExam": {
                     "modalQuestion": "Soll die Person mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Ihre individuelle Klausur wird dabei gelöscht.",
                     "deleteParticipationsAndSubmission": "Zusätzlich die Teilnahme und Abgaben in der zugehörigen Klausur löschen? Diese Aktion kann NICHT rückgängig gemacht werden!",
@@ -692,7 +747,8 @@
             "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert.",
             "toggleSuccessful": "Der Abgabestatus wurde erfolgreich geändert.",
             "togglefailed": "Der Abgabestatus konnte nicht geändert werden!",
-            "hasComplaint": "Beschwerde existiert"
+            "hasComplaint": "Beschwerde existiert",
+            "noSessions": "Keine Sitzungen"
         },
         "studentExam": {
             "submitSuccessful": "Deine Klausur wurde erfolgreich abgegeben. Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden. Halte dich an die Klausuranweisungen deiner Lehrenden.",

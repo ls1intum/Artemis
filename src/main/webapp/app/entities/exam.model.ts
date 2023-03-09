@@ -1,9 +1,9 @@
+import { ExamUser } from 'app/entities/exam-user.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { User } from 'app/core/user/user.model';
 
 export class Exam implements BaseEntity {
     public id?: number;
@@ -17,6 +17,7 @@ export class Exam implements BaseEntity {
     public publishResultsDate?: dayjs.Dayjs;
     public examStudentReviewStart?: dayjs.Dayjs;
     public examStudentReviewEnd?: dayjs.Dayjs;
+    public exampleSolutionPublicationDate?: dayjs.Dayjs;
     // grace period in seconds - time in which students can still submit even though working time is over
     public gracePeriod?: number;
     public examiner?: string;
@@ -27,16 +28,16 @@ export class Exam implements BaseEntity {
     public endText?: string;
     public confirmationStartText?: string;
     public confirmationEndText?: string;
-    public maxPoints?: number;
+    public examMaxPoints?: number;
     public randomizeExerciseOrder?: boolean;
     public numberOfExercisesInExam?: number;
     public numberOfCorrectionRoundsInExam?: number;
     public course?: Course;
     public exerciseGroups?: ExerciseGroup[];
     public studentExams?: StudentExam[];
-    public registeredUsers?: User[];
+    public examUsers?: ExamUser[];
 
-    public numberOfRegisteredUsers?: number; // transient
+    public numberOfExamUsers?: number; // transient
 
     // helper attributes
     public visible?: boolean;
@@ -51,7 +52,7 @@ export class Exam implements BaseEntity {
     constructor() {
         this.randomizeExerciseOrder = false; // default value (set by server)
         this.numberOfCorrectionRoundsInExam = 1; // default value
-        this.maxPoints = 1; // default value
+        this.examMaxPoints = 1; // default value
         this.workingTime = 0; // will be updated during creation
         this.testExam = false; // default value
 

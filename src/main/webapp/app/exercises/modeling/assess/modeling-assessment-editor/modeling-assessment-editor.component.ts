@@ -9,7 +9,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
@@ -30,6 +29,7 @@ import { ExampleSubmissionService } from 'app/exercises/shared/example-submissio
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
+import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -167,6 +167,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.course = getCourseFromExercise(this.modelingExercise);
         if (this.resultId > 0) {
             this.result = getSubmissionResultById(submission, this.resultId);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.correctionRound = submission.results?.findIndex((result) => result.id === this.resultId)!;
         } else {
             this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
@@ -375,11 +376,18 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
      * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
      *
-     * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
+     * @param assessmentAfterComplaint the response to the complaint that is sent to the server along with the assessment update along with onSuccess and onError callbacks
      */
-    onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
-        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.feedback, complaintResponse, this.submission!.id!).subscribe({
+    onUpdateAssessmentAfterComplaint(assessmentAfterComplaint: AssessmentAfterComplaint): void {
+        this.validateFeedback();
+        if (!this.assessmentsAreValid) {
+            this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
+            assessmentAfterComplaint.onError();
+            return;
+        }
+        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.feedback, assessmentAfterComplaint.complaintResponse, this.submission!.id!).subscribe({
             next: (response) => {
+                assessmentAfterComplaint.onSuccess();
                 this.result = response.body!;
                 // reconnect
                 this.result.participation!.results = [this.result];
@@ -387,6 +395,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.alertService.success('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
             },
             error: (httpErrorResponse: HttpErrorResponse) => {
+                assessmentAfterComplaint.onError();
                 this.alertService.closeAll();
                 const error = httpErrorResponse.error;
                 if (error && error.errorKey && error.errorKey === 'complaintLock') {

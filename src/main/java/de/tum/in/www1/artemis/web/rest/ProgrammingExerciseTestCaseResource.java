@@ -72,7 +72,7 @@ public class ProgrammingExerciseTestCaseResource {
      * We don't transfer the whole test case object here, because we need to make sure that only weights and visibility can be updated!
      * Will only return test case objects in the response that could be updated.
      *
-     * @param exerciseId            of exercise the test cases belong to.
+     * @param exerciseId                              of exercise the test cases belong to.
      * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and visibility of.
      * @return the set of test cases for the given programming exercise.
      */

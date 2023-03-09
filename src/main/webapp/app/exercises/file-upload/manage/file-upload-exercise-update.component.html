@@ -1,10 +1,16 @@
 <form name="editForm" role="form" novalidate #editForm="ngForm">
-    <h4 *ngIf="fileUploadExercise.id" id="jhi-file-upload-exercise-heading-edit" jhiTranslate="artemisApp.fileUploadExercise.home.editLabel">Edit a File Upload Exercise</h4>
-    <h4 *ngIf="!fileUploadExercise.id" id="jhi-file-upload-exercise-heading-create" jhiTranslate="artemisApp.fileUploadExercise.home.createLabel">
-        Create a new File Upload Exercise
-    </h4>
+    <div class="d-flex align-items-center">
+        <h4 *ngIf="fileUploadExercise.id && !isImport" id="jhi-file-upload-exercise-heading-edit" jhiTranslate="artemisApp.fileUploadExercise.home.editLabel">
+            Edit a File Upload Exercise
+        </h4>
+        <h4 *ngIf="!fileUploadExercise.id" id="jhi-file-upload-exercise-heading-create" jhiTranslate="artemisApp.fileUploadExercise.home.createLabel">
+            Create a new File Upload Exercise
+        </h4>
+        <h4 *ngIf="isImport" id="jhi-file-upload-exercise-heading-import" jhiTranslate="artemisApp.fileUploadExercise.home.importLabel">Import a File Upload Exercise</h4>
+        <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+    </div>
     <div>
-        <div class="form-group" [hidden]="!fileUploadExercise.id">
+        <div class="form-group" [hidden]="!fileUploadExercise.id || isImport">
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="fileUploadExercise.id" readonly />
         </div>
@@ -14,6 +20,7 @@
         </div>
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
+            <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
             <jhi-category-selector
                 [categories]="exerciseCategories"
                 [existingCategories]="existingCategories"
@@ -26,7 +33,7 @@
                 <jhi-difficulty-picker [exercise]="fileUploadExercise"></jhi-difficulty-picker>
             </div>
         </div>
-        <jhi-team-config-form-group class="form-element" [exercise]="fileUploadExercise"></jhi-team-config-form-group>
+        <jhi-team-config-form-group class="form-element" [exercise]="fileUploadExercise" [isImport]="isImport"></jhi-team-config-form-group>
         <div class="d-flex" *ngIf="!isExamMode">
             <div class="form-group flex-grow-1">
                 <jhi-date-time-picker
@@ -174,11 +181,20 @@
                 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate
             }}</span>
         </div>
+        <div class="form-group" *ngIf="!isExamMode">
+            <jhi-learning-goal-selection
+                id="learning-goals"
+                [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
+                [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
+                [(ngModel)]="fileUploadExercise.learningGoals"
+                name="learningGoals"
+            ></jhi-learning-goal-selection>
+        </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="fileUploadExercise"></jhi-grading-instructions-details>
         </div>
-        <div class="form-group" *ngIf="fileUploadExercise.id">
+        <div class="form-group" *ngIf="fileUploadExercise.id && !isImport">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
             <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>

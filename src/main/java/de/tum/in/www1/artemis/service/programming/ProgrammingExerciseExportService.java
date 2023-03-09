@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.RepositoryCheckoutPath;
 import static de.tum.in.www1.artemis.service.util.XmlFileUtils.getDocumentBuilderFactory;
 
 import java.io.File;
@@ -238,9 +239,10 @@ public class ProgrammingExerciseExportService {
      * solution, or tests repository.
      *
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
-     * @param exerciseId The id of the programming exercise that has the repository
+     *
+     * @param exerciseId     The id of the programming exercise that has the repository
      * @param repositoryType the type of repository to export
-     * @param exportErrors List of failures that occurred during the export
+     * @param exportErrors   List of failures that occurred during the export
      * @return a zipped file
      */
     public Optional<File> exportInstructorRepositoryForExercise(long exerciseId, RepositoryType repositoryType, List<String> exportErrors) {
@@ -252,22 +254,25 @@ public class ProgrammingExerciseExportService {
      * Exports a solution repository available for an instructor/tutor/student for a given programming exercise.
      *
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
-     * @param exerciseId The id of the programming exercise that has the repository
+     *
+     * @param exerciseId   The id of the programming exercise that has the repository
+     * @param includeTests flag that indicates whether the tests should also be exported
      * @param exportErrors List of failures that occurred during the export
      * @return a zipped file
      */
-    public Optional<File> exportSolutionRepositoryForExercise(long exerciseId, List<String> exportErrors) {
-        Path outputDir = fileService.getUniquePath(repoDownloadClonePath);
-        return exportSolutionRepositoryForExercise(exerciseId, outputDir, exportErrors);
+    public Optional<File> exportStudentRequestedRepository(long exerciseId, boolean includeTests, List<String> exportErrors) {
+        Path uniquePath = fileService.getUniquePath(repoDownloadClonePath);
+        return exportStudentRequestedRepository(exerciseId, includeTests, uniquePath, exportErrors);
     }
 
     /**
      * Exports an auxiliary repository available for an instructor/editor/tutor for a given programming exercise.
      *
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
-     * @param exerciseId The id of the programming exercise that has the repository
+     *
+     * @param exerciseId          The id of the programming exercise that has the repository
      * @param auxiliaryRepository the auxiliary repository to export
-     * @param exportErrors List of failures that occurred during the export
+     * @param exportErrors        List of failures that occurred during the export
      * @return a zipped file
      */
     public Optional<File> exportInstructorAuxiliaryRepositoryForExercise(long exerciseId, AuxiliaryRepository auxiliaryRepository, List<String> exportErrors) {
@@ -281,12 +286,12 @@ public class ProgrammingExerciseExportService {
      *
      * @param exerciseId     The id of the programming exercise that has the repository
      * @param repositoryType the type of repository to export
-     * @param outputDir The directory used for store the zip file
+     * @param outputDir      The directory used for store the zip file
      * @param exportErrors   List of failures that occurred during the export
      * @return a zipped file
      */
     public Optional<File> exportInstructorRepositoryForExercise(long exerciseId, RepositoryType repositoryType, Path outputDir, List<String> exportErrors) {
-        var exerciseOrEmpty = loadExerciseForRepoExport(exerciseId, repositoryType.getName(), exportErrors);
+        var exerciseOrEmpty = loadExerciseForRepoExport(exerciseId, exportErrors);
         if (exerciseOrEmpty.isEmpty()) {
             return Optional.empty();
         }
@@ -299,14 +304,14 @@ public class ProgrammingExerciseExportService {
     /**
      * Exports an auxiliary repository for a given programming exercise.
      *
-     * @param exerciseId     The id of the programming exercise that has the repository
+     * @param exerciseId          The id of the programming exercise that has the repository
      * @param auxiliaryRepository the auxiliary repository to export
-     * @param outputDir The directory used for storing the zip file
-     * @param exportErrors   List of failures that occurred during the export
+     * @param outputDir           The directory used for storing the zip file
+     * @param exportErrors        List of failures that occurred during the export
      * @return the zipped file containing the auxiliary repository
      */
     public Optional<File> exportInstructorAuxiliaryRepositoryForExercise(long exerciseId, AuxiliaryRepository auxiliaryRepository, Path outputDir, List<String> exportErrors) {
-        var exerciseOrEmpty = loadExerciseForRepoExport(exerciseId, auxiliaryRepository.getName(), exportErrors);
+        var exerciseOrEmpty = loadExerciseForRepoExport(exerciseId, exportErrors);
         if (exerciseOrEmpty.isEmpty()) {
             return Optional.empty();
         }
@@ -320,37 +325,42 @@ public class ProgrammingExerciseExportService {
      * Exports the solution repository available for an instructor/tutor/student for a given programming exercise.
      * Removes the ".git" directory from the resulting zip file to prevent leaking unintended information to students.
      *
-     * @param exerciseId     The id of the programming exercise that has the repository
-     * @param outputDir The directory used for store the zip file
-     * @param exportErrors   List of failures that occurred during the export
+     * @param exerciseId   the id of the programming exercise that has the repository
+     * @param includeTests flag that indicates whether the tests should also be exported
+     * @param uniquePath   the directory used for store the zip file
+     * @param exportErrors list of failures that occurred during the export
      * @return a zipped file
      */
-    public Optional<File> exportSolutionRepositoryForExercise(long exerciseId, Path outputDir, List<String> exportErrors) {
-        RepositoryType repositoryType = RepositoryType.SOLUTION;
-        var exerciseOrEmpty = loadExerciseForRepoExport(exerciseId, repositoryType.getName(), exportErrors);
+    public Optional<File> exportStudentRequestedRepository(long exerciseId, boolean includeTests, Path uniquePath, List<String> exportErrors) {
+        RepositoryType repositoryType = includeTests ? RepositoryType.TESTS : RepositoryType.SOLUTION;
+        var exerciseOrEmpty = loadExerciseForRepoExport(exerciseId, exportErrors);
         if (exerciseOrEmpty.isEmpty()) {
             return Optional.empty();
         }
         var exercise = exerciseOrEmpty.get();
         String zippedRepoName = getZippedRepoName(exercise, repositoryType.getName());
-        var repositoryUrl = exercise.getRepositoryURL(repositoryType);
-
         Predicate<Path> gitDirFilter = path -> StreamSupport.stream(path.spliterator(), false).noneMatch(pathPart -> ".git".equalsIgnoreCase(pathPart.toString()));
 
-        return exportRepository(repositoryUrl, repositoryType.getName(), zippedRepoName, exercise, outputDir, gitDirFilter, exportErrors);
+        if (includeTests) {
+            return exportSolutionAndTestStudentRepositoryForExercise(zippedRepoName, exercise, uniquePath, gitDirFilter, exportErrors);
+        }
+        else {
+            var repositoryUrl = exercise.getRepositoryURL(repositoryType);
+            return exportRepository(repositoryUrl, repositoryType.getName(), zippedRepoName, exercise, uniquePath, gitDirFilter, exportErrors);
+        }
     }
 
-    private Optional<ProgrammingExercise> loadExerciseForRepoExport(long exerciseId, String repositoryName, List<String> exportErrors) {
-        var exerciseOrEmpty = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId);
+    private Optional<ProgrammingExercise> loadExerciseForRepoExport(long exerciseId, List<String> exportErrors) {
+        var exerciseOrEmpty = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(exerciseId);
         if (exerciseOrEmpty.isEmpty()) {
-            var error = "Failed to export instructor repository " + repositoryName + " because the exercise " + exerciseId + " does not exist.";
+            var error = "Failed to export instructor repository because the exercise " + exerciseId + " does not exist.";
             log.info(error);
             exportErrors.add(error);
             return Optional.empty();
         }
 
         var exercise = exerciseOrEmpty.get();
-        log.info("Request to export instructor repository of type {} of programming exercise {} with title '{}'", repositoryName, exercise, exercise.getTitle());
+        log.info("Request to export instructor repository of programming exercise {} with title '{}'", exercise, exercise.getTitle());
 
         return Optional.of(exercise);
     }
@@ -366,21 +376,57 @@ public class ProgrammingExerciseExportService {
             // It's not guaranteed that the repository url is defined (old courses).
             if (repositoryUrl == null) {
                 var error = "Failed to export instructor repository " + repositoryName + " because the repository url is not defined.";
-                log.info(error);
+                log.error(error);
                 exportErrors.add(error);
                 return Optional.empty();
             }
 
             Path zippedRepo = createZipForRepository(repositoryUrl, zippedRepoName, outputDir, contentFilter);
             if (zippedRepo != null) {
-                return Optional.of(new File(zippedRepo.toString()));
+                return Optional.of(zippedRepo.toFile());
             }
         }
-        catch (Exception ex) {
+        catch (IOException | GitAPIException ex) {
             var error = "Failed to export instructor repository " + repositoryName + " for programming exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + ")";
-            log.info("{}: {}", error, ex.getMessage());
+            log.error("{}: {}", error, ex.getMessage());
             exportErrors.add(error);
         }
+        return Optional.empty();
+    }
+
+    private Optional<File> exportSolutionAndTestStudentRepositoryForExercise(String zippedRepoName, ProgrammingExercise exercise, Path uniquePath,
+            @Nullable Predicate<Path> contentFilter, List<String> exportErrors) {
+        if (exercise.getVcsSolutionRepositoryUrl() == null || exercise.getVcsTestRepositoryUrl() == null) {
+            var error = "Failed to export repository of exercise " + exercise.getTitle() + " because the repository url is not defined.";
+            log.error(error);
+            exportErrors.add(error);
+            return Optional.empty();
+        }
+
+        Path clonePath = uniquePath.resolve("clone");
+        Path zipPath = uniquePath.resolve("zip");
+
+        try {
+            gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUrl(), clonePath, true);
+            if (!clonePath.toFile().exists()) {
+                Files.createDirectories(clonePath);
+            }
+            String assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(exercise.getProgrammingLanguage());
+            FileUtils.deleteDirectory(clonePath.resolve(assignmentPath).toFile());
+            gitService.getOrCheckoutRepository(exercise.getVcsSolutionRepositoryUrl(), clonePath.resolve(assignmentPath), true);
+            for (AuxiliaryRepository auxRepo : exercise.getAuxiliaryRepositoriesForBuildPlan()) {
+                FileUtils.deleteDirectory(clonePath.resolve(auxRepo.getCheckoutDirectory()).toFile());
+                gitService.getOrCheckoutRepository(auxRepo.getVcsRepositoryUrl(), clonePath.resolve(auxRepo.getCheckoutDirectory()), true);
+            }
+
+            return Optional.of(gitService.zipFiles(clonePath, zippedRepoName, zipPath.toString(), contentFilter).toFile());
+        }
+        catch (GitAPIException | IOException e) {
+            var error = "Failed to export solution and test repository for programming exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + ")";
+            log.error("{}: {}", error, e.getMessage());
+            exportErrors.add(error);
+        }
+
         return Optional.empty();
     }
 
@@ -421,7 +467,7 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise     the programming exercise
      * @param participations          participations that should be exported
      * @param repositoryExportOptions the options that should be used for the export
-     * @param outputDir The directory used for store the zip file
+     * @param outputDir               The directory used for store the zip file
      * @param exportErrors            A list of errors that occurred during export (populated by this function)
      * @return List of zip file paths
      */
@@ -458,25 +504,25 @@ public class ProgrammingExerciseExportService {
      *
      * @param repositoryUrl The url of the repository to zip
      * @param zipFilename   The name of the zip file
-     * @param outputDir The directory used for downloading and zipping the repository
+     * @param outputDir     The directory used for downloading and zipping the repository
      * @param contentFilter The path filter to exclude some files, can be null to include everything
      * @return The path to the zip file.
-     * @throws IOException if the zip file couldn't be created
+     * @throws IOException     if the zip file couldn't be created
      * @throws GitAPIException if the repo couldn't get checked out
      */
     private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename, Path outputDir, @Nullable Predicate<Path> contentFilter)
             throws IOException, GitAPIException, GitException, UncheckedIOException {
         var repositoryDir = fileService.getUniquePathString(outputDir.toString());
-        Repository repository;
+        Path localRepoPath;
 
         // Checkout the repository
-        try (Repository repositoryToClose = gitService.getOrCheckoutRepository(repositoryUrl, repositoryDir, true)) {
-            repository = repositoryToClose; // Try-with-resources requires the variable to be declared inside try.
-            gitService.resetToOriginHead(repositoryToClose);
+        try (Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, repositoryDir, true)) {
+            gitService.resetToOriginHead(repository);
+            localRepoPath = repository.getLocalPath();
         }
 
         // Zip it and return the path to the file
-        return gitService.zipRepository(repository, zipFilename, repositoryDir, contentFilter);
+        return gitService.zipFiles(localRepoPath, zipFilename, repositoryDir, contentFilter);
     }
 
     /**
@@ -484,7 +530,7 @@ public class ProgrammingExerciseExportService {
      *
      * @param programmingExercise The programming exercise to which all repos belong to
      * @param pathsToZippedRepos  The paths to all zipped repositories
-     * @param outputDir The directory used for downloading and zipping the repository
+     * @param outputDir           The directory used for downloading and zipping the repository
      * @return the zip file
      */
     private File createZipWithAllRepositories(ProgrammingExercise programmingExercise, List<Path> pathsToZippedRepos, Path outputDir) throws IOException {
@@ -499,7 +545,7 @@ public class ProgrammingExerciseExportService {
 
         Path zipFilePath = Path.of(outputDir.toString(), filename);
         zipFileService.createZipFile(zipFilePath, pathsToZippedRepos, false);
-        return new File(zipFilePath.toString());
+        return zipFilePath.toFile();
     }
 
     /**
@@ -509,7 +555,7 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise     The programming exercise for the participation
      * @param participation           The participation, for which the repository should get zipped
      * @param repositoryExportOptions The options, that should get applied to the zipped repo
-     * @param outputDir The directory used for downloading and zipping the repository
+     * @param outputDir               The directory used for downloading and zipping the repository
      * @return The checked out and zipped repository
      * @throws IOException if zip file creation failed
      */
@@ -572,8 +618,9 @@ public class ProgrammingExerciseExportService {
 
     /**
      * delete all files in the directory based on the given programming exercise and target path
+     *
      * @param programmingExercise the programming exercise for which repos have been downloaded
-     * @param targetPath the path in which the repositories have been downloaded
+     * @param targetPath          the path in which the repositories have been downloaded
      */
     public void deleteReposDownloadProjectRootDirectory(ProgrammingExercise programmingExercise, String targetPath) {
         final String projectDirName = programmingExercise.getProjectKey();
@@ -591,8 +638,8 @@ public class ProgrammingExerciseExportService {
      * Filters out all late commits of submissions from the checked out repository of a participation
      *
      * @param repositoryExportOptions The options that should get applied when exporting the submissions
-     * @param participation  The participation related to the repository
-     * @param repo           The repository for which to filter all late submissions
+     * @param participation           The participation related to the repository
+     * @param repo                    The repository for which to filter all late submissions
      */
     private void filterLateSubmissions(RepositoryExportOptionsDTO repositoryExportOptions, ProgrammingExerciseStudentParticipation participation, Repository repo) {
         log.debug("Filter late submissions for participation {}", participation.toString());
@@ -683,7 +730,7 @@ public class ProgrammingExerciseExportService {
 
             // 4- Save the result to a new XML doc
             Transformer xformer = TransformerFactory.newInstance().newTransformer();
-            xformer.transform(new DOMSource(doc), new StreamResult(new File(pomFile.getPath())));
+            xformer.transform(new DOMSource(doc), new StreamResult(pomFile));
 
         }
         catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
@@ -714,7 +761,7 @@ public class ProgrammingExerciseExportService {
 
             // 4- Save the result to a new XML doc
             Transformer xformer = TransformerFactory.newInstance().newTransformer();
-            xformer.transform(new DOMSource(doc), new StreamResult(new File(eclipseProjectFile.getPath())));
+            xformer.transform(new DOMSource(doc), new StreamResult(eclipseProjectFile));
 
         }
         catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {

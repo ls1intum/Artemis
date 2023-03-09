@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Stream;
 
 import org.gitlab4j.api.*;
 import org.gitlab4j.api.models.*;
@@ -84,6 +85,9 @@ public class GitlabRequestMockProvider {
     @Mock
     private ProtectedBranchesApi protectedBranchesApi;
 
+    @Mock
+    private PipelineApi pipelineApi;
+
     @SpyBean
     private GitLabUserManagementService gitLabUserManagementService;
 
@@ -96,6 +100,8 @@ public class GitlabRequestMockProvider {
     @Autowired
     private UrlService urlService;
 
+    private AutoCloseable closeable;
+
     public GitlabRequestMockProvider(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
@@ -105,11 +111,16 @@ public class GitlabRequestMockProvider {
     public void enableMockingOfRequests() {
         mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServerShortTimeout = MockRestServiceServer.createServer(shortTimeoutRestTemplate);
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
     }
 
-    public void reset() {
-        mockServer.reset();
+    public void reset() throws Exception {
+        if (mockServer != null) {
+            mockServer.reset();
+        }
+        if (closeable != null) {
+            closeable.close();
+        }
     }
 
     /**
@@ -132,19 +143,23 @@ public class GitlabRequestMockProvider {
     /**
      * Method to mock the getUser method to return mocked users with their id's
      *
-     * @throws GitLabApiException in case of git lab api errors
+     * @throws GitLabApiException in case of GitLab API errors
      */
     public void mockGetUserID() throws GitLabApiException {
-        User instructor = new User();
-        User tutor = new User();
-        User user = new User();
-        instructor.setId(2L);
-        tutor.setId(3L);
-        user.setId(4L);
+        mockGetUserID("instructor1", new User().withId(2L));
+        mockGetUserID("tutor1", new User().withId(3L));
+        mockGetUserID("user1", new User().withId(4L));
+    }
 
-        doReturn(instructor).when(userApi).getUser("instructor1");
-        doReturn(tutor).when(userApi).getUser("tutor1");
-        doReturn(user).when(userApi).getUser("user1");
+    /**
+     * Method to mock the getUser method to return a mocked user for the given username
+     *
+     * @param username The username of the user which should be returned
+     * @param user     The user which should be returned
+     * @throws GitLabApiException in case of GitLab API errors
+     */
+    public void mockGetUserID(String username, User user) throws GitLabApiException {
+        doReturn(user).when(userApi).getUser(username);
     }
 
     public void mockUpdateUser() throws GitLabApiException {
@@ -184,7 +199,7 @@ public class GitlabRequestMockProvider {
      *
      * @param participation         Affected participation
      * @param commitHashPushDateMap A map mapping the commit hashes to their push date. We expect here that only one commit is pushed at a time and the order of the map is the
-     *                              order of the commits
+     *                                  order of the commits
      * @throws GitLabApiException if events API fails
      */
     public void mockGetPushDate(ProgrammingExerciseParticipation participation, Map<String, ZonedDateTime> commitHashPushDateMap) throws GitLabApiException {
@@ -267,7 +282,7 @@ public class GitlabRequestMockProvider {
         mockProtectBranch(defaultBranch, repositoryUrl);
     }
 
-    private void mockUserExists(String username, boolean exists) throws GitLabApiException {
+    public void mockUserExists(String username, boolean exists) throws GitLabApiException {
         doReturn(exists ? new User().withUsername(username) : null).when(userApi).getUser(username);
     }
 
@@ -330,7 +345,7 @@ public class GitlabRequestMockProvider {
 
     public void mockUpdateVcsUser(String login, de.tum.in.www1.artemis.domain.User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword)
             throws GitLabApiException {
-        mockUpdateBasicUserInformation(login, user, shouldSynchronizePassword);
+        mockUpdateBasicUserInformation(login, shouldSynchronizePassword);
         mockUpdateUserActivationState(user, false);
 
         // Add as member to new groups
@@ -364,11 +379,11 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockUpdateVcsUserFailToActivate(String login, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
-        mockUpdateBasicUserInformation(login, user, true);
+        mockUpdateBasicUserInformation(login, true);
         mockUpdateUserActivationState(user, true);
     }
 
-    public void mockUpdateBasicUserInformation(String login, de.tum.in.www1.artemis.domain.User user, boolean shouldUpdatePassword) throws GitLabApiException {
+    public void mockUpdateBasicUserInformation(String login, boolean shouldUpdatePassword) throws GitLabApiException {
         var gitlabUser = new User().withUsername(login).withId(1L);
         doReturn(gitlabUser).when(userApi).getUser(login);
         if (shouldUpdatePassword) {
@@ -660,5 +675,60 @@ public class GitlabRequestMockProvider {
 
     public UserApi getMockedUserApi() {
         return userApi;
+    }
+
+    public void mockCreateTrigger(boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(new GitLabApiException("Internal Error", 500)).when(pipelineApi).createPipelineTrigger(any(), anyString());
+        }
+        else {
+            doReturn(new Trigger()).when(pipelineApi).createPipelineTrigger(any(), anyString());
+        }
+    }
+
+    public void mockTriggerPipeline(boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(new GitLabApiException("Internal Error", 500)).when(pipelineApi).triggerPipeline(any(), (Trigger) any(), anyString(), any());
+        }
+        else {
+            doReturn(null).when(pipelineApi).triggerPipeline(any(), (Trigger) any(), anyString(), any());
+        }
+    }
+
+    public void mockDeleteTrigger(boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(new GitLabApiException("Internal Error", 500)).when(pipelineApi).deletePipelineTrigger(any(), anyLong());
+        }
+        else {
+            doNothing().when(pipelineApi).deletePipelineTrigger(any(), anyLong());
+        }
+    }
+
+    public void mockGetProject(boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(new GitLabApiException("Internal Error", 500)).when(projectApi).getProject(anyString());
+        }
+        else {
+            Project project = new Project();
+            doReturn(project).when(projectApi).getProject(anyString());
+        }
+    }
+
+    public void mockUpdateProject(boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(new GitLabApiException("Internal Error", 500)).when(projectApi).updateProject(any());
+        }
+        else {
+            Project project = new Project();
+            doReturn(project).when(projectApi).updateProject(any());
+        }
+    }
+
+    public void mockGetBuildStatus(PipelineStatus pipelineStatus) throws GitLabApiException {
+        Pipeline pipeline = new Pipeline();
+        pipeline.setId(1L);
+        pipeline.setStatus(pipelineStatus);
+
+        doReturn(Stream.of(pipeline)).when(pipelineApi).getPipelinesStream(anyString(), any(PipelineFilter.class));
     }
 }

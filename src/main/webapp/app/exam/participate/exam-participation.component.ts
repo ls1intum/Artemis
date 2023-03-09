@@ -15,6 +15,7 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam.model';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, Subject, Subscription, of, throwError } from 'rxjs';
@@ -48,6 +49,8 @@ import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
+
+const getWebSocketChannelForWorkingTimeChange = (studentExamId: number) => `/topic/studentExams/${studentExamId}/working-time-change-during-conduction`;
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -141,10 +144,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private examMonitoringService: ExamMonitoringService,
         private examActionService: ExamActionService,
         private featureToggleService: FeatureToggleService,
+        private artemisDatePipe: ArtemisDatePipe,
     ) {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
-            this.alertService.error('artemisApp.examParticipation.saveSubmissionError');
+            this.alertService.error('artemisApp.exam.examParticipation.saveSubmissionError');
         });
     }
 
@@ -165,7 +169,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 }
             }
             this.loadingExam = true;
-            if (!!this.testRunId) {
+            if (this.testRunId) {
                 this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe({
                     next: (studentExam) => {
                         this.studentExam = studentExam;
@@ -173,8 +177,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam.exam!.course.id = this.courseId;
                         this.exam = studentExam.exam!;
                         this.testExam = this.exam.testExam!;
-                        this.testStartTime = dayjs();
-                        this.initIndividualEndDates(this.testStartTime);
                         this.loadingExam = false;
                     },
                     error: () => (this.loadingExam = false),
@@ -185,11 +187,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam = studentExam;
                         this.exam = studentExam.exam!;
                         this.testExam = this.exam.testExam!;
-                        if (this.exam.testExam) {
-                            // For TestExams, we either set the StartTime to the current time or the startedDate of the studentExam, if existent
-                            this.testStartTime = this.studentExam.startedDate ? this.studentExam.startedDate! : dayjs();
-                            this.initIndividualEndDates(this.testStartTime);
-                        } else {
+                        if (!this.exam.testExam) {
                             this.initIndividualEndDates(this.exam.startDate!);
                         }
 
@@ -306,7 +304,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.examParticipationService.setExamExerciseIds(exerciseIds);
             // set endDate with workingTime
             if (!!this.testRunId || this.testExam) {
-                this.individualStudentEndDate = this.testStartTime!.add(this.studentExam.workingTime!, 'seconds');
+                this.testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
+                this.initIndividualEndDates(this.testStartTime);
+                this.individualStudentEndDate = this.testStartTime.add(this.studentExam.workingTime!, 'seconds');
             } else {
                 this.individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
             }
@@ -416,7 +416,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         message: 'artemisApp.studentExam.submitSuccessful',
                         timeout: 20000,
                     });
-                    if (!!this.testRunId) {
+                    if (this.testRunId) {
                         // If this is a test run, forward the user directly to the exam summary
                         this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'summary']);
                     }
@@ -427,7 +427,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                     // When we have already submitted load the existing submission
                     if (alreadySubmitted) {
-                        if (!!this.testRunId) {
+                        if (this.testRunId) {
                             this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe({
                                 next: (studentExam: StudentExam) => {
                                     this.studentExam = studentExam;
@@ -483,7 +483,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // update local studentExam for later sync with server if the student wants to hand in early
             this.updateLocalStudentExam();
             try {
-                this.triggerSave(true, false);
+                this.triggerSave(false, false);
             } catch (error) {
                 captureException(error);
             }
@@ -535,7 +535,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * check if exam is visible
      */
     isVisible(): boolean {
-        if (!!this.testRunId) {
+        if (this.testRunId) {
             return true;
         }
         if (!this.exam) {
@@ -548,7 +548,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * check if exam has started
      */
     isActive(): boolean {
-        if (!!this.testRunId) {
+        if (this.testRunId) {
             return true;
         }
         if (!this.exam) {
@@ -566,11 +566,32 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.examMonitoringUpdateSubscription?.unsubscribe();
         this.examActionService.unsubscribeForExamMonitoringUpdate(this.exam);
         window.clearInterval(this.autoSaveInterval);
+        this.websocketService.unsubscribe(getWebSocketChannelForWorkingTimeChange(this.studentExamId));
     }
 
+    /**
+     * Initializes the individual end dates and sets up a subscription for potential changes during the conduction
+     * @param startDate the start date of the exam
+     */
     initIndividualEndDates(startDate: dayjs.Dayjs) {
         this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
         this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
+
+        const channel = getWebSocketChannelForWorkingTimeChange(this.studentExam.id!);
+        this.websocketService.subscribe(channel);
+        this.websocketService.receive(channel).subscribe((workingTime: number) => {
+            const decreased = workingTime < (this.studentExam.workingTime ?? 0);
+            this.studentExam.workingTime = workingTime;
+            this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime, 'seconds');
+            this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
+            const dateFormat = startDate.isSame(this.individualStudentEndDate, 'day') ? 'time' : 'short';
+            const newIndividualStudentEndDateFormatted = this.artemisDatePipe.transform(this.individualStudentEndDate, dateFormat);
+            if (decreased) {
+                this.alertService.error('artemisApp.examParticipation.workingTimeDecreased', { date: newIndividualStudentEndDateFormatted });
+            } else {
+                this.alertService.success('artemisApp.examParticipation.workingTimeIncreased', { date: newIndividualStudentEndDateFormatted });
+            }
+        });
     }
 
     /**
@@ -695,9 +716,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // in the case saving is forced, we mark the current exercise as not synced, so it will definitely be saved
         if ((activeComponent && forceSave) || (activeComponent as ExamSubmissionComponent)?.hasUnsavedChanges()) {
             const activeSubmission = (activeComponent as ExamSubmissionComponent)?.getSubmission();
+            const activeExercise = (activeComponent as ExamSubmissionComponent)?.getExercise();
             if (activeSubmission) {
                 // this will lead to a save below, because isSynced will be set to false
-                activeSubmission.isSynced = false;
+                // it only makes sense to set "isSynced" to false for quiz, text and modeling
+                if (activeExercise?.type !== ExerciseType.PROGRAMMING && activeExercise?.type !== ExerciseType.FILE_UPLOAD) {
+                    activeSubmission.isSynced = false;
+                }
             }
             (activeComponent as ExamSubmissionComponent).updateSubmissionFromView();
         }

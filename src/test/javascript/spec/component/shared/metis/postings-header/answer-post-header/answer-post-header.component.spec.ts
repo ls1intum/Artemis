@@ -33,7 +33,7 @@ describe('AnswerPostHeaderComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip)],
             providers: [
                 FormBuilder,
                 { provide: MetisService, useClass: MockMetisService },
@@ -48,7 +48,6 @@ describe('AnswerPostHeaderComponent', () => {
                 AnswerPostCreateEditModalComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockDirective(NgbTooltip),
                 MockComponent(PostingMarkdownEditorComponent),
                 MockComponent(PostingButtonComponent),
                 MockComponent(FaIconComponent),

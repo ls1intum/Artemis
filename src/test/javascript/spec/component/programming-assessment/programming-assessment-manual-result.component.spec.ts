@@ -2,7 +2,7 @@ import * as ace from 'brace';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -28,7 +28,7 @@ import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { delay } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
@@ -40,7 +40,6 @@ import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-ed
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { RouterTestingModule } from '@angular/router/testing';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
@@ -50,7 +49,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
-import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { AssessmentAfterComplaint, ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-complaint-alert/assessment-complaint-alert.component';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
@@ -66,6 +65,8 @@ import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-ed
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
+import { AlertService } from 'app/core/util/alert.service';
+import { Exercise } from 'app/entities/exercise.model';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -155,7 +156,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             declarations: [
                 CodeEditorTutorAssessmentContainerComponent,
                 MockComponent(ProgrammingAssessmentRepoExportButtonComponent),
-                MockComponent(FaIconComponent),
                 AssessmentLayoutComponent,
                 MockComponent(AssessmentComplaintAlertComponent),
                 MockComponent(AssessmentHeaderComponent),
@@ -193,7 +193,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 { provide: ActivatedRoute, useValue: route() },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 // Ignore console errors
@@ -498,12 +497,106 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         flush();
     }));
 
-    it('should update assessment after complaint', fakeAsync(() => {
-        comp.ngOnInit();
-        tick(100);
-        comp.onUpdateAssessmentAfterComplaint(new ComplaintResponse());
-        expect(updateAfterComplaintStub).toHaveBeenCalledOnce();
-        expect(comp.manualResult!.score).toBe(100);
-        flush();
-    }));
+    it.each([undefined, 'genericErrorKey', 'complaintLock'])(
+        'should update assessment after complaint, errorKeyFromServer=%s',
+        fakeAsync((errorKeyFromServer: string | undefined) => {
+            comp.ngOnInit();
+            tick(100);
+
+            let onSuccessCalled = false;
+            let onErrorCalled = false;
+            const assessmentAfterComplaint: AssessmentAfterComplaint = {
+                complaintResponse: new ComplaintResponse(),
+                onSuccess: () => (onSuccessCalled = true),
+                onError: () => (onErrorCalled = true),
+            };
+
+            const errorMessage = 'errMsg';
+            const errorParams = ['errParam1', 'errParam2'];
+            if (errorKeyFromServer) {
+                updateAfterComplaintStub.mockReturnValue(
+                    throwError(
+                        () =>
+                            new HttpErrorResponse({
+                                status: 400,
+                                error: { message: errorMessage, errorKey: errorKeyFromServer, params: errorParams },
+                            }),
+                    ),
+                );
+            }
+
+            const alertService = TestBed.inject(AlertService);
+            const errorSpy = jest.spyOn(alertService, 'error');
+            const validateSpy = jest.spyOn(comp, 'validateFeedback').mockImplementation(() => (comp.assessmentsAreValid = true));
+
+            comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+
+            expect(validateSpy).toHaveBeenCalledOnce();
+            expect(updateAfterComplaintStub).toHaveBeenCalledOnce();
+            expect(comp.manualResult!.score).toBe(errorKeyFromServer ? 0 : 100);
+            flush();
+            expect(onSuccessCalled).toBe(!errorKeyFromServer);
+            expect(onErrorCalled).toBe(!!errorKeyFromServer);
+            if (!errorKeyFromServer) {
+                expect(errorSpy).not.toHaveBeenCalled();
+            } else if (errorKeyFromServer === 'complaintLock') {
+                expect(errorSpy).toHaveBeenCalledOnce();
+                expect(errorSpy).toHaveBeenCalledWith(errorMessage, errorParams);
+            } else {
+                // Handle all other errors
+                expect(errorSpy).toHaveBeenCalledOnce();
+                expect(errorSpy).toHaveBeenCalledWith('artemisApp.assessment.messages.updateAfterComplaintFailed');
+            }
+        }),
+    );
+
+    it('should display error when complaint resolved but assessment invalid', () => {
+        let onSuccessCalled = false;
+        let onErrorCalled = false;
+        const assessmentAfterComplaint: AssessmentAfterComplaint = {
+            complaintResponse: new ComplaintResponse(),
+            onSuccess: () => (onSuccessCalled = true),
+            onError: () => (onErrorCalled = true),
+        };
+        const alertService = TestBed.inject(AlertService);
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        const validateSpy = jest.spyOn(comp, 'validateFeedback').mockImplementation(() => (comp.assessmentsAreValid = false));
+
+        comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+        expect(validateSpy).toHaveBeenCalledOnce();
+        expect(errorSpy).toHaveBeenCalledOnce();
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingAssessment.invalidAssessments');
+        expect(onSuccessCalled).toBeFalse();
+        expect(onErrorCalled).toBeTrue();
+    });
+
+    it.each([
+        [0, { complaintResponse: { complaint: { accepted: false } }, onSuccess: () => {}, onError: () => {} }, [], false],
+        [0, { complaintResponse: { complaint: { accepted: false } }, onSuccess: () => {}, onError: () => {} }, [{ credits: 1 }], false],
+        [1, { complaintResponse: { complaint: { accepted: false } }, onSuccess: () => {}, onError: () => {} }, [], false],
+        [1, { complaintResponse: { complaint: { accepted: false } }, onSuccess: () => {}, onError: () => {} }, [{ credits: 1 }], false],
+        [0, { complaintResponse: { complaint: { accepted: true } }, onSuccess: () => {}, onError: () => {} }, [], true],
+        [0, { complaintResponse: { complaint: { accepted: true } }, onSuccess: () => {}, onError: () => {} }, [{ credits: 1 }], false],
+        [1, { complaintResponse: { complaint: { accepted: true } }, onSuccess: () => {}, onError: () => {} }, [], true],
+        [1, { complaintResponse: { complaint: { accepted: true } }, onSuccess: () => {}, onError: () => {} }, [{ credits: 1 }], true],
+    ])(
+        'should get confirmation if complaint is accepted without higher score',
+        (totalScoreBeforeAssessment: number, assessmentAfterComplaint: AssessmentAfterComplaint, newFeedback: Feedback[], needsConfirmation: boolean) => {
+            comp.exercise = { maxPoints: 2 } as Exercise;
+            comp.totalScoreBeforeAssessment = totalScoreBeforeAssessment;
+            comp.referencedFeedback = [];
+            comp.automaticFeedback = [];
+            comp.unreferencedFeedback = newFeedback;
+            jest.spyOn(window, 'confirm').mockReturnValue(false);
+
+            comp.checkFeedbackChangeForAcceptedComplaint(assessmentAfterComplaint);
+
+            if (needsConfirmation) {
+                expect(window.confirm).toHaveBeenCalledOnce();
+            } else {
+                expect(window.confirm).toHaveBeenCalledTimes(0);
+            }
+        },
+    );
 });

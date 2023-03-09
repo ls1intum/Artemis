@@ -28,6 +28,8 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -40,10 +42,13 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import net.sourceforge.plantuml.Log;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
+
+    private static final String TEST_PREFIX = "progextemplate";
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
@@ -61,9 +66,9 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
     private final LocalRepository auxRepo = new LocalRepository(defaultBranch);
 
-    private final static String MAVEN_TEST_RESULTS_PATH = "target/surefire-reports";
+    private static final String MAVEN_TEST_RESULTS_PATH = "target/surefire-reports";
 
-    private final static String GRADLE_TEST_RESULTS_PATH = "build/test-results/test";
+    private static final String GRADLE_TEST_RESULTS_PATH = "build/test-results/test";
 
     @BeforeAll
     static void detectMavenHome() {
@@ -98,9 +103,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     }
 
     @BeforeEach
-    @SuppressWarnings("resource")
     void setup() throws Exception {
-        programmingExerciseTestService.setupTestUsers(1, 1, 0, 1);
+        programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 1, 1, 0, 1);
         Course course = database.addEmptyCourse();
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         bambooRequestMockProvider.enableMockingOfRequests();
@@ -117,7 +121,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
     @AfterEach
     void tearDown() throws IOException {
-        database.resetDatabase();
         reset(gitService);
         reset(bambooServer);
         bitbucketRequestMockProvider.reset();
@@ -132,6 +135,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
      * Build a combination of valid programming languages and project types.
      * Programming languages without project type only have one template, set null to use this one.
      * Programming languages with project type should be executed once per project type.
+     *
      * @return valid combinations of programming languages and project types.
      */
     private Stream<Arguments> languageTypeBuilder() {
@@ -151,14 +155,14 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
     void test_template_exercise(ProgrammingLanguage language, ProjectType projectType) throws Exception {
         runTests(language, projectType, exerciseRepo, TestResult.FAILED);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
     void test_template_solution(ProgrammingLanguage language, ProjectType projectType) throws Exception {
         runTests(language, projectType, solutionRepo, TestResult.SUCCESSFUL);
@@ -212,7 +216,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         }
         catch (Exception e) {
             // printing the cause because this contains the relevant error message (and not a generic one from the connector)
-            Log.error("Error occurred while executing Gradle build: " + e.getCause());
+            log.error("Error occurred while executing Gradle build: " + e.getCause());
             return -1;
         }
         return 0;

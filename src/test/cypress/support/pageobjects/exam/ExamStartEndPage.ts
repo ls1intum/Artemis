@@ -1,10 +1,10 @@
 import { COURSE_BASE } from '../../requests/CourseManagementRequests';
-import { artemis } from '../../ArtemisTesting';
+import { users } from '../../users';
 import { POST } from '../../constants';
 
 export class ExamStartEndPage {
     enterFirstnameLastname() {
-        artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type((account.firstName ?? '') + ' ' + (account.lastName ?? '')));
+        users.getAccountInfo((account: any) => cy.get('#fullname').type((account.firstName ?? '') + ' ' + (account.lastName ?? '')));
     }
 
     setConfirmCheckmark(timeout?: number) {
@@ -13,6 +13,10 @@ export class ExamStartEndPage {
 
     pressStart() {
         cy.get('#start-exam').click();
+    }
+
+    clickContinue() {
+        cy.get('#continue').click();
     }
 
     pressFinish() {

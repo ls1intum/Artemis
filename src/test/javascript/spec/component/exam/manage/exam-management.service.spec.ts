@@ -324,12 +324,12 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockStudents: StudentDTO[] = [
-            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1' },
-            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2' },
+            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1', email: '' },
+            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2', email: '' },
         ];
         const expected: StudentDTO[] = [
-            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1' },
-            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2' },
+            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1', email: '' },
+            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2', email: '' },
         ];
 
         // WHEN
@@ -411,8 +411,8 @@ describe('Exam Management Service Tests', () => {
     it('should generate student exams', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockStudentExams: StudentExam[] = [{ exam: mockExam }];
-        const expected: StudentExam[] = [{ exam: { id: 1 } }];
+        const mockStudentExams: StudentExam[] = [{ exam: mockExam, numberOfExamSessions: 0 }];
+        const expected: StudentExam[] = [{ exam: { id: 1 }, numberOfExamSessions: 0 }];
         // WHEN
         service.generateStudentExams(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockStudentExams));
 
@@ -428,8 +428,8 @@ describe('Exam Management Service Tests', () => {
     it('should create test run', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockStudentExam: StudentExam = { exam: mockExam };
-        const expected: StudentExam = { exam: { id: 1 } };
+        const mockStudentExam: StudentExam = { exam: mockExam, numberOfExamSessions: 0 };
+        const expected: StudentExam = { exam: { id: 1 }, numberOfExamSessions: 0 };
         // WHEN
         service.createTestRun(course.id!, mockExam.id!, mockStudentExam).subscribe((res) => expect(res.body).toEqual(mockStudentExam));
 
@@ -445,8 +445,8 @@ describe('Exam Management Service Tests', () => {
     it('should delete test run', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockStudentExam: StudentExam = { exam: mockExam, id: 2 };
-        const expected: StudentExam = { exam: mockExam, id: 2 };
+        const mockStudentExam: StudentExam = { exam: mockExam, id: 2, numberOfExamSessions: 0 };
+        const expected: StudentExam = { exam: mockExam, id: 2, numberOfExamSessions: 0 };
         // WHEN
         service.deleteTestRun(course.id!, mockExam.id!, mockStudentExam.id!).subscribe((res) => expect(res.body).toEqual(mockStudentExam));
 
@@ -462,8 +462,8 @@ describe('Exam Management Service Tests', () => {
     it('should find all test runs for exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockStudentExams: StudentExam[] = [{ exam: mockExam, id: 2 }];
-        const expected: StudentExam[] = [{ exam: mockExam, id: 2 }];
+        const mockStudentExams: StudentExam[] = [{ exam: mockExam, id: 2, numberOfExamSessions: 0 }];
+        const expected: StudentExam[] = [{ exam: mockExam, id: 2, numberOfExamSessions: 0 }];
         // WHEN
         service.findAllTestRunsForExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockStudentExams));
 
@@ -479,8 +479,8 @@ describe('Exam Management Service Tests', () => {
     it('should generate missing student for exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockStudentExams: StudentExam[] = [{ exam: mockExam, id: 2 }];
-        const expected: StudentExam[] = [{ exam: mockExam, id: 2 }];
+        const mockStudentExams: StudentExam[] = [{ exam: mockExam, id: 2, numberOfExamSessions: 0 }];
+        const expected: StudentExam[] = [{ exam: mockExam, id: 2, numberOfExamSessions: 0 }];
         // WHEN
         service.generateMissingStudentExams(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockStudentExams));
 
@@ -496,8 +496,8 @@ describe('Exam Management Service Tests', () => {
     it('should start exercises', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockStudentExams: StudentExam[] = [{ exam: mockExam, id: 1 }];
-        const expected: StudentExam[] = [{ exam: mockExam, id: 1 }];
+        const mockStudentExams: StudentExam[] = [{ exam: mockExam, id: 1, numberOfExamSessions: 0 }];
+        const expected: StudentExam[] = [{ exam: mockExam, id: 1, numberOfExamSessions: 0 }];
 
         // WHEN
         service.startExercises(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockStudentExams));
@@ -605,8 +605,8 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const expected: StudentDTO[] = [
-            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1' },
-            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2' },
+            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1', email: '' },
+            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2', email: '' },
         ];
 
         service.addAllStudentsOfCourseToExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toBeUndefined());
@@ -657,7 +657,7 @@ describe('Exam Management Service Tests', () => {
 
     it('should archive the exam', fakeAsync(() => {
         // GIVEN
-        const mockExam: Exam = { id: 1, studentExams: [{ id: 1 }] };
+        const mockExam: Exam = { id: 1, studentExams: [{ id: 1, numberOfExamSessions: 0 }] };
 
         // WHEN
         service.archiveExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual({}));

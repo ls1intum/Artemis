@@ -1,10 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupFormData } from '../tutorial-group-form/tutorial-group-form.component';
 import { onError } from 'app/shared/util/global.utils';
-import { combineLatest } from 'rxjs';
-import { finalize, switchMap, take } from 'rxjs/operators';
+import { Subject, combineLatest } from 'rxjs';
+import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -15,8 +15,11 @@ import { Course } from 'app/entities/course.model';
 @Component({
     selector: 'jhi-edit-tutorial-group',
     templateUrl: './edit-tutorial-group.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EditTutorialGroupComponent implements OnInit {
+export class EditTutorialGroupComponent implements OnInit, OnDestroy {
+    ngUnsubscribe = new Subject<void>();
+
     isLoading = false;
     tutorialGroup: TutorialGroup;
     tutorialGroupSchedule: TutorialGroupSchedule;
@@ -24,7 +27,13 @@ export class EditTutorialGroupComponent implements OnInit {
     tutorialGroupId: number;
     course: Course;
 
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private tutorialGroupService: TutorialGroupsService, private alertService: AlertService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private router: Router,
+        private tutorialGroupService: TutorialGroupsService,
+        private alertService: AlertService,
+        private cdr: ChangeDetectorRef,
+    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -37,6 +46,7 @@ export class EditTutorialGroupComponent implements OnInit {
                     return this.tutorialGroupService.getOneOfCourse(this.course.id!, this.tutorialGroupId);
                 }),
                 finalize(() => (this.isLoading = false)),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (tutorialGroupResult) => {
@@ -65,11 +75,12 @@ export class EditTutorialGroupComponent implements OnInit {
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+            })
+            .add(() => this.cdr.detectChanges());
     }
 
     updateTutorialGroup(formData: TutorialGroupFormData) {
-        const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, campus, schedule, notificationText } = formData;
+        const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, campus, schedule, notificationText, updateTutorialGroupChannelName } = formData;
         const updatedTutorialGroup = new TutorialGroup();
         updatedTutorialGroup.id = this.tutorialGroup.id;
         updatedTutorialGroup.title = title;
@@ -100,12 +111,13 @@ export class EditTutorialGroupComponent implements OnInit {
 
         this.isLoading = true;
         this.tutorialGroupService
-            .update(this.course.id!, this.tutorialGroupId, updatedTutorialGroup, notificationText)
+            .update(this.course.id!, this.tutorialGroupId, updatedTutorialGroup, notificationText, updateTutorialGroupChannelName)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
                     this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups']);
                 }),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 error: (res: HttpErrorResponse) => this.onError(res),
@@ -121,5 +133,10 @@ export class EditTutorialGroupComponent implements OnInit {
                 error: httpErrorResponse.message,
             });
         }
+    }
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 }

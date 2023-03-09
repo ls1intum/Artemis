@@ -1,7 +1,8 @@
 <div>
     <div class="row">
-        <div class="col-sm">
+        <div class="col-sm d-flex align-items-center">
             <h4 class="fw-medium" id="course-page-heading" jhiTranslate="artemisApp.course.home.title">Courses</h4>
+            <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
         </div>
         <div class="col-12 col-sm-auto d-flex align-items-center gap-2">
             <div class="form-check">
@@ -25,16 +26,14 @@
     <br />
     <div class="table-responsive" *ngIf="courses">
         <div class="course-table-container mb-3" *ngFor="let semester of courseSemesters">
-            <div class="control-label" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]">
-                <fa-icon class="pe-3" [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp"></fa-icon>
-                <span *ngIf="semester !== '' && semester !== 'test'">
-                    <strong>{{ 'artemisApp.course.semester' | artemisTranslate }}: {{ semester }}</strong>
+            <div class="control-label my-3" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]">
+                <fa-icon size="2x" class="pe-3" [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp"></fa-icon>
+                <span *ngIf="semester !== '' && semester !== 'test'" style="font-size: 24px"> {{ 'artemisApp.course.semester' | artemisTranslate }}: {{ semester }} </span>
+                <span *ngIf="semester === ''" style="font-size: 24px">
+                    {{ 'artemisApp.course.semester' | artemisTranslate }}: {{ 'global.generic.unset' | artemisTranslate }}
                 </span>
-                <span *ngIf="semester === ''">
-                    <strong>{{ 'artemisApp.course.semester' | artemisTranslate }}: {{ 'global.generic.unset' | artemisTranslate }}</strong>
-                </span>
-                <span *ngIf="semester === 'test'">
-                    <strong>{{ 'artemisApp.course.testCourse.plural' | artemisTranslate }}</strong>
+                <span *ngIf="semester === 'test'" style="font-size: 24px">
+                    {{ 'artemisApp.course.testCourse.plural' | artemisTranslate }}
                 </span>
             </div>
             <div *ngIf="!semesterCollapsed[semester]">

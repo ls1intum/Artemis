@@ -137,6 +137,14 @@
                 "questionIsInvalid": "Frage ist ungültig",
                 "setAnswerInvalid": "Antwort ungültig setzen",
                 "answerIsInvalid": "Antwort ist ungültig",
+                "resetQuizTitle": "Quiztitel zurücksetzen",
+                "resetQuestion": "Frage zurücksetzen",
+                "resetQuestionTitle": "Fragentitel zurücksetzen",
+                "resetQuestionText": "Fragentext zurücksetzen",
+                "resetAnswer": "Reset Answer",
+                "deleteAnswer": "Delete Answer",
+                "moveUp": "Frage nach oben verschieben",
+                "moveDown": "Frage nach unten verschieben",
                 "warning": {
                     "warning": "Warnung!",
                     "confirm": "Änderungen bestätigen",
@@ -177,6 +185,7 @@
                 "startTimeInPast": "Quiz: Die Startzeit liegt in der Vergangenheit.",
                 "questionTitle": "Frage {{index}}: Der Titel fehlt.",
                 "questionScore": "Frage {{index}}: Mindestens einen Punkt pro Aufgabe erforderlich.",
+                "questionScoreInvalid": "Frage {{index}}: Punkte sind ungültig.",
                 "questionCorrectAnswerOption": "Frage {{index}}: Es existiert keine korrekte Antwortmöglichkeit.",
                 "questionSingleChoiceCorrectAnswerOptions": "Frage {{index}}: Es existieren mehrere korrekte Antwortmöglichkeiten bei einer Frage mit Einfachauswahl.",
                 "questionCorrectMapping": "Frage {{index}}: Es existiert keine korrekte Zuordnung.",
@@ -195,7 +204,8 @@
                 "questionExplanationLength": "Frage {{index}}: Die beigefügte Erklärung ist zu lang. Bitte kürze sie auf {{threshold}} Zeichen!",
                 "questionHintLength": "Frage {{index}}: Der beigefügte Hinweis ist zu lang. Bitte kürze ihn auf {{threshold}} Zeichen!",
                 "answerExplanationLength": "Frage {{index}}: Die Erklärung mindestens einer Antwortmöglichkeit ist zu lang. Bitte kürze sie auf {{threshold}} Zeichen!",
-                "answerHintLength": "Frage {{index}}: Der Hinweis mindestens einer Antwortmöglichkeit ist zu lang. Bitte kürze ihn auf {{threshold}} Zeichen!"
+                "answerHintLength": "Frage {{index}}: Der Hinweis mindestens einer Antwortmöglichkeit ist zu lang. Bitte kürze ihn auf {{threshold}} Zeichen!",
+                "multipleChoiceQuestionAnswerOptionInvalid": "Frage {{index}}: Mindestens eine Antwortmöglichkeit ist ungültig."
             },
             "scoringType": {
                 "all_or_nothing": "Alles-oder-Nichts",

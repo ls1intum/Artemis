@@ -13,6 +13,9 @@ import { cloneDeep } from 'lodash-es';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { captureException } from '@sentry/browser';
+
+export type ButtonTooltipType = 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -178,18 +181,23 @@ export class ExamParticipationService {
 
     private static breakCircularDependency(studentExam: StudentExam) {
         studentExam.exercises!.forEach((exercise) => {
-            if (!!exercise.studentParticipations) {
+            if (exercise.studentParticipations) {
                 for (const participation of exercise.studentParticipations) {
-                    if (!!participation.results) {
+                    if (participation.results) {
                         for (const result of participation.results) {
                             delete result.participation;
+                            if (result.feedbacks) {
+                                for (const feedback of result.feedbacks) {
+                                    delete feedback.result;
+                                }
+                            }
                         }
                     }
-                    if (!!participation.submissions) {
+                    if (participation.submissions) {
                         for (const submission of participation.submissions) {
                             delete submission.participation;
                             const result = getLatestSubmissionResult(submission);
-                            if (!!result) {
+                            if (result) {
                                 delete result.participation;
                                 delete result.submission;
                             }
@@ -209,9 +217,14 @@ export class ExamParticipationService {
      * @param studentExam
      */
     public saveStudentExamToLocalStorage(courseId: number, examId: number, studentExam: StudentExam): void {
-        const studentExamCopy = cloneDeep(studentExam);
-        ExamParticipationService.breakCircularDependency(studentExamCopy);
-        this.localStorageService.store(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(studentExamCopy));
+        // if the following code fails, this should never affect the exam
+        try {
+            const studentExamCopy = cloneDeep(studentExam);
+            ExamParticipationService.breakCircularDependency(studentExamCopy);
+            this.localStorageService.store(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(studentExamCopy));
+        } catch (error) {
+            captureException(error);
+        }
     }
 
     /**
@@ -282,7 +295,7 @@ export class ExamParticipationService {
         }
     }
 
-    getExerciseButtonTooltip(exercise: Exercise): 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' {
+    getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         // The submission might not yet exist for this exercise.
         // When the participant navigates to the exercise the submissions are created.

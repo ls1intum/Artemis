@@ -5,16 +5,16 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -82,30 +82,26 @@ public class Exam extends DomainObject {
     private int workingTime;
 
     @Column(name = "start_text")
-    @Lob
     private String startText;
 
     @Column(name = "end_text")
-    @Lob
     private String endText;
 
     @Column(name = "confirmation_start_text")
-    @Lob
     private String confirmationStartText;
 
     @Column(name = "confirmation_end_text")
-    @Lob
     private String confirmationEndText;
 
     @Column(name = "max_points")
-    private Integer maxPoints;
+    private Integer examMaxPoints;
 
     @Column(name = "randomize_exercise_order")
     private Boolean randomizeExerciseOrder;
 
     /**
      * From all exercise groups connected to the exam, this number of exercises is randomly
-     * chosen when generating the specific exam for the {@link #registeredUsers}
+     * chosen when generating the specific exam for the {@link #examUsers}
      */
     @Column(name = "number_of_exercises_in_exam")
     private Integer numberOfExercisesInExam;
@@ -121,6 +117,10 @@ public class Exam extends DomainObject {
 
     @Column(name = "course_name")
     private String courseName;
+
+    @Nullable
+    @Column(name = "example_solution_publication_date")
+    private ZonedDateTime exampleSolutionPublicationDate;
 
     @ManyToOne
     @JoinColumn(name = "course_id")
@@ -140,21 +140,20 @@ public class Exam extends DomainObject {
     @Column(name = "exam_archive_path")
     private String examArchivePath;
 
-    // Unidirectional
-    @ManyToMany
+    @OneToMany(mappedBy = "exam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JoinTable(name = "exam_user", joinColumns = @JoinColumn(name = "exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id"))
-    private Set<User> registeredUsers = new HashSet<>();
+    @JsonIgnoreProperties("exam")
+    private Set<ExamUser> examUsers = new HashSet<>();
 
     @Transient
-    private Long numberOfRegisteredUsersTransient;
+    private Long numberOfExamUsersTransient;
 
     public String getTitle() {
         return title;
     }
 
     public void setTitle(String title) {
-        this.title = title;
+        this.title = title != null ? title.strip() : null;
     }
 
     public boolean isTestExam() {
@@ -272,12 +271,12 @@ public class Exam extends DomainObject {
         this.confirmationEndText = confirmationEndText;
     }
 
-    public int getMaxPoints() {
-        return this.maxPoints == null ? 0 : this.maxPoints;
+    public int getExamMaxPoints() {
+        return this.examMaxPoints == null ? 0 : this.examMaxPoints;
     }
 
-    public void setMaxPoints(Integer maxPoints) {
-        this.maxPoints = maxPoints;
+    public void setExamMaxPoints(Integer examMaxPoints) {
+        this.examMaxPoints = examMaxPoints;
     }
 
     public Integer getNumberOfExercisesInExam() {
@@ -372,29 +371,43 @@ public class Exam extends DomainObject {
         studentExam.setExam(null);
     }
 
+    public Set<ExamUser> getExamUsers() {
+        return examUsers;
+    }
+
+    @JsonIgnore
     public Set<User> getRegisteredUsers() {
-        return registeredUsers;
+        return this.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
     }
 
-    public void setRegisteredUsers(Set<User> registeredUsers) {
-        this.registeredUsers = registeredUsers;
+    public void setExamUsers(Set<ExamUser> examUsers) {
+        this.examUsers = examUsers;
     }
 
-    public void addRegisteredUser(User user) {
-        this.registeredUsers.add(user);
+    public void addExamUser(ExamUser examUser) {
+        this.examUsers.add(examUser);
+        examUser.setExam(this);
     }
 
-    public void removeRegisteredUser(User user) {
-        this.registeredUsers.remove(user);
+    public void removeExamUser(ExamUser examUser) {
+        this.examUsers.remove(examUser);
+        examUser.setExam(null);
     }
 
-    // needed for Jackson
-    public Long getNumberOfRegisteredUsers() {
-        return this.numberOfRegisteredUsersTransient;
+    public Long getNumberOfExamUsers() {
+        return this.numberOfExamUsersTransient;
     }
 
-    public void setNumberOfRegisteredUsers(Long numberOfRegisteredUsers) {
-        this.numberOfRegisteredUsersTransient = numberOfRegisteredUsers;
+    public void setNumberOfExamUsers(Long numberOfExamUsersTransient) {
+        this.numberOfExamUsersTransient = numberOfExamUsersTransient;
+    }
+
+    public String getExamArchivePath() {
+        return examArchivePath;
+    }
+
+    public void setExamArchivePath(String examArchivePath) {
+        this.examArchivePath = examArchivePath;
     }
 
     /**
@@ -402,6 +415,7 @@ public class Exam extends DomainObject {
      *
      * @return true, if students are allowed to see this exam, otherwise false, null if this cannot be determined
      */
+    @JsonIgnore
     public Boolean isVisibleToStudents() {
         if (visibleDate == null) {  // no visible date means the exam is configured wrongly and should not be visible!
             return null;
@@ -414,6 +428,7 @@ public class Exam extends DomainObject {
      *
      * @return true, if the exam has started, otherwise false, null if this cannot be determined
      */
+    @JsonIgnore
     public Boolean isStarted() {
         if (startDate == null) {   // no start date means the exam is configured wrongly and we cannot answer the question!
             return null;
@@ -426,6 +441,7 @@ public class Exam extends DomainObject {
      *
      * @return true, if the results are published, false if not published or not set!
      */
+    @JsonIgnore
     public Boolean resultsPublished() {
         if (publishResultsDate == null) {
             return false;
@@ -443,16 +459,18 @@ public class Exam extends DomainObject {
         return ZonedDateTime.now().isAfter(getStartDate().plusSeconds(getStudentExams().stream().mapToInt(StudentExam::getWorkingTime).max().orElse(0)));
     }
 
+    @JsonIgnore
     public boolean hasExamArchive() {
         return examArchivePath != null && !examArchivePath.isEmpty();
     }
 
-    public String getExamArchivePath() {
-        return examArchivePath;
+    @Nullable
+    public ZonedDateTime getExampleSolutionPublicationDate() {
+        return exampleSolutionPublicationDate;
     }
 
-    public void setExamArchivePath(String examArchivePath) {
-        this.examArchivePath = examArchivePath;
+    public void setExampleSolutionPublicationDate(@Nullable ZonedDateTime exampleSolutionPublicationDate) {
+        this.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
     }
 
     /**

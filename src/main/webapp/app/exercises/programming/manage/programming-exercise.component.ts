@@ -1,6 +1,8 @@
 import { Component, ContentChild, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
@@ -9,13 +11,11 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
-import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -167,13 +167,11 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     openImportModal() {
-        const modalRef = this.modalService.open(ProgrammingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.result.then(
-            (result: ProgrammingExercise) => {
-                this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import', result.id]);
-            },
-            () => {},
-        );
+        const modalRef = this.modalService.open(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
+        modalRef.result.then((result: ProgrammingExercise) => {
+            this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import', result.id]);
+        });
     }
 
     toggleProgrammingExercise(programmingExercise: ProgrammingExercise) {
@@ -206,14 +204,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         modalRef.closed.subscribe(() => {
             location.reload();
         });
-    }
-
-    openRepoExportModal() {
-        const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, {
-            size: 'lg',
-            backdrop: 'static',
-        });
-        modalRef.componentInstance.selectedProgrammingExercises = this.selectedProgrammingExercises;
     }
 
     /**

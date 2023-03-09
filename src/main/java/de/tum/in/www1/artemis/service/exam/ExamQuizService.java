@@ -61,6 +61,7 @@ public class ExamQuizService {
     /**
      * Evaluate the given quiz exercise by evaluate the submission for each participation (there is only one for each participation in exams)
      * and update the statistics with the generated results.
+     *
      * @param quizExerciseId the id of the QuizExercise that should be evaluated
      */
     public void evaluateQuizAndUpdateStatistics(@NotNull Long quizExerciseId) {
@@ -78,6 +79,7 @@ public class ExamQuizService {
     /**
      * This method is intended to be called after a user submits a test run. We calculate the achieved score in the quiz exercises immediately and attach a result.
      * Note: We do not insert the result of this test run quiz participation into the quiz statistics.
+     *
      * @param studentExam The test run or test exam containing the users participations in all exam exercises
      */
     public void evaluateQuizParticipationsForTestRunAndTestExam(StudentExam studentExam) {
@@ -105,7 +107,7 @@ public class ExamQuizService {
                     result.evaluateQuizSubmission();
                     // remove submission to follow save order for ordered collections
                     result.setSubmission(null);
-                    if (studentExam.getExam().isTestExam()) {
+                    if (studentExam.isTestExam()) {
                         result.rated(true);
                     }
                     result = resultRepository.save(result);
@@ -123,12 +125,12 @@ public class ExamQuizService {
                     // prevent a lazy exception in the evaluateQuizSubmission method
                     result.setParticipation(participation);
                     result.evaluateQuizSubmission();
-                    if (studentExam.getExam().isTestExam()) {
+                    if (studentExam.isTestExam()) {
                         result.rated(true);
                     }
                     resultRepository.save(result);
                 }
-                if (studentExam.getExam().isTestExam()) {
+                if (studentExam.isTestExam()) {
                     // In case of an test exam, the quiz statistic should also be updated
                     var quizExercise1 = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
                     quizStatisticService.updateStatistics(Set.of(result), quizExercise1);
@@ -151,6 +153,7 @@ public class ExamQuizService {
      * After processing all participations, the created results will be returned for further processing
      * Note: We ignore test run participations
      * // @formatter:on
+     *
      * @param quizExercise the id of the QuizExercise that should be evaluated
      * @return the newly generated results
      */

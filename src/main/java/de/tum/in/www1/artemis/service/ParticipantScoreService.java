@@ -5,20 +5,14 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifi
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
-import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 
 @Service
@@ -30,14 +24,10 @@ public class ParticipantScoreService {
 
     private final TeamScoreRepository teamScoreRepository;
 
-    private final ParticipantScoreRepository participantScoreRepository;
-
-    public ParticipantScoreService(UserRepository userRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            ParticipantScoreRepository participantScoreRepository) {
+    public ParticipantScoreService(UserRepository userRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository) {
         this.userRepository = userRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
-        this.participantScoreRepository = participantScoreRepository;
     }
 
     /**
@@ -61,7 +51,9 @@ public class ParticipantScoreService {
         Set<Exercise> includedExercises = exercisesOfExam.stream().filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED))
                 .collect(Collectors.toSet());
 
-        return calculateScores(includedExercises, exam.getRegisteredUsers(), (double) exam.getMaxPoints());
+        Set<User> registeredUsers = exam.getRegisteredUsers();
+
+        return calculateScores(includedExercises, registeredUsers, (double) exam.getExamMaxPoints());
     }
 
     /**
@@ -149,57 +141,4 @@ public class ParticipantScoreService {
         return new ArrayList<>(userIdToScores.values());
 
     }
-
-    /**
-     * Gets all the participant scores that exist for given exercises and converts them to the corresponding DTOs
-     *
-     * @param pageable  pageable object to specify paging
-     * @param exercises exercises for which to get all the participant scores
-     * @return an unmodifiable list of all participant scores of the exercises converted to DTOs
-     */
-    public List<ParticipantScoreDTO> getParticipantScoreDTOs(Pageable pageable, Set<Exercise> exercises) {
-        Set<Exercise> individualExercisesOfCourse = exercises.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.INDIVIDUAL)).collect(Collectors.toSet());
-        Set<Exercise> teamExercisesOfCourse = exercises.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.TEAM)).collect(Collectors.toSet());
-
-        List<ParticipantScoreDTO> resultsIndividualExercises = studentScoreRepository.findAllByExerciseIn(individualExercisesOfCourse, pageable).stream()
-                .map(ParticipantScoreDTO::generateFromParticipantScore).toList();
-        List<ParticipantScoreDTO> resultsTeamExercises = teamScoreRepository.findAllByExerciseIn(teamExercisesOfCourse, pageable).stream()
-                .map(ParticipantScoreDTO::generateFromParticipantScore).toList();
-        return Stream.concat(resultsIndividualExercises.stream(), resultsTeamExercises.stream()).toList();
-    }
-
-    /**
-     * Calculates various average statistics for every user / team that participated in the given exercises
-     *
-     * @param exercises exercises for which to calculate the statistics
-     * @return an unmodifiable list of DTOs containing the statistics for every user / team
-     */
-    public List<ParticipantScoreAverageDTO> getParticipantScoreAverageDTOs(Set<Exercise> exercises) {
-        Set<Exercise> individualExercises = exercises.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.INDIVIDUAL)).collect(Collectors.toSet());
-        Set<Exercise> teamExercises = exercises.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.TEAM)).collect(Collectors.toSet());
-
-        List<ParticipantScoreAverageDTO> resultsIndividualExercises = studentScoreRepository.getAvgScoreOfStudentsInExercises(individualExercises);
-        List<ParticipantScoreAverageDTO> resultsTeamExercises = teamScoreRepository.getAvgScoreOfTeamInExercises(teamExercises);
-
-        return Stream.concat(resultsIndividualExercises.stream(), resultsTeamExercises.stream()).toList();
-    }
-
-    /**
-     * Calculated the average last score or average last rated score achieved in the given exercises
-     *
-     * @param onlyConsiderRatedScores consider either the last score or the last rated score
-     * @param includedExercises       exercises to include in the average calculation
-     * @return average last score or average last rated score achieved in the given exercises
-     */
-    public Double getAverageScore(@RequestParam(defaultValue = "true", required = false) boolean onlyConsiderRatedScores, Set<Exercise> includedExercises) {
-        Double averageScore;
-        if (onlyConsiderRatedScores) {
-            averageScore = participantScoreRepository.findAvgRatedScore(includedExercises);
-        }
-        else {
-            averageScore = participantScoreRepository.findAvgScore(includedExercises);
-        }
-        return averageScore;
-    }
-
 }

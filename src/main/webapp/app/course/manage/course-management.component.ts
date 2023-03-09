@@ -12,6 +12,7 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faAngleDown, faAngleUp, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-course',
@@ -30,6 +31,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     semesterCollapsed: { [key: string]: boolean };
     coursesBySemester: { [key: string]: Course[] };
     eventSubscriber: Subscription;
+    documentationType = DocumentationType.Course;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -113,17 +115,17 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Sorts the courses into the coursesBySemester map.
-     * Fills the semesterCollapsed map depending on if the semester should be uncollapsed by default.
-     * The first semester is always uncollapsed. The test course group is also uncollapsed.
+     * Fills the semesterCollapsed map depending on if the semester should be expanded by default.
+     * The first semester is always expanded. The test course group is also expanded.
      */
     private sortCoursesIntoSemesters(): void {
         this.semesterCollapsed = {};
         this.coursesBySemester = {};
 
-        let firstUncollapsed = false;
+        let firstExpanded = false;
         for (const semester of this.courseSemesters) {
-            this.semesterCollapsed[semester] = firstUncollapsed;
-            firstUncollapsed = true;
+            this.semesterCollapsed[semester] = firstExpanded;
+            firstExpanded = true;
             this.coursesBySemester[semester] = this.courses.filter((course) => !course.testCourse && (course.semester ?? '') === semester);
         }
 

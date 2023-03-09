@@ -1,0 +1,23 @@
+<jhi-loading-indicator-container [isLoading]="isLoading">
+    <div class="row mt-2" *ngIf="isServiceSetUp && course">
+        <div class="col d-flex flex-grow-1 justify-end px-0 me-1" style="max-width: min-content">
+            <jhi-conversation-selection-sidebar> </jhi-conversation-selection-sidebar>
+        </div>
+        <div class="col pe-0 flex-grow-1" [ngClass]="{ 'card-border': activeConversation }" style="min-width: 200px">
+            <ng-container *ngIf="activeConversation">
+                <jhi-conversation-header></jhi-conversation-header>
+                <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course"> </jhi-conversation-messages>
+            </ng-container>
+        </div>
+        <div *ngIf="activeConversation" class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
+            <jhi-conversation-thread-sidebar
+                *ngIf="!!postInThread"
+                [activeConversation]="activeConversation"
+                [readOnlyMode]="!!getAsChannel(activeConversation)?.isArchived"
+                [activePost]="postInThread"
+                (closePostThread)="postInThread = undefined"
+            >
+            </jhi-conversation-thread-sidebar>
+        </div>
+    </div>
+</jhi-loading-indicator-container>

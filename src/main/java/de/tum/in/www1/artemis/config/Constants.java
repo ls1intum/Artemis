@@ -61,7 +61,7 @@ public final class Constants {
 
     public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
 
-    public static final String APOLLON_CONVERSION_API_PATH = "/api/apollon-convert/pdf";
+    public static final String APOLLON_CONVERSION_API_PATH = "/api/apollon/convert-to-pdf";
 
     // short names should have at least 3 characters and must start with a letter
     public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]{2,}";
@@ -97,9 +97,9 @@ public final class Constants {
     public static final long MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024; // 8 MB
 
     // Note: The values in input.constants.ts (client) need to be the same
-    public static final int MAX_SUBMISSION_TEXT_LENGTH = 30 * 1000; // 30.000 characters
+    public static final int MAX_SUBMISSION_TEXT_LENGTH = 30_000; // 30.000 characters
 
-    public static final int MAX_SUBMISSION_MODEL_LENGTH = 100 * 1000; // 100.000 characters
+    public static final int MAX_SUBMISSION_MODEL_LENGTH = 100_000; // 100.000 characters
 
     public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
 

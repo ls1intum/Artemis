@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -39,8 +40,9 @@ public class AnswerPostService extends PostingService {
 
     protected AnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService, SimpMessageSendingOperations messagingTemplate) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
+            GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService, SimpMessageSendingOperations messagingTemplate,
+            ConversationParticipantRepository conversationParticipantRepository) {
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
         this.groupNotificationService = groupNotificationService;
@@ -92,9 +94,9 @@ public class AnswerPostService extends PostingService {
      * updates non-restricted field of the post, persists the post,
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId      id of the course the answer post belongs to
-     * @param answerPostId  id of the answer post to update
-     * @param answerPost    answer post to update
+     * @param courseId     id of the course the answer post belongs to
+     * @param answerPostId id of the answer post to update
+     * @param answerPost   answer post to update
      * @return updated answer post that was persisted
      */
     public AnswerPost updateAnswerPost(Long courseId, Long answerPostId, AnswerPost answerPost) {
@@ -181,7 +183,7 @@ public class AnswerPostService extends PostingService {
     /**
      * Sends notification to affected groups
      *
-     * @param post which is answered
+     * @param post       which is answered
      * @param answerPost which is created
      */
     void sendNotification(Post post, AnswerPost answerPost, Course course) {
@@ -238,8 +240,8 @@ public class AnswerPostService extends PostingService {
      * Checks if the requesting user is authorized in the course context,
      * i.e. user has to be author of original post associated with the answer post or at least teaching assistant
      *
-     * @param answerPost    answer post that should be marked as resolving
-     * @param user          requesting user
+     * @param answerPost answer post that should be marked as resolving
+     * @param user       requesting user
      */
     void mayMarkAnswerPostAsResolvingElseThrow(AnswerPost answerPost, User user, Course course) {
         if (!answerPost.getPost().getAuthor().equals(user)) {

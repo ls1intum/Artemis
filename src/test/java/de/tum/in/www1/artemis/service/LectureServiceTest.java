@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,17 +16,23 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "lservicetest";
+
     @Autowired
     private LectureService lectureService;
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private LectureRepository lectureRepository;
 
     private Course course;
 
@@ -41,11 +46,11 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @BeforeEach
     void initTestCase() throws Exception {
-        List<User> users = database.addUsers(1, 0, 1, 0);
-        student = users.get(0);
-        editor = users.get(1);
+        database.addUsers(TEST_PREFIX, 1, 0, 1, 0);
+        student = database.getUserByLogin(TEST_PREFIX + "student1");
+        editor = database.getUserByLogin(TEST_PREFIX + "editor1");
 
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(false, false);
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, false, 0);
         // always use the lecture and course with the smallest ID, otherwise tests below related to search might fail (in a flaky way)
         course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).get().getId());
         lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).get();
@@ -53,19 +58,15 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         // Add a custom attachment for filtering tests
         testAttachment = ModelFactory.generateAttachment(ZonedDateTime.now().plusDays(1));
         lecture.addAttachments(testAttachment);
+        lectureRepository.save(lecture);
 
         assertThat(lecture).isNotNull();
         assertThat(lecture.getLectureUnits()).isNotEmpty();
         assertThat(lecture.getAttachments()).isNotEmpty();
     }
 
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
-
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testFilterActiveAttachments_editor() {
         Set<Lecture> testLectures = lectureService.filterActiveAttachments(course.getLectures(), editor);
         Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().get();
@@ -74,7 +75,7 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testFilterActiveAttachments_student() {
         Set<Lecture> testLectures = lectureService.filterActiveAttachments(course.getLectures(), student);
         Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().get();
@@ -86,10 +87,15 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testPageableResults() {
         // the database should contain 2 lectures (see createCoursesWithExercisesAndLecturesAndLectureUnits) both with the same title
         // to enable a proper search after title, we change it
+
+        // Use custom lecture name that is unique to test
+        course.getLectures().forEach(lecture -> lecture.setTitle(lecture.getTitle() + "testPageableResults"));
+        lectureRepository.saveAll(course.getLectures());
+        lecture = lectureRepository.findByIdElseThrow(lecture.getId());
 
         PageableSearchDTO<String> pageable = database.configureLectureSearch(lecture.getTitle());
         pageable.setSortedColumn(Lecture.LectureSearchColumn.ID.name());
@@ -110,15 +116,20 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetLecturesPageable() {
+        // Use custom lecture name that is unique to test
+        course.getLectures().forEach(lecture -> lecture.setTitle(lecture.getTitle() + "testGetLecturesPageable"));
+        lectureRepository.saveAll(course.getLectures());
+        lecture = lectureRepository.findByIdElseThrow(lecture.getId());
+
         SearchResultPageDTO<Lecture> result = searchQueryWithUser(lecture.getTitle(), editor);
         assertThat(result.getNumberOfPages()).isEqualTo(1);
         assertThat(result.getResultsOnPage()).contains(lecture);
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetLecturesPageable_notFound() {
         SearchResultPageDTO<Lecture> result = searchQueryWithUser("VeryLongNameThatDoesNotExist", editor);
         assertThat(result.getNumberOfPages()).isEqualTo(0);
@@ -126,7 +137,7 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetLecturesPageable_unauthorized() {
         SearchResultPageDTO<Lecture> result = searchQueryWithUser(lecture.getTitle(), student);
         assertThat(result.getNumberOfPages()).isEqualTo(0);

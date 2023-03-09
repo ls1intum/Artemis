@@ -278,7 +278,7 @@ public class ExamImportService {
      * Prepares a Programming Exercise for the import by setting irrelevant data to null.
      * Additionally, the grading criteria is loaded and attached to the exercise, as this needs to be released before the import
      *
-     * @param newExercise      The new exercise which should be prepared for the import
+     * @param newExercise The new exercise which should be prepared for the import
      */
     private void prepareProgrammingExerciseForExamImport(final ProgrammingExercise newExercise) {
 
@@ -306,7 +306,7 @@ public class ExamImportService {
      */
     private Exam createCopyOfExamWithoutConductionSpecificAttributes(Exam examToCopy, Course targetCourse) {
         examToCopy.setExerciseGroups(new ArrayList<>());
-        examToCopy.setRegisteredUsers(new HashSet<>());
+        examToCopy.setExamUsers(new HashSet<>());
         examToCopy.setStudentExams(new HashSet<>());
         examToCopy.setId(null);
         examToCopy.setCourse(targetCourse);

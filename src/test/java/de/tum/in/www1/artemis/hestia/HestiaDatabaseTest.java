@@ -6,12 +6,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
@@ -27,6 +28,8 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepositor
  * It tests if the addition and deletion of these models works as expected.
  */
 class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "hestiadatabase";
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -47,20 +50,15 @@ class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @BeforeEach
     void init() {
-        database.addUsers(2, 2, 0, 2);
-        database.addCourseWithOneProgrammingExercise();
-        programmingExerciseId = programmingExerciseRepository.findAll().get(0).getId();
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
+        database.addUsers(TEST_PREFIX, 2, 2, 0, 2);
+        final Course course = database.addCourseWithOneProgrammingExercise();
+        programmingExerciseId = database.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
     }
 
     ProgrammingExerciseTask addTaskToProgrammingExercise(String taskName) {
         var task = new ProgrammingExerciseTask();
         task.setTaskName(taskName);
-        task.setExercise(programmingExerciseRepository.getById(programmingExerciseId));
+        task.setExercise(programmingExerciseRepository.getReferenceById(programmingExerciseId));
         task = programmingExerciseTaskRepository.save(task);
         return task;
     }
@@ -88,12 +86,12 @@ class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     void deleteProgrammingExerciseWithTask() {
         addOneTaskToProgrammingExercise();
         programmingExerciseRepository.deleteById(programmingExerciseId);
-        assertThat(programmingExerciseTaskRepository.findAll()).isEmpty();
+        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExerciseId)).isEmpty();
     }
 
     @Test
     void addTestCasesWithSolutionEntriesToProgrammingExercise() {
-        var programmingExercise = programmingExerciseRepository.getById(programmingExerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         database.addTestCasesToProgrammingExercise(programmingExercise);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId);
         assertThat(testCases).isNotEmpty();
@@ -107,13 +105,13 @@ class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     void deleteProgrammingExerciseWithTestCasesAndSolutionEntries() {
         addTestCasesWithSolutionEntriesToProgrammingExercise();
         programmingExerciseRepository.deleteById(programmingExerciseId);
-        assertThat(programmingExerciseTestCaseRepository.findAll()).isEmpty();
-        assertThat(programmingExerciseSolutionEntryRepository.findAll()).isEmpty();
+        assertThat(programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId)).isEmpty();
+        assertThat(programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(programmingExerciseId)).isEmpty();
     }
 
     @Test
     void deleteTaskWithTestCases() {
-        var programmingExercise = programmingExerciseRepository.getById(programmingExerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         database.addTestCasesToProgrammingExercise(programmingExercise);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId);
         assertThat(testCases).isNotEmpty();
@@ -126,7 +124,7 @@ class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @Test
     void addCodeHintToProgrammingExercise() {
-        var programmingExercise = programmingExerciseRepository.getById(programmingExerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         database.addTestCasesToProgrammingExercise(programmingExercise);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId);
         assertThat(testCases).isNotEmpty();
@@ -159,29 +157,29 @@ class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @Test
     void deleteCodeHint() {
         addCodeHintToProgrammingExercise();
-        var codeHint = codeHintRepository.findAll().get(0);
+        var codeHint = codeHintRepository.findByExerciseId(programmingExerciseId).stream().findAny().orElseThrow();
         codeHintRepository.delete(codeHint);
         assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExerciseId)).hasSize(1);
-        assertThat(programmingExerciseSolutionEntryRepository.findAll()).hasSize(6);
+        assertThat(programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(programmingExerciseId)).hasSize(6);
     }
 
     @Test
     void deleteProgrammingExerciseWithCodeHint() {
         addCodeHintToProgrammingExercise();
         programmingExerciseRepository.deleteById(programmingExerciseId);
-        assertThat(programmingExerciseTaskRepository.findAll()).isEmpty();
-        assertThat(programmingExerciseSolutionEntryRepository.findAll()).isEmpty();
-        assertThat(codeHintRepository.findAll()).isEmpty();
-        assertThat(programmingExerciseTestCaseRepository.findAll()).isEmpty();
+        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExerciseId)).isEmpty();
+        assertThat(programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(programmingExerciseId)).isEmpty();
+        assertThat(codeHintRepository.findByExerciseId(programmingExerciseId)).isEmpty();
+        assertThat(programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId)).isEmpty();
     }
 
     @Test
     void deleteTaskWithCodeHint() {
         addCodeHintToProgrammingExercise();
-        var task = programmingExerciseTaskRepository.findAll().get(0);
+        var task = programmingExerciseTaskRepository.findByExerciseId(programmingExerciseId).stream().findAny().orElseThrow();
         programmingExerciseTaskRepository.delete(task);
-        assertThat(codeHintRepository.findAll()).isEmpty();
-        assertThat(programmingExerciseTestCaseRepository.findAll()).hasSize(3);
-        assertThat(programmingExerciseSolutionEntryRepository.findAll()).hasSize(6);
+        assertThat(codeHintRepository.findByExerciseId(programmingExerciseId)).isEmpty();
+        assertThat(programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId)).hasSize(3);
+        assertThat(programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(programmingExerciseId)).hasSize(6);
     }
 }

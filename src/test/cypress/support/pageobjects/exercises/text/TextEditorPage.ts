@@ -1,10 +1,22 @@
 import { BASE_API, PUT } from '../../../constants';
+import { getExercise } from '../../../utils';
+
 /**
  * A class which encapsulates UI selectors and actions for the text editor page.
  */
 export class TextEditorPage {
-    typeSubmission(submission: string) {
-        cy.get('#text-editor').type(submission, { parseSpecialCharSequences: false });
+    typeSubmission(exerciseID: number, submission: string) {
+        getExercise(exerciseID).find('#text-editor').type(submission, { parseSpecialCharSequences: false });
+    }
+
+    clearSubmission(exerciseID: number) {
+        getExercise(exerciseID).find('#text-editor').clear();
+    }
+
+    checkCurrentContent(exerciseID: number, expectedContent: string) {
+        cy.fixture(expectedContent).then((text) => {
+            getExercise(exerciseID).find('#text-editor').should('have.value', text);
+        });
     }
 
     /**

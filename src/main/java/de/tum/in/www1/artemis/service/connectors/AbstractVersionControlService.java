@@ -55,19 +55,19 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     /**
      * Adds a webhook for the specified repository to the given notification URL.
      *
-     * @param repositoryUrl The repository to which the webhook should get added to
+     * @param repositoryUrl   The repository to which the webhook should get added to
      * @param notificationUrl The URL the hook should notify
-     * @param webHookName Any arbitrary name for the webhook
+     * @param webHookName     Any arbitrary name for the webhook
      */
     protected abstract void addWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName);
 
     /**
      * Adds an authenticated webhook for the specified repository to the given notification URL.
      *
-     * @param repositoryUrl The repository to which the webhook should get added to
+     * @param repositoryUrl   The repository to which the webhook should get added to
      * @param notificationUrl The URL the hook should notify
-     * @param webHookName Any arbitrary name for the webhook
-     * @param secretToken A secret token that authenticates the webhook against the system behind the notification URL
+     * @param webHookName     Any arbitrary name for the webhook
+     * @param secretToken     A secret token that authenticates the webhook against the system behind the notification URL
      */
     protected abstract void addAuthenticatedWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName, String secretToken);
 
@@ -172,5 +172,21 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     @Override
     public String getDefaultBranchOfArtemis() {
         return defaultBranch;
+    }
+
+    /**
+     * Determines if a user should get read-only or also write permissions for their repository.
+     *
+     * @param programmingExercise The programming exercise the repository belongs to.
+     * @return The permissions the user should receive for a repository.
+     */
+    protected RepositoryPermissions determineRepositoryPermissions(final ProgrammingExercise programmingExercise) {
+        // NOTE: null values are interpreted as offline IDE is allowed
+        if (Boolean.FALSE.equals(programmingExercise.isAllowOfflineIde())) {
+            return RepositoryPermissions.READ_ONLY;
+        }
+        else {
+            return RepositoryPermissions.READ_WRITE;
+        }
     }
 }

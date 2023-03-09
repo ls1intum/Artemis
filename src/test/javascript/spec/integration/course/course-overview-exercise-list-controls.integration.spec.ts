@@ -1,6 +1,7 @@
 import { CourseExercisesComponent, ExerciseFilter } from 'app/overview/course-exercises/course-exercises.component';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { ArtemisTestModule } from '../../test.module';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
@@ -21,6 +22,7 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { NgModel } from '@angular/forms';
 
 describe('CourseOverviewExerciseListControls', () => {
     let parentFixture: ComponentFixture<CourseOverviewComponent>;
@@ -33,7 +35,7 @@ describe('CourseOverviewExerciseListControls', () => {
     let course: Course;
 
     const parentRoute = { params: of({ courseId: '123' }) } as any as ActivatedRoute;
-    const route = { parent: parentRoute, params: of({ courseId: '123' }) } as any as ActivatedRoute;
+    const route = { parent: parentRoute, params: of({ courseId: '123' }), snapshot: { firstChild: { routeConfig: { path: 'courses/1/exercises' } } } } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -42,7 +44,9 @@ describe('CourseOverviewExerciseListControls', () => {
                 CourseOverviewComponent,
                 CourseExercisesComponent,
                 MockDirective(OrionFilterDirective),
+                MockDirective(NgModel),
                 MockComponent(SidePanelComponent),
+                MockComponent(HeaderCourseComponent),
                 TranslatePipeMock,
                 MockPipe(ArtemisDatePipe),
                 MockTranslateValuesDirective,

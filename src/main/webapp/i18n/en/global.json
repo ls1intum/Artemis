@@ -12,7 +12,8 @@
             "start": "Start",
             "edit": "Edit",
             "copy": "Copy",
-            "copied": "Copied"
+            "copied": "Copied",
+            "new": "New"
         },
         "menu": {
             "home": "Home",
@@ -30,7 +31,7 @@
                 "modelingExercise": "Modeling Exercise",
                 "quizExercise": "Quiz Exercise",
                 "lecture": "Lecture",
-                "learningGoal": "Learning Goal",
+                "learningGoal": "Competency",
                 "ltiOutcomeUrl": "Lti Outcome Url",
                 "submittedAnswer": "Submitted Answer",
                 "quizQuestion": "Question",
@@ -41,7 +42,6 @@
                 "dropLocation": "Drop Location",
                 "dragItem": "Drag Item",
                 "participation": "Participation",
-                "ltiUserId": "Lti User Id",
                 "exerciseResult": "Exercise Result",
                 "feedback": "Feedback",
                 "submission": "Submission",
@@ -201,6 +201,7 @@
             "confirm": "Confirm",
             "download": "Download",
             "edit": "Edit",
+            "connect": "Connect",
             "editSelected": "Edit selected",
             "editInEditor": "Edit in editor",
             "editInIntelliJ": "Edit in IntelliJ",
@@ -212,6 +213,7 @@
             "saving": "Saving...",
             "view": "View",
             "preview": "Preview",
+            "visual": "Visual",
             "cleanup": "Cleanup",
             "remove": "Remove",
             "purge": "Purge",
@@ -253,7 +255,8 @@
             "toggleToUnsubmitted": "Change Student Exam to Unsubmitted",
             "toggleToSubmitted": "Change Student Exam to Submitted",
             "endNow": "End Now",
-            "ldap": "Sync from LDAP"
+            "ldap": "Sync from LDAP",
+            "notUndoable": "This action cannot be undone!"
         },
         "detail": {
             "field": "Field",
@@ -315,7 +318,7 @@
         "aboutUs": "About",
         "course": "Course details",
         "lectures": "Lectures",
-        "learningGoals": "Learning Goals",
+        "learningGoals": "Competencies",
         "tutorialGroups": "Tutorial Groups",
         "exercise": "Exercise details",
         "statistics": "Course statistics",

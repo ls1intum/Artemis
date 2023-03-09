@@ -36,6 +36,7 @@ export class AccountService implements IAccountService {
     private userIdentityValue?: User;
     private authenticated = false;
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);
+    private prefilledUsernameValue?: string;
 
     constructor(
         private translateService: TranslateService,
@@ -69,7 +70,7 @@ export class AccountService implements IAccountService {
         return this.http.get<User>(SERVER_API_URL + 'api/account', { observe: 'response' });
     }
 
-    save(user: User): Observable<HttpResponse<{}>> {
+    save(user: User): Observable<HttpResponse<any>> {
         return this.http.put(SERVER_API_URL + 'api/account', user, { observe: 'response' });
     }
 
@@ -156,7 +157,8 @@ export class AccountService implements IAccountService {
                     return this.userIdentity;
                 }),
                 catchError(() => {
-                    if (this.websocketService.stompClient && this.websocketService.stompClient.connected) {
+                    // this will be called during logout
+                    if (this.websocketService.isConnected()) {
                         this.websocketService.disconnect();
                     }
                     this.userIdentity = undefined;
@@ -288,7 +290,27 @@ export class AccountService implements IAccountService {
      *
      * @param languageKey The new languageKey
      */
-    updateLanguage(languageKey: String): Observable<void> {
+    updateLanguage(languageKey: string): Observable<void> {
         return this.http.post<void>(`${SERVER_API_URL}api/account/change-language`, languageKey);
+    }
+
+    /**
+     * Returns the current prefilled username and clears it. Necessary as we don't want to show the prefilled username after a later log out.
+     *
+     * @returns the prefilled username
+     */
+    getAndClearPrefilledUsername(): string | undefined {
+        const prefilledUsername = this.prefilledUsernameValue;
+        this.prefilledUsernameValue = undefined;
+        return prefilledUsername;
+    }
+
+    /**
+     * Sets the prefilled username
+     *
+     * @param prefilledUsername The new prefilled username
+     */
+    setPrefilledUsername(prefilledUsername: string) {
+        this.prefilledUsernameValue = prefilledUsername;
     }
 }

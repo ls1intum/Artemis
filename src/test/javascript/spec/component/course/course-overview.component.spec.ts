@@ -1,3 +1,7 @@
+import { HeaderCourseComponent } from 'app/overview/header-course.component';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MetisService } from 'app/shared/metis/metis.service';
 import { Subject, of } from 'rxjs';
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -5,7 +9,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -24,7 +28,6 @@ import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
-import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -45,6 +48,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { generateExampleTutorialGroupsConfiguration } from '../tutorial-groups/helpers/tutorialGroupsConfigurationExampleModels';
+import { EMPTY } from 'rxjs';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -94,7 +98,6 @@ class ControlsTestingComponent implements BarControlConfigurationProvider, After
     @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
-        useIndentation: true,
     };
 
     ngAfterViewInit(): void {
@@ -113,12 +116,12 @@ describe('CourseOverviewComponent', () => {
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
     let jhiWebsocketService: JhiWebsocketService;
 
-    const route: MockActivatedRouteWithSubjects = new MockActivatedRouteWithSubjects();
-    const params = new Subject<Params>();
-    params.next({ courseId: course1.id });
-    route.setSubject(params);
+    let metisConversationService: MetisConversationService;
+    const course = { id: 1 } as Course;
 
     beforeEach(fakeAsync(() => {
+        metisConversationService = {} as MetisConversationService;
+
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
             declarations: [
@@ -128,18 +131,22 @@ describe('CourseOverviewComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(SortDirective),
                 MockDirective(SortByDirective),
+                MockDirective(FeatureToggleHideDirective),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(CourseExercisesComponent),
                 MockComponent(CourseRegistrationComponent),
                 MockComponent(CourseCardComponent),
                 MockComponent(SecuredImageComponent),
+                MockComponent(HeaderCourseComponent),
             ],
             providers: [
+                { provide: MetisConversationService, useClass: MetisConversationService },
+                { provide: MetisService, useClass: MetisService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ActivatedRoute, useValue: route },
+                { provide: ActivatedRoute, useValue: { params: of({ courseId: course1.id }), snapshot: { firstChild: { routeConfig: { path: 'courses/1/exercises' } } } } },
                 { provide: CourseExerciseRowComponent },
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
@@ -147,7 +154,20 @@ describe('CourseOverviewComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(CourseOverviewComponent);
+                fixture = TestBed.overrideComponent(CourseOverviewComponent, {
+                    set: {
+                        providers: [
+                            {
+                                provide: MetisConversationService,
+                                useValue: metisConversationService,
+                            },
+                        ],
+                    },
+                }).createComponent(CourseOverviewComponent);
+
+                Object.defineProperty(metisConversationService, 'course', { get: () => course });
+                Object.defineProperty(metisConversationService, 'setUpConversationService', { value: () => EMPTY });
+
                 component = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
                 courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);

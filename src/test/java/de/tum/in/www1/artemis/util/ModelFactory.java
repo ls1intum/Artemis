@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
-import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.security.Role;
@@ -42,7 +41,7 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.*;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.*;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 public class ModelFactory {
@@ -75,6 +74,7 @@ public class ModelFactory {
             attachment.setUploadDate(date);
         }
         attachment.setName("TestAttachment");
+        attachment.setVersion(1);
         return attachment;
     }
 
@@ -93,7 +93,8 @@ public class ModelFactory {
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        attachment.setLink(Path.of(FileService.DEFAULT_FILE_SUBPATH, testFileName).toString());
+        // Path.toString() uses platform dependant path separators. Since we want to use this as a URL later, we need to replace \ with /.
+        attachment.setLink(Path.of(FileService.DEFAULT_FILE_SUBPATH, testFileName).toString().replace('\\', '/'));
         return attachment;
     }
 
@@ -706,7 +707,7 @@ public class ModelFactory {
         exam.setEndText("End Text");
         exam.setConfirmationStartText("Confirmation Start Text");
         exam.setConfirmationEndText("Confirmation End Text");
-        exam.setMaxPoints(90);
+        exam.setExamMaxPoints(90);
         exam.setNumberOfExercisesInExam(1);
         exam.setRandomizeExerciseOrder(false);
         exam.setNumberOfCorrectionRoundsInExam(testExam ? 0 : 1);
@@ -1013,13 +1014,6 @@ public class ModelFactory {
         return apollonDiagram;
     }
 
-    public static LockRepositoryPolicy generateLockRepositoryPolicy(int submissionLimit, boolean active) {
-        LockRepositoryPolicy policy = new LockRepositoryPolicy();
-        policy.setSubmissionLimit(submissionLimit);
-        policy.setActive(active);
-        return policy;
-    }
-
     /**
      * Creates a dummy DTO used by Jenkins, which notifies about new programming exercise results.
      *
@@ -1056,11 +1050,11 @@ public class ModelFactory {
      * Creates a dummy DTO with custom feedbacks used by Jenkins, which notifies about new programming exercise results.
      * Uses {@link #generateTestResultDTO(String, String, ZonedDateTime, ProgrammingLanguage, boolean, List, List, List, List, TestSuiteDTO)} as basis.
      * Then adds a new {@link TestSuiteDTO} with name "CustomFeedbacks" to it.
-     * This Testsuite has four {@link de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO TestCaseDTOs}:
+     * This Testsuite has four {@link TestCaseDTO TestCaseDTOs}:
      * <ul>
-     *     <li>CustomSuccessMessage: successful test with a message</li>
-     *     <li>CustomSuccessNoMessage: successful test without message</li>
-     *     <li>CustomFailedMessage: failed test with a message</li>
+     * <li>CustomSuccessMessage: successful test with a message</li>
+     * <li>CustomSuccessNoMessage: successful test without message</li>
+     * <li>CustomFailedMessage: failed test with a message</li>
      * </ul>
      *
      * @param repoName                    name of the repository
@@ -1357,14 +1351,16 @@ public class ModelFactory {
         TutorialGroupsConfiguration tutorialGroupsConfiguration = new TutorialGroupsConfiguration();
         tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(start.format(DateTimeFormatter.ISO_LOCAL_DATE));
         tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(end.format(DateTimeFormatter.ISO_LOCAL_DATE));
+        tutorialGroupsConfiguration.setUsePublicTutorialGroupChannels(true);
+        tutorialGroupsConfiguration.setUseTutorialGroupChannels(true);
         return tutorialGroupsConfiguration;
     }
 
     /**
      * Generates a Bonus instance with given arguments.
      *
-     * @param bonusStrategy       of bonus
-     * @param weight              of bonus
+     * @param bonusStrategy         of bonus
+     * @param weight                of bonus
      * @param sourceGradingScaleId  of sourceGradingScale of bonus
      * @param bonusToGradingScaleId of bonusToGradingScale bonus
      * @return a new Bonus instance associated with the gradins scales corresonding to ids bonusToGradingScaleId and bonusToGradingScaleId.

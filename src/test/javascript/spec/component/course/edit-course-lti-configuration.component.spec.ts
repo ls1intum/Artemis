@@ -1,8 +1,9 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { of } from 'rxjs';
-import { NgbNavModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -15,7 +16,6 @@ import { Router } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTestModule } from '../../test.module';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
@@ -53,10 +53,9 @@ describe('Edit Course LTI Configuration Component', () => {
                 EditCourseLtiConfigurationComponent,
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
                 MockDirective(SortDirective),
                 MockDirective(SortByDirective),
-                MockComponent(FaIconComponent),
+                MockComponent(HelpIconComponent),
             ],
             providers: [
                 MockProvider(CourseManagementService),

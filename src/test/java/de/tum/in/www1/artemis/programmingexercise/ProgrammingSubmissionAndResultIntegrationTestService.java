@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Submission;
@@ -47,17 +48,18 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
 
     public ProgrammingExerciseParticipation participation;
 
-    public void setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() {
-        database.addCourseWithOneProgrammingExercise(false, false, JAVA);
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
-        participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+    public void setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(String userPrefix) {
+        Course course = database.addCourseWithOneProgrammingExercise(false, false, JAVA);
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(programmingExercise.getId()).orElseThrow();
+        participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
     }
 
     /**
      * Verifies both Atlassian and Jenkins/Gitlab tests of the same name
      *
-     * @param firstCommitHash Hash of the first commit made (second to be received)
-     * @param firstCommitDate Date of the first commit made (second to be received)
+     * @param firstCommitHash  Hash of the first commit made (second to be received)
+     * @param firstCommitDate  Date of the first commit made (second to be received)
      * @param secondCommitHash Hash of the second commit made (first to be received)
      * @param secondCommitDate Date of the second commit made (first to be received)
      */
@@ -83,6 +85,7 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
 
     /**
      * This is the simulated request from the VCS to Artemis on a new commit.
+     *
      * @return The submission that was created
      */
     public ProgrammingSubmission postSubmission(Long participationId, HttpStatus expectedStatus, String jsonRequest) throws Exception {
@@ -92,7 +95,7 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
         // Api should return ok.
         request.postWithoutLocation(PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participationId, obj, expectedStatus, new HttpHeaders());
 
-        List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAll();
+        List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
 
         // Submission should have been created for the participation.
         assertThat(submissions).hasSize(1);

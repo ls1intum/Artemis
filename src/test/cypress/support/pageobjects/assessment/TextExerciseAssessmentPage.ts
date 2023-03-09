@@ -1,5 +1,4 @@
-import { BASE_API, POST } from '../../constants';
-import { CypressExerciseType } from '../../requests/CourseManagementRequests';
+import { BASE_API, EXERCISE_TYPE, POST } from '../../constants';
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
 
 /**
@@ -35,12 +34,12 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
         return cy.wait('@submitFeedback');
     }
 
-    rejectComplaint(response: string) {
-        return super.rejectComplaint(response, CypressExerciseType.TEXT);
+    rejectComplaint(response: string, examMode: boolean) {
+        return super.rejectComplaint(response, examMode, EXERCISE_TYPE.Text);
     }
 
-    acceptComplaint(response: string) {
-        return super.acceptComplaint(response, CypressExerciseType.TEXT);
+    acceptComplaint(response: string, examMode: boolean) {
+        return super.acceptComplaint(response, examMode, EXERCISE_TYPE.Text);
     }
 
     getWordCountElement() {

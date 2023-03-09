@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
-import { faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -35,6 +35,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     faUser = faUser;
     faListAlt = faListAlt;
     faThList = faThList;
+    faChartBar = faChartBar;
 
     readonly FeatureToggle = FeatureToggle;
 
@@ -59,7 +60,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         this.examChecklistService.getExamStatistics(this.exam).subscribe((examStats) => {
             this.examChecklist = examStats;
             this.allExamsGenerated =
-                !!this.exam.numberOfRegisteredUsers && this.exam.numberOfRegisteredUsers > 0 && this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist);
+                !!this.exam.numberOfExamUsers && this.exam.numberOfExamUsers > 0 && this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist);
             this.numberOfStarted = this.examChecklist.numberOfExamsStarted;
             this.numberOfSubmitted = this.examChecklist.numberOfExamsSubmitted;
         });

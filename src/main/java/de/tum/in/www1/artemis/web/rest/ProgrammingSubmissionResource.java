@@ -102,7 +102,7 @@ public class ProgrammingSubmissionResource {
      * VCS Server at the push of a new commit
      *
      * @param participationId the participationId of the participation the repository is linked to
-     * @param requestBody the body of the post request by the VCS.
+     * @param requestBody     the body of the post request by the VCS.
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the latest commit was already notified about
      */
     @PostMapping(value = Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}")
@@ -148,8 +148,9 @@ public class ProgrammingSubmissionResource {
      *
      * @param participationId of the participation.
      * @param submissionType  will be used for the newly created submission.
-     * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404). Will also return notFound if the user's git repository is not available.
-     * The REST path would be: "/programming-submissions/{participationId}/trigger-build"
+     * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404). Will also return notFound if the user's git repository is
+     *         not available.
+     *         The REST path would be: "/programming-submissions/{participationId}/trigger-build"
      */
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-build")
     @PreAuthorize("hasRole('USER')")
@@ -188,15 +189,17 @@ public class ProgrammingSubmissionResource {
      * Trigger the CI build for the latest submission of a given participation, if it did not receive a result.
      *
      * @param participationId to which the submission belongs.
-     * @param lastGraded if true, will not use the most recent submission, but the most recent GRADED submission. This submission could e.g. be created before the deadline or after the deadline by the INSTRUCTOR.
-     * @return 404 if there is no participation for the given id, 403 if the user mustn't access the participation, 200 if the build was triggered, a result already exists or the build is running.
+     * @param lastGraded      if true, will not use the most recent submission, but the most recent GRADED submission. This submission could e.g. be created before the deadline or
+     *                            after the deadline by the INSTRUCTOR.
+     * @return 404 if there is no participation for the given id, 403 if the user mustn't access the participation, 200 if the build was triggered, a result already exists or the
+     *         build is running.
      */
     // TODO: we should definitely change this URL, it does not make sense to use /programming-submissions/{participationId}
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-failed-build")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
-        Participation participation = participationRepository.findByIdElseThrow(participationId);
+        final Participation participation = participationRepository.findByIdElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
             throw new EntityNotFoundException("Participation is not a ProgrammingExerciseParticipation");
         }
@@ -251,7 +254,7 @@ public class ProgrammingSubmissionResource {
      * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
      * Note: If a participationId does not belong to the exercise, it will be ignored!
      *
-     * @param exerciseId to identify the programming exercise.
+     * @param exerciseId       to identify the programming exercise.
      * @param participationIds list of participation ids.
      * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
      */
@@ -283,7 +286,7 @@ public class ProgrammingSubmissionResource {
      * This means that legacy exercises will trigger the repositories to be built, but we won't create submissions here anymore.
      * Therefore incoming build results will have to create new submissions with SubmissionType.OTHER.
      *
-     * @param exerciseId the id of the programmingExercise where the test cases got changed
+     * @param exerciseId  the id of the programmingExercise where the test cases got changed
      * @param requestBody the body of the post request by the VCS.
      * @return the ResponseEntity with status 200 (OK)
      */
@@ -316,13 +319,14 @@ public class ProgrammingSubmissionResource {
     }
 
     /**
-     * GET /programming-submissions : get all the programming submissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
+     * GET /programming-submissions : get all the programming submissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or
+     * only the one
      * assessed by the tutor who is doing the call.
      * In case of exam exercise, it filters out all test run submissions.
      *
-     * @param exerciseId the id of the exercise.
+     * @param exerciseId      the id of the exercise.
      * @param correctionRound the correctionRound for which all submissions should be fetched
-     * @param submittedOnly if only submitted submissions should be returned.
+     * @param submittedOnly   if only submitted submissions should be returned.
      * @param assessedByTutor if the submission was assessed by calling tutor.
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body.
      */
@@ -357,7 +361,7 @@ public class ProgrammingSubmissionResource {
     /**
      * GET /programming-submissions/:submissionId/lock : get the programmingSubmissions participation by its id and locks the corresponding submission for assessment
      *
-     * @param submissionId the id of the participation to retrieve
+     * @param submissionId    the id of the participation to retrieve
      * @param correctionRound correction round for which we prepare the submission
      * @return the ResponseEntity with status 200 (OK) and with body the programmingSubmissions participation
      */
@@ -421,8 +425,8 @@ public class ProgrammingSubmissionResource {
     /**
      * GET /programming-submission-without-assessment : get one Programming Submission without assessment.
      *
-     * @param exerciseId the id of the exercise
-     * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
+     * @param exerciseId      the id of the exercise
+     * @param lockSubmission  optional value to define if the submission should be locked and has the value of false if not set manually
      * @param correctionRound the correction round for which we want to find the submission
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
      */
@@ -446,8 +450,7 @@ public class ProgrammingSubmissionResource {
 
         // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
         ProgrammingSubmission submission;
-        if (programmingExercise.getAllowManualFeedbackRequests() && Objects.nonNull(programmingExercise.getDueDate())
-                && programmingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
+        if (programmingExercise.getAllowManualFeedbackRequests() && programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
             // Assess manual feedback request before the deadline
             submission = programmingSubmissionService.getNextAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
         }
@@ -458,7 +461,7 @@ public class ProgrammingSubmissionResource {
             programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
         }
 
-        if (Objects.nonNull(submission)) {
+        if (submission != null) {
             if (lockSubmission) {
                 Result lockedResult = programmingSubmissionService.lockSubmission(submission, correctionRound);
                 submission = (ProgrammingSubmission) lockedResult.getSubmission();

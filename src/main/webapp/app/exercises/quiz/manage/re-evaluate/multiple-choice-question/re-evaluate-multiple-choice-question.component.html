@@ -1,132 +1,230 @@
 <div class="edit-mc-question">
-    <div class="row">
-        <div class="col-md-10 text-start">
-            <div class="input-group">
-                <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title" style="height: 33px" />
-                <span class="input-group-btn">
-                    <button class="btn btn-outline-secondary" type="button" (click)="resetQuestionTitle()">
-                        <fa-icon [icon]="faUndo"></fa-icon>
-                    </button>
-                </span>
-            </div>
-        </div>
-        <div class="col-md-2 text-end">
-            <div class="form-group">
-                <div class="re-evaluate-button" id="move-up-button" (click)="moveUp()">
-                    <fa-icon [icon]="faChevronUp" size="2x"></fa-icon>
-                </div>
-                <div class="re-evaluate-button" id="move-down-button" (click)="moveDown()">
-                    <fa-icon [icon]="faChevronDown" size="2x"></fa-icon>
-                </div>
-                <div class="re-evaluate-button" id="reset-button" (click)="resetQuestion()">
-                    <fa-icon [icon]="faUndo" size="2x"></fa-icon>
-                </div>
-                <div class="re-evaluate-button" id="delete-button" (click)="delete()">
-                    <fa-icon [icon]="faTrash" size="2x"></fa-icon>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="question-options">
-        <div class="form-group">
-            <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
-            <select class="form-select" [(ngModel)]="question.scoringType" title="scoring type">
-                <option value="ALL_OR_NOTHING">{{ 'artemisApp.quizExercise.scoringType.all_or_nothing' | artemisTranslate }}</option>
-                <option value="PROPORTIONAL_WITH_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | artemisTranslate }}</option>
-                <option value="PROPORTIONAL_WITHOUT_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_without_penalty' | artemisTranslate }}</option>
-            </select>
-            <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-            <span>{{ question.points }}</span>
-        </div>
-        <div class="form-group">
-            <div class="form-check custom-control custom-checkbox">
-                <input type="checkbox" id="{{ 'cbRandomizeOrderMC' + questionIndex }}" [(ngModel)]="question.randomizeOrder" class="form-check-input custom-control-input" />
-                <label
-                    class="form-check-label custom-control-label"
-                    for="{{ 'cbRandomizeOrderMC' + questionIndex }}"
-                    jhiTranslate="artemisApp.multipleChoiceQuestion.randomizeOrder"
+    <div class="card-header">
+        <div class="row">
+            <div class="col-3 col-lg-1 mt-1">
+                <button
+                    class="btn question-collapse"
+                    (click)="isQuestionCollapsed = !isQuestionCollapsed"
+                    [attr.aria-expanded]="!isQuestionCollapsed"
+                    [attr.aria-controls]="'collapseQuestion' + questionIndex"
                 >
-                </label>
+                    <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown"></fa-icon>
+                </button>
             </div>
-        </div>
-        <button
-            class="btn btn-outline-secondary"
-            [hidden]="question.invalid"
-            (click)="question.invalid = true"
-            jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
-        ></button>
-        <button
-            class="btn btn-outline-secondary"
-            [hidden]="!question.invalid"
-            [disabled]="question.invalid"
-            jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
-        ></button>
-    </div>
-    <div class="markupEditorArea">
-        <div class="question-content" style="padding-bottom: 12px">
-            <div class="row">
-                <jhi-markdown-editor
-                    [markdown]="getQuestionText(question)"
-                    [editorMode]="editorMode"
-                    [metaCommands]="[]"
-                    [defaultCommands]="[]"
-                    [headerCommands]="[]"
-                    [domainCommands]="[]"
-                    [colorCommands]="[]"
-                    [showEditButton]="false"
-                    [showPreviewButton]="false"
-                    (markdownChange)="onQuestionChange($event)"
-                    class="editor col"
-                    style="width: 90%"
-                ></jhi-markdown-editor>
-                <span class="col-auto input-group-btn d-flex align-items-center">
-                    <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
+            <div class="col-9 col-lg-8 text-start mt-3">
+                <div class="input-group row">
+                    <div class="col-10 col-lg-11">
+                        <input
+                            class="form-control"
+                            [(ngModel)]="question.title"
+                            placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
+                            attr.aria-label="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
+                        />
+                    </div>
+                    <div class="col-2 col-lg-1">
+                        <span class="input-group-btn">
+                            <button
+                                class="btn btn-outline-secondary"
+                                type="button"
+                                (click)="resetQuestionTitle()"
+                                [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestionTitle' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faUndo"></fa-icon>
+                            </button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-3 col-lg-1 mt-lg-3">
+                <div class="question-type form-group">
+                    <h3 class="mb-0"><span class="badge bg-info align-text-top">MC</span></h3>
+                </div>
+            </div>
+            <div class="col-9 col-lg-2 text-end mt-lg-3">
+                <div class="form-group">
+                    <button
+                        id="move-up-button"
+                        class="btn btn-outline-secondary"
+                        type="button"
+                        (click)="moveUp()"
+                        [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveUp' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="faChevronUp"></fa-icon>
+                    </button>
+                    <button
+                        id="move-down-button"
+                        class="btn btn-outline-secondary"
+                        type="button"
+                        (click)="moveDown()"
+                        [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveDown' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="faChevronDown"></fa-icon>
+                    </button>
+                    <button
+                        id="reset-button"
+                        class="btn btn-outline-secondary"
+                        type="button"
+                        (click)="resetQuestion()"
+                        [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestion' | artemisTranslate"
+                    >
                         <fa-icon [icon]="faUndo"></fa-icon>
                     </button>
-                </span>
+                </div>
             </div>
         </div>
     </div>
-    <div class="answer-border" cdkDropList (cdkDropListDropped)="onReorderAnswerOptionDrop($event)">
-        <div class="answer-border" *ngFor="let answer of question.answerOptions" cdkDrag>
-            <div class="question-options">
-                <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%">
-                    <fa-icon [icon]="faArrowsAltV" size="2x"></fa-icon>
-                </span>
-                <jhi-markdown-editor
-                    [markdown]="generateAnswerMarkdown(answer)"
-                    [editorMode]="editorMode"
-                    [metaCommands]="[]"
-                    [defaultCommands]="[]"
-                    [headerCommands]="[]"
-                    [domainCommands]="[]"
-                    [colorCommands]="[]"
-                    [showEditButton]="false"
-                    [showPreviewButton]="false"
-                    (markdownChange)="onAnswerOptionChange($event, answer)"
-                    class="editor"
-                    style="width: 65%"
-                ></jhi-markdown-editor>
-                <div class="form-group text-center d-flex flex-wrap" style="width: 25%">
+    <div class="card-body" [ngbCollapse]="isQuestionCollapsed">
+        <div class="question-options row">
+            <div class="col-12 col-lg-4">
+                <div class="form-group">
+                    <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
+                    <select class="form-select" [(ngModel)]="question.scoringType" title="scoring type">
+                        <option value="ALL_OR_NOTHING">{{ 'artemisApp.quizExercise.scoringType.all_or_nothing' | artemisTranslate }}</option>
+                        <option value="PROPORTIONAL_WITH_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | artemisTranslate }}</option>
+                        <option value="PROPORTIONAL_WITHOUT_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_without_penalty' | artemisTranslate }}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-12 col-lg-2">
+                <div class="form-group">
+                    <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
+                    <input class="form-control point-input" title="score" type="number" [value]="question.points" disabled />
+                </div>
+            </div>
+            <div class="col-12 col-lg-3">
+                <div class="form-group">
+                    <div class="form-check custom-control custom-checkbox">
+                        <input
+                            type="checkbox"
+                            id="{{ 'cbRandomizeOrderMC' + questionIndex }}"
+                            [(ngModel)]="question.randomizeOrder"
+                            class="form-check-input custom-control-input"
+                        />
+                        <label
+                            class="form-check-label custom-control-label"
+                            for="{{ 'cbRandomizeOrderMC' + questionIndex }}"
+                            jhiTranslate="artemisApp.multipleChoiceQuestion.randomizeOrder"
+                        >
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-3 row justify-content-lg-end">
+                <div class="col-8 form-group">
                     <button
-                        class="btn btn-outline-secondary"
-                        [hidden]="isAnswerInvalid(answer)"
-                        (click)="setAnswerInvalid(answer)"
-                        jhiTranslate="artemisApp.quizExercise.re-evaluate.setAnswerInvalid"
+                        class="btn btn-outline-secondary question-invalid"
+                        [hidden]="question.invalid"
+                        (click)="question.invalid = true"
+                        jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
                     ></button>
                     <button
-                        class="btn btn-outline-secondary"
-                        [hidden]="!isAnswerInvalid(answer)"
-                        [disabled]="isAnswerInvalid(answer)"
-                        jhiTranslate="artemisApp.quizExercise.re-evaluate.answerIsInvalid"
-                    ></button
-                    >&nbsp;
-                    <span class="re-evaluate-button" (click)="resetAnswer(answer)">
-                        <fa-icon [icon]="faUndo" size="2x"></fa-icon>
-                    </span>
-                    <span class="re-evaluate-button" (click)="deleteAnswer(answer)">
+                        class="btn btn-outline-secondary question-invalid"
+                        [hidden]="!question.invalid"
+                        [disabled]="question.invalid"
+                        jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
+                    ></button>
+                </div>
+                <div class="col-2">
+                    <div class="re-evaluate-button" id="delete-button" class="delete-button" (click)="delete()">
                         <fa-icon [icon]="faTrash" size="2x"></fa-icon>
-                    </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="markupEditorArea">
+            <div class="question-content" style="padding-bottom: 12px">
+                <div class="row">
+                    <div class="col-10 col-lg-11">
+                        <!-- TODO: Fix file upload    -->
+                        <jhi-markdown-editor
+                            [markdown]="getQuestionText(question)"
+                            [editorMode]="editorMode"
+                            [metaCommands]="[]"
+                            [defaultCommands]="[]"
+                            [headerCommands]="[]"
+                            [domainCommands]="[]"
+                            [colorCommands]="[]"
+                            [showEditButton]="false"
+                            [showPreviewButton]="false"
+                            (markdownChange)="onQuestionChange($event)"
+                            [enableFileUpload]="false"
+                            class="editor col"
+                            style="width: 90%"
+                        ></jhi-markdown-editor>
+                    </div>
+                    <div class="col-2 col-lg-1">
+                        <span class="reset-question-group col-auto input-group-btn d-flex align-items-start">
+                            <button
+                                class="btn btn-outline-secondary"
+                                type="button"
+                                (click)="resetQuestionText()"
+                                [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestionText' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faUndo"></fa-icon>
+                            </button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div cdkDropList (cdkDropListDropped)="onReorderAnswerOptionDrop($event)">
+            <div class="answer-border" *ngFor="let answer of question.answerOptions" cdkDrag>
+                <div class="question-options row align-items-start">
+                    <div class="col-3 col-lg-1 drag-handle">
+                        <div class="answer-handle re-evaluate-order-button text-center" cdkDragHandle style="width: 100%">
+                            <fa-icon [icon]="faArrowsAltV" size="2x"></fa-icon>
+                        </div>
+                    </div>
+                    <div class="col-9 col-lg-7 option-text">
+                        <!-- TODO: Fix file upload -->
+                        <jhi-markdown-editor
+                            [markdown]="markdownMap.get(answer.id!)"
+                            [editorMode]="editorMode"
+                            [metaCommands]="[]"
+                            [defaultCommands]="[]"
+                            [headerCommands]="[]"
+                            [domainCommands]="[]"
+                            [colorCommands]="[]"
+                            [showEditButton]="false"
+                            [showPreviewButton]="false"
+                            (markdownChange)="onAnswerOptionChange($event, answer)"
+                            [enableFileUpload]="false"
+                            class="editor"
+                            style="width: 65%"
+                        ></jhi-markdown-editor>
+                    </div>
+                    <div class="col-12 col-lg-4">
+                        <div class="form-group question-options-actions text-center d-flex flex-wrap">
+                            <button
+                                class="btn btn-outline-secondary"
+                                [hidden]="isAnswerInvalid(answer)"
+                                (click)="setAnswerInvalid(answer)"
+                                jhiTranslate="artemisApp.quizExercise.re-evaluate.setAnswerInvalid"
+                            ></button>
+                            <button
+                                class="btn btn-outline-secondary"
+                                [hidden]="!isAnswerInvalid(answer)"
+                                [disabled]="isAnswerInvalid(answer)"
+                                jhiTranslate="artemisApp.quizExercise.re-evaluate.answerIsInvalid"
+                            ></button>
+                            <button
+                                class="btn btn-outline-secondary"
+                                type="button"
+                                (click)="resetAnswer(answer)"
+                                [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetAnswer' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faUndo"></fa-icon>
+                            </button>
+                            <button
+                                class="btn btn-outline-secondary"
+                                type="button"
+                                (click)="deleteAnswer(answer)"
+                                [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.deleteAnswer' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faTrash"></fa-icon>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

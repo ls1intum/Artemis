@@ -22,8 +22,9 @@
                 label="artemisApp.exercise.startDate"
                 tooltipText="artemisApp.programmingExercise.timeline.startDateTooltip"
             ></jhi-programming-exercise-test-schedule-date-picker>
+
             <div class="test-schedule-date px-1">
-                <div class="mb-2 text-nowrap">
+                <div class="test-schedule-date-title test-schedule-date-title-small-button">
                     <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests"> Automatic Tests </span>
                     <jhi-help-icon text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip"></jhi-help-icon>
                 </div>
@@ -45,20 +46,21 @@
                 tooltipText="artemisApp.programmingExercise.timeline.dueDateTooltip"
             >
             </jhi-programming-exercise-test-schedule-date-picker>
+            <jhi-programming-exercise-test-schedule-date-picker
+                *ngIf="isExamMode || exercise.dueDate"
+                class="test-schedule-date px-1"
+                [(ngModel)]="exercise.buildAndTestStudentSubmissionsAfterDueDate"
+                [startAt]="exercise.dueDate"
+                [min]="exercise.dueDate"
+                [readOnly]="readOnly"
+                label="artemisApp.programmingExercise.timeline.afterDueDate"
+                tooltipText="artemisApp.programmingExercise.timeline.afterDueDateTooltip"
+            >
+            </jhi-programming-exercise-test-schedule-date-picker>
 
             <div *ngIf="isExamMode || exercise.dueDate">
-                <jhi-programming-exercise-test-schedule-date-picker
-                    class="test-schedule-date px-1"
-                    [(ngModel)]="exercise.buildAndTestStudentSubmissionsAfterDueDate"
-                    [startAt]="exercise.dueDate"
-                    [min]="exercise.dueDate"
-                    [readOnly]="readOnly"
-                    label="artemisApp.programmingExercise.timeline.afterDueDate"
-                    tooltipText="artemisApp.programmingExercise.timeline.afterDueDateTooltip"
-                >
-                </jhi-programming-exercise-test-schedule-date-picker>
                 <div class="test-schedule-date px-1">
-                    <div class="mb-2 text-nowrap">
+                    <div class="test-schedule-date-title test-schedule-date-title-small-button">
                         <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.assessmentType"> Assessment Type </span>
                         <jhi-help-icon
                             [text]="
@@ -83,32 +85,6 @@
                     </div>
                 </div>
 
-                <div *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode" class="test-schedule-date px-1">
-                    <div class="mb-2 text-nowrap">
-                        <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.allowFeedbackRequests">requests</span>
-                        <jhi-help-icon
-                            [text]="
-                                'artemisApp.programmingExercise.timeline.' +
-                                (exercise.allowManualFeedbackRequests ? 'feedbackRequestsEnabledTooltip' : 'feedbackRequestsDisabledTooltip')
-                            "
-                        >
-                        </jhi-help-icon>
-                    </div>
-                    <div
-                        class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle calendar-event-toggle"
-                        [class.btn-lifecycle--disabled]="readOnly"
-                        (click)="!readOnly && toggleManualFeedbackRequests()"
-                    >
-                        <fa-icon [icon]="exercise.allowManualFeedbackRequests ? faHandshake : faHandshakeSlash" size="lg"></fa-icon>
-                    </div>
-                    <div class="mt-2">
-                        {{
-                            'artemisApp.programmingExercise.timeline.' + (exercise.allowManualFeedbackRequests ? 'feedbackRequestsEnabled' : 'feedbackRequestsDisabled')
-                                | artemisTranslate
-                        }}
-                    </div>
-                </div>
-
                 <jhi-programming-exercise-test-schedule-date-picker
                     *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode && !exercise.allowManualFeedbackRequests"
                     class="test-schedule-date"
@@ -119,44 +95,78 @@
                     label="artemisApp.programmingExercise.timeline.assessmentDueDate"
                     tooltipText="artemisApp.programmingExercise.timeline.assessmentDueDateTooltip"
                 ></jhi-programming-exercise-test-schedule-date-picker>
-                <div *ngIf="exercise.assessmentType === assessmentType.AUTOMATIC && (isExamMode || exercise.course?.complaintsEnabled)" class="test-schedule-date px-1">
-                    <div class="mb-2 text-nowrap">
-                        <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"> Complaints </span>
-                        <jhi-help-icon
-                            [text]="
-                                'artemisApp.programmingExercise.timeline.' +
-                                (exercise.allowComplaintsForAutomaticAssessments ? 'allowComplaintOnAutomaticAssessmentTooltip' : 'disallowComplaintOnAutomaticAssessmentTooltip')
-                            "
-                        >
-                        </jhi-help-icon>
-                    </div>
-                    <div
-                        class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle calendar-event-toggle"
-                        [class.btn-lifecycle--disabled]="readOnly"
-                        (click)="!readOnly && toggleComplaintsType()"
-                    >
-                        <fa-icon [icon]="exercise.allowComplaintsForAutomaticAssessments ? faUserCheck : faUserSlash" size="lg"></fa-icon>
-                    </div>
-                    <div class="mt-2">
-                        {{
-                            'artemisApp.programmingExercise.timeline.' +
-                                (exercise.allowComplaintsForAutomaticAssessments ? 'complaintOnAutomaticAssessmentEnabled' : 'complaintOnAutomaticAssessmentDisabled')
-                                | artemisTranslate
-                        }}
-                    </div>
-                </div>
             </div>
-            <jhi-programming-exercise-test-schedule-date-picker
-                *ngIf="!isExamMode"
-                [(ngModel)]="exercise.exampleSolutionPublicationDate"
-                [readOnly]="readOnly"
-                [startAt]="exercise.dueDate ?? exercise.startDate ?? exercise.releaseDate"
-                [min]="(exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED ? exercise.dueDate : undefined) ?? exercise.startDate ?? exercise.releaseDate"
-                class="test-schedule-date px-1"
-                label="artemisApp.exercise.exampleSolutionPublicationDate"
-                tooltipText="artemisApp.programmingExercise.timeline.exampleSolutionPublicationDateTooltip"
-            >
-            </jhi-programming-exercise-test-schedule-date-picker>
+
+            <div *ngIf="!isExamMode">
+                <jhi-programming-exercise-test-schedule-date-picker
+                    [(ngModel)]="exercise.exampleSolutionPublicationDate"
+                    [readOnly]="readOnly"
+                    [startAt]="exercise.dueDate ?? exercise.startDate ?? exercise.releaseDate"
+                    [min]="(exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED ? exercise.dueDate : undefined) ?? exercise.startDate ?? exercise.releaseDate"
+                    class="test-schedule-date px-1"
+                    label="artemisApp.exercise.exampleSolutionPublicationDate"
+                    tooltipText="artemisApp.programmingExercise.timeline.exampleSolutionPublicationDateTooltip"
+                >
+                </jhi-programming-exercise-test-schedule-date-picker>
+            </div>
         </div>
+    </div>
+
+    <h6 jhiTranslate="artemisApp.assessment.assessment"></h6>
+    <div *ngIf="isExamMode || exercise.course?.complaintsEnabled" class="form-check">
+        <input
+            type="checkbox"
+            class="form-check-input"
+            name="allowComplaintsForAutomaticAssessment"
+            [checked]="exercise.allowComplaintsForAutomaticAssessments"
+            [disabled]="exercise.assessmentType !== assessmentType.AUTOMATIC || (!isExamMode && !exercise.dueDate) || readOnly"
+            id="allowComplaintsForAutomaticAssessment"
+            (change)="toggleComplaintsType()"
+        />
+        <label
+            [ngStyle]="exercise.assessmentType !== assessmentType.AUTOMATIC || (!isExamMode && !exercise.dueDate) ? { color: 'grey' } : {}"
+            class="form-control-label"
+            for="allowComplaintsForAutomaticAssessment"
+            jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"
+        ></label>
+        <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessmentTooltip'"></jhi-help-icon>
+    </div>
+    <div *ngIf="!isExamMode" class="form-check">
+        <input
+            type="checkbox"
+            class="form-check-input"
+            name="allowManualFeedbackRequests"
+            [checked]="exercise.allowManualFeedbackRequests"
+            [disabled]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC || readOnly"
+            id="allowManualFeedbackRequests"
+            (change)="toggleManualFeedbackRequests()"
+        />
+        <label
+            [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
+            class="form-control-label"
+            for="allowManualFeedbackRequests"
+            jhiTranslate="artemisApp.programmingExercise.timeline.manualFeedbackRequests"
+        ></label>
+        <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.manualFeedbackRequestsTooltip'"></jhi-help-icon>
+    </div>
+
+    <h6 class="mt-3" jhiTranslate="artemisApp.exercise.exampleSolution"></h6>
+    <div class="form-check">
+        <input
+            type="checkbox"
+            class="form-check-input"
+            name="releaseTestsWithExampleSolution"
+            [checked]="exercise.releaseTestsWithExampleSolution"
+            [disabled]="!exercise.exampleSolutionPublicationDate || readOnly"
+            id="releaseTestsWithExampleSolution"
+            (change)="toggleReleaseTests()"
+        />
+        <label
+            [ngStyle]="!exercise.exampleSolutionPublicationDate ? { color: 'grey' } : {}"
+            class="form-control-label"
+            for="releaseTestsWithExampleSolution"
+            jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution"
+        ></label>
+        <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolutionTooltip'"></jhi-help-icon>
     </div>
 </div>

@@ -29,6 +29,7 @@ public class QuizSubmission extends Submission {
     @JsonView(QuizView.After.class)
     private Double scoreInPoints;
 
+    // The use of id here is on purpose because @ManyToOne relation cannot be lazily fetched and typically, QuizBatch is not needed when loading QuizSubmission
     @Column(name = "quiz_batch")
     private Long quizBatch;
 
@@ -84,8 +85,9 @@ public class QuizSubmission extends Submission {
      * Filters the sensitive quiz submission information for exams, if the results are not published or the user is not an instructor
      * It sets the {@link QuizSubmission#setScoreInPoints(Double)} & {@link SubmittedAnswer#setScoreInPoints(Double)} to null for every submitted answer.
      * Additionally it calls {@link SubmittedAnswer#filterOutCorrectAnswers()} dynamically for the correct question type.
+     *
      * @param examResultsPublished flag indicating if the results are published, see {@link Exam#resultsPublished()}
-     * @param isAtLeastInstructor flag indicating if the user has instructor privileges
+     * @param isAtLeastInstructor  flag indicating if the user has instructor privileges
      */
     public void filterForExam(boolean examResultsPublished, boolean isAtLeastInstructor) {
         if (!(examResultsPublished || isAtLeastInstructor)) {
@@ -140,6 +142,6 @@ public class QuizSubmission extends Submission {
 
     @Override
     public String toString() {
-        return "QuizSubmission{" + "id=" + getId() + ", scoreInPoints='" + getScoreInPoints() + ", submittedAnswers='" + getSubmittedAnswers() + "'" + "}";
+        return "QuizSubmission{" + "id=" + getId() + ", scoreInPoints='" + getScoreInPoints() + "'" + "}";
     }
 }

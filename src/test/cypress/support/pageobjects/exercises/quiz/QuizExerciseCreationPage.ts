@@ -5,10 +5,11 @@ export class QuizExerciseCreationPage {
         cy.get('#quiz-title').type(title);
     }
 
-    addMultipleChoiceQuestion(title: string) {
+    addMultipleChoiceQuestion(title: string, points = 1) {
         cy.get('#quiz-add-mc-question').click();
         cy.get('#mc-question-title').type(title);
-        cy.fixture('quiz_exercise_fixtures/MultipleChoiceQuiz.txt').then((fileContent) => {
+        cy.get('#score').clear().type(points.toString());
+        cy.fixture('exercise/quiz/multiple_choice/question.txt').then((fileContent) => {
             cy.get('.ace_text-input').focus().clear().type(fileContent);
         });
     }
@@ -16,7 +17,7 @@ export class QuizExerciseCreationPage {
     addShortAnswerQuestion(title: string) {
         cy.get('#quiz-add-short-answer-question').click();
         cy.get('#short-answer-question-title').type(title);
-        cy.fixture('quiz_exercise_fixtures/ShortAnswerQuiz.txt').then((fileContent) => {
+        cy.fixture('exercise/quiz/short_answer/question.txt').then((fileContent) => {
             cy.get('.ace_text-input').focus().clear().type(fileContent);
             cy.get('#short-answer-show-visual').click();
         });
@@ -31,7 +32,7 @@ export class QuizExerciseCreationPage {
         });
         this.createDragAndDropItem('Rick Astley');
         cy.get('#drag-item-0').drag('#drop-location');
-        cy.fixture('quiz_exercise_fixtures/dragAndDropQuiz.txt').then((fileContent) => {
+        cy.fixture('exercise/quiz/drag_and_drop/question.txt').then((fileContent) => {
             cy.get('.ace_text-input').focus().clear().type(fileContent);
         });
     }
@@ -42,7 +43,7 @@ export class QuizExerciseCreationPage {
     }
 
     uploadDragAndDropBackground() {
-        cy.get('#background-image-input-form').children().eq(0).attachFile('quiz_exercise_fixtures/dragAndDrop_background.jpg');
+        cy.get('#background-image-input-form').children().eq(0).attachFile('exercise/quiz/drag_and_drop/background.jpg');
         cy.intercept(POST, BASE_API + 'fileUpload*').as('uploadBackground');
         cy.get('#background-image-input-form').children().eq(1).click();
         return cy.wait('@uploadBackground');

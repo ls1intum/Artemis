@@ -16,10 +16,10 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('TextblockAssessmentCardComponent', () => {
     let component: TextblockAssessmentCardComponent;
@@ -27,13 +27,12 @@ describe('TextblockAssessmentCardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
             declarations: [
                 TextblockAssessmentCardComponent,
                 TextblockFeedbackEditorComponent,
                 TranslatePipeMock,
                 MockDirective(TranslateDirective),
-                MockDirective(NgbTooltip),
                 MockDirective(NgModel),
                 MockComponent(ConfirmIconComponent),
                 MockComponent(GradingInstructionLinkIconComponent),

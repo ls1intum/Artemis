@@ -6,13 +6,17 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
+import { Course } from 'app/entities/course.model';
 
 @Component({ selector: 'jhi-course-tutorial-group-card', template: '' })
-class MockCourseTutorialGroupCard {
+class MockCourseTutorialGroupCardComponent {
     @Input()
-    courseId: number;
+    course: Course;
     @Input()
     tutorialGroup: TutorialGroup;
+
+    @Input()
+    showChannelLink = false;
 }
 
 describe('CourseTutorialGroupsRegisteredComponent', () => {
@@ -21,12 +25,12 @@ describe('CourseTutorialGroupsRegisteredComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [CourseTutorialGroupsRegisteredComponent, MockCourseTutorialGroupCard, MockPipe(ArtemisTranslatePipe)],
+            declarations: [CourseTutorialGroupsRegisteredComponent, MockCourseTutorialGroupCardComponent, MockPipe(ArtemisTranslatePipe)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CourseTutorialGroupsRegisteredComponent);
         component = fixture.componentInstance;
-        component.courseId = 1;
+        component.course = { id: 1, postsEnabled: true } as Course;
         component.registeredTutorialGroups = [generateExampleTutorialGroup({})];
         fixture.detectChanges();
     });

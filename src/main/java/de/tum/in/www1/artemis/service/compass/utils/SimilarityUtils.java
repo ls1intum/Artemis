@@ -13,7 +13,6 @@ public class SimilarityUtils {
      *
      * @param parent1 the first parent element
      * @param parent2 the second parent element
-     *
      * @return whether the elements equal or similar depending on their similarity id
      */
     public static boolean parentsSimilarOrEqual(UMLElement parent1, UMLElement parent2) {

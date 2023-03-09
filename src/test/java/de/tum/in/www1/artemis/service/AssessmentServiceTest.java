@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -31,6 +30,8 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "assessmentservice";
 
     @Autowired
     private ExerciseRepository exerciseRepository;
@@ -55,14 +56,9 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     private Course course1 = new Course();
 
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
-
     @BeforeEach
     void init() {
-        database.addUsers(2, 2, 0, 1);
+        database.addUsers(TEST_PREFIX, 2, 2, 0, 1);
         course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course1.setRegistrationEnabled(true);
         courseRepository.save(course1);
@@ -145,12 +141,12 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFileUploadSubmissionAndCalculateScore() {
         FileUploadExercise exercise = createFileuploadExerciseWithSGI(course1);
         Submission submissionWithoutResult = new FileUploadSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
+        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
         database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
@@ -167,12 +163,12 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createTextExerciseSubmissionAndCalculateScore() {
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
+        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
         database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
@@ -189,12 +185,12 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExerciseSubmissionAndCalculateScore() {
         ModelingExercise exercise = createModelingExerciseWithSGI(course1);
         Submission submissionWithoutResult = new ModelingSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
+        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
         database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
@@ -212,13 +208,13 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRatedAfterSubmitResultWithDueDateEqualsSubmissionDateOfResult(boolean isDueDateIndividual) {
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
         // comparison of dates including nanos would make this test flaky
         submissionWithoutResult.setSubmissionDate(futureTimestamp.truncatedTo(ChronoUnit.MILLIS));
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
+        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
         database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
@@ -250,12 +246,12 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNotRatedAfterSubmitResultWithDueDateBeforeSubmissionDateOfResult() {
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
         submissionWithoutResult.setSubmissionDate(futureFutureTimestamp);
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
+        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
         database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
@@ -272,12 +268,12 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRatedAfterSubmitResultWithDueDateBeforeSubmissionDateOfResult() {
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp);
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
+        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
         database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
@@ -294,7 +290,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testIsAllowedToCreateOrOverrideResult_withExamDueDateNotPassed() {
         ZonedDateTime visibleDate = ZonedDateTime.now().minusHours(2);
         ZonedDateTime startDate = ZonedDateTime.now().minusHours(1);
@@ -309,7 +305,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testIsAllowedToCreateOrOverrideResult_withExamPublishResultDatePassed() {
         ZonedDateTime visibleDate = ZonedDateTime.now().minusHours(3);
         ZonedDateTime startDate = ZonedDateTime.now().minusHours(2);

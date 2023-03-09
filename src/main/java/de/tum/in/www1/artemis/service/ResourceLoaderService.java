@@ -35,11 +35,31 @@ public class ResourceLoaderService {
     }
 
     /**
+     * Loads the resource from the specified path.
+     * <p>
+     * Only relative paths are allowed.
+     *
+     * @param path A relative path to a resource.
+     * @return The resource located by the specified path.
+     * @throws IllegalArgumentException Thrown in case an absolute path was given.
+     */
+    public Resource getResource(final Path path) throws IllegalArgumentException {
+        if (path.isAbsolute()) {
+            throw new IllegalArgumentException("Cannot load resources from absolute paths!");
+        }
+
+        return getResource(path.toString());
+    }
+
+    /**
      * Load the resource from the specified path. The path MUST NOT start with a '/', it is appended automatically if needed.
      * File will be loaded from the relative path, if it exists, from the classpath otherwise.
+     *
      * @param path the path to load the file from. Must not start with a '/'.
      * @return the loaded resource, which might not exist ({@link Resource#exists()}.
+     * @deprecated Use {@link #getResource(Path)} instead.
      */
+    @Deprecated(forRemoval = true)
     public Resource getResource(String path) {
         Resource resource = null;
         // Try to load from filesystem if override is allowed for path
@@ -57,19 +77,42 @@ public class ResourceLoaderService {
     /**
      * Load the resource from the specified path.
      * File will be loaded from the relative path, if it exists, from the classpath otherwise.
+     *
      * @param pathSegments the segments of the path (e.g. ["templates", "java", "pom.xml"]). Will automatically be joined with '/'.
      * @return the loaded resource, which might not exist ({@link Resource#exists()}.
+     * @deprecated Use {@link #getResource(Path)} instead.
      */
+    @Deprecated(forRemoval = true)
     public Resource getResource(String... pathSegments) {
         return getResource(StringUtils.join(pathSegments, File.separator));
     }
 
     /**
+     * Loads the resources from the specified path.
+     * <p>
+     * Only relative paths are allowed.
+     *
+     * @param path A relative path to a resource.
+     * @return The resources located by the specified path.
+     * @throws IllegalArgumentException Thrown in case an absolute path was given.
+     */
+    public Resource[] getResources(final Path path) throws IllegalArgumentException {
+        if (path.isAbsolute()) {
+            throw new IllegalArgumentException("Cannot load resources from absolute paths!");
+        }
+
+        return getResources(path.toString());
+    }
+
+    /**
      * Load the resources from the specified path. The path MUST NOT start with a '/', it is appended automatically if needed.
      * Files will be loaded from the relative path, it is non-empty (at least one resource), from the classpath otherwise.
+     *
      * @param path the path to load the file from. Must not start with a '/'.
      * @return the loaded resources, which might be an empty array
+     * @deprecated Use {@link #getResources(Path)} instead.
      */
+    @Deprecated(forRemoval = true)
     public Resource[] getResources(String path) {
         Resource[] resources = null;
         // Try to load from filesystem if override is allowed for path
@@ -96,9 +139,12 @@ public class ResourceLoaderService {
     /**
      * Load the resources from the specified path.
      * Files will be loaded from the relative path, it is non-empty (at least one resource), from the classpath otherwise.
+     *
      * @param pathSegments the segments of the path (e.g. ["templates", "java"]). Will automatically be joined with '/'.
      * @return the loaded resources, which might be an empty array
+     * @deprecated Use {@link #getResources(Path)} instead.
      */
+    @Deprecated(forRemoval = true)
     public Resource[] getResources(String... pathSegments) {
         return getResources(StringUtils.join(pathSegments, File.separator));
     }
@@ -107,6 +153,7 @@ public class ResourceLoaderService {
      * Return the file system path where templates are stored.
      * If no template path is defined, the current directory where Artemis was started from is used (e.g. the `templates` folder next to the 'Artemis.war' file).
      * If a template path is defined, it is used.
+     *
      * @return the template system path if defined (with a trailing '/') or "" if is not set
      */
     private String getTemplateFileSystemPath() {

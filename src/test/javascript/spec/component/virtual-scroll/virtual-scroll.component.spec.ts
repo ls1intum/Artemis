@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
+import { SimpleChange, SimpleChanges } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
 import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll.component';
 import { metisCoursePosts, metisCoursePostsWithCourseWideContext } from '../../helpers/sample/metis-sample-data';
@@ -17,13 +17,17 @@ class MockRouter {
 describe('VirtualScrollComponent', () => {
     let comp: VirtualScrollComponent<Post>;
     let fixture: ComponentFixture<VirtualScrollComponent<Post>>;
-    let debugElement: DebugElement;
 
+    let originalWindow: any;
+    let windowSpy: jest.SpyInstance;
+    let windowScrollToSpy: jest.SpyInstance;
     let prepareDataItemsSpy: jest.SpyInstance;
     let forceReloadChangeSpy: jest.SpyInstance;
     let onEndOfOriginalItemsReachedSpy: jest.SpyInstance;
 
-    const minPostItemHeight = 126.7;
+    const SCROLL_PADDING_TOP = 325;
+    const MIN_ITEM_HEIGHT = 126.7;
+    const END_OF_LIST_THRESHOLD = 2;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -35,11 +39,24 @@ describe('VirtualScrollComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(VirtualScrollComponent);
                 comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
+
+                windowSpy = jest.spyOn(global, 'window', 'get');
+                windowScrollToSpy = jest.spyOn(window, 'scrollTo');
                 prepareDataItemsSpy = jest.spyOn(comp, 'prepareDataItems');
                 forceReloadChangeSpy = jest.spyOn(comp.forceReloadChange, 'emit');
                 onEndOfOriginalItemsReachedSpy = jest.spyOn(comp.onEndOfOriginalItemsReached, 'emit');
+                jest.spyOn(comp, 'numberItemsCanRender').mockReturnValue(2);
+
+                // make a copy of type any to assign readonly variable scrollY and prevent circular dependency problem
+                originalWindow = window;
             });
+    });
+
+    afterEach(() => {
+        originalWindow.scrollY = 0;
+        windowSpy.mockReturnValue(originalWindow);
+
+        jest.restoreAllMocks();
     });
 
     it('should initialize correctly', fakeAsync(() => {
@@ -47,8 +64,8 @@ describe('VirtualScrollComponent', () => {
 
         expect(comp.prevOriginalItems).toBeEmpty();
         expect(comp.minItemHeight).not.toBeNull();
-        expect(comp.focusInUnlistener).not.toBeNull();
-        expect(comp.scrollUnlistener).not.toBeNull();
+        expect(comp.focusInUnListener).not.toBeNull();
+        expect(comp.scrollUnListener).not.toBeNull();
     }));
 
     it('should set originalItems to empty array if undefined value is passed into the component', fakeAsync(() => {
@@ -120,40 +137,47 @@ describe('VirtualScrollComponent', () => {
         changes.originalItems = new SimpleChange([], metisCoursePostsWithCourseWideContext, true);
         comp.ngOnChanges(changes);
 
+        originalWindow.scrollY = 1500;
+        windowSpy.mockReturnValue(originalWindow);
+        global.window.dispatchEvent(new Event('scroll'));
+
         tick();
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.scrollTop).toBe(0);
+        // simulate unintended scrolling that occurs on focus
+        originalWindow.scrollY = 1000;
+        windowSpy.mockReturnValue(originalWindow);
+        global.window.dispatchEvent(new Event('focusin'));
 
-        comp.currentScroll = comp.minItemHeight * 2;
-        debugElement.nativeElement.dispatchEvent(new Event('focusin'));
-
-        expect(fixture.nativeElement.scrollTop).toBe(comp.currentScroll);
+        expect(windowScrollToSpy).toHaveBeenCalledOnce();
+        expect(windowScrollToSpy).toHaveBeenCalledWith(0, comp.windowScrollTop);
     }));
 
     it('should perform virtual scroll on scroll event and update the DOM tree', fakeAsync(() => {
         prepareComponent();
 
-        expect(fixture.nativeElement.scrollTop).toBe(0);
+        expect(window.scrollY).toBe(0);
         expect(comp.domTreeItems[0].id).toBe(1);
         expect(comp.domTreeItems[1].id).toBe(2);
         expect(comp.domTreeItems[2].id).toBe(3);
 
-        fixture.nativeElement.scrollTop = comp.minItemHeight * 2;
-        debugElement.nativeElement.dispatchEvent(new Event('scroll'));
+        originalWindow.scrollY = comp.minItemHeight * 7;
+        windowSpy.mockReturnValue(originalWindow);
+        global.window.dispatchEvent(new Event('scroll'));
 
         tick();
         fixture.detectChanges();
 
-        expect(comp.currentScroll).toBe(comp.minItemHeight * 2);
+        expect(comp.windowScrollTop).toBe(comp.minItemHeight * 7);
         expect(prepareDataItemsSpy).toHaveBeenCalledTimes(2);
         expect(onEndOfOriginalItemsReachedSpy).toHaveBeenCalledTimes(0);
-        expect(comp.domTreeItems[0].id).toBe(3);
-        expect(comp.domTreeItems[1].id).toBe(5);
-        expect(comp.domTreeItems[2].id).toBe(6);
+        expect(comp.domTreeItems[0].id).toBe(2);
+        expect(comp.domTreeItems[1].id).toBe(3);
+        expect(comp.domTreeItems[2].id).toBe(5);
 
-        fixture.nativeElement.scrollTop = comp.minItemHeight * 4;
-        debugElement.nativeElement.dispatchEvent(new Event('scroll'));
+        originalWindow.scrollY = comp.minItemHeight * 10;
+        windowSpy.mockReturnValue(originalWindow);
+        global.window.dispatchEvent(new Event('scroll'));
 
         tick();
         fixture.detectChanges();
@@ -162,8 +186,9 @@ describe('VirtualScrollComponent', () => {
     }));
 
     function prepareComponent() {
-        comp.minItemHeight = minPostItemHeight;
-        comp.endOfListReachedItemThreshold = 2;
+        comp.scrollPaddingTop = SCROLL_PADDING_TOP;
+        comp.minItemHeight = MIN_ITEM_HEIGHT;
+        comp.endOfListReachedItemThreshold = END_OF_LIST_THRESHOLD;
         comp.originalItems = metisCoursePosts;
 
         const changes = {} as SimpleChanges;
