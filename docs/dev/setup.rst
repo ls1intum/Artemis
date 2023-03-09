@@ -59,7 +59,9 @@ MySQL Setup
 The required Artemis schema will be created / updated automatically at startup time of the
 server application.
 
-As an alternative to a native MySQL setup, you can run the MySQL Database Server inside a Docker container
+You have to run a database on your local machine to be able to start Artemis.  
+
+We recommend to start the database in a docker container. You can run the MySQL Database Server 
 using e.g. ``docker compose -f src/main/docker/mysql.yml up``.
 
 If you run your own MySQL server, make sure to specify the default ``character-set``
@@ -338,7 +340,7 @@ Debugging with Docker
 """""""""""""""""""""
 
 | The Docker containers have the possibility to enable Java Remote Debugging via environment variables.
-| Via Java Remote Debugging you can use your preferred debugger on port 5005.
+| Java Remote Debugging allows you to use your preferred debugger connected to port 5005.
   For IntelliJ you can use the `Remote Java Debugging for Docker` being shipped in the git repository.
 
 With the following environment variables you can configure the Remote Java Debugging inside the docker container:
