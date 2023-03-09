@@ -26,7 +26,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
-import { faBan, faExclamationCircle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
@@ -43,6 +43,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
+    toggleMode = () => this.toggleWizardMode();
+    getInvalidReasonsForWizard = () => this.getInvalidReasons(this.currentWizardModeStep);
+    programmingLanguageChanged = (language: ProgrammingLanguage) => this.onProgrammingLanguageChange(language);
+    withDependenciesChanged = (withDependencies: boolean) => this.onWithDependenciesChanged(withDependencies);
+    categoriesChanged = (categories: ExerciseCategory[]) => this.updateCategories(categories);
+    projectTypeChanged = (projectType: ProjectType) => this.onProjectTypeChange(projectType);
+    staticCodeAnalysisChanged = () => this.onStaticCodeAnalysisChanged();
+    currentWizardModeStep = 1;
+
     auxiliaryRepositoryDuplicateNames: boolean;
     auxiliaryRepositoryDuplicateDirectories: boolean;
     auxiliaryRepositoryNamedCorrectly: boolean;
@@ -50,6 +59,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     isImport: boolean;
     isEdit: boolean;
     isExamMode: boolean;
+    isShowingWizardMode = false;
     hasUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     backupExercise: ProgrammingExercise;
@@ -93,16 +103,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     public inProductionEnvironment: boolean;
 
-    public supportsJava = true;
-    public supportsPython = false;
-    public supportsC = false;
-    public supportsHaskell = false;
-    public supportsKotlin = false;
-    public supportsVHDL = false;
-    public supportsAssembler = false;
-    public supportsSwift = false;
-    public supportsOCaml = false;
-    public supportsEmpty = false;
+    public supportedLanguages = ['java'];
 
     public packageNameRequired = true;
     public staticCodeAnalysisAllowed = false;
@@ -126,6 +127,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     // Icons
     faSave = faSave;
     faBan = faBan;
+    faHandShakeAngle = faHandshakeAngle;
     faQuestionCircle = faQuestionCircle;
     faExclamationCircle = faExclamationCircle;
 
@@ -144,6 +146,25 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
+
+    /**
+     * Activate or deactivate the wizard mode for easier exercise creation.
+     * This function is called by pressing "Switch to guided mode" when creating a new exercise
+     */
+    toggleWizardMode() {
+        this.isShowingWizardMode = !this.isShowingWizardMode;
+    }
+
+    /**
+     * Progress to the next step of the wizard mode
+     */
+    nextWizardStep() {
+        this.currentWizardModeStep++;
+
+        if (this.currentWizardModeStep > 5) {
+            this.save();
+        }
+    }
 
     /**
      * Updates the name of the editedAuxiliaryRepository.
@@ -410,16 +431,38 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
         });
 
-        this.supportsJava = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.JAVA);
-        this.supportsPython = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.PYTHON);
-        this.supportsC = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.C);
-        this.supportsHaskell = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.HASKELL);
-        this.supportsKotlin = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.KOTLIN);
-        this.supportsVHDL = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.VHDL);
-        this.supportsAssembler = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.ASSEMBLER);
-        this.supportsSwift = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.SWIFT);
-        this.supportsOCaml = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.OCAML);
-        this.supportsEmpty = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.EMPTY);
+        this.supportedLanguages = [];
+
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.JAVA)) {
+            this.supportedLanguages.push(ProgrammingLanguage.JAVA);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.PYTHON)) {
+            this.supportedLanguages.push(ProgrammingLanguage.PYTHON);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.C)) {
+            this.supportedLanguages.push(ProgrammingLanguage.C);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.HASKELL)) {
+            this.supportedLanguages.push(ProgrammingLanguage.HASKELL);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.KOTLIN)) {
+            this.supportedLanguages.push(ProgrammingLanguage.KOTLIN);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.VHDL)) {
+            this.supportedLanguages.push(ProgrammingLanguage.VHDL);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.ASSEMBLER)) {
+            this.supportedLanguages.push(ProgrammingLanguage.ASSEMBLER);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.SWIFT)) {
+            this.supportedLanguages.push(ProgrammingLanguage.SWIFT);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.OCAML)) {
+            this.supportedLanguages.push(ProgrammingLanguage.OCAML);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.EMPTY)) {
+            this.supportedLanguages.push(ProgrammingLanguage.EMPTY);
+        }
     }
 
     /**
@@ -475,6 +518,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     updateCategories(categories: ExerciseCategory[]) {
         this.programmingExercise.categories = categories;
+        this.exerciseCategories = categories;
     }
 
     save() {
@@ -625,6 +669,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return projectType;
     }
 
+    onWithDependenciesChanged(withDependencies: boolean) {
+        this.withDependenciesValue = withDependencies;
+
+        return withDependencies;
+    }
+
     onStaticCodeAnalysisChanged() {
         // On import: If SCA mode changed, activate recreation of build plans and update of the template
         if (this.isImport && this.programmingExercise.staticCodeAnalysisEnabled !== this.originalStaticCodeAnalysisEnabled) {
@@ -686,19 +736,32 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     /**
      * Get a list of all reasons that describe why the current input to update is invalid
+     *
+     * @param forStep Limit the respected invalid reasons to the current wizard mode step. By default, e.g. when not using the wizard, all reasons are respected.
      */
-    getInvalidReasons(): ValidationReason[] {
+    getInvalidReasons(forStep = Number.MAX_VALUE): ValidationReason[] {
         const validationErrorReasons: ValidationReason[] = [];
 
-        this.validateExerciseTitle(validationErrorReasons);
-        this.validateExerciseShortName(validationErrorReasons);
-        this.validateExercisePoints(validationErrorReasons);
-        this.validateExerciseBonusPoints(validationErrorReasons);
-        this.validateExerciseSCAMaxPenalty(validationErrorReasons);
-        this.validateExercisePackageName(validationErrorReasons);
-        this.validateExerciseSubmissionLimit(validationErrorReasons);
-        this.validateExerciseAuxiliryRepositories(validationErrorReasons);
-        this.validateExerciseIdeSelection(validationErrorReasons);
+        if (forStep >= 1) {
+            this.validateExerciseTitle(validationErrorReasons);
+            this.validateExerciseShortName(validationErrorReasons);
+            this.validateExerciseAuxiliryRepositories(validationErrorReasons);
+        }
+
+        if (forStep >= 3) {
+            this.validateExercisePackageName(validationErrorReasons);
+        }
+
+        if (forStep >= 4) {
+            this.validateExercisePoints(validationErrorReasons);
+            this.validateExerciseBonusPoints(validationErrorReasons);
+            this.validateExerciseSCAMaxPenalty(validationErrorReasons);
+            this.validateExerciseSubmissionLimit(validationErrorReasons);
+        }
+
+        if (forStep >= 5) {
+            this.validateExerciseIdeSelection(validationErrorReasons);
+        }
 
         return validationErrorReasons;
     }
@@ -875,5 +938,64 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 translateValues: {},
             });
         }
+    }
+
+    getInfoStepInputs() {
+        return {
+            titleNamePattern: this.titleNamePattern,
+            shortNamePattern: this.shortNamePattern,
+            invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
+            invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
+            updateRepositoryName: this.updateRepositoryName,
+            updateCheckoutDirectory: this.updateCheckoutDirectory,
+            refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
+            auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
+            auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
+            exerciseCategories: this.exerciseCategories,
+            existingCategories: this.existingCategories,
+            updateCategories: this.categoriesChanged,
+        };
+    }
+
+    getLanguageStepInputs() {
+        return {
+            appNamePatternForSwift: this.appNamePatternForSwift,
+            modePickerOptions: this.modePickerOptions,
+            withDependencies: this.withDependencies,
+            onWithDependenciesChanged: this.withDependenciesChanged,
+            packageNameRequired: this.packageNameRequired,
+            packageNamePattern: this.packageNamePattern,
+            supportedLanguages: this.supportedLanguages,
+            selectedProgrammingLanguage: this.selectedProgrammingLanguage,
+            onProgrammingLanguageChange: this.programmingLanguageChanged,
+            projectTypes: this.projectTypes,
+            selectedProjectType: this.selectedProjectType,
+            onProjectTypeChange: this.projectTypeChanged,
+        };
+    }
+
+    getGradingStepInputs() {
+        return {
+            staticCodeAnalysisAllowed: this.staticCodeAnalysisAllowed,
+            onStaticCodeAnalysisChanged: this.staticCodeAnalysisChanged,
+            maxPenaltyPattern: this.maxPenaltyPattern,
+        };
+    }
+
+    getProblemStepInputs() {
+        return {
+            problemStatementLoaded: this.problemStatementLoaded,
+            templateParticipationResultLoaded: this.templateParticipationResultLoaded,
+            hasUnsavedChanges: this.hasUnsavedChanges,
+            rerenderSubject: this.rerenderSubject.asObservable(),
+            sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
+            checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
+            validIdeSelection: this.validIdeSelection,
+            inProductionEnvironment: this.inProductionEnvironment,
+            recreateBuildPlans: this.recreateBuildPlans,
+            onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
+            updateTemplate: this.updateTemplate,
+            selectedProjectType: this.selectedProjectType,
+        };
     }
 }

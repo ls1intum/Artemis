@@ -97,7 +97,7 @@
                     <label for="percent" class="input-group-text">%</label>
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary me-2" [disabled]="!form.valid || isFormDisabled()">
+            <button id="save" type="submit" class="btn btn-primary me-2" [disabled]="!form.valid || isFormDisabled()">
                 <fa-icon [icon]="faSave"></fa-icon>
                 <span jhiTranslate="entity.action.save">Save</span>
             </button>

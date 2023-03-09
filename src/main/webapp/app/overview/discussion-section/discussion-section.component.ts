@@ -247,6 +247,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * helper method which returns the order which posts must be listed
      * @param postA     first post to compare
      * @param postB     second post to compare
+     * @param sortDirection ascending or descending
      * @return number   the order which posts must be listed
      */
     sortByDate = (postA: Post, postB: Post, sortDirection: SortDirection): number => {
