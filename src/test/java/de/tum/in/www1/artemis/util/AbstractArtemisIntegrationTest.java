@@ -24,9 +24,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.Lti10Service;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
-import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
-import de.tum.in.www1.artemis.service.notifications.TutorialGroupNotificationService;
+import de.tum.in.www1.artemis.service.notifications.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
@@ -64,6 +62,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @SpyBean
     protected TutorialGroupNotificationService tutorialGroupNotificationService;
+
+    @SpyBean
+    protected ConversationNotificationService conversationNotificationService;
 
     @SpyBean
     protected SingleUserNotificationService singleUserNotificationService;
@@ -145,9 +146,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     }
 
     protected void resetSpyBeans() {
-        Mockito.reset(lti10Service, gitService, groupNotificationService, tutorialGroupNotificationService, singleUserNotificationService, websocketMessagingService,
-                messagingTemplate, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
-                urlService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService,
+        Mockito.reset(lti10Service, gitService, groupNotificationService, conversationNotificationService, tutorialGroupNotificationService, singleUserNotificationService,
+                websocketMessagingService, messagingTemplate, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService,
+                programmingExerciseParticipationService, urlService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService,
                 programmingExerciseStudentParticipationRepository, exerciseRepository);
     }
 

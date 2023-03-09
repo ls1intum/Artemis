@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.notification;
 
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,7 +21,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
@@ -77,6 +83,12 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     private TutorialGroup tutorialGroup;
 
+    private OneToOneChat oneToOneChat;
+
+    private GroupChat groupChat;
+
+    private Channel channel;
+
     /**
      * Sets up all needed mocks and their wanted behavior
      */
@@ -129,6 +141,31 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         tutorialGroup = new TutorialGroup();
         tutorialGroup.setCourse(course);
         tutorialGroup.setTeachingAssistant(userTwo);
+
+        oneToOneChat = new OneToOneChat();
+        oneToOneChat.setCourse(course);
+        oneToOneChat.setCreator(userTwo);
+        oneToOneChat.setCreationDate(ZonedDateTime.now());
+        ConversationParticipant conversationParticipant1 = new ConversationParticipant();
+        conversationParticipant1.setUser(user);
+        ConversationParticipant conversationParticipant2 = new ConversationParticipant();
+        conversationParticipant2.setUser(userTwo);
+        oneToOneChat.setConversationParticipants(Set.of(conversationParticipant1, conversationParticipant2));
+
+        groupChat = new GroupChat();
+        groupChat.setCourse(course);
+        groupChat.setCreator(userTwo);
+        groupChat.setCreationDate(ZonedDateTime.now());
+        ConversationParticipant conversationParticipant3 = new ConversationParticipant();
+        conversationParticipant1.setUser(userThree);
+        groupChat.setConversationParticipants(Set.of(conversationParticipant1, conversationParticipant2, conversationParticipant3));
+
+        channel = new Channel();
+        channel.setCourse(course);
+        channel.setName("test");
+        channel.setCreator(userTwo);
+        channel.setCreationDate(ZonedDateTime.now());
+        channel.setConversationParticipants(Set.of(conversationParticipant1, conversationParticipant2, conversationParticipant3));
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
@@ -304,6 +341,92 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         ArgumentCaptor<MimeMessage> mimeMessageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
         verify(javaMailSender, timeout(1000).times(1)).send(mimeMessageCaptor.capture());
         assertThat(mimeMessageCaptor.getValue().getSubject()).isEqualTo(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);
+    }
+
+    @Test
+    void testConversationNotifications_oneToOneChatCreation() {
+        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(oneToOneChat, user, userTwo, CONVERSATION_CREATE_ONE_TO_ONE_CHAT);
+        List<Notification> capturedNotifications = notificationRepository.findAll();
+        assertThat(capturedNotifications).as("Notification should not have been saved").hasSize(0);
+        // notification should be sent
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+    }
+
+    @Test
+    void testConversationNotifications_groupChatCreation() {
+        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChat, user, userTwo, CONVERSATION_CREATE_GROUP_CHAT);
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+
+        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChat, userThree, userTwo, CONVERSATION_CREATE_GROUP_CHAT);
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + userThree.getId() + "/notifications"), (Object) any());
+
+        List<Notification> capturedNotifications = notificationRepository.findAll();
+        assertThat(capturedNotifications).as("Both notifications should have been saved").hasSize(2);
+        capturedNotifications.forEach(capturedNotification -> {
+            assertThat(capturedNotification.getTitle()).as("Title of the captured notification should be equal to the expected one")
+                    .isEqualTo(CONVERSATION_CREATE_GROUP_CHAT_TITLE);
+        });
+    }
+
+    @Test
+    void testConversationNotifications_groupChatAddUsers() {
+        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChat, user, userTwo, CONVERSATION_ADD_USER_GROUP_CHAT);
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+
+        verifyRepositoryCallWithCorrectNotification(CONVERSATION_ADD_USER_GROUP_CHAT_TITLE);
+    }
+
+    @Test
+    void testConversationNotifications_groupChatRemoveUser() {
+        notificationSettingRepository.deleteAll();
+        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChat, user, userTwo, CONVERSATION_REMOVE_USER_GROUP_CHAT);
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+
+        verifyRepositoryCallWithCorrectNotification(CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE);
+    }
+
+    @Test
+    void testConversationNotifications_deleteChannel() {
+        notificationSettingRepository.deleteAll();
+        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(channel, user, userTwo, CONVERSATION_DELETE_CHANNEL);
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+
+        verifyRepositoryCallWithCorrectNotification(CONVERSATION_DELETE_CHANNEL_TITLE);
+    }
+
+    @Test
+    void testConversationNotifications_channelAddUsers() {
+        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(channel, user, userTwo, CONVERSATION_ADD_USER_CHANNEL);
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+
+        verifyRepositoryCallWithCorrectNotification(CONVERSATION_ADD_USER_CHANNEL_TITLE);
+    }
+
+    @Test
+    void testConversationNotifications_channelRemoveUser() {
+        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(channel, user, userTwo, CONVERSATION_REMOVE_USER_CHANNEL);
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+
+        verifyRepositoryCallWithCorrectNotification(CONVERSATION_REMOVE_USER_CHANNEL_TITLE);
+    }
+
+    @Test
+    void testConversationNotifications_newMessageReply() {
+        Post post = new Post();
+        post.setAuthor(user);
+        post.setCreationDate(ZonedDateTime.now());
+        post.setConversation(groupChat);
+        post.setCourse(course);
+
+        AnswerPost answerPost = new AnswerPost();
+        answerPost.setAuthor(userTwo);
+        answerPost.setCreationDate(ZonedDateTime.now().plusSeconds(5));
+        answerPost.setPost(post);
+
+        singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, user, userTwo);
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+
+        verifyRepositoryCallWithCorrectNotification(MESSAGE_REPLY_IN_CONVERSATION_TITLE);
     }
 
     // Tutorial Group related

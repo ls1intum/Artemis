@@ -7,9 +7,6 @@ import java.util.Set;
 
 import javax.persistence.*;
 
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -30,7 +27,6 @@ public class ConversationNotification extends Notification {
 
     @ManyToOne
     @JoinColumn(name = "message_id")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private Post message;
 
     @ManyToOne

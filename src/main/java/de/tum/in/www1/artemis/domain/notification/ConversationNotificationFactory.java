@@ -28,8 +28,5 @@ public class ConversationNotificationFactory {
         if (notification.notificationType == NotificationType.CONVERSATION_NEW_MESSAGE) {
             notification.setTransientAndStringTarget(createConversationMessageTarget(notification.getMessage(), notification.getMessage().getConversation().getCourse().getId()));
         }
-        if (notification.notificationType == NotificationType.CONVERSATION_NEW_REPLY_MESSAGE) {
-            notification.setTransientAndStringTarget(createConversationMessageTarget(notification.getMessage(), notification.getMessage().getConversation().getCourse().getId()));
-        }
     }
 }
