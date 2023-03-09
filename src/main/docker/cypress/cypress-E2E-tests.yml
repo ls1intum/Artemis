@@ -70,3 +70,9 @@ services:
 networks:
     artemis:
         driver: "bridge"
+        name: artemis
+volumes:
+    artemis-mysql-data:
+        name: artemis-mysql-data
+    artemis-data:
+        name: artemis-data
