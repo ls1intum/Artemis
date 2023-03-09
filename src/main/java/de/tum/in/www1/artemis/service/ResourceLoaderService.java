@@ -2,10 +2,11 @@ package de.tum.in.www1.artemis.service;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.*;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.stereotype.Service;
+
+import de.tum.in.www1.artemis.exception.LocalCIException;
 
 /**
  * Service class to load resources from the file system (if possible) and the classpath (as fallback).
@@ -105,6 +108,65 @@ public class ResourceLoaderService {
      */
     public Resource[] getResources(String... pathSegments) {
         return getResources(StringUtils.join(pathSegments, File.separator));
+    }
+
+    /**
+     * Get the path to a file in the 'resources' folder.
+     * If the file is in the file system, the path to the file is returned. If the file is in a jar file, the file is extracted to a temporary file and the path to the temporary
+     * file is returned.
+     *
+     * @param path the path to the file in the 'resources' folder.
+     * @return the path to the file in the file system or in the jar file.
+     */
+    public Path getResourceFilePath(Path path) {
+
+        Resource resource = getResource(path.toString());
+
+        if (!resource.exists()) {
+            throw new RuntimeException("Resource does not exist: " + path);
+        }
+
+        URL resourceUrl;
+        try {
+            resourceUrl = resource.getURL();
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Could not get URL of resource: " + path, e);
+        }
+
+        if (resourceUrl.getProtocol().equals("file")) {
+            // Resource is in the file system.
+            try {
+                return Paths.get(resourceUrl.toURI());
+            }
+            catch (URISyntaxException e) {
+                throw new RuntimeException("Could not get URI of resource: " + path, e);
+            }
+        }
+        else if (resourceUrl.getProtocol().equals("jar")) {
+            // Resource is in a jar file.
+            InputStream scriptInputStream;
+            try {
+                scriptInputStream = getResource(path.toString()).getInputStream();
+            }
+            catch (IOException e) {
+                throw new LocalCIException("Could not get input stream for build script.");
+            }
+
+            Path scriptPath;
+            try {
+                scriptPath = Files.createTempFile(UUID.randomUUID().toString(), ".sh");
+                Files.copy(scriptInputStream, scriptPath, StandardCopyOption.REPLACE_EXISTING);
+                // Delete the temporary file when the JVM exits.
+                scriptPath.toFile().deleteOnExit();
+                return scriptPath;
+            }
+            catch (IOException e) {
+                throw new LocalCIException("Could not create temporary file for build script.");
+            }
+        }
+        throw new IllegalArgumentException("Unsupported protocol: " + resourceUrl.getProtocol());
+
     }
 
     /**

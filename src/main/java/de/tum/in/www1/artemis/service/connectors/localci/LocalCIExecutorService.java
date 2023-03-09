@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
@@ -10,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -83,13 +81,13 @@ public class LocalCIExecutorService {
             throw new LocalCIException("Programming language " + programmingLanguage + " is not supported by local CI.");
         }
 
-        Resource script = resourceLoaderService.getResource("templates/localci/java/build_and_run_tests.sh");
+        Path resourcePath = Path.of("templates", "localci", "java", "build_and_run_tests.sh");
         Path scriptPath;
         try {
-            scriptPath = script.getFile().toPath();
+            scriptPath = resourceLoaderService.getResourceFilePath(resourcePath);
         }
-        catch (IOException e) {
-            throw new LocalCIException("Could not retrieve build script.");
+        catch (RuntimeException e) {
+            throw new LocalCIException("Could not retrieve build script.", e);
         }
 
         return scriptPath;
