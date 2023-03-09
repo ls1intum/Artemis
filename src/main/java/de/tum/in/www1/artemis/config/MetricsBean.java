@@ -206,7 +206,7 @@ public class MetricsBean {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return examRepository.countRegisteredStudentsInExamsWithEndDateGreaterThanEqualButLessOrEqualThan(now, endDate);
+        return examRepository.countExamUsersInExamsWithEndDateGreaterThanEqualButLessOrEqualThan(now, endDate);
     }
 
     private double getUpcomingStartingExamCount(int minutes) {
@@ -220,7 +220,7 @@ public class MetricsBean {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return examRepository.countRegisteredStudentsInExamsWithStartDateGreaterThanEqualButLessOrEqualThan(now, endDate);
+        return examRepository.countExamUsersInExamsWithStartDateGreaterThanEqualButLessOrEqualThan(now, endDate);
     }
 
     private void registerDatasourceMetrics(HikariDataSource dataSource) {

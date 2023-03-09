@@ -101,14 +101,14 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     Integer countExamsWithEndDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     @Query("""
-            SELECT COUNT(registeredUsers)
+            SELECT COUNT(examUsers)
             FROM Exam exam
-            JOIN exam.registeredUsers registeredUsers
+            JOIN exam.examUsers examUsers
             WHERE exam.course.testCourse = false
                 AND exam.endDate >= :#{#minDate}
                 AND exam.endDate <= :#{#maxDate}
             """)
-    Integer countRegisteredStudentsInExamsWithEndDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+    Integer countExamUsersInExamsWithEndDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     @Query("""
             SELECT COUNT(exam)
@@ -120,14 +120,14 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     Integer countExamsWithStartDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     @Query("""
-            SELECT COUNT(registeredUsers)
+            SELECT COUNT(examUsers)
             FROM Exam exam
-            JOIN exam.registeredUsers registeredUsers
+            JOIN exam.examUsers examUsers
             WHERE exam.course.testCourse = false
                 AND exam.startDate >= :#{#minDate}
                 AND exam.startDate <= :#{#maxDate}
             """)
-    Integer countRegisteredStudentsInExamsWithStartDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+    Integer countExamUsersInExamsWithStartDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups" })
     Optional<Exam> findWithExerciseGroupsById(long examId);

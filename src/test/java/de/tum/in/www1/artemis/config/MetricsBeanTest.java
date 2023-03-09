@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.ZonedDateTime;
 
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +21,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 
 class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "metricsbeans";
+
     @Autowired
     MeterRegistry meterRegistry;
 
@@ -28,16 +33,27 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     ExerciseRepository exerciseRepository;
 
     @Autowired
+    ExamUserRepository examUserRepository;
+
+    @Autowired
+    ExamRepository examRepository;
+
+    @Autowired
     CourseRepository courseRepository;
 
     @AfterEach
     void resetDatabase() {
-        database.resetDatabase();
+        examRepository.findAllByEndDateGreaterThanEqual(ZonedDateTime.now()).forEach(exam -> {
+            // Set dates of existing exams to past to that they are not returned in the metrics
+            exam.setStartDate(ZonedDateTime.now().minusHours(2));
+            exam.setEndDate(ZonedDateTime.now().minusHours(1));
+            examRepository.save(exam);
+        });
     }
 
     @Test
     void testPrometheusMetricsExercises() {
-        database.addUsers(3, 0, 0, 0);
+        database.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         var course = database.createCourse();
         exerciseRepository.save(database.createQuiz(course, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusMinutes(55), QuizMode.SYNCHRONIZED));
         exerciseRepository.save(database.createQuiz(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(3), QuizMode.SYNCHRONIZED));
@@ -61,16 +77,35 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     void testPrometheusMetricsExams() {
-        var users = database.addUsers(3, 0, 0, 0);
+        var users = database.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         var course = database.createCourse();
         var exam1 = database.addExam(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(10), ZonedDateTime.now().plusMinutes(40));
-        exam1.addRegisteredUser(users.get(0));
-        exam1.addRegisteredUser(users.get(1));
+        var registeredExamUser1 = new ExamUser();
+        registeredExamUser1.setUser(users.get(0));
+        registeredExamUser1.setExam(exam1);
+        registeredExamUser1 = examUserRepository.save(registeredExamUser1);
+        exam1.addExamUser(registeredExamUser1);
+
+        var registeredExamUser2 = new ExamUser();
+        registeredExamUser2.setUser(users.get(1));
+        registeredExamUser2.setExam(exam1);
+        registeredExamUser2 = examUserRepository.save(registeredExamUser2);
+        exam1.addExamUser(registeredExamUser2);
+
+        exam1 = examRepository.save(exam1);
+
         database.addExerciseGroupsAndExercisesToExam(exam1, false);
         courseRepository.save(course);
 
         var exam2 = database.addExam(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(65), ZonedDateTime.now().plusMinutes(85));
-        exam2.addRegisteredUser(users.get(0));
+        var registeredExamUser3 = new ExamUser();
+        registeredExamUser3.setUser(users.get(0));
+        registeredExamUser3.setExam(exam2);
+        registeredExamUser3 = examUserRepository.save(registeredExamUser3);
+        exam2.addExamUser(registeredExamUser3);
+
+        exam2 = examRepository.save(exam2);
+
         database.addExerciseGroupsAndExercisesToExam(exam2, false);
         courseRepository.save(course);
 
