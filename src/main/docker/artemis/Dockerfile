@@ -16,9 +16,8 @@ FROM docker.io/library/eclipse-temurin:17-jdk as runtime
 
 # Docker Compose: wget (healthcheck docker compose)
 # Artemis: graphviz, locales
-# versions just pinned for reproducibility
 RUN echo "Installing needed dependencies" \
-  && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget netcat-openbsd \
+  && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
