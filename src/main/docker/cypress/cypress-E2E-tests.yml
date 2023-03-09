@@ -30,6 +30,12 @@ services:
         extends:
             file: ../nginx/nginx.yml
             service: artemis-nginx
+        # TODO: for now the artemis-app service needs to be started, otherwise there are problems with name resolution in docker
+        depends_on:
+            artemis-app:
+                condition: service_started
+        volumes:
+            - ../nginx/artemis-server-cypress.conf:/etc/nginx/includes/artemis-server-cypress.conf:ro
         ports:
             - 80:80
             - 443:443

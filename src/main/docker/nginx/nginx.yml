@@ -20,6 +20,7 @@ services:
             - ./dhparam.pem:/etc/nginx/dhparam.pem:ro
             - ./nginx_502.html:/usr/share/nginx/html/502.html:ro
             - ./70-artemis-setup.sh:/docker-entrypoint.d/70-artemis-setup.sh
+            # TODO: move the certs to a place for testing in cypress and/or development envs
             - ../../../test/cypress/certs/artemis-nginx+4.pem:/certs/fullchain.pem:ro
             - ../../../test/cypress/certs/artemis-nginx+4-key.pem:/certs/priv_key.pem:ro
             #- ./pki:/etc/pki/nginx:ro
@@ -31,10 +32,6 @@ services:
         ports:
             - 80:80
             - 443:443
-        # TODO: for now the artemis-app service needs to be started, otherwise there are problems with name resolution in docker
-        depends_on:
-            artemis-app:
-                condition: service_started
         healthcheck:
             test: service nginx status || exit 1
             start_period: 30s
