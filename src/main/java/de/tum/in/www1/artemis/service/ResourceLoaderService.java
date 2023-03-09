@@ -88,7 +88,7 @@ public class ResourceLoaderService {
      * <p>
      * Only relative paths are allowed.
      * <p>
-     * Examples for path patterns: {@code *.sh}, {@code base/**}.
+     * Examples for path patterns: {@code *.sh}, {@code base/**}. Use forward slashes to separate path parts.
      *
      * @param basePath A relative path pattern to a resource.
      * @param pattern  A pattern that limits which files in the directory of the base path are matched.
@@ -136,15 +136,29 @@ public class ResourceLoaderService {
     }
 
     private String getFileResourceLocation(final Path resourcePath, final String pathPattern) {
-        return "file:" + resolveResourcePath(resourcePath).toString() + File.separator + pathPattern;
+        final String systemPathPattern = File.separator + adaptPathPatternToSystem(pathPattern);
+        return "file:" + resolveResourcePath(resourcePath).toString() + systemPathPattern;
     }
 
     private String getClassPathResourceLocation(final Path resourcePath) {
-        return "classpath:/" + resourcePath.toString();
+        return "classpath:/" + ensureUnixPath(resourcePath.toString());
     }
 
     private String getClassPathResourceLocation(final Path resourcePath, final String pathPattern) {
-        return "classpath:/" + resourcePath.toString() + File.separator + pathPattern;
+        return "classpath:/" + ensureUnixPath(resourcePath.toString() + "/" + pathPattern);
+    }
+
+    private String adaptPathPatternToSystem(final String pathPattern) {
+        if ("/".equals(File.separator)) {
+            return ensureUnixPath(pathPattern);
+        }
+        else {
+            return pathPattern.replace("/", "\\");
+        }
+    }
+
+    private String ensureUnixPath(final String pathPattern) {
+        return pathPattern.replace("\\", "/");
     }
 
     private Path resolveResourcePath(final Path resource) {
