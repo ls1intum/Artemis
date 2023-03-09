@@ -102,7 +102,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             @Param("exerciseType") String exerciseTypeDiscriminator);
 
     @Query("""
-            SELECT COUNT(user.id)
+            SELECT COUNT(DISTINCT user.id)
             FROM Exercise e
             JOIN User user ON e.course.studentGroupName member of user.groups
             WHERE e.course.testCourse = FALSE
@@ -125,7 +125,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             @Param("exerciseType") String exerciseTypeDiscriminator);
 
     @Query("""
-            SELECT COUNT(user.id)
+            SELECT COUNT(DISTINCT user.id)
             FROM Exercise e
             JOIN User user ON e.course.studentGroupName member of user.groups
             WHERE e.course.testCourse = FALSE

@@ -54,10 +54,12 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     @Test
     void testPrometheusMetricsExercises() {
         database.addUsers(TEST_PREFIX, 3, 0, 0, 0);
-        var course = database.createCourse();
-        exerciseRepository.save(database.createQuiz(course, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusMinutes(55), QuizMode.SYNCHRONIZED));
-        exerciseRepository.save(database.createQuiz(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(3), QuizMode.SYNCHRONIZED));
-        exerciseRepository.save(database.createIndividualTextExercise(course, ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(25), null));
+        var course1 = database.createCourse();
+        course1.setStudentGroupName(TEST_PREFIX + "students");
+
+        exerciseRepository.save(database.createQuiz(course1, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusMinutes(55), QuizMode.SYNCHRONIZED));
+        exerciseRepository.save(database.createQuiz(course1, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(3), QuizMode.SYNCHRONIZED));
+        exerciseRepository.save(database.createIndividualTextExercise(course1, ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(25), null));
 
         // Only one of the two quizzes ends in the next 15 minutes
         assertMetricEquals(1, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
@@ -67,8 +69,17 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         assertMetricEquals(1, "artemis.scheduled.exercises.release.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "30");
         assertMetricEquals(3 * 1, "artemis.scheduled.exercises.release.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "30");
 
-        // Both quizzes end within the next 120 minutes
+        // Both quizzes end within the next 120 minutes, but have the same users (-> Users are only counted once)
         assertMetricEquals(2, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "120");
+        assertMetricEquals(3 * 1, "artemis.scheduled.exercises.due.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "120");
+
+        database.addUsers(TEST_PREFIX + "2", 3, 0, 0, 0);
+        var course2 = database.createCourse();
+        course1.setStudentGroupName(TEST_PREFIX + "2" + "students");
+        exerciseRepository.save(database.createQuiz(course2, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(3), QuizMode.SYNCHRONIZED));
+
+        // 3 quizzes end within the next 120 minutes, and are in two different courses -> 6 different users in total
+        assertMetricEquals(3, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "120");
         assertMetricEquals(3 * 2, "artemis.scheduled.exercises.due.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "120");
 
         // One text exercise is released within the next 30 minutes
