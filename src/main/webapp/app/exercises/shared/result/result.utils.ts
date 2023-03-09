@@ -12,9 +12,11 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercises/shared/participation/participation.utils';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
+import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
+import { TestCaseResult } from 'app/entities/test-case-result.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -178,11 +180,18 @@ export const evaluateTemplateStatus = (
 
 /**
  * Checks if only compilation was tested. This is the case, when a successful result is present with 0 of 0 passed tests
- *
+ * This could be because all test cases are only visible after the due date.
  */
-export const onlyShowSuccessfulCompileStatus = (result: Result | undefined, templateStatus: ResultTemplateStatus): boolean => {
+export const isOnlyCompilationTested = (result: Result | undefined, templateStatus: ResultTemplateStatus): boolean => {
     const zeroTests = !result?.testCaseCount;
-    return templateStatus !== ResultTemplateStatus.NO_RESULT && templateStatus !== ResultTemplateStatus.IS_BUILDING && !isBuildFailed(result?.submission) && zeroTests;
+    const isProgrammingExercise: boolean = result?.participation?.exercise?.type === ExerciseType.PROGRAMMING;
+    return (
+        templateStatus !== ResultTemplateStatus.NO_RESULT &&
+        templateStatus !== ResultTemplateStatus.IS_BUILDING &&
+        !isBuildFailed(result?.submission) &&
+        zeroTests &&
+        isProgrammingExercise
+    );
 };
 
 /**
@@ -209,6 +218,10 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
 
     if (result?.score === undefined) {
         return result?.successful ? 'text-success' : 'text-danger';
+    }
+
+    if (isOnlyCompilationTested(result, templateStatus)) {
+        return 'text-success';
     }
 
     if (result.score >= MIN_SCORE_GREEN) {
@@ -239,7 +252,7 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
         return faQuestionCircle;
     }
 
-    if (onlyShowSuccessfulCompileStatus(result, templateStatus)) {
+    if (isOnlyCompilationTested(result, templateStatus)) {
         return faCheckCircle;
     }
 
@@ -288,3 +301,66 @@ export const isBuildFailed = (submission?: Submission) => {
 export const isManualResult = (result?: Result) => {
     return result?.assessmentType !== AssessmentType.AUTOMATIC;
 };
+
+/**
+ * Retrieves a list of test cases names contained in a result's feedback list.
+ *
+ * @param results list of results to extract the test case names from
+ * @return list of extracted test case names
+ * @private
+ */
+export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingCriterion[]): string[] {
+    const testCasesNames: Set<string> = new Set();
+    results.forEach((result) => {
+        if (!result.result.feedbacks) {
+            return [];
+        }
+        result.result.feedbacks.map((f) => {
+            if (Feedback.isTestCaseFeedback(f)) {
+                testCasesNames.add(f.text ?? 'Test ' + result.result.feedbacks?.indexOf(f) + 1);
+            }
+        });
+    });
+    return Array.from(testCasesNames);
+}
+
+/**
+ * Extracts test case results from a given result and returns them.
+ * If no feedback is found in the result an empty array is returned
+ * @param result from which the test case results should be extracted
+ * @param testCaseNames list containing the test names
+ * @param withFeedback if true, the feedback's full text is included in case of failed test case
+ * @private
+ */
+export function getTestCaseResults(result: ResultWithPointsPerGradingCriterion, testCaseNames: string[], withFeedback?: boolean): TestCaseResult[] {
+    const testCaseResults: TestCaseResult[] = [];
+
+    testCaseNames.forEach((testName) => {
+        const feedback = getFeedbackByTestCase(testName, result.result.feedbacks);
+
+        let resultText;
+        if (feedback?.positive) {
+            resultText = 'Passed';
+        } else {
+            resultText = !!withFeedback && feedback?.detailText ? `Failed: "${feedback.detailText}"` : 'Failed';
+        }
+        testCaseResults.push({ testName, testResult: resultText } as TestCaseResult);
+    });
+    return testCaseResults;
+}
+
+/**
+ * Retrieves a feedback object from a result's feedback list by a given test case name.
+ *
+ * If no feedback is found for the given test case name, null is returned.
+ * @param feedbacks the list of result feedbacks to search in
+ * @param testCase the name of the test case to search for
+ * @private
+ */
+export function getFeedbackByTestCase(testCase: string, feedbacks?: Feedback[]): Feedback | null {
+    if (!feedbacks) {
+        return null;
+    }
+    const i = feedbacks.findIndex((feedback) => feedback.text?.localeCompare(testCase) === 0);
+    return i !== -1 ? feedbacks[i] : null;
+}

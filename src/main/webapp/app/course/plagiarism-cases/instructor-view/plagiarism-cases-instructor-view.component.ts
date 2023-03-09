@@ -5,6 +5,7 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { downloadFile } from 'app/shared/util/download.util';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-plagiarism-cases-instructor-view',
@@ -17,6 +18,8 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     groupedPlagiarismCases: any; // maybe? { [key: number]: PlagiarismCase[] }
     exercisesWithPlagiarismCases: Exercise[] = [];
     getIcon = getIcon;
+
+    documentationType = DocumentationType.PlagiarismChecks;
 
     constructor(private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute) {}
 

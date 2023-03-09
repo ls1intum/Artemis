@@ -5,7 +5,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -33,7 +31,10 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface StudentExamRepository extends JpaRepository<StudentExam, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
-    Optional<StudentExam> findWithExercisesById(Long id);
+    Optional<StudentExam> findWithExercisesById(Long studentExamId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "examSessions" })
+    Optional<StudentExam> findWithExercisesAndSessionsById(Long studentExamId);
 
     @Query("""
             SELECT DISTINCT se
@@ -74,6 +75,15 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             	AND se.testRun = FALSE
             """)
     Set<StudentExam> findByExamId(@Param("examId") long examId);
+
+    @Query("""
+            SELECT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.examSessions
+            WHERE se.exam.id = :examId
+            	AND se.testRun = FALSE
+            """)
+    Set<StudentExam> findByExamIdWithSessions(@Param("examId") long examId);
 
     @Query("""
             SELECT se
@@ -227,13 +237,14 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     List<StudentExam> findStudentExamForTestExamsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     @Query("""
-            SELECT DISTINCT se FROM StudentExam se
-                        LEFT JOIN FETCH se.exercises exercises
-                        WHERE se.exam.id = :examId
-                        AND se.user.id = :userId
-                        	AND se.submitted = FALSE
-                        	AND se.testRun = FALSE
-                        	AND se.exam.testExam = TRUE
+            SELECT DISTINCT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises exercises
+            WHERE se.exam.id = :examId
+                AND se.user.id = :userId
+                AND se.submitted = FALSE
+                AND se.testRun = FALSE
+                AND se.exam.testExam = TRUE
             """)
     List<StudentExam> findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(@Param("examId") Long examId, @Param("userId") Long userId);
 
@@ -289,6 +300,17 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @NotNull
     default StudentExam findByIdWithExercisesElseThrow(Long studentExamId) {
         return findWithExercisesById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
+    }
+
+    /**
+     * Get one student exam by id with exercises and sessions
+     *
+     * @param studentExamId the id of the student exam
+     * @return the student exam with exercises
+     */
+    @NotNull
+    default StudentExam findByIdWithExercisesAndSessionsElseThrow(Long studentExamId) {
+        return findWithExercisesAndSessionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
     }
 
     /**
@@ -391,7 +413,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
         deleteAll(existingStudentExams);
 
-        Set<User> users = exam.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toCollection(HashSet::new));
+        Set<User> users = exam.getRegisteredUsers();
 
         // StudentExams are saved in the called method
         return createRandomStudentExams(exam, users);
@@ -412,7 +434,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         Set<User> usersWithStudentExam = findUsersWithStudentExamsForExam(exam.getId());
 
         // Get all students who don't have an exam yet
-        Set<User> missingUsers = exam.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
+        Set<User> missingUsers = exam.getRegisteredUsers();
         missingUsers.removeAll(usersWithStudentExam);
 
         // StudentExams are saved in the called method

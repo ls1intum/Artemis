@@ -168,12 +168,12 @@ zonky:
             type: H2  # Alternatives: H2 / MYSQL / POSTGRES
             postgres:
                 docker:
-                    image: "postgres:15.1-alpine"
+                    image: "postgres:15.2-alpine"
                     tmpfs:
                         enabled: true
             mysql:
                 docker:
-                    image: "mysql:8.0.31"
+                    image: "mysql:8.0.32"
                     tmpfs:
                         enabled: true
 

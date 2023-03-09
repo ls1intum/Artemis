@@ -99,10 +99,10 @@ public class Lti13Service {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 
-        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), ltiIdToken.getSubject(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration),
-                ltiIdToken.getGivenName(), ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
+        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
+                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        ltiService.onSuccessfulLtiAuthentication(user, ltiIdToken.getSubject(), targetExercise.get());
+        ltiService.onSuccessfulLtiAuthentication(user, targetExercise.get());
 
         Lti13LaunchRequest launchRequest = launchRequestFrom(ltiIdToken, clientRegistrationId);
 
@@ -120,10 +120,10 @@ public class Lti13Service {
     public String createUsernameFromLaunchRequest(OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
         String username;
 
-        if (!StringUtils.isEmpty(ltiIdToken.getPreferredUsername())) {
+        if (StringUtils.hasLength(ltiIdToken.getPreferredUsername())) {
             username = ltiIdToken.getPreferredUsername();
         }
-        else if (!StringUtils.isEmpty(ltiIdToken.getGivenName()) && !StringUtils.isEmpty(ltiIdToken.getFamilyName())) {
+        else if (StringUtils.hasLength(ltiIdToken.getGivenName()) && StringUtils.hasLength(ltiIdToken.getFamilyName())) {
             username = ltiIdToken.getGivenName() + ltiIdToken.getFamilyName();
         }
         else {
@@ -208,7 +208,7 @@ public class Lti13Service {
     }
 
     private String getScoresUrl(String lineItemUrl) {
-        if (StringUtils.isEmpty(lineItemUrl)) {
+        if (!StringUtils.hasLength(lineItemUrl)) {
             return null;
         }
         StringBuilder builder = new StringBuilder(lineItemUrl);

@@ -24,6 +24,8 @@ export const generateExampleChannelDTO = ({
     isMember = true,
     isAnnouncementChannel = false,
     unreadMessagesCount = 0,
+    tutorialGroupTitle = undefined,
+    tutorialGroupId = undefined,
 }: ChannelDTO) => {
     const exampleChannelDto = new ChannelDTO();
     exampleChannelDto.id = id;
@@ -45,6 +47,8 @@ export const generateExampleChannelDTO = ({
     exampleChannelDto.isMember = isMember;
     exampleChannelDto.isAnnouncementChannel = isAnnouncementChannel;
     exampleChannelDto.unreadMessagesCount = unreadMessagesCount;
+    exampleChannelDto.tutorialGroupTitle = tutorialGroupTitle;
+    exampleChannelDto.tutorialGroupId = tutorialGroupId;
 
     return exampleChannelDto;
 };

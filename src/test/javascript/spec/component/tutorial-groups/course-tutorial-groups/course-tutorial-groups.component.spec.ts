@@ -15,6 +15,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
+import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 
 @Component({
     selector: 'jhi-course-tutorial-groups-overview',
@@ -25,6 +26,8 @@ class MockCourseTutorialGroupsOverviewComponent {
     course: Course;
     @Input()
     tutorialGroups: TutorialGroup[] = [];
+    @Input()
+    configuration?: TutorialGroupsConfiguration;
 }
 
 @Component({
@@ -35,7 +38,10 @@ class MockCourseTutorialGroupsRegisteredComponent {
     @Input()
     registeredTutorialGroups: TutorialGroup[] = [];
     @Input()
-    courseId: number;
+    course: Course;
+
+    @Input()
+    configuration?: TutorialGroupsConfiguration;
 }
 
 describe('CourseTutorialGroupsComponent', () => {

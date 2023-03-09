@@ -12,6 +12,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
 import { ClusterNode, Edge, Node } from '@swimlane/ngx-graph';
 import { AccountService } from 'app/core/auth/account.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-learning-goal-management',
@@ -34,6 +35,8 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    documentationType = DocumentationType.LearningGoals;
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;

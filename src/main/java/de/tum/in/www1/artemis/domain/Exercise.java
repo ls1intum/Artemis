@@ -928,6 +928,13 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     public void validateGeneralSettings() {
         validateScoreSettings();
         validateDates();
+        validateExamExerciseIncludedInScoreCompletely();
+    }
+
+    private void validateExamExerciseIncludedInScoreCompletely() {
+        if (isExamExercise() && includedInOverallScore == IncludedInOverallScore.NOT_INCLUDED) {
+            throw new BadRequestAlertException("An exam exercise must be included in the score.", getTitle(), "examExerciseNotIncludedInScore");
+        }
     }
 
     /**

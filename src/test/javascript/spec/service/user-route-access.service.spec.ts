@@ -25,6 +25,8 @@ describe('UserRouteAccessService', () => {
     let service: UserRouteAccessService;
 
     let accountService: AccountService;
+    let accountServiceStub: jest.SpyInstance;
+
     let storageService: StateStorageService;
     let router: Router;
 
@@ -70,8 +72,9 @@ describe('UserRouteAccessService', () => {
 
     afterEach(() => jest.restoreAllMocks());
 
-    it('should create alert for existing LTI users', () => {
+    it('should create alert and prefill username for existing LTI users', () => {
         alertServiceStub = jest.spyOn(alertService, 'success');
+        accountServiceStub = jest.spyOn(accountService, 'setPrefilledUsername');
 
         const snapshot = fixture.debugElement.injector.get(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
         const routeConfig = snapshot.routeConfig as Route;
@@ -81,10 +84,13 @@ describe('UserRouteAccessService', () => {
 
         service.canActivate(snapshot, routeStateMock);
         expect(alertServiceStub).toHaveBeenCalledOnce();
+        expect(accountServiceStub).toHaveBeenCalledOnce();
+        expect(accountServiceStub).toHaveBeenCalledWith('username');
     });
 
-    it('should not create alert for new LTI users', () => {
+    it('should not create alert and not prefill username for new LTI users', () => {
         alertServiceStub = jest.spyOn(alertService, 'success');
+        accountServiceStub = jest.spyOn(accountService, 'setPrefilledUsername');
 
         const snapshot = fixture.debugElement.injector.get(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
         const routeConfig = snapshot.routeConfig as Route;
@@ -94,10 +100,23 @@ describe('UserRouteAccessService', () => {
 
         service.canActivate(snapshot, routeStateMock);
         expect(alertServiceStub).toHaveBeenCalledTimes(0);
+        expect(accountServiceStub).toHaveBeenCalledTimes(0);
     });
 
     it('should return true if authorities are omitted', async () => {
         await expect(service.checkLogin([], url)).resolves.toBeTrue();
+    });
+
+    it('should return false if it does not have authority', async () => {
+        jest.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(false));
+        const storeSpy = jest.spyOn(storageService, 'storeUrl');
+        const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
+
+        const result = await service.checkLogin([Authority.EDITOR], url);
+
+        expect(result).toBeFalse();
+        expect(consoleErrorMock).toHaveBeenCalledWith('User has not any of required authorities: ', [Authority.EDITOR]);
+        expect(storeSpy).toHaveBeenCalledTimes(0);
     });
 
     it('should store url if identity is undefined', async () => {

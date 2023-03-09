@@ -18,13 +18,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.LtiUserId;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserInitializationDTO;
@@ -60,9 +60,6 @@ public class UserTestService {
 
     @Autowired
     protected RequestUtilService request;
-
-    @Autowired
-    private LtiUserIdRepository ltiUserIdRepository;
 
     @Autowired
     private Optional<VcsUserManagementService> optionalVcsUserManagementService;
@@ -692,12 +689,8 @@ public class UserTestService {
         repoUser.setPassword(password);
         repoUser.setInternal(true);
         repoUser.setActivated(false);
-        repoUser.setGroups(new HashSet<>());
+        repoUser.setGroups(Set.of(LtiService.LTI_GROUP_NAME));
         final User user = userRepository.save(repoUser);
-        LtiUserId ltiUserId = new LtiUserId();
-        ltiUserId.setLtiUserId("1234");
-        ltiUserId.setUser(repoUser);
-        ltiUserIdRepository.save(ltiUserId);
 
         if (mock) {
             // Mock user creation and update calls to prevent issues in GitLab/Jenkins tests
@@ -727,11 +720,8 @@ public class UserTestService {
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(true);
-        user = userRepository.save(user);
-        LtiUserId ltiUserId = new LtiUserId();
-        ltiUserId.setLtiUserId("1234");
-        ltiUserId.setUser(user);
-        ltiUserIdRepository.save(ltiUserId);
+        user.setGroups(Set.of(LtiService.LTI_GROUP_NAME));
+        userRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
@@ -753,8 +743,6 @@ public class UserTestService {
         user.setActivated(false);
         userRepository.save(user);
 
-        ltiUserIdRepository.findByUser(user).ifPresent(ltiUserIdRepository::delete);
-
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
         assertThat(dto.getPassword()).isNull();
 
@@ -772,10 +760,6 @@ public class UserTestService {
         user.setInternal(false);
         user.setActivated(false);
         user = userRepository.save(user);
-        LtiUserId ltiUserId = new LtiUserId();
-        ltiUserId.setLtiUserId("1234");
-        ltiUserId.setUser(user);
-        ltiUserIdRepository.save(ltiUserId);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 

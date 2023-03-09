@@ -329,6 +329,12 @@ public class FileService implements DisposableBean {
         if (publicPath.contains("files/course/icons")) {
             return Path.of(FilePathService.getCourseIconFilePath(), filename).toString();
         }
+        if (publicPath.contains("files/exam-user")) {
+            return Path.of(FilePathService.getStudentImageFilePath(), filename).toString();
+        }
+        if (publicPath.contains("files/exam-user/signatures")) {
+            return Path.of(FilePathService.getExamUserSignatureFilePath(), filename).toString();
+        }
         if (publicPath.contains("files/attachments/lecture")) {
             String lectureId = publicPath.replace(filename, "").replace("/api/files/attachments/lecture/", "");
             return Path.of(FilePathService.getLectureAttachmentFilePath(), lectureId, filename).toString();
@@ -1089,7 +1095,7 @@ public class FileService implements DisposableBean {
             return new CommonsMultipartFile(fileItem);
         }
         catch (IOException e) {
-            log.warn("Could not convert file {}. Error message: {}", fileName, e.getMessage());
+            log.error("Could not convert file {}.", fileName, e);
             throw new InternalServerErrorException("Error while converting byte[] to MultipartFile by using CommonsMultipartFile");
         }
     }

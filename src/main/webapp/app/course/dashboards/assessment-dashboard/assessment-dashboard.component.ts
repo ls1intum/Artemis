@@ -21,7 +21,8 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
-import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard, faHeartBroken, faSort, faTable } from '@fortawesome/free-solid-svg-icons';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -31,6 +32,7 @@ import { faSort } from '@fortawesome/free-solid-svg-icons';
 })
 export class AssessmentDashboardComponent implements OnInit {
     readonly TeamFilterProp = TeamFilterProp;
+    documentationType = DocumentationType.Assessment;
 
     course: Course;
     exam: Exam;
@@ -74,6 +76,9 @@ export class AssessmentDashboardComponent implements OnInit {
 
     // Icons
     faSort = faSort;
+    faTable = faTable;
+    faClipboard = faClipboard;
+    faHeartBroken = faHeartBroken;
 
     constructor(
         private courseService: CourseManagementService,

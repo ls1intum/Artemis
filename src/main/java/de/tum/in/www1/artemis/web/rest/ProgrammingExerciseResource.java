@@ -77,7 +77,9 @@ public class ProgrammingExerciseResource {
 
     private final ExerciseDeletionService exerciseDeletionService;
 
-    public final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseService programmingExerciseService;
+
+    private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -122,7 +124,8 @@ public class ProgrammingExerciseResource {
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
+            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
+            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, StudentParticipationRepository studentParticipationRepository,
             StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository,
             Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, CourseRepository courseRepository, GitService gitService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
@@ -139,6 +142,7 @@ public class ProgrammingExerciseResource {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.gradingCriterionRepository = gradingCriterionRepository;
@@ -176,7 +180,7 @@ public class ProgrammingExerciseResource {
         // Only when changing the assessment format to automatic an additional check for > 0 has to be performed.
         if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC) {
             final Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
-            if (!ProgrammingExerciseTestCaseService.isTestCaseWeightSumValid(exercise, testCases)) {
+            if (!ProgrammingExerciseTestCaseService.isTestCaseWeightSumValid(testCases)) {
                 throw new BadRequestAlertException("For exercises with only automatic assignment at least one test case weight must be greater than zero.", "Exercise",
                         ProgrammingExerciseResourceErrorKeys.INVALID_TEST_CASE_WEIGHTS);
             }
@@ -356,7 +360,7 @@ public class ProgrammingExerciseResource {
         ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(programmingExerciseBeforeUpdate, updatedProgrammingExercise,
                 notificationText);
 
-        programmingExerciseService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, savedProgrammingExercise);
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, savedProgrammingExercise);
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
@@ -662,7 +666,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> unlockAllRepositories(@PathVariable Long exerciseId) {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
-        programmingExerciseService.unlockAllRepositories(exerciseId);
+        programmingExerciseRepositoryService.unlockAllRepositories(exerciseId);
         log.info("Unlocked all repositories of programming exercise {} upon manual request", exerciseId);
         return ResponseEntity.ok().build();
     }
@@ -678,7 +682,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> lockAllRepositories(@PathVariable Long exerciseId) {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
-        programmingExerciseService.lockAllRepositories(exerciseId);
+        programmingExerciseRepositoryService.lockAllRepositories(exerciseId);
         log.info("Locked all repositories of programming exercise {} upon manual request", exerciseId);
         return ResponseEntity.ok().build();
     }

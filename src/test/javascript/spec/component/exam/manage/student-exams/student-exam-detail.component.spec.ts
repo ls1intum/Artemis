@@ -65,7 +65,7 @@ describe('StudentExamDetailComponent', () => {
         exam = {
             course,
             id: 1,
-            examUsers: [student],
+            examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...student, user: student }],
             visibleDate: dayjs().add(120, 'seconds'),
             startDate: dayjs().add(200, 'seconds'),
             endDate: dayjs().add(7400, 'seconds'),
@@ -85,6 +85,7 @@ describe('StudentExamDetailComponent', () => {
             exam,
             user: student,
             exercises: [exercise],
+            numberOfExamSessions: 0,
         };
         studentExam2 = {
             id: 2,
@@ -94,6 +95,7 @@ describe('StudentExamDetailComponent', () => {
             submitted: true,
             submissionDate: dayjs(),
             exercises: [exercise],
+            numberOfExamSessions: 0,
         };
 
         studentExamWithGrade = {

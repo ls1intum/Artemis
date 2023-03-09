@@ -1,15 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
@@ -18,6 +15,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamUserService;
+import de.tum.in.www1.artemis.web.rest.dto.ExamUserAttendanceCheckDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUsersNotFoundDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -69,11 +67,8 @@ public class ExamUserResource {
         var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(examUserDTO.login())
                 .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + examUserDTO.login() + "\" does not exist"));
 
-        ExamUser examUser = examUserRepository.findByExamIdAndUserId(examId, student.getId());
-
-        if (examUser == null) {
-            throw new EntityNotFoundException("Exam user", examUserDTO.login());
-        }
+        ExamUser examUser = examUserRepository.findByExamIdAndUserId(examId, student.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Exam user with login: \"" + examUserDTO.login() + "\" does not exist"));
 
         if (signatureFile != null) {
             String responsePath = fileService.handleSaveFile(signatureFile, true, false);
@@ -106,5 +101,20 @@ public class ExamUserResource {
         log.debug("REST request to parse pdf : {}", file.getOriginalFilename());
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         return ResponseEntity.ok().body(examUserService.saveImages(examId, file));
+    }
+
+    /**
+     * GET courses/{courseId}/exams/{examId}/verify-exam-users : Retrieves a list of students who started the exam but did not sign
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @return list of students who did not sign ResponseEntity with status 200 (OK)
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/verify-exam-users")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Set<ExamUserAttendanceCheckDTO>> getAllWhoDidNotSign(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request to get all students who did not sign for exam with id: {}", examId);
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        return ResponseEntity.ok().body(examUserRepository.findAllExamUsersWhoDidNotSign(examId));
     }
 }

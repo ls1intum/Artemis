@@ -2,19 +2,11 @@ import { Interception } from 'cypress/types/net-stubbing';
 import { Course } from 'app/entities/course.model';
 import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
-import { artemis } from '../../../support/ArtemisTesting';
 import { dayjsToString, generateUUID, trimDate } from '../../../support/utils';
+import { courseManagement, courseManagementRequest, examCreation, examDetails, examManagement, navigationBar } from '../../../support/artemis';
+import { admin } from '../../../support/users';
 
-// Requests
-const courseManagementRequests = artemis.requests.courseManagement;
-
-// Pageobjects
-const navigationBar = artemis.pageobjects.navigationBar;
-const courseManagement = artemis.pageobjects.course.management;
-const examManagement = artemis.pageobjects.exam.management;
-const creationPage = artemis.pageobjects.exam.creation;
-const examDetailsPage = artemis.pageobjects.exam.details;
-
+// Common primitives
 const examData = {
     title: 'exam' + generateUUID(),
     visibleDate: dayjs(),
@@ -34,14 +26,14 @@ describe('Test Exam creation/deletion', () => {
     let examId: number;
 
     before(() => {
-        cy.login(artemis.users.getAdmin());
-        courseManagementRequests.createCourse().then((response) => {
+        cy.login(admin);
+        courseManagementRequest.createCourse().then((response) => {
             course = convertCourseAfterMultiPart(response);
         });
     });
 
     beforeEach(() => {
-        cy.login(artemis.users.getAdmin(), '/');
+        cy.login(admin, '/');
     });
 
     it('Creates a test exam', function () {
@@ -49,21 +41,21 @@ describe('Test Exam creation/deletion', () => {
         courseManagement.openExamsOfCourse(course.shortName!);
 
         examManagement.createNewExam();
-        creationPage.setTitle(examData.title);
-        creationPage.setTestMode();
-        creationPage.setVisibleDate(examData.visibleDate);
-        creationPage.setStartDate(examData.startDate);
-        creationPage.setEndDate(examData.endDate);
-        creationPage.setWorkingTime(examData.workingTime);
-        creationPage.setNumberOfExercises(examData.numberOfExercises);
-        creationPage.setExamMaxPoints(examData.maxPoints);
+        examCreation.setTitle(examData.title);
+        examCreation.setTestMode();
+        examCreation.setVisibleDate(examData.visibleDate);
+        examCreation.setStartDate(examData.startDate);
+        examCreation.setEndDate(examData.endDate);
+        examCreation.setWorkingTime(examData.workingTime);
+        examCreation.setNumberOfExercises(examData.numberOfExercises);
+        examCreation.setExamMaxPoints(examData.maxPoints);
 
-        creationPage.setStartText(examData.startText);
-        creationPage.setEndText(examData.endText);
-        creationPage.setConfirmationStartText(examData.confirmationStartText);
-        creationPage.setConfirmationEndText(examData.confirmationEndText);
+        examCreation.setStartText(examData.startText);
+        examCreation.setEndText(examData.endText);
+        examCreation.setConfirmationStartText(examData.confirmationStartText);
+        examCreation.setConfirmationEndText(examData.confirmationEndText);
 
-        creationPage.submit().then((examResponse: Interception) => {
+        examCreation.submit().then((examResponse: Interception) => {
             const examBody = examResponse.response!.body;
             examId = examResponse.response!.body.id;
             expect(examResponse.response!.statusCode).to.eq(201);
@@ -88,7 +80,7 @@ describe('Test Exam creation/deletion', () => {
         beforeEach(() => {
             examData.title = 'exam' + generateUUID();
             const exam = new CypressExamBuilder(course).title(examData.title).testExam().build();
-            courseManagementRequests.createExam(exam).then((examResponse) => {
+            courseManagementRequest.createExam(exam).then((examResponse) => {
                 examId = examResponse.body.id;
             });
         });
@@ -98,14 +90,14 @@ describe('Test Exam creation/deletion', () => {
             courseManagement.openExamsOfCourse(course.shortName!);
             examManagement.getExamSelector(examData.title).should('exist');
             examManagement.openExam(examId);
-            examDetailsPage.deleteExam(examData.title);
+            examDetails.deleteExam(examData.title);
             examManagement.getExamSelector(examData.title).should('not.exist');
         });
     });
 
     after(() => {
         if (course) {
-            courseManagementRequests.deleteCourse(course.id!);
+            courseManagementRequest.deleteCourse(course.id!);
         }
     });
 });

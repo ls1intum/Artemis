@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -17,6 +18,7 @@ import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.User;
 
 @Entity
 @Table(name = "exam")
@@ -371,6 +373,11 @@ public class Exam extends DomainObject {
 
     public Set<ExamUser> getExamUsers() {
         return examUsers;
+    }
+
+    @JsonIgnore
+    public Set<User> getRegisteredUsers() {
+        return this.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
     }
 
     public void setExamUsers(Set<ExamUser> examUsers) {
