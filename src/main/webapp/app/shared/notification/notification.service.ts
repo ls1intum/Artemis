@@ -30,8 +30,6 @@ import { RouteComponents } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { TutorialGroupsNotificationService } from 'app/course/tutorial-groups/services/tutorial-groups-notification.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { translationNotFoundMessage } from 'app/core/config/translation.config';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -48,7 +46,6 @@ export class NotificationService {
         private courseManagementService: CourseManagementService,
         private serializer: UrlSerializer,
         private tutorialGroupsNotificationService: TutorialGroupsNotificationService,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
     ) {
         this.initNotificationObserver();
     }
