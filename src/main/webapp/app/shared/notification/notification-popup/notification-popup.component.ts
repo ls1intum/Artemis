@@ -74,15 +74,11 @@ export class NotificationPopupComponent implements OnInit {
     // we use this method instead of the regular translation pipe to be able to also display legacy notifications that were created
     // before it was possible to translate notifications
     getNotificationTitleTranslation(notification: Notification): string {
-        if (notification.textIsPlaceholder) {
-            const translation = this.artemisTranslatePipe.transform(notification.title);
-            if (translation.includes(translationNotFoundMessage)) {
-                return notification.title ? notification.title : 'No title found';
-            }
-            return translation;
-        } else {
+        const translation = this.artemisTranslatePipe.transform(notification.title);
+        if (translation.includes(translationNotFoundMessage)) {
             return notification.title ? notification.title : 'No title found';
         }
+        return translation;
     }
 
     // we use this method instead of the regular translation pipe to be able to also display legacy notifications that were created
