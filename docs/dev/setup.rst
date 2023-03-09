@@ -59,9 +59,9 @@ MySQL Setup
 The required Artemis schema will be created / updated automatically at startup time of the
 server application.
 
-You have to run a database on your local machine to be able to start Artemis.  
+You have to run a database on your local machine to be able to start Artemis.
 
-We recommend to start the database in a docker container. You can run the MySQL Database Server 
+We recommend to start the database in a docker container. You can run the MySQL Database Server
 using e.g. ``docker compose -f src/main/docker/mysql.yml up``.
 
 If you run your own MySQL server, make sure to specify the default ``character-set``
@@ -287,7 +287,7 @@ Dockerfile
 
 You can find the latest Artemis Dockerfile at ``src/main/docker/artemis/Dockerfile``.
 
-* The Dockerfile has multiple stages: A `build stage`, building the ``.war`` file, and a `runtime stage` with minimal
+* The Dockerfile has `multiple stages <https://docs.docker.com/build/building/multi-stage/>`__: A `build stage`, building the ``.war`` file, and a `runtime stage` with minimal
   dependencies just for running artemis.
 
 * The Dockerfile defines three Docker volumes (at the specified paths inside the container):
