@@ -274,39 +274,4 @@ export class NotificationService {
     private initNotificationObserver(): void {
         this.notificationObserver = new ReplaySubject<Notification>();
     }
-
-    // we use this method instead of the regular translation pipe to be able to also display legacy notifications that were created
-    // before it was possible to translate notifications
-    getNotificationTitleTranslation(notification: Notification): string {
-        if (notification.textIsPlaceholder) {
-            let translation = this.artemisTranslatePipe.transform(notification.title);
-            if (translation.includes(translationNotFoundMessage)) {
-                return notification.title ? notification.title : 'No title found';
-            }
-            return translation;
-        } else {
-            return notification.title ? notification.title : 'No title found';
-        }
-    }
-
-    // we use this method instead of the regular translation pipe to be able to also display legacy notifications that were created
-    // before it was possible to translate notifications
-    getNotificationTextTranslation(notification: Notification): string {
-        if (notification.textIsPlaceholder) {
-            let translation = this.artemisTranslatePipe.transform(notification.text, this.getParsedPlaceholderValues(notification));
-            if (translation.includes(translationNotFoundMessage)) {
-                return notification.text ? notification.text : 'No text found';
-            }
-            return translation;
-        } else {
-            return notification.text ? notification.text : 'No text found';
-        }
-    }
-
-    private getParsedPlaceholderValues(notification: Notification): string[] {
-        if (notification.placeholderValues) {
-            return JSON.parse(notification.placeholderValues);
-        }
-        return [];
-    }
 }

@@ -16,6 +16,8 @@ import { Setting } from 'app/shared/user-settings/user-settings.model';
 import { faArchive, faBell, faCircleNotch, faCog, faEye, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { SessionStorageService } from 'ngx-webstorage';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { translationNotFoundMessage } from 'app/core/config/translation.config';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificationSideBar';
 export const LAST_READ_STORAGE_KEY = 'lastNotificationRead';
@@ -64,6 +66,7 @@ export class NotificationSidebarComponent implements OnInit {
         private notificationSettingsService: NotificationSettingsService,
         private sessionStorageService: SessionStorageService,
         private changeDetector: ChangeDetectorRef,
+        private artemisTranslatePipe: ArtemisTranslatePipe,
     ) {}
 
     /**
@@ -161,12 +164,39 @@ export class NotificationSidebarComponent implements OnInit {
         });
     }
 
+    // we use this method instead of the regular translation pipe to be able to also display legacy notifications that were created
+    // before it was possible to translate notifications
     getNotificationTitleTranslation(notification: Notification): string {
-        return this.notificationService.getNotificationTitleTranslation(notification);
+        if (notification.textIsPlaceholder) {
+            let translation = this.artemisTranslatePipe.transform(notification.title);
+            if (translation.includes(translationNotFoundMessage)) {
+                return notification.title ? notification.title : 'No title found';
+            }
+            return translation;
+        } else {
+            return notification.title ? notification.title : 'No title found';
+        }
     }
 
+    // we use this method instead of the regular translation pipe to be able to also display legacy notifications that were created
+    // before it was possible to translate notifications
     getNotificationTextTranslation(notification: Notification): string {
-        return this.notificationService.getNotificationTextTranslation(notification);
+        if (notification.textIsPlaceholder) {
+            let translation = this.artemisTranslatePipe.transform(notification.text, this.getParsedPlaceholderValues(notification));
+            if (translation.includes(translationNotFoundMessage)) {
+                return notification.text ? notification.text : 'No text found';
+            }
+            return translation;
+        } else {
+            return notification.text ? notification.text : 'No text found';
+        }
+    }
+
+    private getParsedPlaceholderValues(notification: Notification): string[] {
+        if (notification.placeholderValues) {
+            return JSON.parse(notification.placeholderValues);
+        }
+        return [];
     }
 
     private loadNotifications(): void {
