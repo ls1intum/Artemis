@@ -65,7 +65,7 @@ describe('StudentExamDetailComponent', () => {
         exam = {
             course,
             id: 1,
-            examUsers: [student],
+            examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...student, user: student }],
             visibleDate: dayjs().add(120, 'seconds'),
             startDate: dayjs().add(200, 'seconds'),
             endDate: dayjs().add(7400, 'seconds'),
