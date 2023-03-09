@@ -88,7 +88,7 @@ void postBuildTasks() {
     sh '''
     rm -rf results
     mkdir results
-    cp build/test-results/test/*.xml $WORKSPACE/results/ || true
+    cp target/surefire-reports/*.xml $WORKSPACE/results/ || true
     sed -i 's/[^[:print:]]/�/g' $WORKSPACE/results/*.xml || true
     '''
 }
