@@ -65,6 +65,8 @@
             <div *ngIf="activeTab == 'test-cases'">
                 <div class="grading-table-layout">
                     <div class="col-7">
+                        <jhi-configure-grading-task [exercise]="programmingExercise"></jhi-configure-grading-task>
+
                         <div class="d-flex justify-content-between mb-3">
                             <div>
                                 <h2 class="mb-1 fw-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.title">Test Cases</h2>

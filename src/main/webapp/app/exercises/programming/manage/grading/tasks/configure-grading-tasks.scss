@@ -1,0 +1,7 @@
+.task__table__head {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 0.5rem;
+    margin-left: 2rem;
+    padding: 1rem;
+}

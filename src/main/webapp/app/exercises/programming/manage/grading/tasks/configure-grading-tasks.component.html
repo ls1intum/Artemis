@@ -1,0 +1,73 @@
+<h2 class="mb-1 fw-medium">Tasks</h2>
+
+<div class="task__table__head">
+    <div class="d-flex">
+        <p>{{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.testName' | artemisTranslate }}</p>
+    </div>
+
+    <div class="d-flex">
+        {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.weight' | artemisTranslate }}
+        <fa-icon
+            [icon]="faQuestionCircle"
+            class="text-secondary ms-2"
+            placement="bottom auto"
+            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.weight' | artemisTranslate"
+        ></fa-icon>
+    </div>
+
+    <div class="d-flex">
+        {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.bonusMultiplier' | artemisTranslate }}
+        <fa-icon
+            [icon]="faQuestionCircle"
+            class="text-secondary ms-2"
+            placement="bottom auto"
+            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.bonusMultiplier' | artemisTranslate"
+        ></fa-icon>
+    </div>
+
+    <div class="d-flex">
+        {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.bonusPoints' | artemisTranslate }}
+        <fa-icon
+            [icon]="faQuestionCircle"
+            class="text-secondary ms-2"
+            placement="bottom auto"
+            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.bonusPoints' | artemisTranslate"
+        ></fa-icon>
+    </div>
+
+    <div class="d-flex">
+        {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.visibility' | artemisTranslate }}
+        <fa-icon
+            [icon]="faQuestionCircle"
+            class="text-secondary ms-2"
+            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.visibility' | artemisTranslate"
+            placement="bottom auto"
+        ></fa-icon>
+    </div>
+
+    <div class="d-flex">
+        {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.resultingPoints' | artemisTranslate }}
+        <fa-icon
+            [icon]="faQuestionCircle"
+            class="text-secondary ms-2"
+            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.points' | artemisTranslate"
+            placement="bottom auto"
+        ></fa-icon>
+    </div>
+
+    <div class="d-flex">
+        {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.testType' | artemisTranslate }}
+        <fa-icon
+            [icon]="faQuestionCircle"
+            class="text-secondary ms-2"
+            placement="bottom auto"
+            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.type' | artemisTranslate"
+        ></fa-icon>
+    </div>
+
+    <div class="d-flex">
+        {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.passedPercent' | artemisTranslate }}
+    </div>
+</div>
+
+<jhi-programming-exercise-task *ngFor="let task of tasks" [task]="task"></jhi-programming-exercise-task>
