@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service.notifications.push_notifications;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +44,7 @@ public class ApplePushNotificationService extends PushNotificationService {
     }
 
     @Override
+    @Async
     public void sendNotification(Notification notification, List<User> users, Object notificationSubject) {
         super.sendNotification(notification, users, notificationSubject);
     }
@@ -51,9 +54,14 @@ public class ApplePushNotificationService extends PushNotificationService {
         RestTemplateConfiguration restTemplateConfiguration = new RestTemplateConfiguration();
         RestTemplate restTemplate = restTemplateConfiguration.restTemplate();
 
-        for (RelayNotificationRequest request : requests) {
-            sendRelayRequest(restTemplate, request, relayServerBaseUrl);
-        }
+        var threadPool = Executors.newFixedThreadPool(10);
+        var futures = requests.stream().map(request -> CompletableFuture.runAsync(() -> sendRelayRequest(restTemplate, request, relayServerBaseUrl))).toList()
+                .toArray(new CompletableFuture<?>[requests.size()]);
+
+        CompletableFuture.allOf(futures).thenApply((empty) -> {
+            threadPool.shutdown();
+            return null;
+        });
     }
 
     @Async
