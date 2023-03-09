@@ -339,28 +339,19 @@ You can find the latest Artemis Dockerfile at ``src/main/docker/artemis/Dockerfi
 Debugging with Docker
 """""""""""""""""""""
 
-| The Docker containers have the possibility to enable Java Remote Debugging via environment variables.
+| The Docker containers have the possibility to enable Java Remote Debugging via Java environment variables.
 | Java Remote Debugging allows you to use your preferred debugger connected to port 5005.
-  For IntelliJ you can use the `Remote Java Debugging for Docker` being shipped in the git repository.
+  For IntelliJ you can use the `Remote Java Debugging for Docker` profile being shipped in the git repository.
 
-With the following environment variables you can configure the Remote Java Debugging inside the docker container:
+With the following Java environment variable you can configure the Remote Java Debugging inside a container:
 
-.. list-table::
-   :header-rows: 1
+::
 
-   * - environment variable
-     - description
-     - possibles values
-   * - | JAVA_REMOTE_DEBUG
-     - | enables or disables the Java Remote Debugging
-       | in the Docker container
-     - | ``true`` to enable
-       | ``false`` (default) to disable
-   * - | JAVA_REMOTE_DEBUG_SUSPEND
-     - | changes the start behaviour of the Java application,
-       | making it possible to suspend it until the debugger started
-     - | ``y`` to suspend the startup of the Java application
-       | ``n`` (default) to start the application right away
+   _JAVA_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+
+| This is already preset in the Docker Compose **Artemis-Dev-MySQL** Setup.
+| For issues at the startup you might have to suspend the java command until a Debugger connected.
+  This is possible by setting ``suspend=y``.
 
 
 Run the server via a run configuration in IntelliJ

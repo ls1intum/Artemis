@@ -20,7 +20,6 @@ services:
         # environments can also be used for custom overrides (alternative to application-local.yml)
         # the following environments are necessary for docker images orchestrated by docker compose
         environment:
-            _JAVA_OPTIONS: -Xmx5120m -Xms2560m
             SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,prod,docker
         healthcheck:
             test: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1

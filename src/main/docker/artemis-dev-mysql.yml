@@ -18,7 +18,9 @@ services:
         expose:
             - "5005"
         environment:
-            JAVA_REMOTE_DEBUG: true
+            # The following enables the Java Remote Debugging port. More infos in the documentation:
+            # https://docs.artemis.cit.tum.de/dev/setup.html#debugging-with-docker
+            _JAVA_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005
             SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,dev,docker
         depends_on:
             mysql:
