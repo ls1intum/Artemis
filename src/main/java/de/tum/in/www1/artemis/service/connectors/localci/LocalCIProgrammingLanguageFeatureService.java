@@ -17,7 +17,7 @@ public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguag
 
     public LocalCIProgrammingLanguageFeatureService() {
         // Must be extended once a new programming language is added
-        programmingLanguageFeatures.put(EMPTY, new ProgrammingLanguageFeature(EMPTY, false, false, false, false, false, List.of(), false, false));
+        // Local CI is not supporting EMPTY at the moment.
         programmingLanguageFeatures.put(JAVA, new ProgrammingLanguageFeature(JAVA, false, false, true, true, false, List.of(PLAIN_GRADLE, GRADLE_GRADLE), false, false));
         // Local CI is not supporting Python at the moment.
         // Local CI is not supporting C at the moment.

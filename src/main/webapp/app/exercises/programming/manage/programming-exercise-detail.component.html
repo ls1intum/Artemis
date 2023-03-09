@@ -408,17 +408,23 @@
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateBuildPlanId">Template Build Plan Id</span></dt>
                 <dd>
                     <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.buildPlanId">
-                        <a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation.buildPlanUrl }}">
+                        <a *ngIf="!localVCEnabled; else noLinkBuildPlanId" target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation.buildPlanUrl }}">
                             {{ programmingExercise.templateParticipation.buildPlanId }}
                         </a>
+                        <ng-template #noLinkBuildPlanId>
+                            {{ programmingExercise.templateParticipation.buildPlanId }}
+                        </ng-template>
                     </span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.solutionBuildPlanId">Solution Build Plan Id</span></dt>
                 <dd>
                     <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.buildPlanId">
-                        <a target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation.buildPlanUrl }}">
+                        <a *ngIf="!localVCEnabled; else noLinkBuildPlanId" target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation.buildPlanUrl }}">
                             {{ programmingExercise.solutionParticipation.buildPlanId }}
                         </a>
+                        <ng-template #noLinkBuildPlanId>
+                            {{ programmingExercise.solutionParticipation.buildPlanId }}
+                        </ng-template>
                     </span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Sequential Test Runs</span></dt>
