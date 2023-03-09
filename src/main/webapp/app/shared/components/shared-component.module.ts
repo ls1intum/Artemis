@@ -17,6 +17,8 @@ import { StartPracticeModeButtonComponent } from 'app/shared/components/start-pr
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
 import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
+import { ExerciseImportTabsComponent } from 'app/exercises/shared/import/exercise-import-tabs.component';
+import { ProgrammingExerciseImportFromFileComponent } from 'app/exercises/shared/import/from-file/programming-exercise-import-from-file.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisCoursesRoutingModule, FeatureToggleModule, ClipboardModule],
@@ -36,6 +38,8 @@ import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-im
         NotReleasedTagComponent,
         DocumentationButtonComponent,
         ExerciseImportComponent,
+        ExerciseImportTabsComponent,
+        ProgrammingExerciseImportFromFileComponent,
     ],
     exports: [
         ButtonComponent,
@@ -52,6 +56,8 @@ import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-im
         NotReleasedTagComponent,
         DocumentationButtonComponent,
         ExerciseImportComponent,
+        ExerciseImportTabsComponent,
+        ProgrammingExerciseImportFromFileComponent,
     ],
 })
 export class ArtemisSharedComponentModule {}

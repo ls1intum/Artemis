@@ -2,7 +2,6 @@ import { Component, ContentChild, Input, OnDestroy, OnInit, TemplateRef } from '
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
@@ -24,6 +23,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { faBook, faCheckDouble, faDownload, faFileSignature, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ExerciseImportTabsComponent } from 'app/exercises/shared/import/exercise-import-tabs.component';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -167,10 +167,16 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     openImportModal() {
-        const modalRef = this.modalService.open(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        const modalRef = this.modalService.open(ExerciseImportTabsComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
+        modalRef.componentInstance.courseId = this.courseId;
         modalRef.result.then((result: ProgrammingExercise) => {
-            this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import', result.id]);
+            //when the file is uploaded we set the id to null.
+            if (result.id === undefined) {
+                this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import-from-file']);
+            } else {
+                this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import', result.id]);
+            }
         });
     }
 

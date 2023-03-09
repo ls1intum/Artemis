@@ -48,6 +48,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     auxiliaryRepositoryNamedCorrectly: boolean;
     submitButtonTitle: string;
     isImport: boolean;
+    isImportFromFile: boolean;
     isEdit: boolean;
     isExamMode: boolean;
     hasUnsavedChanges = false;
@@ -241,7 +242,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed && language === ProgrammingLanguage.HASKELL;
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
-        if (this.programmingExercise.id === undefined) {
+        if (this.programmingExercise.id === undefined && !this.isImportFromFile) {
             this.loadProgrammingLanguageTemplate(language);
             // Rerender the instructions as the template has changed.
             this.rerenderSubject.next();
@@ -343,13 +344,18 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
         });
 
-        // If it is an import, just get the course, otherwise handle the edit and new cases
+        // If it is an import from this instance, just get the course, otherwise handle the edit and new cases
         this.activatedRoute.url
             .pipe(
-                tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import'))),
+                tap((segments) => {
+                    this.isImport = segments.some((segment) => segment.path === 'import');
+                    this.isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
+                }),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
-                    if (this.isImport) {
+                    if (this.isImportFromFile) {
+                        this.createProgrammingExerciseForImportFromFile(params);
+                    } else if (this.isImport) {
                         this.createProgrammingExerciseForImport(params);
                     } else {
                         if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
@@ -377,7 +383,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                     }
 
                     // Set submit button text depending on component state
-                    if (this.isImport) {
+                    if (this.isImport || this.isImportFromFile) {
                         this.submitButtonTitle = 'entity.action.import';
                     } else if (this.programmingExercise.id) {
                         this.isEdit = true;
@@ -397,7 +403,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         // If an exercise is created, load our readme template so the problemStatement is not empty
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
-        if (this.programmingExercise.id) {
+        if (this.programmingExercise.id || this.isImportFromFile) {
             this.problemStatementLoaded = true;
         }
         // Select the correct pattern
@@ -528,8 +534,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 message: 'artemisApp.programmingExercise.auxiliaryRepository.editedWarning',
             });
         }
-
-        if (this.isImport) {
+        if (this.isImportFromFile) {
+            this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise));
+        } else if (this.isImport) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans, this.updateTemplate));
         } else if (this.programmingExercise.id !== undefined) {
             const requestOptions = {} as any;
@@ -876,4 +883,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             });
         }
     }
+
+    private createProgrammingExerciseForImportFromFile(params: Params) {}
 }

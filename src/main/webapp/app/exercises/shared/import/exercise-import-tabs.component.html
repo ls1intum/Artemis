@@ -1,0 +1,16 @@
+<ul ngbNav #nav="ngbNav" [(activeId)]="active" class="nav-tabs">
+    <li [ngbNavItem]="1">
+        <a ngbNavLink>From Instance</a>
+        <ng-template ngbNavContent>
+            <jhi-exercise-import [exerciseType]="exerciseType" />
+        </ng-template>
+    </li>
+    <li [ngbNavItem]="2">
+        <a ngbNavLink>From File</a>
+        <ng-template ngbNavContent>
+            <jhi-exercise-import-from-file [exerciseType]="exerciseType" [courseId]="courseId" />
+        </ng-template>
+    </li>
+</ul>
+
+<div [ngbNavOutlet]="nav" class="mt-2"></div>

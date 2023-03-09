@@ -148,10 +148,12 @@
                     <td class="d-md-table-cell">{{ programmingExercise.publishBuildPlanUrl }}</td>
                     <td class="d-md-table-cell">
                         <div class="d-flex justify-content-between">
-                            {{ 'artemisApp.programmingExercise.offlineIde' | artemisTranslate }}: {{ programmingExercise.allowOfflineIde }}
+                            {{ 'artemisApp.programmingExercise.offlineIde' | artemisTranslate }}
+                            : {{ programmingExercise.allowOfflineIde }}
                         </div>
                         <div class="d-flex justify-content-between">
-                            {{ 'artemisApp.programmingExercise.onlineEditor' | artemisTranslate }}: {{ programmingExercise.allowOnlineEditor }}
+                            {{ 'artemisApp.programmingExercise.onlineEditor' | artemisTranslate }}
+                            : {{ programmingExercise.allowOnlineEditor }}
                         </div>
                     </td>
                     <td class="d-md-table-cell" *ngIf="course.presentationScore !== 0">{{ programmingExercise.presentationScoreEnabled }}</td>

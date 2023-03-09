@@ -31,6 +31,13 @@
                 "showTemplateSubmissions": "Show Template Submissions",
                 "showSolutionSubmissions": "Show Solution Submissions"
             },
+            "importFromFile": {
+                "title": "Import Programming Exercise from File",
+                "description": "The file must be a zip file containing the exercise configuration in JSON format at the root level and a zip file for each of the repositories (template, solution, tests). You can get such a file by exporting a programming exercise.",
+                "uploadForImport": "Upload Programming Exercise for Import",
+                "fileTooBigError": "The file {{ fileName }} is too large. The maximum file size is 20 MB.",
+                "fileTypeNotSupportedError": "The file type is not supported. Please select a file with the extension .zip."
+            },
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
             "unsavedChangesProjectTypeChange": "The problem statement still contains unsaved changes. Do you really want to change the project type?",
             "templateRepositoryUrl": "Template Repository Url",
