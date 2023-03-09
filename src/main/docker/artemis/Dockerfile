@@ -35,10 +35,6 @@ RUN mkdir -p /opt/artemis/config /opt/artemis/data /opt/artemis/public/content \
   && chown -R artemis:artemis /opt/artemis
 USER artemis:artemis
 
-# Insert run_artemis.sh which sets Java options
-COPY --chown=artemis:artemis src/main/docker/artemis/run_artemis.sh /run_artemis.sh
-RUN chmod 774 /run_artemis.sh
-
 # Copy Artemis.war to execution location
 WORKDIR /opt/artemis
 ARG WAR_PATH=build/libs

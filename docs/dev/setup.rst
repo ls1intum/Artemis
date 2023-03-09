@@ -324,9 +324,6 @@ You can find the latest Artemis Dockerfile at ``src/main/docker/artemis/Dockerfi
       This directory will be used for branding.
       You can specify a favicon, ``imprint.html``, and ``privacy_statement.html`` here.
 
-* The startup script is located at ``src/main/docker/artemis/run_artemis.sh`` and is as a wrapper to start
-  the artemis Java application.
-
 * The Dockerfile assumes that the mounted volumes are located on a file system with the following locale settings
   (see `#4439 <https://github.com/ls1intum/Artemis/issues/4439>`__ for more details):
 
