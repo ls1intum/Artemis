@@ -10,19 +10,19 @@ services:
     mysql:
         extends:
             #TODO: use standard version of mysql.yml after docker compose version is upgraded
-            file: mysql_compose_2_4.yml
+            file: ../mysql_compose_2_4.yml
             service: mysql
 
     artemis-app:
         extends:
             #TODO: use standard version of artemis.yml after docker compose version is upgraded
-            file: ./artemis/artemis_compose_2_4.yml
+            file: ../artemis/artemis_compose_2_4.yml
             service: artemis-app
         depends_on:
             mysql:
                 condition: service_healthy
         env_file:
-            - ../resources/config/docker-cypress-application-local.env
+            - ../../resources/config/docker-cypress-application-local.env
         environment:
             SPRING_PROFILES_ACTIVE: "artemis,bamboo,bitbucket,jira,prod,docker"
 
