@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationNotificationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 
-public class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "conversationnotificationservice";
 
