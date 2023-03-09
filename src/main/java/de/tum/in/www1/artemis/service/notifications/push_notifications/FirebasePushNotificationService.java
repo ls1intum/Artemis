@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service.notifications.push_notifications;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,9 +53,15 @@ public class FirebasePushNotificationService extends PushNotificationService {
     void sendNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayBaseUrl) {
         // The relay server accepts at most 500 messages per batch
         List<List<RelayNotificationRequest>> batches = Lists.partition(requests, 500);
-        for (List<RelayNotificationRequest> batch : batches) {
-            scheduleSendBatch(batch, relayBaseUrl);
-        }
+
+        var threadPool = Executors.newFixedThreadPool(10);
+        var futures = batches.stream().map(batch -> CompletableFuture.runAsync(() -> scheduleSendBatch(batch, relayBaseUrl))).toList()
+                .toArray(new CompletableFuture<?>[requests.size()]);
+
+        CompletableFuture.allOf(futures).thenApply((empty) -> {
+            threadPool.shutdown();
+            return null;
+        });
     }
 
     @Async
