@@ -31,6 +31,10 @@ services:
         ports:
             - 80:80
             - 443:443
+        # TODO: for now the artemis-app service needs to be started, otherwise there are problems with name resolution in docker
+        depends_on:
+            artemis-app:
+                condition: service_started
         healthcheck:
             test: service nginx status || exit 1
             start_period: 30s
