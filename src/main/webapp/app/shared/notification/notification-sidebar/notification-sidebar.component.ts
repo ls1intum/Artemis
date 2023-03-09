@@ -161,11 +161,12 @@ export class NotificationSidebarComponent implements OnInit {
         });
     }
 
-    getParsedPlaceholderValues(notification: Notification): string[] {
-        if (notification.placeholderValues) {
-            return JSON.parse(notification.placeholderValues);
-        }
-        return [];
+    getNotificationTitleTranslation(notification: Notification): string {
+        return this.notificationService.getNotificationTitleTranslation(notification);
+    }
+
+    getNotificationTextTranslation(notification: Notification): string {
+        return this.notificationService.getNotificationTextTranslation(notification);
     }
 
     private loadNotifications(): void {

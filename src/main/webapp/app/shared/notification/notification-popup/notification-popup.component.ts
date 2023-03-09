@@ -9,6 +9,7 @@ import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.
 import { AlertService } from 'app/core/util/alert.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faCheckDouble, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-notification-popup',
@@ -68,11 +69,12 @@ export class NotificationPopupComponent implements OnInit {
         }
     }
 
-    getParsedPlaceholderValues(notification: Notification): string[] {
-        if (notification.placeholderValues) {
-            return JSON.parse(notification.placeholderValues);
-        }
-        return [];
+    getNotificationTitleTranslation(notification: Notification): string {
+        return this.notificationService.getNotificationTitleTranslation(notification);
+    }
+
+    getNotificationTextTranslation(notification: Notification): string {
+        return this.notificationService.getNotificationTextTranslation(notification);
     }
 
     private notificationTargetRoute(notification: Notification): UrlTree | string {

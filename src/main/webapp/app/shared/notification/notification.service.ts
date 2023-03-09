@@ -30,6 +30,8 @@ import { RouteComponents } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { TutorialGroupsNotificationService } from 'app/course/tutorial-groups/services/tutorial-groups-notification.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { translationNotFoundMessage } from 'app/core/config/translation.config';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -46,6 +48,7 @@ export class NotificationService {
         private courseManagementService: CourseManagementService,
         private serializer: UrlSerializer,
         private tutorialGroupsNotificationService: TutorialGroupsNotificationService,
+        private artemisTranslatePipe: ArtemisTranslatePipe,
     ) {
         this.initNotificationObserver();
     }
@@ -270,5 +273,40 @@ export class NotificationService {
      */
     private initNotificationObserver(): void {
         this.notificationObserver = new ReplaySubject<Notification>();
+    }
+
+    // we use this method instead of the regular translation pipe to be able to also display legacy notifications that were created
+    // before it was possible to translate notifications
+    getNotificationTitleTranslation(notification: Notification): string {
+        if (notification.textIsPlaceholder) {
+            let translation = this.artemisTranslatePipe.transform(notification.title);
+            if (translation.includes(translationNotFoundMessage)) {
+                return notification.title ? notification.title : 'No title found';
+            }
+            return translation;
+        } else {
+            return notification.title ? notification.title : 'No title found';
+        }
+    }
+
+    // we use this method instead of the regular translation pipe to be able to also display legacy notifications that were created
+    // before it was possible to translate notifications
+    getNotificationTextTranslation(notification: Notification): string {
+        if (notification.textIsPlaceholder) {
+            let translation = this.artemisTranslatePipe.transform(notification.text, this.getParsedPlaceholderValues(notification));
+            if (translation.includes(translationNotFoundMessage)) {
+                return notification.text ? notification.text : 'No text found';
+            }
+            return translation;
+        } else {
+            return notification.text ? notification.text : 'No text found';
+        }
+    }
+
+    private getParsedPlaceholderValues(notification: Notification): string[] {
+        if (notification.placeholderValues) {
+            return JSON.parse(notification.placeholderValues);
+        }
+        return [];
     }
 }
