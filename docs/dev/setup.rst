@@ -355,7 +355,7 @@ With the following environment variables you can configure the Remote Java Debug
      - | enables or disables the Java Remote Debugging
        | in the Docker container
      - | ``true`` to enable
-       | ``false`` to disable
+       | ``false`` (default) to disable
    * - | JAVA_REMOTE_DEBUG_SUSPEND
      - | changes the start behaviour of the Java application,
        | making it possible to suspend it until the debugger started
