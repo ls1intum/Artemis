@@ -12,7 +12,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -272,7 +271,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
         exam2 = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam2.getId());
-        var usersOfExam = exam2.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
+        var usersOfExam = exam2.getRegisteredUsers();
         usersOfExam.add(instructor);
 
         var programmingExercise = database.getFirstExerciseWithType(exam2, ProgrammingExercise.class);
@@ -1937,7 +1936,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
-        Set<User> users = exam2.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
+        Set<User> users = exam2.getRegisteredUsers();
         mockDeleteProgrammingExercise(programmingExercise, users);
 
         request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);

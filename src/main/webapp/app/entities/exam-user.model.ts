@@ -10,10 +10,10 @@ export class ExamUser implements BaseEntity {
     public plannedSeat?: string;
     public signingImagePath?: string;
     public studentImagePath?: string;
-    public didCheckImage?: boolean;
-    public didCheckName?: boolean;
-    public didCheckLogin?: boolean;
-    public didCheckRegistrationNumber?: boolean;
+    public didCheckImage = false; // default value
+    public didCheckName = false; // default value
+    public didCheckLogin = false; // default value
+    public didCheckRegistrationNumber = false; // default value
     public user?: User;
     public exam?: Exam;
 }
