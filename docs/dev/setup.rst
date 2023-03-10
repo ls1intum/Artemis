@@ -294,7 +294,7 @@ You can find the latest Artemis Dockerfile at ``src/main/docker/artemis/Dockerfi
 
     * **/opt/artemis/config:**
 
-      This will be used to store additional configuration of Artemis in YAML files.
+      This can be used to store additional configuration of Artemis in YAML files.
       The usage is optional and we recommend using the environment files for overriding your custom configurations
       instead of using ``src/main/resources/application-local.yml`` as such an additional configuration file.
       The other configurations like ``src/main/resources/application.yml``, ... are built into the ``.war`` file and
@@ -680,6 +680,7 @@ In the directory ``src/main/docker/`` you can find the following *docker compose
   (see `Gitlab Server Quickstart Guide <#gitlab-server-quickstart>`__ for the configuration of this setup)
 * ``monitoring.yml``: **Prometheus-Grafana** Setup containing a Prometheus and Grafana instance
 * ``mysql.yml``: **MySQL** Setup containing a MySQL DB instance
+* ``nginx.yml``: **Nginx** Setup containing a preconfigured Nginx instance
 * ``postgresql.yml``: **PostgreSQL** Setup containing a PostgreSQL DB instance
 
 Two example commands to run such setups:
@@ -698,6 +699,7 @@ is defined in the following files:
 
 * ``artemis/artemis.yml``: **Artemis Service**
 * ``mysql.yml``: **MySQL DB Service**
+* ``nginx.yml``: **Nginx Service**
 * ``postgresql.yml``: **PostgreSQL DB Service**
 * ``gitlab/gitlab.yml``: **GitLab Service**
 * ``jenkins/jenkins.yml``: **Jenkins Service**
@@ -783,6 +785,7 @@ Other useful commands
 - Stop a service: ``docker compose stop <name of the service>`` (restart via
   ``docker compose start <name of the service>``)
 - Restart a service: ``docker compose restart <name of the service>``
+- Remove all local Docker containers: ``docker container rm $(docker ps -a -q)``
 - Remove all local Artemis Docker images: ``docker rmi $(docker images -q ghcr.io/ls1intum/artemis)``
 
 ------------------------------------------------------------------------------------------------------------------------
