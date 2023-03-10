@@ -10,6 +10,8 @@ import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/co
 import { metisExercise, metisLecture } from '../../helpers/sample/metis-sample-data';
 import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 import { ReferenceType } from 'app/shared/metis/metis.util';
+import { ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
+import { MockProfileToggleServiceService } from '../../helpers/mocks/service/mock-profile-toggle-service.service';
 
 describe('Exercise Lecture Attachment Reference Commands', () => {
     let comp: MarkdownEditorComponent;
@@ -18,17 +20,22 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
     let lectureReferenceCommand: LectureAttachmentReferenceCommand;
 
     let metisService: MetisService;
+    let profileToggleService: ProfileToggleService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, AceEditorModule, ArtemisMarkdownEditorModule],
-            providers: [{ provide: MetisService, useClass: MockMetisService }],
+            providers: [
+                { provide: MetisService, useClass: MockMetisService },
+                { provide: ProfileToggleService, useClass: MockProfileToggleServiceService },
+            ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(MarkdownEditorComponent);
                 comp = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
+                profileToggleService = TestBed.inject(ProfileToggleService);
             });
     });
 
@@ -44,7 +51,7 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
     });
 
     it('should initialize lecture attachment reference command correctly', () => {
-        lectureReferenceCommand = new LectureAttachmentReferenceCommand(metisService);
+        lectureReferenceCommand = new LectureAttachmentReferenceCommand(metisService, profileToggleService);
         expect(lectureReferenceCommand.getValues()).toEqual(
             metisService.getCourse().lectures!.map((lecture) => ({
                 id: lecture.id!.toString(),
@@ -71,7 +78,7 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
     });
 
     it('should insert correct reference link for lecture to markdown editor on execute', () => {
-        lectureReferenceCommand = new LectureAttachmentReferenceCommand(metisService);
+        lectureReferenceCommand = new LectureAttachmentReferenceCommand(metisService, profileToggleService);
 
         comp.defaultCommands = [lectureReferenceCommand];
         fixture.detectChanges();
@@ -84,7 +91,7 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
     });
 
     it('should insert correct reference link for attachment to markdown editor on execute', () => {
-        lectureReferenceCommand = new LectureAttachmentReferenceCommand(metisService);
+        lectureReferenceCommand = new LectureAttachmentReferenceCommand(metisService, profileToggleService);
 
         comp.defaultCommands = [lectureReferenceCommand];
         fixture.detectChanges();
