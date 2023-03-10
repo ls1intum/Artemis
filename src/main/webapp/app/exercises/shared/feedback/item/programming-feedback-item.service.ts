@@ -127,7 +127,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
 
         return {
             type: feedback.isSubsequent ? 'Subsequent' : 'Reviewer',
-            name: showTestDetails ? this.translateService.instant('artemisApp.course.tutor') : this.translateService.instant('artemisApp.result.detail.feedback'),
+            name: showTestDetails ? this.translateService.instant('artemisApp.course.reviewer') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text,
             text: gradingInstruction.feedback + (feedback.detailText ? `\n${feedback.detailText}` : ''),
             positive: feedback.positive,
@@ -144,7 +144,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
     private createTutorFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         return {
             type: 'Reviewer',
-            name: showTestDetails ? this.translateService.instant('artemisApp.course.tutor') : this.translateService.instant('artemisApp.result.detail.feedback'),
+            name: showTestDetails ? this.translateService.instant('artemisApp.course.reviewer') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text,
             text: feedback.detailText,
             positive: feedback.positive,
