@@ -43,6 +43,7 @@ services:
                 condition: service_started
         volumes:
             - ../nginx/artemis-nginx-cypress.conf:/etc/nginx/includes/artemis-nginx-cypress.conf:ro
+            - ../nginx/artemis-upstream-cypress.conf:/etc/nginx/includes/artemis-upstream.conf:ro
         ports:
             - 80:80
             - 443:443
