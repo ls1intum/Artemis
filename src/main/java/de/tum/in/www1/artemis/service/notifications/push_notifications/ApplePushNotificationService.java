@@ -56,7 +56,7 @@ public class ApplePushNotificationService extends PushNotificationService {
 
         var threadPool = Executors.newFixedThreadPool(10);
         var futures = requests.stream().map(request -> CompletableFuture.runAsync(() -> sendRelayRequest(restTemplate, request, relayServerBaseUrl))).toList()
-                .toArray(new CompletableFuture<?>[requests.size()]);
+                .toArray(new CompletableFuture[requests.size()]);
 
         CompletableFuture.allOf(futures).thenApply((empty) -> {
             threadPool.shutdown();
@@ -80,7 +80,7 @@ public class ApplePushNotificationService extends PushNotificationService {
             });
         }
         catch (RestClientException e) {
-            log.error("Could not send APNS notifications", e);
+            log.error("Could not send APNS notifications");
         }
     }
 
