@@ -13,6 +13,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
 import javax.xml.stream.XMLInputFactory;
@@ -41,6 +42,8 @@ import com.github.dockerjava.core.DockerClientConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
@@ -49,9 +52,15 @@ public class LocalCIBuildJobService {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIBuildJobService.class);
 
+    private final LocalCIBuildPlanService localCIBuildPlanService;
+
+    private final Optional<VersionControlService> versionControlService;
+
     private final String dockerConnectionUri;
 
-    public LocalCIBuildJobService() {
+    public LocalCIBuildJobService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService) {
+        this.localCIBuildPlanService = localCIBuildPlanService;
+        this.versionControlService = versionControlService;
         if (System.getProperty("os.name").toLowerCase().contains("windows")) {
             this.dockerConnectionUri = "tcp://localhost:2375";
         }
@@ -66,6 +75,9 @@ public class LocalCIBuildJobService {
     public LocalCIBuildResultNotificationDTO runBuildJob(ProgrammingExerciseParticipation participation, Path assignmentRepositoryPath, Path testRepositoryPath, Path scriptPath) {
         long timeNanoStart = System.nanoTime();
 
+        // Add "_BUILDING" to the build plan id to indicate that the build blan is currently building.
+        localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
+
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(dockerConnectionUri).build();
         DockerClient dockerClient = DockerClientBuilder.getInstance(config).build();
 
@@ -78,10 +90,11 @@ public class LocalCIBuildJobService {
             throw new LocalCIException("Project type must be either Maven or Gradle.");
         }
 
+        String branch = versionControlService.get().getOrRetrieveBranchOfParticipation(participation);
+
         // Create the container from the "ls1tum/artemis-maven-template:java17-13" image with the local paths to the Git repositories and the shell script bound to it.
         CreateContainerResponse container = dockerClient.createContainerCmd("ls1tum/artemis-maven-template:java17-13").withHostConfig(hostConfig)
-                // TODO: Replace with default branch for participation.
-                .withEnv("ARTEMIS_BUILD_TOOL=" + (projectType.isMaven() ? "maven" : "gradle"), "ARTEMIS_DEFAULT_BRANCH=main")
+                .withEnv("ARTEMIS_BUILD_TOOL=" + (projectType.isMaven() ? "maven" : "gradle"), "ARTEMIS_DEFAULT_BRANCH=" + branch)
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
@@ -128,20 +141,19 @@ public class LocalCIBuildJobService {
         try {
             // Get an input stream of the file in .git folder of the assignment repository and the test repository that contains the current commit hash of branch main.
             TarArchiveInputStream assignmentRepoTarInputStream = new TarArchiveInputStream(
-                    dockerClient.copyArchiveFromContainerCmd(container.getId(), "/repositories/assignment-repository/.git/refs/heads/main").exec());
+                    dockerClient.copyArchiveFromContainerCmd(container.getId(), "/repositories/assignment-repository/.git/refs/heads/" + branch).exec());
             assignmentRepoTarInputStream.getNextTarEntry();
             String assignmentRepoCommitHash = IOUtils.toString(assignmentRepoTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
             assignmentRepoTarInputStream.close();
 
             TarArchiveInputStream testRepoTarInputStream = new TarArchiveInputStream(
-                    dockerClient.copyArchiveFromContainerCmd(container.getId(), "/repositories/test-repository/.git/refs/heads/main").exec());
+                    dockerClient.copyArchiveFromContainerCmd(container.getId(), "/repositories/test-repository/.git/refs/heads/" + branch).exec());
             testRepoTarInputStream.getNextTarEntry();
             String testRepoCommitHash = IOUtils.toString(testRepoTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
             testRepoTarInputStream.close();
 
-            // TODO: Take default branch name from the participation.
-            assignmentVC = new LocalCIBuildResultNotificationDTO.LocalCIVCSDTO(assignmentRepoCommitHash, ASSIGNMENT_REPO_NAME, "main", List.of());
-            testVC = new LocalCIBuildResultNotificationDTO.LocalCIVCSDTO(testRepoCommitHash, TEST_REPO_NAME, "main", List.of());
+            assignmentVC = new LocalCIBuildResultNotificationDTO.LocalCIVCSDTO(assignmentRepoCommitHash, ASSIGNMENT_REPO_NAME, branch, List.of());
+            testVC = new LocalCIBuildResultNotificationDTO.LocalCIVCSDTO(testRepoCommitHash, TEST_REPO_NAME, branch, List.of());
         }
         catch (IOException e) {
             // Could not read commit hash from .git folder. Stop the container and return a build results that indicates that the build failed.
@@ -184,6 +196,9 @@ public class LocalCIBuildJobService {
         catch (IOException | XMLStreamException e) {
             throw new LocalCIException("Error while parsing test results", e);
         }
+
+        // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
+        localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
 
         log.info("Building and testing submission for repository {} took {}", participation.getRepositoryUrl(), TimeLogUtil.formatDurationFrom(timeNanoStart));
 
@@ -238,11 +253,6 @@ public class LocalCIBuildJobService {
                     throw new IllegalStateException("Expected testsuite element, but got " + xmlStreamReader.getLocalName());
                 }
 
-                // Extract the timestamp attribute from the "testsuite" node.
-                // TODO: Extract timestamp for maven (if even necessary).
-                // String timestamp = xmlStreamReader.getAttributeValue(null, "timestamp");
-                // timestamps.add(timestamp);
-
                 // Go through all testcase nodes.
                 while (xmlStreamReader.hasNext()) {
                     xmlStreamReader.next();
@@ -250,9 +260,6 @@ public class LocalCIBuildJobService {
                     if (xmlStreamReader.isStartElement() && xmlStreamReader.getLocalName().equals("testcase")) {
                         // Extract the name attribute from the "testcase" node.
                         String name = xmlStreamReader.getAttributeValue(null, "name");
-
-                        String methodName = ""; // TODO
-                        String className = ""; // TODO
 
                         // Check if there is a failure node inside the testcase node.
                         // Call next() until there is an end element (no failure node exists inside the testcase node) or a start element (failure node exists inside the
@@ -263,18 +270,17 @@ public class LocalCIBuildJobService {
                         }
                         if (xmlStreamReader.isStartElement() && xmlStreamReader.getLocalName().equals("failure")) {
                             // Extract the message attribute from the "failure" node.
-                            // TODO: Extract message for maven.
                             String error = xmlStreamReader.getAttributeValue(null, "message");
 
                             // Add the failed test to the list of failed tests.
-                            failedTests.add(new LocalCIBuildResultNotificationDTO.LocalCITestJobDTO(name, methodName, className, error != null ? List.of(error) : List.of()));
+                            failedTests.add(new LocalCIBuildResultNotificationDTO.LocalCITestJobDTO(name, "", "", error != null ? List.of(error) : List.of()));
 
                             // If there is at least one test case with a failure node, the build is not successful.
                             isBuildSuccessful = false;
                         }
                         else {
                             // Add the successful test to the list of successful tests.
-                            successfulTests.add(new LocalCIBuildResultNotificationDTO.LocalCITestJobDTO(name, methodName, className, List.of()));
+                            successfulTests.add(new LocalCIBuildResultNotificationDTO.LocalCITestJobDTO(name, "", "", List.of()));
                         }
                     }
                 }

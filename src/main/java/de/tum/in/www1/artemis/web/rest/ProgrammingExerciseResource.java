@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -71,6 +72,8 @@ public class ProgrammingExerciseResource {
     private final AuthorizationCheckService authCheckService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+
+    private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
     private final Optional<VersionControlService> versionControlService;
 
@@ -124,8 +127,9 @@ public class ProgrammingExerciseResource {
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
+            Optional<VersionControlService> versionControlService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
+            ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository,
             Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, CourseRepository courseRepository, GitService gitService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
@@ -138,6 +142,7 @@ public class ProgrammingExerciseResource {
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -310,6 +315,18 @@ public class ProgrammingExerciseResource {
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
+
+            if (Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
+                // Automatically trigger builds for the template and solution participation. For Bamboo and Jenkins, this happens automatically when publishing the build plans.
+                // At the moment this cannot happen at the same place for local CI (in the createBuildPlanForExercise method in the ContinuousIntegrationService), because the
+                // participation is modified during the execution of the build job
+                // which leads to errors when it happens inside the same @Transactional block that the participations are created in.
+                // This is why we need to trigger the builds here, after the participations where correctly created inside the programmingExerciseService.createProgrammingExercise
+                // method above.
+                continuousIntegrationTriggerService.get().triggerBuild(newProgrammingExercise.getTemplateParticipation());
+                continuousIntegrationTriggerService.get().triggerBuild(newProgrammingExercise.getSolutionParticipation());
+            }
+
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId())).body(newProgrammingExercise);
         }
         catch (IOException | URISyntaxException | GitAPIException | ContinuousIntegrationException e) {

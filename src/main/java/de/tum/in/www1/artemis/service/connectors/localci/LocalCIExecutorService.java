@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 
@@ -31,16 +32,20 @@ public class LocalCIExecutorService {
 
     private final ResourceLoaderService resourceLoaderService;
 
+    private final LocalCIBuildPlanService localCIBuildPlanService;
+
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCBasePath;
 
-    public LocalCIExecutorService(ExecutorService executorService, LocalCIBuildJobService localCIBuildJobService, ResourceLoaderService resourceLoaderService) {
+    public LocalCIExecutorService(ExecutorService executorService, LocalCIBuildJobService localCIBuildJobService, ResourceLoaderService resourceLoaderService,
+            LocalCIBuildPlanService localCIBuildPlanService) {
         this.executorService = executorService;
         this.localCIBuildJobService = localCIBuildJobService;
         this.resourceLoaderService = resourceLoaderService;
+        this.localCIBuildPlanService = localCIBuildPlanService;
     }
 
     /**
@@ -73,6 +78,10 @@ public class LocalCIExecutorService {
                 futureResult.completeExceptionally(e);
             }
         });
+
+        // Add "_QUEUED" to the build plan id to indicate that the build job is queued.
+        localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.QUEUED);
+
         return futureResult;
     }
 

@@ -22,8 +22,8 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
 
     private final boolean isPracticeRepository;
 
-    public LocalVCRepositoryUrl(String projectKey, String repositorySlug, URL localVCServerUrl) {
-        final String urlString = localVCServerUrl + buildRepositoryPath(projectKey, repositorySlug);
+    public LocalVCRepositoryUrl(String projectKey, String repositorySlug, URL localVCBaseUrl) {
+        final String urlString = localVCBaseUrl + buildRepositoryPath(projectKey, repositorySlug);
         try {
             this.uri = new URI(urlString);
         }

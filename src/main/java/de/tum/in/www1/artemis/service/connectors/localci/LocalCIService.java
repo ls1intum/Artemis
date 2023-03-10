@@ -1,13 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
-
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -18,9 +13,7 @@ import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
@@ -31,14 +24,9 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 @Profile("localci")
 public class LocalCIService extends AbstractContinuousIntegrationService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
-
-    private final LocalCITriggerService localCITriggerService;
-
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, LocalCITriggerService localCITriggerService) {
+            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
-        this.localCITriggerService = localCITriggerService;
     }
 
     @Override
@@ -47,13 +35,6 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
         // For Bamboo and Jenkins, this method is called for the template and the solution repository and creates and publishes a new build plan which results in a new build being
         // triggered.
         // For local CI, a build plan must not be created, because all the information for building a submission and running tests is contained in the participation.
-        // However, we trigger a build for the template and solution participation here so the creator of an exercise gets build results for both right after creating the exercise.
-        if (planKey.equals(TEMPLATE.getName())) {
-            localCITriggerService.triggerBuild(programmingExercise.getTemplateParticipation());
-        }
-        else if (planKey.equals(SOLUTION.getName())) {
-            localCITriggerService.triggerBuild(programmingExercise.getSolutionParticipation());
-        }
     }
 
     @Override
@@ -83,26 +64,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void deleteBuildPlan(String projectKey, String buildPlanId) {
-
-        var buildPlan = getBuildPlan(buildPlanId);
-        if (buildPlan == null) {
-            log.error("Cannot delete {}, because it does not exist!", buildPlanId);
-            return;
-        }
-
-        executeDelete("selectedBuilds", buildPlanId);
-        log.info("Delete bamboo build plan {} was successful.", buildPlanId);
-    }
-
-    /**
-     * NOTE: the REST call in this method fails silently with a 404 in case all build plans have already been deleted before
-     *
-     * @param projectKey the project which build plans should be retrieved
-     * @return a list of build plans
-     */
-    private List<LocalCIBuildPlan> getBuildPlans(String projectKey) {
-        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
-        return List.of();
+        // Not implemented for local CI. No build plans exist and thus no build plans can be deleted.
     }
 
     /**
@@ -112,27 +74,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public void deleteProject(String projectKey) {
-        log.info("Trying to delete local CI project {}", projectKey);
-
-        // TODO: check if the project actually exists, if not, we can immediately return
-
-        // in normal cases this list should be empty, because all build plans have been deleted before
-        final List<LocalCIBuildPlan> buildPlans = getBuildPlans(projectKey);
-        for (var buildPlan : buildPlans) {
-            try {
-                deleteBuildPlan(projectKey, buildPlan.key());
-            }
-            catch (Exception ex) {
-                log.error(ex.getMessage());
-            }
-        }
-
-        executeDelete("selectedProjects", projectKey);
-        log.info("Deleting local CI project {} was successful.", projectKey);
-    }
-
-    private void executeDelete(String elementKey, String elementValue) {
-        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
+        // Not implemented for local CI. No build plans exist and thus no projects exist that contain build plans.
     }
 
     /**
@@ -143,24 +85,19 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
-        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
+        if (participation.getBuildPlanId().endsWith(BuildStatus.QUEUED.name())) {
+            return BuildStatus.QUEUED;
+        }
+        else if (participation.getBuildPlanId().endsWith(BuildStatus.BUILDING.name())) {
+            return BuildStatus.BUILDING;
+        }
         return BuildStatus.INACTIVE;
-    }
-
-    /**
-     * get the build plan for the given planKey
-     *
-     * @param planKey the unique local CI build plan identifier
-     * @return the build plan
-     */
-    private LocalCIBuildPlan getBuildPlan(String planKey) {
-        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
-        return null;
     }
 
     @Override
     public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
+        // No build plans exist for local CI. Only return a plan name.
         final String cleanPlanName = getCleanPlanName(targetPlanName);
         return targetProjectKey + "-" + cleanPlanName;
     }
@@ -182,13 +119,14 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void enablePlan(String projectKey, String planKey) throws LocalCIException {
-        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
+        // Not implemented for local CI. No plans exist that must be enabled.
     }
 
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
             String newBranch, Optional<List<String>> optionalTriggeredByRepositories) throws LocalCIException {
-        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
+        // Not implemented for local CI. No build plans exist.
+        // When a student pushes to a repository, a build is triggered using the information contained in the participation which includes the relevant repository.
     }
 
     /**
@@ -200,7 +138,8 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public String getPlanKey(Object requestBody) throws LocalCIException {
-        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
+        // This method is called in the processNewProgrammingExerciseResult method of the ResultResource.
+        // It is thus never called for local CI as the local CI results directly go to the method processNewProgrammingExerciseResult in the ProgrammingExerciseGradingService.
         return null;
     }
 
@@ -222,14 +161,14 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      * @return the html representation of the artifact page.
      */
     public ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
-        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
+        // Build artifacts are not supported by local CI yet.
         return null;
     }
 
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
-        // TODO: Empty implementation to allow usage of local VCS with local CIS in testing.
-        return "Not implemented yet.";
+        // For local CI, no projects exist. Therefore, we always return "non-existent".
+        return "non-existent";
     }
 
     /**
@@ -240,7 +179,8 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public boolean checkIfBuildPlanExists(String projectKey, String buildPlanId) {
-        return getBuildPlan(buildPlanId.toUpperCase()) != null;
+        // For local CI, no build plans exist. Therefore, we always return false.
+        return false;
     }
 
     private String getCleanPlanName(String name) {
