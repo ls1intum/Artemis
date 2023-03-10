@@ -8,6 +8,7 @@ import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,8 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @BeforeEach
     void resetDatabase() {
+        SecurityUtils.setAuthorizationObject();
+
         examRepository.findAllByEndDateGreaterThanEqual(ZonedDateTime.now()).forEach(exam -> {
             // Set dates of existing exams to past to that they are not returned in the metrics
             exam.setStartDate(ZonedDateTime.now().minusHours(2));
@@ -53,6 +56,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         });
 
         exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDate().forEach(exercise -> {
+            // Set dates of existing exercises to past to that they are not returned in the metrics
             exercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
             exercise.setStartDate(ZonedDateTime.now().minusHours(2));
             exercise.setDueDate(ZonedDateTime.now().minusHours(1));
