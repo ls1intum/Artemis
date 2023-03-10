@@ -168,7 +168,7 @@ export class NotificationSidebarComponent implements OnInit {
     // before it was possible to translate notifications
     getNotificationTitleTranslation(notification: Notification): string {
         const translation = this.artemisTranslatePipe.transform(notification.title);
-        if (translation.includes(translationNotFoundMessage)) {
+        if (translation?.includes(translationNotFoundMessage)) {
             return notification.title ? notification.title : 'No title found';
         }
         return translation;
@@ -179,7 +179,7 @@ export class NotificationSidebarComponent implements OnInit {
     getNotificationTextTranslation(notification: Notification): string {
         if (notification.textIsPlaceholder) {
             const translation = this.artemisTranslatePipe.transform(notification.text, { placeholderValues: this.getParsedPlaceholderValues(notification) });
-            if (translation.includes(translationNotFoundMessage)) {
+            if (translation?.includes(translationNotFoundMessage)) {
                 return notification.text ? notification.text : 'No text found';
             }
             return translation;
