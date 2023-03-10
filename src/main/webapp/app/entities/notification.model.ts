@@ -107,5 +107,11 @@ export const CONVERSATION_ADD_USER_CHANNEL_TITLE = 'You have been added to a cha
 
 export const CONVERSATION_ADD_USER_GROUP_CHAT_TITLE = 'You have been added to a group chat';
 
+export const CONVERSATION_DELETE_CHANNEL_TITLE = 'Channel deleted';
+
+export const CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE = 'You have been removed from a group chat';
+
+export const CONVERSATION_REMOVE_USER_CHANNEL_TITLE = 'You have been removed from a channel';
+
 // edge case: has no separate notificationType. Is created based on EXERCISE_UPDATED for exam exercises
 export const LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = 'Live Exam Exercise Update';

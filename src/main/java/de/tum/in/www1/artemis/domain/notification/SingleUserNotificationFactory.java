@@ -285,14 +285,6 @@ public class SingleUserNotificationFactory {
                 notification.setTransientAndStringTarget(createConversationDeletionTarget(groupChat, groupChat.getCourse().getId()));
                 notification.setAuthor(responsibleForAction);
             }
-            case CONVERSATION_DELETE_GROUP_CHAT -> {
-                var user = users.stream().findAny().orElseThrow();
-                var groupChat = (GroupChat) conversation;
-                notification = new SingleUserNotification(user, title,
-                        "A group chat has been deleted by " + responsibleForAction.getName() + " in course (" + groupChat.getCourse().getTitle() + ").");
-                notification.setTransientAndStringTarget(createConversationDeletionTarget(groupChat, groupChat.getCourse().getId()));
-                notification.setAuthor(responsibleForAction);
-            }
             case CONVERSATION_DELETE_CHANNEL -> {
                 var user = users.stream().findAny().orElseThrow();
                 var channel = (Channel) conversation;

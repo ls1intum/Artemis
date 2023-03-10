@@ -36,6 +36,7 @@ import { RouteComponents } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { TutorialGroupsNotificationService } from 'app/course/tutorial-groups/services/tutorial-groups-notification.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -100,12 +101,14 @@ export class NotificationService {
             } else if (
                 notification.title === NEW_MESSAGE_TITLE ||
                 notification.title === NEW_REPLY_MESSAGE_TITLE ||
-                notification.title === CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE ||
                 notification.title === CONVERSATION_CREATE_GROUP_CHAT_TITLE ||
                 notification.title === CONVERSATION_ADD_USER_CHANNEL_TITLE ||
                 notification.title === CONVERSATION_ADD_USER_GROUP_CHAT_TITLE
             ) {
-                this.router.navigateByUrl(`/${target.mainPage}/${targetCourseId}/messages?conversationId=${targetConversationId}`);
+                // this.router.navigateByUrl(`/${target.mainPage}/${targetCourseId}/messages?conversationId=${targetConversationId}`);
+                const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
+                const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
+                this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
             } else {
                 this.router.navigate([target.mainPage, targetCourseId, target.entity, target.id]);
             }
