@@ -18,7 +18,7 @@ services:
             SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_SEARCH_LOCATIONS: file:./central-config/localhost-config/
         ports:
             - "8761:8761"
-        # also expose the port to make it reachable docker internally even if the external port mapping changes
+        # expose the port to make it reachable docker internally even if the external port mapping changes
         expose:
             - "8761"
 
@@ -31,6 +31,6 @@ services:
             ARTEMIS_PASSWORD: guest
         ports:
             - "61613:61613"
-        # also expose the port to make it reachable docker internally even if the external port mapping changes
+        # expose the port to make it reachable docker internally even if the external port mapping changes
         expose:
             - "61613"

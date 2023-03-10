@@ -16,7 +16,7 @@ services:
         pull_policy: always
         ports:
             - "9980:8080"
-        # also expose the port to make it reachable docker internally even if the external port mapping changes
+        # expose the port to make it reachable docker internally even if the external port mapping changes
         expose:
             - "8080"
         volumes:

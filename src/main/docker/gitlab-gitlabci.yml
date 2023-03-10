@@ -26,7 +26,7 @@ services:
             - "2222:22"
             - "80:80"
             - "443:443"
-        # also expose the ports to make them reachable docker internally even if the external port mapping changes
+        # expose the ports to make them reachable docker internally even if the external port mapping changes
         expose:
             - "22"
             - "80"

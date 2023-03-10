@@ -21,7 +21,7 @@ services:
         # the following environments are necessary for docker images orchestrated by docker compose
         environment:
             SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,prod,docker
-        # also expose the port to make it reachable docker internally even if the external port mapping changes
+        # expose the port to make it reachable docker internally even if the external port mapping changes
         expose:
             - "8080"
         networks:

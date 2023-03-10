@@ -29,7 +29,7 @@ services:
             test: wget -nv -t1 --spider http://localhost:54321/actuator/health || exit 1
             start_period: 300s
             interval: 1s
-        # also expose the port to make it reachable docker internally even if the external port mapping changes
+        # expose the port to make it reachable docker internally even if the external port mapping changes
         expose:
             - "54321"
 
