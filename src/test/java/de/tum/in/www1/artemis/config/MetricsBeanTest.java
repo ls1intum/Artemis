@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -43,13 +43,20 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     @Autowired
     CourseRepository courseRepository;
 
-    @AfterEach
+    @BeforeEach
     void resetDatabase() {
         examRepository.findAllByEndDateGreaterThanEqual(ZonedDateTime.now()).forEach(exam -> {
             // Set dates of existing exams to past to that they are not returned in the metrics
             exam.setStartDate(ZonedDateTime.now().minusHours(2));
             exam.setEndDate(ZonedDateTime.now().minusHours(1));
             examRepository.save(exam);
+        });
+
+        exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDate().forEach(exercise -> {
+            exercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
+            exercise.setStartDate(ZonedDateTime.now().minusHours(2));
+            exercise.setDueDate(ZonedDateTime.now().minusHours(1));
+            exerciseRepository.save(exercise);
         });
     }
 
