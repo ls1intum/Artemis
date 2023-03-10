@@ -173,21 +173,23 @@ public class ComplaintResource {
             return ResponseEntity.ok().build();
         }
         Complaint complaint = optionalComplaint.get();
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         StudentParticipation participation = (StudentParticipation) complaint.getResult().getParticipation();
-        var exercise = participation.getExercise();
-        var isOwner = authCheckService.isOwnerOfParticipation(participation, user);
-        var isAtLeastTA = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
-        if (!isOwner && !isAtLeastTA) {
+        Exercise exercise = participation.getExercise();
+        boolean isOwner = authCheckService.isOwnerOfParticipation(participation, user);
+        boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
+        if (!isOwner && !isAtLeastTutor) {
             throw new AccessForbiddenException();
         }
-        var isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
-        var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        var isTeamParticipation = participation.getParticipant() instanceof Team;
-        var isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner().getLogin()).orElse(null));
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        boolean isTeamParticipation = participation.getParticipant() instanceof Team;
+        boolean isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner().getLogin()).orElse(null));
 
         if (!isAtLeastTutor) {
             complaint.getResult().setAssessor(null);
+            if (complaint.getComplaintResponse() != null) {
+                complaint.getComplaintResponse().setReviewer(null);
+            }
         }
         if (!isAtLeastInstructor && (!isTeamParticipation || !isTutorOfTeam)) {
             complaint.filterSensitiveInformation();
