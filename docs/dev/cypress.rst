@@ -118,20 +118,20 @@ flaky tests based on the changed code. To do this, we have some special Docker c
    We extend the existing `Dockerfile <./src/main/docker/Dockerfile>`__ to create the Docker image for the Artemis
    container. For the flaky test detection build plan, we need to change the Artemis startup and add the :code:`unzip`
    dependency. To do this, we have a special Dockerfile that extends the original one and adds these changes. The
-   Dockerfile can be found `here <./src/main/docker/cypress/Coverage-Dockerfile>`__. To do this, the regular image
+   Dockerfile can be found `here <./src/main/docker/cypress/coverage.Dockerfile>`__. To do this, the regular image
    has to be built and tagged with :code:`artemis:coverage-latest`.
 
    Additionally, we need Java in the Cypress container for the flaky test detection, so we have a special Dockerfile for
    the Cypress container that extends the original one and adds the Java installation. This Dockerfile can be found
-   `here <./src/main/docker/cypress/Cypress-Dockerfile>`__.
+   `here <./src/main/docker/cypress/cypress.Dockerfile>`__.
 
 2. Docker Compose Changes
 
    The Docker Compose file for the flaky test detection is located
-   `here <./src/main/docker/cypress/docker-compose.coverage.yml>`__. This file includes some overrides for the regular
+   `here <./src/main/docker/cypress/cypress-E2E-tests-coverage-override.yml>`__. This file includes some overrides for the regular
    Docker Compose file. The main differences are that we use the extended Dockerfiles for the Artemis and Cypress
    containers, and we also change the Cypress startup command to include our coverage analysis. To use the overrides,
-   you can run the following command: :code:`docker-compose -f docker-compose.yml -f docker-compose.coverage.yml up`.
+   you can run the following command: :code:`docker-compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml up`.
 
 This setup allows us to run the flaky test detection build plan in parallel with the regular Cypress build plan. If
 there is no overlap between the changed code and the files covered by failed tests, we label plan executions with the

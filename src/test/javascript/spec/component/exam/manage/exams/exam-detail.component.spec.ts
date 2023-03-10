@@ -118,7 +118,7 @@ describe('ExamDetailComponent', () => {
         exam.course.isAtLeastEditor = true;
         exam.course.id = 1;
         exam.title = 'Example Exam';
-        exam.numberOfRegisteredUsers = 3;
+        exam.numberOfExamUsers = 3;
         exam.examMaxPoints = 100;
         exam.exerciseGroups = [];
         examDetailComponent.exam = exam;
@@ -216,7 +216,7 @@ describe('ExamDetailComponent', () => {
         const alertService = TestBed.inject(AlertService);
 
         // GIVEN
-        examDetailComponent.exam = { ...exam, studentExams: [{ id: 1 }] };
+        examDetailComponent.exam = { ...exam, studentExams: [{ id: 1, numberOfExamSessions: 0 }] };
         const responseFakeReset = { body: exam } as HttpResponse<Exam>;
         jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
         jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));

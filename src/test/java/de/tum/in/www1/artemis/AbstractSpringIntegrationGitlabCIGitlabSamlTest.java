@@ -142,8 +142,7 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists, HttpStatus status)
-            throws GitLabApiException {
+    public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws GitLabApiException {
         // Step 1a)
         gitlabRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
         // Step 1b)
@@ -386,12 +385,17 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) throws URISyntaxException {
+    public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) {
         // Not needed here.
     }
 
     @Override
     public void verifyMocks() {
         gitlabRequestMockProvider.verifyMocks();
+    }
+
+    @Override
+    public void mockUserExists(String username) throws Exception {
+        gitlabRequestMockProvider.mockUserExists(username, true);
     }
 }

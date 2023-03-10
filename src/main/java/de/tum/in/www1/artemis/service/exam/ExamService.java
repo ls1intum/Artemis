@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.exam;
 
-import static de.tum.in.www1.artemis.config.Constants.EXAM_EXERCISE_START_STATUS;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.io.IOException;
@@ -17,16 +16,13 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.audit.AuditEvent;
-import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -62,14 +58,14 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Service
 public class ExamService {
 
+    private static final int EXAM_ACTIVE_DAYS = 7;
+
     @Value("${artemis.course-archives-path}")
     private String examArchivesDirPath;
 
     private final Logger log = LoggerFactory.getLogger(ExamService.class);
 
     private final UserRepository userRepository;
-
-    private final ExerciseDeletionService exerciseDeletionService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -84,8 +80,6 @@ public class ExamService {
     private final ExamRepository examRepository;
 
     private final StudentExamRepository studentExamRepository;
-
-    private final AuditEventRepository auditEventRepository;
 
     private final ComplaintRepository complaintRepository;
 
@@ -115,19 +109,15 @@ public class ExamService {
 
     private final CourseScoreCalculationService courseScoreCalculationService;
 
-    private final CacheManager cacheManager;
-
     private final ObjectMapper defaultObjectMapper;
 
-    public ExamService(ExerciseDeletionService exerciseDeletionService, ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService,
-            InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, AuditEventRepository auditEventRepository,
-            StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService,
-            GroupNotificationService groupNotificationService, GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository,
-            AuthorizationCheckService authorizationCheckService, BonusService bonusService, SubmittedAnswerRepository submittedAnswerRepository,
-            CourseScoreCalculationService courseScoreCalculationService, CacheManager cacheManager) {
-        this.exerciseDeletionService = exerciseDeletionService;
+    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService,
+            InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, StudentParticipationRepository studentParticipationRepository,
+            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository,
+            SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService, GroupNotificationService groupNotificationService,
+            GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository, AuthorizationCheckService authorizationCheckService,
+            BonusService bonusService, SubmittedAnswerRepository submittedAnswerRepository, CourseScoreCalculationService courseScoreCalculationService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -135,7 +125,6 @@ public class ExamService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examQuizService = examQuizService;
         this.instanceMessageSendService = instanceMessageSendService;
-        this.auditEventRepository = auditEventRepository;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -151,7 +140,6 @@ public class ExamService {
         this.bonusService = bonusService;
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
-        this.cacheManager = cacheManager;
         this.defaultObjectMapper = new ObjectMapper();
     }
 
@@ -181,97 +169,6 @@ public class ExamService {
             }
         }
         return exam;
-    }
-
-    /**
-     * Fetches the exam and eagerly loads all required elements and deletes all elements associated with the
-     * exam including:
-     * <ul>
-     * <li>The Exam</li>
-     * <li>All ExerciseGroups</li>
-     * <li>All Exercises including:
-     * Submissions, Participations, Results, Repositories and build plans, see {@link ExerciseDeletionService#delete}</li>
-     * <li>All StudentExams</li>
-     * <li>The exam Grading Scale if such exists</li>
-     * </ul>
-     * Note: StudentExams and ExerciseGroups are not explicitly deleted as the delete operation of the exam is cascaded by the database.
-     *
-     * @param examId the ID of the exam to be deleted
-     */
-    public void delete(@NotNull long examId) {
-        User user = userRepository.getUser();
-        Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
-        log.info("User {} has requested to delete the exam {}", user.getLogin(), exam.getTitle());
-        AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
-        auditEventRepository.add(auditEvent);
-
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            if (exerciseGroup != null) {
-                for (Exercise exercise : exerciseGroup.getExercises()) {
-                    exerciseDeletionService.delete(exercise.getId(), true, true);
-                }
-            }
-        }
-        deleteGradingScaleOfExam(exam);
-        examRepository.deleteById(exam.getId());
-    }
-
-    private void deleteGradingScaleOfExam(Exam exam) {
-        // delete exam grading scale if it exists
-        Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(exam.getId());
-        gradingScale.ifPresent(gradingScaleRepository::delete);
-    }
-
-    /**
-     * Deletes all elements associated with the exam but not the exam itself in order to reset it.
-     * <p>
-     * The deleted elements are:
-     * <ul>
-     * <li>All StudentExams</li>
-     * <li>Everything that has been submitted by students to the exercises that are part of the exam,
-     * but not the exercises themself. See {@link ExerciseDeletionService#reset}</li>
-     * </ul>
-     *
-     * @param examId the ID of the exam to be reset
-     */
-    public void reset(@NotNull Long examId) {
-        User user = userRepository.getUser();
-        Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
-        log.info("User {} has requested to reset the exam {}", user.getLogin(), exam.getTitle());
-        AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.RESET_EXAM, "exam=" + exam.getTitle());
-        auditEventRepository.add(auditEvent);
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            if (exerciseGroup != null) {
-                for (Exercise exercise : exerciseGroup.getExercises()) {
-                    exerciseDeletionService.reset(exercise);
-                }
-            }
-        }
-        studentExamRepository.deleteAll(exam.getStudentExams());
-
-        var studentExamExercisePreparationCache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
-        if (studentExamExercisePreparationCache != null) {
-            studentExamExercisePreparationCache.evict(examId);
-        }
-    }
-
-    /**
-     * Deletes student exams and existing participations for an exam.
-     *
-     * @param examId the ID of the exam where the student exams and participations should be deleted
-     */
-    public void deleteStudentExamsAndExistingParticipationsForExam(@NotNull Long examId) {
-        User user = userRepository.getUser();
-        Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
-        log.info("User {} has requested to delete existing student exams and participations for exam {}", user.getLogin(), exam.getTitle());
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            if (exerciseGroup != null) {
-                for (Exercise exercise : exerciseGroup.getExercises()) {
-                    exerciseDeletionService.deletePlagiarismResultsAndParticipations(exercise);
-                }
-            }
-        }
-        studentExamRepository.deleteAll(exam.getStudentExams());
     }
 
     /**
@@ -459,7 +356,7 @@ public class ExamService {
     /**
      * Return student exam result, aggregate points, assessment result for a student exam and grade calculations
      * if the exam is assessed.
-     *
+     * <p>
      * See {@link StudentExamWithGradeDTO} for more explanation.
      *
      * @param targetUser  the user who submitted the studentExam
@@ -1171,7 +1068,7 @@ public class ExamService {
             studentParticipationRepository.addNumberOfExamExerciseParticipations(exerciseGroup);
         });
         // set transient number of registered users
-        examRepository.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
+        examRepository.setNumberOfExamUsersForExams(Collections.singletonList(exam));
     }
 
     /**
@@ -1322,6 +1219,19 @@ public class ExamService {
             }
         }
         return new SearchResultPageDTO<>(examPage.getContent(), examPage.getTotalPages());
+    }
+
+    /**
+     * Get all exams of the user. The result is paged
+     *
+     * @param pageable The search query defining the search term and the size of the returned page
+     * @param user     The user for whom to fetch all available exercises
+     * @return exam page
+     */
+    public Page<Exam> getAllActiveExams(final Pageable pageable, final User user) {
+        // active exam means that exam has visible date in the past 7 days or next 7 days.
+        return examRepository.findAllActiveExamsInCoursesWhereInstructor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(EXAM_ACTIVE_DAYS),
+                ZonedDateTime.now().plusDays(EXAM_ACTIVE_DAYS));
     }
 
     /**

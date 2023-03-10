@@ -16,5 +16,19 @@
         <div *ngIf="tutorialGroup.teachingAssistantName">
             {{ 'artemisApp.tutorialGroupCard.teachingAssistant' | artemisTranslate : { name: tutorialGroup.teachingAssistantName } }}
         </div>
+        <div *ngIf="showChannelLink && tutorialGroup.channel && course.postsEnabled" class="mt-2">
+            <ng-container *ngIf="tutorialGroup.channel.isMember; else notChannelMember">
+                <a
+                    [id]="'channel-' + tutorialGroup.id + '-' + tutorialGroup.channel.id"
+                    [routerLink]="['/courses', course.id!, 'messages']"
+                    [queryParams]="{ conversationId: tutorialGroup.channel.id }"
+                    class="btn btn-primary"
+                    >{{ 'artemisApp.entities.tutorialGroup.channelWithName' | artemisTranslate : { channel: tutorialGroup.channel.name } }}</a
+                >
+            </ng-container>
+            <ng-template #notChannelMember>
+                <span>{{ 'artemisApp.entities.tutorialGroup.channelWithName' | artemisTranslate : { channel: tutorialGroup.channel.name } }}</span>
+            </ng-template>
+        </div>
     </div>
 </ng-container>

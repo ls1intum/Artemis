@@ -46,7 +46,13 @@ export class TutorialGroupsService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupResponseDatesFromServer(res)));
     }
 
-    update(courseId: number, tutorialGroupId: number, tutorialGroup: TutorialGroup, notificationText?: string): Observable<EntityResponseType> {
+    update(
+        courseId: number,
+        tutorialGroupId: number,
+        tutorialGroup: TutorialGroup,
+        notificationText?: string,
+        updateTutorialGroupChannelName?: boolean,
+    ): Observable<EntityResponseType> {
         const copy = this.convertTutorialGroupDatesFromClient(tutorialGroup);
         return this.httpClient
             .put<TutorialGroup>(
@@ -54,6 +60,7 @@ export class TutorialGroupsService {
                 {
                     tutorialGroup: copy,
                     notificationText,
+                    updateTutorialGroupChannelName: updateTutorialGroupChannelName ?? false,
                 },
                 { observe: 'response' },
             )

@@ -1430,7 +1430,7 @@ class ProgrammingExerciseIntegrationTestService {
             final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
             testCaseUpdate.setId(testCase.getId());
             testCaseUpdate.setVisibility(Visibility.AFTER_DUE_DATE);
-            testCaseUpdate.setWeight(0D);
+            testCaseUpdate.setWeight(-1.);
             testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
             return testCaseUpdate;
@@ -1618,8 +1618,8 @@ class ProgrammingExerciseIntegrationTestService {
             // System.out.println(entries.nextElement().getName());
             // }
             assertThat(zipFile.getEntry("overview.json")).isNotNull();
-            assertThat(zipFile.getEntry("submissions/Submission-1.java/Submission-1.java")).isNotNull();
-            assertThat(zipFile.getEntry("submissions/Submission-2.java/Submission-2.java")).isNotNull();
+            assertThat(zipFile.getEntry("files/Submission-1.java/Submission-1.java")).isNotNull();
+            assertThat(zipFile.getEntry("files/Submission-2.java/Submission-2.java")).isNotNull();
 
             // it is random which of the following two exists, but one of them must be part of the zip file
             var json1 = zipFile.getEntry("Submission-2.java-Submission-1.java.json");

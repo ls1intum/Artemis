@@ -31,7 +31,10 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface StudentExamRepository extends JpaRepository<StudentExam, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
-    Optional<StudentExam> findWithExercisesById(Long id);
+    Optional<StudentExam> findWithExercisesById(Long studentExamId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "examSessions" })
+    Optional<StudentExam> findWithExercisesAndSessionsById(Long studentExamId);
 
     @Query("""
             SELECT DISTINCT se
@@ -72,6 +75,15 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             	AND se.testRun = FALSE
             """)
     Set<StudentExam> findByExamId(@Param("examId") long examId);
+
+    @Query("""
+            SELECT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.examSessions
+            WHERE se.exam.id = :examId
+            	AND se.testRun = FALSE
+            """)
+    Set<StudentExam> findByExamIdWithSessions(@Param("examId") long examId);
 
     @Query("""
             SELECT se
@@ -225,13 +237,14 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     List<StudentExam> findStudentExamForTestExamsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     @Query("""
-            SELECT DISTINCT se FROM StudentExam se
-                        LEFT JOIN FETCH se.exercises exercises
-                        WHERE se.exam.id = :examId
-                        AND se.user.id = :userId
-                        	AND se.submitted = FALSE
-                        	AND se.testRun = FALSE
-                        	AND se.exam.testExam = TRUE
+            SELECT DISTINCT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises exercises
+            WHERE se.exam.id = :examId
+                AND se.user.id = :userId
+                AND se.submitted = FALSE
+                AND se.testRun = FALSE
+                AND se.exam.testExam = TRUE
             """)
     List<StudentExam> findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(@Param("examId") Long examId, @Param("userId") Long userId);
 
@@ -287,6 +300,17 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @NotNull
     default StudentExam findByIdWithExercisesElseThrow(Long studentExamId) {
         return findWithExercisesById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
+    }
+
+    /**
+     * Get one student exam by id with exercises and sessions
+     *
+     * @param studentExamId the id of the student exam
+     * @return the student exam with exercises
+     */
+    @NotNull
+    default StudentExam findByIdWithExercisesAndSessionsElseThrow(Long studentExamId) {
+        return findWithExercisesAndSessionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
     }
 
     /**
@@ -389,14 +413,16 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
         deleteAll(existingStudentExams);
 
+        Set<User> users = exam.getRegisteredUsers();
+
         // StudentExams are saved in the called method
-        return createRandomStudentExams(exam, exam.getRegisteredUsers());
+        return createRandomStudentExams(exam, users);
     }
 
     /**
      * Generates the missing student exams randomly based on the exam configuration and the exercise groups.
      * The difference between all registered users and the users who already have an individual exam is the set of users for which student exams will be created.
-     *
+     * <p>
      * Important: the passed exams needs to include the registered users, exercise groups and exercises (eagerly loaded)
      *
      * @param exam with eagerly loaded registered users, exerciseGroups and exercises loaded
@@ -407,15 +433,11 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         // Get all users who already have an individual exam
         Set<User> usersWithStudentExam = findUsersWithStudentExamsForExam(exam.getId());
 
-        // Get all registered users
-        Set<User> allRegisteredUsers = exam.getRegisteredUsers();
-
         // Get all students who don't have an exam yet
-        Set<User> missingUsers = new HashSet<>(allRegisteredUsers);
+        Set<User> missingUsers = exam.getRegisteredUsers();
         missingUsers.removeAll(usersWithStudentExam);
 
         // StudentExams are saved in the called method
         return createRandomStudentExams(exam, missingUsers);
     }
-
 }

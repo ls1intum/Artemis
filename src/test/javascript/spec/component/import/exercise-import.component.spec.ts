@@ -23,6 +23,7 @@ import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pag
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
+import { FileUploadExercisePagingService } from 'app/exercises/file-upload/manage/file-upload-exercise-paging.service';
 
 describe('ExerciseImportComponent', () => {
     let fixture: ComponentFixture<ExerciseImportComponent>;
@@ -260,6 +261,7 @@ describe('ExerciseImportComponent', () => {
         [ExerciseType.TEXT, TextExercisePagingService],
         [ExerciseType.MODELING, ModelingExercisePagingService],
         [ExerciseType.QUIZ, QuizExercisePagingService],
+        [ExerciseType.FILE_UPLOAD, FileUploadExercisePagingService],
     ])(
         'uses the correct paging service',
         fakeAsync((exerciseType: ExerciseType, expectedPagingService: typeof PagingService) => {
@@ -270,7 +272,7 @@ describe('ExerciseImportComponent', () => {
 
             comp.ngOnInit();
 
-            expect(getSpy).toHaveBeenCalledOnceWith(expectedPagingService);
+            expect(getSpy).toHaveBeenCalledOnceWith(expectedPagingService, undefined, 0); // default values for arguments 2 and 3
         }),
     );
 
@@ -284,7 +286,7 @@ describe('ExerciseImportComponent', () => {
         comp.ngOnInit();
 
         expect(comp.titleKey).toContain('configureGrading');
-        expect(getSpy).toHaveBeenCalledOnceWith(CodeAnalysisPagingService);
+        expect(getSpy).toHaveBeenCalledOnceWith(CodeAnalysisPagingService, undefined, 0);
     });
 
     it('should sort by exam title when only the exam filter is active', () => {

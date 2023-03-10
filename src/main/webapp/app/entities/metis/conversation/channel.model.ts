@@ -29,6 +29,9 @@ export class ChannelDTO extends ConversationDto {
     public isChannelModerator?: boolean;
     public hasChannelModerationRights?: boolean;
 
+    public tutorialGroupId?: number;
+
+    public tutorialGroupTitle?: string;
     constructor() {
         super(ConversationType.CHANNEL);
     }

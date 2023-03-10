@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
@@ -117,6 +118,7 @@ public class User extends AbstractAuditingEntity implements Participant {
      * It will e.g. be included in the repository clone URL.
      */
     @Nullable
+    @JsonIgnore
     @Column(name = "vcs_access_token")
     private String vcsAccessToken = null;
 
@@ -158,6 +160,11 @@ public class User extends AbstractAuditingEntity implements Participant {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
     private Set<LearningGoalProgress> learningGoalProgress = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnore
+    private Set<ExamUser> examUsers = new HashSet<>();
 
     public String getLogin() {
         return login;
@@ -338,6 +345,14 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setLearningGoalProgress(Set<LearningGoalProgress> learningGoalProgress) {
         this.learningGoalProgress = learningGoalProgress;
+    }
+
+    public Set<ExamUser> getExamUsers() {
+        return examUsers;
+    }
+
+    public void setExamUsers(Set<ExamUser> examUsers) {
+        this.examUsers = examUsers;
     }
 
     public Set<GuidedTourSetting> getGuidedTourSettings() {

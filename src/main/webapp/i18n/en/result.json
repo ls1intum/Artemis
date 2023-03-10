@@ -86,6 +86,7 @@
             "preliminaryTooltip": "Your result is not final yet, because more tests will be executed after the due date",
             "preliminaryTooltipSemiAutomatic": "Your result is not final yet, because more tests will be executed after the due date or a manual assessment will be done.",
             "noResultDetails": "No result details available.",
+            "onlyCompilationTested": "Your code compiled successfully. There are currently no tests visible.",
             "chart": {
                 "points": "Points",
                 "deductions": "Deductions",

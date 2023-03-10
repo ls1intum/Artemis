@@ -9,6 +9,16 @@ export class TextEditorPage {
         getExercise(exerciseID).find('#text-editor').type(submission, { parseSpecialCharSequences: false });
     }
 
+    clearSubmission(exerciseID: number) {
+        getExercise(exerciseID).find('#text-editor').clear();
+    }
+
+    checkCurrentContent(exerciseID: number, expectedContent: string) {
+        cy.fixture(expectedContent).then((text) => {
+            getExercise(exerciseID).find('#text-editor').should('have.value', text);
+        });
+    }
+
     /**
      * Saves the text submission and continues to the next exercise in the exam. This button is only available in exam mode!
      */

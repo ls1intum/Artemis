@@ -1,23 +1,9 @@
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { artemis } from '../../../support/ArtemisTesting';
 import day from 'dayjs/esm';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-
-// pageobjects
-const assessmentEditor = artemis.pageobjects.assessment.modeling;
-const courseAssessmentDashboard = artemis.pageobjects.assessment.course;
-const exerciseAssessmentDashboard = artemis.pageobjects.assessment.exercise;
-const exerciseResult = artemis.pageobjects.exercise.result;
-const modelingFeedback = artemis.pageobjects.exercise.modeling.feedback;
-// requests
-const courseManagementRequests = artemis.requests.courseManagement;
-// Users
-const userManagement = artemis.users;
-const admin = userManagement.getAdmin();
-const student = userManagement.getStudentOne();
-const tutor = userManagement.getTutor();
-const instructor = userManagement.getInstructor();
+import { courseAssessment, courseManagementRequest, exerciseAssessment, exerciseResult, modelingExerciseAssessment, modelingExerciseFeedback } from '../../../support/artemis';
+import { admin, instructor, studentOne, tutor } from '../../../support/users';
 
 describe('Modeling Exercise Assessment Spec', () => {
     let course: Course;
@@ -32,79 +18,79 @@ describe('Modeling Exercise Assessment Spec', () => {
 
     after('Delete test course', () => {
         cy.login(admin);
-        courseManagementRequests.deleteCourse(course.id!);
+        courseManagementRequest.deleteCourse(course.id!);
     });
 
     it('Tutor can assess a submission', () => {
         cy.login(tutor, '/course-management');
         cy.get(`[href="/course-management/${course.id}/assessment-dashboard"]`).click();
         cy.url().should('contain', `/course-management/${course.id}/assessment-dashboard`);
-        courseAssessmentDashboard.clickExerciseDashboardButton();
-        exerciseAssessmentDashboard.clickHaveReadInstructionsButton();
-        exerciseAssessmentDashboard.clickStartNewAssessment();
+        courseAssessment.clickExerciseDashboardButton();
+        exerciseAssessment.clickHaveReadInstructionsButton();
+        exerciseAssessment.clickStartNewAssessment();
         cy.get('#assessmentLockedCurrentUser').should('be.visible');
-        assessmentEditor.addNewFeedback(1, 'Thanks, good job.');
-        assessmentEditor.openAssessmentForComponent(1);
-        assessmentEditor.assessComponent(-1, 'False');
-        assessmentEditor.clickNextAssessment();
-        assessmentEditor.assessComponent(2, 'Good');
-        assessmentEditor.clickNextAssessment();
-        assessmentEditor.assessComponent(0, 'Unnecessary');
-        assessmentEditor.submit();
+        modelingExerciseAssessment.addNewFeedback(1, 'Thanks, good job.');
+        modelingExerciseAssessment.openAssessmentForComponent(1);
+        modelingExerciseAssessment.assessComponent(-1, 'False');
+        modelingExerciseAssessment.clickNextAssessment();
+        modelingExerciseAssessment.assessComponent(2, 'Good');
+        modelingExerciseAssessment.clickNextAssessment();
+        modelingExerciseAssessment.assessComponent(0, 'Unnecessary');
+        modelingExerciseAssessment.submit();
     });
 
     describe('Handling complaints', () => {
         before(() => {
             cy.login(admin);
-            courseManagementRequests
+            courseManagementRequest
                 .updateModelingExerciseAssessmentDueDate(modelingExercise, day())
                 .its('body')
                 .then((exercise) => {
                     modelingExercise = exercise;
                 });
-            cy.login(student, `/courses/${course.id}/exercises/${modelingExercise.id}`);
+            cy.login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
         });
 
         it('Student can view the assessment and complain', () => {
-            cy.login(student, `/courses/${course.id}/exercises/${modelingExercise.id}`);
+            cy.login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
             exerciseResult.shouldShowExerciseTitle(modelingExercise.title!);
             exerciseResult.shouldShowScore(20);
             exerciseResult.clickViewSubmission();
-            modelingFeedback.shouldShowScore(20);
-            modelingFeedback.shouldShowAdditionalFeedback(1, 'Thanks, good job.');
-            modelingFeedback.shouldShowComponentFeedback(1, 2, 'Good');
-            modelingFeedback.complain('I am not happy with your assessment.');
+            modelingExerciseFeedback.shouldShowScore(20);
+            modelingExerciseFeedback.shouldShowAdditionalFeedback(1, 'Thanks, good job.');
+            modelingExerciseFeedback.shouldShowComponentFeedback(1, 2, 'Good');
+            modelingExerciseFeedback.complain('I am not happy with your assessment.');
         });
 
         it('Instructor can see complaint and reject it', () => {
             cy.login(instructor, `/course-management/${course.id}/complaints`);
-            courseAssessmentDashboard.showTheComplaint();
-            assessmentEditor.rejectComplaint('You are wrong.');
+            courseAssessment.showTheComplaint();
+            modelingExerciseAssessment.rejectComplaint('You are wrong.', false);
         });
     });
 
     function createCourseWithModelingExercise() {
         cy.login(admin);
-        return courseManagementRequests.createCourse(true).then((response) => {
+        return courseManagementRequest.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseManagementRequests.addStudentToCourse(course, student);
-            courseManagementRequests.addTutorToCourse(course, tutor);
-            courseManagementRequests.addInstructorToCourse(course, instructor);
-            courseManagementRequests.createModelingExercise({ course }).then((modelingResponse) => {
+            courseManagementRequest.addStudentToCourse(course, studentOne);
+            courseManagementRequest.addTutorToCourse(course, tutor);
+            courseManagementRequest.addInstructorToCourse(course, instructor);
+            courseManagementRequest.createModelingExercise({ course }).then((modelingResponse) => {
                 modelingExercise = modelingResponse.body;
             });
         });
     }
 
     function makeModelingSubmissionAsStudent() {
-        cy.login(student);
-        courseManagementRequests.startExerciseParticipation(modelingExercise.id!).then((participation) => {
-            courseManagementRequests.makeModelingExerciseSubmission(modelingExercise.id!, participation.body);
+        cy.login(studentOne);
+        courseManagementRequest.startExerciseParticipation(modelingExercise.id!).then((participation) => {
+            courseManagementRequest.makeModelingExerciseSubmission(modelingExercise.id!, participation.body);
         });
     }
 
     function updateExerciseDueDate() {
         cy.login(admin);
-        courseManagementRequests.updateModelingExerciseDueDate(modelingExercise, day().add(5, 'seconds'));
+        courseManagementRequest.updateModelingExerciseDueDate(modelingExercise, day().add(5, 'seconds'));
     }
 });

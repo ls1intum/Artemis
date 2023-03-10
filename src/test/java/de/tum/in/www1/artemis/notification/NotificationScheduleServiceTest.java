@@ -18,9 +18,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
 
 class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -38,6 +40,9 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
+
+    @Autowired
+    private ResultRepository resultRepository;
 
     private Exercise exercise;
 
@@ -76,7 +81,10 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
         textSubmission.text("Text");
         textSubmission.submitted(true);
         database.addSubmission(exercise, textSubmission, TEST_PREFIX + "student1");
-        database.createParticipationSubmissionAndResult(exercise.getId(), database.getUserByLogin(TEST_PREFIX + "student1"), 10.0, 10.0, 50, true);
+        Result manualResult = database.createParticipationSubmissionAndResult(exercise.getId(), database.getUserByLogin(TEST_PREFIX + "student1"), 10.0, 10.0, 50, true);
+        manualResult.setAssessmentType(AssessmentType.MANUAL);
+        resultRepository.save(manualResult);
+
         notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED));
 
         instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exercise.getId());

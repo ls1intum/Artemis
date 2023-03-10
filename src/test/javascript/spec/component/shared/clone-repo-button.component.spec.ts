@@ -1,33 +1,33 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
-import { TranslateService } from '@ngx-translate/core';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { AlertService } from 'app/core/util/alert.service';
-import { BehaviorSubject, Subject } from 'rxjs';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ArtemisTestModule } from '../../test.module';
-import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
+import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { Exercise } from 'app/entities/exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
-import { Exercise } from 'app/entities/exercise.model';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService } from 'ngx-webstorage';
+import { BehaviorSubject, Subject } from 'rxjs';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 
-describe('JhiCloneRepoButtonComponent', () => {
+describe('CloneRepoButtonComponent', () => {
     let component: CloneRepoButtonComponent;
     let fixture: ComponentFixture<CloneRepoButtonComponent>;
     let profileService: ProfileService;
@@ -330,6 +330,7 @@ describe('JhiCloneRepoButtonComponent', () => {
             2,
         ],
         [[{ id: 2, testRun: false }], { dueDate: undefined } as Exercise, 2],
+        [[{ id: 1, testRun: true }], { exerciseGroup: {} } as Exercise, 1],
     ])('should correctly choose active participation', (participations: ProgrammingExerciseStudentParticipation[], exercise: Exercise, expected: number) => {
         component.participations = participations;
         component.exercise = exercise;

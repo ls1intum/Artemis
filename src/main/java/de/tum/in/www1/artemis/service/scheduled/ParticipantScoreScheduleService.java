@@ -113,7 +113,13 @@ public class ParticipantScoreScheduleService {
     @PostConstruct
     public void startup() {
         isRunning.set(true);
-        scheduleTasks();
+        try {
+            // this should never prevent the application start of Artemis
+            scheduleTasks();
+        }
+        catch (Exception ex) {
+            logger.error("Cannot schedule participant score service", ex);
+        }
     }
 
     public void activate() {
