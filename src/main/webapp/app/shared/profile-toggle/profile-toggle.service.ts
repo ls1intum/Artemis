@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
@@ -29,7 +29,7 @@ export class ProfileToggleService {
     /**
      * This method is only supposed to be called by the account service once the user is logged in!
      */
-    public subscribeProfileToggleUpdates() {
+    public subscribeProfileToggleUpdates(): void {
         if (!this.subscriptionInitialized) {
             this.websocketService.subscribe(this.topic);
             this.websocketService
@@ -43,14 +43,14 @@ export class ProfileToggleService {
     /**
      * This method is only supposed to be called by the account service once the user is logged out!
      */
-    public unsubscribeProfileToggleUpdates() {
+    public unsubscribeProfileToggleUpdates(): void {
         if (this.subscriptionInitialized) {
             this.websocketService.unsubscribe(this.topic);
             this.subscriptionInitialized = false;
         }
     }
 
-    private notifySubscribers(activeProfiles: ActiveProfileToggles) {
+    private notifySubscribers(activeProfiles: ActiveProfileToggles): void {
         this.subject.next(activeProfiles);
     }
 
@@ -60,14 +60,14 @@ export class ProfileToggleService {
      * so there should be no reason to set the values manually, other than on initialization.
      * @param activeProfiles
      */
-    initializeProfileToggles(activeProfiles: ActiveProfileToggles) {
+    initializeProfileToggles(activeProfiles: ActiveProfileToggles): void {
         this.notifySubscribers(activeProfiles);
     }
 
     /**
      * Getter method for the profile toggles as an observable.
      */
-    getProfileToggles() {
+    getProfileToggles(): Observable<ActiveProfileToggles> {
         return this.subject.asObservable().pipe(distinctUntilChanged());
     }
 
@@ -75,7 +75,7 @@ export class ProfileToggleService {
      * Getter method for the active profiles toggles as an observable.
      * Will check that the passed profile is enabled
      */
-    getProfileToggleActive(profile: ProfileToggle) {
+    getProfileToggleActive(profile: ProfileToggle): Observable<boolean> {
         return this.getProfileTogglesActive([profile]);
     }
 
@@ -83,7 +83,7 @@ export class ProfileToggleService {
      * Getter method for the active profiles toggles as an observable.
      * Will check that all passed profiles are enabled
      */
-    getProfileTogglesActive(profiles: ProfileToggle[]) {
+    getProfileTogglesActive(profiles: ProfileToggle[]): Observable<boolean> {
         return this.subject.asObservable().pipe(
             map((activeProfiles) => profiles.every((profile) => activeProfiles.includes(profile))),
             distinctUntilChanged(),

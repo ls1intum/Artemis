@@ -1,25 +1,36 @@
 import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ReferenceType } from 'app/shared/metis/metis.util';
+import { ProfileToggle, ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
 
 export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
     metisService: MetisService;
 
     buttonTranslationString = 'artemisApp.metis.editor.lecture';
 
-    constructor(metisService: MetisService) {
+    constructor(metisService: MetisService, profileToggleService: ProfileToggleService) {
         super();
         this.metisService = metisService;
 
-        this.setValues(
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            this.metisService.getCourse().lectures?.map((lecture) => ({
-                id: lecture.id!.toString(),
-                value: lecture.title!,
-                type: ReferenceType.LECTURE,
-                elements: lecture.attachments?.map((attachment) => ({ id: attachment.id!.toString(), value: attachment.name!, courseArtifactType: ReferenceType.ATTACHMENT })),
-            }))!,
-        );
+        profileToggleService.getProfileToggleActive(ProfileToggle.LECTURE).subscribe((lecturesEnabled) => {
+            if (lecturesEnabled) {
+                this.setValues(
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                    this.metisService.getCourse().lectures?.map((lecture) => ({
+                        id: lecture.id!.toString(),
+                        value: lecture.title!,
+                        type: ReferenceType.LECTURE,
+                        elements: lecture.attachments?.map((attachment) => ({
+                            id: attachment.id!.toString(),
+                            value: attachment.name!,
+                            courseArtifactType: ReferenceType.ATTACHMENT,
+                        })),
+                    }))!,
+                );
+            } else {
+                this.setValues([]);
+            }
+        });
     }
 
     /**
