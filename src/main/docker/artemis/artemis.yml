@@ -21,10 +21,6 @@ services:
         # the following environments are necessary for docker images orchestrated by docker compose
         environment:
             SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,prod,docker
-        healthcheck:
-            test: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1
-            start_period: 300s
-            interval: 1s
         # also expose the port to make it reachable docker internally even if the external port mapping changes
         expose:
             - "8080"
