@@ -4,12 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.ZonedDateTime;
 
-import de.tum.in.www1.artemis.domain.exam.ExamUser;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExamUserRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,9 +11,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import io.micrometer.core.instrument.MeterRegistry;
 
 class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -70,9 +70,11 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         var course1 = database.createCourse();
         course1.setStudentGroupName(TEST_PREFIX + "students");
 
-        course1.addExercises(exerciseRepository.save(database.createQuiz(course1, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusMinutes(55), QuizMode.SYNCHRONIZED)));
+        course1.addExercises(
+                exerciseRepository.save(database.createQuiz(course1, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusMinutes(55), QuizMode.SYNCHRONIZED)));
         course1.addExercises(exerciseRepository.save(database.createQuiz(course1, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(3), QuizMode.SYNCHRONIZED)));
-        course1.addExercises(exerciseRepository.save(database.createIndividualTextExercise(course1, ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(25), null)));
+        course1.addExercises(
+                exerciseRepository.save(database.createIndividualTextExercise(course1, ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(25), null)));
 
         // Only one of the two quizzes ends in the next 15 minutes
         assertMetricEquals(1, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
@@ -99,7 +101,6 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         // Should now have two active users
         assertMetricEquals(2, "artemis.scheduled.exercises.release.student_multiplier.active.14", "exerciseType", ExerciseType.QUIZ.toString(), "range", "30");
-
 
         // Both quizzes end within the next 120 minutes, but have the same users (-> Users are only counted once)
         assertMetricEquals(2, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "120");

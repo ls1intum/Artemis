@@ -6,8 +6,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
-import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
-import de.tum.in.www1.artemis.repository.StatisticsRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.*;
@@ -23,8 +21,10 @@ import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 import com.zaxxer.hikari.HikariDataSource;
 
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
+import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StatisticsRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -141,9 +141,10 @@ public class MetricsBean {
                         .strongReference(true).tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString())
                         .description("Number of exercises ending within the next minutes multiplied with students in the course").register(meterRegistry);
 
-                Gauge.builder("artemis.scheduled.exercises.due.student_multiplier.active.14", () -> this.getUpcomingDueExercisesCountWithActiveStudentMultiplier(range, exerciseType, 14))
-                        .strongReference(true).tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString())
-                        .description("Number of exercises ending within the next minutes multiplied with students in the course").register(meterRegistry);
+                Gauge.builder("artemis.scheduled.exercises.due.student_multiplier.active.14",
+                        () -> this.getUpcomingDueExercisesCountWithActiveStudentMultiplier(range, exerciseType, 14)).strongReference(true).tag("range", String.valueOf(range))
+                        .tag("exerciseType", exerciseType.toString()).description("Number of exercises ending within the next minutes multiplied with students in the course")
+                        .register(meterRegistry);
 
                 Gauge.builder("artemis.scheduled.exercises.release.count", () -> this.getUpcomingReleasedExercisesCount(range, exerciseType)).strongReference(true)
                         .tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString()).description("Number of exercises starting within the next minutes")
@@ -153,9 +154,10 @@ public class MetricsBean {
                         .strongReference(true).tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString())
                         .description("Number of exercises starting within the next minutes multiplied with students in the course").register(meterRegistry);
 
-                Gauge.builder("artemis.scheduled.exercises.release.student_multiplier.active.14", () -> this.getUpcomingReleasedExercisesCountWithActiveStudentMultiplier(range, exerciseType, 14))
-                        .strongReference(true).tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString())
-                        .description("Number of exercises starting within the next minutes multiplied with students in the course").register(meterRegistry);
+                Gauge.builder("artemis.scheduled.exercises.release.student_multiplier.active.14",
+                        () -> this.getUpcomingReleasedExercisesCountWithActiveStudentMultiplier(range, exerciseType, 14)).strongReference(true).tag("range", String.valueOf(range))
+                        .tag("exerciseType", exerciseType.toString()).description("Number of exercises starting within the next minutes multiplied with students in the course")
+                        .register(meterRegistry);
             }
 
             Gauge.builder("artemis.scheduled.exams.due.count", range, this::getUpcomingEndingExamCount).strongReference(true).tag("range", String.valueOf(range))
@@ -232,7 +234,6 @@ public class MetricsBean {
 
         return exerciseRepository.countActiveStudentsInExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate, exerciseType.getDiscriminator(), activeUserNames);
     }
-
 
     private double getUpcomingEndingExamCount(int minutes) {
         SecurityUtils.setAuthorizationObject();
