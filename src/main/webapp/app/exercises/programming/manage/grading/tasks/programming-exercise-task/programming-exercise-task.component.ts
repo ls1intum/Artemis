@@ -17,5 +17,4 @@ export class ProgrammingExerciseTaskComponent {
     faAngleRight = faAngleRight;
 
     testCaseVisibilityList = Object.entries(Visibility).map(([name, value]) => ({ value, name }));
-    taskVisibilityList = [...this.testCaseVisibilityList, { value: 'MIXED', name: 'Mixed' }];
 }
