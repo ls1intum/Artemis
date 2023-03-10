@@ -19,7 +19,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -65,8 +64,6 @@ public class ProgrammingExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
 
-    private final Environment environment;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final FileService fileService;
@@ -109,7 +106,7 @@ public class ProgrammingExerciseService {
 
     private final ExerciseSpecificationService exerciseSpecificationService;
 
-    public ProgrammingExerciseService(Environment environment, ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
+    public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
@@ -119,7 +116,6 @@ public class ProgrammingExerciseService {
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
             ExerciseSpecificationService exerciseSpecificationService) {
-        this.environment = environment;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -878,18 +874,15 @@ public class ProgrammingExerciseService {
         cancelScheduledOperations(programmingExercise.getId());
 
         if (deleteBaseReposBuildPlans) {
-            // TODO: Remove check when local CI is implemented.
-            if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
-                final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
-                if (templateBuildPlanId != null) {
-                    continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
-                }
-                final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
-                if (solutionBuildPlanId != null) {
-                    continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
-                }
-                continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
+            final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
+            if (templateBuildPlanId != null) {
+                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
             }
+            final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
+            if (solutionBuildPlanId != null) {
+                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
+            }
+            continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
 
             if (programmingExercise.getTemplateRepositoryUrl() != null) {
                 versionControlService.get().deleteRepository(templateRepositoryUrlAsUrl);
@@ -1067,13 +1060,12 @@ public class ProgrammingExerciseService {
             var errorMessageVcs = "Project already exists on the Version Control Server: " + projectName + ". Please choose a different title and short name!";
             throw new BadRequestAlertException(errorMessageVcs, "ProgrammingExercise", "vcsProjectExists");
         }
-        // TODO: Remove check when local CI is implemented.
-        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
-            String errorMessageCis = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
-            if (errorMessageCis != null) {
-                throw new BadRequestAlertException(errorMessageCis, "ProgrammingExercise", "ciProjectExists");
-            }
+
+        String errorMessageCis = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
+        if (errorMessageCis != null) {
+            throw new BadRequestAlertException(errorMessageCis, "ProgrammingExercise", "ciProjectExists");
         }
+
         // means the project does not exist in version control server and does not exist in continuous integration server
     }
 

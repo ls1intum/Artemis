@@ -167,8 +167,8 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
-        // For local CI, no projects exist. Therefore, we always return "non-existent".
-        return "non-existent";
+        // For local CI, no projects exist. Therefore, we always return null.
+        return null;
     }
 
     /**
@@ -179,8 +179,9 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public boolean checkIfBuildPlanExists(String projectKey, String buildPlanId) {
-        // For local CI, no build plans exist. Therefore, we always return false.
-        return false;
+        // For local CI, no build plans exist. This method is always used in a context where build plans should exist and an error is thrown if they don't.
+        // It is safe here to always return true.
+        return true;
     }
 
     private String getCleanPlanName(String name) {

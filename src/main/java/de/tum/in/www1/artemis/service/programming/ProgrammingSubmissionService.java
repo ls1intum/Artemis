@@ -11,7 +11,6 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -66,8 +65,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
 
-    private final Environment environment;
-
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ProgrammingMessagingService programmingMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
@@ -75,8 +72,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             GitService gitService, StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExamDateService examDateService,
             ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService,
-            Environment environment) {
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
                 exerciseDateService, courseRepository, participationRepository, complaintRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -90,7 +86,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.resultRepository = resultRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
-        this.environment = environment;
     }
 
     /**
@@ -135,8 +130,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throw new IllegalStateException("Submission for participation id " + participation.getId() + " based on an empty setup commit by Artemis will be ignored!");
         }
 
-        // TODO: Remove check for 'localci' when local CI is implemented.
-        if (participation instanceof ProgrammingExerciseStudentParticipation && !Arrays.asList(this.environment.getActiveProfiles()).contains("localci")
+        if (participation instanceof ProgrammingExerciseStudentParticipation
                 && (participation.getBuildPlanId() == null || !participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
             // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
