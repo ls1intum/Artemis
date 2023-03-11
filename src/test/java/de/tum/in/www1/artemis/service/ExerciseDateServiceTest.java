@@ -148,7 +148,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Nested
-    class ExamTests {
+    class ExamTest {
 
         private Exam exam;
 
@@ -199,7 +199,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Nested
-    class TestExamTests {
+    class TestExamTest {
 
         private Exam testExam;
 
