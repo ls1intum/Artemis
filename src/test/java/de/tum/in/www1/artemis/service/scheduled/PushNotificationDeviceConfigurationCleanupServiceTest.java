@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.util.AssertionErrors.assertEquals;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +53,6 @@ class PushNotificationDeviceConfigurationCleanupServiceTest extends AbstractSpri
 
         List<PushNotificationDeviceConfiguration> result = deviceConfigurationRepository.findByUserIn(Collections.singletonList(user), PushNotificationDeviceType.FIREBASE);
 
-        Assert.assertEquals("The result is not correct", Collections.singletonList(valid), result);
+        assertEquals("The result is not correct", Collections.singletonList(valid), result);
     }
 }
