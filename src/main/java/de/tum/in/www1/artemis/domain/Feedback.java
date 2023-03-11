@@ -42,6 +42,9 @@ public class Feedback extends DomainObject {
     @Column(name = "detail_text", length = FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS)
     private String detailText;
 
+    @Column(name = "has_long_feedback_text")
+    private boolean hasLongFeedbackText = false;
+
     /**
      * Reference to the assessed element (e.g. model element id or text element string)
      */
@@ -58,11 +61,11 @@ public class Feedback extends DomainObject {
     @Column(name = "positive")
     private Boolean positive;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.ORDINAL)
     @Column(name = "type")
     private FeedbackType type;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.ORDINAL)
     @Column(name = "visibility")
     private Visibility visibility;
 
@@ -135,6 +138,14 @@ public class Feedback extends DomainObject {
         else {
             this.detailText = detailText.substring(0, FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS);
         }
+    }
+
+    public boolean hasLongFeedbackText() {
+        return hasLongFeedbackText;
+    }
+
+    public void setHasLongFeedbackText(boolean hasLongFeedbackText) {
+        this.hasLongFeedbackText = hasLongFeedbackText;
     }
 
     public String getReference() {
@@ -351,6 +362,7 @@ public class Feedback extends DomainObject {
     public Feedback copyFeedback() {
         var feedback = new Feedback();
         feedback.setDetailText(getDetailText());
+        feedback.setHasLongFeedbackText(hasLongFeedbackText());
         feedback.setType(getType());
         // For manual result each feedback needs to have a credit. If no credit is set, we set it to 0.0
         feedback.setCredits(Objects.requireNonNullElse(getCredits(), 0.0));
