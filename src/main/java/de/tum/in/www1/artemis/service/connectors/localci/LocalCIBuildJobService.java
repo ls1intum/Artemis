@@ -25,19 +25,18 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Volume;
-import com.github.dockerjava.core.DefaultDockerClientConfig;
-import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.DockerClientConfig;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -56,17 +55,15 @@ public class LocalCIBuildJobService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final String dockerConnectionUri;
+    private final DockerClient dockerClient;
 
-    public LocalCIBuildJobService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService) {
+    @Value("${artemis.continuous-integration.build.images.java.default}")
+    String dockerImage;
+
+    public LocalCIBuildJobService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService, DockerClient dockerClient) {
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.versionControlService = versionControlService;
-        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-            this.dockerConnectionUri = "tcp://localhost:2375";
-        }
-        else {
-            this.dockerConnectionUri = "unix:///var/run/docker.sock";
-        }
+        this.dockerClient = dockerClient;
     }
 
     /**
@@ -77,9 +74,6 @@ public class LocalCIBuildJobService {
 
         // Add "_BUILDING" to the build plan id to indicate that the build blan is currently building.
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
-
-        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(dockerConnectionUri).build();
-        DockerClient dockerClient = DockerClientBuilder.getInstance(config).build();
 
         HostConfig hostConfig = HostConfig.newHostConfig().withAutoRemove(true) // Automatically remove the container when it exits.
                 .withBinds(new Bind(assignmentRepositoryPath.toString(), new Volume("/assignment-repository")),
@@ -92,8 +86,11 @@ public class LocalCIBuildJobService {
 
         String branch = versionControlService.get().getOrRetrieveBranchOfParticipation(participation);
 
+        // If the docker image is not available on the local machine, pull it from Docker Hub.
+        pullDockerImage(dockerClient, dockerImage);
+
         // Create the container from the "ls1tum/artemis-maven-template:java17-13" image with the local paths to the Git repositories and the shell script bound to it.
-        CreateContainerResponse container = dockerClient.createContainerCmd("ls1tum/artemis-maven-template:java17-13").withHostConfig(hostConfig)
+        CreateContainerResponse container = dockerClient.createContainerCmd(dockerImage).withHostConfig(hostConfig)
                 .withEnv("ARTEMIS_BUILD_TOOL=" + (projectType.isMaven() ? "maven" : "gradle"), "ARTEMIS_DEFAULT_BRANCH=" + branch)
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
@@ -203,6 +200,22 @@ public class LocalCIBuildJobService {
         log.info("Building and testing submission for repository {} took {}", participation.getRepositoryUrl(), TimeLogUtil.formatDurationFrom(timeNanoStart));
 
         return buildResult;
+    }
+
+    private void pullDockerImage(DockerClient dockerClient, String dockerImage) {
+        try {
+            dockerClient.inspectImageCmd(dockerImage).exec();
+        }
+        catch (NotFoundException e) {
+            // Image does not exist locally, pull it from Docker Hub.
+            log.info("Pulling docker image {}", dockerImage);
+            try {
+                dockerClient.pullImageCmd(dockerImage).exec(new PullImageResultCallback()).awaitCompletion();
+            }
+            catch (InterruptedException ie) {
+                throw new LocalCIException("Interrupted while pulling docker image " + dockerImage, ie);
+            }
+        }
     }
 
     private void stopContainer(DockerClient dockerClient, String containerId, Path scriptPath) {

@@ -217,7 +217,9 @@ dependencies {
     implementation "org.jsoup:jsoup:1.15.4"
     implementation "commons-codec:commons-codec:1.15"   // needed for spring security saml2
 
-    implementation "com.github.docker-java:docker-java:3.2.14"
+    implementation 'com.github.docker-java:docker-java-core:3.3.0'
+    implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.2.3'
+
 
     implementation "org.springdoc:springdoc-openapi-ui:1.6.14"
     implementation "com.vdurmont:semver4j:3.1.0"
