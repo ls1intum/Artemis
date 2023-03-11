@@ -97,7 +97,7 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
             this.cancelExamStateSubscription();
             return;
         }
-        if (dayjs().isBefore(this.exam.startDate)) {
+        if (this.exam.startDate && dayjs().isBefore(this.exam.startDate)) {
             if (dayjs(this.exam.startDate).diff(dayjs(), `seconds`) < 600) {
                 this.examState = ExamState.IMMINENT;
             } else {
@@ -106,7 +106,7 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
             this.timeLeftToStartInSeconds();
             return;
         }
-        if (dayjs().isBefore(this.exam.endDate)) {
+        if (this.exam.endDate && dayjs().isBefore(this.exam.endDate)) {
             this.examState = ExamState.CONDUCTING;
             return;
         }
