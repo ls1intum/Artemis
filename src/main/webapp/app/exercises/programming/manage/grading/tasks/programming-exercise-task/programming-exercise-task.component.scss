@@ -13,10 +13,13 @@
         overflow-wrap: anywhere;
     }
     &__row {
-        display: grid;
-        grid-template-columns: repeat(8, 1fr);
+        display: flex;
         gap: 0.5rem;
         padding: 1rem;
+
+        &__cell {
+            flex: 1 1 0;
+        }
     }
     &__collapse {
         color: var(--bs-card-color);

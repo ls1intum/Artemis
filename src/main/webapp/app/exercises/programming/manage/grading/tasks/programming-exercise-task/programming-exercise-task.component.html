@@ -5,35 +5,67 @@
         </button>
 
         <div class="task__row">
-            <span class="task__field">{{ task.taskName }}</span>
-            <input type="number" class="form-control" min="0" [value]="task.weight" />
-            <input type="number" class="form-control" min="0" [value]="task.bonusMultiplier" />
-            <input type="number" class="form-control" min="0" [value]="task.bonusPoints" />
-            <select [ngModel]="task.visibility" class="form-select">
-                <option *ngFor="let s of taskVisibilityList" [value]="s.value">
-                    {{ 'artemisApp.programmingExerciseTestCase.visibility.' + s.name | artemisTranslate }}
-                </option>
-            </select>
-            <span class="task__field">Points</span>
-            <span class="task__field">Type</span>
-            <jhi-test-case-passed-builds-chart></jhi-test-case-passed-builds-chart>
+            <div class="task__row__cell">
+                <span class="task__field">{{ task.taskName }}</span>
+            </div>
+            <div class="task__row__cell">
+                <input type="number" class="form-control" min="0" [value]="task.weight" />
+            </div>
+            <div class="task__row__cell">
+                <input type="number" class="form-control" min="0" [value]="task.bonusMultiplier" />
+            </div>
+            <div class="task__row__cell">
+                <input type="number" class="form-control" min="0" [value]="task.bonusPoints" />
+            </div>
+            <div class="task__row__cell">
+                <select [ngModel]="task.visibility" class="form-select">
+                    <option *ngFor="let s of testCaseVisibilityList" [value]="s.value">
+                        {{ 'artemisApp.programmingExerciseTestCase.visibility.' + s.name | artemisTranslate }}
+                    </option>
+                </select>
+            </div>
+            <div class="task__row__cell">
+                <span class="task__field">Points</span>
+            </div>
+            <div class="task__row__cell">
+                <span class="task__field">Type</span>
+            </div>
+            <div class="task__row__cell">
+                <jhi-test-case-passed-builds-chart></jhi-test-case-passed-builds-chart>
+            </div>
         </div>
     </div>
 
     <div *ngIf="open" class="task__body">
         <div *ngFor="let test of task.testCases" class="task__row">
-            <span class="task__field ps-3">{{ test.testName }}</span>
-            <input type="number" class="form-control" min="0" [value]="test.weight" />
-            <input type="number" class="form-control" min="0" [value]="test.bonusMultiplier" />
-            <input type="number" class="form-control" min="0" [value]="test.bonusPoints" />
-            <select [ngModel]="test.visibility" class="form-select">
-                <option *ngFor="let s of testCaseVisibilityList" [value]="s.value">
-                    {{ 'artemisApp.programmingExerciseTestCase.visibility.' + s.name | artemisTranslate }}
-                </option>
-            </select>
-            <span class="task__field">Points</span>
-            <span class="task__field">Type</span>
-            <jhi-test-case-passed-builds-chart></jhi-test-case-passed-builds-chart>
+            <div class="task__row__cell">
+                <span class="task__field ps-3">{{ test.testName }}</span>
+            </div>
+            <div class="task__row__cell">
+                <input type="number" class="form-control" min="0" [value]="test.weight" />
+            </div>
+            <div class="task__row__cell">
+                <input type="number" class="form-control" min="0" [value]="test.bonusMultiplier" />
+            </div>
+            <div class="task__row__cell">
+                <input type="number" class="form-control" min="0" [value]="test.bonusPoints" />
+            </div>
+            <div class="task__row__cell">
+                <select [ngModel]="test.visibility" class="form-select">
+                    <option *ngFor="let s of testCaseVisibilityList" [value]="s.value">
+                        {{ 'artemisApp.programmingExerciseTestCase.visibility.' + s.name | artemisTranslate }}
+                    </option>
+                </select>
+            </div>
+            <div class="task__row__cell">
+                <span class="task__field">Points</span>
+            </div>
+            <div class="task__row__cell">
+                <span class="task__field">Type</span>
+            </div>
+            <div class="task__row__cell">
+                <jhi-test-case-passed-builds-chart></jhi-test-case-passed-builds-chart>
+            </div>
         </div>
     </div>
 </div>

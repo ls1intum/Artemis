@@ -1,7 +1,16 @@
-.task__table__head {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 0.5rem;
-    margin-left: 2rem;
-    padding: 1rem;
+.task {
+    &__head {
+        margin-left: 2rem;
+    }
+
+    &__row {
+        display: flex;
+        padding: 1rem;
+        gap: 0.5rem;
+
+        &__cell {
+            display: flex;
+            flex: 1 1 0;
+        }
+    }
 }
