@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -71,6 +72,8 @@ public class ExamResource {
     @Value("${artemis.course-archives-path}")
     private String examArchivesDirPath;
 
+    private final Environment environment;
+
     private final UserRepository userRepository;
 
     private final CourseRepository courseRepository;
@@ -105,11 +108,12 @@ public class ExamResource {
 
     private final CustomAuditEventRepository auditEventRepository;
 
-    public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
+    public ExamResource(Environment environment, UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
             ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
             AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository,
             ExamImportService examImportService, ExamMonitoringScheduleService examMonitoringScheduleService, CustomAuditEventRepository auditEventRepository) {
+        this.environment = environment;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -850,6 +854,12 @@ public class ExamResource {
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Integer> unlockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
+        // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
+        // LocalVCPushFilter.
+        if (Arrays.asList(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALVC)) {
+            return ResponseEntity.badRequest().build();
+        }
+
         log.info("REST request to unlock all repositories of exam {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -871,6 +881,12 @@ public class ExamResource {
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Integer> lockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
+        // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
+        // LocalVCPushFilter.
+        if (Arrays.asList(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALVC)) {
+            return ResponseEntity.badRequest().build();
+        }
+
         log.info("REST request to lock all repositories of exam {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);

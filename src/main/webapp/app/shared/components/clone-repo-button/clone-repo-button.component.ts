@@ -11,6 +11,7 @@ import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Exercise } from 'app/entities/exercise.model';
+import { PROFILE_LOCALVC } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-clone-repo-button',
@@ -72,7 +73,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
                 this.versionControlUrl = info.versionControlUrl;
             }
             this.versionControlAccessTokenRequired = info.versionControlAccessToken;
-            this.localVCEnabled = info.activeProfiles.includes('localvc');
+            this.localVCEnabled = info.activeProfiles.includes(PROFILE_LOCALVC);
         });
 
         this.useSsh = this.localStorage.retrieve('useSsh') || false;

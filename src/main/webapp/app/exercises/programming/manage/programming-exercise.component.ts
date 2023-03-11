@@ -25,6 +25,7 @@ import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consiste
 import { faBook, faCheckDouble, faDownload, faFileSignature, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
+import { PROFILE_LOCALVC } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -92,7 +93,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 this.programmingExercises = res.body!;
                 this.profileService.getProfileInfo().subscribe((profileInfo) => {
                     this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
-                    this.localVCEnabled = profileInfo.activeProfiles.includes('localvc');
+                    this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                 });
                 // reconnect exercise with course
                 this.programmingExercises.forEach((exercise) => {

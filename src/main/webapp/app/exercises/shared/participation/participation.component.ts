@@ -21,6 +21,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { faCircleNotch, faEraser, faFilePowerpoint, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { PROFILE_LOCALVC } from 'app/app.constants';
 
 enum FilterProp {
     ALL = 'all',
@@ -132,7 +133,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 if (programmingExercise.projectKey) {
                     this.profileService.getProfileInfo().subscribe((profileInfo) => {
                         setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, (this.exercise as ProgrammingExercise).projectKey);
-                        this.localVCEnabled = profileInfo.activeProfiles.includes('localvc');
+                        this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                     });
                 }
             }

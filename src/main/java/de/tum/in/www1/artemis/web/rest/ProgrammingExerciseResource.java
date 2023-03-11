@@ -23,6 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -312,7 +313,7 @@ public class ProgrammingExerciseResource {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
 
-            if (Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
+            if (Arrays.asList(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALCI)) {
                 // Automatically trigger builds for the template and solution participation. For Bamboo and Jenkins, this happens automatically when publishing the build plans.
                 // At the moment this cannot happen at the same place for local CI (in the createBuildPlanForExercise method in the ContinuousIntegrationService), because the
                 // participation is modified during the execution of the build job
@@ -705,6 +706,11 @@ public class ProgrammingExerciseResource {
     @PutMapping(UNLOCK_ALL_REPOSITORIES)
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> unlockAllRepositories(@PathVariable Long exerciseId) {
+        // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
+        // LocalVCPushFilter.
+        if (Arrays.asList(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALVC)) {
+            return ResponseEntity.badRequest().build();
+        }
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         programmingExerciseService.unlockAllRepositories(exerciseId);
@@ -721,6 +727,11 @@ public class ProgrammingExerciseResource {
     @PutMapping(LOCK_ALL_REPOSITORIES)
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> lockAllRepositories(@PathVariable Long exerciseId) {
+        // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
+        // LocalVCPushFilter.
+        if (Arrays.asList(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALVC)) {
+            return ResponseEntity.badRequest().build();
+        }
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         programmingExerciseService.lockAllRepositories(exerciseId);

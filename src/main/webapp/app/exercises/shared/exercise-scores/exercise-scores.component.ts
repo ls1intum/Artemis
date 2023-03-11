@@ -26,6 +26,7 @@ import { faCodeBranch, faDownload, faFolderOpen, faListAlt, faSync } from '@fort
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { Range } from 'app/shared/util/utils';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
+import { PROFILE_LOCALVC } from 'app/app.constants';
 
 /**
  * Filter properties for a result
@@ -174,7 +175,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     this.results.map<ProgrammingExerciseStudentParticipation>((result) => result.participation as ProgrammingExerciseStudentParticipation),
                     (this.exercise as ProgrammingExercise).projectKey,
                 );
-                this.localVCEnabled = profileInfo.activeProfiles.includes('localvc');
+                this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             });
         }
         this.isLoading = false;

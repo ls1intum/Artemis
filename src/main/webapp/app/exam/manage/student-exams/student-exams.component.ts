@@ -21,6 +21,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { PROFILE_LOCALVC } from 'app/app.constants';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 
@@ -86,7 +87,7 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
         this.loadAll();
 
         this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes('localvc');
+            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
 
         const channel = getWebsocketChannel(this.examId);

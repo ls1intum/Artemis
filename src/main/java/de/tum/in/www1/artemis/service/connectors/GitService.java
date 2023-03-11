@@ -259,7 +259,9 @@ public class GitService {
 
     private URI getGitUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
         // If the "localvc" profile is active, the repository is cloned from the folder defined in "artemis.version-control.local-vcs-repo-path".
-        if (Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
+        // You cannot just use vcsRepositoryUrl.getURI() for that, because that returns the URL for people to access the repository from their local Git client.
+        // Internally, the repositories are accessed by getting a path to their location in the file system.
+        if (Arrays.asList(this.environment.getActiveProfiles()).contains(de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC)) {
             // Create less generic LocalVCRepositoryUrl out of VcsRepositoryUrl.
             LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(vcsRepositoryUrl.toString(), gitUrl);
 

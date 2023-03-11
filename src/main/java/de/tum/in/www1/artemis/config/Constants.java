@@ -252,6 +252,10 @@ public final class Constants {
 
     public static final String EXAM_EXERCISE_START_STATUS = "exam-exercise-start-status";
 
+    public static final String PROFILE_LOCALVC = "localvc";
+
+    public static final String PROFILE_LOCALCI = "localci";
+
     /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
