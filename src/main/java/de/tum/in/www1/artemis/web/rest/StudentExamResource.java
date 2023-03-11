@@ -731,6 +731,13 @@ public class StudentExamResource {
         return ResponseEntity.ok(studentExamRepository.save(studentExam));
     }
 
+    /**
+     * GET /courses/{courseId}/exams/{examId}/own-student-exam : Return the student exam of the current user for the specified exam or null if there is none
+     *
+     * @param courseId the course to which the student exams belong to
+     * @param examId   the exam to which the student exams belong to
+     * @return the student exam of the current user or null if not present
+     */
     @GetMapping("/courses/{courseId}/exams/{examId}/own-student-exam")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentExam> retrieveOwnStudentExam(@PathVariable Long courseId, @PathVariable Long examId) {
