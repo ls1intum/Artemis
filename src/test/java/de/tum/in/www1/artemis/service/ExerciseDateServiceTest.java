@@ -230,7 +230,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
             boolean result = exerciseDateService.isAfterDueDate(participation);
             assertThat(result).isTrue();
 
-            // Should still be true if other students are still working
+            // Should also be true if other students are stil working - only the own test exam matters
             StudentExam studentExam2 = database.addStudentExamWithUser(testExam, TEST_PREFIX + "student2");
             result = exerciseDateService.isAfterDueDate(participation);
             assertThat(result).isTrue();
