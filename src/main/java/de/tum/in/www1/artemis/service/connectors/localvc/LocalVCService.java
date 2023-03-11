@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -20,6 +22,8 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -283,15 +287,38 @@ public class LocalVCService extends AbstractVersionControlService {
 
     @Override
     public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject) throws LocalVCException {
-        // The local CIS will provide an eventObject that contains the push date.
-        JsonNode node = new ObjectMapper().convertValue(eventObject, JsonNode.class);
-        String dateString;
+        // If the event object is supplied we try to retrieve the push date from there. Otherwise we use the commitHash to determine the push date.
+        if (eventObject != null) {
+            JsonNode node = new ObjectMapper().convertValue(eventObject, JsonNode.class);
+            String dateString;
+            try {
+                dateString = node.get("date").asText(null);
+                return ZonedDateTime.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
+            }
+            catch (NullPointerException | DateTimeParseException e) {
+                throw new LocalVCException("Unable to get the push date from participation.", e);
+            }
+        }
+
+        de.tum.in.www1.artemis.domain.Repository repository;
         try {
-            dateString = node.get("date").asText(null);
-            return ZonedDateTime.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
+            repository = gitService.getOrCheckoutRepository(participation);
         }
-        catch (NullPointerException | DateTimeParseException e) {
-            throw new LocalVCException("Unable to get the push date from participation.", e);
+        catch (GitAPIException e) {
+            throw new LocalVCException("Unable to get the repository from participation " + participation.getId() + ": " + participation.getRepositoryUrl(), e);
         }
+
+        try (RevWalk revWalk = new RevWalk(repository)) {
+            RevCommit commit = revWalk.parseCommit(repository.resolve(commitHash));
+
+            // Convert the commit time to a ZonedDateTime using the system default time zone.
+            Instant instant = Instant.ofEpochSecond(commit.getCommitTime());
+            ZoneId zoneId = ZoneId.systemDefault();
+            return ZonedDateTime.ofInstant(instant, zoneId);
+        }
+        catch (IOException e) {
+            throw new LocalVCException("Unable to get the push date from participation " + participation.getId() + ": " + participation.getRepositoryUrl(), e);
+        }
+
     }
 }

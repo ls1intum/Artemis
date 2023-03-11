@@ -222,10 +222,12 @@ public class ProgrammingExerciseGradingService {
             try {
                 // Try to get the actual date, the push might be 10s - 3min earlier, depending on how long the build takes.
                 // Note: the whole method is a fallback in case creating the submission initially (when the user pushed the code) was not successful for whatever reason
+                // This is also the case when a new programming exercise is created and the local CI system builds and tests the template and solution repositories for the first
+                // time.
                 submissionDate = versionControlService.get().getPushDate(participation, commitHash.get(), null);
             }
             catch (VersionControlException e) {
-                log.error("Could not retrieve push date for participation {} and build plan {}", participation.getId(), participation.getBuildPlanId(), e);
+                log.warn("Could not retrieve push date for participation {} and build plan {}", participation.getId(), participation.getBuildPlanId(), e);
             }
         }
         var submission = createFallbackSubmission(participation, submissionDate, commitHash.orElse(null));
