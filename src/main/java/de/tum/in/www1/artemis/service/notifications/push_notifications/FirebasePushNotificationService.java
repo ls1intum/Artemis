@@ -56,7 +56,7 @@ public class FirebasePushNotificationService extends PushNotificationService {
 
         var threadPool = Executors.newFixedThreadPool(10);
         var futures = batches.stream().map(batch -> CompletableFuture.runAsync(() -> scheduleSendBatch(batch, relayBaseUrl))).toList()
-                .toArray(new CompletableFuture[requests.size()]);
+                .toArray(new CompletableFuture[batches.size()]);
 
         CompletableFuture.allOf(futures).thenApply((empty) -> {
             threadPool.shutdown();
