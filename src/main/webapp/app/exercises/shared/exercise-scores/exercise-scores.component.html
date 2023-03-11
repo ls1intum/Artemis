@@ -257,11 +257,11 @@
                 >
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <ng-container *ngIf="getRepositoryLink(value)">
-                            <a *ngIf="!localVCEnabled; else repoCloneButton" class="btn btn-primary btn-sm me-1" href="{{ getRepositoryLink(value) }}">
+                            <a *ngIf="!localVCEnabled; else cloneRepoButton" class="btn btn-primary btn-sm me-1" href="{{ getRepositoryLink(value) }}">
                                 <fa-icon [icon]="faCodeBranch" class="me-1"></fa-icon>
                                 Repository
                             </a>
-                            <ng-template #repoCloneButton>
+                            <ng-template #cloneRepoButton>
                                 <jhi-clone-repo-button class="me-1" [smallButtons]="true" [repositoryUrl]="getRepositoryLink(value) || ''"></jhi-clone-repo-button>
                             </ng-template>
                         </ng-container>

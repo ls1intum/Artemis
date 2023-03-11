@@ -242,7 +242,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
         this.publishBuildPlanUrlAllowed = programmingLanguageFeature.publishBuildPlanUrlAllowed;
         this.testwiseCoverageReportSupported = programmingLanguageFeature.testwiseCoverageReportSupported;
-        console.log(programmingLanguageFeature);
         this.auxiliaryRepositoriesSupported = programmingLanguageFeature.auxiliaryRepositoriesSupported;
         // filter out MAVEN_MAVEN and GRADLE_GRADLE because they are not directly selectable but only via a checkbox
         this.projectTypes = programmingLanguageFeature.projectTypes.filter((projectType) => projectType !== ProjectType.MAVEN_MAVEN && projectType !== ProjectType.GRADLE_GRADLE);
