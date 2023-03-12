@@ -9,6 +9,7 @@ export class MockRouter {
     routerState: RouterState;
     createUrlTree = jest.fn().mockReturnValue({ path: 'testValue' } as unknown as UrlTree);
     serializeUrl = jest.fn().mockReturnValue('testValue');
+    getCurrentNavigation = jest.fn().mockReturnValue({ extras: { state: {} } });
 
     eventSubject: Subject<RouterEvent> = new Subject<RouterEvent>();
 
