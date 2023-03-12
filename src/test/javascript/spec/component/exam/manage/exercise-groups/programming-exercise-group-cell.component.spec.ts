@@ -42,6 +42,7 @@ describe('Programming Exercise Group Cell Component', () => {
                 // @ts-ignore
                 of({
                     buildPlanURLTemplate: 'https://example.com/{buildPlanId}/{projectKey}',
+                    activeProfiles: [],
                 }),
         };
 
