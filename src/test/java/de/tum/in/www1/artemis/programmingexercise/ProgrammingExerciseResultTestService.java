@@ -327,6 +327,8 @@ public class ProgrammingExerciseResultTestService {
         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         assertThat(result.getFeedbacks()).hasSize(6);
         assertThat(result.getFeedbacks().stream().filter((fb) -> fb.getType() == FeedbackType.AUTOMATIC).count()).isEqualTo(3);
+        assertThat(result.getTestCaseCount()).isEqualTo(3);
+        assertThat(result.getPassedTestCaseCount()).isEqualTo(3);
 
         // Call again and shouldn't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
