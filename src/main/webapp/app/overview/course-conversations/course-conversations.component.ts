@@ -25,7 +25,18 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     activeConversation?: ConversationDto = undefined;
     conversationsOfUser: ConversationDto[] = [];
     // MetisConversationService is created in course overview, so we can use it here
-    constructor(private router: Router, private activatedRoute: ActivatedRoute, public metisConversationService: MetisConversationService, public metisService: MetisService) {}
+    constructor(private router: Router, private activatedRoute: ActivatedRoute, public metisConversationService: MetisConversationService, public metisService: MetisService) {
+        // we need to get extra (state: {postId: postId}) data from the router, because we want to set postInThread in order to open the thread view
+        // this case can happen when user clicks on a notification about a new reply message
+        if (this.router.getCurrentNavigation() && this.router.getCurrentNavigation()!.extras.state && this.router.getCurrentNavigation()!.extras.state!.postId) {
+            const postId = this.router.getCurrentNavigation()!.extras.state!.postId;
+            this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
+                if (posts) {
+                    this.postInThread = posts.filter((post) => post.id === postId).first();
+                }
+            });
+        }
+    }
 
     getAsChannel = getAsChannelDto;
 

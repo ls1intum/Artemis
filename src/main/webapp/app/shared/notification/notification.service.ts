@@ -7,7 +7,7 @@ import dayjs from 'dayjs/esm';
 import { map } from 'rxjs/operators';
 
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Params, Router, UrlSerializer } from '@angular/router';
+import { NavigationExtras, Params, Router, UrlSerializer } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
@@ -100,15 +100,20 @@ export class NotificationService {
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
             } else if (
                 notification.title === NEW_MESSAGE_TITLE ||
-                notification.title === NEW_REPLY_MESSAGE_TITLE ||
                 notification.title === CONVERSATION_CREATE_GROUP_CHAT_TITLE ||
                 notification.title === CONVERSATION_ADD_USER_CHANNEL_TITLE ||
                 notification.title === CONVERSATION_ADD_USER_GROUP_CHAT_TITLE
             ) {
-                // this.router.navigateByUrl(`/${target.mainPage}/${targetCourseId}/messages?conversationId=${targetConversationId}`);
                 const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
                 const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
+            } else if (notification.title === NEW_REPLY_MESSAGE_TITLE) {
+                const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
+                const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
+                const extras = {
+                    state: { postId: target.id },
+                };
+                this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams, extras);
             } else {
                 this.router.navigate([target.mainPage, targetCourseId, target.entity, target.id]);
             }
@@ -120,18 +125,24 @@ export class NotificationService {
      * @param {number} targetCourseId
      * @param {RouteComponents} routeComponents
      * @param {Params} queryParams
+     * @param extras optional extras for router.navigate
      */
-    navigateToNotificationTarget(targetCourseId: number, routeComponents: RouteComponents, queryParams: Params): void {
+    navigateToNotificationTarget(targetCourseId: number, routeComponents: RouteComponents, queryParams: Params, extras?: NavigationExtras): void {
         const currentCourseId = NotificationService.getCurrentCourseId();
         // determine if reload is required when notification is clicked
         // by comparing the id of the course the user is currently in and the course the post associated with the notification belongs to
-        if (currentCourseId === undefined || currentCourseId !== targetCourseId) {
+        if (currentCourseId === undefined || currentCourseId !== targetCourseId || this.isUnderMessagesTabOfSpecificCourse(targetCourseId.toString())) {
             const tree = this.router.createUrlTree(routeComponents, { queryParams });
             // navigate by string url to force reload when switching the course context
             window.location.href = this.serializer.serialize(tree);
         } else {
-            // navigate with router when staying in same course context when clicking on notification
-            this.router.navigate(routeComponents, { queryParams });
+            if (extras) {
+                // add extras (postId) to router.navigate when clicking on notification to open reply message
+                this.router.navigate(routeComponents, { queryParams, ...extras });
+            } else {
+                // navigate with router when staying in same course context when clicking on notification
+                this.router.navigate(routeComponents, { queryParams });
+            }
         }
     }
 
