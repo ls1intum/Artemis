@@ -274,22 +274,24 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     }
 
     @Query("""
-            select distinct p from StudentParticipation p
-            left join fetch p.results r
-            left join fetch r.feedbacks
-            left join fetch r.submission s
-            where p.id = :#{#participationId}
-                 and (s.type <> 'ILLEGAL' or s.type is null)
-                 and (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI_AUTOMATIC')
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.submission s
+            WHERE p.id = :#{#participationId}
+                 AND (s.type <> 'ILLEGAL' or s.type is null)
+                 AND (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI_AUTOMATIC')
             """)
     Optional<StudentParticipation> findByIdWithManualResultAndFeedbacks(@Param("participationId") Long participationId);
 
     @Query("""
-            select distinct p from StudentParticipation p
-            left join fetch p.submissions s
-            where p.exercise.id = :#{#exerciseId}
-                and p.student.id = :#{#studentId}
-                and (s.type <> 'ILLEGAL' or s.type is null)
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.student.id = :#{#studentId}
+                AND (s.type <> 'ILLEGAL' or s.type is null)
             """)
     List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerLegalSubmissions(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
