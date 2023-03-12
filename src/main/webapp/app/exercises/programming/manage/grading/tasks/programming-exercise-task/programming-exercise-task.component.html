@@ -9,17 +9,17 @@
                 <span class="task__field">{{ task.taskName }}</span>
             </div>
             <div class="task__row__cell">
-                <input type="number" class="form-control" min="0" [value]="task.weight" />
+                <input type="number" class="form-control" min="0" [(ngModel)]="task.weight" name="{{ task.taskName }}-name" (change)="updateTests()" />
             </div>
             <div class="task__row__cell">
-                <input type="number" class="form-control" min="0" [value]="task.bonusMultiplier" />
+                <input type="number" class="form-control" min="0" [(ngModel)]="task.bonusMultiplier" name="{{ task.taskName }}-bonusMultiplier" (change)="updateTests()" />
             </div>
             <div class="task__row__cell">
-                <input type="number" class="form-control" min="0" [value]="task.bonusPoints" />
+                <input type="number" class="form-control" min="0" [(ngModel)]="task.bonusPoints" name="{{ task.taskName }}-bonusPoints" (change)="updateTests()" />
             </div>
             <div class="task__row__cell">
-                <select [ngModel]="task.visibility" class="form-select">
-                    <option *ngFor="let s of testCaseVisibilityList" [value]="s.value">
+                <select [(ngModel)]="task.visibility" class="form-select" name="{{ task.taskName }}-visibility">
+                    <option *ngFor="let s of testCaseVisibilityList">
                         {{ 'artemisApp.programmingExerciseTestCase.visibility.' + s.name | artemisTranslate }}
                     </option>
                 </select>
@@ -42,16 +42,16 @@
                 <span class="task__field ps-3">{{ test.testName }}</span>
             </div>
             <div class="task__row__cell">
-                <input type="number" class="form-control" min="0" [value]="test.weight" />
+                <input type="number" class="form-control" min="0" [(ngModel)]="test.weight" name="{{ test.testName }}-name" (change)="updateTask()" />
             </div>
             <div class="task__row__cell">
-                <input type="number" class="form-control" min="0" [value]="test.bonusMultiplier" />
+                <input type="number" class="form-control" min="0" [(ngModel)]="test.bonusMultiplier" name="{{ test.testName }}-bonusMultiplier" (change)="updateTask()" />
             </div>
             <div class="task__row__cell">
-                <input type="number" class="form-control" min="0" [value]="test.bonusPoints" />
+                <input type="number" class="form-control" min="0" [(ngModel)]="test.bonusPoints" name="{{ test.testName }}-bonusPoints" (change)="updateTask()" />
             </div>
             <div class="task__row__cell">
-                <select [ngModel]="test.visibility" class="form-select">
+                <select [(ngModel)]="test.visibility" class="form-select" name="{{ test.testName }}-visibility">
                     <option *ngFor="let s of testCaseVisibilityList" [value]="s.value">
                         {{ 'artemisApp.programmingExerciseTestCase.visibility.' + s.name | artemisTranslate }}
                     </option>

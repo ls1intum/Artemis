@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
 import { Observable } from 'rxjs';
 import { Exercise } from 'app/entities/exercise.model';
-import { ProgrammingExerciseTask, TaskAdditionalEnum } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
+import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskService {
@@ -18,11 +18,15 @@ export class ProgrammingExerciseTaskService {
     public updateValues(serverSideTask: ProgrammingExerciseServerSideTask): ProgrammingExerciseTask {
         const task = serverSideTask as ProgrammingExerciseTask;
         task.testCases = serverSideTask.testCases ?? [];
+        return this.updateTask(task);
+    }
+
+    public updateTask(task: ProgrammingExerciseTask) {
         task.weight = task.testCases.map((testCase) => testCase.weight ?? 0).reduce(this.sum);
         task.bonusMultiplier = this.getSingleValue(task.testCases.map((testCase) => testCase.bonusMultiplier));
         task.bonusPoints = task.testCases.map((testCase) => testCase.bonusPoints ?? 0).reduce(this.sum);
-        task.visibility = this.getSingleValue(task.testCases.map((testCase) => testCase.visibility)) ?? TaskAdditionalEnum.Mixed;
-        task.type = this.getSingleValue(task.testCases.map((testCase) => testCase.type)) ?? TaskAdditionalEnum.Mixed;
+        task.visibility = this.getSingleValue(task.testCases.map((testCase) => testCase.visibility));
+        task.type = this.getSingleValue(task.testCases.map((testCase) => testCase.type));
         return task;
     }
 
