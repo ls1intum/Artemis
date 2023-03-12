@@ -8,4 +8,5 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  */
 @ResponseStatus(HttpStatus.UNAUTHORIZED)
 public class AccessUnauthorizedException extends RuntimeException {
+    // Only default no-args constructor required.
 }

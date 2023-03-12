@@ -34,6 +34,9 @@ public class LocalCIBuildPlanService {
     /**
      * Updates the build plan status of the given participation to the given status.
      * This method attaches the new status to the build plan id and saves it in the database. This way no new database table must be added just for this purpose.
+     * Inactive build plan id: "TESTCOURSE1TESTEX2-USER1"
+     * Queued build plan id: "TESTCOURSE1TESTEX2-USER1_QUEUED"
+     * Building build plan id: "TESTCOURSE1TESTEX2-USER1_BUILDING"
      *
      * @param participation  the participation for which the build plan status should be updated.
      * @param newBuildStatus the new build plan status.

@@ -15,8 +15,6 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.exception.LocalCIException;
-
 /**
  * Service class to load resources from the file system (if possible) and the classpath (as fallback).
  */
@@ -118,52 +116,31 @@ public class ResourceLoaderService {
      * @param path the path to the file in the 'resources' folder.
      * @return the path to the file in the file system or in the jar file.
      */
-    public Path getResourceFilePath(Path path) {
+    public Path getResourceFilePath(Path path) throws IOException, URISyntaxException {
 
         Resource resource = getResource(path.toString());
 
         if (!resource.exists()) {
-            throw new RuntimeException("Resource does not exist: " + path);
+            throw new IOException("Resource does not exist: " + path);
         }
 
         URL resourceUrl;
-        try {
-            resourceUrl = resource.getURL();
-        }
-        catch (IOException e) {
-            throw new RuntimeException("Could not get URL of resource: " + path, e);
-        }
+
+        resourceUrl = resource.getURL();
 
         if (resourceUrl.getProtocol().equals("file")) {
             // Resource is in the file system.
-            try {
-                return Paths.get(resourceUrl.toURI());
-            }
-            catch (URISyntaxException e) {
-                throw new RuntimeException("Could not get URI of resource: " + path, e);
-            }
+            return Paths.get(resourceUrl.toURI());
         }
         else if (resourceUrl.getProtocol().equals("jar")) {
             // Resource is in a jar file.
-            InputStream scriptInputStream;
-            try {
-                scriptInputStream = getResource(path.toString()).getInputStream();
-            }
-            catch (IOException e) {
-                throw new LocalCIException("Could not get input stream for build script.");
-            }
+            InputStream resourceInputStream = getResource(path.toString()).getInputStream();
 
-            Path scriptPath;
-            try {
-                scriptPath = Files.createTempFile(UUID.randomUUID().toString(), ".sh");
-                Files.copy(scriptInputStream, scriptPath, StandardCopyOption.REPLACE_EXISTING);
-                // Delete the temporary file when the JVM exits.
-                scriptPath.toFile().deleteOnExit();
-                return scriptPath;
-            }
-            catch (IOException e) {
-                throw new LocalCIException("Could not create temporary file for build script.");
-            }
+            Path resourcePath = Files.createTempFile(UUID.randomUUID().toString(), "");
+            Files.copy(resourceInputStream, resourcePath, StandardCopyOption.REPLACE_EXISTING);
+            // Delete the temporary file when the JVM exits.
+            resourcePath.toFile().deleteOnExit();
+            return resourcePath;
         }
         throw new IllegalArgumentException("Unsupported protocol: " + resourceUrl.getProtocol());
     }

@@ -6,6 +6,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationPushService;
 
+/**
+ * Service implementation for GitLab CI.
+ */
 @Service
 @Profile("gitlab")
 public class GitLabCIPushService implements ContinuousIntegrationPushService {

@@ -17,6 +17,10 @@ import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
 
+/**
+ * Creates beans needed for the local CI system.
+ * This includes a Docker client and an executor service that manages the queue of build jobs.
+ */
 @Configuration
 @Profile("localci")
 public class LocalCIConfiguration {
@@ -26,11 +30,21 @@ public class LocalCIConfiguration {
     @Value("${artemis.continuous-integration.thread-pool-size}")
     int threadPoolSize;
 
+    /**
+     * Creates an executor service that manages the queue of build jobs.
+     *
+     * @return The executor service bean.
+     */
     @Bean
     public ExecutorService executorService() {
         return Executors.newFixedThreadPool(threadPoolSize);
     }
 
+    /**
+     * Creates a Docker client that is used to communicate with the Docker daemon.
+     *
+     * @return The Docker client bean.
+     */
     @Bean
     public DockerClient dockerClient() {
         String dockerConnectionUri;

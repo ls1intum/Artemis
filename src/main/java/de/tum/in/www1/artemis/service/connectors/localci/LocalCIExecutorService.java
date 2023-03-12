@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
@@ -20,6 +22,9 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 
+/**
+ * Service for submitting build jobs to the executor service.
+ */
 @Service
 @Profile("localci")
 public class LocalCIExecutorService {
@@ -95,7 +100,7 @@ public class LocalCIExecutorService {
         try {
             scriptPath = resourceLoaderService.getResourceFilePath(resourcePath);
         }
-        catch (RuntimeException e) {
+        catch (IOException | URISyntaxException e) {
             throw new LocalCIException("Could not retrieve build script.", e);
         }
 

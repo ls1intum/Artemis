@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.security.localvc;
 
 import java.io.IOException;
 
-import javax.servlet.*;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -26,6 +27,9 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
         this.localVCFilterService = localVCFilterService;
     }
 
+    /**
+     * Filters incoming push requests performing authentication and authorization.
+     */
     @Override
     public void doFilterInternal(HttpServletRequest servletRequest, HttpServletResponse servletResponse, @NotNull FilterChain filterChain) throws IOException, ServletException {
 

@@ -6,6 +6,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationPushService;
 
+/**
+ * Service implementation for Jenkins.
+ */
 @Service
 @Profile("jenkins")
 public class JenkinsPushService implements ContinuousIntegrationPushService {

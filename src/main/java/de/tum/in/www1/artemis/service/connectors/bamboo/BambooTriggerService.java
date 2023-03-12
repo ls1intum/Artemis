@@ -16,6 +16,9 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationTriggerService;
 
+/**
+ * Service implementation for Bamboo.
+ */
 @Service
 @Profile("bamboo")
 public class BambooTriggerService implements ContinuousIntegrationTriggerService {

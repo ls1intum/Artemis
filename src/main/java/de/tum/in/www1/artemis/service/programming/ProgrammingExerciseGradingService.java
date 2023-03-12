@@ -135,7 +135,6 @@ public class ProgrammingExerciseGradingService {
             latestSubmission.setBuildArtifact(buildResult.hasArtifact());
 
             if (buildResult.hasLogs()) {
-                // TODO: Check for whether this works with local CI once logs are returned by local CI.
                 var programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
                 var projectType = participation.getProgrammingExercise().getProjectType();
                 var buildLogs = buildResult.extractBuildLogs(programmingLanguage);
