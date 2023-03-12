@@ -8,4 +8,6 @@ export class ProgrammingExerciseTask extends ProgrammingExerciseServerSideTask {
     bonusPoints?: number;
     visibility?: Visibility;
     type?: ProgrammingExerciseTestCaseType;
+    resultingPoints?: number;
+    resultingPointsPercent?: number;
 }
