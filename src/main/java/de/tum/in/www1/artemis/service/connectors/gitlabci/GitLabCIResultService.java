@@ -22,11 +22,14 @@ import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResults
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
+/**
+ * Service implementation for GitLab CI.
+ */
 @Profile("gitlabci")
 @Service
 public class GitLabCIResultService extends AbstractContinuousIntegrationResultService {
 
-    private static final Logger log = LoggerFactory.getLogger(GitLabCIResultService.class);
+    private final Logger log = LoggerFactory.getLogger(GitLabCIResultService.class);
 
     public GitLabCIResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {

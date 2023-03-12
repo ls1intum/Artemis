@@ -23,6 +23,9 @@ import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResults
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
+/**
+ * Service implementation for Jenkins.
+ */
 @Profile("jenkins")
 @Service
 public class JenkinsResultService extends AbstractContinuousIntegrationResultService {

@@ -276,7 +276,7 @@ public class LocalCIPushService implements ContinuousIntegrationPushService {
             }
             git.close();
         }
-        catch (IOException | NullPointerException | GitAPIException e) {
+        catch (IOException | GitAPIException e) {
             log.error("Could not resolve commit hash {} to a commit.", commitHash, e);
         }
 

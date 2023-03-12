@@ -11,10 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCBadRequestException;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
 /**
@@ -40,25 +36,9 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
         try {
             localVCFilterService.authenticateAndAuthorizeGitRequest(servletRequest, RepositoryActionType.WRITE);
         }
-        catch (LocalVCBadRequestException e) {
-            servletResponse.setStatus(400);
-            return;
-        }
-        catch (LocalVCAuthException e) {
-            servletResponse.setStatus(401);
-            return;
-        }
-        catch (LocalVCForbiddenException e) {
-            servletResponse.setStatus(403);
-            return;
-        }
-        catch (LocalVCInternalException e) {
-            servletResponse.setStatus(500);
-            return;
-        }
         catch (Exception e) {
-            servletResponse.setStatus(500);
-            log.error("Unexpected error while trying to push to repository {}", servletRequest.getRequestURI(), e);
+            servletResponse.setStatus(localVCFilterService.getHttpStatusForException(e, servletRequest.getRequestURI()));
+            return;
         }
 
         filterChain.doFilter(servletRequest, servletResponse);

@@ -22,6 +22,7 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
@@ -42,7 +43,11 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
+/**
+ * Service for running build jobs on the local CI server.
+ */
 @Service
+@Profile("localci")
 public class LocalCIBuildJobService {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIBuildJobService.class);
@@ -68,12 +73,10 @@ public class LocalCIBuildJobService {
     public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, Path assignmentRepositoryPath, Path testRepositoryPath, Path scriptPath) {
         long timeNanoStart = System.nanoTime();
 
-        // Add "_BUILDING" to the build plan id to indicate that the build blan is currently building.
+        // Add "_BUILDING" to the build plan id to indicate that the build plan is currently building.
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
 
-        HostConfig hostConfig = HostConfig.newHostConfig().withAutoRemove(true) // Automatically remove the container when it exits.
-                .withBinds(new Bind(assignmentRepositoryPath.toString(), new Volume("/assignment-repository")),
-                        new Bind(testRepositoryPath.toString(), new Volume("/test-repository")), new Bind(scriptPath.toString(), new Volume("/script.sh")));
+        HostConfig volumeConfig = createVolumeConfig(assignmentRepositoryPath, testRepositoryPath, scriptPath);
 
         ProjectType projectType = participation.getProgrammingExercise().getProjectType();
         if (projectType == null || (!projectType.isMaven() && !projectType.isGradle())) {
@@ -85,44 +88,13 @@ public class LocalCIBuildJobService {
         // If the docker image is not available on the local machine, pull it from Docker Hub.
         pullDockerImage(dockerClient, dockerImage);
 
-        // Create the container from the "ls1tum/artemis-maven-template:java17-13" image with the local paths to the Git repositories and the shell script bound to it.
-        CreateContainerResponse container = dockerClient.createContainerCmd(dockerImage).withHostConfig(hostConfig)
-                .withEnv("ARTEMIS_BUILD_TOOL=" + (projectType.isMaven() ? "maven" : "gradle"), "ARTEMIS_DEFAULT_BRANCH=" + branch)
-                // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
-                // container from exiting until it finishes.
-                // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
-                // by the creation of a file "stop_container.txt" in the container's root directory.
-                .withCmd("sh", "-c", "while [ ! -f /stop_container.txt ]; do sleep 0.5; done")
-                // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
-                // "docker exec -it <container-id> /bin/bash".
-                .exec();
+        // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it.
+        CreateContainerResponse container = createContainer(volumeConfig, projectType, branch);
 
         // Start the container.
         dockerClient.startContainerCmd(container.getId()).exec();
 
-        // The "sh script.sh" command specified here is run inside the container as an additional process. This command runs in the background, independent of the container's
-        // main process. The execution command can run concurrently with the main process. This setup with the ExecCreateCmdResponse gives us the ability to wait in code until the
-        // command has finished before trying to extract the results.
-        ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(container.getId()).withAttachStdout(true).withAttachStderr(true).withCmd("sh", "script.sh").exec();
-
-        // Start the command and wait for it to complete.
-        final CountDownLatch latch = new CountDownLatch(1);
-
-        dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(new ResultCallback.Adapter<>() {
-
-            @Override
-            public void onComplete() {
-                latch.countDown();
-            }
-        });
-
-        try {
-            // Block until the latch reaches 0 or until the thread is interrupted.
-            latch.await();
-        }
-        catch (InterruptedException e) {
-            throw new LocalCIException("Interrupted while waiting for command to complete", e);
-        }
+        runScriptInContainer(container.getId());
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 
@@ -130,18 +102,8 @@ public class LocalCIBuildJobService {
         String testsRepoCommitHash = "";
 
         try {
-            // Get an input stream of the file in .git folder of the assignment repository and the test repository that contains the current commit hash of branch main.
-            TarArchiveInputStream assignmentRepoTarInputStream = new TarArchiveInputStream(
-                    dockerClient.copyArchiveFromContainerCmd(container.getId(), "/repositories/assignment-repository/.git/refs/heads/" + branch).exec());
-            assignmentRepoTarInputStream.getNextTarEntry();
-            assignmentRepoCommitHash = IOUtils.toString(assignmentRepoTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
-            assignmentRepoTarInputStream.close();
-
-            TarArchiveInputStream testRepoTarInputStream = new TarArchiveInputStream(
-                    dockerClient.copyArchiveFromContainerCmd(container.getId(), "/repositories/test-repository/.git/refs/heads/" + branch).exec());
-            testRepoTarInputStream.getNextTarEntry();
-            testsRepoCommitHash = IOUtils.toString(testRepoTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
-            testRepoTarInputStream.close();
+            assignmentRepoCommitHash = getCommitHashOfBranch(container.getId(), "assignment-repository", branch);
+            testsRepoCommitHash = getCommitHashOfBranch(container.getId(), "test-repository", branch);
         }
         catch (IOException e) {
             // Could not read commit hash from .git folder. Stop the container and return a build results that indicates that the build failed.
@@ -151,16 +113,7 @@ public class LocalCIBuildJobService {
 
         // When Gradle is used as the build tool, the test results are located in /repositories/test-repository/build/test-resuls/test/TEST-*.xml.
         // When Maven is used as the build tool, the test results are located in /repositories/test-repository/target/surefire-reports/TEST-*.xml.
-        String testResultsPath;
-        if (projectType.isGradle()) {
-            testResultsPath = "/repositories/test-repository/build/test-results/test";
-        }
-        else if (projectType.isMaven()) {
-            testResultsPath = "/repositories/test-repository/target/surefire-reports";
-        }
-        else {
-            throw new LocalCIException("Unknown build tool: " + projectType);
-        }
+        String testResultsPath = getTestResultsPath(projectType);
 
         // Get an input stream of the test result files.
         TarArchiveInputStream testResultsTarInputStream;
@@ -191,6 +144,74 @@ public class LocalCIBuildJobService {
         log.info("Building and testing submission for repository {} took {}", participation.getRepositoryUrl(), TimeLogUtil.formatDurationFrom(timeNanoStart));
 
         return buildResult;
+    }
+
+    private String getTestResultsPath(ProjectType projectType) {
+        if (projectType.isGradle()) {
+            return "/repositories/test-repository/build/test-results/test";
+        }
+        else if (projectType.isMaven()) {
+            return "/repositories/test-repository/target/surefire-reports";
+        }
+        else {
+            throw new LocalCIException("Unknown build tool: " + projectType);
+        }
+    }
+
+    private String getCommitHashOfBranch(String containerId, String repositoryName, String branchName) throws IOException {
+        // Get an input stream of the file in .git folder of the repository that contains the current commit hash of the branch.
+        TarArchiveInputStream repositoryTarInputStream = new TarArchiveInputStream(
+                dockerClient.copyArchiveFromContainerCmd(containerId, "/repositories/" + repositoryName + "/.git/refs/heads/" + branchName).exec());
+        repositoryTarInputStream.getNextTarEntry();
+        String commitHash = IOUtils.toString(repositoryTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
+        repositoryTarInputStream.close();
+        return commitHash;
+    }
+
+    private void runScriptInContainer(String containerId) {
+        // The "sh script.sh" command specified here is run inside the container as an additional process. This command runs in the background, independent of the container's
+        // main process. The execution command can run concurrently with the main process. This setup with the ExecCreateCmdResponse gives us the ability to wait in code until the
+        // command has finished before trying to extract the results.
+        ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId).withAttachStdout(true).withAttachStderr(true).withCmd("sh", "script.sh").exec();
+
+        // Start the command and wait for it to complete.
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(new ResultCallback.Adapter<>() {
+
+            @Override
+            public void onComplete() {
+                latch.countDown();
+            }
+        });
+
+        try {
+            // Block until the latch reaches 0 or until the thread is interrupted.
+            latch.await();
+        }
+        catch (InterruptedException e) {
+            throw new LocalCIException("Interrupted while waiting for command to complete", e);
+        }
+    }
+
+    private CreateContainerResponse createContainer(HostConfig volumeConfig, ProjectType projectType, String branch) {
+        return dockerClient.createContainerCmd(dockerImage).withHostConfig(volumeConfig)
+                .withEnv("ARTEMIS_BUILD_TOOL=" + (projectType.isMaven() ? "maven" : "gradle"), "ARTEMIS_DEFAULT_BRANCH=" + branch)
+                // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
+                // container from exiting until it finishes.
+                // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
+                // by the creation of a file "stop_container.txt" in the container's root directory.
+                .withCmd("sh", "-c", "while [ ! -f /stop_container.txt ]; do sleep 0.5; done")
+                // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
+                // "docker exec -it <container-id> /bin/bash".
+                .exec();
+    }
+
+    private HostConfig createVolumeConfig(Path assignmentRepositoryPath, Path testRepositoryPath, Path scriptPath) {
+        // Configure the volumes of the container such that it can access the assignment repository, the test repository, and the build script.
+        return HostConfig.newHostConfig().withAutoRemove(true) // Automatically remove the container when it exits.
+                .withBinds(new Bind(assignmentRepositoryPath.toString(), new Volume("/assignment-repository")),
+                        new Bind(testRepositoryPath.toString(), new Volume("/test-repository")), new Bind(scriptPath.toString(), new Volume("/script.sh")));
     }
 
     private void pullDockerImage(DockerClient dockerClient, String dockerImage) {
@@ -239,57 +260,64 @@ public class LocalCIBuildJobService {
         XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
         TarArchiveEntry tarEntry;
         while ((tarEntry = testResultsTarInputStream.getNextTarEntry()) != null) {
-            if (!tarEntry.isDirectory() && tarEntry.getName().startsWith(projectType.isGradle() ? "test" : "surefire-reports" + "/TEST-") && tarEntry.getName().endsWith(".xml")) {
-                // Read the contents of the tar entry as a string.
-                String xmlString = IOUtils.toString(testResultsTarInputStream, StandardCharsets.UTF_8);
 
-                // Create an XML stream reader for the string.
-                XMLStreamReader xmlStreamReader = xmlInputFactory.createXMLStreamReader(new StringReader(xmlString));
-
-                // Move to the first start element.
-                while (xmlStreamReader.hasNext() && !xmlStreamReader.isStartElement()) {
-                    xmlStreamReader.next();
-                }
-
-                // Check if the start element is the "testsuite" node.
-                if (!xmlStreamReader.getLocalName().equals("testsuite")) {
-                    throw new IllegalStateException("Expected testsuite element, but got " + xmlStreamReader.getLocalName());
-                }
-
-                // Go through all testcase nodes.
-                while (xmlStreamReader.hasNext()) {
-                    xmlStreamReader.next();
-
-                    if (xmlStreamReader.isStartElement() && xmlStreamReader.getLocalName().equals("testcase")) {
-                        // Extract the name attribute from the "testcase" node.
-                        String name = xmlStreamReader.getAttributeValue(null, "name");
-
-                        // Check if there is a failure node inside the testcase node.
-                        // Call next() until there is an end element (no failure node exists inside the testcase node) or a start element (failure node exists inside the
-                        // testcase node).
-                        xmlStreamReader.next();
-                        while (!(xmlStreamReader.isEndElement() || xmlStreamReader.isStartElement())) {
-                            xmlStreamReader.next();
-                        }
-                        if (xmlStreamReader.isStartElement() && xmlStreamReader.getLocalName().equals("failure")) {
-                            // Extract the message attribute from the "failure" node.
-                            String error = xmlStreamReader.getAttributeValue(null, "message");
-
-                            // Add the failed test to the list of failed tests.
-                            failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, error != null ? List.of(error) : List.of()));
-
-                            // If there is at least one test case with a failure node, the build is not successful.
-                            isBuildSuccessful = false;
-                        }
-                        else {
-                            // Add the successful test to the list of successful tests.
-                            successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, List.of()));
-                        }
-                    }
-                }
-                // Close the XML stream reader.
-                xmlStreamReader.close();
+            if (tarEntry.isDirectory() || !tarEntry.getName().endsWith(".xml") || !tarEntry.getName().startsWith(projectType.isGradle() ? "test" : "surefire-reports" + "/TEST-")) {
+                continue;
             }
+
+            // Read the contents of the tar entry as a string.
+            String xmlString = IOUtils.toString(testResultsTarInputStream, StandardCharsets.UTF_8);
+
+            // Create an XML stream reader for the string.
+            XMLStreamReader xmlStreamReader = xmlInputFactory.createXMLStreamReader(new StringReader(xmlString));
+
+            // Move to the first start element.
+            while (xmlStreamReader.hasNext() && !xmlStreamReader.isStartElement()) {
+                xmlStreamReader.next();
+            }
+
+            // Check if the start element is the "testsuite" node.
+            if (!xmlStreamReader.getLocalName().equals("testsuite")) {
+                throw new IllegalStateException("Expected testsuite element, but got " + xmlStreamReader.getLocalName());
+            }
+
+            // Go through all testcase nodes.
+            while (xmlStreamReader.hasNext()) {
+                xmlStreamReader.next();
+
+                if (!xmlStreamReader.isStartElement() || !xmlStreamReader.getLocalName().equals("testcase")) {
+                    continue;
+                }
+
+                // Now we are at the start of a "testcase" node.
+
+                // Extract the name attribute from the "testcase" node.
+                String name = xmlStreamReader.getAttributeValue(null, "name");
+
+                // Check if there is a failure node inside the testcase node.
+                // Call next() until there is an end element (no failure node exists inside the testcase node) or a start element (failure node exists inside the
+                // testcase node).
+                xmlStreamReader.next();
+                while (!(xmlStreamReader.isEndElement() || xmlStreamReader.isStartElement())) {
+                    xmlStreamReader.next();
+                }
+                if (xmlStreamReader.isStartElement() && xmlStreamReader.getLocalName().equals("failure")) {
+                    // Extract the message attribute from the "failure" node.
+                    String error = xmlStreamReader.getAttributeValue(null, "message");
+
+                    // Add the failed test to the list of failed tests.
+                    failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, error != null ? List.of(error) : List.of()));
+
+                    // If there is at least one test case with a failure node, the build is not successful.
+                    isBuildSuccessful = false;
+                }
+                else {
+                    // Add the successful test to the list of successful tests.
+                    successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, List.of()));
+                }
+            }
+            // Close the XML stream reader.
+            xmlStreamReader.close();
         }
 
         return constructBuildResult(failedTests, successfulTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildCompletedDate,

@@ -23,6 +23,9 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNot
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
+/**
+ * Service implementation for Bamboo.
+ */
 @Service
 @Profile("bamboo")
 public class BambooResultService extends AbstractContinuousIntegrationResultService {

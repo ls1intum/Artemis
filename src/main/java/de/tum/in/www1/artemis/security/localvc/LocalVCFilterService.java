@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.AuthenticationException;
@@ -210,6 +211,33 @@ public class LocalVCFilterService {
         }
         catch (IllegalArgumentException e) {
             throw new LocalVCInternalException(e);
+        }
+    }
+
+    /**
+     * Returns the HTTP status code for the given exception thrown by the above method "authenticateAndAuthorizeGitRequest".
+     *
+     * @param e             The exception thrown.
+     * @param repositoryUrl The URL of the repository that was accessed.
+     * @return The HTTP status code.
+     */
+    public int getHttpStatusForException(Exception e, String repositoryUrl) {
+        if (e instanceof LocalVCAuthException) {
+            return HttpStatus.UNAUTHORIZED.value();
+        }
+        else if (e instanceof LocalVCForbiddenException) {
+            return HttpStatus.FORBIDDEN.value();
+        }
+        else if (e instanceof LocalVCBadRequestException) {
+            return HttpStatus.BAD_REQUEST.value();
+        }
+        else if (e instanceof LocalVCInternalException) {
+            log.error("Internal server error while trying to access repository {}", repositoryUrl, e);
+            return HttpStatus.INTERNAL_SERVER_ERROR.value();
+        }
+        else {
+            log.error("Unexpected error while trying to access repository {}", repositoryUrl, e);
+            return HttpStatus.INTERNAL_SERVER_ERROR.value();
         }
     }
 }

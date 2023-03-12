@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import org.eclipse.jgit.lib.Repository;
 
+/**
+ * Service called by the version control system to further process a push that was successfully received.
+ */
 public interface ContinuousIntegrationPushService {
 
     /**

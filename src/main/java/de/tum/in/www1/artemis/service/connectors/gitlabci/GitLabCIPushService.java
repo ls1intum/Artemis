@@ -18,6 +18,6 @@ public class GitLabCIPushService implements ContinuousIntegrationPushService {
      */
     @Override
     public void processNewPush(String commitHash, Repository repository) {
-        // Not needed for GitLab. The build is processed in GitLab and the CI system is notified via a webhook.
+        // Not needed for GitLab. The push is processed in GitLab and the CI system is notified via a webhook.
     }
 }

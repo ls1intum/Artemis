@@ -19,6 +19,9 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
+/**
+ * Service implementation for Local CI.
+ */
 @Service
 @Profile("localci")
 public class LocalCIResultService extends AbstractContinuousIntegrationResultService {

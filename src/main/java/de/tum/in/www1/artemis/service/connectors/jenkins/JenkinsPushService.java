@@ -18,6 +18,6 @@ public class JenkinsPushService implements ContinuousIntegrationPushService {
      */
     @Override
     public void processNewPush(String commitHash, Repository repository) {
-        // Not needed for Jenkins. The build is processed in GitLab and Jenkins is notified via a webhook.
+        // Not needed for Jenkins. The push is processed in GitLab and Jenkins is notified via a webhook.
     }
 }

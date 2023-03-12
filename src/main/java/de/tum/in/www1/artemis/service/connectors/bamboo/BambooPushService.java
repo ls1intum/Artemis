@@ -18,6 +18,6 @@ public class BambooPushService implements ContinuousIntegrationPushService {
      */
     @Override
     public void processNewPush(String commitHash, Repository repository) {
-        // Not needed for Bamboo. The build is processed in Bitbucket and Bamboo is notified via a webhook.
+        // Not needed for Bamboo. The push is processed in Bitbucket and Bamboo is notified via a webhook.
     }
 }
