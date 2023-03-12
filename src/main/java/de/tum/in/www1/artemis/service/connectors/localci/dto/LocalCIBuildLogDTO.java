@@ -7,5 +7,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LocalCIBuildLogDTO(ZonedDateTime date, String log, String unstyledLog) {
+public record LocalCIBuildLogDTO(ZonedDateTime date, String log) {
 }

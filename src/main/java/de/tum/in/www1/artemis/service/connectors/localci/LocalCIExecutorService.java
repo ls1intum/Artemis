@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 
 @Service
@@ -54,7 +54,7 @@ public class LocalCIExecutorService {
      * @param participation The participation of the repository for which the build job should be executed.
      * @return A future that will be completed with the build result.
      */
-    public CompletableFuture<LocalCIBuildResultNotificationDTO> addBuildJobToQueue(ProgrammingExerciseParticipation participation) {
+    public CompletableFuture<LocalCIBuildResult> addBuildJobToQueue(ProgrammingExerciseParticipation participation) {
 
         LocalVCRepositoryUrl assignmentRepositoryUrl = new LocalVCRepositoryUrl(participation.getRepositoryUrl(), localVCBaseUrl);
         Path assignmentRepositoryPath = assignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
@@ -66,9 +66,9 @@ public class LocalCIExecutorService {
         // Get script file out of resources.
         Path scriptPath = getBuildScriptPath(programmingExercise.getProgrammingLanguage());
 
-        CompletableFuture<LocalCIBuildResultNotificationDTO> futureResult = new CompletableFuture<>();
+        CompletableFuture<LocalCIBuildResult> futureResult = new CompletableFuture<>();
         executorService.submit(() -> {
-            LocalCIBuildResultNotificationDTO buildResult;
+            LocalCIBuildResult buildResult;
             try {
                 buildResult = localCIBuildJobService.runBuildJob(participation, assignmentRepositoryPath, testRepositoryPath, scriptPath);
                 futureResult.complete(buildResult);

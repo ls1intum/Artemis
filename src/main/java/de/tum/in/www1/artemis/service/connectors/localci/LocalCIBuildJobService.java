@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -10,7 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -43,7 +39,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 @Service
@@ -69,7 +65,7 @@ public class LocalCIBuildJobService {
     /**
      * Runs the build job. This includes creating and starting a Docker container, executing the build script, and processing the build result.
      */
-    public LocalCIBuildResultNotificationDTO runBuildJob(ProgrammingExerciseParticipation participation, Path assignmentRepositoryPath, Path testRepositoryPath, Path scriptPath) {
+    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, Path assignmentRepositoryPath, Path testRepositoryPath, Path scriptPath) {
         long timeNanoStart = System.nanoTime();
 
         // Add "_BUILDING" to the build plan id to indicate that the build blan is currently building.
@@ -101,8 +97,6 @@ public class LocalCIBuildJobService {
                 // "docker exec -it <container-id> /bin/bash".
                 .exec();
 
-        ZonedDateTime buildStartedDate = ZonedDateTime.now();
-
         // Start the container.
         dockerClient.startContainerCmd(container.getId()).exec();
 
@@ -132,30 +126,27 @@ public class LocalCIBuildJobService {
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 
-        LocalCIBuildResultNotificationDTO.LocalCIVCSDTO assignmentVC;
-        LocalCIBuildResultNotificationDTO.LocalCIVCSDTO testVC;
+        String assignmentRepoCommitHash = "";
+        String testsRepoCommitHash = "";
 
         try {
             // Get an input stream of the file in .git folder of the assignment repository and the test repository that contains the current commit hash of branch main.
             TarArchiveInputStream assignmentRepoTarInputStream = new TarArchiveInputStream(
                     dockerClient.copyArchiveFromContainerCmd(container.getId(), "/repositories/assignment-repository/.git/refs/heads/" + branch).exec());
             assignmentRepoTarInputStream.getNextTarEntry();
-            String assignmentRepoCommitHash = IOUtils.toString(assignmentRepoTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
+            assignmentRepoCommitHash = IOUtils.toString(assignmentRepoTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
             assignmentRepoTarInputStream.close();
 
             TarArchiveInputStream testRepoTarInputStream = new TarArchiveInputStream(
                     dockerClient.copyArchiveFromContainerCmd(container.getId(), "/repositories/test-repository/.git/refs/heads/" + branch).exec());
             testRepoTarInputStream.getNextTarEntry();
-            String testRepoCommitHash = IOUtils.toString(testRepoTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
+            testsRepoCommitHash = IOUtils.toString(testRepoTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
             testRepoTarInputStream.close();
-
-            assignmentVC = new LocalCIBuildResultNotificationDTO.LocalCIVCSDTO(assignmentRepoCommitHash, ASSIGNMENT_REPO_NAME, branch, List.of());
-            testVC = new LocalCIBuildResultNotificationDTO.LocalCIVCSDTO(testRepoCommitHash, TEST_REPO_NAME, branch, List.of());
         }
         catch (IOException e) {
             // Could not read commit hash from .git folder. Stop the container and return a build results that indicates that the build failed.
-            stopContainer(dockerClient, container.getId(), scriptPath);
-            return constructBuildResult(List.of(), List.of(), buildStartedDate, buildCompletedDate, "build-failed", false, null, null);
+            stopContainer(container.getId(), scriptPath);
+            return constructBuildResult(List.of(), List.of(), branch, assignmentRepoCommitHash, testsRepoCommitHash, false, buildCompletedDate, "build-failed");
         }
 
         // When Gradle is used as the build tool, the test results are located in /repositories/test-repository/build/test-resuls/test/TEST-*.xml.
@@ -179,16 +170,16 @@ public class LocalCIBuildJobService {
         catch (NotFoundException e) {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
             // Stop the container and return a build results that indicates that the build failed.
-            stopContainer(dockerClient, container.getId(), scriptPath);
+            stopContainer(container.getId(), scriptPath);
 
-            return constructBuildResult(List.of(), List.of(), buildStartedDate, buildCompletedDate, "build-failed", false, assignmentVC, testVC);
+            return constructBuildResult(List.of(), List.of(), branch, assignmentRepoCommitHash, testsRepoCommitHash, false, buildCompletedDate, "build-failed");
         }
 
-        stopContainer(dockerClient, container.getId(), scriptPath);
+        stopContainer(container.getId(), scriptPath);
 
-        LocalCIBuildResultNotificationDTO buildResult;
+        LocalCIBuildResult buildResult;
         try {
-            buildResult = parseTestResults(testResultsTarInputStream, projectType, buildStartedDate, buildCompletedDate, assignmentVC, testVC);
+            buildResult = parseTestResults(testResultsTarInputStream, projectType, branch, assignmentRepoCommitHash, testsRepoCommitHash, buildCompletedDate);
         }
         catch (IOException | XMLStreamException e) {
             throw new LocalCIException("Error while parsing test results", e);
@@ -218,7 +209,7 @@ public class LocalCIBuildJobService {
         }
     }
 
-    private void stopContainer(DockerClient dockerClient, String containerId, Path scriptPath) {
+    private void stopContainer(String containerId, Path scriptPath) {
         // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
@@ -237,14 +228,13 @@ public class LocalCIBuildJobService {
         }
     }
 
-    private LocalCIBuildResultNotificationDTO parseTestResults(TarArchiveInputStream testResultsTarInputStream, ProjectType projectType, ZonedDateTime buildStartedDate,
-            ZonedDateTime buildCompletedDate, LocalCIBuildResultNotificationDTO.LocalCIVCSDTO assignmentVC, LocalCIBuildResultNotificationDTO.LocalCIVCSDTO testVC)
-            throws IOException, XMLStreamException {
-        // List<String> timestamps = new ArrayList<>();
+    private LocalCIBuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, ProjectType projectType, String assignmentRepoBranchName,
+            String assignmentRepoCommitHash, String testsRepoCommitHash, ZonedDateTime buildCompletedDate) throws IOException, XMLStreamException {
+
         boolean isBuildSuccessful = true;
 
-        List<LocalCIBuildResultNotificationDTO.LocalCITestJobDTO> failedTests = new ArrayList<>();
-        List<LocalCIBuildResultNotificationDTO.LocalCITestJobDTO> successfulTests = new ArrayList<>();
+        List<LocalCIBuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
+        List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
 
         XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
         TarArchiveEntry tarEntry;
@@ -286,14 +276,14 @@ public class LocalCIBuildJobService {
                             String error = xmlStreamReader.getAttributeValue(null, "message");
 
                             // Add the failed test to the list of failed tests.
-                            failedTests.add(new LocalCIBuildResultNotificationDTO.LocalCITestJobDTO(name, "", "", error != null ? List.of(error) : List.of()));
+                            failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, error != null ? List.of(error) : List.of()));
 
                             // If there is at least one test case with a failure node, the build is not successful.
                             isBuildSuccessful = false;
                         }
                         else {
                             // Add the successful test to the list of successful tests.
-                            successfulTests.add(new LocalCIBuildResultNotificationDTO.LocalCITestJobDTO(name, "", "", List.of()));
+                            successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, List.of()));
                         }
                     }
                 }
@@ -302,21 +292,15 @@ public class LocalCIBuildJobService {
             }
         }
 
-        return constructBuildResult(failedTests, successfulTests, buildStartedDate, buildCompletedDate, "Some description", isBuildSuccessful, assignmentVC, testVC);
+        return constructBuildResult(failedTests, successfulTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildCompletedDate,
+                "some description");
     }
 
-    private LocalCIBuildResultNotificationDTO constructBuildResult(List<LocalCIBuildResultNotificationDTO.LocalCITestJobDTO> failedTests,
-            List<LocalCIBuildResultNotificationDTO.LocalCITestJobDTO> successfulTests, ZonedDateTime buildStartedDate, ZonedDateTime buildCompletedDate, String description,
-            boolean isBuildSuccessful, LocalCIBuildResultNotificationDTO.LocalCIVCSDTO assignmentVC, LocalCIBuildResultNotificationDTO.LocalCIVCSDTO testVC) {
-        LocalCIBuildResultNotificationDTO.LocalCIJobDTO job = new LocalCIBuildResultNotificationDTO.LocalCIJobDTO(1, failedTests, successfulTests, List.of(), List.of(), List.of());
+    private LocalCIBuildResult constructBuildResult(List<LocalCIBuildResult.LocalCITestJobDTO> failedTests, List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests,
+            String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
+            String description) {
+        LocalCIBuildResult.LocalCIJobDTO job = new LocalCIBuildResult.LocalCIJobDTO(failedTests, successfulTests, List.of(), List.of(), List.of());
 
-        LocalCIBuildResultNotificationDTO.LocalCITestSummaryDTO testSummary = new LocalCIBuildResultNotificationDTO.LocalCITestSummaryDTO(
-                (int) ChronoUnit.SECONDS.between(buildStartedDate, buildCompletedDate), 0, failedTests.size(), 0, 0, successfulTests.size(), description, 0, 0,
-                failedTests.size() + successfulTests.size(), 0);
-
-        LocalCIBuildResultNotificationDTO.LocalCIBuildDTO build = new LocalCIBuildResultNotificationDTO.LocalCIBuildDTO(false, 0, "Some reason for this build", buildCompletedDate,
-                isBuildSuccessful, testSummary, (assignmentVC != null && testVC != null ? List.of(assignmentVC, testVC) : List.of()), List.of(job));
-
-        return new LocalCIBuildResultNotificationDTO(null, null, null, build);
+        return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job), description);
     }
 }

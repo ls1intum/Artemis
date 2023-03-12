@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationResultService;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
@@ -36,8 +36,8 @@ public class LocalCIResultService extends AbstractContinuousIntegrationResultSer
 
     @Override
     public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
-        if (!(requestBody instanceof LocalCIBuildResultNotificationDTO localCIBuildResult)) {
-            throw new LocalCIException("The request body is not of type LocalCIBuildResultNotificationDTO");
+        if (!(requestBody instanceof LocalCIBuildResult localCIBuildResult)) {
+            throw new LocalCIException("The request body is not of type LocalCIBuildResult");
         }
         return localCIBuildResult;
     }
