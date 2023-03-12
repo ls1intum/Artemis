@@ -731,8 +731,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     /**
      * Get all participations belonging to a student in a course with relevant results.
      *
-     * @param courseId the id of the course
-     * @return an unmodifiable list of participations belonging to course
+     * @param courseId  the id of the course
+     * @param studentId the id of the student
+     * @return an unmodifiable list of participations belonging to the given student in the given course
      */
     default List<StudentParticipation> findByCourseIdAndStudentIdWithRelevantResult(Long courseId, Long studentId) {
         List<StudentParticipation> participations = findByCourseIdAndStudentIdWithEagerRatedResults(courseId, studentId);
