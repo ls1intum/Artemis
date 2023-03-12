@@ -1,0 +1,7 @@
+<ng-container *ngIf="tutorialGroup.averageAttendance !== undefined && tutorialGroup.capacity !== undefined; else noUtilization">
+    <jhi-vertical-progress-bar [fillLevelInPercent]="Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100)" [widthInPixels]="20" [heightInPixels]="50">
+    </jhi-vertical-progress-bar>
+</ng-container>
+<ng-template #noUtilization>
+    <span>{{ '' }}</span>
+</ng-template>
