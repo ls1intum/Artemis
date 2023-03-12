@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -45,13 +46,13 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void setup() {
-        pushNotificationDeviceConfigurationRepository.deleteAll();
-        pushNotificationDeviceConfigurationRepository.flush();
-
-        userRepository.deleteAll();
-        userRepository.flush();
-
         user = databaseUtilService.createAndSaveUser(userLogin);
+    }
+
+    @AfterEach
+    void teardown() {
+        userRepository.delete(user);
+        user = null;
     }
 
     @Test
