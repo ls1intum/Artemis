@@ -196,8 +196,8 @@ public class ProgrammingExerciseGradingService {
      * Retrieves the submission that is assigned to the specified participation and its commit hash matches the one from the build result.
      *
      * @param participationId id of the participation
-     * @param buildResult     The build results
-     * @return The submission or empty no submissions exist
+     * @param buildResult     The build result
+     * @return The submission or empty if no submissions exist
      */
     protected Optional<ProgrammingSubmission> getSubmissionForBuildResult(Long participationId, AbstractBuildResultNotificationDTO buildResult) {
         var submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
@@ -672,6 +672,7 @@ public class ProgrammingExerciseGradingService {
         else if (!testCases.isEmpty() && !result.getFeedbacks().isEmpty() && !testCaseFeedback.isEmpty()) {
             addFeedbackTestsNotExecuted(result, exercise, staticCodeAnalysisFeedback);
         }
+
         // Case 3: If there is no test case feedback, the build has failed, or it has previously fallen under case 2. In this case we just return the original result without
         // changing it.
 
@@ -685,7 +686,7 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Adds the appropriate feedback to the result in case the automatic tests were not executed.
+     * Adds the appropriate feedback to the result in case the automatic test cases were not executed.
      *
      * @param result                     to which the feedback should be added.
      * @param exercise                   to which the result belongs to.
@@ -724,7 +725,7 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Checks which tests were not executed and add a new Feedback for them to the exercise.
+     * Checks which test cases were not executed and add a new Feedback for them to the exercise.
      *
      * @param result    of the build run.
      * @param testCases of the given programming exercise.
@@ -874,8 +875,10 @@ public class ProgrammingExerciseGradingService {
         final double testPoints;
         double exerciseMaxPoints = scoreCalculationData.exercise().getMaxPoints();
 
-        // A weight-sum of zero would let the solution show an error to the instructor as the solution score must be
-        // 100% of all reachable points. To prevent this, we weigh all test cases equally in such a case.
+        // In case of a weight-sum of zero the instructor must be able to distinguish between a working solution
+        // (all tests passed, 0 points) and a solution with test failures.
+        // Only the second case should show a warning while the first case is considered as 100%.
+        // Therefore, all test cases have equal weight in such a case.
         if (isWeightSumZero && scoreCalculationData.participation() instanceof SolutionProgrammingExerciseParticipation) {
             testPoints = (1.0 / totalTestCaseCount) * exerciseMaxPoints;
         }
@@ -914,7 +917,9 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Calculates the total penalty over all static code analysis issues
+     * Calculates the total penalty over all static code analysis issues.
+     * Also updates the credits of each SCA feedback item as a side effect.
+     * This allows other parts of Artemis a more simplified score calculation by just summing up all feedback points.
      *
      * @param staticCodeAnalysisFeedback The list of static code analysis feedback
      * @param programmingExercise        The current exercise
@@ -922,7 +927,8 @@ public class ProgrammingExerciseGradingService {
      */
     private double calculateStaticCodeAnalysisPenalty(final List<Feedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise) {
         final var feedbackByCategory = staticCodeAnalysisFeedback.stream().collect(Collectors.groupingBy(Feedback::getStaticCodeAnalysisCategory));
-        double codeAnalysisPenaltyPoints = 0;
+        final double maxExercisePenaltyPoints = Objects.requireNonNullElse(programmingExercise.getMaxStaticCodeAnalysisPenalty(), 100) / 100.0 * programmingExercise.getMaxPoints();
+        double overallPenaltyPoints = 0;
 
         for (var category : staticCodeAnalysisService.findByExerciseId(programmingExercise.getId())) {
             if (!category.getState().equals(CategoryState.GRADED)) {
@@ -940,26 +946,22 @@ public class ProgrammingExerciseGradingService {
                 categoryPenaltyPoints = category.getMaxPenalty();
             }
 
+            // Cap at the maximum allowed penalty for this exercise (maxStaticCodeAnalysisPenalty is in percent) The max penalty is applied to the maxScore. If no max penalty
+            // was supplied, the value defaults to 100 percent. If for example maxScore is 6, maxBonus is 4 and the penalty is 50 percent, then a student can only lose
+            // 3 (0.5 * maxScore) points due to static code analysis issues.
+            if (overallPenaltyPoints + categoryPenaltyPoints > maxExercisePenaltyPoints) {
+                categoryPenaltyPoints = maxExercisePenaltyPoints - overallPenaltyPoints;
+            }
+            overallPenaltyPoints += categoryPenaltyPoints;
+
             // update credits of feedbacks in category
             if (!categoryFeedback.isEmpty()) {
                 double perFeedbackPenalty = categoryPenaltyPoints / categoryFeedback.size();
                 categoryFeedback.forEach(feedback -> feedback.setCredits(-perFeedbackPenalty));
             }
-
-            codeAnalysisPenaltyPoints += categoryPenaltyPoints;
         }
 
-        /*
-         * Cap at the maximum allowed penalty for this exercise (maxStaticCodeAnalysisPenalty is in percent) The max penalty is applied to the maxScore. If no max penalty was
-         * supplied, the value defaults to 100 percent. If for example maxScore is 6, maxBonus is 4 and the penalty is 50 percent, then a student can only lose 3 (0.5 * maxScore)
-         * points due to static code analysis issues.
-         */
-        final var maxExercisePenaltyPoints = Objects.requireNonNullElse(programmingExercise.getMaxStaticCodeAnalysisPenalty(), 100) / 100.0 * programmingExercise.getMaxPoints();
-        if (codeAnalysisPenaltyPoints > maxExercisePenaltyPoints) {
-            codeAnalysisPenaltyPoints = maxExercisePenaltyPoints;
-        }
-
-        return codeAnalysisPenaltyPoints;
+        return overallPenaltyPoints;
     }
 
     /**

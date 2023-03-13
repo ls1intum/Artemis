@@ -992,12 +992,4 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         }
         this.changeDetector.detectChanges();
     }
-
-    /**
-     * Handles the click on an arbitrary bar in the score distribution
-     * Delegates the user to the participant scores view of the course
-     */
-    accessParticipantScores(): void {
-        this.navigationUtilService.routeInNewTab(['course-management', this.course.id, 'participant-scores']);
-    }
 }

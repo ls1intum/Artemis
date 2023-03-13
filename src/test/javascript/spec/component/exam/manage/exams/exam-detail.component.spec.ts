@@ -216,7 +216,7 @@ describe('ExamDetailComponent', () => {
         const alertService = TestBed.inject(AlertService);
 
         // GIVEN
-        examDetailComponent.exam = { ...exam, studentExams: [{ id: 1 }] };
+        examDetailComponent.exam = { ...exam, studentExams: [{ id: 1, numberOfExamSessions: 0 }] };
         const responseFakeReset = { body: exam } as HttpResponse<Exam>;
         jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
         jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));

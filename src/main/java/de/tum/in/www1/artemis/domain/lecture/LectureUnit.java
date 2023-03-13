@@ -31,9 +31,6 @@ import de.tum.in.www1.artemis.domain.*;
 public abstract class LectureUnit extends DomainObject implements LearningObject {
 
     @Transient
-    private boolean visibleToStudents;
-
-    @Transient
     private boolean completed;
 
     @Column(name = "name")

@@ -65,7 +65,7 @@ describe('Modeling Exercise Assessment Spec', () => {
         it('Instructor can see complaint and reject it', () => {
             cy.login(instructor, `/course-management/${course.id}/complaints`);
             courseAssessment.showTheComplaint();
-            modelingExerciseAssessment.rejectComplaint('You are wrong.');
+            modelingExerciseAssessment.rejectComplaint('You are wrong.', false);
         });
     });
 

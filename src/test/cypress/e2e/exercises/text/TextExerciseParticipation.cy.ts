@@ -38,7 +38,7 @@ describe('Text exercise participation', () => {
             textExerciseEditor.shouldShowNumberOfCharacters(591);
             textExerciseEditor.submit().then((request: Interception) => {
                 expect(request.response!.body.text).to.eq(submission);
-                expect(request.response!.body.submitted).to.eq(true);
+                expect(request.response!.body.submitted).to.be.true;
                 expect(request.response!.statusCode).to.eq(200);
             });
         });

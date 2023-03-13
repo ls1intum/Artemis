@@ -499,15 +499,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expectElementToBeEnabled(saveButton);
         saveButton.click();
 
-        if (assessmentType === AssessmentType.AUTOMATIC) {
-            expect(alertServiceSpy).toHaveBeenCalledOnce();
-            expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.configureGrading.testCases.weightSumError');
-        } else {
-            expect(alertServiceSpy).not.toHaveBeenCalled();
-        }
+        expect(alertServiceSpy).not.toHaveBeenCalled();
     };
 
-    it('should show an error alert when test case weights are less or equal zero for exercises with automatic feedback', () => {
+    it('should NOT show an error alert when test case weights zero for exercises with automatic feedback', () => {
         checkBehaviourForZeroWeight(AssessmentType.AUTOMATIC);
     });
 
