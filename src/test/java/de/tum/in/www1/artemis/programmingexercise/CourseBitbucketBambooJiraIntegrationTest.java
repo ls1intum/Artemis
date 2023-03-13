@@ -216,6 +216,24 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
         courseTestService.testGetCourseForDashboard(userRefresh);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseForDashboardRedirectToForRegistration() throws Exception {
+        courseTestService.testGetCourseForDashboardRedirectToForRegistration();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseForRegistration() throws Exception {
+        courseTestService.testGetCourseForRegistration();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseForRegistrationRedirectToForDashboard() throws Exception {
+        courseTestService.testGetCourseForRegistrationRedirectToForDashboard();
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "custom1", roles = { "USER", "TA", "EDITOR", "INSTRUCTOR" })
     @ValueSource(booleans = { true, false })
@@ -256,7 +274,7 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void testGetCoursesToRegisterAndAccurateTimeZoneEvaluation() throws Exception {
-        courseTestService.testGetCoursesToRegisterAndAccurateTimeZoneEvaluation();
+        courseTestService.testGetCoursesForRegistrationAndAccurateTimeZoneEvaluation();
     }
 
     @Test

@@ -4,8 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREF
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -675,6 +674,41 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetCourseForDashboardRedirectToForRegistration() throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
+        Course courseToRequest = courses.get(0);
+        courseToRequest.setRegistrationEnabled(true);
+        // remove student from course so that they are not already registered
+        courseToRequest.setStudentGroupName("someNonExistingStudentGroupName");
+        courseRepo.save(courseToRequest);
+        // expect redirect
+        request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.FOUND, Course.class);
+    }
+
+    // Test
+    public void testGetCourseForRegistration() throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
+        Course courseToRequest = courses.get(0);
+        // remove student from course so that they are not already registered
+        courseToRequest.setStudentGroupName("someNonExistingStudentGroupName");
+        // however, enable registration
+        courseToRequest.setRegistrationEnabled(true);
+        courseRepo.save(courseToRequest);
+        // expect redirect
+        request.get("/api/courses/" + courses.get(0).getId() + "/for-registration", HttpStatus.OK, Course.class);
+    }
+
+    // Test
+    public void testGetCourseForRegistrationRedirectToForDashboard() throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
+        Course courseToRequest = courses.get(0);
+        courseToRequest.setRegistrationEnabled(true);
+        courseRepo.save(courseToRequest);
+        // The user already registered for the course, so the request should be redirected to /for-dashboard
+        request.get("/api/courses/" + courses.get(0).getId() + "/for-registration", HttpStatus.FOUND, Course.class);
+    }
+
+    // Test
     public void testGetAllCoursesForDashboardExams(boolean userRefresh) throws Exception {
         User customUser = userRepo.findOneWithGroupsByLogin(userPrefix + "custom1").get();
         User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").get();
@@ -880,7 +914,7 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetCoursesToRegisterAndAccurateTimeZoneEvaluation() throws Exception {
+    public void testGetCoursesForRegistrationAndAccurateTimeZoneEvaluation() throws Exception {
         Course courseActiveRegistrationEnabled = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
                 "testuser", "tutor", "editor", "instructor");
         courseActiveRegistrationEnabled.setRegistrationEnabled(true);
