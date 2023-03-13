@@ -2,21 +2,15 @@
 # Cypress Setup
 # ----------------------------------------------------------------------------------------------------------------------
 
-# TODO: this requires a newer docker compose version for the bamboo agents which is already requested
-# for now we use 2.4 until this is fixed
-version: '2.4'
-
 services:
     mysql:
         extends:
-            #TODO: use standard version of mysql.yml after docker compose version is upgraded
-            file: ../mysql_compose_2_4.yml
+            file: ../mysql.yml
             service: mysql
 
     artemis-app:
         extends:
-            #TODO: use standard version of artemis.yml after docker compose version is upgraded
-            file: ../artemis/artemis_compose_2_4.yml
+            file: ../artemis/artemis.yml
             service: artemis-app
         depends_on:
             mysql:
@@ -53,8 +47,7 @@ services:
     artemis-cypress:
         # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
         image: docker.io/cypress/browsers:node18.12.0-chrome107
-        #TODO: uncomment this after Docker compose version upgrade
-        #pull_policy: always
+        pull_policy: always
         depends_on:
             artemis-app:
                 condition: service_healthy
