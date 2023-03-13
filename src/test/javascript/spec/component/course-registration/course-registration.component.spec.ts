@@ -7,8 +7,11 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CoursePrerequisitesButtonComponent } from 'app/overview/course-registration/course-prerequisites-button/course-prerequisites-button.component';
+import { CourseRegistrationButtonComponent } from 'app/overview/course-registration/course-registration-button/course-registration-button.component';
 
 describe('CourseRegistrationComponent', () => {
     let fixture: ComponentFixture<CourseRegistrationComponent>;
@@ -24,10 +27,14 @@ describe('CourseRegistrationComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [CourseRegistrationComponent],
+            declarations: [
+                CourseRegistrationComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(CoursePrerequisitesButtonComponent),
+                MockComponent(CourseRegistrationButtonComponent),
+            ],
             providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
         })
-            .overrideTemplate(CourseRegistrationComponent, '')
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseRegistrationComponent);
