@@ -21,7 +21,6 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
         this.paramSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId']);
             this.courseService.findOneToRegister(this.courseId).subscribe((res) => {
-                console.log({ res });
                 const courseIsFullyAccessible = res.url?.endsWith('/for-dashboard');
                 if (courseIsFullyAccessible) {
                     // server returned a course for the dashboard, which means we have full access to the course already

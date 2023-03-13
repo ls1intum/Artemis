@@ -191,8 +191,14 @@ export class MetisConversationService implements OnDestroy {
         this._courseId = courseId;
         this.setIsLoading(true);
         return this.courseManagementService.findOneForDashboard(courseId).pipe(
-            map((course: HttpResponse<Course>) => {
-                return course.body;
+            map((res: HttpResponse<Course>) => {
+                if (res.url?.endsWith('/for-registration')) {
+                    // cannot access course, need to register first
+                    this.setIsLoading(false);
+                    this._isServiceSetup$.next(false);
+                    return of([]);
+                }
+                return res.body;
             }),
             switchMap((course: Course) => {
                 this._course = course;
