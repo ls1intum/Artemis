@@ -214,7 +214,7 @@ describe('CourseOverviewComponent', () => {
         const httpResponseComingFromForRegistrationEndpoint = new HttpResponse({
             body: course1,
             headers: new HttpHeaders(),
-            url: `/courses/${course1.id}/for-registration`,
+            url: `/api/courses/${course1.id}/for-registration`,
         });
         findOneForDashboardStub.mockReturnValue(of(httpResponseComingFromForRegistrationEndpoint));
         getCourseStub.mockReturnValue(undefined);
