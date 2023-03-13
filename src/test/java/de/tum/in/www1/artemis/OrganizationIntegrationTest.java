@@ -130,7 +130,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         updatedStudent = request.postWithResponseBody("/api/courses/" + course2.getId() + "/register", null, User.class, HttpStatus.OK);
         assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course2.getStudentGroupName());
 
-        request.postWithResponseBody("/api/courses/" + course3.getId() + "/register", null, User.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/courses/" + course3.getId() + "/register", null, User.class, HttpStatus.FORBIDDEN);
     }
 
     /**

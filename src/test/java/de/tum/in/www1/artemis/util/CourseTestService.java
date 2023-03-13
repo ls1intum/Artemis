@@ -1307,7 +1307,7 @@ public class CourseTestService {
         AuditEvent auditEvent = auditEvents.get(0);
         assertThat(auditEvent.getData()).as("Correct Event Data").containsEntry("course", course1.getTitle());
 
-        request.postWithResponseBody("/api/courses/" + course2.getId() + "/register", null, User.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/courses/" + course2.getId() + "/register", null, User.class, HttpStatus.FORBIDDEN);
     }
 
     // Test
@@ -1326,8 +1326,8 @@ public class CourseTestService {
         mockDelegate.mockAddUserToGroupInUserManagement(student, notYetStartedCourse.getStudentGroupName(), false);
         mockDelegate.mockAddUserToGroupInUserManagement(student, finishedCourse.getStudentGroupName(), false);
 
-        request.post("/api/courses/" + notYetStartedCourse.getId() + "/register", User.class, HttpStatus.BAD_REQUEST);
-        request.post("/api/courses/" + finishedCourse.getId() + "/register", User.class, HttpStatus.BAD_REQUEST);
+        request.post("/api/courses/" + notYetStartedCourse.getId() + "/register", User.class, HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + finishedCourse.getId() + "/register", User.class, HttpStatus.FORBIDDEN);
     }
 
     // Test
