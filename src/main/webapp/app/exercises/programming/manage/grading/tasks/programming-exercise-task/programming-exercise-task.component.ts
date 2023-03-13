@@ -19,6 +19,10 @@ export class ProgrammingExerciseTaskComponent {
 
     testCaseVisibilityList = Object.entries(Visibility).map(([name, value]) => ({ value, name }));
 
+    get numParticipations(): number {
+        return this.programmingExerciseTaskService.gradingStatistics.numParticipations ?? 0;
+    }
+
     constructor(private programmingExerciseTaskService: ProgrammingExerciseTaskService) {}
 
     testUpdateHandler() {

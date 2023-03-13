@@ -3,6 +3,7 @@ import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 
 @Component({
     selector: 'jhi-configure-grading-task',
@@ -13,6 +14,7 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 export class ConfigureGradingTasksComponent implements OnInit {
     @Input() exercise: ProgrammingExercise;
     @Input() course: Course;
+    @Input() gradingStatistics: ProgrammingExerciseGradingStatistics;
 
     faQuestionCircle = faQuestionCircle;
 
@@ -23,6 +25,6 @@ export class ConfigureGradingTasksComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.taskService.configure(this.exercise, this.course);
+        this.taskService.configure(this.exercise, this.course, this.gradingStatistics);
     }
 }
