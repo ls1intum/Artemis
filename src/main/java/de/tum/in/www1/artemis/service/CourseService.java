@@ -422,6 +422,7 @@ public class CourseService {
      *
      * @param user   The user that wants to self register
      * @param course The course to which the user wants to self register
+     * @return true if the user is allowed to self register for the given course, false otherwise
      */
     public boolean isUserAllowedToSelfRegisterForCourse(User user, Course course) {
         if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
