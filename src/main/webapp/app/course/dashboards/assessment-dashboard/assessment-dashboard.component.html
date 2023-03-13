@@ -15,7 +15,7 @@
             </div>
         </div>
         <div class="col-12 col-lg-5">
-            <div class="d-flex justify-content-lg-end">
+            <div *ngIf="!isExamMode" class="d-flex justify-content-lg-end">
                 <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn btn-info btn-md">
                     <fa-icon [icon]="faTable"></fa-icon>
                     <span jhiTranslate="entity.action.scores">Scores</span>
@@ -33,10 +33,10 @@
     <div *ngIf="isExamMode && !isTestRun" class="row justify-content-between">
         <div class="col-md-8">
             <h4>
-                <span class="me-2"> {{ 'artemisApp.exam.endDate' | artemisTranslate }} : {{ exam?.endDate | artemisDate }} </span>
+                <span class="me-2">{{ 'artemisApp.exam.endDate' | artemisTranslate }}: {{ exam?.endDate | artemisDate }}</span>
             </h4>
             <h4>
-                <span class="me-2"> {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }} : {{ exam?.publishResultsDate | artemisDate }} </span>
+                <span class="me-2">{{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }}: {{ exam?.publishResultsDate | artemisDate }}</span>
             </h4>
         </div>
         <jhi-exam-assessment-buttons *ngIf="course?.isAtLeastInstructor" class="assessment-button-row"></jhi-exam-assessment-buttons>
