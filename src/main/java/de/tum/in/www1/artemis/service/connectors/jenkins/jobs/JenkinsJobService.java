@@ -175,7 +175,7 @@ public class JenkinsJobService {
 
         var folder = jenkinsServer.getFolderJob(job);
 
-        String jobXml = jenkinsServer.getJobXml(folder.orNull(), jobName);
+        String jobXml = jenkinsServer.getJobXml(folder.orElse(null), jobName);
         return XmlFileUtils.readFromString(jobXml);
     }
 
@@ -194,7 +194,7 @@ public class JenkinsJobService {
             if (folderName != null && !folderName.isEmpty()) {
                 var job = jenkinsServer.getJob(folderName);
                 var folder = jenkinsServer.getFolderJob(job);
-                jenkinsServer.updateJob(folder.orNull(), jobName, configString, useCrumb);
+                jenkinsServer.updateJob(folder.orElse(null), jobName, configString, useCrumb);
             }
             else {
                 jenkinsServer.updateJob(jobName, configString, useCrumb);
