@@ -12,8 +12,9 @@ services:
         # TODO: Ensure file-max limit in sysctl.conf (from ansible task)
         # TODO: Copy security-limits nginx.conf (from ansible task)
         # TODO: Copy systemd-limits nginx.conf (from ansible task)
-        image: nginx:latest
-        restart: "unless-stopped"
+        container_name: artemis-nginx
+        image: nginx:1.23
+        pull_policy: always
         volumes:
             - ./timeouts.conf:/etc/nginx/conf.d/timeouts.conf:ro
             - ./artemis-nginx.conf:/etc/nginx/conf.d/artemis-nginx.conf:ro
@@ -32,8 +33,12 @@ services:
             #- ./defaults/ssl.conf:/etc/nginx/ssl.conf:ro
             #- ./defaults/dhparam.pem:/etc/nginx/dhparam.pem:ro
         ports:
-            - 80:80
-            - 443:443
+            - "80:80"
+            - "443:443"
+        # expose the port to make it reachable docker internally even if the external port mapping changes
+        expose:
+            - "80"
+            - "443"
         healthcheck:
             test: service nginx status || exit 1
             start_period: 30s
@@ -43,3 +48,4 @@ services:
 networks:
     artemis:
         driver: "bridge"
+        name: artemis
