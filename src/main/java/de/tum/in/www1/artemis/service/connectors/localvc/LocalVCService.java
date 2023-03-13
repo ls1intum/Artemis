@@ -285,18 +285,30 @@ public class LocalVCService extends AbstractVersionControlService {
         return (Commit) requestBody;
     }
 
+    /**
+     * Get the date of a push event. If the event object is supplied we try to retrieve the push date from there.
+     * Otherwise we use the participation to retrieve the repository and use the commitHash to determine the date of the latest commit.
+     *
+     * @param participation The participation we retrieve the repository for.
+     * @param commitHash    The commit hash that identifies the latest commit.
+     * @param eventObject   An object describing the push event, that contains the node "date". null if not available
+     * @return The date of the push event or the date of the latest commit.
+     */
     @Override
-    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject) throws LocalVCException {
-        // If the event object is supplied we try to retrieve the push date from there. Otherwise we use the commitHash to determine the push date.
+    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject) {
+        // If the event object is supplied we try to retrieve the push date from there. Otherwise we use the commitHash to determine date of the latest commit.
         if (eventObject != null) {
             JsonNode node = new ObjectMapper().convertValue(eventObject, JsonNode.class);
             String dateString;
             try {
-                dateString = node.get("date").asText(null);
-                return ZonedDateTime.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
+                JsonNode dateNode = node.get("date");
+                if (dateNode != null) {
+                    dateString = dateNode.asText(null);
+                    return ZonedDateTime.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
+                }
             }
-            catch (NullPointerException | DateTimeParseException e) {
-                throw new LocalVCException("Unable to get the push date from participation.", e);
+            catch (DateTimeParseException e) {
+                throw new LocalVCException("Unable to parse push date from eventObject.", e);
             }
         }
 

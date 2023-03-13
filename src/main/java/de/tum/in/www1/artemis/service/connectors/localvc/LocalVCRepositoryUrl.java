@@ -22,6 +22,13 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
 
     private final boolean isPracticeRepository;
 
+    /**
+     * Constructor that build a LocalVCRepositoryUrl from a project key and a repository slug.
+     *
+     * @param projectKey     the project key.
+     * @param repositorySlug the repository slug.
+     * @param localVCBaseUrl the base URL of the local VC server defined in an environment variable.
+     */
     public LocalVCRepositoryUrl(String projectKey, String repositorySlug, URL localVCBaseUrl) {
         final String urlString = localVCBaseUrl + buildRepositoryPath(projectKey, repositorySlug);
         try {
@@ -37,6 +44,12 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
         this.isPracticeRepository = getIsPracticeRepository(repositorySlug, projectKey);
     }
 
+    /**
+     * Constructor that builds a LocalVCRepositoryUrl from a URL string.
+     *
+     * @param urlString      the enire URL string (should already contain the base URL, otherwise an exception is thrown).
+     * @param localVCBaseUrl the base URL of the local VC server defined in an environment variable.
+     */
     public LocalVCRepositoryUrl(String urlString, URL localVCBaseUrl) {
         if (!urlString.startsWith(localVCBaseUrl.toString())) {
             throw new LocalVCException("Invalid local VC Repository URL: " + urlString);
@@ -61,6 +74,12 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
         this.isPracticeRepository = getIsPracticeRepository(repositorySlug, projectKey);
     }
 
+    /**
+     * Constructor that builds a LocalVCRepositoryUrl from a repository path.
+     *
+     * @param repositoryPath   the path to the repository, also works with a path to a local checked out repository.
+     * @param localVCServerUrl the base URL of the local VC server defined in an environment variable.
+     */
     public LocalVCRepositoryUrl(Path repositoryPath, URL localVCServerUrl) {
         if (repositoryPath.getFileName().toString().equals(".git")) {
             // This is the case when a local repository path is passed instead of a path to a remote repository in the "local-vcs-repos" folder.
@@ -117,6 +136,12 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
         return isPracticeRepository;
     }
 
+    /**
+     * Get the path to the repository saved in the folder for the local VC system.
+     *
+     * @param localVCBasePath the base path of the local VC system defined in an environment variable.
+     * @return the path to the repository.
+     */
     public Path getLocalRepositoryPath(String localVCBasePath) {
         return Paths.get(localVCBasePath, projectKey, repositorySlug + ".git");
     }

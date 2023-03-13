@@ -20,6 +20,11 @@ import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
+/**
+ * Implementation of ContinuousIntegrationService for local CI. Contains methods for communication with the local CI system.
+ * Note: Because the ContinuousIntegrationSystem and the AbstractContinuousIntegrationService were designed with Bamboo and Jenkins integration in mind, some methods here are not
+ * needed and thus contain an empty implementation.
+ */
 @Service
 @Profile("localci")
 public class LocalCIService extends AbstractContinuousIntegrationService {
@@ -162,7 +167,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     public ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
         // Build artifacts are not supported by local CI yet.
-        return null;
+        return ResponseEntity.noContent().build();
     }
 
     @Override

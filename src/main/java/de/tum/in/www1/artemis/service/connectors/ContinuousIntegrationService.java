@@ -16,6 +16,10 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 
 /**
  * Abstract service for managing entities related to continuous integration.
+ * Note: Some of the functionality that this service encompassed hat to be extracted to separate services to resolve circular dependencies introduced by the local CI system.
+ * The following services are also relevant for communication with the CI system:
+ * - {@link de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationTriggerService}
+ * - {@link de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationResultService}
  */
 public interface ContinuousIntegrationService {
 

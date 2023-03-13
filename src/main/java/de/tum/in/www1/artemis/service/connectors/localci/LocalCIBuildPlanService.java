@@ -13,6 +13,9 @@ import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 
+/**
+ * This service is responsible for updating the build plan status of a participation when the local CI system is used.
+ */
 @Service
 @Profile("localci")
 public class LocalCIBuildPlanService {

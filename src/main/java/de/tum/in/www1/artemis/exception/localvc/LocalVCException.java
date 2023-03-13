@@ -8,6 +8,7 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 public class LocalVCException extends VersionControlException {
 
     public LocalVCException() {
+        // empty constructor
     }
 
     public LocalVCException(Throwable cause) {

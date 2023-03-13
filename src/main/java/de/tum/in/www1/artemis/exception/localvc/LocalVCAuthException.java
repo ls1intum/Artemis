@@ -7,6 +7,7 @@ package de.tum.in.www1.artemis.exception.localvc;
 public class LocalVCAuthException extends LocalVCException {
 
     public LocalVCAuthException() {
+        // empty constructor
     }
 
     public LocalVCAuthException(Throwable cause) {

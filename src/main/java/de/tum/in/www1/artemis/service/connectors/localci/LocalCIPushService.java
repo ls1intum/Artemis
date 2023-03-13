@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -39,6 +40,9 @@ import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+/**
+ * Service for further processing authenticated and authorized pushes in the local CI system.
+ */
 @Service
 @Profile("localci")
 public class LocalCIPushService implements ContinuousIntegrationPushService {
@@ -97,27 +101,12 @@ public class LocalCIPushService implements ContinuousIntegrationPushService {
         long timeNanoStart = System.nanoTime();
 
         if (commitHash == null) {
-            try (Git git = new Git(repository)) {
-                RevCommit latestCommit = git.log().setMaxCount(1).call().iterator().next();
-                commitHash = latestCommit.getName();
-            }
-            catch (GitAPIException e) {
-                log.error("Could not retrieve latest commit from repository {}.", repository.getDirectory().toPath());
-                return;
-            }
+            commitHash = getLatestCommitHash(repository);
         }
 
         Path repositoryFolderPath = repository.getDirectory().toPath();
 
-        LocalVCRepositoryUrl localVCRepositoryUrl;
-
-        try {
-            localVCRepositoryUrl = new LocalVCRepositoryUrl(repositoryFolderPath, localVCBaseUrl);
-        }
-        catch (LocalVCException e) {
-            log.error("Could not create valid repository URL from path {}.", repositoryFolderPath);
-            return;
-        }
+        LocalVCRepositoryUrl localVCRepositoryUrl = getLocalVCRepositoryUrl(repositoryFolderPath);
 
         String repositoryTypeOrUserName = localVCRepositoryUrl.getRepositoryTypeOrUserName();
         String projectKey = localVCRepositoryUrl.getProjectKey();
@@ -141,7 +130,7 @@ public class LocalCIPushService implements ContinuousIntegrationPushService {
         }
 
         if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.getName())) {
-            processNewPushToTestsRepository(exercise.getId(), commitHash);
+            processNewPushToTestsRepository(exercise, commitHash, localVCRepositoryUrl);
             return;
         }
 
@@ -151,30 +140,43 @@ public class LocalCIPushService implements ContinuousIntegrationPushService {
         log.info("New push processed to repository {} in {}.", localVCRepositoryUrl.getURI(), TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
+    private LocalVCRepositoryUrl getLocalVCRepositoryUrl(Path repositoryFolderPath) {
+        try {
+            return new LocalVCRepositoryUrl(repositoryFolderPath, localVCBaseUrl);
+        }
+        catch (LocalVCException e) {
+            throw new LocalCIException("Could not create valid repository URL from path " + repositoryFolderPath);
+        }
+    }
+
+    private String getLatestCommitHash(Repository repository) {
+        try (Git git = new Git(repository)) {
+            RevCommit latestCommit = git.log().setMaxCount(1).call().iterator().next();
+            return latestCommit.getName();
+        }
+        catch (GitAPIException e) {
+            throw new LocalCIException("Could not retrieve latest commit from repository " + repository.getDirectory().toPath());
+        }
+    }
+
     /**
      * Process a new push to the tests repository.
      * Build and test the solution repository to make sure all tests are still passing.
      *
-     * @param exerciseId the id of the exercise.
+     * @param exercise   the exercise for which the push was made.
      * @param commitHash the hash of the last commit to the tests repository.
      */
-    private void processNewPushToTestsRepository(Long exerciseId, String commitHash) {
+    private void processNewPushToTestsRepository(ProgrammingExercise exercise, String commitHash, LocalVCRepositoryUrl localVCRepositoryUrl) {
         // Create a new submission for the solution repository.
-        ProgrammingSubmission submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exerciseId, commitHash);
+        ProgrammingSubmission submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), commitHash);
         programmingMessagingService.notifyUserAboutSubmission(submission);
 
         // Set a flag to inform the instructor that the student results are now outdated.
-        programmingTriggerService.setTestCasesChanged(exerciseId, true);
+        programmingTriggerService.setTestCasesChanged(exercise.getId(), true);
 
         // Retrieve the solution participation.
-        SolutionProgrammingExerciseParticipation participation;
-        try {
-            participation = solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exerciseId);
-        }
-        catch (EntityNotFoundException e) {
-            log.error("No solution participation found for exercise with id {}.", exerciseId);
-            return;
-        }
+        SolutionProgrammingExerciseParticipation participation = (SolutionProgrammingExerciseParticipation) getParticipation(RepositoryType.SOLUTION.getName(), exercise,
+                localVCRepositoryUrl);
 
         // Trigger a build of the solution repository.
         CompletableFuture<LocalCIBuildResult> futureSolutionBuildResult = localCIExecutorService.addBuildJobToQueue(participation);
@@ -203,10 +205,10 @@ public class LocalCIPushService implements ContinuousIntegrationPushService {
             }
 
             try {
-                programmingTriggerService.triggerTemplateBuildAndNotifyUser(exerciseId, submission.getCommitHash(), SubmissionType.TEST);
+                programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
             }
             catch (EntityNotFoundException e) {
-                log.error("No template participation found for exercise with id {}.", exerciseId);
+                log.error("No template participation found for exercise with id {}.", exercise.getId());
             }
         });
     }
@@ -217,25 +219,7 @@ public class LocalCIPushService implements ContinuousIntegrationPushService {
     private void processNewPushToRepository(String repositoryTypeOrUserName, ProgrammingExercise exercise, LocalVCRepositoryUrl localVCRepositoryUrl, String commitHash,
             Repository repository) {
         // Retrieve participation for the repository.
-        ProgrammingExerciseParticipation participation;
-        try {
-            if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.getName())) {
-                participation = templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
-            }
-            else if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.getName())) {
-                participation = solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
-            }
-            else {
-                boolean isPracticeRepository = localVCRepositoryUrl.isPracticeRepository();
-                participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRun(exercise, repositoryTypeOrUserName,
-                        isPracticeRepository, true);
-            }
-        }
-        catch (EntityNotFoundException e) {
-            // This should never happen, as the participation is already retrieved in the LocalVCPushFilter.
-            log.error("No participation found for the given repository: {}", localVCRepositoryUrl.getURI());
-            return;
-        }
+        ProgrammingExerciseParticipation participation = getParticipation(repositoryTypeOrUserName, exercise, localVCRepositoryUrl);
 
         Commit commit = extractCommitInfo(commitHash, repository);
 
@@ -255,6 +239,25 @@ public class LocalCIPushService implements ContinuousIntegrationPushService {
             log.error("Exception encountered when trying to create a new submission for participation {} with the following commit: {}", participation.getId(), commit, ex);
             // Throwing an exception here would lead to the Git client request getting stuck.
             // Instead, the user can see in the UI that creating the submission failed.
+        }
+    }
+
+    private ProgrammingExerciseParticipation getParticipation(String repositoryTypeOrUserName, ProgrammingExercise exercise, LocalVCRepositoryUrl localVCRepositoryUrl) {
+        try {
+            if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.getName())) {
+                return templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
+            }
+            else if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.getName())) {
+                return solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
+            }
+            else {
+                boolean isPracticeRepository = localVCRepositoryUrl.isPracticeRepository();
+                return programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRun(exercise, repositoryTypeOrUserName, isPracticeRepository,
+                        true);
+            }
+        }
+        catch (EntityNotFoundException e) {
+            throw new LocalCIException("No participation found for the given repository: " + localVCRepositoryUrl.getURI(), e);
         }
     }
 

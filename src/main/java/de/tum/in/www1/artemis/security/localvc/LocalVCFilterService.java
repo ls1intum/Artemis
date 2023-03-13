@@ -61,6 +61,9 @@ public class LocalVCFilterService {
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
+    /**
+     * Name of the header containing the authorization information.
+     */
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
     public LocalVCFilterService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, ProgrammingExerciseService programmingExerciseService,
@@ -77,24 +80,16 @@ public class LocalVCFilterService {
     }
 
     /**
+     * Determines whether a given request to access a local VC repository (either via fetch of push) is authenticated and authorized. Throws an exception if not.
+     *
      * @param servletRequest       The object containing all information about the incoming request.
      * @param repositoryActionType Indicates whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
-     * @throws LocalVCAuthException For when the user cannot be authenticated or is not authorized to access the repository.
      */
     public void authenticateAndAuthorizeGitRequest(HttpServletRequest servletRequest, RepositoryActionType repositoryActionType) {
 
         long timeNanoStart = System.nanoTime();
 
-        String basicAuthCredentials = checkAuthorizationHeader(servletRequest.getHeader(LocalVCFilterService.AUTHORIZATION_HEADER));
-
-        if (basicAuthCredentials.split(":").length != 2) {
-            throw new LocalVCAuthException();
-        }
-
-        String username = basicAuthCredentials.split(":")[0];
-        String password = basicAuthCredentials.split(":")[1];
-
-        User user = authenticateUser(username, password);
+        User user = authenticateUser(servletRequest.getHeader(LocalVCFilterService.AUTHORIZATION_HEADER));
 
         // Optimization.
         // For each git command (i.e. 'git fetch' or 'git push'), the git client sends three requests.
@@ -137,6 +132,32 @@ public class LocalVCFilterService {
         log.info("Authorizing user {} for repository {} took {}", user.getLogin(), url, TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
+    private User authenticateUser(String authorizationHeader) throws LocalVCAuthException {
+
+        String basicAuthCredentials = checkAuthorizationHeader(authorizationHeader);
+
+        if (basicAuthCredentials.split(":").length != 2) {
+            throw new LocalVCAuthException();
+        }
+
+        String username = basicAuthCredentials.split(":")[0];
+        String password = basicAuthCredentials.split(":")[1];
+
+        try {
+            SecurityUtils.checkUsernameAndPasswordValidity(username, password);
+
+            // Try to authenticate the user.
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+            authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        }
+        catch (AccessForbiddenException | AuthenticationException e) {
+            throw new LocalVCAuthException(e);
+        }
+
+        // Check that the user exists.
+        return userRepository.findOneByLogin(username).orElseThrow(LocalVCAuthException::new);
+    }
+
     private String checkAuthorizationHeader(String authorizationHeader) throws LocalVCAuthException {
         if (authorizationHeader == null) {
             throw new LocalVCAuthException();
@@ -152,22 +173,6 @@ public class LocalVCFilterService {
         return new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
     }
 
-    private User authenticateUser(String username, String password) throws LocalVCAuthException {
-        try {
-            SecurityUtils.checkUsernameAndPasswordValidity(username, password);
-
-            // Try to authenticate the user.
-            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
-            authenticationManagerBuilder.getObject().authenticate(authenticationToken);
-        }
-        catch (AccessForbiddenException | AuthenticationException ex) {
-            throw new LocalVCAuthException();
-        }
-
-        // Check that the user exists.
-        return userRepository.findOneByLogin(username).orElseThrow(LocalVCAuthException::new);
-    }
-
     private void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, boolean isTestRunRepository, RepositoryActionType repositoryActionType)
             throws LocalVCAuthException, LocalVCForbiddenException, LocalVCInternalException {
 
@@ -181,24 +186,7 @@ public class LocalVCFilterService {
             return;
         }
 
-        Participation participation;
-
-        try {
-            if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
-                participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
-            }
-            else if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
-                participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
-            }
-            else {
-                participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRun(exercise, repositoryTypeOrUserName,
-                        isTestRunRepository, false);
-            }
-        }
-        catch (EntityNotFoundException e) {
-            throw new LocalVCInternalException(
-                    "Could not find single participation for exercise " + exercise.getId() + " and repository type or user name " + repositoryTypeOrUserName, e);
-        }
+        Participation participation = getParticipation(repositoryTypeOrUserName, exercise, isTestRunRepository);
 
         try {
             repositoryAccessService.checkAccessRepositoryElseThrow(participation, exercise, user, repositoryActionType);
@@ -211,6 +199,25 @@ public class LocalVCFilterService {
         }
         catch (IllegalArgumentException e) {
             throw new LocalVCInternalException(e);
+        }
+    }
+
+    private Participation getParticipation(String repositoryTypeOrUserName, ProgrammingExercise exercise, boolean isTestRunRepository) {
+        try {
+            if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
+                return templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
+            }
+            else if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
+                return solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
+            }
+            else {
+                return programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRun(exercise, repositoryTypeOrUserName, isTestRunRepository,
+                        false);
+            }
+        }
+        catch (EntityNotFoundException e) {
+            throw new LocalVCInternalException(
+                    "Could not find single participation for exercise " + exercise.getId() + " and repository type or user name " + repositoryTypeOrUserName, e);
         }
     }
 
@@ -232,11 +239,11 @@ public class LocalVCFilterService {
             return HttpStatus.BAD_REQUEST.value();
         }
         else if (e instanceof LocalVCInternalException) {
-            log.error("Internal server error while trying to access repository {}", repositoryUrl, e);
+            log.error("Internal server error while trying to access repository {}: {}", repositoryUrl, e.getMessage());
             return HttpStatus.INTERNAL_SERVER_ERROR.value();
         }
         else {
-            log.error("Unexpected error while trying to access repository {}", repositoryUrl, e);
+            log.error("Unexpected error while trying to access repository {}: {}", repositoryUrl, e.getMessage());
             return HttpStatus.INTERNAL_SERVER_ERROR.value();
         }
     }
