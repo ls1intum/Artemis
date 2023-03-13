@@ -205,6 +205,25 @@ describe('CourseOverviewComponent', () => {
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
     });
 
+    it('should redirect to the registration page if the API endpoint redirected to /courses/:courseId/for-registration', async () => {
+        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
+        jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(new TeamAssignmentPayload())));
+        // mock with HTTP response from /courses/:courseId/for-registration directly
+        // so that the component detects that the user is not registered for the course
+        const httpResponseComingFromForRegistrationEndpoint = new HttpResponse({
+            body: course1,
+            headers: new HttpHeaders(),
+            url: `/courses/${course1.id}/for-registration`,
+        });
+        findOneForDashboardStub.mockReturnValue(of(httpResponseComingFromForRegistrationEndpoint));
+        getCourseStub.mockReturnValue(undefined);
+
+        await component.ngOnInit();
+
+        expect(router.navigate).toHaveBeenCalledWith(['courses', course1.id, 'register']);
+    });
+
     it('should call load Course methods on init', async () => {
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
