@@ -236,7 +236,7 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     // The following annotation can only be applied to classes: https://github.com/spring-projects/spring-framework/issues/18951
     // Only the login name of the student2 user is NOT allowed to self-register for courses.
     @TestPropertySource(properties = "artemis.user-management.course-registration.allowed-username-pattern=^(?!" + TEST_PREFIX + "student2).*$")
-    class TestIsUserAllowedToSelfRegisterForCourse {
+    class IsUserAllowedToSelfRegisterForCourseTest {
 
         // We need our own courseService here that overshadows the one from the CourseServiceTest, so that the new property is applied to it.
         @Autowired
