@@ -24,7 +24,7 @@
                         <jhi-course-prerequisites-button [course]="course"></jhi-course-prerequisites-button>
                     </td>
                     <td class="text-end">
-                        <jhi-course-registration-button [course]="course" (onRegistration)="removeCourseFromList(course.id)"></jhi-course-registration-button>
+                        <jhi-course-registration-button [course]="course" (onRegistration)="removeCourseFromList(course.id!)"></jhi-course-registration-button>
                     </td>
                 </tr>
             </tbody>
