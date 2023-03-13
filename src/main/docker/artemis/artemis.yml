@@ -16,7 +16,7 @@ services:
         volumes:
             - artemis-data:/opt/artemis/data
         env_file:
-            - ../../resources/config/docker-artemis-prod-mysql-application-local.env
+            - ../../resources/config/docker-artemis-prod-application-local.env
         # environments can also be used for custom overrides (alternative to application-local.yml)
         # the following environments are necessary for docker images orchestrated by docker compose
         environment:
