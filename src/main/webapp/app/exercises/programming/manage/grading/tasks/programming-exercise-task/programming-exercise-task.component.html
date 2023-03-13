@@ -19,7 +19,7 @@
             </div>
             <div class="task__row__cell">
                 <select [(ngModel)]="task.visibility" class="form-select" name="{{ task.taskName }}-visibility" (change)="taskUpdateHandler()">
-                    <option *ngFor="let s of testCaseVisibilityList">
+                    <option *ngFor="let s of testCaseVisibilityList" [value]="s.value">
                         {{ 'artemisApp.programmingExerciseTestCase.visibility.' + s.name | artemisTranslate }}
                     </option>
                 </select>
