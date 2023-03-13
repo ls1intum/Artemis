@@ -21,11 +21,11 @@ export class ProgrammingExerciseTaskComponent {
 
     constructor(private programmingExerciseTaskService: ProgrammingExerciseTaskService) {}
 
-    updateTask() {
+    testUpdateHandler() {
         this.task = this.programmingExerciseTaskService.updateTask(this.task);
     }
 
-    updateTests() {
+    taskUpdateHandler() {
         const testCasesAmount = this.task.testCases.length;
 
         this.task.testCases.forEach((testCase) => {
@@ -42,5 +42,7 @@ export class ProgrammingExerciseTaskComponent {
                 testCase.visibility = this.task.visibility;
             }
         });
+
+        this.programmingExerciseTaskService.updateTaskPoints(this.task);
     }
 }

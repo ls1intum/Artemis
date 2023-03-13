@@ -48,15 +48,30 @@ export class ProgrammingExerciseTaskService {
         return this.updateTaskPoints(task);
     };
 
-    private updateTaskPoints = (task: ProgrammingExerciseTask): ProgrammingExerciseTask => {
-        const weight = task.weight ?? 0;
-        const multiplier = task.bonusMultiplier ?? 1;
-        const bonusPoints = task.bonusPoints ?? 0;
+    public calculatePoints = (item: Pick<ProgrammingExerciseTask, 'weight' | 'bonusMultiplier' | 'bonusPoints'>): [number, number] => {
+        const weight = item.weight ?? 0;
+        const multiplier = item.bonusMultiplier ?? 1;
+        const bonusPoints = item.bonusPoints ?? 0;
 
         const points = ((weight * multiplier) / this.totalWeights) * this.maxPoints + bonusPoints;
-        task.resultingPoints = roundValueSpecifiedByCourseSettings(points, this.course);
+        const resultingPoints = roundValueSpecifiedByCourseSettings(points, this.course);
+
         const relativePoints = (points / this.maxPoints) * 100;
-        task.resultingPointsPercent = roundValueSpecifiedByCourseSettings(relativePoints, this.course);
+        const resultingPointsPercent = roundValueSpecifiedByCourseSettings(relativePoints, this.course);
+
+        return [resultingPoints, resultingPointsPercent];
+    };
+
+    public updateTaskPoints = (task: ProgrammingExerciseTask): ProgrammingExerciseTask => {
+        const [resultingPoints, resultingPointsPercent] = this.calculatePoints(task);
+
+        task.resultingPoints = resultingPoints;
+        task.resultingPointsPercent = resultingPointsPercent;
+        task.testCases.forEach((test) => {
+            const [resultingPoints, resultingPointsPercent] = this.calculatePoints(test);
+            test.resultingPoints = resultingPoints;
+            test.resultingPointsPercent = resultingPointsPercent;
+        });
         return task;
     };
 }

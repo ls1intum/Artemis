@@ -25,4 +25,6 @@ export class ProgrammingExerciseTestCase implements BaseEntity {
     exercise?: ProgrammingExercise;
     type?: ProgrammingExerciseTestCaseType;
     solutionEntries?: ProgrammingExerciseSolutionEntry[];
+    resultingPoints?: number;
+    resultingPointsPercent?: number;
 }
