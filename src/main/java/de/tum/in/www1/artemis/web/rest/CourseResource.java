@@ -359,7 +359,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/for-registration")
     @PreAuthorize("hasRole('USER')")
-    public Course getCourseForRegistration(@PathVariable long courseId) {
+    public ResponseEntity<Course> getCourseForRegistration(@PathVariable long courseId) {
         log.debug("REST request to get a currently active course for registration");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         Course course = courseRepository.findSingleCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(courseId);
@@ -369,7 +369,15 @@ public class CourseResource {
             throw new AccessForbiddenException("You are not allowed to register for this course, so you cannot see it.");
         }
 
-        return course;
+        // check that the user has not already registered for the course
+        List<Course> allRegisteredCourses = courseService.findAllActiveForUser(user);
+        if (allRegisteredCourses.contains(course)) {
+            // redirect to the more detailed route /courses/{courseId}/for-dashboard
+            UriComponents redirectUri = UriComponentsBuilder.fromPath("/api/courses/{courseId}/for-dashboard").buildAndExpand(courseId);
+            return ResponseEntity.status(HttpStatus.FOUND).location(redirectUri.toUri()).build();
+        }
+
+        return ResponseEntity.ok(course);
     }
 
     /**

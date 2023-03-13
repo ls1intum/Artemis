@@ -196,20 +196,17 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.refreshingCourse = refresh;
         this.courseService.findOneForDashboard(this.courseId, refresh).subscribe({
             next: (res: HttpResponse<Course>) => {
-                console.log({ res });
+                const isResponseFromForRegistrationEndpoint = res.url?.endsWith('/for-registration');
+                if (isResponseFromForRegistrationEndpoint) {
+                    // user is not in course, but can register
+                    this.redirectToCourseRegistrationPage();
+                    return;
+                }
                 this.courseCalculationService.updateCourse(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
                 setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
             },
             error: async (error: HttpErrorResponse) => {
-                if (error.status === 403) {
-                    const canRegister = await this.canRegisterForCourse();
-                    if (canRegister) {
-                        this.redirectToCourseRegistrationPage();
-                        // no need to show the permission error
-                        return;
-                    }
-                }
                 const errorMessage = error.headers.get('X-artemisApp-message')!;
                 this.alertService.addAlert({
                     type: AlertType.DANGER,

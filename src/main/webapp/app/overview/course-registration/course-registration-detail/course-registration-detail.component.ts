@@ -16,27 +16,20 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
 
     constructor(private accountService: AccountService, private courseService: CourseManagementService, private route: ActivatedRoute, private router: Router) {}
 
-    /**
-     * Check if we have full access to the course already
-     */
-    async courseIsFullyAccessible(): Promise<boolean> {
-        // try to fetch full course from server to check access
-        const resp = await this.courseService.find(this.courseId).toPromise();
-        return resp?.status === 200;
-    }
-
     ngOnInit(): void {
         this.loading = true;
         this.paramSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId']);
-            this.courseService.findOneToRegister(this.courseId).subscribe((courseResponse) => {
-                this.course = courseResponse.body!;
-                this.loading = false;
-            });
-            this.courseIsFullyAccessible().then((isFullyAccessible) => {
-                if (isFullyAccessible) {
+            this.courseService.findOneToRegister(this.courseId).subscribe((res) => {
+                console.log({ res });
+                const courseIsFullyAccessible = res.url?.endsWith('/for-dashboard');
+                if (courseIsFullyAccessible) {
+                    // server returned a course for the dashboard, which means we have full access to the course already
                     this.redirectToCoursePage();
+                    return;
                 }
+                this.course = res.body!;
+                this.loading = false;
             });
         });
     }
