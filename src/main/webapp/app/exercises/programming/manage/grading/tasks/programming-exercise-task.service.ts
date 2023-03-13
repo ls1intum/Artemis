@@ -28,31 +28,27 @@ export class ProgrammingExerciseTaskService {
         this.maxPoints = this.exercise.maxPoints ?? 0;
 
         this.getTasksByExercise(this.exercise).subscribe((serverSideTasks) => {
-            const tasks = (serverSideTasks ?? []).map((task) => task as ProgrammingExerciseTask);
-            this.totalWeights = sum(tasks.map((task) => task.weight));
-            this.tasks = tasks.map((task) => this.updateTask(task));
+            const tasks = (serverSideTasks ?? []).map((task) => task as ProgrammingExerciseTask).map(this.updateTask);
+            this.totalWeights = sum(tasks.map((task) => task.weight ?? 0));
+            this.tasks = tasks.map(this.updateTaskPoints);
         });
     }
 
-    public getTasksByExercise(exercise: Exercise): Observable<ProgrammingExerciseServerSideTask[]> {
+    public getTasksByExercise = (exercise: Exercise): Observable<ProgrammingExerciseServerSideTask[]> => {
         return this.http.get<ProgrammingExerciseServerSideTask[]>(`${this.resourceUrl}/${exercise.id}/tasks`);
-    }
+    };
 
-    public updateTask(task: ProgrammingExerciseTask): ProgrammingExerciseTask {
-        const newWeight = sum(task.testCases.map((testCase) => testCase.weight ?? 0));
-        this.totalWeights += (task.weight ?? 0) - newWeight;
-        task.weight = newWeight;
-
+    public updateTask = (task: ProgrammingExerciseTask): ProgrammingExerciseTask => {
+        task.weight = sum(task.testCases.map((testCase) => testCase.weight ?? 0));
         task.bonusMultiplier = getSingleValue(task.testCases.map((testCase) => testCase.bonusMultiplier));
         task.bonusPoints = sum(task.testCases.map((testCase) => testCase.bonusPoints ?? 0));
         task.visibility = getSingleValue(task.testCases.map((testCase) => testCase.visibility));
         task.type = getSingleValue(task.testCases.map((testCase) => testCase.type));
-        task.resultingPoints = (task.weight! / this.totalWeights) * this.maxPoints;
 
         return this.updateTaskPoints(task);
-    }
+    };
 
-    private updateTaskPoints(task: ProgrammingExerciseTask): ProgrammingExerciseTask {
+    private updateTaskPoints = (task: ProgrammingExerciseTask): ProgrammingExerciseTask => {
         const weight = task.weight ?? 0;
         const multiplier = task.bonusMultiplier ?? 1;
         const bonusPoints = task.bonusPoints ?? 0;
@@ -62,7 +58,7 @@ export class ProgrammingExerciseTaskService {
         const relativePoints = (points / this.maxPoints) * 100;
         task.resultingPointsPercent = roundValueSpecifiedByCourseSettings(relativePoints, this.course);
         return task;
-    }
+    };
 }
 
 /**
