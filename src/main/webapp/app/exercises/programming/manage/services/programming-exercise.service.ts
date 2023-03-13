@@ -21,6 +21,8 @@ import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.uti
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
+import { stringifyCircular } from 'app/shared/util/utils';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -510,20 +512,17 @@ export class ProgrammingExerciseService {
         return this.http.get<BuildLogStatisticsDTO>(`${this.resourceUrl}/${exerciseId}/build-log-statistics`);
     }
 
-    uploadFileForImport(courseId: number, file: File): Observable<EntityResponseType> {
-        const formData = new FormData();
-        formData.append('file', file);
-        return this.http
-            .post<ProgrammingExercise>(`${this.resourceUrl}/upload-file?courseId=${courseId}`, formData, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
-    }
-
-    importFromFile(exercise: ProgrammingExercise): Observable<EntityResponseType> {
+    importFromFile(exercise: ProgrammingExercise, zipFileForImport: File): Observable<EntityResponseType> {
         let copy = this.convertDataFromClient(exercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const formData = new FormData();
+        const exerciseBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });
+        formData.append('file', zipFileForImport);
+        formData.append('programmingExercise', exerciseBlob);
+
         return this.http
-            .post<ProgrammingExercise>(`${this.resourceUrl}/import-from-file`, exercise, { observe: 'response' })
+            .post<ProgrammingExercise>(`${this.resourceUrl}/import-from-file`, formData, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 }

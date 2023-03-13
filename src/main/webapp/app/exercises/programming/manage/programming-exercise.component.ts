@@ -173,7 +173,12 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         modalRef.result.then((result: ProgrammingExercise) => {
             //when the file is uploaded we set the id to null.
             if (result.id === undefined) {
-                this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import-from-file']);
+                this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import-from-file'], {
+                    state: {
+                        zipFileOfProgrammingExerciseForImport: result.zipFileForImport,
+                        programmingExerciseForImportFromFile: result,
+                    },
+                });
             } else {
                 this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import', result.id]);
             }

@@ -73,6 +73,7 @@ export abstract class Exercise implements BaseEntity {
     public teamAssignmentConfig?: TeamAssignmentConfig;
     public categories?: ExerciseCategory[];
     public type?: ExerciseType;
+    public zipFileForImport?: File;
     public exampleSolutionPublicationDate?: dayjs.Dayjs;
 
     public teams?: Team[];

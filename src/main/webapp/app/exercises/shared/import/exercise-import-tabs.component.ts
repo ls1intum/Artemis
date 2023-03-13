@@ -10,7 +10,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 export class ExerciseImportTabsComponent {
     active = 1;
     @Input()
-    exerciseType?: ExerciseType;
+    exerciseType: ExerciseType;
     @Input()
     courseId?: number;
 

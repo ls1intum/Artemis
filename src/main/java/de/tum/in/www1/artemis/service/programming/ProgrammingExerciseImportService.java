@@ -5,17 +5,17 @@ import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.*;
 import java.io.File;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -30,11 +30,13 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @Service
 public class ProgrammingExerciseImportService {
@@ -53,6 +55,8 @@ public class ProgrammingExerciseImportService {
 
     private final UserRepository userRepository;
 
+    private final RepositoryService repositoryService;
+
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     private final UrlService urlService;
@@ -63,7 +67,7 @@ public class ProgrammingExerciseImportService {
 
     public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService, UserRepository userRepository,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UrlService urlService, TemplateUpgradePolicy templateUpgradePolicy,
+            RepositoryService repositoryService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UrlService urlService, TemplateUpgradePolicy templateUpgradePolicy,
             ProgrammingExerciseImportBasicService programmingExerciseImportBasicService) {
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -71,6 +75,7 @@ public class ProgrammingExerciseImportService {
         this.gitService = gitService;
         this.fileService = fileService;
         this.userRepository = userRepository;
+        this.repositoryService = repositoryService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.urlService = urlService;
         this.templateUpgradePolicy = templateUpgradePolicy;
@@ -128,24 +133,131 @@ public class ProgrammingExerciseImportService {
         }
     }
 
-    private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path templateRepository, Path solutionRepository, Path testRepository)
-            throws IOException, GitAPIException {
-        // TODO activate again
-        // versionControlService.get().createProjectForExercise(newExercise);
-        // versionControlService.get().createRepository(newExercise.getProjectKey(), newExercise.generateRepositoryName(RepositoryType.TEMPLATE), null);
-        // versionControlService.get().createRepository(newExercise.getProjectKey(), newExercise.generateRepositoryName(RepositoryType.SOLUTION), null);
-        // versionControlService.get().createRepository(newExercise.getProjectKey(), newExercise.generateRepositoryName(RepositoryType.TESTS), null);
-        // versionControlService.get().createProjectForExercise(newExercise);
-        // programmingExerciseService.initParticipations(newExercise);
-        Repository templateRepo = new Repository(templateRepository.toString(), newExercise.getVcsTemplateRepositoryUrl());
-        Repository solutionRepo = new Repository(solutionRepository.toString(), newExercise.getVcsSolutionRepositoryUrl());
-        Repository testRepo = new Repository(testRepository.toString(), newExercise.getVcsTestRepositoryUrl());
+    private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, String oldPackageName) throws IOException, GitAPIException, URISyntaxException {
+        Repository templateRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getTemplateRepositoryUrl()), false);
+        Repository solutionRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getSolutionRepositoryUrl()), false);
+        Repository testRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getTestRepositoryUrl()), false);
+
+        copyImportedExerciseContentToRepositories(templateRepo, solutionRepo, testRepo, basePath, newExercise, oldPackageName);
         gitService.stageAllChanges(templateRepo);
         gitService.stageAllChanges(solutionRepo);
         gitService.stageAllChanges(testRepo);
         gitService.commitAndPush(templateRepo, "Import template from file", true, null);
         gitService.commitAndPush(solutionRepo, "Import solution from file", true, null);
         gitService.commitAndPush(testRepo, "Import tests from file", true, null);
+
+    }
+
+    private void copyImportedExerciseContentToRepositories(Repository templateRepo, Repository solutionRepo, Repository testRepo, Path basePath, ProgrammingExercise newExercise,
+            String oldPackageName) throws IOException {
+        deleteSourceAndTestFilesInRepository(templateRepo);
+        deleteSourceAndTestFilesInRepository(solutionRepo);
+        deleteSourceAndTestFilesInRepository(testRepo);
+        switch (newExercise.getProgrammingLanguage()) {
+            case JAVA, KOTLIN -> {
+
+                copyExerciseContentToRepositoryForJavaOrKotlinExercise(templateRepo, RepositoryType.TEMPLATE, basePath, newExercise, oldPackageName);
+                copyExerciseContentToRepositoryForJavaOrKotlinExercise(solutionRepo, RepositoryType.SOLUTION, basePath, newExercise, oldPackageName);
+                copyExerciseContentToRepositoryForJavaOrKotlinExercise(testRepo, RepositoryType.TESTS, basePath, newExercise, oldPackageName);
+            }
+            case C, VHDL, ASSEMBLER -> {
+                copyExerciseContentToRepositoryForExerciseWithPlainDirectoryStructure(templateRepo, RepositoryType.TEMPLATE, basePath);
+                copyExerciseContentToRepositoryForExerciseWithPlainDirectoryStructure(solutionRepo, RepositoryType.SOLUTION, basePath);
+                copyExerciseContentToRepositoryForExerciseWithPlainDirectoryStructure(testRepo, RepositoryType.TESTS, basePath);
+            }
+            case PYTHON -> {
+                copyExerciseContentToRepositoryForPythonExercise(templateRepo, RepositoryType.TEMPLATE, basePath);
+                copyExerciseContentToRepositoryForPythonExercise(solutionRepo, RepositoryType.SOLUTION, basePath);
+                copyExerciseContentToRepositoryForPythonExercise(testRepo, RepositoryType.TESTS, basePath);
+            }
+        }
+    }
+
+    private void copyExerciseContentToRepositoryForExerciseWithPlainDirectoryStructure(Repository repository, RepositoryType repositoryType, Path exerciseDir) {
+
+    }
+
+    private void copyExerciseContentToRepositoryForPythonExercise(Repository repository, RepositoryType repositoryType, Path exerciseDir) throws IOException {
+        boolean testRepo;
+        if (repositoryType == RepositoryType.TESTS) {
+            repositoryService.createFolderRecursively(repository, "behavior");
+            repositoryService.createFolderRecursively(repository, "structural");
+            testRepo = true;
+        }
+        else {
+            testRepo = false;
+        }
+
+        for (Path file : retrieveRepositoryContentPaths(exerciseDir, repositoryType)) {
+            if (testRepo) {
+                if (file.toAbsolutePath().toString().contains("behavior")) {
+                    repositoryService.createFile(repository, "behavior/" + file.getFileName(), Files.newInputStream(file));
+                }
+                else {
+                    repositoryService.createFile(repository, "structural/" + file.getFileName(), Files.newInputStream(file));
+                }
+            }
+            else {
+                repositoryService.createFile(repository, String.valueOf(file.getFileName()), Files.newInputStream(file));
+            }
+
+        }
+    }
+
+    private void copyExerciseContentToRepositoryForJavaOrKotlinExercise(Repository repository, RepositoryType repositoryType, Path exerciseDir, ProgrammingExercise newExercise,
+            String oldPackageName) throws IOException {
+        boolean testRepo;
+        if (repositoryType == RepositoryType.TESTS) {
+            repositoryService.createFolderRecursively(repository, "test/" + newExercise.getPackageFolderName());
+            testRepo = true;
+        }
+        else {
+            testRepo = false;
+            repositoryService.createFolderRecursively(repository, "src/" + newExercise.getPackageFolderName());
+        }
+        Map<String, String> replacePackageName = Map.of(oldPackageName, newExercise.getPackageName());
+
+        retrieveRepositoryContentPaths(exerciseDir, repositoryType).forEach(file -> {
+            try {
+                if (testRepo) {
+                    repositoryService.createFile(repository, "test/" + newExercise.getPackageFolderName() + "/" + file.getFileName(), Files.newInputStream(file));
+                }
+                else {
+                    repositoryService.createFile(repository, "src/" + newExercise.getPackageFolderName() + "/" + file.getFileName(), Files.newInputStream(file));
+                }
+                var path = repository.getLocalPath();
+                path = testRepo ? path.resolve("test") : path.resolve("src");
+                var absolutePath = path.toAbsolutePath();
+                fileService.replaceVariablesInFileRecursive(absolutePath.toString(), replacePackageName);
+            }
+            catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        });
+    }
+
+    private void deleteSourceAndTestFilesInRepository(Repository repository) {
+        // only the root level dir exists, delete all existing files
+        if (gitService.listFilesAndFolders(repository).keySet().stream().noneMatch(File::isDirectory)) {
+            gitService.listFilesAndFolders(repository).keySet().forEach(FileSystemUtils::deleteRecursively);
+            return;
+        }
+        var srcOrTestDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory)
+                .filter(dir -> "src".equals(dir.getName()) || "test".equals(dir.getName())).findFirst();
+        srcOrTestDir.ifPresent(FileSystemUtils::deleteRecursively);
+        var behavioralDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> "behavioral".equals(dir.getName())).findFirst();
+        behavioralDir.ifPresent(FileSystemUtils::deleteRecursively);
+        var structuralDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> "structural".equals(dir.getName())).findFirst();
+        structuralDir.ifPresent(FileSystemUtils::deleteRecursively);
+        var assignmentDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> "assignment".equals(dir.getName())).findFirst();
+        assignmentDir.ifPresent(FileSystemUtils::deleteRecursively);
+        var checkerDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> "checker".equals(dir.getName())).findFirst();
+        checkerDir.ifPresent(FileSystemUtils::deleteRecursively);
+        var overridesDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> "overrides".equals(dir.getName())).findFirst();
+        overridesDir.ifPresent(FileSystemUtils::deleteRecursively);
+        var solutionDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> "solution".equals(dir.getName())).findFirst();
+        solutionDir.ifPresent(FileSystemUtils::deleteRecursively);
 
     }
 
@@ -325,91 +437,17 @@ public class ProgrammingExerciseImportService {
         return importedProgrammingExercise;
     }
 
-    public ProgrammingExercise processUploadedFile(MultipartFile multipartFile, Course course) throws Exception {
-        deleteDirectory(Path.of("imported-exercise-dir").toFile());
-        Path path = Files.createDirectory(Path.of("imported-exercise-dir"));
-        log.error(path.toString());
-        Path exerciseFilePath = Files.createTempFile(path, "exercise", ".zip");
-        multipartFile.transferTo(exerciseFilePath);
-        extractZipFileRecursively(exerciseFilePath);
-
-        try (Stream<Path> stream = Files.walk(path)) {
-            stream.forEach(f -> log.error(f.getFileName().toString()));
-        }
-
-        var exerciseDetailsFileName = findJsonFileAndReturnFileName(path);
-        ProgrammingExercise importedProgrammingExercise = parseJsonFile(Path.of(exerciseFilePath.toString().substring(0, exerciseFilePath.toString().length() - 4)),
-                exerciseDetailsFileName);
-
-        importedProgrammingExercise.setCourse(course);
-        importedProgrammingExercise.setDueDate(null);
-        importedProgrammingExercise.setAssessmentDueDate(null);
-        importedProgrammingExercise.setStartDate(null);
-        importedProgrammingExercise.setReleaseDate(null);
-        importedProgrammingExercise.setTestRepositoryUrl(null);
-        importedProgrammingExercise.setId(null);
-        return importedProgrammingExercise;
-
-    }
-
-    private void extractZipFileRecursively(Path zipPath) throws IOException {
-        int BUFFER = 2048;
-
-        File zipFile = zipPath.toFile();
-        ZipFile zip = new ZipFile(zipPath.toFile());
-        String newPath = zipFile.getAbsolutePath().substring(0, zipFile.getAbsolutePath().length() - 4);
-
-        new File(newPath).mkdir();
-        Enumeration<? extends ZipEntry> zipFileEntries = zip.entries();
-
-        // Process each entry
-        while (zipFileEntries.hasMoreElements()) {
-            // grab a zip file entry
-            ZipEntry entry = zipFileEntries.nextElement();
-            String currentEntry = entry.getName();
-            java.io.File destFile = new java.io.File(newPath, currentEntry);
-            File destinationParent = destFile.getParentFile();
-
-            // create the parent directory structure if needed
-            destinationParent.mkdirs();
-
-            if (!entry.isDirectory()) {
-                BufferedInputStream is = new BufferedInputStream(zip.getInputStream(entry));
-                int currentByte;
-                // establish buffer for writing file
-                byte[] data = new byte[BUFFER];
-
-                // write the current file to disk
-                FileOutputStream fos = new FileOutputStream(destFile);
-                BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER);
-
-                // read and write until last byte is encountered
-                while ((currentByte = is.read(data, 0, BUFFER)) != -1) {
-                    dest.write(data, 0, currentByte);
-                }
-                dest.flush();
-                dest.close();
-                is.close();
-            }
-
-            if (currentEntry.endsWith(".zip")) {
-                // found a zip file, try to open
-                extractZipFileRecursively(destFile.toPath());
-            }
-        }
-    }
-
-    private ProgrammingExercise parseJsonFile(Path dirPath, String fileName) {
+    private String retrieveOldPackageName(Path dirPath, String fileName) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         objectMapper.findAndRegisterModules();
 
         try {
-            return objectMapper.readValue(dirPath.resolve(fileName).toFile(), ProgrammingExercise.class);
+            return objectMapper.readValue(dirPath.resolve(fileName).toFile(), ProgrammingExercise.class).getPackageName();
         }
         catch (IOException e) {
             e.printStackTrace();
-            throw new BadRequestAlertException("The exercise.json file is not valid", "programmingExercise", "exercisejsonnotvalid");
+            throw new BadRequestAlertException("The JSON file for the programming exercise is not valid or was not found.", "programmingExercise", "exerciseJsonNotValidOrFound");
         }
     }
 
@@ -430,24 +468,27 @@ public class ProgrammingExerciseImportService {
         return result.get(0);
     }
 
-    private Path retrieveTemplateRepositoryDirectoryName(Path dirPath) {
-        return retrieveRepositoryDirectoryPath(dirPath, "exercise");
+    private List<Path> retrieveRepositoryContentPaths(Path dirPath, RepositoryType type) {
+        Path repositorySrcPath;
+        if (type == RepositoryType.TESTS) {
+            repositorySrcPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("test");
+        }
+        else {
+            repositorySrcPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("src");
+        }
 
-    }
-
-    private Path retrieveSolutionRepositoryDirectoryName(Path dirPath) {
-        return retrieveRepositoryDirectoryPath(dirPath, "solution");
-    }
-
-    private Path retrieveTestRepositoryDirectoryName(Path dirPath) {
-        return retrieveRepositoryDirectoryPath(dirPath, "tests");
+        List<Path> files;
+        try (Stream<Path> walk = Files.walk(repositorySrcPath)) {
+            files = walk.filter(f -> !Files.isDirectory(f)).toList();
+        }
+        catch (IOException e) {
+            throw new InternalServerErrorException("Could not copy exercise content to new repository");
+        }
+        return files;
 
     }
 
     private String findJsonFileAndReturnFileName(Path dirPath) throws IOException {
-        // if (!Files.isDirectory(dirPath)) {
-        // throw new IllegalArgumentException("Path must be a directory!");
-        // }
         List<String> result;
         try (Stream<Path> stream = Files.walk(dirPath)) {
             result = stream.filter(Files::isRegularFile).map(f -> f.getFileName().toString()).filter(name -> name.startsWith("Exercise-Details"))
@@ -462,24 +503,16 @@ public class ProgrammingExerciseImportService {
         return result.get(0);
     }
 
-    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise importedProgrammingExercise) throws GitAPIException, IOException {
-        var basePath = Path.of("imported-exercise-dir");
-        var templateRepositoryDirectoryName = retrieveTemplateRepositoryDirectoryName(basePath).resolve(".git");
-        var solutionRepositoryDirectoryName = retrieveSolutionRepositoryDirectoryName(basePath).resolve(".git");
-        var testRepositoryDirectoryName = retrieveTestRepositoryDirectoryName(basePath).resolve(".git");
-        importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(importedProgrammingExercise);
-        importRepositoriesFromFile(importedProgrammingExercise, templateRepositoryDirectoryName, solutionRepositoryDirectoryName, testRepositoryDirectoryName);
-        deleteDirectory(basePath.toFile());
+    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, MultipartFile zipFile)
+            throws IOException, GitAPIException, URISyntaxException {
+        Path path = Files.createTempDirectory("imported-exercise-dir");
+        Path exerciseFilePath = Files.createTempFile(path, "exercise-for-import", ".zip");
+        zipFile.transferTo(exerciseFilePath);
+        fileService.extractZipFileRecursively(exerciseFilePath);
+        var exerciseDetailsFileName = findJsonFileAndReturnFileName(path);
+        String oldPackageName = retrieveOldPackageName(Path.of(exerciseFilePath.toString().substring(0, exerciseFilePath.toString().length() - 4)), exerciseDetailsFileName);
+        ProgrammingExercise importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport);
+        importRepositoriesFromFile(importedProgrammingExercise, path, oldPackageName);
         return importedProgrammingExercise;
-    }
-
-    public boolean deleteDirectory(File file) {
-        File[] children = file.listFiles();
-        if (children != null) {
-            for (File child : children) {
-                deleteDirectory(child);
-            }
-        }
-        return file.delete();
     }
 }

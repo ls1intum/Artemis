@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoin
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -203,47 +205,20 @@ public class ProgrammingExerciseExportImportResource {
         }
     }
 
-    @PostMapping(UPLOAD_FILE)
-    @PreAuthorize("hasRole('EDITOR')")
-    @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> uploadFileForImport(@RequestPart("file") MultipartFile file, @RequestParam("courseId") long courseForImportId) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
-        final var course = courseService.findByIdElseThrow(courseForImportId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
-        ProgrammingExercise newExercise = new ProgrammingExercise();
-        try {
-
-            newExercise = programmingExerciseImportService.processUploadedFile(file, course);
-        }
-        catch (Exception e) {
-            throw new InternalServerErrorException("Error uploading file for import");
-
-        }
-
-        // return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle()))
-        // .body(importedProgrammingExercise);
-        return ResponseEntity.ok().body(newExercise);
-
-    }
-
     @PostMapping(IMPORT_FROM_FILE)
     @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> importProgrammingExerciseFromFile(@RequestBody ProgrammingExercise programmingExercise) {
+    public ResponseEntity<ProgrammingExercise> importProgrammingExerciseFromFile(@RequestPart("programmingExercise") ProgrammingExercise programmingExercise,
+            @RequestPart("file") MultipartFile zipFile) throws GitAPIException, IOException, URISyntaxException {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var course = courseService.findByIdElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
         try {
-
-            return ResponseEntity.ok(programmingExerciseImportService.importProgrammingExerciseFromFile(programmingExercise));
-
+            return ResponseEntity.ok(programmingExerciseImportService.importProgrammingExerciseFromFile(programmingExercise, zipFile));
         }
-        catch (Exception e) {
-            throw new InternalServerErrorException("Error importing exercise from file");
+        catch (IOException | URISyntaxException e) {
+            throw new InternalServerErrorException("Error while importing programming exercise from file: " + e.getMessage());
         }
-
-        // return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle()))
-        // .body(importedProgrammingExercise);
 
     }
 

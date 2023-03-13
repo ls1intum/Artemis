@@ -18,7 +18,7 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
 import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercises/shared/import/exercise-import-tabs.component';
-import { ProgrammingExerciseImportFromFileComponent } from 'app/exercises/shared/import/from-file/programming-exercise-import-from-file.component';
+import { ExerciseImportFromFileComponent } from 'app/exercises/shared/import/from-file/exercise-import-from-file.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisCoursesRoutingModule, FeatureToggleModule, ClipboardModule],
@@ -39,7 +39,7 @@ import { ProgrammingExerciseImportFromFileComponent } from 'app/exercises/shared
         DocumentationButtonComponent,
         ExerciseImportComponent,
         ExerciseImportTabsComponent,
-        ProgrammingExerciseImportFromFileComponent,
+        ExerciseImportFromFileComponent,
     ],
     exports: [
         ButtonComponent,
@@ -57,7 +57,7 @@ import { ProgrammingExerciseImportFromFileComponent } from 'app/exercises/shared
         DocumentationButtonComponent,
         ExerciseImportComponent,
         ExerciseImportTabsComponent,
-        ProgrammingExerciseImportFromFileComponent,
+        ExerciseImportFromFileComponent,
     ],
 })
 export class ArtemisSharedComponentModule {}
