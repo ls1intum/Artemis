@@ -8,7 +8,6 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.PipelineStatus;
@@ -244,7 +243,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         continuousIntegrationService.removeAllDefaultProjectPermissions(null);
         continuousIntegrationService.givePlanPermissions(null, null);
         continuousIntegrationService.giveProjectPermissions(null, null, null);
-        continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null, Optional.empty());
+        continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null, List.of());
         continuousIntegrationService.enablePlan(null, null);
         continuousIntegrationService.deleteBuildPlan(null, null);
         continuousIntegrationService.deleteProject(null);

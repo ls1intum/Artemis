@@ -10,7 +10,7 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.util.Optional;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -252,7 +252,7 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         Exception exception = assertThrows(JenkinsException.class, () -> {
             String templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
             continuousIntegrationService.updatePlanRepository(projectKey, planName, ASSIGNMENT_REPO_NAME, null, participation.getRepositoryUrl(), templateRepoUrl, "main",
-                    Optional.empty());
+                    List.of());
         });
         assertThat(exception.getMessage()).startsWith("Error trying to configure build plan in Jenkins");
     }
