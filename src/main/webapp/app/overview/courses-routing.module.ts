@@ -23,7 +23,8 @@ const routes: Routes = [
         loadChildren: () => import('./course-registration/course-registration.module').then((m) => m.CourseRegistrationModule),
     },
     // /courses/:courseId/register is special,
-    // because we won't have access to the course object before the user is registered
+    // because we won't have access to the course object before the user is registered,
+    // so we need to load it outside the normal course routing
     {
         path: 'courses/:courseId/register',
         loadChildren: () => import('./course-registration/course-registration-detail/course-registration-detail.module').then((m) => m.CourseRegistrationDetailModule),
