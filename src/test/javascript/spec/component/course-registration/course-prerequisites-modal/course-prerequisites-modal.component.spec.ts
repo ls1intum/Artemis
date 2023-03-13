@@ -9,7 +9,7 @@ import { By } from '@angular/platform-browser';
 import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { LearningGoalCardStubComponent } from '../learning-goals/learning-goal-card-stub.component';
+import { LearningGoalCardStubComponent } from '../../learning-goals/learning-goal-card-stub.component';
 
 describe('CoursePrerequisitesModal', () => {
     let coursePrerequisitesModalComponentFixture: ComponentFixture<CoursePrerequisitesModalComponent>;

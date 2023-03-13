@@ -116,12 +116,14 @@ describe('CourseOverviewComponent', () => {
     let tutorialGroupsService: TutorialGroupsService;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
     let jhiWebsocketService: JhiWebsocketService;
+    let router: MockRouter;
 
     let metisConversationService: MetisConversationService;
     const course = { id: 1 } as Course;
 
     beforeEach(fakeAsync(() => {
         metisConversationService = {} as MetisConversationService;
+        router = new MockRouter();
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
@@ -150,7 +152,7 @@ describe('CourseOverviewComponent', () => {
                 { provide: ActivatedRoute, useValue: { params: of({ courseId: course1.id }), snapshot: { firstChild: { routeConfig: { path: 'courses/1/exercises' } } } } },
                 { provide: CourseExerciseRowComponent },
                 MockProvider(AlertService),
-                { provide: Router, useClass: MockRouter },
+                { provide: Router, useValue: router },
             ],
         })
             .compileComponents()
