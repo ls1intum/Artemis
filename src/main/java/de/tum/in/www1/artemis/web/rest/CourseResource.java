@@ -430,7 +430,7 @@ public class CourseResource {
                 UriComponents redirectUri = UriComponentsBuilder.fromPath("/api/courses/{courseId}/for-registration").buildAndExpand(courseId);
                 return ResponseEntity.status(HttpStatus.FOUND).location(redirectUri.toUri()).build();
             }
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found", e);
         }
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user);
         logDuration(List.of(course), user, timeNanoStart);
