@@ -800,6 +800,9 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: false,
                 projectTypes: [ProjectType.PLAIN, ProjectType.XCODE],
+                auxiliaryRepositoriesSupported: true,
+                publishBuildPlanUrlAllowed: true,
+                testwiseCoverageReportSupported: false,
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.JAVA:
             return {
@@ -810,6 +813,9 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: true,
                 projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
+                auxiliaryRepositoriesSupported: true,
+                publishBuildPlanUrlAllowed: true,
+                testwiseCoverageReportSupported: true,
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.HASKELL:
             return {
@@ -820,6 +826,9 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: true,
                 projectTypes: [],
+                auxiliaryRepositoriesSupported: true,
+                publishBuildPlanUrlAllowed: true,
+                testwiseCoverageReportSupported: false,
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.C:
             return {
@@ -830,6 +839,9 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: true,
                 projectTypes: [ProjectType.FACT, ProjectType.GCC],
+                auxiliaryRepositoriesSupported: true,
+                publishBuildPlanUrlAllowed: true,
+                testwiseCoverageReportSupported: false,
             } as ProgrammingLanguageFeature;
         default:
             throw new Error();
