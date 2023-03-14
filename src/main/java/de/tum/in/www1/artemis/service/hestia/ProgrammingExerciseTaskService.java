@@ -2,10 +2,12 @@ package de.tum.in.www1.artemis.service.hestia;
 
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
@@ -116,6 +118,24 @@ public class ProgrammingExerciseTaskService {
                         .filter(task -> task.getTaskName().equals(extractedTask.getTaskName()) && task.getTestCases().equals(extractedTask.getTestCases())).findFirst()
                         .orElse(null))
                 .filter(Objects::nonNull).toList();
+    }
+
+    public Set<ProgrammingExerciseTask> getTasksWithUnassignedTestCases(long exerciseId) {
+        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
+
+        Set<ProgrammingExerciseTestCase> testsWithTasks = tasks.stream().flatMap(task -> task.getTestCases().stream()).collect(Collectors.toSet());
+
+        // Additionally add all tests that are not manually assigned to a task
+        Set<ProgrammingExerciseTestCase> testsWithoutTasks = programmingExerciseTestCaseRepository.findByExerciseId(exerciseId);
+        testsWithTasks.removeAll(testsWithTasks);
+
+        ProgrammingExerciseTask unassignedTask = new ProgrammingExerciseTask();
+        unassignedTask.setTaskName("Not assigned to task");
+        unassignedTask.setTestCases(testsWithoutTasks);
+
+        tasks.add(unassignedTask);
+
+        return tasks;
     }
 
     /**
