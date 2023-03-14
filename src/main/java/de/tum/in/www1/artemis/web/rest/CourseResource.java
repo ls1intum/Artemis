@@ -362,20 +362,21 @@ public class CourseResource {
     public ResponseEntity<Course> getCourseForRegistration(@PathVariable long courseId) {
         log.debug("REST request to get a currently active course for registration");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-        Course course = courseRepository.findSingleCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(courseId);
+        Course fullCourse = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, false);
 
         // check that the user CAN at least register to one organization of the course
-        if (!authCheckService.isUserAllowedToSelfRegisterForCourse(user, course)) {
+        if (!authCheckService.isUserAllowedToSelfRegisterForCourse(user, fullCourse)) {
             throw new AccessForbiddenException("course", courseId);
         }
 
-        if (authCheckService.isAtLeastStudentInCourse(course, user)) {
+        if (authCheckService.isAtLeastStudentInCourse(fullCourse, user)) {
             // user IS already registered, redirect to the more detailed route /courses/{courseId}/for-dashboard
             UriComponents redirectUri = UriComponentsBuilder.fromPath("/api/courses/{courseId}/for-dashboard").buildAndExpand(courseId);
             return ResponseEntity.status(HttpStatus.FOUND).location(redirectUri.toUri()).build();
         }
 
-        return ResponseEntity.ok(course);
+        Course courseForRegistration = courseRepository.findSingleCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(courseId);
+        return ResponseEntity.ok(courseForRegistration);
     }
 
     /**
