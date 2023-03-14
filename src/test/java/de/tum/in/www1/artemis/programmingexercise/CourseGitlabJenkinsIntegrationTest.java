@@ -380,6 +380,13 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         courseTestService.testGetCourseForDashboard(userRefresh);
     }
 
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @ValueSource(booleans = { true, false })
+    void testGetCourseForDashboardAccessDenied(boolean userRefresh) throws Exception {
+        courseTestService.testGetCourseForDashboardAccessDenied(userRefresh);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseForDashboardRedirectToForRegistration() throws Exception {

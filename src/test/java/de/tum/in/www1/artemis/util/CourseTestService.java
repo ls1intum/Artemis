@@ -674,6 +674,18 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetCourseForDashboardAccessDenied(boolean userRefresh) throws Exception {
+        // test that a user cannot access a course he is not part of
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
+        User student = database.getUserByLogin(userPrefix + "student1");
+        // remove student from course so that they are not already registered
+        student.setGroups(new HashSet<>());
+        userRepo.save(student);
+        // expect forbidden (403) from endpoint
+        request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.FORBIDDEN, Course.class);
+    }
+
+    // Test
     public void testGetCourseForDashboardRedirectToForRegistration() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
         Course courseToRequest = courses.get(0);
