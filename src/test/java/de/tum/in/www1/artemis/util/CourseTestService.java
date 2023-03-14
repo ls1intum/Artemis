@@ -688,13 +688,16 @@ public class CourseTestService {
     // Test
     public void testGetCourseForDashboardRedirectToForRegistration() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
+        // enable registration
         Course courseToRequest = courses.get(0);
         courseToRequest.setRegistrationEnabled(true);
-        // remove student from course so that they are not already registered
-        courseToRequest.setStudentGroupName("someNonExistingStudentGroupName");
         courseRepo.save(courseToRequest);
+        User student = database.getUserByLogin(userPrefix + "student1");
+        // remove student from course so that they are not already registered
+        student.setGroups(new HashSet<>());
+        userRepo.save(student);
         // expect redirect
-        request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.FOUND, Course.class);
+        request.get("/api/courses/" + courseToRequest.getId() + "/for-dashboard", HttpStatus.FOUND, Course.class);
     }
 
     // Test
@@ -706,8 +709,8 @@ public class CourseTestService {
         // however, enable registration
         courseToRequest.setRegistrationEnabled(true);
         courseRepo.save(courseToRequest);
-        // expect redirect
-        request.get("/api/courses/" + courses.get(0).getId() + "/for-registration", HttpStatus.OK, Course.class);
+        // expect normal response
+        request.get("/api/courses/" + courseToRequest.getId() + "/for-registration", HttpStatus.OK, Course.class);
     }
 
     // Test
@@ -720,7 +723,7 @@ public class CourseTestService {
         courseToRequest.setRegistrationEnabled(false);
         courseRepo.save(courseToRequest);
         // expect forbidden(403)
-        request.get("/api/courses/" + courses.get(0).getId() + "/for-registration", HttpStatus.FORBIDDEN, Course.class);
+        request.get("/api/courses/" + courseToRequest.getId() + "/for-registration", HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
@@ -730,7 +733,7 @@ public class CourseTestService {
         courseToRequest.setRegistrationEnabled(true);
         courseRepo.save(courseToRequest);
         // The user already registered for the course, so the request should be redirected to /for-dashboard
-        request.get("/api/courses/" + courses.get(0).getId() + "/for-registration", HttpStatus.FOUND, Course.class);
+        request.get("/api/courses/" + courseToRequest.getId() + "/for-registration", HttpStatus.FOUND, Course.class);
     }
 
     // Test
