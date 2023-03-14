@@ -88,6 +88,25 @@ export class ProgrammingExerciseTaskService {
         );
     }
 
+    /**
+     * Reset all test cases.
+     */
+    public resetTestCases(): Observable<ProgrammingExerciseTestCase[] | undefined> {
+        return this.gradingService.resetTestCases(this.exercise.id!).pipe(
+            tap((testCases: ProgrammingExerciseTestCase[]) => {
+                this.alertService.success(`artemisApp.programmingExercise.configureGrading.testCases.resetSuccessful`);
+                this.gradingService.notifyTestCases(this.exercise.id!, testCases);
+
+                // Update tasks
+                this.initializeTasks();
+            }),
+            catchError(() => {
+                this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.resetFailed`);
+                return of(undefined);
+            }),
+        );
+    }
+
     private initializeTasks = () => {
         this.getTasksByExercise(this.exercise).subscribe((serverSideTasks) => {
             const tasks = (serverSideTasks ?? []).map((task) => task as ProgrammingExerciseTask).map(this.updateTask);
