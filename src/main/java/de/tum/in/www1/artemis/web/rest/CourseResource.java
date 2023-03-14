@@ -423,14 +423,20 @@ public class CourseResource {
         try {
             course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, refresh);
         }
-        catch (AccessForbiddenException e) {
-            course = courseRepository.findSingleCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(courseId);
+        catch (AccessForbiddenException accessForbiddenException) {
+            try {
+                course = courseRepository.findSingleCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(courseId);
+            }
+            catch (EntityNotFoundException e) {
+                // no course for registration found, so we can just throw the original exception
+                throw accessForbiddenException;
+            }
             // maybe the user can register, then we can redirect to /courses/{courseId}/for-registration
             if (courseService.isUserAllowedToSelfRegisterForCourse(user, course)) {
                 UriComponents redirectUri = UriComponentsBuilder.fromPath("/api/courses/{courseId}/for-registration").buildAndExpand(courseId);
                 return ResponseEntity.status(HttpStatus.FOUND).location(redirectUri.toUri()).build();
             }
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found", e);
+            throw accessForbiddenException;
         }
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user);
         logDuration(List.of(course), user, timeNanoStart);
