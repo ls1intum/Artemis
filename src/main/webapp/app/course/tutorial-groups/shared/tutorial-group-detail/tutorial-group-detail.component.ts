@@ -5,6 +5,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { getDayTranslationKey } from '../weekdays';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-tutorial-group-detail',
@@ -33,6 +34,9 @@ export class TutorialGroupDetailComponent implements OnChanges {
     ENGLISH = Language.ENGLISH;
     formattedAdditionalInformation?: SafeHtml;
     getDayTranslationKey = getDayTranslationKey;
+
+    faQuestionCircle = faQuestionCircle;
+    readonly Math = Math;
 
     sessions: TutorialGroupSession[] = [];
 

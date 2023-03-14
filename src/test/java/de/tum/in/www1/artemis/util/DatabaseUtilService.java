@@ -4611,7 +4611,7 @@ public class DatabaseUtilService {
         }
     }
 
-    public TutorialGroupSession createIndividualTutorialGroupSession(Long tutorialGroupId, ZonedDateTime start, ZonedDateTime end) {
+    public TutorialGroupSession createIndividualTutorialGroupSession(Long tutorialGroupId, ZonedDateTime start, ZonedDateTime end, Integer attendanceCount) {
         var tutorialGroup = tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
 
         TutorialGroupSession tutorialGroupSession = new TutorialGroupSession();
@@ -4620,6 +4620,7 @@ public class DatabaseUtilService {
         tutorialGroupSession.setTutorialGroup(tutorialGroup);
         tutorialGroupSession.setLocation("LoremIpsum");
         tutorialGroupSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
+        tutorialGroupSession.setAttendanceCount(attendanceCount);
         tutorialGroupSession = tutorialGroupSessionRepository.save(tutorialGroupSession);
         return tutorialGroupSession;
     }
