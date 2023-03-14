@@ -24,6 +24,7 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
 
     @Output() tutorialGroupDeleted = new EventEmitter<void>();
     @Output() registrationsChanged = new EventEmitter<void>();
+    @Output() attendanceUpdated = new EventEmitter<void>();
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -51,7 +52,9 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
                 catchError(() => EMPTY),
                 takeUntil(this.ngUnsubscribe),
             )
-            .subscribe(() => {});
+            .subscribe(() => {
+                this.attendanceUpdated.emit();
+            });
     }
 
     openRegistrationDialog(event: MouseEvent) {
