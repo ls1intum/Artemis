@@ -29,6 +29,7 @@ artemis:
         internal-admin:
             username: artemis_admin
             password: artemis_admin
+            email: admin@localhost
         registration:               # the whole section is optional: whether user can register in Artemis
             enabled: false
             allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@(tum\.de|in\.tum\.de|mytum\.de)'

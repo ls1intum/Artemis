@@ -67,6 +67,9 @@ public class UserService {
     @Value("${artemis.user-management.internal-admin.password:#{null}}")
     private Optional<String> artemisInternalAdminPassword;
 
+    @Value("${artemis.user-management.internal-admin.email:#{null}}")
+    private Optional<String> artemisInternalAdminEmail;
+
     private final UserCreationService userCreationService;
 
     private final UserRepository userRepository;
@@ -161,7 +164,7 @@ public class UserService {
                     userDto.setActivated(true);
                     userDto.setFirstName("Administrator");
                     userDto.setLastName("Administrator");
-                    userDto.setEmail("admin@localhost");
+                    userDto.setEmail(artemisInternalAdminEmail.orElse("admin@localhost"));
                     userDto.setLangKey("en");
                     userDto.setCreatedBy("system");
                     userDto.setLastModifiedBy("system");
