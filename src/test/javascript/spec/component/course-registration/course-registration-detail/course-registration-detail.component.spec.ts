@@ -11,9 +11,10 @@ import { of } from 'rxjs/internal/observable/of';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CoursePrerequisitesButtonComponent } from 'app/overview/course-registration/course-prerequisites-button/course-prerequisites-button.component';
 import { CourseRegistrationButtonComponent } from 'app/overview/course-registration/course-registration-button/course-registration-button.component';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { throwError } from 'rxjs';
 
 describe('CourseRegistrationDetailComponent', () => {
     let fixture: ComponentFixture<CourseRegistrationDetailComponent>;
@@ -72,8 +73,8 @@ describe('CourseRegistrationDetailComponent', () => {
         expect(component.courseId).toBe(123);
     });
 
-    it('should load the course using findOneToRegister', fakeAsync(() => {
-        jest.spyOn(courseService, 'findOneToRegister').mockReturnValue(of(new HttpResponse<Course>({ body: course1 })));
+    it('should load the course using findOneForRegistration', fakeAsync(() => {
+        jest.spyOn(courseService, 'findOneForRegistration').mockReturnValue(of(new HttpResponse<Course>({ body: course1 })));
 
         component.ngOnInit();
 
@@ -82,16 +83,45 @@ describe('CourseRegistrationDetailComponent', () => {
         expect(component.course?.title).toBe(course1.title);
     }));
 
-    it('should redirect to the course page if the API endpoint redirected to /courses/:courseId/for-dashboard', async () => {
+    it('should have a function isCourseFullyAccessible that returns true if the for-dashboard endpoint returns a 200', fakeAsync(() => {
         const httpResponseComingFromForDashboardEndpoint = new HttpResponse({
             body: course1,
             headers: new HttpHeaders(),
-            url: `/api/courses/${course1.id}/for-dashboard`,
         });
-        jest.spyOn(courseService, 'findOneToRegister').mockReturnValue(of(httpResponseComingFromForDashboardEndpoint));
+        jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(of(httpResponseComingFromForDashboardEndpoint));
 
-        await component.ngOnInit();
+        component.ngOnInit();
 
-        expect(router.navigate).toHaveBeenCalledWith(['courses', course1.id]);
-    });
+        return expect(component.isCourseFullyAccessible()).resolves.toBeTrue();
+    }));
+
+    it('should have a function isCourseFullyAccessible that returns false if the for-dashboard endpoint returns a 403', fakeAsync(() => {
+        const httpResponseComingFromForDashboardEndpoint = new HttpErrorResponse({
+            headers: new HttpHeaders(),
+            status: 403,
+        });
+        jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(throwError(httpResponseComingFromForDashboardEndpoint));
+
+        component.ngOnInit();
+
+        return expect(component.isCourseFullyAccessible()).resolves.toBeFalse();
+    }));
+
+    it('should redirect to the course page if the dashboard version is fully accessible', fakeAsync(() => {
+        jest.spyOn(component, 'isCourseFullyAccessible').mockReturnValue(Promise.resolve(true));
+
+        component.courseId = course1.id;
+        component.redirectIfCourseIsFullyAccessible().then(() => {
+            expect(router.navigate).toHaveBeenCalledWith(['courses', course1.id]);
+        });
+    }));
+
+    it('should not redirect to the course page if the dashboard version is not fully accessible', fakeAsync(() => {
+        jest.spyOn(component, 'isCourseFullyAccessible').mockReturnValue(Promise.resolve(false));
+
+        component.courseId = course1.id;
+        component.redirectIfCourseIsFullyAccessible().then(() => {
+            expect(router.navigate).not.toHaveBeenCalled();
+        });
+    }));
 });

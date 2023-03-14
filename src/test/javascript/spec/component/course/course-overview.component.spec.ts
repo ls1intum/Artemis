@@ -2,7 +2,7 @@ import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { Subject, of } from 'rxjs';
+import { EMPTY, Subject, of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -48,7 +48,6 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { generateExampleTutorialGroupsConfiguration } from '../tutorial-groups/helpers/tutorialGroupsConfigurationExampleModels';
-import { EMPTY } from 'rxjs';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -204,18 +203,30 @@ describe('CourseOverviewComponent', () => {
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
     });
 
-    it('should redirect to the registration page if the API endpoint redirected to /courses/:courseId/for-registration', async () => {
+    it('should redirect to the registration page if the API endpoint returned a 403, but the user can register', async () => {
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
+        const findOneForRegistrationStub = jest.spyOn(courseService, 'findOneForRegistration');
         jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(new TeamAssignmentPayload())));
-        // mock with HTTP response from /courses/:courseId/for-registration directly
-        // so that the component detects that the user is not registered for the course
-        const httpResponseComingFromForRegistrationEndpoint = new HttpResponse({
-            body: course1,
-            headers: new HttpHeaders(),
-            url: `/api/courses/${course1.id}/for-registration`,
-        });
-        findOneForDashboardStub.mockReturnValue(of(httpResponseComingFromForRegistrationEndpoint));
+        // mock error response
+        findOneForDashboardStub.mockReturnValue(
+            throwError(
+                new HttpResponse({
+                    body: course1,
+                    headers: new HttpHeaders(),
+                    status: 403,
+                }),
+            ),
+        );
+        findOneForRegistrationStub.mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: course1,
+                    headers: new HttpHeaders(),
+                    status: 200,
+                }),
+            ),
+        );
         getCourseStub.mockReturnValue(undefined);
 
         await component.ngOnInit();

@@ -212,7 +212,7 @@ export class CourseManagementService {
     /**
      * finds all courses that can be registered to
      */
-    findAllToRegister(): Observable<EntityArrayResponseType> {
+    findAllForRegistration(): Observable<EntityArrayResponseType> {
         return this.http
             .get<Course[]>(`${this.resourceUrl}/for-registration`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)));
@@ -221,7 +221,7 @@ export class CourseManagementService {
     /**
      * finds a single course that can be registered to (with limited information)
      */
-    findOneToRegister(courseId: number): Observable<EntityResponseType> {
+    findOneForRegistration(courseId: number): Observable<EntityResponseType> {
         return this.http
             .get<Course>(`${this.resourceUrl}/${courseId}/for-registration`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));

@@ -174,6 +174,24 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
+    /**
+     * Determines whether the user can register for the course by trying to fetch the for-registration version
+     */
+    canRegisterForCourse(): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            this.courseService.findOneForRegistration(this.courseId).subscribe({
+                next: () => resolve(true),
+                error: (res: HttpErrorResponse) => {
+                    if (res.status === 403) {
+                        resolve(false);
+                    } else {
+                        reject(res);
+                    }
+                },
+            });
+        });
+    }
+
     redirectToCourseRegistrationPage() {
         this.router.navigate(['courses', this.courseId, 'register']);
     }
@@ -186,17 +204,17 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.refreshingCourse = refresh;
         this.courseService.findOneForDashboard(this.courseId, refresh).subscribe({
             next: (res: HttpResponse<Course>) => {
-                const isResponseFromForRegistrationEndpoint = res.url?.endsWith('/for-registration');
-                if (isResponseFromForRegistrationEndpoint) {
-                    // user is not in course, but can register
-                    this.redirectToCourseRegistrationPage();
-                    return;
-                }
                 this.courseCalculationService.updateCourse(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
                 setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
             },
-            error: (error: HttpErrorResponse) => {
+            error: async (error: HttpErrorResponse) => {
+                if (error.status === 403 && (await this.canRegisterForCourse())) {
+                    // the user can to register, so we want to redirect them
+                    this.redirectToCourseRegistrationPage();
+                    // no need to show the permission error
+                    return;
+                }
                 const errorMessage = error.headers.get('X-artemisApp-message')!;
                 this.alertService.addAlert({
                     type: AlertType.DANGER,

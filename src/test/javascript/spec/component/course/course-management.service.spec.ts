@@ -205,7 +205,7 @@ describe('Course Management Service', () => {
     it('should find all courses to register', fakeAsync(() => {
         returnedFromService = [{ ...course }];
         courseManagementService
-            .findAllToRegister()
+            .findAllForRegistration()
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
         requestAndExpectDateConversion('GET', `${resourceUrl}/for-registration`, returnedFromService, course);

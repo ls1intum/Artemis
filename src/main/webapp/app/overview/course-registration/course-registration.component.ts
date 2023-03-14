@@ -26,7 +26,7 @@ export class CourseRegistrationComponent implements OnInit {
      */
     loadRegistrableCourses() {
         this.loading = true;
-        this.courseService.findAllToRegister().subscribe((res) => {
+        this.courseService.findAllForRegistration().subscribe((res) => {
             this.coursesToSelect = res.body!.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
             this.loading = false;
         });

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
@@ -18,18 +19,13 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.loading = true;
-        this.paramSubscription = this.route.parent!.params.subscribe((params) => {
+        this.paramSubscription = this.route.parent!.params.subscribe(async (params) => {
             this.courseId = parseInt(params['courseId']);
-            this.courseService.findOneToRegister(this.courseId).subscribe((res) => {
-                const courseIsFullyAccessible = res.url?.endsWith('/for-dashboard');
-                if (courseIsFullyAccessible) {
-                    // server returned a course for the dashboard, which means we have full access to the course already
-                    this.redirectToCoursePage();
-                    return;
-                }
+            this.courseService.findOneForRegistration(this.courseId).subscribe((res) => {
                 this.course = res.body!;
                 this.loading = false;
             });
+            await this.redirectIfCourseIsFullyAccessible();
         });
     }
 
@@ -37,7 +33,32 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
         this.paramSubscription?.unsubscribe();
     }
 
-    redirectToCoursePage() {
+    redirectToCoursePage(): void {
         this.router.navigate(['courses', this.courseId]);
+    }
+
+    /**
+     * Determines whether the user is already registered for the course by trying to fetch the for-dashboard version
+     */
+    isCourseFullyAccessible(): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            this.courseService.findOneForDashboard(this.courseId).subscribe({
+                next: () => resolve(true),
+                error: (res: HttpErrorResponse) => {
+                    if (res.status === 403) {
+                        resolve(false);
+                    } else {
+                        reject(res);
+                    }
+                },
+            });
+        });
+    }
+
+    async redirectIfCourseIsFullyAccessible(): Promise<void> {
+        const isFullyAccessible = await this.isCourseFullyAccessible();
+        if (isFullyAccessible) {
+            this.redirectToCoursePage();
+        }
     }
 }
