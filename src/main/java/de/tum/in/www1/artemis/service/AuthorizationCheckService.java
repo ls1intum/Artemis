@@ -194,17 +194,6 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Determine whether the current date is within the course period (after start, before end).
-     *
-     * @param course The course to check
-     * @return true if the current date is within the course period, false otherwise
-     */
-    private boolean isNowWithinCoursePeriod(Course course) {
-        ZonedDateTime now = ZonedDateTime.now();
-        return (course.getStartDate() == null || course.getStartDate().isBefore(now)) && (course.getEndDate() == null || course.getEndDate().isAfter(now));
-    }
-
-    /**
      * Checks if the user is allowed to self register for the given course.
      *
      * @param user   The user that wants to self register
@@ -216,7 +205,7 @@ public class AuthorizationCheckService {
             log.info("Registration with this username is not allowed. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
             return false;
         }
-        if (!isNowWithinCoursePeriod(course)) {
+        if (!course.isActive()) {
             log.info("The course is not currently active. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
             return false;
         }
@@ -551,7 +540,6 @@ public class AuthorizationCheckService {
 
     /**
      * Checks if the user is allowed to see the exam result. Returns true if
-     *
      * - the current user is at least teaching assistant in the course
      * - OR if the exercise is not part of an exam
      * - OR if the exam has not ended
