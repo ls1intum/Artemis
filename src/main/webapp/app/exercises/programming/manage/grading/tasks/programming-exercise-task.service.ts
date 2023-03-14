@@ -42,7 +42,7 @@ export class ProgrammingExerciseTaskService {
     /**
      * Save the test case configuration contained in each task
      */
-    public saveTestCases() {
+    public saveTestCases(): Observable<ProgrammingExerciseTestCase[] | undefined | null> {
         const testCasesToUpdate = this.tasks
             .map((task) => task.testCases)
             .flatMap((testcase) => testcase)
@@ -51,12 +51,14 @@ export class ProgrammingExerciseTaskService {
         const testCaseUpdates = testCasesToUpdate.map((testCase) => ProgrammingExerciseTestCaseUpdate.from(testCase));
         const testCaseUpdatesWeightSum = sum(testCasesToUpdate.map((test) => test.weight));
 
+        console.log(testCaseUpdates);
+
         if (testCaseUpdatesWeightSum < 0) {
             this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.weightSumError`);
-            return;
+            return of(undefined);
         }
 
-        this.gradingService.updateTestCase(this.exercise.id!, testCaseUpdates).pipe(
+        return this.gradingService.updateTestCase(this.exercise.id!, testCaseUpdates).pipe(
             tap((updatedTestCases: ProgrammingExerciseTestCase[]) => {
                 // Update changed flag for test cases
                 const updatedTestCaseIDs = updatedTestCases.map((updatedTest) => updatedTest.id);

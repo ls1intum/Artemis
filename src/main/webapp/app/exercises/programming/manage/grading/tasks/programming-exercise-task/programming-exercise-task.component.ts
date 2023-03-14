@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
-import { Visibility } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseTaskService } from '../programming-exercise-task.service';
 
 @Component({
@@ -25,14 +25,17 @@ export class ProgrammingExerciseTaskComponent {
 
     constructor(private programmingExerciseTaskService: ProgrammingExerciseTaskService) {}
 
-    testUpdateHandler() {
+    testUpdateHandler(test: ProgrammingExerciseTestCase) {
         this.task = this.programmingExerciseTaskService.updateTask(this.task);
+        test.changed = true;
     }
 
     taskUpdateHandler() {
         const testCasesAmount = this.task.testCases.length;
 
         this.task.testCases.forEach((testCase) => {
+            testCase.changed = true;
+
             if (this.task.weight != undefined) {
                 testCase.weight = this.task.weight / testCasesAmount;
             }

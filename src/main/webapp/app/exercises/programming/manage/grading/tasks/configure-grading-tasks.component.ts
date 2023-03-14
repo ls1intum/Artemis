@@ -17,6 +17,7 @@ export class ConfigureGradingTasksComponent implements OnInit {
     @Input() gradingStatistics: ProgrammingExerciseGradingStatistics;
 
     faQuestionCircle = faQuestionCircle;
+    isSaving = false;
 
     constructor(private taskService: ProgrammingExerciseTaskService) {}
 
@@ -29,6 +30,7 @@ export class ConfigureGradingTasksComponent implements OnInit {
     }
 
     saveTestCases() {
-        this.taskService.saveTestCases();
+        this.isSaving = true;
+        this.taskService.saveTestCases().subscribe(() => (this.isSaving = false));
     }
 }
