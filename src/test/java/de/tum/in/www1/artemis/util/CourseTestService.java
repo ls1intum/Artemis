@@ -711,6 +711,19 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetCourseForRegistrationAccessDenied() throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
+        Course courseToRequest = courses.get(0);
+        // remove student from course so that they are not already registered
+        courseToRequest.setStudentGroupName("someNonExistingStudentGroupName");
+        // also, explicitly DON't enable registration
+        courseToRequest.setRegistrationEnabled(false);
+        courseRepo.save(courseToRequest);
+        // expect forbidden(403)
+        request.get("/api/courses/" + courses.get(0).getId() + "/for-registration", HttpStatus.FORBIDDEN, Course.class);
+    }
+
+    // Test
     public void testGetCourseForRegistrationRedirectToForDashboard() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
         Course courseToRequest = courses.get(0);
