@@ -96,7 +96,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :#{#now}
             	AND e.dueDate <= :#{#maxDate}
-                AND e.class = :#{#exerciseType}
+                AND TYPE(e) = :#{#exerciseType}
             """)
     Integer countExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
             @Param("exerciseType") String exerciseTypeDiscriminator);
@@ -108,7 +108,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :#{#now}
             	AND e.dueDate <= :#{#maxDate}
-                AND e.class = :#{#exerciseType}
+                AND TYPE(e) = :#{#exerciseType}
             """)
     Integer countStudentsInExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
             @Param("exerciseType") String exerciseTypeDiscriminator);
@@ -120,7 +120,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :#{#now}
             	AND e.dueDate <= :#{#maxDate}
-                AND e.class = :#{#exerciseType}
+                AND TYPE(e) = :#{#exerciseType}
                 AND user.login IN :#{#activeUserLogins}
             """)
     Integer countActiveStudentsInExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
@@ -132,7 +132,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :#{#now}
             	AND e.releaseDate <= :#{#maxDate}
-                AND e.class = :#{#exerciseType}
+                AND TYPE(e) = :#{#exerciseType}
             """)
     Integer countExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
             @Param("exerciseType") String exerciseTypeDiscriminator);
@@ -144,7 +144,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :#{#now}
             	AND e.releaseDate <= :#{#maxDate}
-                AND e.class = :#{#exerciseType}
+                AND TYPE(e) = :#{#exerciseType}
             """)
     Integer countStudentsInExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
             @Param("exerciseType") String exerciseTypeDiscriminator);
@@ -156,7 +156,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :#{#now}
             	AND e.releaseDate <= :#{#maxDate}
-                AND e.class = :#{#exerciseType}
+                AND TYPE(e) = :#{#exerciseType}
                 AND user.login IN :#{#activeUserLogins}
             """)
     Integer countActiveStudentsInExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
