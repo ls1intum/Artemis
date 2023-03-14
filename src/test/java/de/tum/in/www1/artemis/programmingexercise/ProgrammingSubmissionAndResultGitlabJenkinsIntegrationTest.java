@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.CommitDTO;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -348,7 +349,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
-        var result = assertBuildError(participation.getId(), userLogin, false);
+        var result = assertBuildError(participation.getId(), userLogin);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
 
         // Call again and assert that no new submissions have been created
@@ -372,11 +373,11 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
-        assertBuildError(participation.getId(), userLogin, true);
+        assertBuildError(participation.getId(), userLogin);
     }
 
-    private Result assertBuildError(Long participationId, String userLogin, boolean useLegacyBuildLogs) throws Exception {
-
+    private Result assertBuildError(Long participationId, String userLogin) throws Exception {
+        SecurityUtils.setAuthorizationObject();
         // Assert that result is linked to the participation
         var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results).hasSize(1);
@@ -393,6 +394,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         assertThat(submissionWithLogsOptional).isPresent();
         assertThat(submissionWithLogsOptional.get().getBuildLogEntries()).hasSize(3);
 
+        database.changeUser(userLogin);
         // Assert that the build logs can be retrieved from the REST API from the database
         var receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull().isNotEmpty();
