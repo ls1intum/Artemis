@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
-import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 
 @Repository
 public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
@@ -33,14 +32,6 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "team", "exercise", "lastResult", "lastRatedResult" })
     List<TeamScore> findAllByExerciseIn(Set<Exercise> exercises, Pageable pageable);
-
-    @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO(s.team.name, AVG(s.lastScore), AVG(s.lastRatedScore), AVG(s.lastPoints), AVG(s.lastRatedPoints))
-            FROM TeamScore s
-            WHERE s.exercise IN :exercises
-            GROUP BY s.team.name
-            """)
-    List<ParticipantScoreAverageDTO> getAvgScoreOfTeamInExercises(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
             SELECT DISTINCT s

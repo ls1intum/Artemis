@@ -155,7 +155,7 @@ public class StudentExamService {
         }
 
         // NOTE: only for test runs and test exams, the quizzes should be evaluated automatically
-        if (studentExam.isTestRun() || studentExam.getExam().isTestExam()) {
+        if (studentExam.isTestRun() || studentExam.isTestExam()) {
             // immediately evaluate quiz participations for test runs and test exams
             examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExam);
 
@@ -381,7 +381,7 @@ public class StudentExamService {
     private void lockStudentRepositories(User currentUser, StudentExam studentExam) {
         // Only lock programming exercises when the student submitted early in real exams. Otherwise, the lock operations were already scheduled/executed.
         // Always lock test exams since there is no locking operation scheduled (also see StudentExamService:457)
-        if (studentExam.getExam().isTestExam() || (studentExam.getIndividualEndDate() != null && ZonedDateTime.now().isBefore(studentExam.getIndividualEndDate()))) {
+        if (studentExam.isTestExam() || (studentExam.getIndividualEndDate() != null && ZonedDateTime.now().isBefore(studentExam.getIndividualEndDate()))) {
             // Use the programming exercises in the DB to lock the repositories (for safety)
             for (Exercise exercise : studentExam.getExercises()) {
                 if (exercise instanceof ProgrammingExercise programmingExercise) {
@@ -496,7 +496,7 @@ public class StudentExamService {
                     }
                     generatedParticipations.add(participation);
                     // Unlock repository only if the real exam starts within 5 minutes or if we have a test exam or test run
-                    if (exercise instanceof ProgrammingExercise programmingExercise && (studentExam.isTestRun() || studentExam.getExam().isTestExam()
+                    if (exercise instanceof ProgrammingExercise programmingExercise && (studentExam.isTestRun() || studentExam.isTestExam()
                             || ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now()))) {
                         // Note: only unlock the programming exercise student repository for the affected user (Important: Do NOT invoke unlockAll)
                         programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
