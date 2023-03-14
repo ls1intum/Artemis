@@ -29,4 +29,5 @@ export class ProgrammingExerciseTestCase implements BaseEntity {
     resultingPoints: number | undefined;
     resultingPointsPercent: number | undefined;
     testCaseStats: TestCaseStats | undefined;
+    changed: boolean | undefined;
 }

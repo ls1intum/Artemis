@@ -27,4 +27,8 @@ export class ConfigureGradingTasksComponent implements OnInit {
     ngOnInit(): void {
         this.taskService.configure(this.exercise, this.course, this.gradingStatistics);
     }
+
+    saveTestCases() {
+        this.taskService.saveTestCases();
+    }
 }

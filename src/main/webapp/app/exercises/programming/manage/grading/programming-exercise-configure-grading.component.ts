@@ -363,6 +363,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     /**
      * Save the unsaved (edited) changes of the test cases.
+     * TODO: moved to programming-exercise-task.service.ts
      */
     saveTestCases() {
         this.isSaving = true;

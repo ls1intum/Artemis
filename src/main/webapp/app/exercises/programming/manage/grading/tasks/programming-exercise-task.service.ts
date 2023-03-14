@@ -1,7 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
-import { Observable } from 'rxjs';
+import { Observable, catchError, of, tap } from 'rxjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -9,6 +9,8 @@ import { Course } from 'app/entities/course.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseGradingService, ProgrammingExerciseTestCaseUpdate } from '../../services/programming-exercise-grading.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Injectable()
 export class ProgrammingExerciseTaskService {
@@ -22,7 +24,11 @@ export class ProgrammingExerciseTaskService {
 
     public resourceUrl = `${SERVER_API_URL}api/programming-exercises`;
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private alertService: AlertService, private gradingService: ProgrammingExerciseGradingService) {}
+
+    get testCases(): ProgrammingExerciseTestCase[] {
+        return this.tasks.flatMap((task) => task.testCases);
+    }
 
     public configure(exercise: ProgrammingExercise, course: Course, gradingStatistics: ProgrammingExerciseGradingStatistics) {
         this.exercise = exercise;
@@ -33,19 +39,77 @@ export class ProgrammingExerciseTaskService {
         this.initializeTasks();
     }
 
+    /**
+     * Save the test case configuration contained in each task
+     */
+    public saveTestCases() {
+        const testCasesToUpdate = this.tasks
+            .map((task) => task.testCases)
+            .flatMap((testcase) => testcase)
+            .filter((test) => test.changed);
+
+        const testCaseUpdates = testCasesToUpdate.map((testCase) => ProgrammingExerciseTestCaseUpdate.from(testCase));
+        const testCaseUpdatesWeightSum = sum(testCasesToUpdate.map((test) => test.weight));
+
+        if (testCaseUpdatesWeightSum < 0) {
+            this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.weightSumError`);
+            return;
+        }
+
+        this.gradingService.updateTestCase(this.exercise.id!, testCaseUpdates).pipe(
+            tap((updatedTestCases: ProgrammingExerciseTestCase[]) => {
+                // Update changed flag for test cases
+                const updatedTestCaseIDs = updatedTestCases.map((updatedTest) => updatedTest.id);
+                this.testCases
+                    .filter((test) => updatedTestCaseIDs.includes(test.id))
+                    .forEach((test) => {
+                        test.changed = false;
+                    });
+                this.gradingService.notifyTestCases(this.exercise.id!, this.testCases);
+
+                // Find out if there are test cases that were not updated, show an error.
+                const notUpdatedTestCases = this.testCases.filter((test) => test.changed);
+                if (notUpdatedTestCases.length) {
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.couldNotBeUpdated`, { testCases: notUpdatedTestCases });
+                } else {
+                    this.alertService.success(`artemisApp.programmingExercise.configureGrading.testCases.updated`);
+                }
+            }),
+            catchError((error: HttpErrorResponse) => {
+                if (error.status === 400 && error.error?.errorKey) {
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.` + error.error.errorKey, error.error);
+                } else {
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.couldNotBeUpdated`, { testCases: testCasesToUpdate });
+                }
+                return of(null);
+            }),
+        );
+    }
+
     private initializeTasks = () => {
         this.getTasksByExercise(this.exercise).subscribe((serverSideTasks) => {
             const tasks = (serverSideTasks ?? []).map((task) => task as ProgrammingExerciseTask).map(this.updateTask);
             this.totalWeights = sum(tasks.map((task) => task.weight ?? 0));
+
+            // Task points need to be updated again here since weight is not available before
             this.tasks = tasks.map(this.updateTaskPoints).map(this.addGradingStats);
         });
     };
 
+    private getTasksByExercise = (exercise: Exercise): Observable<ProgrammingExerciseServerSideTask[]> => {
+        return this.http.get<ProgrammingExerciseServerSideTask[]>(`${this.resourceUrl}/${exercise.id}/tasks`);
+    };
+
     private addGradingStats = (task: ProgrammingExerciseTask): ProgrammingExerciseTask => {
         task.stats = new TestCaseStats();
+        const testCaseStatsMap = this.gradingStatistics?.testCaseStatsMap;
+
+        if (!testCaseStatsMap) {
+            return task;
+        }
 
         task.testCases.forEach((testCase: ProgrammingExerciseTestCase) => {
-            const testStats = this.gradingStatistics.testCaseStatsMap![testCase.testName!];
+            const testStats = testCaseStatsMap[testCase.testName!];
             testCase.testCaseStats = testStats;
 
             task.stats!.numPassed += testStats.numPassed;
@@ -53,10 +117,6 @@ export class ProgrammingExerciseTaskService {
         });
 
         return task;
-    };
-
-    public getTasksByExercise = (exercise: Exercise): Observable<ProgrammingExerciseServerSideTask[]> => {
-        return this.http.get<ProgrammingExerciseServerSideTask[]>(`${this.resourceUrl}/${exercise.id}/tasks`);
     };
 
     public updateTask = (task: ProgrammingExerciseTask): ProgrammingExerciseTask => {
