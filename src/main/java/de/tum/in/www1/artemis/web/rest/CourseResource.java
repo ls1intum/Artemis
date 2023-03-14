@@ -373,7 +373,7 @@ public class CourseResource {
             throw new AccessForbiddenException(ENTITY_NAME, courseId);
         }
 
-        Course courseForRegistration = courseRepository.findSingleCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(courseId);
+        Course courseForRegistration = courseRepository.findSingleActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(courseId);
         return ResponseEntity.ok(courseForRegistration);
     }
 
