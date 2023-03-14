@@ -187,7 +187,6 @@ public class CourseTestService {
 
     // Test
     public void testCreateCourseWithPermission() throws Exception {
-        assertThrows(EntityNotFoundException.class, () -> courseRepo.findByIdWithLecturesAndExamsElseThrow(Long.MAX_VALUE));
         assertThrows(EntityNotFoundException.class, () -> courseRepo.findByIdElseThrow(Long.MAX_VALUE));
         assertThrows(EntityNotFoundException.class, () -> courseRepo.findByIdWithExercisesAndLecturesElseThrow(Long.MAX_VALUE));
         assertThrows(EntityNotFoundException.class, () -> courseRepo.findWithEagerOrganizationsElseThrow(Long.MAX_VALUE));

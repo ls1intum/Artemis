@@ -4,7 +4,9 @@ import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -127,13 +129,37 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals", "prerequisites" })
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
 
-    @Query("select distinct course from Course course left join fetch course.organizations organizations left join fetch course.prerequisites prerequisites where (course.startDate is null or course.startDate <= :now) and (course.endDate is null or course.endDate >= :now) and course.onlineCourse = false and course.registrationEnabled = true and course.id = :courseId")
+    @Query("""
+                SELECT DISTINCT course
+                FROM Course course
+                LEFT JOIN FETCH course.organizations organizations
+                LEFT JOIN FETCH course.prerequisites prerequisites
+                WHERE (course.startDate IS NULL OR course.startDate <= :now)
+                  AND (course.endDate IS NULL OR course.endDate >= :now)
+                  AND course.onlineCourse = false
+                  AND course.registrationEnabled = true
+                  AND course.id = :courseId
+            """)
     Optional<Course> findSingleCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
 
-    @Query("select distinct course from Course course left join fetch course.organizations organizations left join fetch course.prerequisites prerequisites where (course.startDate is null or course.startDate <= :now) and (course.endDate is null or course.endDate >= :now) and course.onlineCourse = false and course.registrationEnabled = true")
+    @Query("""
+                SELECT DISTINCT course
+                FROM Course course
+                LEFT JOIN FETCH course.organizations organizations
+                LEFT JOIN FETCH course.prerequisites prerequisites
+                WHERE (course.startDate IS NULL OR course.startDate <= :now)
+                  AND (course.endDate IS NULL OR course.endDate >= :now)
+                  AND course.onlineCourse = false
+                  AND course.registrationEnabled = true
+            """)
     List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
 
-    @Query("select course from Course course left join fetch course.organizations co where course.id = :courseId")
+    @Query("""
+                SELECT course
+                FROM Course course
+                LEFT JOIN FETCH course.organizations co
+                WHERE course.id = :courseId
+            """)
     Optional<Course> findWithEagerOrganizations(@Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration" })
@@ -297,17 +323,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     default List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites() {
         return findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(ZonedDateTime.now());
-    }
-
-    /**
-     * Get one course by id with lectures and exams. If the course cannot be found throw an exception
-     *
-     * @param courseId the id of the entity
-     * @return the entity
-     */
-    @NotNull
-    default Course findByIdWithLecturesAndExamsElseThrow(long courseId) {
-        return findWithLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**
