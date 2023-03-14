@@ -7,7 +7,7 @@ import dayjs from 'dayjs/esm';
 import { map } from 'rxjs/operators';
 
 import { createRequestOption } from 'app/shared/util/request.util';
-import { NavigationExtras, Params, Router, UrlSerializer } from '@angular/router';
+import { ActivatedRoute, NavigationExtras, Params, Route, Router, UrlSerializer } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
@@ -37,6 +37,7 @@ import { convertDateFromServer } from 'app/utils/date.utils';
 import { TutorialGroupsNotificationService } from 'app/course/tutorial-groups/services/tutorial-groups-notification.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -110,12 +111,10 @@ export class NotificationService {
             } else if (notification.title === NEW_REPLY_MESSAGE_TITLE) {
                 const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
                 const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
-                const extras = {
-                    state: { postId: target.id },
-                };
-                this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams, extras);
+                this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
             } else {
-                this.router.navigate([target.mainPage, targetCourseId, target.entity, target.id]);
+                const routeComponents: RouteComponents = [target.mainPage, targetCourseId, target.entity, target.id];
+                this.navigateToNotificationTarget(targetCourseId, routeComponents, {});
             }
         }
     }
@@ -125,24 +124,17 @@ export class NotificationService {
      * @param {number} targetCourseId
      * @param {RouteComponents} routeComponents
      * @param {Params} queryParams
-     * @param extras optional extras for router.navigate
      */
-    navigateToNotificationTarget(targetCourseId: number, routeComponents: RouteComponents, queryParams: Params, extras?: NavigationExtras): void {
+    navigateToNotificationTarget(targetCourseId: number, routeComponents: RouteComponents, queryParams: Params): void {
         const currentCourseId = NotificationService.getCurrentCourseId();
         // determine if reload is required when notification is clicked
         // by comparing the id of the course the user is currently in and the course the post associated with the notification belongs to
         if (currentCourseId === undefined || currentCourseId !== targetCourseId || this.isUnderMessagesTabOfSpecificCourse(targetCourseId.toString())) {
-            const tree = this.router.createUrlTree(routeComponents, { queryParams });
-            // navigate by string url to force reload when switching the course context
-            window.location.href = this.serializer.serialize(tree);
-        } else {
-            if (extras) {
-                // add extras (postId) to router.navigate when clicking on notification to open reply message
-                this.router.navigate(routeComponents, { queryParams, ...extras });
-            } else {
-                // navigate with router when staying in same course context when clicking on notification
+            this.router.navigate(['/courses'], { skipLocationChange: true }).then(() => {
                 this.router.navigate(routeComponents, { queryParams });
-            }
+            });
+        } else {
+            this.router.navigate(routeComponents, { queryParams });
         }
     }
 

@@ -48,7 +48,6 @@ examples.forEach((activeConversation) => {
                     MockProvider(AlertService),
                     MockProvider(MetisConversationService),
                     MockProvider(MetisService),
-                    MockProvider(Router),
                     { provide: Router, useValue: router },
                     {
                         provide: ActivatedRoute,
