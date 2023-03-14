@@ -2,12 +2,17 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -16,6 +21,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -29,8 +35,16 @@ public class AuthorizationCheckService {
 
     private final UserRepository userRepository;
 
-    public AuthorizationCheckService(UserRepository userRepository) {
+    private final CourseRepository courseRepository;
+
+    @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
+    private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
+
+    private final Logger log = LoggerFactory.getLogger(CourseService.class);
+
+    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository) {
         this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -177,6 +191,45 @@ public class AuthorizationCheckService {
         if (!isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("Course", course.getId());
         }
+    }
+
+    /**
+     * Determine whether the current date is within the course period (after start, before end).
+     *
+     * @param course The course to check
+     * @return true if the current date is within the course period, false otherwise
+     */
+    private boolean isNowWithinCoursePeriod(Course course) {
+        ZonedDateTime now = ZonedDateTime.now();
+        return (course.getStartDate() == null || course.getStartDate().isBefore(now)) && (course.getEndDate() == null || course.getEndDate().isAfter(now));
+    }
+
+    /**
+     * Checks if the user is allowed to self register for the given course.
+     *
+     * @param user   The user that wants to self register
+     * @param course The course to which the user wants to self register
+     * @return true if the user is allowed to self register for the given course, false otherwise
+     */
+    public boolean isUserAllowedToSelfRegisterForCourse(User user, Course course) {
+        if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
+            log.info("Registration with this username is not allowed. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
+            return false;
+        }
+        if (!isNowWithinCoursePeriod(course)) {
+            log.info("The course is not currently active. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
+            return false;
+        }
+        if (!Boolean.TRUE.equals(course.isRegistrationEnabled())) {
+            log.info("The course does not allow registration. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
+            return false;
+        }
+        Set<Organization> courseOrganizations = course.getOrganizations();
+        if (courseOrganizations != null && !courseOrganizations.isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
+            log.info("User is not member of any organization of this course. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
+            return false;
+        }
+        return true;
     }
 
     /**

@@ -15,7 +15,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -70,9 +69,6 @@ public class CourseService {
 
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
-
-    @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
-    private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
 
     private final Logger log = LoggerFactory.getLogger(CourseService.class);
 
@@ -225,9 +221,6 @@ public class CourseService {
      */
     public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(Long courseId, User user, boolean refresh) {
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
-        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
-            throw new AccessForbiddenException();
-        }
         // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
         course.setExercises(exerciseService.filterExercisesForCourse(course, user));
@@ -421,51 +414,13 @@ public class CourseService {
     }
 
     /**
-     * Determine whether the current date is within the course period (after start, before end).
-     *
-     * @param course The course to check
-     * @return true if the current date is within the course period, false otherwise
-     */
-    private boolean isNowWithinCoursePeriod(Course course) {
-        ZonedDateTime now = ZonedDateTime.now();
-        return (course.getStartDate() == null || course.getStartDate().isBefore(now)) && (course.getEndDate() == null || course.getEndDate().isAfter(now));
-    }
-
-    /**
-     * Return whether the user is allowed to self register for the given course.
-     *
-     * @param user   The user that wants to self register
-     * @param course The course to which the user wants to self register
-     * @return true if the user is allowed to self register for the given course, false otherwise
-     */
-    public boolean isUserAllowedToSelfRegisterForCourse(User user, Course course) {
-        if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
-            log.info("Registration with this username is not allowed. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
-            return false;
-        }
-        if (!isNowWithinCoursePeriod(course)) {
-            log.info("The course is not currently active. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
-            return false;
-        }
-        if (!Boolean.TRUE.equals(course.isRegistrationEnabled())) {
-            log.info("The course does not allow registration. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
-            return false;
-        }
-        if (course.getOrganizations() != null && !course.getOrganizations().isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
-            log.info("User is not member of any organization of this course. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
-            return false;
-        }
-        return true;
-    }
-
-    /**
      * Registers a user in a course by adding them to the student group of the course
      *
      * @param user   The user that should get added to the course
      * @param course The course to which the user should get added to
      */
     public void registerUserForCourseOrThrow(User user, Course course) {
-        if (!isUserAllowedToSelfRegisterForCourse(user, course)) {
+        if (!authCheckService.isUserAllowedToSelfRegisterForCourse(user, course)) {
             throw new AccessForbiddenException("You are not allowed to register for this course");
         }
         userService.addUserToGroup(user, course.getStudentGroupName(), Role.STUDENT);

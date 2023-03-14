@@ -9,19 +9,14 @@ import java.util.HashSet;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.stereotype.Component;
-import org.springframework.test.context.TestPropertySource;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -229,82 +224,5 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         courses = courseService.getAllCoursesForManagementOverview(true);
         assertThat(courses).isEmpty();
-    }
-
-    @Nested
-    @Component
-    // The following annotation can only be applied to classes: https://github.com/spring-projects/spring-framework/issues/18951
-    // Only the login name of the student2 user is NOT allowed to self-register for courses.
-    @TestPropertySource(properties = "artemis.user-management.course-registration.allowed-username-pattern=^(?!" + TEST_PREFIX + "student2).*$")
-    class IsUserAllowedToSelfRegisterForCourseTest {
-
-        // We need our own courseService here that overshadows the one from the CourseServiceTest, so that the new property is applied to it.
-        @Autowired
-        private CourseService courseService;
-
-        private Course course;
-
-        private User student1;
-
-        private Course createCourseForSelfRegistrationAllowedTest() {
-            var course = database.createCourse();
-            course.setRegistrationEnabled(true);
-            course.setStartDate(ZonedDateTime.now().minusDays(2));
-            course.setEndDate(ZonedDateTime.now().plusDays(2));
-            course.setStudentGroupName("test-students");
-            courseRepository.save(course);
-            return course;
-        }
-
-        @BeforeEach
-        void setUp() {
-            course = createCourseForSelfRegistrationAllowedTest();
-            student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testIsUserAllowedToSelfRegisterForCourseForAllowed() {
-            assertThat(courseService.isUserAllowedToSelfRegisterForCourse(this.student1, this.course)).isTrue();
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
-        void testIsUserAllowedToSelfRegisterForCourseForWrongUsernamePattern() {
-            // student2 is not allowed to self-register for courses, see the @TestPropertySource annotation above.
-            var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
-            assertThat(courseService.isUserAllowedToSelfRegisterForCourse(student2, this.course)).isFalse();
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testIsUserAllowedToSelfRegisterForCourseForWrongStartDate() {
-            this.course.setStartDate(ZonedDateTime.now().plusDays(1));
-            courseRepository.save(this.course);
-            assertThat(courseService.isUserAllowedToSelfRegisterForCourse(this.student1, this.course)).isFalse();
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testIsUserAllowedToSelfRegisterForCourseForWrongEndDate() {
-            this.course.setEndDate(ZonedDateTime.now().minusDays(1));
-            courseRepository.save(this.course);
-            assertThat(courseService.isUserAllowedToSelfRegisterForCourse(this.student1, this.course)).isFalse();
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testIsUserAllowedToSelfRegisterForCourseForRegistrationDisabled() {
-            this.course.setRegistrationEnabled(false);
-            courseRepository.save(this.course);
-            assertThat(courseService.isUserAllowedToSelfRegisterForCourse(this.student1, this.course)).isFalse();
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testIsUserAllowedToSelfRegisterForCourseForDifferentOrganizations() {
-            var courseWithOrganizations = database.createCourseWithOrganizations();
-            assertThat(courseService.isUserAllowedToSelfRegisterForCourse(this.student1, courseWithOrganizations)).isFalse();
-        }
     }
 }

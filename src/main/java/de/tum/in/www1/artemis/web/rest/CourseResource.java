@@ -364,15 +364,13 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         Course course = courseRepository.findSingleCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(courseId);
 
-        // check that the user can at least register to one organization of the course
-        if (!courseService.isUserAllowedToSelfRegisterForCourse(user, course)) {
-            throw new AccessForbiddenException("You are not allowed to register for this course, so you cannot see it.");
+        // check that the user CAN at least register to one organization of the course
+        if (!authCheckService.isUserAllowedToSelfRegisterForCourse(user, course)) {
+            throw new AccessForbiddenException("course", courseId);
         }
 
-        // check that the user has not already registered for the course
-        List<Course> allRegisteredCourses = courseService.findAllActiveForUser(user);
-        if (allRegisteredCourses.contains(course)) {
-            // redirect to the more detailed route /courses/{courseId}/for-dashboard
+        if (authCheckService.isAtLeastStudentInCourse(course, user)) {
+            // user IS already registered, redirect to the more detailed route /courses/{courseId}/for-dashboard
             UriComponents redirectUri = UriComponentsBuilder.fromPath("/api/courses/{courseId}/for-dashboard").buildAndExpand(courseId);
             return ResponseEntity.status(HttpStatus.FOUND).location(redirectUri.toUri()).build();
         }
@@ -397,7 +395,7 @@ public class CourseResource {
         // check whether registration is actually possible for each of the courses
         return allCoursesToPotentiallyRegister.stream().filter(course -> {
             // check that self-registration is allowed for the user in this course
-            if (!courseService.isUserAllowedToSelfRegisterForCourse(user, course)) {
+            if (!authCheckService.isUserAllowedToSelfRegisterForCourse(user, course)) {
                 return false;
             }
             // check that the user is not already registered to the course
@@ -419,25 +417,18 @@ public class CourseResource {
         long timeNanoStart = System.nanoTime();
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course;
-        try {
-            course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, refresh);
-        }
-        catch (AccessForbiddenException accessForbiddenException) {
-            try {
-                course = courseRepository.findSingleCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(courseId);
-            }
-            catch (EntityNotFoundException e) {
-                // no course for registration found, so we can just throw the original exception
-                throw accessForbiddenException;
-            }
-            // maybe the user can register, then we can redirect to /courses/{courseId}/for-registration
-            if (courseService.isUserAllowedToSelfRegisterForCourse(user, course)) {
+
+        Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, refresh);
+        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
+            // user might be allowed to register for the course
+            if (authCheckService.isUserAllowedToSelfRegisterForCourse(user, course)) {
+                // redirect to /courses/{courseId}/for-registration
                 UriComponents redirectUri = UriComponentsBuilder.fromPath("/api/courses/{courseId}/for-registration").buildAndExpand(courseId);
                 return ResponseEntity.status(HttpStatus.FOUND).location(redirectUri.toUri()).build();
             }
-            throw accessForbiddenException;
+            throw new AccessForbiddenException("course", courseId);
         }
+
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user);
         logDuration(List.of(course), user, timeNanoStart);
         return ResponseEntity.ok(course);
