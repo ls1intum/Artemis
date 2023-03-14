@@ -74,7 +74,7 @@ export class ProgrammingExerciseTaskService {
 
         task.resultingPoints = resultingPoints;
         task.resultingPointsPercent = resultingPointsPercent;
-        task.addGradingStats.forEach((test) => {
+        task.testCases.forEach((test) => {
             const [resultingPoints, resultingPointsPercent] = this.calculatePoints(test);
             test.resultingPoints = resultingPoints;
             test.resultingPointsPercent = resultingPointsPercent;
