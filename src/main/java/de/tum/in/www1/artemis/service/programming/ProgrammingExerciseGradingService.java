@@ -49,7 +49,9 @@ public class ProgrammingExerciseGradingService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final ProgrammingExerciseTestCaseService testCaseService;
+    private final ProgrammingExerciseFeedbackService programmingExerciseFeedbackService;
+
+    private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -81,8 +83,8 @@ public class ProgrammingExerciseGradingService {
 
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, Optional<VersionControlService> versionControlService,
-            SimpMessageSendingOperations messagingTemplate, ProgrammingExerciseTestCaseService testCaseService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            ProgrammingExerciseFeedbackService programmingExerciseFeedbackService, SimpMessageSendingOperations messagingTemplate,
+            ProgrammingExerciseTestCaseRepository testCaseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
@@ -91,8 +93,9 @@ public class ProgrammingExerciseGradingService {
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
         this.versionControlService = versionControlService;
+        this.programmingExerciseFeedbackService = programmingExerciseFeedbackService;
         this.messagingTemplate = messagingTemplate;
-        this.testCaseService = testCaseService;
+        this.testCaseRepository = testCaseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -331,10 +334,10 @@ public class ProgrammingExerciseGradingService {
      * @param result   from which to extract the test cases.
      */
     private void extractTestCasesFromResult(ProgrammingExercise exercise, Result result) {
-        boolean haveTestCasesChanged = testCaseService.generateTestCasesFromFeedbacks(result.getFeedbacks(), exercise);
+        boolean haveTestCasesChanged = programmingExerciseFeedbackService.generateTestCasesFromFeedbacks(result.getFeedbacks(), exercise);
         if (haveTestCasesChanged) {
             // Notify the client about the updated testCases
-            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(exercise.getId());
+            Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId());
             messagingTemplate.convertAndSend("/topic/programming-exercises/" + exercise.getId() + "/test-cases", testCases);
         }
     }
@@ -353,7 +356,7 @@ public class ProgrammingExerciseGradingService {
      * @return Result with updated feedbacks and score
      */
     public Result calculateScoreForResult(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
-        Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
         var relevantTestCases = testCases;
 
         // We don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
@@ -382,7 +385,7 @@ public class ProgrammingExerciseGradingService {
      * @return the results of the exercise that have been updated.
      */
     public List<Result> updateAllResults(final ProgrammingExercise exercise) {
-        final Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+        final Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
 
         final Stream<Result> updatedTemplateAndSolutionResult = updateTemplateAndSolutionResults(exercise, testCases);
 
@@ -406,7 +409,7 @@ public class ProgrammingExerciseGradingService {
      * @return the results of the exercise that have been updated.
      */
     public List<Result> updateResultsOnlyRegularDueDateParticipations(final ProgrammingExercise exercise) {
-        final Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+        final Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
 
         final Stream<Result> updatedTemplateAndSolutionResult = updateTemplateAndSolutionResults(exercise, testCases);
 
@@ -431,7 +434,7 @@ public class ProgrammingExerciseGradingService {
      */
     public List<Result> updateParticipationResults(final ProgrammingExerciseStudentParticipation participation) {
         final ProgrammingExercise exercise = participation.getProgrammingExercise();
-        final Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+        final Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
         final Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate = filterTestCasesForStudents(testCases, true);
         final Set<ProgrammingExerciseTestCase> testCasesAfterDueDate = filterTestCasesForStudents(testCases, false);
 
@@ -943,7 +946,7 @@ public class ProgrammingExerciseGradingService {
      */
     public ProgrammingExerciseGradingStatisticsDTO generateGradingStatistics(Long exerciseId) {
         // number of passed and failed tests per test case
-        final var testCases = testCaseService.findByExerciseId(exerciseId);
+        final var testCases = testCaseRepository.findByExerciseId(exerciseId);
         final var testCaseStatsMap = new HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats>();
         for (ProgrammingExerciseTestCase testCase : testCases) {
             testCaseStatsMap.put(testCase.getTestName(), new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(0, 0));
