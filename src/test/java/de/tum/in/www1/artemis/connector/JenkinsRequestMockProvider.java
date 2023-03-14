@@ -12,6 +12,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -34,7 +35,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Optional;
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.*;
 
@@ -124,7 +124,7 @@ public class JenkinsRequestMockProvider {
             doThrow(IOException.class).when(jenkinsServer).createFolder(null, exercise.getProjectKey(), useCrumb);
         }
         else {
-            doNothing().when(jenkinsServer).createFolder(null, exercise.getProjectKey(), useCrumb);
+            doReturn(null).when(jenkinsServer).createFolder(null, exercise.getProjectKey(), useCrumb);
         }
     }
 
@@ -144,7 +144,7 @@ public class JenkinsRequestMockProvider {
         }
         else {
             doReturn(null).when(jenkinsServer).getJob(any(FolderJob.class), eq(job));
-            doNothing().when(jenkinsServer).createJob(any(FolderJob.class), eq(job), anyString(), eq(useCrumb));
+            doReturn(null).when(jenkinsServer).createJob(any(FolderJob.class), eq(job), anyString(), eq(useCrumb));
         }
     }
 
@@ -152,7 +152,7 @@ public class JenkinsRequestMockProvider {
         mockGetJobConfig(jobFolder, job);
         mockUpdateJob(jobFolder, job);
         mockGetFolderConfig(jobFolder);
-        doNothing().when(jenkinsServer).updateJob(eq(jobFolder), anyString(), eq(useCrumb));
+        doReturn(null).when(jenkinsServer).updateJob(eq(jobFolder), anyString(), eq(useCrumb));
     }
 
     private void mockGetJobConfig(String folderName, String jobName) throws IOException {
@@ -173,17 +173,17 @@ public class JenkinsRequestMockProvider {
         if (folderName != null && !folderName.isEmpty()) {
             doReturn(new JobWithDetails()).when(jenkinsServer).getJob(folderName);
             mockGetFolderJob(folderName, new FolderJob());
-            doNothing().when(jenkinsServer).updateJob(any(FolderJob.class), eq(jobName), anyString(), eq(useCrumb));
+            doReturn(null).when(jenkinsServer).updateJob(any(FolderJob.class), eq(jobName), anyString(), eq(useCrumb));
         }
         else {
-            doNothing().when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
+            doReturn(null).when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
         }
     }
 
     public void mockCheckIfProjectExists(ProgrammingExercise exercise, boolean exists, boolean shouldFail) throws IOException {
         var jobOrNull = exists ? mock(JobWithDetails.class) : null;
         if (jobOrNull != null) {
-            doReturn("http://some-job-url.com/").when(jobOrNull).getUrl();
+            doReturn("https://some-job-url.com").when(jobOrNull).getUrl();
         }
 
         if (shouldFail) {
@@ -213,7 +213,7 @@ public class JenkinsRequestMockProvider {
         mockGetFolderJob(targetProjectKey, new FolderJob());
         // copyBuildPlan uses #createJobInFolder()
         doReturn(null).when(jenkinsServer).getJob(any(), anyString());
-        doNothing().when(jenkinsServer).createJob(any(), anyString(), anyString(), eq(useCrumb));
+        doReturn(null).when(jenkinsServer).createJob(any(), anyString(), anyString(), eq(useCrumb));
     }
 
     public void mockConfigureBuildPlan(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
@@ -286,7 +286,7 @@ public class JenkinsRequestMockProvider {
     public void mockGetFolderJob(String folderName, FolderJob folderJobToReturn) throws IOException {
         final var jobWithDetails = new JobWithDetails();
         doReturn(jobWithDetails).when(jenkinsServer).getJob(folderName);
-        doReturn(com.google.common.base.Optional.of(folderJobToReturn)).when(jenkinsServer).getFolderJob(jobWithDetails);
+        doReturn(Optional.of(folderJobToReturn)).when(jenkinsServer).getFolderJob(jobWithDetails);
     }
 
     public BuildWithDetails mockGetLatestBuildLogs(ProgrammingExerciseStudentParticipation participation, boolean useLegacyLogs) throws IOException {
@@ -435,7 +435,7 @@ public class JenkinsRequestMockProvider {
                     doThrow(IOException.class).when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
                 }
                 else {
-                    doNothing().when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
+                    doReturn(null).when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
                 }
             }
         }
@@ -482,7 +482,7 @@ public class JenkinsRequestMockProvider {
             doThrow(IOException.class).when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
         }
         else {
-            doNothing().when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
+            doReturn(null).when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
         }
     }
 
@@ -492,7 +492,7 @@ public class JenkinsRequestMockProvider {
             doThrow(new HttpResponseException(400, "Bad Request")).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
         }
         else {
-            doNothing().when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
+            doReturn(null).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
         }
     }
 
@@ -511,7 +511,7 @@ public class JenkinsRequestMockProvider {
             doThrow(new HttpResponseException(400, "Bad Request")).when(jenkinsServer).deleteJob(projectKey, useCrumb);
         }
         else {
-            doNothing().when(jenkinsServer).deleteJob(projectKey, useCrumb);
+            doReturn(null).when(jenkinsServer).deleteJob(projectKey, useCrumb);
         }
     }
 

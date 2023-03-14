@@ -1,4 +1,4 @@
-import { Component, ContentChild, Input, TemplateRef } from '@angular/core';
+import { Component, ContentChild, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
@@ -27,6 +27,8 @@ export class TutorialGroupSessionsTableStubComponent {
 
     @Input()
     isReadOnly = false;
+
+    @Output() attendanceUpdated = new EventEmitter<void>();
 }
 @Component({
     // eslint-disable-next-line @angular-eslint/component-selector
@@ -54,4 +56,5 @@ export class TutorialGroupSessionRowStubComponent {
 
     @Input()
     isReadOnly = false;
+    @Output() attendanceChanged = new EventEmitter<TutorialGroupSession>();
 }

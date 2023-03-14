@@ -241,7 +241,7 @@ describe('BonusComponent', () => {
         [BonusStrategy.GRADES_DISCRETE, BonusStrategyOption.GRADES, BonusStrategyDiscreteness.DISCRETE],
         [BonusStrategy.POINTS, BonusStrategyOption.POINTS, undefined],
         [undefined, undefined, undefined],
-        [undefined, BonusStrategyOption.GRADES, undefined],
+        [BonusStrategy.GRADES_CONTINUOUS, BonusStrategyOption.GRADES, undefined],
     ];
 
     beforeEach(async () => {
