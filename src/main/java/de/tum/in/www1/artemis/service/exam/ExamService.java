@@ -58,6 +58,8 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Service
 public class ExamService {
 
+    private static final int EXAM_ACTIVE_DAYS = 7;
+
     @Value("${artemis.course-archives-path}")
     private String examArchivesDirPath;
 
@@ -595,6 +597,9 @@ public class ExamService {
                         exercise.getMaxPoints(), relevantResult.getScore(), achievedPoints, hasNonEmptySubmission));
             }
         }
+
+        // Round the points again to prevent floating point issues that might occur when summing up the exercise points (e.g. 0.3 + 0.3 + 0.3 = 0.8999999999999999)
+        overallPointsAchieved = roundScoreSpecifiedByCourseSettings(overallPointsAchieved, exam.getCourse());
 
         var overallGrade = "";
         var overallGradeInFirstCorrection = "";
@@ -1226,11 +1231,10 @@ public class ExamService {
      * @param user     The user for whom to fetch all available exercises
      * @return exam page
      */
-    public Page<Exam> getAllActiveExams(Pageable pageable, final User user) {
-        final Page<Exam> examPage;
+    public Page<Exam> getAllActiveExams(final Pageable pageable, final User user) {
         // active exam means that exam has visible date in the past 7 days or next 7 days.
-        examPage = examRepository.findAllActiveExamsInCoursesWhereInstructor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(7), ZonedDateTime.now().plusDays(7));
-        return examPage;
+        return examRepository.findAllActiveExamsInCoursesWhereInstructor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(EXAM_ACTIVE_DAYS),
+                ZonedDateTime.now().plusDays(EXAM_ACTIVE_DAYS));
     }
 
     /**

@@ -337,6 +337,13 @@ $quiz-scoring-info-student-modal-question-wrong: $warning;
 $quiz-question-background: $neutral-dark;
 $quiz-question-border-color: $neutral-dark-l-20;
 
+$quiz-visual-question-border-color: $quiz-question-border-color;
+$quiz-visual-answer-correct-container-color: $success;
+$quiz-visual-answer-correct-container-hover-color: lighten($success, 40%);
+$quiz-visual-answer-wrong-container-hover-color: lighten($danger, 40%);
+$quiz-visual-answer-add-container-color: $primary;
+$quiz-visual-answer-add-container-hover-color: lighten($primary, 20%);
+
 $dnd-question-drop-location-background: white;
 $dnd-question-drop-location-border-color: black;
 $dnd-question-drop-location-results-border-color: $success;

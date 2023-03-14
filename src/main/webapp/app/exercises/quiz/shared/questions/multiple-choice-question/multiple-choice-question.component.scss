@@ -89,7 +89,7 @@
         }
 
         th {
-            color: dimgray;
+            color: var(--gray-600);
         }
 
         th,
@@ -120,4 +120,117 @@
             color: var(--danger);
         }
     }
+}
+
+.visual-mode {
+    margin-top: 20px;
+}
+
+.visual-question {
+    border-radius: 4px;
+    border: 1px solid var(--quiz-visual-question-border-color);
+    padding: 6px;
+}
+
+.visual-question-hint {
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+}
+
+.visual-answer-option {
+    outline: none !important;
+    border: 1px solid var(--mc-question-answer-option-border);
+    margin: 4px 0;
+    padding: 6px 10px;
+}
+
+.visual-answer-question-container {
+    display: flex;
+}
+
+.visual-answer-delete-container {
+    background: var(--red);
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+    width: 2.5%;
+    min-width: 35px;
+    margin-left: 0.2rem;
+    border-radius: 2px;
+}
+
+.visual-answer-correct-container {
+    background: var(--quiz-visual-answer-correct-container-color);
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+    width: 2.5%;
+    min-width: 35px;
+    margin-right: 0.2rem;
+    border-radius: 2px;
+}
+
+.visual-answer-wrong-container {
+    background: var(--red);
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+    width: 2.5%;
+    min-width: 35px;
+    margin-right: 0.2rem;
+    border-radius: 2px;
+}
+
+.visual-answer-add-container {
+    background: var(--quiz-visual-answer-add-container-color);
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+    width: 2.5%;
+    min-width: 35px;
+    margin-left: 0.2rem;
+    border-radius: 2px;
+    color: var(--white);
+}
+
+.visual-answer-add-container:hover {
+    background: var(--quiz-visual-answer-add-container-hover-color);
+}
+
+.visual-answer-add-container-disabled {
+    background: var(--quiz-visual-answer-add-container-hover-color);
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+    width: 2.5%;
+    min-width: 35px;
+    margin-left: 0.2rem;
+    border-radius: 2px;
+    color: var(--white);
+}
+
+.visual-answer-delete-container:hover {
+    color: var(--white);
+}
+
+.visual-answer-correct-container:hover {
+    background: var(--quiz-visual-answer-correct-container-hover-color);
+}
+
+.visual-answer-wrong-container:hover {
+    background: var(--quiz-visual-answer-wrong-container-hover-color);
+}
+
+.visual-answer {
+    color: var(--white);
+}
+
+.visual-new-answer-title {
+    margin-top: 1rem;
 }
