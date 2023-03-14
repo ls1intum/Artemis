@@ -30,15 +30,16 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import org.springframework.web.util.UriComponents;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
@@ -51,10 +52,10 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.web.rest.dto.*;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.errors.*;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -63,6 +64,8 @@ import tech.jhipster.web.util.PaginationUtil;
 @RestController
 @RequestMapping("api/")
 public class CourseResource {
+
+    private static final String ENTITY_NAME = "course";
 
     private final Logger log = LoggerFactory.getLogger(CourseResource.class);
 
@@ -362,17 +365,12 @@ public class CourseResource {
     public ResponseEntity<Course> getCourseForRegistration(@PathVariable long courseId) {
         log.debug("REST request to get a currently active course for registration");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
+        // fetch full course without filter first, because otherwise a 404 is thrown if the course is not found
         Course fullCourse = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, false);
 
         // check that the user CAN at least register to one organization of the course
         if (!authCheckService.isUserAllowedToSelfRegisterForCourse(user, fullCourse)) {
-            throw new AccessForbiddenException("course", courseId);
-        }
-
-        if (authCheckService.isAtLeastStudentInCourse(fullCourse, user)) {
-            // user IS already registered, redirect to the more detailed route /courses/{courseId}/for-dashboard
-            UriComponents redirectUri = UriComponentsBuilder.fromPath("/api/courses/{courseId}/for-dashboard").buildAndExpand(courseId);
-            return ResponseEntity.status(HttpStatus.FOUND).location(redirectUri.toUri()).build();
+            throw new AccessForbiddenException(ENTITY_NAME, courseId);
         }
 
         Course courseForRegistration = courseRepository.findSingleCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(courseId);
@@ -423,11 +421,12 @@ public class CourseResource {
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             // user might be allowed to register for the course
             if (authCheckService.isUserAllowedToSelfRegisterForCourse(user, course)) {
-                // redirect to /courses/{courseId}/for-registration
-                UriComponents redirectUri = UriComponentsBuilder.fromPath("/api/courses/{courseId}/for-registration").buildAndExpand(courseId);
-                return ResponseEntity.status(HttpStatus.FOUND).location(redirectUri.toUri()).build();
+                // suppress error alert with skipAlert: true
+                throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could register.", ENTITY_NAME,
+                        "noAccessButCouldRegister", true);
             }
-            throw new AccessForbiddenException("course", courseId);
+            // just normally throw the access forbidden exception
+            throw new AccessForbiddenException(ENTITY_NAME, courseId);
         }
 
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user);

@@ -4,7 +4,8 @@ import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREF
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -686,7 +687,7 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetCourseForDashboardRedirectToForRegistration() throws Exception {
+    public void testGetCourseForDashboardForbiddenWithRegistrationPossible() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
         // enable registration
         Course courseToRequest = courses.get(0);
@@ -696,8 +697,8 @@ public class CourseTestService {
         // remove student from course so that they are not already registered
         student.setGroups(new HashSet<>());
         userRepo.save(student);
-        // expect redirect
-        request.get("/api/courses/" + courseToRequest.getId() + "/for-dashboard", HttpStatus.FOUND, Course.class);
+        // still expect forbidden (403) from endpoint (only now the skipAlert flag will be set)
+        request.get("/api/courses/" + courseToRequest.getId() + "/for-dashboard", HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
@@ -717,23 +718,15 @@ public class CourseTestService {
     public void testGetCourseForRegistrationAccessDenied() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
         Course courseToRequest = courses.get(0);
+        User student = database.getUserByLogin(userPrefix + "student1");
         // remove student from course so that they are not already registered
-        courseToRequest.setStudentGroupName("someNonExistingStudentGroupName");
+        student.setGroups(new HashSet<>());
+        userRepo.save(student);
         // also, explicitly DON't enable registration
         courseToRequest.setRegistrationEnabled(false);
         courseRepo.save(courseToRequest);
         // expect forbidden(403)
         request.get("/api/courses/" + courseToRequest.getId() + "/for-registration", HttpStatus.FORBIDDEN, Course.class);
-    }
-
-    // Test
-    public void testGetCourseForRegistrationRedirectToForDashboard() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
-        Course courseToRequest = courses.get(0);
-        courseToRequest.setRegistrationEnabled(true);
-        courseRepo.save(courseToRequest);
-        // The user already registered for the course, so the request should be redirected to /for-dashboard
-        request.get("/api/courses/" + courseToRequest.getId() + "/for-registration", HttpStatus.FOUND, Course.class);
     }
 
     // Test

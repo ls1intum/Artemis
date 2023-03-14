@@ -390,7 +390,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseForDashboardRedirectToForRegistration() throws Exception {
-        courseTestService.testGetCourseForDashboardRedirectToForRegistration();
+        courseTestService.testGetCourseForDashboardForbiddenWithRegistrationPossible();
     }
 
     @Test
@@ -403,12 +403,6 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseForRegistrationAccessDenied() throws Exception {
         courseTestService.testGetCourseForRegistrationAccessDenied();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCourseForRegistrationRedirectToForDashboard() throws Exception {
-        courseTestService.testGetCourseForRegistrationRedirectToForDashboard();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
