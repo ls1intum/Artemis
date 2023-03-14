@@ -598,6 +598,9 @@ public class ExamService {
             }
         }
 
+        // Round the points again to prevent floating point issues that might occur when summing up the exercise points (e.g. 0.3 + 0.3 + 0.3 = 0.8999999999999999)
+        overallPointsAchieved = roundScoreSpecifiedByCourseSettings(overallPointsAchieved, exam.getCourse());
+
         var overallGrade = "";
         var overallGradeInFirstCorrection = "";
         var hasPassed = false;
