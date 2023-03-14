@@ -205,7 +205,7 @@
                         "placeholder": "z.B. technischer Support",
                         "requiredValidationError": "Name ist erforderlich!",
                         "maxLengthValidationError": "Name kann max {{ max }} Zeichen lang sein!",
-                        "regexValidationError": "Namen können nur Kleinbuchstaben, Zahlen und Striche enthalten."
+                        "regexValidationError": "Namen können nur Kleinbuchstaben, Zahlen und Striche enthalten. Nur Artemis kann Kanäle erstellen, die mit $ beginnen."
                     },
                     "descriptionInput": {
                         "label": "Beschreibung (optional)",

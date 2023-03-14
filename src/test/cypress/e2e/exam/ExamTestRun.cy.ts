@@ -48,7 +48,7 @@ describe('Exam test run', () => {
 
     beforeEach('Create test run instance', () => {
         cy.login(instructor);
-        // API call does not work yet, for now we use the UI to create the test run
+        // TODO: API call does not work yet, for now we use the UI to create the test run
         // courseManagementRequests.createExamTestRun(exam, exerciseArray).then((response: any) => {
         //     testRun = response.body;
         // });
@@ -77,8 +77,8 @@ describe('Exam test run', () => {
             testRunID = testRun.id;
 
             expect(testRunResponse.response!.statusCode).to.eq(200);
-            expect(testRun.testRun).to.eq(true);
-            expect(testRun.submitted).to.eq(false);
+            expect(testRun.testRun).to.be.true;
+            expect(testRun.submitted).to.be.false;
             expect(testRun.workingTime).to.eq(minutes * 60 + seconds);
 
             examTestRun.getWorkingTime(testRunID).contains('40min 30s');

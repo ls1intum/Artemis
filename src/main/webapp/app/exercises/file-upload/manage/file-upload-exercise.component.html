@@ -17,6 +17,15 @@
             <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.fileUploadExercise.home.createLabel"> Create File Upload Exercise </span>
         </a>
+        <button
+            *ngIf="course?.isAtLeastEditor"
+            id="jh-import-entity"
+            class="btn btn-primary jh-create-entity create-file-upload-exercise text-truncate mb-1 me-1"
+            (click)="openImportModal()"
+        >
+            <fa-icon [icon]="faPlus"></fa-icon>
+            <span class="hidden-sm-down" jhiTranslate="artemisApp.fileUploadExercise.home.importLabel"> Import new file upload exercise </span>
+        </button>
     </h4>
     <div class="row"></div>
     <br />

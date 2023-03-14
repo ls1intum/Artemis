@@ -136,7 +136,7 @@ describe('Course management', () => {
                 expect(courseBody.testCourse).to.eq(courseData.testCourse);
                 expect(trimDate(courseBody.startDate)).to.eq(trimDate(dayjsToString(courseData.startDate)));
                 expect(trimDate(courseBody.endDate)).to.eq(trimDate(dayjsToString(courseData.endDate)));
-                expect(courseBody.validStartAndEndDate).to.eq(true);
+                expect(courseBody.validStartAndEndDate).to.be.true;
                 expect(courseBody.semester).to.eq(courseData.semester);
                 expect(courseBody.maxPoints).to.eq(courseData.maxPoints);
                 expect(courseBody.defaultProgrammingLanguage).to.eq(courseData.programmingLanguage);

@@ -12,10 +12,14 @@ import { Course, Language } from 'app/entities/course.model';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupRowComponent {
+    readonly Math = Math;
     @HostBinding('class') class = 'tutorial-group-row';
 
     @Input()
     showIdColumn = false;
+
+    @Input()
+    showChannelColumn = false;
 
     @Input() extraColumn: TemplateRef<any>;
 

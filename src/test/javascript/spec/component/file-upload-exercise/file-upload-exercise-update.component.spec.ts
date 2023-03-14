@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
@@ -9,7 +9,6 @@ import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockFileUploadExerciseService } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Course } from 'app/entities/course.model';
@@ -17,6 +16,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { Exam } from 'app/entities/exam.model';
 
 describe('FileUploadExercise Management Update Component', () => {
     let comp: FileUploadExerciseUpdateComponent;
@@ -30,7 +32,6 @@ describe('FileUploadExercise Management Update Component', () => {
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(TranslateService),
@@ -52,6 +53,7 @@ describe('FileUploadExercise Management Update Component', () => {
             beforeEach(() => {
                 const route = TestBed.inject(ActivatedRoute);
                 route.data = of({ fileUploadExercise });
+                route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
             it('should call create service on save for new entity', fakeAsync(() => {
@@ -79,6 +81,7 @@ describe('FileUploadExercise Management Update Component', () => {
             beforeEach(() => {
                 const route = TestBed.inject(ActivatedRoute);
                 route.data = of({ fileUploadExercise });
+                route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
             it('should call update service on save for existing entity', fakeAsync(() => {
@@ -104,6 +107,7 @@ describe('FileUploadExercise Management Update Component', () => {
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
             route.data = of({ fileUploadExercise });
+            route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
         });
 
         it('should be in exam mode', fakeAsync(() => {
@@ -122,6 +126,7 @@ describe('FileUploadExercise Management Update Component', () => {
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
             route.data = of({ fileUploadExercise });
+            route.url = of([{ path: 'new' } as UrlSegment]);
         });
 
         it('should not be in exam mode', fakeAsync(() => {
@@ -131,6 +136,150 @@ describe('FileUploadExercise Management Update Component', () => {
             // THEN
             expect(comp.isExamMode).toBeFalse();
             expect(comp.fileUploadExercise).toEqual(fileUploadExercise);
+        }));
+    });
+    describe('imported exercise', () => {
+        const course = { id: 1 } as Course;
+        const fileUploadExercise = new FileUploadExercise(course, undefined);
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.data = of({ fileUploadExercise });
+            route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
+        });
+
+        it('should call import service on save for new entity', fakeAsync(() => {
+            // GIVEN
+            comp.ngOnInit();
+            comp.isImport = true;
+
+            const entity = { ...fileUploadExercise };
+            jest.spyOn(service, 'import').mockReturnValue(of(new HttpResponse({ body: entity })));
+
+            // WHEN
+            comp.save();
+            tick(1000); // simulate async
+
+            // THEN
+            expect(service.import).toHaveBeenCalledWith(entity);
+            expect(comp.isSaving).toBeFalse();
+        }));
+    });
+
+    describe('ngOnInit in import mode: Course to Course', () => {
+        const fileUploadExercise = new FileUploadExercise(new Course(), undefined);
+        fileUploadExercise.id = 1;
+        fileUploadExercise.releaseDate = dayjs();
+        fileUploadExercise.dueDate = dayjs();
+        fileUploadExercise.assessmentDueDate = dayjs();
+        const courseId = 1;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'import' } as UrlSegment]);
+            route.data = of({ fileUploadExercise });
+        });
+
+        it('should set isImport and remove all dates', fakeAsync(() => {
+            // WHEN
+            comp.ngOnInit();
+            tick(); // simulate async
+            // THEN
+            expect(comp.isImport).toBeTrue();
+            expect(comp.isExamMode).toBeFalse();
+            expect(comp.fileUploadExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.fileUploadExercise.releaseDate).toBeUndefined();
+            expect(comp.fileUploadExercise.dueDate).toBeUndefined();
+        }));
+    });
+    describe('ngOnInit in import mode: Exam to Course', () => {
+        const fileUploadExercise = new FileUploadExercise(undefined, undefined);
+        fileUploadExercise.exerciseGroup = new ExerciseGroup();
+        fileUploadExercise.exerciseGroup.exam = new Exam();
+        fileUploadExercise.exerciseGroup.exam.course = new Course();
+        fileUploadExercise.exerciseGroup.exam.course.id = 1;
+        fileUploadExercise.id = 1;
+        fileUploadExercise.releaseDate = dayjs();
+        fileUploadExercise.dueDate = dayjs();
+        fileUploadExercise.assessmentDueDate = dayjs();
+        const courseId = 1;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'import' } as UrlSegment]);
+            route.data = of({ fileUploadExercise });
+        });
+
+        it('should set isImport and remove all dates', fakeAsync(() => {
+            // WHEN
+            comp.ngOnInit();
+            tick(); // simulate async
+            // THEN
+            expect(comp.isImport).toBeTrue();
+            expect(comp.isExamMode).toBeFalse();
+            expect(comp.fileUploadExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.fileUploadExercise.releaseDate).toBeUndefined();
+            expect(comp.fileUploadExercise.dueDate).toBeUndefined();
+        }));
+    });
+
+    describe('ngOnInit in import mode: Course to Exam', () => {
+        const fileUploadExercise = new FileUploadExercise(new Course(), undefined);
+        fileUploadExercise.id = 1;
+        fileUploadExercise.releaseDate = dayjs();
+        fileUploadExercise.dueDate = dayjs();
+        fileUploadExercise.assessmentDueDate = dayjs();
+        const groupId = 1;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ groupId });
+            route.url = of([{ path: 'exercise-groups' } as UrlSegment, { path: 'import' } as UrlSegment]);
+            route.data = of({ fileUploadExercise });
+        });
+
+        it('should set isImport and isExamMode and remove all dates', fakeAsync(() => {
+            // WHEN
+            comp.ngOnInit();
+            tick(); // simulate async
+            // THEN
+            expect(comp.isImport).toBeTrue();
+            expect(comp.isExamMode).toBeTrue();
+            expect(comp.fileUploadExercise.course).toBeUndefined();
+            expect(comp.fileUploadExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.fileUploadExercise.releaseDate).toBeUndefined();
+            expect(comp.fileUploadExercise.dueDate).toBeUndefined();
+        }));
+    });
+
+    describe('ngOnInit in import mode: Exam to Exam', () => {
+        const fileUploadExercise = new TextExercise(undefined, undefined);
+        fileUploadExercise.exerciseGroup = new ExerciseGroup();
+        fileUploadExercise.id = 1;
+        fileUploadExercise.releaseDate = dayjs();
+        fileUploadExercise.dueDate = dayjs();
+        fileUploadExercise.assessmentDueDate = dayjs();
+        const groupId = 1;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ groupId });
+            route.url = of([{ path: 'exercise-groups' } as UrlSegment, { path: 'import' } as UrlSegment]);
+            route.data = of({ fileUploadExercise });
+        });
+
+        it('should set isImport and isExamMode and remove all dates', fakeAsync(() => {
+            // WHEN
+            comp.ngOnInit();
+            tick(); // simulate async
+            // THEN
+            expect(comp.isImport).toBeTrue();
+            expect(comp.isExamMode).toBeTrue();
+            expect(comp.fileUploadExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.fileUploadExercise.releaseDate).toBeUndefined();
+            expect(comp.fileUploadExercise.dueDate).toBeUndefined();
         }));
     });
 });
