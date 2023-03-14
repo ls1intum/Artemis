@@ -180,7 +180,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     canRegisterForCourse(): Promise<boolean> {
         return new Promise((resolve, reject) => {
             this.courseService.findOneForRegistration(this.courseId).subscribe({
-                next: () => resolve(true),
+                next: () => {
+                    resolve(true);
+                },
                 error: (res: HttpErrorResponse) => {
                     if (res.status === 403) {
                         resolve(false);
@@ -209,11 +211,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
             },
             error: async (error: HttpErrorResponse) => {
-                if (error.status === 403 && (await this.canRegisterForCourse())) {
-                    // the user can to register, so we want to redirect them
-                    this.redirectToCourseRegistrationPage();
-                    // no need to show the permission error
-                    return;
+                if (error.status === 403) {
+                    const canRegister = await this.canRegisterForCourse();
+                    if (canRegister) {
+                        // the user can register, so we want to redirect them
+                        this.redirectToCourseRegistrationPage();
+                        // no need to show the permission error
+                        return;
+                    }
                 }
                 const errorMessage = error.headers.get('X-artemisApp-message')!;
                 this.alertService.addAlert({
@@ -310,7 +315,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      * Receives team assignment changes and updates related attributes of the affected exercise
      */
     async subscribeToTeamAssignmentUpdates() {
-        this.teamAssignmentUpdateListener = (await this.teamService.teamAssignmentUpdates).subscribe((teamAssignment: TeamAssignmentPayload) => {
+        const teamAssignmentUpdates = await this.teamService.teamAssignmentUpdates;
+        this.teamAssignmentUpdateListener = teamAssignmentUpdates.subscribe((teamAssignment: TeamAssignmentPayload) => {
             const exercise = this.course?.exercises?.find((courseExercise) => courseExercise.id === teamAssignment.exerciseId);
             if (exercise) {
                 exercise.studentAssignedTeamId = teamAssignment.teamId;

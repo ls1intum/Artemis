@@ -190,7 +190,7 @@ describe('CourseOverviewComponent', () => {
                 jhiWebsocketServiceReceiveStub = jest.spyOn(jhiWebsocketService, 'receive');
                 jhiWebsocketServiceReceiveStub.mockReturnValue(of(quizExercise));
                 jhiWebsocketServiceSubscribeStub = jest.spyOn(jhiWebsocketService, 'subscribe');
-                jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(new TeamAssignmentPayload())));
+                jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
                 findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
                 // default is to return the course
                 findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
@@ -204,23 +204,21 @@ describe('CourseOverviewComponent', () => {
         sessionStorage.clear();
     });
 
-    it('should call all methods on init', async () => {
+    it('should call all methods on init', fakeAsync(() => {
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
-        await component.ngOnInit();
+        component.ngOnInit().then(() => {
+            expect(getCourseStub).toHaveBeenCalledOnce();
+            expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
+            expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
+        });
+    }));
 
-        expect(getCourseStub).toHaveBeenCalledOnce();
-        expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
-        expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
-    });
-
-    it('should redirect to the registration page if the API endpoint returned a 403, but the user can register', async () => {
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
-        const findOneForRegistrationStub = jest.spyOn(courseService, 'findOneForRegistration');
+    it('should redirect to the registration page if the API endpoint returned a 403, but the user can register', fakeAsync(() => {
         // mock error response
         findOneForDashboardStub.mockReturnValue(
             throwError(
@@ -231,6 +229,7 @@ describe('CourseOverviewComponent', () => {
                 }),
             ),
         );
+        const findOneForRegistrationStub = jest.spyOn(courseService, 'findOneForRegistration');
         findOneForRegistrationStub.mockReturnValue(
             of(
                 new HttpResponse({
@@ -240,12 +239,11 @@ describe('CourseOverviewComponent', () => {
                 }),
             ),
         );
-        getCourseStub.mockReturnValue(undefined);
 
-        await component.ngOnInit();
-
-        expect(router.navigate).toHaveBeenCalledWith(['courses', course1.id, 'register']);
-    });
+        component.ngOnInit().then(() => {
+            expect(router.navigate).toHaveBeenCalledWith(['courses', course1.id, 'register']);
+        });
+    }));
 
     it('should call load Course methods on init', async () => {
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
