@@ -270,6 +270,34 @@ class ProgrammingExerciseIntegrationTestService {
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.FORBIDDEN, Boolean.class);
     }
 
+    void testExportSubmissionsByParticipationIds_excludePracticeSubmissions() throws Exception {
+        var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
+        var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
+        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
+
+        // Set one of the participations to practice mode
+        assertThat(participation1.isTestRun()).isFalse();
+        participation2.setTestRun(true);
+        programmingExerciseStudentParticipationRepository.save(participation2);
+
+        // Export excluding practice submissions
+        var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
+        final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
+                String.join(",", participationIds));
+        var exportOptions = new RepositoryExportOptionsDTO();
+        exportOptions.setExcludePracticeSubmissions(true);
+
+        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        assertThat(downloadedFile).exists();
+
+        List<Path> entries = unzipExportedFile();
+
+        // Make sure that the practice submission is not included
+        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString()))
+                .noneMatch(entry -> entry.toString().endsWith(Path.of("student2", ".git").toString()));
+    }
+
     void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName() throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
@@ -464,6 +492,7 @@ class ProgrammingExerciseIntegrationTestService {
     private RepositoryExportOptionsDTO getOptions() {
         final var repositoryExportOptions = new RepositoryExportOptionsDTO();
         repositoryExportOptions.setFilterLateSubmissions(true);
+        repositoryExportOptions.setExcludePracticeSubmissions(false);
         repositoryExportOptions.setCombineStudentCommits(true);
         repositoryExportOptions.setAnonymizeStudentCommits(true);
         repositoryExportOptions.setAddParticipantName(true);
