@@ -44,6 +44,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         this.repositoryExportOptions = {
             exportAllParticipants: false,
             filterLateSubmissions: false,
+            excludePracticeSubmissions: false,
             addParticipantName: true,
             combineStudentCommits: true,
             anonymizeStudentCommits: false,
