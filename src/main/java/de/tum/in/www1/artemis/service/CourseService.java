@@ -1,13 +1,16 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT;
+import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
-import static java.time.ZonedDateTime.now;
-import static tech.jhipster.config.JHipsterConstants.*;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
@@ -418,6 +421,17 @@ public class CourseService {
     }
 
     /**
+     * Determine whether the current date is within the course period (after start, before end).
+     *
+     * @param course The course to check
+     * @return true if the current date is within the course period, false otherwise
+     */
+    private boolean isNowWithinCoursePeriod(Course course) {
+        ZonedDateTime now = ZonedDateTime.now();
+        return (course.getStartDate() == null || course.getStartDate().isBefore(now)) && (course.getEndDate() == null || course.getEndDate().isAfter(now));
+    }
+
+    /**
      * Return whether the user is allowed to self register for the given course.
      *
      * @param user   The user that wants to self register
@@ -429,12 +443,8 @@ public class CourseService {
             log.info("Registration with this username is not allowed. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
             return false;
         }
-        if (course.getStartDate() != null && course.getStartDate().isAfter(now())) {
-            log.info("The course has not yet started. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
-            return false;
-        }
-        if (course.getEndDate() != null && course.getEndDate().isBefore(now())) {
-            log.info("The course has already finished. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
+        if (!isNowWithinCoursePeriod(course)) {
+            log.info("The course is not currently active. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
             return false;
         }
         if (!Boolean.TRUE.equals(course.isRegistrationEnabled())) {
