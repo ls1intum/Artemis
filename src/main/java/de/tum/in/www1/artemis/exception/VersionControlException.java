@@ -8,8 +8,10 @@ package de.tum.in.www1.artemis.exception;
  * declaring "throws Exception" themselves (Although in the end, we just throw an unchecked RuntimeException).
  */
 
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
+
 /**
- * Generic exception thrown if there are any errors while communicating with the {@link de.tum.in.www1.artemis.service.connectors.VersionControlService VersionControlService}
+ * Generic exception thrown if there are any errors while communicating with the {@link VersionControlService VersionControlService}
  */
 public class VersionControlException extends RuntimeException {
 

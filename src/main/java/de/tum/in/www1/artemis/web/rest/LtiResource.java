@@ -22,8 +22,8 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.Lti10Service;
-import de.tum.in.www1.artemis.service.connectors.LtiDynamicRegistrationService;
+import de.tum.in.www1.artemis.service.connectors.lti.Lti10Service;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiDynamicRegistrationService;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
 /**

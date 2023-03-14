@@ -40,10 +40,10 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 
 @Component
 @Profile("bitbucket")

@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.lti.Lti13ClientRegistration;
 import de.tum.in.www1.artemis.domain.lti.Lti13PlatformConfiguration;
 import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
-import de.tum.in.www1.artemis.service.connectors.LtiDynamicRegistrationService;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiDynamicRegistrationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 class LtiDynamicRegistrationServiceTest {
