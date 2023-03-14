@@ -1,10 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslateService } from '@ngx-translate/core';
 import { CourseRegistrationDetailComponent } from 'app/overview/course-registration/course-registration-detail/course-registration-detail.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs/internal/observable/of';
@@ -15,6 +12,7 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { Course } from 'app/entities/course.model';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { throwError } from 'rxjs';
+import { AccountService } from 'app/core/auth/account.service';
 
 describe('CourseRegistrationDetailComponent', () => {
     let fixture: ComponentFixture<CourseRegistrationDetailComponent>;
@@ -42,9 +40,8 @@ describe('CourseRegistrationDetailComponent', () => {
                 MockComponent(CourseRegistrationButtonComponent),
             ],
             providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                MockProvider(TranslateService),
+                MockProvider(AccountService),
+                MockProvider(CourseManagementService),
                 {
                     provide: ActivatedRoute,
                     useValue: route,
@@ -57,15 +54,15 @@ describe('CourseRegistrationDetailComponent', () => {
                 fixture = TestBed.createComponent(CourseRegistrationDetailComponent);
                 component = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
+
+                // by default, assume that the course is not fully accessible but only available for registration
+                jest.spyOn(courseService, 'findOneForRegistration').mockReturnValue(of(new HttpResponse<Course>({ body: course1 })));
+                jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(throwError(new HttpErrorResponse({ status: 403 })));
             });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
-    });
-
-    it('should initialize', () => {
-        component.ngOnInit();
     });
 
     it('should parse the courseId from the route', () => {
@@ -74,8 +71,6 @@ describe('CourseRegistrationDetailComponent', () => {
     });
 
     it('should load the course using findOneForRegistration', fakeAsync(() => {
-        jest.spyOn(courseService, 'findOneForRegistration').mockReturnValue(of(new HttpResponse<Course>({ body: course1 })));
-
         component.ngOnInit();
 
         expect(component.course).not.toBeNull();

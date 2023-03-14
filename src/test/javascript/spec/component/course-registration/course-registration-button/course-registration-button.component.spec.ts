@@ -1,17 +1,15 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { MockProvider } from 'ng-mocks';
-import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { CourseRegistrationButtonComponent } from 'app/overview/course-registration/course-registration-button/course-registration-button.component';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('CourseRegistrationButtonComponent', () => {
     let fixture: ComponentFixture<CourseRegistrationButtonComponent>;
@@ -28,7 +26,7 @@ describe('CourseRegistrationButtonComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [CourseRegistrationButtonComponent],
-            providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
+            providers: [MockProvider(AccountService), MockProvider(CourseManagementService), MockProvider(ProfileService), MockProvider(AlertService)],
         })
             .overrideTemplate(CourseRegistrationButtonComponent, '')
             .compileComponents()
