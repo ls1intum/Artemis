@@ -64,7 +64,7 @@ public class ExamSubmissionService {
      *         the user's student exam
      */
     public boolean isAllowedToSubmitDuringExam(Exercise exercise, User user, boolean withGracePeriod) {
-        if (isExamSubmission(exercise)) {
+        if (exercise.isExamExercise()) {
             // Get the student exam if it was not passed to the function
             Exam exam = exercise.getExerciseGroup().getExam();
             // Step 1: Find real exam
@@ -137,7 +137,7 @@ public class ExamSubmissionService {
      */
     public Submission preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
         // Return immediately if it is not an exam submissions or if it is a programming exercise
-        if (!isExamSubmission(exercise) || exercise instanceof ProgrammingExercise) {
+        if (!exercise.isExamExercise() || exercise instanceof ProgrammingExercise) {
             return submission;
         }
 
@@ -154,10 +154,6 @@ public class ExamSubmissionService {
         }
 
         return submission;
-    }
-
-    private boolean isExamSubmission(Exercise exercise) {
-        return exercise.isExamExercise();
     }
 
     private boolean isSubmissionInTime(Exercise exercise, StudentExam studentExam, boolean withGracePeriod) {

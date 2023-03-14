@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
+// TODO: this class has too many dependencies to other services. We should reduce this
 public class SubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(SubmissionService.class);
@@ -413,6 +414,7 @@ public class SubmissionService {
      * @param feedbackText         the feedback text for the
      * @param correctionRound      the correction round (1 or 2)
      */
+    // TODO: we should move this method into the resultService
     public void addResultWithFeedbackByCorrectionRound(StudentParticipation studentParticipation, User assessor, double score, String feedbackText, int correctionRound) {
         if (studentParticipation.getExercise().isExamExercise()) {
             var latestSubmission = studentParticipation.findLatestSubmission();

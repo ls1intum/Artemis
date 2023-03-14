@@ -105,8 +105,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @Query("""
             SELECT r FROM Result r
-            LEFT JOIN FETCH r.feedbacks
-            LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.assessor
             WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerFeedbacksAndAssessor(@Param("resultId") Long resultId);
