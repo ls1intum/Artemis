@@ -50,9 +50,6 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     private ProgrammingSubmissionRepository submissionRepository;
 
     @Autowired
-    private ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
-
-    @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
