@@ -13,7 +13,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { faCircleNotch, faMessage, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
@@ -57,7 +57,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     // Icons
     faSync = faSync;
-    faMessage = faMessage;
     faCircleNotch = faCircleNotch;
     FeatureToggle = FeatureToggle;
 
