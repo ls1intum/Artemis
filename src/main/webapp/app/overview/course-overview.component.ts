@@ -196,7 +196,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 this.course = this.courseCalculationService.getCourse(this.courseId);
                 setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
             },
-            error: async (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 const errorMessage = error.headers.get('X-artemisApp-message')!;
                 this.alertService.addAlert({
                     type: AlertType.DANGER,
