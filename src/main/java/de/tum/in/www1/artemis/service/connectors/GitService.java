@@ -1247,7 +1247,7 @@ public class GitService {
             zipRepoName += "-student-submission.git.zip";
         }
         else {
-            zipRepoName += "-" + studentTeamOrDefault + ".zip";
+            zipRepoName += "-" + studentTeamOrDefault + (participation.isTestRun() ? "_practice" : "") + ".zip";
         }
         return zipFiles(repo.getLocalPath(), zipRepoName, repositoryDir, null);
     }
