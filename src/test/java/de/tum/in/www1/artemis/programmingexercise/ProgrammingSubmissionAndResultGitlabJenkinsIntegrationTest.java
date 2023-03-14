@@ -4,8 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.GITLAB_PUSH_EVENT_REQUEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -36,7 +34,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.CommitDTO;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -123,6 +120,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    // TODO: this test seems to be outdated
     void shouldParseLegacyBuildLogsWhenPipelineLogsNotPresent() throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = TEST_PREFIX + "student1";
@@ -331,6 +329,8 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         testService.shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(firstCommitHash, firstCommitDate, secondCommitHash, secondCommitDate);
     }
 
+    private final List<String> logs = List.of("[2023-03-10T15:19:49.741Z] [ERROR] Log1", "[2023-03-10T15:19:49.742Z] [ERROR] Log2", "[2023-03-10T15:19:49.743Z] [ERROR] Log3");
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("shouldSaveBuildLogsOnStudentParticipationArguments")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -344,8 +344,8 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         var submission = database.createProgrammingSubmission(participation, false);
 
-        // Call programming-exercises/new-result which do not include build log entries yet
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of(), new ArrayList<>(), null, new ArrayList<>());
+        // Call programming-exercises/new-result which does include build log entries
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
         var result = assertBuildError(participation.getId(), userLogin, false);
@@ -368,15 +368,14 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
-        // Call programming-exercises/new-result which do not include build log entries yet
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of(), new ArrayList<>(), null, new ArrayList<>());
+        // Call programming-exercises/new-result which does include build log entries
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
         assertBuildError(participation.getId(), userLogin, true);
     }
 
     private Result assertBuildError(Long participationId, String userLogin, boolean useLegacyBuildLogs) throws Exception {
-        SecurityUtils.setAuthorizationObject();
 
         // Assert that result is linked to the participation
         var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
@@ -392,34 +391,11 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         var submissionWithLogsOptional = submissionRepository.findWithEagerBuildLogEntriesById(submission.getId());
         assertThat(submissionWithLogsOptional).isPresent();
+        assertThat(submissionWithLogsOptional.get().getBuildLogEntries()).hasSize(3);
 
-        // Assert that the submission does not contain build log entries yet
-        var submissionWithLogs = submissionWithLogsOptional.get();
-        assertThat(submissionWithLogs.getBuildLogEntries()).isEmpty();
-
-        // Assert that the build logs can be retrieved from the REST API
-        var buildWithDetails = jenkinsRequestMockProvider.mockGetLatestBuildLogs(studentParticipationRepository.findById(participationId).orElseThrow(), useLegacyBuildLogs);
-        database.changeUser(userLogin);
+        // Assert that the build logs can be retrieved from the REST API from the database
         var receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull().isNotEmpty();
-
-        if (useLegacyBuildLogs) {
-            verify(buildWithDetails, times(1)).getConsoleOutputHtml();
-        }
-        else {
-            verify(buildWithDetails, times(1)).getConsoleOutputText();
-        }
-
-        // Call again and it should not call Jenkins::getLatestBuildLogs() since the logs are cached.
-        receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
-        assertThat(receivedLogs).isNotNull().isNotEmpty();
-
-        if (useLegacyBuildLogs) {
-            verify(buildWithDetails, times(1)).getConsoleOutputHtml();
-        }
-        else {
-            verify(buildWithDetails, times(1)).getConsoleOutputText();
-        }
 
         return result;
     }

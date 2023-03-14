@@ -5,16 +5,13 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.http.client.HttpResponseException;
 import org.mockito.InjectMocks;
@@ -29,7 +26,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.util.ResourceUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -287,35 +283,6 @@ public class JenkinsRequestMockProvider {
         final var jobWithDetails = new JobWithDetails();
         doReturn(jobWithDetails).when(jenkinsServer).getJob(folderName);
         doReturn(Optional.of(folderJobToReturn)).when(jenkinsServer).getFolderJob(jobWithDetails);
-    }
-
-    public BuildWithDetails mockGetLatestBuildLogs(ProgrammingExerciseStudentParticipation participation, boolean useLegacyLogs) throws IOException {
-        String projectKey = participation.getProgrammingExercise().getProjectKey();
-        String buildPlanId = participation.getBuildPlanId();
-
-        final var job = mock(JobWithDetails.class);
-        mockGetJob(projectKey, buildPlanId, job, false);
-
-        final var build = mock(Build.class);
-        doReturn(build).when(job).getLastBuild();
-
-        final var buildWithDetails = mock(BuildWithDetails.class);
-        doReturn(buildWithDetails).when(build).details();
-
-        if (useLegacyLogs) {
-            doReturn(null).when(buildWithDetails).getConsoleOutputText();
-            String htmlString = loadFileFromResources("test-data/jenkins-response/legacy-failed-build-log.html");
-            doReturn(htmlString).when(buildWithDetails).getConsoleOutputHtml();
-        }
-        else {
-            File file = ResourceUtils.getFile("classpath:test-data/jenkins-response/failed-build-log.txt");
-            try (var lines = Files.lines(file.toPath())) {
-                String result = lines.collect(Collectors.joining("\n"));
-                doReturn(result).when(buildWithDetails).getConsoleOutputText();
-            }
-        }
-        return buildWithDetails;
-
     }
 
     public void mockGetLegacyBuildLogs(ProgrammingExerciseStudentParticipation participation) throws IOException {

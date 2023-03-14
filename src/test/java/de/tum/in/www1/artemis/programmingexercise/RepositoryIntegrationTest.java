@@ -53,6 +53,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -90,6 +91,9 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Autowired
     private PostRepository postRepository;
+
+    @Autowired
+    private BuildLogEntryService buildLogEntryService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -701,24 +705,30 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsWithManualResult() throws Exception {
         var submission = database.createProgrammingSubmission(participation, true);
+        var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
+        submission.setBuildLogEntries(buildLogEntries);
         database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC);
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
         assertThat(receivedLogs.get(0).getTime()).isEqualTo(logs.get(0).getTime());
-        // due to timezone assertThat isEqualTo issues, we compare those directly first and ignore them afterwards
-        assertThat(receivedLogs).usingRecursiveFieldByFieldElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
+        assertThat(receivedLogs.get(0).getLog()).isEqualTo(logs.get(0).getLog());
+        assertThat(receivedLogs.get(1).getTime()).isEqualTo(logs.get(1).getTime());
+        assertThat(receivedLogs.get(1).getLog()).isEqualTo(logs.get(1).getLog());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogs() throws Exception {
         var submission = database.createProgrammingSubmission(participation, true);
+        var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
+        submission.setBuildLogEntries(buildLogEntries);
         database.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
         assertThat(receivedLogs.get(0).getTime()).isEqualTo(logs.get(0).getTime());
-        // due to timezone assertThat isEqualTo issues, we compare those directly first and ignore them afterwards
-        assertThat(receivedLogs).usingRecursiveFieldByFieldElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
+        assertThat(receivedLogs.get(0).getLog()).isEqualTo(logs.get(0).getLog());
+        assertThat(receivedLogs.get(1).getTime()).isEqualTo(logs.get(1).getTime());
+        assertThat(receivedLogs.get(1).getLog()).isEqualTo(logs.get(1).getLog());
     }
 
     @Test
