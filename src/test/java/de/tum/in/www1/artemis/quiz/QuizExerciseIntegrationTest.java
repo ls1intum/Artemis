@@ -1325,14 +1325,11 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      * test non-instructors cant create quiz exercises
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCreateQuizExerciseAsTutorForbidden() throws Exception {
         final Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), ZonedDateTime.now().plusHours(5), QuizMode.SYNCHRONIZED);
-        // remove instructor rights
-        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Collections.emptySet());
-        userRepo.save(user);
+
         request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.FORBIDDEN);
         assertThat(course.getExercises()).isEmpty();
     }
@@ -1341,16 +1338,12 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      * test non-instructors cant get all quiz exercises
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllQuizExercisesAsStudentForbidden() throws Exception {
-        final Course course = database.addCourseWithOneQuizExercise("Titel");
+        final Course course = database.addCourseWithOneQuizExercise("Title");
         assertThat(course.getExercises()).isNotEmpty();
-        List<QuizExercise> quizExercises;
-        // remove instructor rights
-        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Collections.emptySet());
-        userRepo.save(user);
-        quizExercises = request.getList("/api/courses/" + course.getId() + "/quiz-exercises", HttpStatus.FORBIDDEN, QuizExercise.class);
+
+        List<QuizExercise> quizExercises = request.getList("/api/courses/" + course.getId() + "/quiz-exercises", HttpStatus.FORBIDDEN, QuizExercise.class);
         assertThat(quizExercises).isNull();
     }
 
@@ -1358,16 +1351,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      * test non-instructors can't perform start-now, set-visible or open-for-practice on quiz exercises
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testPerformPutActionAsTutorForbidden() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
+        // todo: redundant check (or move it into the helper function)
         assertThat(course.getExercises()).isNotEmpty();
         quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         assertThat(quizExercise.isIsOpenForPractice()).isFalse();
-        // remove instructor rights
-        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Collections.emptySet());
-        userRepo.save(user);
 
         request.put("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, HttpStatus.FORBIDDEN);
         assertThat(quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0).isIsOpenForPractice()).isFalse();

@@ -2495,6 +2495,7 @@ public class DatabaseUtilService {
         return addCourseWithOneQuizExercise("Title");
     }
 
+    // TODO missing parameters
     public Course addCourseWithOneQuizExercise(String title) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         QuizExercise quizExercise = createQuiz(course, futureTimestamp, futureFutureTimestamp, QuizMode.SYNCHRONIZED);
