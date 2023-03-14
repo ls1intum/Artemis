@@ -352,12 +352,13 @@ public class TutorialGroupResource {
         }
 
         overrideValues(updatedTutorialGroup, oldTutorialGroup);
-        // persist without schedule at first
-        oldTutorialGroup.setTutorialGroupSchedule(null);
+        if (oldTutorialGroup.getTutorialGroupSchedule() != null) {
+            oldTutorialGroup.getTutorialGroupSchedule().setTutorialGroup(oldTutorialGroup);
+        }
         var persistedTutorialGroup = tutorialGroupRepository.save(oldTutorialGroup);
-
-        tutorialGroupScheduleService.updateSchedule(configuration, persistedTutorialGroup, Optional.ofNullable(persistedTutorialGroup.getTutorialGroupSchedule()),
+        tutorialGroupScheduleService.updateScheduleIfChanged(configuration, persistedTutorialGroup, Optional.ofNullable(persistedTutorialGroup.getTutorialGroupSchedule()),
                 Optional.ofNullable(updatedTutorialGroup.getTutorialGroupSchedule()));
+        persistedTutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroup.getId());
 
         return ResponseEntity.ok(TutorialGroup.preventCircularJsonConversion(persistedTutorialGroup));
     }
