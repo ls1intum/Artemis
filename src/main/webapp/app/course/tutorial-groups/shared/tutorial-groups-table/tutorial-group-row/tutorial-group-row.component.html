@@ -17,8 +17,19 @@
             <span class="d-inline-block text-truncate title"> {{ tutorialGroup.title }} </span>
         </ng-template>
     </td>
-    <td>{{ tutorialGroup.isUserTutor ? ('global.generic.you' | artemisTranslate) : tutorialGroup.teachingAssistantName }}</td>
+    <td>
+        <jhi-tutorial-group-utilization-indicator [tutorialGroup]="tutorialGroup"></jhi-tutorial-group-utilization-indicator>
+    </td>
+    <td>
+        <ng-container *ngIf="tutorialGroup.averageAttendance !== undefined; else noAverageAttendance">
+            <span>{{ Math.round(tutorialGroup.averageAttendance) }}</span>
+        </ng-container>
+        <ng-template #noAverageAttendance>
+            <span>{{ '' }}</span>
+        </ng-template>
+    </td>
     <td>{{ tutorialGroup.capacity }}</td>
+    <td>{{ tutorialGroup.isUserTutor ? ('global.generic.you' | artemisTranslate) : tutorialGroup.teachingAssistantName }}</td>
     <td>{{ tutorialGroup.tutorialGroupSchedule ? (getDayTranslationKey(tutorialGroup.tutorialGroupSchedule?.dayOfWeek) | artemisTranslate) : '' }}</td>
     <td>
         <span *ngIf="tutorialGroup.tutorialGroupSchedule; else no_schedule">
