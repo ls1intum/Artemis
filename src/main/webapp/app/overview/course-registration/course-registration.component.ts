@@ -35,6 +35,7 @@ export class CourseRegistrationComponent implements OnInit {
     /**
      * Removes a course from the list of courses that the user can register for
      * after the user has registered for the course
+     * @param courseId the id of the course that the user has registered for
      */
     removeCourseFromList(courseId: number) {
         this.coursesToSelect = this.coursesToSelect.filter((course) => course.id !== courseId);
