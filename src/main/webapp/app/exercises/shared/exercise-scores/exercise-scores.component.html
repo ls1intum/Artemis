@@ -93,25 +93,38 @@
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                 </a>
 
-                <button *ngIf="exercise.isAtLeastInstructor" class="btn btn-info btn-sm me-1" (click)="exportNames()">
-                    <fa-icon [icon]="faDownload"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportNames">Export Names</span>
-                </button>
-                <jhi-exercise-scores-export-button *ngIf="exercise.isAtLeastInstructor" [exercise]="exercise"></jhi-exercise-scores-export-button>
-                <jhi-programming-assessment-repo-export
-                    *ngIf="exercise.type === ExerciseType.PROGRAMMING"
-                    [programmingExercises]="[exercise]"
-                    class="me-1"
-                ></jhi-programming-assessment-repo-export>
-                <jhi-exercise-submission-export
-                    *ngIf="
-                        exercise.isAtLeastInstructor &&
-                        (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.FILE_UPLOAD)
-                    "
-                    [exerciseId]="exercise.id!"
-                    [exerciseType]="exercise.type"
-                    class="me-1"
-                ></jhi-exercise-submission-export>
+                <button
+                    jhi-exercise-action-button
+                    [buttonIcon]="faDownload"
+                    class="btn btn-info btn-sm me-1"
+                    [buttonLabel]="'entity.action.export' | artemisTranslate"
+                    [hideLabelMobile]="false"
+                    [ngbPopover]="popContent"
+                    [autoClose]="'outside'"
+                    placement="bottom-right auto"
+                    container="body"
+                ></button>
+                <ng-template #popContent>
+                    <button *ngIf="exercise.isAtLeastInstructor" class="btn btn-info btn-sm me-1" (click)="exportNames()">
+                        <fa-icon [icon]="faDownload"></fa-icon>
+                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportNames">Export Names</span>
+                    </button>
+                    <jhi-exercise-scores-export-button *ngIf="exercise.isAtLeastInstructor" [exercise]="exercise"></jhi-exercise-scores-export-button>
+                    <jhi-programming-assessment-repo-export
+                        *ngIf="exercise.type === ExerciseType.PROGRAMMING"
+                        [programmingExercises]="[exercise]"
+                        class="me-1"
+                    ></jhi-programming-assessment-repo-export>
+                    <jhi-exercise-submission-export
+                        *ngIf="
+                            exercise.isAtLeastInstructor &&
+                            (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.FILE_UPLOAD)
+                        "
+                        [exerciseId]="exercise.id!"
+                        [exerciseType]="exercise.type"
+                        class="me-1"
+                    ></jhi-exercise-submission-export>
+                </ng-template>
                 <button class="btn btn-primary btn-sm" (click)="refresh()">
                     <fa-icon [icon]="faSync"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
@@ -264,12 +277,14 @@
 
                 <ngx-datatable-column prop="" [sortable]="true" [minWidth]="80" [width]="90">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.[0]?.submission?.durationInMinutes')">
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.[0]?.durationInMinutes')">
                             <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.duration' | artemisTranslate }}</span>
-                            <fa-icon [icon]="controls.iconForSortPropField('results?.[0]?.submission?.durationInMinutes')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('results?.[0]?.durationInMinutes')"></fa-icon>
                         </span>
                     </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value"> {{ value.results?.[0]?.submission?.durationInMinutes || '-' }} min </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        {{ value.results?.[0]?.durationInMinutes ? (value.results?.[0]?.durationInMinutes | artemisDurationFromSeconds: true) : '-' }}
+                    </ng-template>
                 </ngx-datatable-column>
 
                 <ngx-datatable-column prop="" *ngIf="exercise.isAtLeastInstructor" [minWidth]="350" [width]="400">

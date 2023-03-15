@@ -172,6 +172,11 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     private handleNewParticipations(participationsResponse: HttpResponse<Participation[]>) {
         this.participations = participationsResponse.body ?? [];
+        this.participations.forEach((participation) => {
+            if (participation.results?.[0]) {
+                participation.results[0].durationInMinutes = dayjs(participation.results[0].completionDate).diff(participation.initializationDate, 'seconds');
+            }
+        });
         this.filteredParticipations = this.filterByScoreRange(this.participations);
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = this.exercise as ProgrammingExercise;
