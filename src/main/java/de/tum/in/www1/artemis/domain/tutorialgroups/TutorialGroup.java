@@ -105,6 +105,14 @@ public class TutorialGroup extends DomainObject {
     @Transient
     private ChannelDTO channel;
 
+    /**
+     * This field represents the average attendance of this tutorial group
+     * <p>
+     * For more information on how this is calculated check out {@link de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService#setAverageAttendance}
+     */
+    @Transient
+    private Integer averageAttendance;
+
     @OneToOne(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "tutorialGroup", allowSetters = true)
     private TutorialGroupSchedule tutorialGroupSchedule;
@@ -306,6 +314,16 @@ public class TutorialGroup extends DomainObject {
 
     public void setChannel(ChannelDTO channel) {
         this.channel = channel;
+    }
+
+    @JsonIgnore(false)
+    @JsonProperty
+    public Integer getAverageAttendance() {
+        return averageAttendance;
+    }
+
+    public void setAverageAttendance(Integer averageAttendance) {
+        this.averageAttendance = averageAttendance;
     }
 
     /**
