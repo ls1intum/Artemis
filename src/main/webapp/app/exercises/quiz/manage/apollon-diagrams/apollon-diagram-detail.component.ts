@@ -183,7 +183,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }
 
         const selection = [...this.apollonEditor!.selection.elements, ...this.apollonEditor!.selection.relationships];
-        const svg = this.apollonEditor!.exportAsSVG({
+        const svg = await this.apollonEditor!.exportAsSVG({
             keepOriginalSize: !this.crop,
             include: selection,
         });
