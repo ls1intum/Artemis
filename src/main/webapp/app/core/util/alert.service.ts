@@ -72,6 +72,9 @@ export class AlertService {
 
         this.httpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: any) => {
             const httpErrorResponse: HttpErrorResponse = response.content;
+            if (httpErrorResponse.error !== null && httpErrorResponse.error.skipAlert) {
+                return;
+            }
             switch (httpErrorResponse.status) {
                 // connection refused, server not reachable
                 case 0:
@@ -79,9 +82,6 @@ export class AlertService {
                     break;
 
                 case 400:
-                    if (httpErrorResponse.error !== null && httpErrorResponse.error.skipAlert) {
-                        break;
-                    }
                     const arr = httpErrorResponse.headers.keys();
                     let errorHeader = null;
                     let entityKey = null;

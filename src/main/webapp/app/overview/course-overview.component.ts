@@ -91,7 +91,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 this.loadLearningGoalsAndTutorialGroups();
             }
         } else {
-            this.loadCourse();
+            await this.loadCourse();
         }
 
         await this.subscribeToTeamAssignmentUpdates();
@@ -103,6 +103,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 complete: () => {
                     // service is fully set up, now we can subscribe to the respective observables
                     this.subscribeToHasUnreadMessages();
+                },
+                error: (error) => {
+                    console.error('Error while setting up metis service: ', error);
                 },
             });
     }
@@ -202,31 +205,35 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      * Fetch the course from the server including all exercises, lectures, exams and learning goals
      * @param refresh Whether this is a force refresh (displays loader animation)
      */
-    loadCourse(refresh = false) {
+    loadCourse(refresh = false): Promise<void> {
         this.refreshingCourse = refresh;
-        this.courseService.findOneForDashboard(this.courseId, refresh).subscribe({
-            next: (res: HttpResponse<Course>) => {
-                this.courseCalculationService.updateCourse(res.body!);
-                this.course = this.courseCalculationService.getCourse(this.courseId);
-                setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
-            },
-            error: async (error: HttpErrorResponse) => {
-                if (error.status === 403) {
-                    const canRegister = await this.canRegisterForCourse();
-                    if (canRegister) {
-                        // the user can register, so we want to redirect them
-                        this.redirectToCourseRegistrationPage();
-                        // no need to show the permission error
-                        return;
+        return new Promise<void>((resolve, reject) => {
+            this.courseService.findOneForDashboard(this.courseId, refresh).subscribe({
+                next: (res: HttpResponse<Course>) => {
+                    this.courseCalculationService.updateCourse(res.body!);
+                    this.course = this.courseCalculationService.getCourse(this.courseId);
+                    setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
+                    resolve();
+                },
+                error: async (error: HttpErrorResponse) => {
+                    if (error.status === 403) {
+                        const canRegister = await this.canRegisterForCourse();
+                        if (canRegister) {
+                            // the user can register, so we want to redirect them
+                            this.redirectToCourseRegistrationPage();
+                            // no need to show the permission error
+                            return;
+                        }
                     }
-                }
-                const errorMessage = error.headers.get('X-artemisApp-message')!;
-                this.alertService.addAlert({
-                    type: AlertType.DANGER,
-                    message: errorMessage,
-                    disableTranslation: true,
-                });
-            },
+                    const errorMessage = error.headers.get('X-artemisApp-message')!;
+                    this.alertService.addAlert({
+                        type: AlertType.DANGER,
+                        message: errorMessage,
+                        disableTranslation: true,
+                    });
+                    reject();
+                },
+            });
         });
     }
 
