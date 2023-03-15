@@ -6,6 +6,16 @@
     margin-bottom: 0;
 }
 
+.wrapper-btn-manage-course {
+    display: flex;
+    align-items: center;
+}
+
+.btn-manage-course {
+    height: fit-content;
+    background-color: rgb(0, 188, 140) !important;
+}
+
 .course-icon {
     ::ng-deep {
         img {

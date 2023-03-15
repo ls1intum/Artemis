@@ -2,6 +2,7 @@ import { Component, HostListener, Input, OnChanges } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-header-course',
@@ -17,6 +18,8 @@ export class HeaderCourseComponent implements OnChanges {
     public courseDescription?: string;
     public enableShowMore = false;
     public longDescriptionShown = false;
+
+    constructor(private router: Router) {}
 
     ngOnChanges() {
         this.adjustCourseDescription();
@@ -48,5 +51,14 @@ export class HeaderCourseComponent implements OnChanges {
                 this.courseDescription = this.course.description;
             }
         }
+    }
+
+    showGoToCourseManagementButton() {
+        const courseManagementPage = this.router.url.startsWith('/course-management');
+        return !courseManagementPage && this.course.isAtLeastTutor;
+    }
+
+    redirectToCourseManagement() {
+        this.router.navigate([`/course-management/${this.course.id}`]);
     }
 }

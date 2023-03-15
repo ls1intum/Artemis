@@ -9,6 +9,13 @@
                 </h6>
             </ng-container>
         </div>
+        <ng-container *ngIf="showGoToCourseManagementButton()">
+            <div class="col-auto wrapper-btn-manage-course">
+                <button class="btn btn-manage-course" (click)="redirectToCourseManagement()">
+                    {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
+                </button>
+            </div>
+        </ng-container>
         <div class="col-auto d-none d-lg-flex justify-content-end course-icon" *ngIf="course.courseIcon">
             <jhi-secured-image [src]="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [alt]="'artemisApp.courseOverview.noCourseIcon' | artemisTranslate">
             </jhi-secured-image>

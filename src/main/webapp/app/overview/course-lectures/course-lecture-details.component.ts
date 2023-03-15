@@ -14,6 +14,7 @@ import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { Router } from '@angular/router';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -23,7 +24,7 @@ export interface LectureUnitCompletionEvent {
 @Component({
     selector: 'jhi-course-lecture-details',
     templateUrl: './course-lecture-details.component.html',
-    styleUrls: ['../course-overview.scss', './course-lectures.scss'],
+    styleUrls: ['../course-overview.scss', './course-lectures.scss', 'course-lecture-details.component.scss'],
 })
 export class CourseLectureDetailsComponent implements OnInit {
     lectureId?: number;
@@ -45,6 +46,7 @@ export class CourseLectureDetailsComponent implements OnInit {
         private lectureUnitService: LectureUnitService,
         private activatedRoute: ActivatedRoute,
         private fileService: FileService,
+        private router: Router,
     ) {}
 
     ngOnInit(): void {
@@ -84,6 +86,14 @@ export class CourseLectureDetailsComponent implements OnInit {
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
+    }
+
+    showGoToLectureManagementButton(): boolean {
+        return !!this.lecture?.course?.isAtLeastTutor;
+    }
+
+    redirectToLectureManagement(): void {
+        this.router.navigate([`/course-management/${this.lecture?.course?.id}/lectures/${this.lecture?.id}`]);
     }
 
     attachmentNotReleased(attachment: Attachment): boolean {
