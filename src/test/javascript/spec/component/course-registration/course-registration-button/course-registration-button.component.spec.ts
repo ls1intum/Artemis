@@ -17,7 +17,7 @@ describe('CourseRegistrationButtonComponent', () => {
     let courseService: CourseManagementService;
     let accountService: AccountService;
     let profileService: ProfileService;
-    let registerForCourseStub: jest.SpyInstance;
+    let registerForCourseSpy: jest.SpyInstance;
     let identityStub: jest.SpyInstance;
     let getProfileInfoStub: jest.SpyInstance;
     let onRegistrationStub: jest.SpyInstance;
@@ -38,7 +38,7 @@ describe('CourseRegistrationButtonComponent', () => {
                 profileService = TestBed.inject(ProfileService);
                 onRegistrationStub = jest.spyOn(component.onRegistration, 'emit');
 
-                registerForCourseStub = jest.spyOn(courseService, 'registerForCourse').mockReturnValue(of(new HttpResponse({ body: new User() })));
+                registerForCourseSpy = jest.spyOn(courseService, 'registerForCourse').mockReturnValue(of(new HttpResponse({ body: new User() })));
                 identityStub = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'ga12tes' } as User));
                 getProfileInfoStub = jest
                     .spyOn(profileService, 'getProfileInfo')
@@ -60,7 +60,7 @@ describe('CourseRegistrationButtonComponent', () => {
     it('should register for course', () => {
         component.registerForCourse(1);
 
-        expect(registerForCourseStub).toHaveBeenCalledOnce();
+        expect(registerForCourseSpy).toHaveBeenCalledOnce();
     });
 
     it('should should fire onRegistration after registration', () => {

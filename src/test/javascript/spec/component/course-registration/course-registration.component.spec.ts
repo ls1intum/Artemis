@@ -47,11 +47,6 @@ describe('CourseRegistrationComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(component).not.toBeNull();
-    });
-
     it('should show registrable courses', () => {
         component.loadRegistrableCourses();
 

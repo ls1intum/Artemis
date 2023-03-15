@@ -73,7 +73,7 @@ describe('CourseRegistrationDetailComponent', () => {
     it('should load the course using findOneForRegistration', fakeAsync(() => {
         component.ngOnInit();
 
-        expect(component.course).not.toBeNull();
+        expect(component.course).toBeDefined();
         expect(component.course?.id).toBe(course1.id);
         expect(component.course?.title).toBe(course1.title);
     }));
