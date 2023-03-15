@@ -49,7 +49,6 @@ import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/cod
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { BuildPlanService } from 'app/exercises/programming/manage/services/build-plan.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -125,7 +124,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private codeHintService: CodeHintService,
         private router: Router,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
-        private buildPlanService: BuildPlanService,
     ) {}
 
     ngOnInit() {

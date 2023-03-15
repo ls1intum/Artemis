@@ -4,6 +4,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 export class BuildPlan implements BaseEntity {
     public id?: number;
 
-    public buildPlan: string;
-    public programmingExercises: Set<ProgrammingExercise>;
+    public buildPlan?: string;
+    public programmingExercises?: Set<ProgrammingExercise>;
 }

@@ -47,7 +47,7 @@ public class BuildPlanResource {
      */
     @GetMapping(BUILD_PLAN)
     @PreAuthorize("permitAll()")
-    public ResponseEntity<String> getBuildPlan(@PathVariable Long exerciseId, @RequestParam("secret") String secret) {
+    public ResponseEntity<BuildPlan> getBuildPlan(@PathVariable Long exerciseId, @RequestParam(value = "secret", required = false) String secret) {
         log.debug("REST request to get build plan for programming exercise with id {}", exerciseId);
 
         final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(exerciseId);
@@ -64,7 +64,7 @@ public class BuildPlanResource {
             throw new AccessForbiddenException();
         }
 
-        return ResponseEntity.ok().body(buildPlan.getBuildPlan());
+        return ResponseEntity.ok().body(buildPlan);
     }
 
     @PutMapping("/programming-exercises/{exerciseId}/build-plan")
@@ -78,6 +78,7 @@ public class BuildPlanResource {
 
         buildPlanRepository.disconnectBuildPlanFromExercise(programmingExercise);
         buildPlan.addProgrammingExercise(programmingExercise);
+        programmingExerciseRepository.save(programmingExercise);
         buildPlan = buildPlanRepository.save(buildPlan);
 
         return ResponseEntity.ok(buildPlan);

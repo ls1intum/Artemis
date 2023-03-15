@@ -1,1 +1,47 @@
-<h1>just a test</h1>
+<button
+    id="submit_button"
+    type="button"
+    class="guided-tour-submit-button btn btn-success navbar-btn"
+    (click)="submit()"
+    [ngbTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"
+>
+        <span>
+            <fa-icon [icon]="farPlayCircle"></fa-icon>
+            <span jhiTranslate="artemisApp.editor.submit">Submit</span>
+        </span>
+</button>
+<div class="card build-plan-editor">
+    <div class="d-flex justify-content-between card-header bg-primary text-white">
+        <h3 class="mt-1 card-title">
+            <fa-icon [icon]="farFileAlt"></fa-icon>
+            <span> &nbsp;{{ selectedFile }}</span>
+            <fa-icon *ngIf="isLoading" [icon]="faCircleNotch" [spin]="true" class="ms-2" title="{{ 'artemisApp.editor.loadingFile' | artemisTranslate }}"></fa-icon>
+        </h3>
+        <div ngbDropdown class="ms-2" placement="bottom-end auto" [autoClose]="'outside'" aria-label="Code Editor Settings">
+            <button ngbDropdownToggle class="btn btn-sm btn-primary" type="button" id="dropdownCodeEditorSettings" aria-expanded="false">
+                <fa-icon [icon]="faGear"></fa-icon>
+            </button>
+            <div ngbDropdownMenu aria-labelledby="dropdownCodeEditorSettings">
+                <div ngbDropdownItem class="d-flex">
+                    <span class="dropdown-item" jhiTranslate="artemisApp.editor.tabSize"></span>
+                    <input class="form-control-sm" type="number" min="1" [max]="MAX_TAB_SIZE" step="1" size="1" [(ngModel)]="tabSize" (change)="validateTabSize()" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body build-plan-editor__content">
+        <jhi-ace-editor
+            #editor
+            id="build-plan-editor"
+            [mode]="'groovy'"
+            [readOnly]="isLoading"
+            [hidden]="false"
+            [autoUpdateContent]="true"
+            [durationBeforeCallback]="200"
+            [tabSize]="tabSize"
+            (textChanged)="onTextChanged($event)"
+            class="build-plan-editor__content__editor"
+        >
+        </jhi-ace-editor>
+    </div>
+</div>
