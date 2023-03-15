@@ -17,7 +17,9 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
-// TODO: Find better name for this class. Right now it just exists to resolve the circular dependency ProgrammingExerciseGradingService -> ProgrammingExer
+/**
+ * Service for extracting the test cases out of the feedback provided by a build run.
+ */
 @Service
 public class ProgrammingExerciseFeedbackService {
 
@@ -43,7 +45,7 @@ public class ProgrammingExerciseFeedbackService {
     }
 
     /**
-     * From a list of build run feedback, extract all test cases. If an already stored test case is not found anymore in the build result, it will not be deleted, but set inactive.
+     * From a list of build run feedbacks, extract all test cases. If an already stored test case is not found anymore in the build result, it will not be deleted, but set inactive.
      * This way old test cases are not lost, some interfaces in the client might need this information to e.g. show warnings.
      *
      * @param feedbacks list of build log output.

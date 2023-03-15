@@ -45,29 +45,24 @@ public class RepositoryAccessService {
     /**
      * Checks if the user has access to the repository of the given participation.
      *
-     * @param participation        The participation for which the repository should be accessed.
+     * @param programmingParticipation        The participation for which the repository should be accessed.
      * @param programmingExercise  The programming exercise of the participation.
      * @param user                 The user who wants to access the repository.
      * @param repositoryActionType The type of action that the user wants to perform on the repository (i.e. WRITE or READ).
      */
-    public void checkAccessRepositoryElseThrow(Participation participation, ProgrammingExercise programmingExercise, User user, RepositoryActionType repositoryActionType) {
+    public void checkAccessRepositoryElseThrow(ProgrammingExerciseParticipation programmingParticipation, ProgrammingExercise programmingExercise, User user, RepositoryActionType repositoryActionType) {
 
-        // Error case 1: The participation is not from a programming exercise.
-        if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
-            throw new IllegalArgumentException();
-        }
-
-        // Error case 2: The user does not have permissions to push into the repository and the user is not notified for a related plagiarism case.
+        // Error case 1: The user does not have permissions to push into the repository and the user is not notified for a related plagiarism case.
         boolean hasPermissions = programmingExerciseParticipationService.canAccessParticipation(programmingParticipation, user);
-        boolean wasUserNotifiedAboutPlagiarismCase = plagiarismService.wasUserNotifiedByInstructor(participation.getId(), user.getLogin());
+        boolean wasUserNotifiedAboutPlagiarismCase = plagiarismService.wasUserNotifiedByInstructor(programmingParticipation.getId(), user.getLogin());
         if (!hasPermissions && !wasUserNotifiedAboutPlagiarismCase) {
             throw new AccessUnauthorizedException();
         }
 
-        // Error case 3: The user's participation repository is locked.
+        // Error case 2: The user's participation repository is locked.
         boolean lockRepositoryPolicyEnforced = false;
         if (programmingExercise.getSubmissionPolicy() instanceof LockRepositoryPolicy policy) {
-            lockRepositoryPolicyEnforced = submissionPolicyService.isParticipationLocked(policy, participation);
+            lockRepositoryPolicyEnforced = submissionPolicyService.isParticipationLocked(policy, (Participation) programmingParticipation);
         }
         if (repositoryActionType == RepositoryActionType.WRITE && (programmingParticipation.isLocked() || lockRepositoryPolicyEnforced)) {
             throw new AccessForbiddenException();
@@ -75,11 +70,11 @@ public class RepositoryAccessService {
 
         boolean isStudent = !authorizationCheckService.isAtLeastTeachingAssistantInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
-        // Error case 4: The student can reset the repository only before and a tutor/instructor only after the due date has passed.
+        // Error case 3: The student can reset the repository only before and a tutor/instructor only after the due date has passed.
         if (repositoryActionType == RepositoryActionType.RESET) {
             boolean isOwner = true; // true for Solution- and TemplateProgrammingExerciseParticipation
-            if (participation instanceof StudentParticipation) {
-                isOwner = authorizationCheckService.isOwnerOfParticipation((StudentParticipation) participation);
+            if (programmingParticipation instanceof StudentParticipation) {
+                isOwner = authorizationCheckService.isOwnerOfParticipation((StudentParticipation) programmingParticipation);
             }
             if (isStudent && programmingParticipation.isLocked()) {
                 throw new AccessForbiddenException();
@@ -92,7 +87,7 @@ public class RepositoryAccessService {
                     throw new AccessForbiddenException();
                 }
                 // Check for an exam exercise, as it might not be locked but a student might still be allowed to submit
-                var optStudent = ((StudentParticipation) participation).getStudent();
+                var optStudent = ((StudentParticipation) programmingParticipation).getStudent();
                 if (optStudent.isPresent() && programmingExercise.isExamExercise()
                         && examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optStudent.get(), false)) {
                     throw new AccessForbiddenException();
@@ -100,10 +95,10 @@ public class RepositoryAccessService {
             }
         }
 
-        // Error case 5: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
+        // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
         // This must be a student participation as hasPermissions would have been false and an error already thrown
         // But the student should still be able to access if they are notified for a related plagiarism case.
-        boolean isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
+        boolean isStudentParticipation = programmingParticipation instanceof ProgrammingExerciseStudentParticipation;
         if (isStudentParticipation && isStudent && !repositoryActionType.equals(RepositoryActionType.READ)
                 && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false) && !wasUserNotifiedAboutPlagiarismCase) {
             throw new AccessForbiddenException();

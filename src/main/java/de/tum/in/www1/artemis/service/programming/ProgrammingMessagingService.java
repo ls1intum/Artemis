@@ -124,6 +124,11 @@ public class ProgrammingMessagingService {
         return "/topic/programming-exercises/" + programmingExerciseId + "/all-builds-triggered";
     }
 
+    /**
+     * Notify user about new result.
+     * @param result the result created from the result returned from the CI system.
+     * @param participation the participation for which the result was created.
+     */
     public void notifyUserAboutNewResult(Result result, ProgrammingExerciseParticipation participation) {
         // notify user via websocket
         websocketMessagingService.broadcastNewResult((Participation) participation, result);

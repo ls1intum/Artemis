@@ -12,8 +12,6 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
@@ -23,21 +21,15 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
  */
 public abstract class AbstractContinuousIntegrationResultService implements ContinuousIntegrationResultService {
 
-    protected final ProgrammingSubmissionRepository programmingSubmissionRepository;
-
     protected final FeedbackRepository feedbackRepository;
-
-    protected final BuildLogEntryService buildLogService;
 
     protected final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
     protected final TestwiseCoverageService testwiseCoverageService;
 
-    public AbstractContinuousIntegrationResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
-            BuildLogEntryService buildLogService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
-        this.programmingSubmissionRepository = programmingSubmissionRepository;
+    public AbstractContinuousIntegrationResultService(FeedbackRepository feedbackRepository,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
         this.feedbackRepository = feedbackRepository;
-        this.buildLogService = buildLogService;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.testwiseCoverageService = testwiseCoverageService;
     }

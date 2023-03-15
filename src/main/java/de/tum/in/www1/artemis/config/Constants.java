@@ -252,8 +252,14 @@ public final class Constants {
 
     public static final String EXAM_EXERCISE_START_STATUS = "exam-exercise-start-status";
 
+    /**
+     * The name of the Spring profile used to choose the local VC system instead of Bitbucket or GitLab.
+     */
     public static final String PROFILE_LOCALVC = "localvc";
 
+    /**
+     * The name of the Spring profile used to choose the local CI system instead of Bamboo, Jenkins, or GitLabCI.
+     */
     public static final String PROFILE_LOCALCI = "localci";
 
     /**

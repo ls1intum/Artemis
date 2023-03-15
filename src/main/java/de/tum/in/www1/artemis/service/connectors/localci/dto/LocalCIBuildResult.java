@@ -5,9 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.apache.commons.text.StringEscapeUtils;
-
-import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -39,7 +40,6 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     private final String description;
 
-    @JsonCreator
     public LocalCIBuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
             List<LocalCIJobDTO> jobs, String description) {
         this.assignmentRepoBranchName = assignmentRepoBranchName;
@@ -136,6 +136,15 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
         return description;
     }
 
+    /**
+     * Represents all the information returned by the local CI system about a job.
+     * In the current implementation of local CI, there is always one job per build.
+     * @param failedTests list of failed tests.
+     * @param successfulTests list of successful tests.
+     * @param staticCodeAnalysisReports list of static code analysis reports.
+     * @param testwiseCoverageReport list of testwise coverage reports.
+     * @param logs list of logs.
+     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record LocalCIJobDTO(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
@@ -152,6 +161,11 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
         }
     }
 
+    /**
+     * Represents the information about one test case, including the test case's name and potential error messages that indicate what went wrong.
+     * @param name
+     * @param errors
+     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record LocalCITestJobDTO(String name, List<String> errors) implements TestCaseDTOInterface {

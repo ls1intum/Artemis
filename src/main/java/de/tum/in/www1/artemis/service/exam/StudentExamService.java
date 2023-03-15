@@ -388,7 +388,7 @@ public class StudentExamService {
                     try {
                         log.debug("lock student repositories for {}", currentUser);
                         ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService
-                                .findStudentParticipationByExerciseAndStudentLoginAndTestRun(programmingExercise, currentUser.getLogin(), false, false);
+                                .findStudentParticipationByExerciseAndStudentId(programmingExercise, currentUser.getLogin());
                         programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
                     }
                     catch (Exception e) {

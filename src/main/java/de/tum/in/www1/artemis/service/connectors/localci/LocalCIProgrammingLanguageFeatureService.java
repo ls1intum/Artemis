@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 
+/**
+ * Sets the features provided for the different programming languages when using the local CI system.
+ */
 @Service
 @Profile("localci")
 public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {

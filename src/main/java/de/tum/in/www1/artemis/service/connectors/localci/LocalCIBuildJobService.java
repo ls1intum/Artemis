@@ -258,10 +258,11 @@ public class LocalCIBuildJobService {
         List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
 
         XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+        String testResultsFolderName = projectType.isGradle() ? "test" : "surefire-reports";
         TarArchiveEntry tarEntry;
         while ((tarEntry = testResultsTarInputStream.getNextTarEntry()) != null) {
 
-            if (tarEntry.isDirectory() || !tarEntry.getName().endsWith(".xml") || !tarEntry.getName().startsWith(projectType.isGradle() ? "test" : "surefire-reports" + "/TEST-")) {
+            if (tarEntry.isDirectory() || !tarEntry.getName().endsWith(".xml") || !tarEntry.getName().startsWith(testResultsFolderName + "/TEST-")) {
                 continue;
             }
 
@@ -306,7 +307,8 @@ public class LocalCIBuildJobService {
                     String error = xmlStreamReader.getAttributeValue(null, "message");
 
                     // Add the failed test to the list of failed tests.
-                    failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, error != null ? List.of(error) : List.of()));
+                    List<String> errors = error != null ? List.of(error) : List.of();
+                    failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, errors));
 
                     // If there is at least one test case with a failure node, the build is not successful.
                     isBuildSuccessful = false;

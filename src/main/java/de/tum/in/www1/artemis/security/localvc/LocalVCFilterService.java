@@ -5,6 +5,12 @@ import java.util.Base64;
 
 import javax.servlet.http.HttpServletRequest;
 
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCBadRequestException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,8 +24,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.exception.localvc.*;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -67,9 +71,9 @@ public class LocalVCFilterService {
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
     public LocalVCFilterService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, ProgrammingExerciseService programmingExerciseService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, RepositoryAccessService repositoryAccessService) {
+                                TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+                                SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+                                ProgrammingExerciseParticipationService programmingExerciseParticipationService, RepositoryAccessService repositoryAccessService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
         this.programmingExerciseService = programmingExerciseService;
@@ -111,7 +115,8 @@ public class LocalVCFilterService {
 
         String projectKey = url.getProjectKey();
         String repositoryTypeOrUserName = url.getRepositoryTypeOrUserName();
-        boolean isTestRunRepository = url.isPracticeRepository();
+        // Is true if the repository slug contains "-practice-".
+        boolean isPracticeRepository = url.isPracticeRepository();
 
         ProgrammingExercise exercise;
 
@@ -127,7 +132,7 @@ public class LocalVCFilterService {
             throw new LocalVCForbiddenException();
         }
 
-        authorizeUser(repositoryTypeOrUserName, user, exercise, isTestRunRepository, repositoryActionType);
+        authorizeUser(repositoryTypeOrUserName, user, exercise, isPracticeRepository, repositoryActionType);
 
         log.info("Authorizing user {} for repository {} took {}", user.getLogin(), url, TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
@@ -173,7 +178,7 @@ public class LocalVCFilterService {
         return new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
     }
 
-    private void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, boolean isTestRunRepository, RepositoryActionType repositoryActionType)
+    private void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, boolean isPracticeRepository, RepositoryActionType repositoryActionType)
             throws LocalVCAuthException, LocalVCForbiddenException, LocalVCInternalException {
 
         if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
@@ -186,7 +191,7 @@ public class LocalVCFilterService {
             return;
         }
 
-        Participation participation = getParticipation(repositoryTypeOrUserName, exercise, isTestRunRepository);
+        ProgrammingExerciseParticipation participation = getParticipation(repositoryTypeOrUserName, exercise, isPracticeRepository, user);
 
         try {
             repositoryAccessService.checkAccessRepositoryElseThrow(participation, exercise, user, repositoryActionType);
@@ -202,18 +207,23 @@ public class LocalVCFilterService {
         }
     }
 
-    private Participation getParticipation(String repositoryTypeOrUserName, ProgrammingExercise exercise, boolean isTestRunRepository) {
+    /**
+     * Returns the participation for the given repository type or username.
+     * @param repositoryTypeOrUserName The repository type or username (e.g. "exercise" for the template repository, or "artemis_test_user_1" for the repository of artemis_test_user_1).
+     * @param exercise The programming exercise.
+     * @param isPracticeRepository True if the repository is a practice repository, i.e. the repository name contains "-practice-". This is not true for exam test runs conducted by an instructor, because there is no way to tell just from the repository URL!
+     * @param user The authenticated user.
+     * @return The participation for the given repository type or username.
+     */
+    private ProgrammingExerciseParticipation getParticipation(String repositoryTypeOrUserName, ProgrammingExercise exercise, boolean isPracticeRepository, User user) {
         try {
-            if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
-                return templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
+            if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
+                return solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
+            } else if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
+                return templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
             }
-            else if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
-                return solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
-            }
-            else {
-                return programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRun(exercise, repositoryTypeOrUserName, isTestRunRepository,
-                        false);
-            }
+
+            return programmingExerciseParticipationService.findStudentParticipationByExerciseAndUserNameAndTestRunOrThrow(exercise, repositoryTypeOrUserName, isPracticeRepository, user);
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException(

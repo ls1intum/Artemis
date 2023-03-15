@@ -132,6 +132,9 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
         return repositoryTypeOrUserName;
     }
 
+    /**
+     * @return true if the repository slug contains "-practice-" and false otherwise.
+     */
     public boolean isPracticeRepository() {
         return isPracticeRepository;
     }

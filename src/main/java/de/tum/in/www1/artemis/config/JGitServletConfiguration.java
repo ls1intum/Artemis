@@ -2,6 +2,11 @@ package de.tum.in.www1.artemis.config;
 
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.security.localvc.LocalVCFetchFilter;
+import de.tum.in.www1.artemis.security.localvc.LocalVCFilterService;
+import de.tum.in.www1.artemis.security.localvc.LocalVCPostPushHook;
+import de.tum.in.www1.artemis.security.localvc.LocalVCPrePushHook;
+import de.tum.in.www1.artemis.security.localvc.LocalVCPushFilter;
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.slf4j.Logger;
@@ -11,7 +16,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-import de.tum.in.www1.artemis.security.localvc.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationPushService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 

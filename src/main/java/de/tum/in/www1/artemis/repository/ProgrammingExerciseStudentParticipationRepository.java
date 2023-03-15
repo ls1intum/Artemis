@@ -68,6 +68,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
+    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(Long exerciseId, String username, boolean testRun);
+
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
     @Query("""
@@ -104,8 +106,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             left join fetch participation.submissions
             where participation.exercise.id = :#{#exerciseId}
             and participation.student.login = :#{#username}
+            and participation.testRun = :#{#testRun}
             """)
-    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("username") String username);
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId, @Param("username") String username, @Param("testRun") boolean testRun);
 
     @Query("""
             SELECT p

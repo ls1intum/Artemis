@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.ProjectApi;
@@ -27,17 +28,14 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
-import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Profile("gitlabci")
 @Service
-public class GitLabCIService extends AbstractContinuousIntegrationService {
+public class GitLabCIService implements ContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(GitLabCIService.class);
 
@@ -97,11 +95,8 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     @Value("${artemis.version-control.token}")
     private String gitlabToken;
 
-    public GitLabCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            GitLabApi gitlab, UrlService urlService, ProgrammingExerciseRepository programmingExerciseRepository, BuildPlanRepository buildPlanRepository,
-            GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
+    public GitLabCIService(GitLabApi gitlab, UrlService urlService, ProgrammingExerciseRepository programmingExerciseRepository, BuildPlanRepository buildPlanRepository,
+            GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.gitlab = gitlab;
         this.urlService = urlService;
         this.programmingExerciseRepository = programmingExerciseRepository;
