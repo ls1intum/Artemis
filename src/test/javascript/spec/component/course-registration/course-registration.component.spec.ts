@@ -53,4 +53,11 @@ describe('CourseRegistrationComponent', () => {
         expect(component.coursesToSelect).toHaveLength(1);
         expect(findAllForRegistrationStub).toHaveBeenCalledOnce();
     });
+
+    it('should be able to remove courses from its list', () => {
+        component.loadRegistrableCourses();
+        component.removeCourseFromList(course1.id!);
+
+        expect(component.coursesToSelect).toHaveLength(0);
+    });
 });
