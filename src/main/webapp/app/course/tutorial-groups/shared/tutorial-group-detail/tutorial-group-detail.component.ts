@@ -5,7 +5,6 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { getDayTranslationKey } from '../weekdays';
 import { Course, Language } from 'app/entities/course.model';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
