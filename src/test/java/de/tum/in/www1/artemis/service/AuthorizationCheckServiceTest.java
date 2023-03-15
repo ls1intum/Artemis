@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.time.ZonedDateTime;
 
@@ -16,6 +17,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -63,7 +65,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToSelfRegisterForCourseForAllowed() {
-            assertThat(authCheckService.isUserAllowedToSelfRegisterForCourse(this.student1, this.course)).isTrue();
+            assertDoesNotThrow(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, this.course));
         }
 
         @Test
@@ -71,7 +73,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
         void testIsUserAllowedToSelfRegisterForCourseForWrongUsernamePattern() {
             // student2 is not allowed to self-register for courses, see the @TestPropertySource annotation above.
             var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
-            assertThat(authCheckService.isUserAllowedToSelfRegisterForCourse(student2, this.course)).isFalse();
+            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(student2, this.course));
         }
 
         @Test
@@ -79,7 +81,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
         void testIsUserAllowedToSelfRegisterForCourseForWrongStartDate() {
             this.course.setStartDate(ZonedDateTime.now().plusDays(1));
             courseRepository.save(this.course);
-            assertThat(authCheckService.isUserAllowedToSelfRegisterForCourse(this.student1, this.course)).isFalse();
+            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, this.course));
         }
 
         @Test
@@ -87,7 +89,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
         void testIsUserAllowedToSelfRegisterForCourseForWrongEndDate() {
             this.course.setEndDate(ZonedDateTime.now().minusDays(1));
             courseRepository.save(this.course);
-            assertThat(authCheckService.isUserAllowedToSelfRegisterForCourse(this.student1, this.course)).isFalse();
+            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, this.course));
         }
 
         @Test
@@ -95,14 +97,14 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
         void testIsUserAllowedToSelfRegisterForCourseForRegistrationDisabled() {
             this.course.setRegistrationEnabled(false);
             courseRepository.save(this.course);
-            assertThat(authCheckService.isUserAllowedToSelfRegisterForCourse(this.student1, this.course)).isFalse();
+            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, this.course));
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToSelfRegisterForCourseForDifferentOrganizations() {
             var courseWithOrganizations = database.createCourseWithOrganizations();
-            assertThat(authCheckService.isUserAllowedToSelfRegisterForCourse(this.student1, courseWithOrganizations)).isFalse();
+            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, courseWithOrganizations));
         }
     }
 }

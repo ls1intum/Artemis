@@ -58,7 +58,6 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -420,9 +419,7 @@ public class CourseService {
      * @param course The course to which the user should get added to
      */
     public void registerUserForCourseOrThrow(User user, Course course) {
-        if (!authCheckService.isUserAllowedToSelfRegisterForCourse(user, course)) {
-            throw new AccessForbiddenException("You are not allowed to register for this course");
-        }
+        authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, course);
         userService.addUserToGroup(user, course.getStudentGroupName(), Role.STUDENT);
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);

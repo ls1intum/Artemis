@@ -10,8 +10,6 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -39,8 +37,6 @@ public class AuthorizationCheckService {
 
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
     private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
-
-    private final Logger log = LoggerFactory.getLogger(CourseService.class);
 
     public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository) {
         this.userRepository = userRepository;
@@ -195,30 +191,25 @@ public class AuthorizationCheckService {
 
     /**
      * Checks if the user is allowed to self register for the given course.
+     * Throws an AccessForbiddenException if the user is not allowed to self register for the course.
      *
      * @param user   The user that wants to self register
      * @param course The course to which the user wants to self register
-     * @return true if the user is allowed to self register for the given course, false otherwise
      */
-    public boolean isUserAllowedToSelfRegisterForCourse(User user, Course course) {
+    public void checkUserAllowedToSelfRegisterForCourseElseThrow(User user, Course course) throws AccessForbiddenException {
         if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
-            log.info("Registration with this username is not allowed. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
-            return false;
+            throw new AccessForbiddenException("Registration with this username is not allowed.");
         }
         if (!course.isActive()) {
-            log.info("The course is not currently active. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
-            return false;
+            throw new AccessForbiddenException("The course is not currently active.");
         }
         if (!Boolean.TRUE.equals(course.isRegistrationEnabled())) {
-            log.info("The course does not allow registration. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
-            return false;
+            throw new AccessForbiddenException("The course does not allow registration.");
         }
         Set<Organization> courseOrganizations = course.getOrganizations();
         if (courseOrganizations != null && !courseOrganizations.isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
-            log.info("User is not member of any organization of this course. Cannot register user {} for course {}", user.getLogin(), course.getTitle());
-            return false;
+            throw new AccessForbiddenException("User is not member of any organization of this course.");
         }
-        return true;
     }
 
     /**

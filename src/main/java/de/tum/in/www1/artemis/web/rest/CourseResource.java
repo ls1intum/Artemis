@@ -369,9 +369,7 @@ public class CourseResource {
         Course fullCourse = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, false);
 
         // check that the user CAN at least register to one organization of the course
-        if (!authCheckService.isUserAllowedToSelfRegisterForCourse(user, fullCourse)) {
-            throw new AccessForbiddenException(ENTITY_NAME, courseId);
-        }
+        authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, fullCourse);
 
         Course courseForRegistration = courseRepository.findSingleActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(courseId);
         return ResponseEntity.ok(courseForRegistration);
@@ -394,7 +392,10 @@ public class CourseResource {
         // check whether registration is actually possible for each of the courses
         return allCoursesToPotentiallyRegister.stream().filter(course -> {
             // check that self-registration is allowed for the user in this course
-            if (!authCheckService.isUserAllowedToSelfRegisterForCourse(user, course)) {
+            try {
+                authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, course);
+            }
+            catch (AccessForbiddenException e) {
                 return false;
             }
             // check that the user is not already registered to the course
@@ -420,13 +421,17 @@ public class CourseResource {
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, refresh);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             // user might be allowed to register for the course
-            if (authCheckService.isUserAllowedToSelfRegisterForCourse(user, course)) {
-                // suppress error alert with skipAlert: true
+            try {
+                authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, course);
+                // suppress error alert with skipAlert: true so that the client can redirect to the registration page
                 throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could register.", ENTITY_NAME,
                         "noAccessButCouldRegister", true);
             }
-            // just normally throw the access forbidden exception
-            throw new AccessForbiddenException(ENTITY_NAME, courseId);
+            catch (AccessForbiddenException e) {
+                // user is not even allowed to self-register
+                // just normally throw the access forbidden exception
+                throw new AccessForbiddenException(ENTITY_NAME, courseId);
+            }
         }
 
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user);
