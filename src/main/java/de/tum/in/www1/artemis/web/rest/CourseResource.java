@@ -368,13 +368,11 @@ public class CourseResource {
     public ResponseEntity<Course> getCourseForRegistration(@PathVariable long courseId) {
         log.debug("REST request to get a currently active course for registration");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-        // fetch full course without filter first, because otherwise a 404 is thrown if the course is not found
-        Course fullCourse = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, false);
 
-        authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, fullCourse);
+        Course course = courseRepository.findSingleNotOnlineWithOrganizationsAndPrerequisitesElseThrow(courseId);
+        authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, course);
 
-        Course courseForRegistration = courseRepository.findSingleActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(courseId);
-        return ResponseEntity.ok(courseForRegistration);
+        return ResponseEntity.ok(course);
     }
 
     /**
@@ -424,7 +422,8 @@ public class CourseResource {
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             // user might be allowed to register for the course
             try {
-                authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, course);
+                Course courseWithOrganizations = courseRepository.findSingleNotOnlineWithOrganizationsAndPrerequisitesElseThrow(courseId);
+                authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, courseWithOrganizations);
                 // suppress error alert with skipAlert: true so that the client can redirect to the registration page
                 throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could register.", ENTITY_NAME,
                         "noAccessButCouldRegister", true);

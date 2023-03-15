@@ -389,7 +389,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCourseForDashboardRedirectToForRegistration() throws Exception {
+    void testGetCourseForDashboardForbiddenWithRegistrationPossible() throws Exception {
         courseTestService.testGetCourseForDashboardForbiddenWithRegistrationPossible();
     }
 

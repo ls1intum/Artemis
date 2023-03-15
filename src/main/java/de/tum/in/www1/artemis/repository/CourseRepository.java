@@ -134,13 +134,10 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                 FROM Course course
                 LEFT JOIN FETCH course.organizations organizations
                 LEFT JOIN FETCH course.prerequisites prerequisites
-                WHERE (course.startDate IS NULL OR course.startDate <= :now)
-                  AND (course.endDate IS NULL OR course.endDate >= :now)
-                  AND course.onlineCourse = false
-                  AND course.registrationEnabled = true
+                WHERE course.onlineCourse = false
                   AND course.id = :courseId
             """)
-    Optional<Course> findSingleActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
+    Optional<Course> findSingleNotOnlineWithOrganizationsAndPrerequisites(@Param("courseId") long courseId);
 
     @Query("""
                 SELECT DISTINCT course
@@ -311,9 +308,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @param courseId the id of the course
      * @return the course entity
      */
-    default Course findSingleActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(long courseId) {
-        return findSingleActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(courseId, ZonedDateTime.now())
-                .orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default Course findSingleNotOnlineWithOrganizationsAndPrerequisitesElseThrow(long courseId) {
+        return findSingleNotOnlineWithOrganizationsAndPrerequisites(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**
