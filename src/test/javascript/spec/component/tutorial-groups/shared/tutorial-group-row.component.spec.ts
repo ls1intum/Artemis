@@ -1,13 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { MockPipe } from 'ng-mocks';
 
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { TutorialGroupRowComponent } from 'app/course/tutorial-groups/shared/tutorial-groups-table/tutorial-group-row/tutorial-group-row.component';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('TutorialGroupRowComponent', () => {

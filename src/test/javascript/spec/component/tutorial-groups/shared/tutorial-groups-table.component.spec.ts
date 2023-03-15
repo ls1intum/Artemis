@@ -1,22 +1,18 @@
 import { Component, Input, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
-import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { TutorialGroupRowStubComponent } from '../stubs/tutorial-groups-table-stub.component';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { TutorialGroupsTableComponent } from 'app/course/tutorial-groups/shared/tutorial-groups-table/tutorial-groups-table.component';
 import { Course } from 'app/entities/course.model';
-import { Course } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
