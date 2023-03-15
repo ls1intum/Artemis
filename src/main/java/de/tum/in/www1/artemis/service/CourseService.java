@@ -240,10 +240,10 @@ public class CourseService {
      * Get all courses for the given user
      *
      * @param user the user entity
-     * @return an unmodifiable list of all courses for the user
+     * @return an unmodifiable set of all courses for the user
      */
-    public List<Course> findAllActiveForUser(User user) {
-        return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> isCourseVisibleForUser(user, course)).toList();
+    public Set<Course> findAllActiveForUser(User user) {
+        return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> isCourseVisibleForUser(user, course)).collect(Collectors.toUnmodifiableSet());
     }
 
     /**

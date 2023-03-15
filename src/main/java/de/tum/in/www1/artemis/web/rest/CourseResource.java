@@ -367,7 +367,6 @@ public class CourseResource {
         // fetch full course without filter first, because otherwise a 404 is thrown if the course is not found
         Course fullCourse = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, false);
 
-        // check that the user CAN at least register to one organization of the course
         authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, fullCourse);
 
         Course courseForRegistration = courseRepository.findSingleActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisitesElseThrow(courseId);
@@ -386,7 +385,7 @@ public class CourseResource {
         log.debug("REST request to get all currently active courses that are not online courses");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
-        List<Course> allRegisteredCourses = courseService.findAllActiveForUser(user);
+        Set<Course> allRegisteredCourses = courseService.findAllActiveForUser(user);
         List<Course> allCoursesToPotentiallyRegister = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites();
         // check whether registration is actually possible for each of the courses
         return allCoursesToPotentiallyRegister.stream().filter(course -> {
@@ -477,7 +476,7 @@ public class CourseResource {
     public List<Course> getAllCoursesForNotifications() {
         log.debug("REST request to get all Courses the user has access to");
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        return courseService.findAllActiveForUser(user);
+        return courseService.findAllActiveForUser(user).stream().toList();
     }
 
     /**
