@@ -42,30 +42,28 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
         @Autowired
         private CourseRepository courseRepository;
 
-        private Course course;
-
         private User student1;
 
-        private Course createCourseForSelfRegistrationAllowedTest() {
+        private Course getCourseForSelfRegistrationAllowedTest() {
             var course = database.createCourse();
             course.setRegistrationEnabled(true);
             course.setStartDate(ZonedDateTime.now().minusDays(2));
             course.setEndDate(ZonedDateTime.now().plusDays(2));
             course.setStudentGroupName("test-students");
-            courseRepository.save(course);
             return course;
         }
 
         @BeforeEach
         void setUp() {
-            this.course = createCourseForSelfRegistrationAllowedTest();
             this.student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToSelfRegisterForCourseForAllowed() {
-            assertDoesNotThrow(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, this.course));
+            Course course = getCourseForSelfRegistrationAllowedTest();
+            courseRepository.save(course);
+            assertDoesNotThrow(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course));
         }
 
         @Test
@@ -73,31 +71,36 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
         void testIsUserAllowedToSelfRegisterForCourseForWrongUsernamePattern() {
             // student2 is not allowed to self-register for courses, see the @TestPropertySource annotation above.
             var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
-            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(student2, this.course));
+            Course course = getCourseForSelfRegistrationAllowedTest();
+            courseRepository.save(course);
+            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(student2, course));
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToSelfRegisterForCourseForWrongStartDate() {
-            this.course.setStartDate(ZonedDateTime.now().plusDays(1));
-            courseRepository.save(this.course);
-            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, this.course));
+            Course course = getCourseForSelfRegistrationAllowedTest();
+            course.setStartDate(ZonedDateTime.now().plusDays(1));
+            courseRepository.save(course);
+            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course));
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToSelfRegisterForCourseForWrongEndDate() {
-            this.course.setEndDate(ZonedDateTime.now().minusDays(1));
-            courseRepository.save(this.course);
-            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, this.course));
+            Course course = getCourseForSelfRegistrationAllowedTest();
+            course.setEndDate(ZonedDateTime.now().minusDays(1));
+            courseRepository.save(course);
+            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course));
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToSelfRegisterForCourseForRegistrationDisabled() {
-            this.course.setRegistrationEnabled(false);
-            courseRepository.save(this.course);
-            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, this.course));
+            Course course = getCourseForSelfRegistrationAllowedTest();
+            course.setRegistrationEnabled(false);
+            courseRepository.save(course);
+            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course));
         }
 
         @Test
