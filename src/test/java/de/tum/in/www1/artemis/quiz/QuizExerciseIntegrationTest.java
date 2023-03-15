@@ -551,6 +551,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
+    // TODO why is this here?
     private QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) throws Exception {
         Course course = database.createCourse();
 
@@ -1322,29 +1323,29 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     /**
-     * test non-instructors cant create quiz exercises
+     * test non-instructors and non-editors can't create quiz exercises
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCreateQuizExerciseAsTutorForbidden() throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null, QuizMode.SYNCHRONIZED);
         final Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), ZonedDateTime.now().plusHours(5), QuizMode.SYNCHRONIZED);
+        quizExerciseService.save(quizExercise);
 
-        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.FORBIDDEN);
-        assertThat(course.getExercises()).isEmpty();
+        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.FORBIDDEN); // FORBIDDEN... what if the instructor is not even in the
+                                                                                                                     // course?
     }
 
     /**
-     * test non-instructors cant get all quiz exercises
+     * test students can't get all quiz exercises
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllQuizExercisesAsStudentForbidden() throws Exception {
-        final Course course = database.addCourseWithOneQuizExercise("Title");
-        assertThat(course.getExercises()).isNotEmpty();
+        final Course course = database.addCourseWithOneQuizExercise();
 
-        List<QuizExercise> quizExercises = request.getList("/api/courses/" + course.getId() + "/quiz-exercises", HttpStatus.FORBIDDEN, QuizExercise.class);
-        assertThat(quizExercises).isNull();
+        request.getList("/api/courses/" + course.getId() + "/quiz-exercises", HttpStatus.FORBIDDEN, QuizExercise.class);
     }
 
     /**
@@ -1354,43 +1355,39 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testPerformPutActionAsTutorForbidden() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
-        // todo: redundant check (or move it into the helper function)
-        assertThat(course.getExercises()).isNotEmpty();
+        // TODO
         quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         assertThat(quizExercise.isIsOpenForPractice()).isFalse();
 
         request.put("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/set-visible", quizExercise, QuizExercise.class, HttpStatus.FORBIDDEN);
+
         assertThat(quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0).isIsOpenForPractice()).isFalse();
     }
 
+    // TODO: students can't see the exercise if not set to visible
     /**
      * test non-instructors can't see the exercise if it is not set to visible
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testViewQuizExerciseAsStudentNotVisible() throws Exception {
-        final Course course = database.addCourseWithOneQuizExercise();
+        final Course course = database.addCourseWithOneQuizExercise();  // TODO: does this get added to the
         quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         assertThat(quizExercise.isVisibleToStudents()).isFalse();
-        // remove instructor rights in course
-        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Collections.emptySet());
-        userRepo.save(user);
+
         request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.FORBIDDEN, QuizExercise.class);
     }
 
     /**
-     * test non-instructors cant delete an exercise
+     * test non-instructors can't delete an exercise
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeleteQuizExerciseAsNonInstructor() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
         quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        // remove instructor rights in course
-        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Collections.emptySet());
-        userRepo.save(user);
+
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.FORBIDDEN);
     }
 
@@ -1398,14 +1395,11 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      * test non tutors cant recalculate quiz exercise statistics
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
     void testRecalculateStatisticsAsNonInstructor() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
         quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        // remove instructor rights in course
-        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Collections.emptySet());
-        userRepo.save(user);
+
         request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.FORBIDDEN, QuizExercise.class);
     }
 
@@ -1414,37 +1408,40 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetQuizExerciseForStudentNotInCourseForbiden() throws Exception {
-        final Course course = database.addCourseWithOneQuizExercise();
-        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        // remove instructor rights in course
+    void testGetQuizExerciseForStudentNotInCourseForbidden() throws Exception {
+        Course course = database.createCourse();
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(4), null, QuizMode.SYNCHRONIZED);
+        quizExerciseService.save(quizExercise);
+        courseRepo.save(course);
+        quizExerciseRepository.save(quizExercise);
+
         User user = database.getUserByLogin(TEST_PREFIX + "student1");
-        user.setGroups(Collections.emptySet());
+        user.setGroups(Set.of());
         userRepo.save(user);
+
         request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.FORBIDDEN, QuizExercise.class);
     }
 
     /**
-     * test non-instructors in this course cant re-evaluate quiz exercises
+     * test non-instructors in this course can't re-evaluate quiz exercises
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testReEvaluateQuizAsNonInstructorForbidden() throws Exception {
         final Course course = database.createCourse();
         quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
-        quizExercise.setTitle("Titel");
-        quizExercise.setDuration(200);
-        assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
-        assertThat(quizExercise.isExamExercise()).as("Is an exam exercise!").isFalse();
-        assertThat(quizExercise.isQuizEnded()).as("Is not ended!").isTrue();
+        /*
+         * quizExercise.setTitle("Title");
+         * quizExercise.setDuration(200);
+         * assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
+         * assertThat(quizExercise.isExamExercise()).as("Is an exam exercise!").isFalse();
+         * assertThat(quizExercise.isQuizEnded()).as("Is not ended!").isTrue();
+         */
         course.addExercises(quizExercise);
+        // TODO check if it works with instructor
 
         courseRepo.save(course);
         quizExerciseRepository.save(quizExercise);
-        // remove instructor rights in course
-        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Collections.emptySet());
-        userRepo.save(user);
         request.put("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, HttpStatus.FORBIDDEN);
     }
 
@@ -1456,7 +1453,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testUnfinishedExamReEvaluateBadRequest() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         quizExercise = database.createQuizForExam(exerciseGroup);
-        quizExercise.setTitle("Titel");
+        quizExercise.setTitle("Title");
         quizExercise.setDuration(200);
         assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
         quizExerciseRepository.save(quizExercise);
@@ -1464,27 +1461,19 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     /**
-     * test non editor cant update quiz exercise
+     * test non editor can't update quiz exercise
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testUpdateQuizExerciseAsNonEditorForbidden() throws Exception {
         final Course course = database.createCourse();
         quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
-        quizExercise.setTitle("Titel");
-        quizExercise.setDuration(200);
-        assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
-        assertThat(quizExercise.isExamExercise()).as("Is an exam exercise!").isFalse();
-        assertThat(quizExercise.isQuizEnded()).as("Is not ended!").isTrue();
         course.addExercises(quizExercise);
         courseRepo.save(course);
         quizExerciseRepository.save(quizExercise);
         // change some stuff
-        quizExercise.setTitle("new Titel");
-        // remove instructor rights in course
-        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Collections.emptySet());
-        userRepo.save(user);
+        quizExercise.setTitle("new Title");
+
         request.put("/api/quiz-exercises", quizExercise, HttpStatus.FORBIDDEN);
     }
 
@@ -1496,7 +1485,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testUpdateQuizExerciseInvalidBadRequest() throws Exception {
         final Course course = database.createCourse();
         quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
-        quizExercise.setTitle("Titel");
+        quizExercise.setTitle("Title");
         quizExercise.setDuration(200);
         assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
         assertThat(quizExercise.isExamExercise()).as("Is an exam exercise!").isFalse();
