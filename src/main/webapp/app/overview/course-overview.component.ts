@@ -104,9 +104,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                     // service is fully set up, now we can subscribe to the respective observables
                     this.subscribeToHasUnreadMessages();
                 },
-                error: (error) => {
-                    console.error('Error while setting up metis service: ', error);
-                },
             });
     }
 
