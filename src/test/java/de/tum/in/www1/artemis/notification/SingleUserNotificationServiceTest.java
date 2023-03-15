@@ -15,18 +15,23 @@ import static org.mockito.Mockito.*;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -374,44 +379,22 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         });
     }
 
-    @Test
-    void testConversationNotificationsGroupChatAddUsers() {
-        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChat, user, userTwo, CONVERSATION_ADD_USER_GROUP_CHAT);
+    @ParameterizedTest
+    @MethodSource("getNotificationTypesAndTitlesParametersForGroupChat")
+    void testConversationNotificationsGroupChatAddAndRemoveUsers(NotificationType notificationType, String expectedTitle) {
+        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChat, user, userTwo, notificationType);
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
-        verifyRepositoryCallWithCorrectNotification(CONVERSATION_ADD_USER_GROUP_CHAT_TITLE);
+        verifyRepositoryCallWithCorrectNotification(expectedTitle);
     }
 
-    @Test
-    void testConversationNotificationsGroupChatRemoveUser() {
-        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChat, user, userTwo, CONVERSATION_REMOVE_USER_GROUP_CHAT);
+    @ParameterizedTest
+    @MethodSource("getNotificationTypesAndTitlesParametersForChannel")
+    void testConversationNotificationsChannel(NotificationType notificationType, String expectedTitle) {
+        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(channel, user, userTwo, notificationType);
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
-        verifyRepositoryCallWithCorrectNotification(CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE);
-    }
-
-    @Test
-    void testConversationNotificationsDeleteChannel() {
-        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(channel, user, userTwo, CONVERSATION_DELETE_CHANNEL);
-        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
-
-        verifyRepositoryCallWithCorrectNotification(CONVERSATION_DELETE_CHANNEL_TITLE);
-    }
-
-    @Test
-    void testConversationNotificationsChannelAddUsers() {
-        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(channel, user, userTwo, CONVERSATION_ADD_USER_CHANNEL);
-        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
-
-        verifyRepositoryCallWithCorrectNotification(CONVERSATION_ADD_USER_CHANNEL_TITLE);
-    }
-
-    @Test
-    void testConversationNotificationsChannelRemoveUser() {
-        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(channel, user, userTwo, CONVERSATION_REMOVE_USER_CHANNEL);
-        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
-
-        verifyRepositoryCallWithCorrectNotification(CONVERSATION_REMOVE_USER_CHANNEL_TITLE);
+        verifyRepositoryCallWithCorrectNotification(expectedTitle);
     }
 
     @Test
@@ -509,5 +492,16 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
      */
     private void verifyEmail() {
         verify(javaMailSender, timeout(1000).times(1)).send(any(MimeMessage.class));
+    }
+
+    private static Stream<Arguments> getNotificationTypesAndTitlesParametersForGroupChat() {
+        return Stream.of(Arguments.of(CONVERSATION_ADD_USER_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT_TITLE),
+                Arguments.of(CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE));
+    }
+
+    private static Stream<Arguments> getNotificationTypesAndTitlesParametersForChannel() {
+        return Stream.of(Arguments.of(CONVERSATION_ADD_USER_CHANNEL, CONVERSATION_ADD_USER_CHANNEL_TITLE),
+                Arguments.of(CONVERSATION_REMOVE_USER_CHANNEL, CONVERSATION_REMOVE_USER_CHANNEL_TITLE),
+                Arguments.of(CONVERSATION_DELETE_CHANNEL, CONVERSATION_DELETE_CHANNEL_TITLE));
     }
 }

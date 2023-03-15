@@ -9,6 +9,7 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -26,8 +27,9 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ConversationNotification extends Notification {
 
+    @Transient
     @JsonIgnore
-    public static final Set<NotificationType> CONVERSATION_NOTIFICATION_TYPES = Set.of(CONVERSATION_NEW_MESSAGE);
+    private final Set<NotificationType> CONVERSATION_NOTIFICATION_TYPES = Set.of(CONVERSATION_NEW_MESSAGE);
 
     @ManyToOne
     @JoinColumn(name = "message_id")
@@ -81,7 +83,7 @@ public class ConversationNotification extends Notification {
      *
      * @param notificationType the notification type to verify
      */
-    public static void verifySupportedNotificationType(NotificationType notificationType) {
+    public void verifySupportedNotificationType(NotificationType notificationType) {
         if (!CONVERSATION_NOTIFICATION_TYPES.contains(notificationType)) {
             throw new UnsupportedOperationException("Unsupported NotificationType for conversation: " + notificationType);
         }
