@@ -72,7 +72,7 @@ export class AlertService {
 
         this.httpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: any) => {
             const httpErrorResponse: HttpErrorResponse = response.content;
-            if (httpErrorResponse.error !== null && httpErrorResponse.error.skipAlert) {
+            if (httpErrorResponse.error?.skipAlert) {
                 return;
             }
             switch (httpErrorResponse.status) {
