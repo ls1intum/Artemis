@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { NgModel } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -32,7 +32,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { of, Subscription } from 'rxjs';
+import { Subscription, of } from 'rxjs';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
@@ -54,7 +54,7 @@ describe('Exercise Scores Component', () => {
 
     const exercise: Exercise = {
         id: 1,
-        type: ExerciseType.TEXT,
+        type: ExerciseType.PROGRAMMING,
         numberOfAssessmentsOfCorrectionRounds: [],
         secondCorrectionEnabled: false,
         studentAssignedTeamIdComputed: false,
@@ -185,9 +185,8 @@ describe('Exercise Scores Component', () => {
     }));
 
     it('should get exercise participation link for exercise without an exercise group', () => {
-        const expectedLink = ['/course-management', course.id!.toString(), 'text-exercises', exercise.id!.toString(), 'participations', '1', 'submissions'];
+        const expectedLink = ['/course-management', course.id!.toString(), 'programming-exercises', exercise.id!.toString(), 'participations', '1', 'submissions'];
         component.course = course;
-        component.exercise = exercise;
 
         const returnedLink = component.getExerciseParticipationsLink(1);
 
@@ -195,9 +194,19 @@ describe('Exercise Scores Component', () => {
     });
 
     it('should get exercise participation link for exercise with an exercise group', () => {
-        const expectedLink = ['/course-management', course.id!.toString(), 'exams', '1', 'exercise-groups', '1', 'text-exercises', exercise.id!.toString(), 'participations', '2'];
+        const expectedLink = [
+            '/course-management',
+            course.id!.toString(),
+            'exams',
+            '1',
+            'exercise-groups',
+            '1',
+            'programming-exercises',
+            exercise.id!.toString(),
+            'participations',
+            '2',
+        ];
         component.course = course;
-        component.exercise = exercise;
         component.exercise.exerciseGroup = {
             id: 1,
             exam: {
@@ -221,6 +230,10 @@ describe('Exercise Scores Component', () => {
 
     it.each([
         [FilterProp.ALL, {} as Participation, true],
+        [FilterProp.SUCCESSFUL, { results: [{ successful: true }] } as Participation, true],
+        [FilterProp.SUCCESSFUL, { results: [{ successful: false }] } as Participation, false],
+        [FilterProp.UNSUCCESSFUL, { results: [{ successful: false }] } as Participation, true],
+        [FilterProp.UNSUCCESSFUL, { results: [{ successful: true }] } as Participation, false],
         [FilterProp.BUILD_FAILED, { results: [{ submission: { buildFailed: true } as Submission }] } as Participation, true],
         [FilterProp.BUILD_FAILED, { results: [{ submission: {} as Submission }] } as Participation, false],
         [FilterProp.MANUAL, { results: [{ assessmentType: AssessmentType.SEMI_AUTOMATIC }] } as Participation, true],
@@ -240,6 +253,7 @@ describe('Exercise Scores Component', () => {
 
     it('should return project key', () => {
         component.exercise = {
+            type: ExerciseType.PROGRAMMING,
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: false,
@@ -308,12 +322,14 @@ describe('Exercise Scores Component', () => {
     });
 
     it('should refresh properly', () => {
-        const resultServiceStub = jest.spyOn(participationService, 'findAllParticipationsByExercise').mockReturnValue(of(new HttpResponse<Result[]>({ body: [participation] })));
+        const participationServiceStub = jest
+            .spyOn(participationService, 'findAllParticipationsByExercise')
+            .mockReturnValue(of(new HttpResponse<Result[]>({ body: [participation] })));
 
         component.refresh();
 
-        expect(resultServiceStub).toHaveBeenCalledOnce();
-        expect(resultServiceStub).toHaveBeenCalledWith(1, true);
+        expect(participationServiceStub).toHaveBeenCalledOnce();
+        expect(participationServiceStub).toHaveBeenCalledWith(1, true);
         expect(component.participations).toEqual([participation]);
         expect(component.filteredParticipations).toEqual([participation]);
         expect(component.isLoading).toBeFalse();

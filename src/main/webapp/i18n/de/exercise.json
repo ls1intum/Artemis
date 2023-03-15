@@ -126,15 +126,18 @@
             "participations": "Teilnahmen",
             "submissions": "Einreichungen",
             "teams": "Teams",
-            "exportNames": "Namen exportieren",
-            "exportResults": {
-                "title": "Ergebnisse exportieren",
-                "withoutTestCases": "Ohne Testfälle",
-                "withTestCases": "Mit Testfällen",
-                "withTestCasesAndFeedback": "Mit Testfällen<br />und Feedback",
-                "withTestCasesTooltip": "Damit werden zusätzliche Informationen über bestandene und nicht bestandene Testfälle, für jeden Eintrag, hinzugefügt.",
-                "withTestCasesAndFeedbackTooltip": "Damit werden Informationen über die Testfälle und ihre Feedbacks hinzugefügt.",
-                "emptyError": "{{ exercise }}: Keine Ergebnisse gefunden"
+            "export": {
+                "options": "Exportoptionen:",
+                "names": "Namen exportieren",
+                "results": {
+                    "title": "Ergebnisse exportieren",
+                    "withoutTestCases": "Ohne Testfälle",
+                    "withTestCases": "Mit Testfällen",
+                    "withTestCasesAndFeedback": "Mit Testfällen<br />und Feedback",
+                    "withTestCasesTooltip": "Damit werden zusätzliche Informationen über bestandene und nicht bestandene Testfälle, für jeden Eintrag, hinzugefügt.",
+                    "withTestCasesAndFeedbackTooltip": "Damit werden Informationen über die Testfälle und ihre Feedbacks hinzugefügt.",
+                    "emptyError": "{{ exercise }}: Keine Ergebnisse gefunden"
+                }
             },
             "refresh": "Aktualisieren",
             "course": "Kurs",

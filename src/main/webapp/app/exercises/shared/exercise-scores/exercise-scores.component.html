@@ -44,13 +44,13 @@
                         <span class="ms-1">{{ 'artemisApp.exercise.showSuccessful' | artemisTranslate }}</span>
                     </label>
                 </li>
-                <li *ngIf="newManualResultAllowed">
+                <li *ngIf="newManualResultAllowed || exercise.allowComplaintsForAutomaticAssessments">
                     <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
                         <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.MANUAL)" [value]="FilterProp.MANUAL" />
                         <span class="ms-1">{{ 'artemisApp.exercise.showManual' | artemisTranslate }}</span>
                     </label>
                 </li>
-                <li *ngIf="newManualResultAllowed">
+                <li *ngIf="newManualResultAllowed || exercise.allowComplaintsForAutomaticAssessments">
                     <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
                         <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.AUTOMATIC)" [value]="FilterProp.AUTOMATIC" />
                         <span class="ms-1">{{ 'artemisApp.exercise.showAutomatic' | artemisTranslate }}</span>
@@ -105,9 +105,10 @@
                     container="body"
                 ></button>
                 <ng-template #popContent>
+                    <h5 jhiTranslate="artemisApp.exercise.export.options"></h5>
                     <button *ngIf="exercise.isAtLeastInstructor" class="btn btn-info btn-sm me-1" (click)="exportNames()">
                         <fa-icon [icon]="faDownload"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportNames">Export Names</span>
+                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.export.names">Export Names</span>
                     </button>
                     <jhi-exercise-scores-export-button *ngIf="exercise.isAtLeastInstructor" [exercise]="exercise"></jhi-exercise-scores-export-button>
                     <jhi-programming-assessment-repo-export
@@ -374,7 +375,7 @@
                                 <button
                                     *ngIf="
                                         newManualResultAllowed &&
-                                        value.results[0] &&
+                                        value.results[0]?.assessmentType &&
                                         !value.results[0].completionDate &&
                                         value.results[0].assessmentType !== AssessmentType.AUTOMATIC
                                     "
