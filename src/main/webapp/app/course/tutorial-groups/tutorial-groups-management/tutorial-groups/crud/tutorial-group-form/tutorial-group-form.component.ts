@@ -172,7 +172,12 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
         } else if (!originalHasSchedule && !updateHasSchedule) {
             return false;
         } else {
-            return !isEqual({ ...this.form.value.schedule }, this.existingScheduleFormDate);
+            const newScheduleValues = { ...this.form.value.schedule };
+            delete newScheduleValues.location;
+            const existingScheduleValues = { ...this.existingScheduleFormDate };
+            // we do not consider the location when comparing the schedules as change it has no irreversible effect
+            delete existingScheduleValues.location;
+            return !isEqual(newScheduleValues, existingScheduleValues);
         }
     }
 

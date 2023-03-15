@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Course, Language } from 'app/entities/course.model';
+import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -33,6 +35,9 @@ export class TutorialGroupDetailComponent implements OnChanges {
     ENGLISH = Language.ENGLISH;
     formattedAdditionalInformation?: SafeHtml;
     getDayTranslationKey = getDayTranslationKey;
+
+    faQuestionCircle = faQuestionCircle;
+    readonly Math = Math;
 
     sessions: TutorialGroupSession[] = [];
 

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef } from '@angular/core';
-import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle, faSort } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
@@ -37,6 +37,7 @@ export class TutorialGroupsTableComponent implements OnChanges {
     sortingPredicate = 'title';
     ascending = true;
     faSort = faSort;
+    faQuestionCircle = faQuestionCircle;
 
     constructor(private sortService: SortService, private cdr: ChangeDetectorRef) {}
 

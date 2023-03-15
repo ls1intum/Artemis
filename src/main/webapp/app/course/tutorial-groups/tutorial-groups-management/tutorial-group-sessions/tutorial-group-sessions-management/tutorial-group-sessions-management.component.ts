@@ -35,6 +35,7 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     tutorialGroup: TutorialGroup;
     sessions: TutorialGroupSession[] = [];
     tutorialGroupSchedule: TutorialGroupSchedule;
+    attendanceUpdated = false;
 
     isInitialized = false;
 
@@ -101,7 +102,11 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     }
 
     clear() {
-        this.activeModal.dismiss();
+        if (this.attendanceUpdated) {
+            this.activeModal.close();
+        } else {
+            this.activeModal.dismiss();
+        }
     }
 
     ngOnDestroy(): void {

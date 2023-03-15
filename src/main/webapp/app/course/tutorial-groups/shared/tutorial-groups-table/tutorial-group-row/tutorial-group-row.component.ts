@@ -12,6 +12,7 @@ import { getDayTranslationKey } from '../../weekdays';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupRowComponent {
+    readonly Math = Math;
     @HostBinding('class') class = 'tutorial-group-row';
 
     @Input()
