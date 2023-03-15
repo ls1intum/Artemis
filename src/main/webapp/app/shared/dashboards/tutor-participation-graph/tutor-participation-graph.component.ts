@@ -1,11 +1,12 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
 import { Router } from '@angular/router';
 import { faBook, faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
+import { get } from 'lodash-es';
+
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { get } from 'lodash-es';
 
 @Component({
     selector: 'jhi-tutor-participation-graph',

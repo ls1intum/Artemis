@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { IsActiveMatchOptions, Router, UrlTree } from '@angular/router';
 import { faCheckDouble, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';

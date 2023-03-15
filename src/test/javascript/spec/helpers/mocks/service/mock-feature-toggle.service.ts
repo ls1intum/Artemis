@@ -1,6 +1,7 @@
-import { ActiveFeatureToggles, FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { BehaviorSubject, of } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
+
+import { ActiveFeatureToggles, FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 export class MockFeatureToggleService {
     private subject: BehaviorSubject<ActiveFeatureToggles>;

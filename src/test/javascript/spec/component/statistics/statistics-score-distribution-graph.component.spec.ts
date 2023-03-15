@@ -1,13 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { BarChartModule } from '@swimlane/ngx-charts';
+import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
+
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/statistics-score-distribution-graph.component';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('StatisticsScoreDistributionGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsScoreDistributionGraphComponent>;

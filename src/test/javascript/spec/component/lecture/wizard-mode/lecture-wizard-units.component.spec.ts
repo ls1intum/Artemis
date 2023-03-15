@@ -3,6 +3,11 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { AlertService } from 'app/core/util/alert.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
@@ -23,10 +28,6 @@ import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-managem
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { objectToJsonBlob } from 'app/utils/blob-util';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
 
 @Component({ selector: 'jhi-video-unit-form', template: '' })
 class VideoUnitFormStubComponent {

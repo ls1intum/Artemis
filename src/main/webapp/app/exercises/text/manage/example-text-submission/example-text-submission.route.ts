@@ -1,7 +1,8 @@
 import { Routes } from '@angular/router';
+
+import { ExampleTextSubmissionComponent } from './example-text-submission.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ExampleTextSubmissionComponent } from './example-text-submission.component';
 
 export const exampleTextSubmissionRoute: Routes = [
     {

@@ -1,5 +1,3 @@
-import { Course } from 'app/entities/course.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import allSuccessful from '../../../fixtures/exercise/programming/all_successful/submission.json';
 import buildError from '../../../fixtures/exercise/programming/build_error/submission.json';
 import partiallySuccessful from '../../../fixtures/exercise/programming/partially_successful/submission.json';
@@ -7,6 +5,8 @@ import { courseManagementRequest, programmingExerciseEditor } from '../../../sup
 import { ProgrammingExerciseSubmission } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, studentOne, studentThree, studentTwo } from '../../../support/users';
+import { Course } from 'app/entities/course.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('Programming exercise participations', () => {
     let course: Course;

@@ -1,6 +1,10 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { faChevronLeft, faChevronRight, faComments, faCompress, faExpand, faFilter, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import interact from 'interactjs';
+import { EMPTY, Subject, from, map, takeUntil } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
@@ -16,9 +20,6 @@ import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversation
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import interact from 'interactjs';
-import { EMPTY, Subject, from, map, takeUntil } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 
 interface SearchQuery {
     searchTerm: string;

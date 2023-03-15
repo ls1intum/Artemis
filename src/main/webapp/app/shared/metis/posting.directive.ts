@@ -1,4 +1,5 @@
 import { Directive, Input, OnInit } from '@angular/core';
+
 import { Posting } from 'app/entities/metis/posting.model';
 
 @Directive()

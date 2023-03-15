@@ -1,6 +1,15 @@
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { BehaviorSubject, of } from 'rxjs';
+
+import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { AssessmentFiltersComponent } from 'app/assessment/assessment-filters/assessment-filters.component';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { AccountService } from 'app/core/auth/account.service';
@@ -18,14 +27,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, of } from 'rxjs';
-import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 const textExercise: TextExercise = {
     allowManualFeedbackRequests: false,

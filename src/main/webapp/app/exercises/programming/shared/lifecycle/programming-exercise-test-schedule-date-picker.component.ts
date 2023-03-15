@@ -1,8 +1,9 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faCalendarCheck, faCalendarMinus, faCalendarPlus } from '@fortawesome/free-solid-svg-icons';
-import { isDate } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
+
+import { isDate } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-programming-exercise-test-schedule-date-picker',

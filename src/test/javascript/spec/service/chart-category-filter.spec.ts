@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
+
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
@@ -9,7 +11,6 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
-import dayjs from 'dayjs/esm';
 
 const generateExerciseCategory = (type: ExerciseType, index: number) => {
     return { category: type + index.toString(), color: '#9f34eb' };

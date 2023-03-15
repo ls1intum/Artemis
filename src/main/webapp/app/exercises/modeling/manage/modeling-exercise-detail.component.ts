@@ -3,6 +3,10 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { UMLModel } from '@ls1intum/apollon';
+import dayjs from 'dayjs/esm';
+import { Subscription } from 'rxjs';
+
+import { ModelingExerciseService } from './modeling-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -14,9 +18,6 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import dayjs from 'dayjs/esm';
-import { Subscription } from 'rxjs';
-import { ModelingExerciseService } from './modeling-exercise.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',

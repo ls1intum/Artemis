@@ -1,6 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { BarChartModule } from '@swimlane/ngx-charts';
+import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
+
+import { ArtemisTestModule } from '../../test.module';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
 import { GraphColors } from 'app/entities/statistics.model';
@@ -9,8 +12,6 @@ import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-fi
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PerformanceInterval, StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('StatisticsAverageScoreGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsAverageScoreGraphComponent>;

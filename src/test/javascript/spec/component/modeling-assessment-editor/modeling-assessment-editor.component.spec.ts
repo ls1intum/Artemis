@@ -3,6 +3,16 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockComponent } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of, throwError } from 'rxjs';
+
+import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
@@ -34,15 +44,6 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
-import dayjs from 'dayjs/esm';
-import { MockComponent } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of, throwError } from 'rxjs';
-import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;

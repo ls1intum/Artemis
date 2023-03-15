@@ -1,17 +1,18 @@
 import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of, throwError } from 'rxjs';
+
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { RegisterComponent } from 'app/account/register/register.component';
 import { RegisterService } from 'app/account/register/register.service';
 import { User } from 'app/core/user/user.model';
 import { EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/constants/error.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of, throwError } from 'rxjs';
-import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('Component Tests', () => {
     describe('RegisterComponent', () => {

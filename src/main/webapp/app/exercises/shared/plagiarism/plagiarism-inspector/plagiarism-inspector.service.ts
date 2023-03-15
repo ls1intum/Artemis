@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { Range } from 'app/shared/util/utils';
 

@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+
 import { CourseGroup } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';

@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BarChartModule } from '@swimlane/ngx-charts';
+
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
 import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';

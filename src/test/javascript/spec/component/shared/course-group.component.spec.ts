@@ -4,6 +4,15 @@ import { ActivatedRoute } from '@angular/router';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { Observable, of, throwError } from 'rxjs';
+
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -19,14 +28,6 @@ import { UsersImportButtonComponent } from 'app/shared/import/users-import-butto
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { Observable, of, throwError } from 'rxjs';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 jest.mock('export-to-csv', () => ({
     ExportToCsv: jest.fn().mockImplementation(() => ({

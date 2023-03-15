@@ -1,6 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgModel, NgSelectOption } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { cloneDeep } from 'lodash-es';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
+import { ArtemisTestModule } from '../../test.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -13,11 +19,6 @@ import { IntervalGradingSystemComponent } from 'app/grading-system/interval-grad
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { cloneDeep } from 'lodash-es';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
-import { ArtemisTestModule } from '../../test.module';
 
 const generateCsv = jest.fn();
 

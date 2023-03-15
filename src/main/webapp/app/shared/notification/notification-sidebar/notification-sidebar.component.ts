@@ -1,6 +1,10 @@
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { faArchive, faBell, faCircleNotch, faCog, faEye, faTimes } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { SessionStorageService } from 'ngx-webstorage';
+import { Subscription } from 'rxjs';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
@@ -13,9 +17,6 @@ import { NotificationSetting } from 'app/shared/user-settings/notification-setti
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { Setting } from 'app/shared/user-settings/user-settings.model';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import dayjs from 'dayjs/esm';
-import { SessionStorageService } from 'ngx-webstorage';
-import { Subscription } from 'rxjs';
 
 export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificationSideBar';
 export const LAST_READ_STORAGE_KEY = 'lastNotificationRead';

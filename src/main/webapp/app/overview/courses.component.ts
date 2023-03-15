@@ -2,6 +2,9 @@ import { HttpResponse } from '@angular/common/http';
 import { Component, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+
+import { CourseManagementService } from '../course/manage/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -16,8 +19,6 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import dayjs from 'dayjs/esm';
-import { CourseManagementService } from '../course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-overview',

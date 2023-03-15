@@ -1,12 +1,13 @@
 import { HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
+
 import { Exercise } from 'app/entities/exercise.model';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-exercise-statistics',

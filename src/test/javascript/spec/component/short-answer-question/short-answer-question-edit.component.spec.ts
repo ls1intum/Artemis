@@ -3,6 +3,10 @@ import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { cloneDeep } from 'lodash-es';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+
+import { ArtemisTestModule } from '../../test.module';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -15,9 +19,6 @@ import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as markdownConversionUtil from 'app/shared/util/markdown.conversion.util';
-import { cloneDeep } from 'lodash-es';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 
 const question = new ShortAnswerQuestion();
 question.id = 1;

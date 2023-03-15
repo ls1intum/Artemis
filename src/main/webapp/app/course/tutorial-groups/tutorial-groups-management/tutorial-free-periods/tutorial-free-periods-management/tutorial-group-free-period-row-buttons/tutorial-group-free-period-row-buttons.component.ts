@@ -2,13 +2,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { EMPTY, Subject, from } from 'rxjs';
+import { catchError, takeUntil } from 'rxjs/operators';
+
 import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { EMPTY, Subject, from } from 'rxjs';
-import { catchError, takeUntil } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-tutorial-group-free-period-row-buttons',

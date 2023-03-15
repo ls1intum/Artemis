@@ -3,6 +3,9 @@ import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
+import interact from 'interactjs';
+import { combineLatest, map } from 'rxjs';
+
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -13,8 +16,6 @@ import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.di
 import { MetisService } from 'app/shared/metis/metis.service';
 import { DisplayPriority, PageType, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import interact from 'interactjs';
-import { combineLatest, map } from 'rxjs';
 
 @Component({
     selector: 'jhi-discussion-section',

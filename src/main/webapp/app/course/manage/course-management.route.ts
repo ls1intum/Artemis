@@ -1,5 +1,11 @@
 /* eslint-disable max-len */
 import { Routes } from '@angular/router';
+
+import { CourseManagementExercisesComponent } from './course-management-exercises.component';
+import { CourseManagementStatisticsComponent } from './course-management-statistics.component';
+import { CourseManagementComponent } from './course-management.component';
+import { CourseUpdateComponent } from './course-update.component';
+import { CourseDetailComponent } from './detail/course-detail.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CreateLearningGoalComponent } from 'app/course/learning-goals/create-learning-goal/create-learning-goal.component';
 import { EditLearningGoalComponent } from 'app/course/learning-goals/edit-learning-goal/edit-learning-goal.component';
@@ -16,11 +22,6 @@ import { GradingSystemComponent } from 'app/grading-system/grading-system.compon
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { isOrion } from 'app/shared/orion/orion';
-import { CourseManagementExercisesComponent } from './course-management-exercises.component';
-import { CourseManagementStatisticsComponent } from './course-management-statistics.component';
-import { CourseManagementComponent } from './course-management.component';
-import { CourseUpdateComponent } from './course-update.component';
-import { CourseDetailComponent } from './detail/course-detail.component';
 
 export const courseManagementState: Routes = [
     {

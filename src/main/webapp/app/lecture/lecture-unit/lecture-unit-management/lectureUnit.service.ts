@@ -1,13 +1,14 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
 

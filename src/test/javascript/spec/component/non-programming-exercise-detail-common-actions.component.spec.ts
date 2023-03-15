@@ -1,6 +1,13 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockRouterLinkDirective } from '../helpers/mocks/directive/mock-router-link.directive';
+import { MockRouter } from '../helpers/mocks/mock-router';
+import { MockFileUploadExerciseService } from '../helpers/mocks/service/mock-file-upload-exercise.service';
+import { ArtemisTestModule } from '../test.module';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -15,12 +22,6 @@ import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external
 import { SubmissionExportButtonComponent } from 'app/exercises/shared/submission-export/submission-export-button.component';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockRouterLinkDirective } from '../helpers/mocks/directive/mock-router-link.directive';
-import { MockRouter } from '../helpers/mocks/mock-router';
-import { MockFileUploadExerciseService } from '../helpers/mocks/service/mock-file-upload-exercise.service';
-import { ArtemisTestModule } from '../test.module';
 
 describe('Exercise detail common actions Component', () => {
     let comp: NonProgrammingExerciseDetailCommonActionsComponent;

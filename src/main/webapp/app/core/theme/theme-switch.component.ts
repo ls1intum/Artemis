@@ -1,8 +1,9 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { fromEvent } from 'rxjs';
+
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 /**
  * Displays a sun or a moon in the navbar, depending on the current theme.

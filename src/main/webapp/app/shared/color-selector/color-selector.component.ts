@@ -1,4 +1,5 @@
 import { Component, EventEmitter, HostListener, Input, OnInit, Output } from '@angular/core';
+
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 
 export interface Coordinates {

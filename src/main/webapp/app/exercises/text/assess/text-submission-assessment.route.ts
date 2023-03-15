@@ -1,5 +1,10 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
+import { of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+
+import { TextFeedbackConflictsComponent } from './conflicts/text-feedback-conflicts.component';
+import { TextSubmissionAssessmentComponent } from './text-submission-assessment.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
@@ -7,10 +12,6 @@ import { TextAssessmentDashboardComponent } from 'app/exercises/text/assess/text
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-import { TextFeedbackConflictsComponent } from './conflicts/text-feedback-conflicts.component';
-import { TextSubmissionAssessmentComponent } from './text-submission-assessment.component';
 
 @Injectable({ providedIn: 'root' })
 export class NewStudentParticipationResolver implements Resolve<StudentParticipation | undefined> {

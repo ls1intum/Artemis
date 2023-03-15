@@ -2,6 +2,8 @@ import { HttpResponse } from '@angular/common/http';
 import { Component, Input, OnInit } from '@angular/core';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Observable } from 'rxjs';
+
 import { SCORE_PATTERN } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -11,7 +13,6 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
 import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { Observable } from 'rxjs';
 
 @Component({
     selector: 'jhi-external-submission-dialog',

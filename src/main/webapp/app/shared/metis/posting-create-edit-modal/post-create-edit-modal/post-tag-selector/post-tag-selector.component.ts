@@ -4,8 +4,9 @@ import { FormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { Observable, Subscription, map, startWith } from 'rxjs';
+
+import { MetisService } from 'app/shared/metis/metis.service';
 
 @Component({
     selector: 'jhi-post-tag-selector',

@@ -1,6 +1,8 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { faSort, faSortDown, faSortUp, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { Subject } from 'rxjs';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { ProgrammingExerciseTestCaseType } from 'app/entities/programming-exercise-test-case.model';
@@ -13,7 +15,6 @@ import { ProgrammingExerciseSolutionEntryService } from 'app/exercises/shared/ex
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortingOrder } from 'app/shared/table/pageable-table';
-import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-solution-entry-generation-step',

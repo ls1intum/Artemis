@@ -1,5 +1,5 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
 import { StudentExam } from './student-exam.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
 
 export class ExamSession implements BaseEntity {
     public id?: number;

@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+
 import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 
 @Component({

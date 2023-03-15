@@ -1,5 +1,5 @@
-import { BASE_API, POST, PUT } from '../../constants';
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
+import { BASE_API, POST, PUT } from '../../constants';
 
 export class ExamAssessmentPage extends AbstractExerciseAssessmentPage {
     submitModelingAssessment() {

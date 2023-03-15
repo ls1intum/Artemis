@@ -1,4 +1,8 @@
 import { TestBed } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockPipe } from 'ng-mocks';
+
+import { ArtemisTestModule } from '../../../../test.module';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
@@ -12,9 +16,6 @@ import { SubmissionResultStatusComponent } from 'app/overview/submission-result-
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('HeaderParticipationPage', () => {
     let component: HeaderParticipationPageComponent;

@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 
 @Component({

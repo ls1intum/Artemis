@@ -1,6 +1,7 @@
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { TestBed, fakeAsync, flush, inject, tick } from '@angular/core/testing';
 import { MissingTranslationHandler, TranslateModule, TranslateService } from '@ngx-translate/core';
+
 import { missingTranslationHandler } from 'app/core/config/translation.config';
 import { Alert, AlertCreationProperties, AlertService, AlertType } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';

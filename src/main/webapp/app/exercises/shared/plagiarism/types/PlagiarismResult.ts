@@ -1,6 +1,6 @@
+import { PlagiarismComparison } from './PlagiarismComparison';
 import { Exercise } from 'app/entities/exercise.model';
 import { PlagiarismSubmissionElement } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmissionElement';
-import { PlagiarismComparison } from './PlagiarismComparison';
 
 /**
  * Base result of any automatic plagiarism detection.

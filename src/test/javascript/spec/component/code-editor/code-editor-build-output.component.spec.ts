@@ -1,6 +1,14 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
+import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
+import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
+import { triggerChanges } from '../../helpers/utils/general.utils';
+import { ArtemisTestModule } from '../../test.module';
 import { BuildLogEntryArray } from 'app/entities/build-log.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -16,13 +24,6 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
-import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
-import { triggerChanges } from '../../helpers/utils/general.utils';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('CodeEditorBuildOutputComponent', () => {
     let comp: CodeEditorBuildOutputComponent;

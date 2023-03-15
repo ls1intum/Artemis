@@ -1,4 +1,6 @@
 import { Injectable } from '@angular/core';
+import dayjs from 'dayjs/esm';
+
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -8,7 +10,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import dayjs from 'dayjs/esm';
 
 export enum ScoreType {
     ABSOLUTE_SCORE = 'absoluteScore',

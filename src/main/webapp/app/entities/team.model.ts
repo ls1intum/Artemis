@@ -1,7 +1,8 @@
+import dayjs from 'dayjs/esm';
+
 import { User } from 'app/core/user/user.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import dayjs from 'dayjs/esm';
 
 export enum TeamImportStrategyType {
     PURGE_EXISTING = 'PURGE_EXISTING',

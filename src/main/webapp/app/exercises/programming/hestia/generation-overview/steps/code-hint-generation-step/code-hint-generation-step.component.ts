@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { faWrench } from '@fortawesome/free-solid-svg-icons';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';

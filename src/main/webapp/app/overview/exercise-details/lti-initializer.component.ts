@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+
 import { UserService } from 'app/core/user/user.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { LtiInitializerModalComponent } from 'app/overview/exercise-details/lti-initializer-modal.component';

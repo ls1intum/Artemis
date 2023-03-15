@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { UMLModel } from '@ls1intum/apollon';
+import dayjs from 'dayjs/esm';
+
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
-import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',

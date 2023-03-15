@@ -1,3 +1,5 @@
+import dayjs from 'dayjs/esm';
+
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -7,7 +9,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
-import dayjs from 'dayjs/esm';
 
 describe('CourseScoreCalculationService', () => {
     let courseScoreCalculationService: CourseScoreCalculationService;

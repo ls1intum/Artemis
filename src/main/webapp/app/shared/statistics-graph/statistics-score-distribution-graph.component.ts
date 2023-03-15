@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+
 import { ExerciseType } from 'app/entities/exercise.model';
 import { GraphColors } from 'app/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';

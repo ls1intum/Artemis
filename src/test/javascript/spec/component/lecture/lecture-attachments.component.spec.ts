@@ -4,6 +4,12 @@ import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockFileService } from '../../helpers/mocks/service/mock-file.service';
+import { ArtemisTestModule } from '../../test.module';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
@@ -15,11 +21,6 @@ import { FileService } from 'app/shared/http/file.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockFileService } from '../../helpers/mocks/service/mock-file.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('LectureAttachmentsComponent', () => {
     let comp: LectureAttachmentsComponent;

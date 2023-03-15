@@ -2,6 +2,8 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
@@ -11,7 +13,6 @@ import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizStatistics } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { Subscription } from 'rxjs';
 
 export const redColor = '#d9534f';
 export const greenColor = '#5cb85c';

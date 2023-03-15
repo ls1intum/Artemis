@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { ConsistencyCheckError } from 'app/entities/consistency-check-result.model';
 import { getCourseId } from 'app/entities/exercise.model';

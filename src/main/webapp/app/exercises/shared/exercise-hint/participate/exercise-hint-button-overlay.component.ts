@@ -1,9 +1,10 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import cloneDeep from 'lodash-es/cloneDeep';
+
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseHintStudentDialogComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
-import cloneDeep from 'lodash-es/cloneDeep';
 
 @Component({
     selector: 'jhi-exercise-hint-button-overlay',

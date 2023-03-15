@@ -2,13 +2,14 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+
+import { QuizExerciseService } from './quiz-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { onError } from 'app/shared/util/global.utils';
-import { QuizExerciseService } from './quiz-exercise.service';
 
 @Component({
     selector: 'jhi-quiz-exercise-export',

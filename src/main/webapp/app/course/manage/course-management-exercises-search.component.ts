@@ -1,4 +1,5 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { exerciseTypes } from 'app/entities/exercise.model';
 

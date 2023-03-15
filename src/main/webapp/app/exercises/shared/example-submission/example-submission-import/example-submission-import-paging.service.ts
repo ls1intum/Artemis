@@ -1,10 +1,11 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { Submission } from 'app/entities/submission.model';
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 type EntityResponseType = SearchResult<Submission>;
 

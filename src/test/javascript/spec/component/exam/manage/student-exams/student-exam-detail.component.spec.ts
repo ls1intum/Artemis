@@ -8,6 +8,12 @@ import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
+import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
@@ -29,11 +35,6 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
-import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('StudentExamDetailComponent', () => {
     let studentExamDetailComponentFixture: ComponentFixture<StudentExamDetailComponent>;

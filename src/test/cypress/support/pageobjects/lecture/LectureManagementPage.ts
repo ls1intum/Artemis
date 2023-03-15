@@ -1,4 +1,5 @@
 import day from 'dayjs/esm';
+
 import { BASE_API, DELETE, POST } from '../../constants';
 
 export class LectureManagementPage {

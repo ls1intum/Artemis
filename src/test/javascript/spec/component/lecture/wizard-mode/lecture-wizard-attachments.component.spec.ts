@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockPipe } from 'ng-mocks';
+
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUpdateWizardAttachmentsComponent } from 'app/lecture/wizard-mode/lecture-wizard-attachments.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
 
 describe('LectureWizardAttachmentsComponent', () => {
     let wizardAttachmentsComponentFixture: ComponentFixture<LectureUpdateWizardAttachmentsComponent>;

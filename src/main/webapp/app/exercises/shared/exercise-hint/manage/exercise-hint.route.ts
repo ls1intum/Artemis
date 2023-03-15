@@ -1,17 +1,18 @@
 import { HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
+import { of } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
+
+import { ExerciseHintDetailComponent } from './exercise-hint-detail.component';
+import { ExerciseHintComponent } from './exercise-hint.component';
+import { ExerciseHintService } from '../shared/exercise-hint.service';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { exerciseTypes } from 'app/entities/exercise.model';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExerciseResolve } from 'app/exercises/programming/manage/programming-exercise-management-routing.module';
 import { ExerciseHintUpdateComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-update.component';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { of } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
-import { ExerciseHintService } from '../shared/exercise-hint.service';
-import { ExerciseHintDetailComponent } from './exercise-hint-detail.component';
-import { ExerciseHintComponent } from './exercise-hint.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseHintResolve implements Resolve<ExerciseHint> {

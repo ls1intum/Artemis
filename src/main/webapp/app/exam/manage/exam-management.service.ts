@@ -1,6 +1,10 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { Observable } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
@@ -17,9 +21,6 @@ import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exam
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
-import dayjs from 'dayjs/esm';
-import { Observable } from 'rxjs';
-import { filter, map, tap } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;

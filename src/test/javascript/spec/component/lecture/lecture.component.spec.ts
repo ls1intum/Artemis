@@ -3,6 +3,15 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { LectureComponent, LectureDateFilter } from 'app/lecture/lecture.component';
@@ -12,14 +21,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;

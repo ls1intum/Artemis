@@ -1,6 +1,13 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { take } from 'rxjs/operators';
+
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../test.module';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { GradeType } from 'app/entities/grading-scale.model';
@@ -13,12 +20,6 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import dayjs from 'dayjs/esm';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { take } from 'rxjs/operators';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../test.module';
 
 describe('Exam Participation Service', () => {
     let service: ExamParticipationService;

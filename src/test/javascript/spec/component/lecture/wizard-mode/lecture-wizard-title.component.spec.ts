@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MockComponent } from 'ng-mocks';
+
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUpdateWizardTitleComponent } from 'app/lecture/wizard-mode/lecture-wizard-title.component';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
-import { MockComponent } from 'ng-mocks';
 
 describe('LectureWizardTitleComponent', () => {
     let wizardTitleComponentFixture: ComponentFixture<LectureUpdateWizardTitleComponent>;

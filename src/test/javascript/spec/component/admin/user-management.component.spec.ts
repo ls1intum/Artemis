@@ -4,6 +4,18 @@ import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/cor
 import { AbstractControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { Subscription, of } from 'rxjs';
+
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisTestModule } from '../../test.module';
 import {
     AuthorityFilter,
     OriginFilter,
@@ -25,17 +37,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { Subscription, of } from 'rxjs';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
-import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
-import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;

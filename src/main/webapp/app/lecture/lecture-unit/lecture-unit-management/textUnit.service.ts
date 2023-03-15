@@ -1,9 +1,10 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+
+import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 
 type EntityResponseType = HttpResponse<TextUnit>;
 

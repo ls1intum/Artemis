@@ -4,6 +4,12 @@ import { ActivatedRoute } from '@angular/router';
 import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from '@sentry/browser';
+import { ExportToCsv } from 'export-to-csv';
+import { Subscription, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { mean, median, standardDeviation } from 'simple-statistics';
+import * as XLSX from 'xlsx';
+
 import { VERSION } from 'app/app.constants';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AlertService } from 'app/core/util/alert.service';
@@ -52,11 +58,6 @@ import { LocaleConversionService } from 'app/shared/service/locale-conversion.se
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { ExportToCsv } from 'export-to-csv';
-import { Subscription, forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import { mean, median, standardDeviation } from 'simple-statistics';
-import * as XLSX from 'xlsx';
 
 export enum MedianType {
     PASSED,

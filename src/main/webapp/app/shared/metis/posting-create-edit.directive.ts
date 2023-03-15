@@ -1,6 +1,7 @@
 import { Directive, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+
 import { Posting } from 'app/entities/metis/posting.model';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { MetisService } from 'app/shared/metis/metis.service';

@@ -2,6 +2,8 @@
 // We changed the notification plugin to also send information about successful tests (previously only failed tests).
 // In some cases it needs to be checked explicitly wether a result is legacy or not.
 // The date used is the date of the merge: 2019-05-10T22:12:28Z.
+import dayjs from 'dayjs/esm';
+
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -9,7 +11,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
 import { SubmissionType } from 'app/entities/submission.model';
-import dayjs from 'dayjs/esm';
 
 const BAMBOO_RESULT_LEGACY_TIMESTAMP = 1557526348000;
 

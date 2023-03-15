@@ -1,7 +1,8 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 import { Subscription } from 'rxjs';
+
+import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-difficulty-badge',

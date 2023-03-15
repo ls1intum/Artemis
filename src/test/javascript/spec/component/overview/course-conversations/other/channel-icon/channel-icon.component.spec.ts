@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
 import { MockComponent } from 'ng-mocks';
+
+import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
 
 describe('ChannelIconComponent', () => {
     let component: ChannelIconComponent;

@@ -1,5 +1,8 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TutorEffort } from 'app/entities/tutor-effort.model';
@@ -7,8 +10,6 @@ import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exerci
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;

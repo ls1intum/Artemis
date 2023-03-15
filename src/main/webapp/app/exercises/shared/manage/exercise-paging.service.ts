@@ -1,9 +1,10 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
+
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
-import { Observable, map } from 'rxjs';
 
 export abstract class ExercisePagingService<T extends Exercise> extends PagingService {
     protected constructor(protected http: HttpClient, protected resourceUrl: string) {

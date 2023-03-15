@@ -3,6 +3,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { BarChartModule } from '@swimlane/ngx-charts';
+import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../../test.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { GraphColors } from 'app/entities/statistics.model';
@@ -11,10 +16,6 @@ import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('ExamScoresAverageScoresGraphComponent', () => {
     let fixture: ComponentFixture<ExamScoresAverageScoresGraphComponent>;

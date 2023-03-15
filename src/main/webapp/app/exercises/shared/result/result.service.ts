@@ -2,6 +2,10 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from '@sentry/browser';
+import dayjs from 'dayjs/esm';
+import { Observable } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
+
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
@@ -16,9 +20,6 @@ import { SubmissionService } from 'app/exercises/shared/submission/submission.se
 import { createRequestOption } from 'app/shared/util/request.util';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
-import dayjs from 'dayjs/esm';
-import { Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;

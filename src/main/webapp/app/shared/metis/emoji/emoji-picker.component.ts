@@ -1,8 +1,9 @@
 import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+import { Subscription } from 'rxjs';
+
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { EmojiUtils } from 'app/shared/metis/emoji/emoji.utils';
-import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-emoji-picker',

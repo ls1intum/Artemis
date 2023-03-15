@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../../../test.module';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
-import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('Quiz Exercise Group Cell Component', () => {
     let comp: QuizExerciseGroupCellComponent;

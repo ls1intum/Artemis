@@ -1,9 +1,10 @@
 import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Cacheable } from 'ts-cacheable';
+
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlService {

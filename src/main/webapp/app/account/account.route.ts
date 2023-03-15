@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+
 import { ActivateComponent } from 'app/account/activate/activate.component';
 import { PasswordComponent } from 'app/account/password/password.component';
 import { PasswordResetFinishComponent } from 'app/account/password-reset/finish/password-reset-finish.component';

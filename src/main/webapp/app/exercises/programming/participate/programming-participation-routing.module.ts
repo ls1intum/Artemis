@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/participate/code-editor-student-container.component';
 import { Authority } from 'app/shared/constants/authority.constants';

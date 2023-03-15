@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+
 import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';

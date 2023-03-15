@@ -9,6 +9,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+
+import { PostingContentComponent } from './posting-content/posting-content.components';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
@@ -36,7 +38,6 @@ import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-
 import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
 import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { PostingContentComponent } from './posting-content/posting-content.components';
 
 @NgModule({
     imports: [

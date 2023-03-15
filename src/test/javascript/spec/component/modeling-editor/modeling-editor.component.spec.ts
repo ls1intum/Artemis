@@ -5,6 +5,12 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ApollonEditor, UMLModel } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
+import { cloneDeep } from 'lodash-es';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { Subject, of } from 'rxjs';
+
+import { ArtemisTestModule } from '../../test.module';
+import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { Course } from 'app/entities/course.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
@@ -12,11 +18,6 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
 import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { cloneDeep } from 'lodash-es';
-import { MockComponent, MockProvider } from 'ng-mocks';
-import { Subject, of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
-import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {

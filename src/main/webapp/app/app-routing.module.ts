@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+
 import { errorRoute } from 'app/shared/layouts/error/error.route';
 import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';

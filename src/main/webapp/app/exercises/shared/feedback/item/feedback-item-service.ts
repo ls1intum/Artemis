@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+
 import { Exercise } from 'app/entities/exercise.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { FeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';

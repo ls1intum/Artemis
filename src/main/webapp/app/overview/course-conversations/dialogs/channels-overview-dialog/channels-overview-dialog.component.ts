@@ -1,6 +1,9 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { EMPTY, Observable, Subject, debounceTime, distinctUntilChanged, finalize, from, map, takeUntil } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -11,8 +14,6 @@ import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { onError } from 'app/shared/util/global.utils';
-import { EMPTY, Observable, Subject, debounceTime, distinctUntilChanged, finalize, from, map, takeUntil } from 'rxjs';
-import { catchError } from 'rxjs/operators';
 
 export type ChannelActionType = 'register' | 'deregister' | 'view' | 'create';
 export type ChannelAction = {

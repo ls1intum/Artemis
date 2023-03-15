@@ -2,6 +2,9 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, Input, OnInit } from '@angular/core';
 import { faLink, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { Observable, Subject } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
@@ -11,8 +14,6 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { onError } from 'app/shared/util/global.utils';
-import { Observable, Subject } from 'rxjs';
-import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-lecture-update-wizard-learning-goals',

@@ -3,6 +3,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
+import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
+import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
+import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
+import { TutorialGroupRowStubComponent } from '../stubs/tutorial-groups-table-stub.component';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { TutorialGroupsTableComponent } from 'app/course/tutorial-groups/shared/tutorial-groups-table/tutorial-groups-table.component';
 import { Course } from 'app/entities/course.model';
@@ -14,13 +22,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
-import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
-import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
-import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
-import { TutorialGroupRowStubComponent } from '../stubs/tutorial-groups-table-stub.component';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {

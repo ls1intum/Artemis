@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+
 import { ConsistencyCheckError } from 'app/entities/consistency-check-result.model';
 
 @Injectable({

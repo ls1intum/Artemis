@@ -1,8 +1,9 @@
 import { AfterViewInit, Component, Input } from '@angular/core';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
-import { Exercise } from 'app/entities/exercise.model';
 import interact from 'interactjs';
+
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-collapsable-assessment-instructions',

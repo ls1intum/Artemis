@@ -3,6 +3,13 @@ import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import * as ace from 'brace';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTeamService, mockEmptyTeam, mockExercise, mockNonTeamStudents, mockTeam, mockTeamStudents } from '../../helpers/mocks/service/mock-team.service';
+import { ArtemisTestModule } from '../../test.module';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { TeamOwnerSearchComponent } from 'app/exercises/shared/team/team-owner-search/team-owner-search.component';
 import { TeamStudentSearchComponent } from 'app/exercises/shared/team/team-student-search/team-student-search.component';
@@ -12,12 +19,6 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import * as ace from 'brace';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTeamService, mockEmptyTeam, mockExercise, mockNonTeamStudents, mockTeam, mockTeamStudents } from '../../helpers/mocks/service/mock-team.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('TeamUpdateDialogComponent', () => {
     // needed to make sure ace is defined

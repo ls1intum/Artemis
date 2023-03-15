@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { Feedback } from 'app/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class FeedbackService {

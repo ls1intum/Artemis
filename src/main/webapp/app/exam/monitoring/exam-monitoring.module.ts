@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { BarChartModule, LineChartModule, PieChartModule } from '@swimlane/ngx-charts';
+
 import { ActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/actions-chart.component';
 import { AverageActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/average-actions-chart.component';
 import { CategoryActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/category-actions-chart.component';

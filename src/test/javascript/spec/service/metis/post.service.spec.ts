@@ -1,9 +1,7 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { Post } from 'app/entities/metis/post.model';
-import { CourseWideContext, DisplayPriority, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
-import { PostService } from 'app/shared/metis/post.service';
 import { take } from 'rxjs/operators';
+
 import {
     metisCourse,
     metisCoursePosts,
@@ -16,6 +14,9 @@ import {
     metisPostToCreateUser1,
     metisTags,
 } from '../../helpers/sample/metis-sample-data';
+import { Post } from 'app/entities/metis/post.model';
+import { CourseWideContext, DisplayPriority, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { PostService } from 'app/shared/metis/post.service';
 
 describe('Post Service', () => {
     let service: PostService;

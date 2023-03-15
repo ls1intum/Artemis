@@ -1,16 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
+import { MockPipe, MockProvider } from 'ng-mocks';
+
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
+import { TutorialGroupsTableStubComponent } from '../stubs/tutorial-groups-table-stub.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { CourseTutorialGroupsOverviewComponent } from 'app/overview/course-tutorial-groups/course-tutorial-groups-overview/course-tutorial-groups-overview.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
-import { TutorialGroupsTableStubComponent } from '../stubs/tutorial-groups-table-stub.component';
 
 describe('CourseTutorialGroupsOverviewComponent', () => {
     let fixture: ComponentFixture<CourseTutorialGroupsOverviewComponent>;

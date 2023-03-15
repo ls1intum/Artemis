@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { uniq } from 'lodash-es';
+
 import {
     AnalysisItem,
     ProblemStatementAnalysis,
     ProblemStatementIssue,
 } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { RegExpLineNumberMatchArray, matchRegexWithLineNumbers } from 'app/shared/util/global.utils';
-import { uniq } from 'lodash-es';
 
 /**
  * Analyzes the problem statement of a programming-exercise and provides information support concerning potential issues.

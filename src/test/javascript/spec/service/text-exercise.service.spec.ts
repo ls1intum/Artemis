@@ -3,6 +3,13 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { take } from 'rxjs/operators';
+
+import { MockRouter } from '../helpers/mocks/mock-router';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/entities/course.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
@@ -11,12 +18,6 @@ import { TutorEffort } from 'app/entities/tutor-effort.model';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import dayjs from 'dayjs/esm';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { take } from 'rxjs/operators';
-import { MockRouter } from '../helpers/mocks/mock-router';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 
 describe('TextExercise Service', () => {
     let service: TextExerciseService;

@@ -1,9 +1,10 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { LearningGoal } from 'app/entities/learningGoal.model';
 import dayjs from 'dayjs/esm';
 import urlParser from 'js-video-url-parser';
+
+import { LearningGoal } from 'app/entities/learningGoal.model';
 
 export interface VideoUnitFormData {
     name?: string;

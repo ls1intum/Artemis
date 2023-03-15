@@ -7,6 +7,10 @@ import { Router } from '@angular/router';
 import { NgbDateAdapter, NgbDatepickerConfig, NgbTooltipConfig } from '@ng-bootstrap/ng-bootstrap';
 import { MissingTranslationHandler, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { TraceService } from '@sentry/angular';
+import dayjs from 'dayjs/esm';
+import { NgxWebstorageModule, SessionStorageService } from 'ngx-webstorage';
+
+import { missingTranslationHandler, translatePartialLoader } from './config/translation.config';
 import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 import { ArtemisVersionInterceptor, WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
@@ -16,9 +20,7 @@ import { NotificationInterceptor } from 'app/core/interceptor/notification.inter
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
-import dayjs from 'dayjs/esm';
-import { NgxWebstorageModule, SessionStorageService } from 'ngx-webstorage';
-import { missingTranslationHandler, translatePartialLoader } from './config/translation.config';
+
 import './config/dayjs';
 
 @NgModule({

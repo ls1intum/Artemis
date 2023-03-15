@@ -7,6 +7,15 @@ import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService } from 'ngx-webstorage';
+import { of, throwError } from 'rxjs';
+
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -24,14 +33,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService } from 'ngx-webstorage';
-import { of, throwError } from 'rxjs';
-import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
-import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
-import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 
 describe('StudentExamsComponent', () => {
     let studentExamsComponentFixture: ComponentFixture<StudentExamsComponent>;

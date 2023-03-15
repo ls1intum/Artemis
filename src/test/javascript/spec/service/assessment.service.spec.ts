@@ -1,10 +1,11 @@
+import dayjs from 'dayjs/esm';
+
 import { isAllowedToModifyFeedback, isAllowedToRespondToComplaintAction } from 'app/assessment/assessment.service';
 import { User } from 'app/core/user/user.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
-import dayjs from 'dayjs/esm';
 
 describe('Assessment Service', () => {
     const user = {} as User;

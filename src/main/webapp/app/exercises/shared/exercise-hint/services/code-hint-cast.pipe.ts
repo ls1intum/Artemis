@@ -1,4 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
+
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 

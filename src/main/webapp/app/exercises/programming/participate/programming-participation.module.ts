@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
 import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/participate/code-editor-student-container.component';
 import { ArtemisProgrammingParticipationRoutingModule } from 'app/exercises/programming/participate/programming-participation-routing.module';

@@ -3,18 +3,19 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { CreateTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/create-tutorial-group/create-tutorial-group.component';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
+
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { generateExampleTutorialGroup, tutorialGroupToTutorialGroupFormData } from '../../../helpers/tutorialGroupExampleModels';
 import { TutorialGroupFormStubComponent } from '../../../stubs/tutorial-group-form-stub.component';
+import { AlertService } from 'app/core/util/alert.service';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
+import { CreateTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/create-tutorial-group/create-tutorial-group.component';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('CreateTutorialGroupComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupComponent>;

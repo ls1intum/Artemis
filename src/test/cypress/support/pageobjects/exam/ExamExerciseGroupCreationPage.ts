@@ -1,9 +1,9 @@
-import { Exam } from 'app/entities/exam.model';
+import { AdditionalData, Exercise } from './ExamParticipation';
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { courseManagementRequest } from '../../artemis';
 import { BASE_API, EXERCISE_TYPE, POST, PUT } from '../../constants';
 import { generateUUID } from '../../utils';
-import { AdditionalData, Exercise } from './ExamParticipation';
+import { Exam } from 'app/entities/exam.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam exercise group creation page.

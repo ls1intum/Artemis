@@ -4,9 +4,10 @@ import { FormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { Observable, map, startWith } from 'rxjs';
+
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { Observable, map, startWith } from 'rxjs';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
 

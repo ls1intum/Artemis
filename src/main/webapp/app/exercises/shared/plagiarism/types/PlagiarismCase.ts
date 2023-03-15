@@ -1,3 +1,5 @@
+import dayjs from 'dayjs/esm';
+
 import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Post } from 'app/entities/metis/post.model';
@@ -5,7 +7,6 @@ import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/Plag
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
-import dayjs from 'dayjs/esm';
 
 export class PlagiarismCase {
     public id: number;

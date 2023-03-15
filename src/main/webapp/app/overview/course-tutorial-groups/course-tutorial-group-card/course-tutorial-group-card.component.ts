@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, HostListener, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
+
 import { Course } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 

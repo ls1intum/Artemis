@@ -3,6 +3,12 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { EMPTY, of } from 'rxjs';
+
+import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
+import { generateExampleChannelDTO } from '../../helpers/conversationExampleModels';
+import { initializeDialog } from '../dialog-test-helpers';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -12,11 +18,7 @@ import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversatio
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { EMPTY, of } from 'rxjs';
-import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
-import { generateExampleChannelDTO } from '../../helpers/conversationExampleModels';
-import { initializeDialog } from '../dialog-test-helpers';
+
 @Component({
     selector: 'jhi-channel-item',
     template: '',

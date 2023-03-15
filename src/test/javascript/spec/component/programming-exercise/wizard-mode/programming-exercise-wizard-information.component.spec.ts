@@ -1,6 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DefaultValueAccessor, NgModel } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { of } from 'rxjs';
+
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -9,8 +12,6 @@ import { ProgrammingExerciseInformationComponent } from 'app/exercises/programmi
 import { ProgrammingExerciseUpdateWizardInformationComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-information.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { of } from 'rxjs';
 
 describe('ProgrammingExerciseWizardInformationComponent', () => {
     let wizardComponentFixture: ComponentFixture<ProgrammingExerciseUpdateWizardInformationComponent>;

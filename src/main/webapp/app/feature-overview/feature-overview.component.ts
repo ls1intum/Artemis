@@ -31,6 +31,7 @@ import {
     faThList,
     faUserSecret,
 } from '@fortawesome/free-solid-svg-icons';
+
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({

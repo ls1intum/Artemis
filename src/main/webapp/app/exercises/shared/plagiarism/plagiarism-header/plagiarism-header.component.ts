@@ -1,5 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subject } from 'rxjs';
+
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { Exercise, getCourseId } from 'app/entities/exercise.model';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
@@ -10,7 +12,6 @@ import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
-import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-plagiarism-header',

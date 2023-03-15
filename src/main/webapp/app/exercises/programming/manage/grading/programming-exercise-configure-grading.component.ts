@@ -4,6 +4,10 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faQuestionCircle, faSort, faSortDown, faSortUp, faSquare } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash-es';
+import { Subscription, of, zip } from 'rxjs';
+import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -24,9 +28,6 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash-es';
-import { Subscription, of, zip } from 'rxjs';
-import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
 
 /**
  * Describes the editableField

@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+
+import { ArtemisTestModule } from '../../../test.module';
 import { MetricsModalThreadsComponent } from 'app/admin/metrics/blocks/metrics-modal-threads/metrics-modal-threads.component';
 import { Thread, ThreadState } from 'app/admin/metrics/metrics.model';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('MetricsModalThreadsComponent', () => {
     let runnableThreads: Thread[];

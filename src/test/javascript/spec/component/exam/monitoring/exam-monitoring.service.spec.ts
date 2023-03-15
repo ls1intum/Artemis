@@ -2,6 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import * as Sentry from '@sentry/browser';
 import { CaptureContext } from '@sentry/types';
+import { BehaviorSubject, of } from 'rxjs';
+
+import { createActions } from './exam-monitoring-helper';
+import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
+import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
+import { ArtemisTestModule } from '../../../test.module';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Course } from 'app/entities/course.model';
 import { ExamAction, ExamActionType, ExamActivity } from 'app/entities/exam-user-activity.model';
@@ -10,11 +16,6 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { EXAM_MONITORING_UPDATE_URL, ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { BehaviorSubject, of } from 'rxjs';
-import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
-import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
-import { ArtemisTestModule } from '../../../test.module';
-import { createActions } from './exam-monitoring-helper';
 
 describe('ExamMonitoringService', () => {
     let examMonitoringService: ExamMonitoringService;

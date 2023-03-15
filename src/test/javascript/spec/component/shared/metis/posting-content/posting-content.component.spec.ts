@@ -1,14 +1,9 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { Post } from 'app/entities/metis/post.model';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { PatternMatch, PostingContentPart, ReferenceType } from 'app/shared/metis/metis.util';
-import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
-import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
+
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import {
     metisCourse,
@@ -19,6 +14,12 @@ import {
     metisLecture,
     metisLecturePosts,
 } from '../../../../helpers/sample/metis-sample-data';
+import { Post } from 'app/entities/metis/post.model';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { PatternMatch, PostingContentPart, ReferenceType } from 'app/shared/metis/metis.util';
+import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
+import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('PostingContentComponent', () => {
     let component: PostingContentComponent;

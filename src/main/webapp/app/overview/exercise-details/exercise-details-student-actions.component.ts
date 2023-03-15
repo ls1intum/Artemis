@@ -3,6 +3,9 @@ import { Component, ContentChild, HostBinding, Input, OnChanges, OnInit, Templat
 import { Router } from '@angular/router';
 import { faComment, faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { finalize } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
@@ -16,8 +19,6 @@ import { isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAva
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
-import dayjs from 'dayjs/esm';
-import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',

@@ -1,8 +1,9 @@
 import { Component, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+
 import { QuizExerciseService } from './quiz-exercise.service';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class QuizExercisePopupService {

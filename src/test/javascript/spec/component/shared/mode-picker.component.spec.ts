@@ -1,10 +1,11 @@
 import { EventEmitter } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { MockPipe } from 'ng-mocks';
+
+import { ArtemisTestModule } from '../../test.module';
 import { ModePickerComponent, ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('Mode Picker Component', () => {
     let comp: ModePickerComponent<string>;

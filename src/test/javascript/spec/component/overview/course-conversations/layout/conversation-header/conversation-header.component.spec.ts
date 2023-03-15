@@ -1,6 +1,10 @@
 import { ComponentFixture, TestBed, fakeAsync, waitForAsync } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { BehaviorSubject, EMPTY } from 'rxjs';
+
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import {
@@ -14,9 +18,7 @@ import { GroupChatIconComponent } from 'app/overview/course-conversations/other/
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, EMPTY } from 'rxjs';
-import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
+
 const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
 examples.forEach((activeConversation) => {

@@ -1,7 +1,8 @@
 import { Component, Input } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Thread, ThreadState } from 'app/admin/metrics/metrics.model';
+
 import { MetricsModalThreadsComponent } from '../metrics-modal-threads/metrics-modal-threads.component';
+import { Thread, ThreadState } from 'app/admin/metrics/metrics.model';
 
 @Component({
     selector: 'jhi-jvm-threads',

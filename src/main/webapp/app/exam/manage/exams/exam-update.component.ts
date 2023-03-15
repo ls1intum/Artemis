@@ -2,6 +2,10 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faCheckDouble, faExclamationTriangle, faFont, faSave } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
@@ -13,9 +17,6 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import dayjs from 'dayjs/esm';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exam-update',

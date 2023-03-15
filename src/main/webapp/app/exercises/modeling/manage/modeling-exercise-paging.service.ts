@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ExercisePagingService } from 'app/exercises/shared/manage/exercise-paging.service';
 

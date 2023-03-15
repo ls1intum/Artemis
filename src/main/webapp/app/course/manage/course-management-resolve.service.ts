@@ -1,9 +1,10 @@
 import { HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { Observable, filter, map, of } from 'rxjs';
+
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { Observable, filter, map, of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class CourseManagementResolve implements Resolve<Course> {

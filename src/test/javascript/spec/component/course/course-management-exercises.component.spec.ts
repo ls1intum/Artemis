@@ -1,5 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { ArtemisTestModule } from '../../test.module';
 import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-card.component';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
@@ -15,9 +19,6 @@ import { ExtensionPointDirective } from 'app/shared/extension-point/extension-po
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;

@@ -4,6 +4,10 @@ import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { Subject, merge } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
@@ -28,9 +32,6 @@ import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { onError } from 'app/shared/util/global.utils';
-import dayjs from 'dayjs/esm';
-import { Subject, merge } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 
 @Component({
     templateUrl: './text-editor.component.html',

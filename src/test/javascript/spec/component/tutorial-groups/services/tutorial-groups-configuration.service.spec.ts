@@ -1,10 +1,11 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { take } from 'rxjs/operators';
+
+import { generateExampleTutorialGroupsConfiguration } from '../helpers/tutorialGroupsConfigurationExampleModels';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { take } from 'rxjs/operators';
-import { generateExampleTutorialGroupsConfiguration } from '../helpers/tutorialGroupsConfigurationExampleModels';
 
 describe('TutorialGroupsConfigurationService', () => {
     let service: TutorialGroupsConfigurationService;

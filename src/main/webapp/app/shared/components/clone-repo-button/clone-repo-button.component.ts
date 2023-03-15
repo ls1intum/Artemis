@@ -1,6 +1,8 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService } from 'ngx-webstorage';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -10,7 +12,6 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { LocalStorageService } from 'ngx-webstorage';
 
 @Component({
     selector: 'jhi-clone-repo-button',

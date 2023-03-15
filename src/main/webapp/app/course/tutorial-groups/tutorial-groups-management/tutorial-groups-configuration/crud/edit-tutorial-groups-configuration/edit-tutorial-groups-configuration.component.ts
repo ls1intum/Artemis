@@ -1,6 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subject, combineLatest } from 'rxjs';
+import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
@@ -8,8 +11,6 @@ import { TutorialGroupsConfigurationFormData } from 'app/course/tutorial-groups/
 import { Course } from 'app/entities/course.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, combineLatest } from 'rxjs';
-import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-edit-tutorial-groups-configuration',

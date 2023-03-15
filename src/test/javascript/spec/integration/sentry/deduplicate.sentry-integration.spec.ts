@@ -1,7 +1,8 @@
 import { fakeAsync, flush, tick } from '@angular/core/testing';
 import { Event } from '@sentry/types';
-import { ArtemisDeduplicate } from 'app/core/sentry/deduplicate.sentry-integration';
 import dayjs from 'dayjs/esm';
+
+import { ArtemisDeduplicate } from 'app/core/sentry/deduplicate.sentry-integration';
 
 describe('ArtemisDeduplicateSentryIntegration', () => {
     let dedup: ArtemisDeduplicate;

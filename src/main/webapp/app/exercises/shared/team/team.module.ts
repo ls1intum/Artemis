@@ -1,6 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+
+import { TeamsImportFromFileFormComponent } from './teams-import-dialog/teams-import-from-file-form.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exercise-search/team-exercise-search.component';
 import { TeamOwnerSearchComponent } from 'app/exercises/shared/team/team-owner-search/team-owner-search.component';
@@ -19,7 +21,6 @@ import { TeamsComponent } from 'app/exercises/shared/team/teams.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { TeamsImportFromFileFormComponent } from './teams-import-dialog/teams-import-from-file-form.component';
 
 @NgModule({
     imports: [

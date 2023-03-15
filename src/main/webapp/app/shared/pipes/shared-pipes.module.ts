@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AverageByPipe } from 'app/shared/pipes/average-by.pipe';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';

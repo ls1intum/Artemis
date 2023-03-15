@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';

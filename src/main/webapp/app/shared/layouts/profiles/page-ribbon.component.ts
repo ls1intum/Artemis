@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+
 import { ProfileInfo } from './profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-page-ribbon',

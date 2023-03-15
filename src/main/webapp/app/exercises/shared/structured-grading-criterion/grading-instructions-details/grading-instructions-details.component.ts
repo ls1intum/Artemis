@@ -1,5 +1,7 @@
 import { AfterContentInit, ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { cloneDeep } from 'lodash-es';
+
 import { Exercise } from 'app/entities/exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
@@ -12,7 +14,6 @@ import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/g
 import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
 import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
-import { cloneDeep } from 'lodash-es';
 
 @Component({
     selector: 'jhi-grading-instructions-details',

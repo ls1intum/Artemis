@@ -3,6 +3,9 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faAward, faClipboard, faEye, faFlaskVial, faHeartBroken, faListAlt, faThList, faTimes, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { Subject } from 'rxjs';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exam } from 'app/entities/exam.model';
@@ -12,8 +15,6 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import dayjs from 'dayjs/esm';
-import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-exam-detail',

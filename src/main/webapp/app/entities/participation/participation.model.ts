@@ -1,3 +1,5 @@
+import dayjs from 'dayjs/esm';
+
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
@@ -6,7 +8,6 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { Result } from 'app/entities/result.model';
 import { Submission } from 'app/entities/submission.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import dayjs from 'dayjs/esm';
 
 export enum InitializationState {
     /**

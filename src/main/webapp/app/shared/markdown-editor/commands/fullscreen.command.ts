@@ -1,5 +1,6 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCompress } from '@fortawesome/free-solid-svg-icons';
+
 import { Command } from 'app/shared/markdown-editor/commands/command';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
 

@@ -1,5 +1,9 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+
+import { ExamParticipationCoverComponent } from './exam-cover/exam-participation-cover.component';
+import { ExamNavigationBarComponent } from './exam-navigation-bar/exam-navigation-bar.component';
+import { ExamTimerComponent } from './timer/exam-timer.component';
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { examParticipationState } from 'app/exam/participate/exam-participation.route';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
@@ -27,9 +31,6 @@ import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ExamParticipationCoverComponent } from './exam-cover/exam-participation-cover.component';
-import { ExamNavigationBarComponent } from './exam-navigation-bar/exam-navigation-bar.component';
-import { ExamTimerComponent } from './timer/exam-timer.component';
 
 const ENTITY_STATES = [...examParticipationState];
 

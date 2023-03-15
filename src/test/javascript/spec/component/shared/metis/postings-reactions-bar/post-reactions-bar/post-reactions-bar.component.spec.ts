@@ -9,6 +9,16 @@ import { EmojiData, EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+
+import { MockRouter } from '../../../../../helpers/mocks/mock-router';
+import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
+import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
+import { MockReactionService } from '../../../../../helpers/mocks/service/mock-reaction.service';
+import { MockTranslateService, TranslatePipeMock } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { metisCourse, metisPostExerciseUser1, metisUser1, sortedAnswerArray } from '../../../../../helpers/sample/metis-sample-data';
+import { getElement, getElements } from '../../../../../helpers/utils/general.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { Post } from 'app/entities/metis/post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
@@ -18,15 +28,6 @@ import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { ReactionService } from 'app/shared/metis/reaction.service';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockRouter } from '../../../../../helpers/mocks/mock-router';
-import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
-import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
-import { MockReactionService } from '../../../../../helpers/mocks/service/mock-reaction.service';
-import { MockTranslateService, TranslatePipeMock } from '../../../../../helpers/mocks/service/mock-translate.service';
-import { metisCourse, metisPostExerciseUser1, metisUser1, sortedAnswerArray } from '../../../../../helpers/sample/metis-sample-data';
-import { getElement, getElements } from '../../../../../helpers/utils/general.utils';
 
 describe('PostReactionsBarComponent', () => {
     let component: PostReactionsBarComponent;

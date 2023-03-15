@@ -1,5 +1,8 @@
 import { HttpResponse } from '@angular/common/http';
 import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { Subject } from 'rxjs';
+import * as Split from 'split.js';
+
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { Exercise, ExerciseType, getCourseId } from 'app/entities/exercise.model';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
@@ -7,8 +10,6 @@ import { SimpleMatch } from 'app/exercises/shared/plagiarism/types/PlagiarismMat
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { FromToElement, TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
-import { Subject } from 'rxjs';
-import * as Split from 'split.js';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {

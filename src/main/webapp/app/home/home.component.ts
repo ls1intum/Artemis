@@ -3,6 +3,7 @@ import { AfterViewChecked, Component, ElementRef, OnInit, Renderer2 } from '@ang
 import { ActivatedRoute, Router } from '@angular/router';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+
 import { PASSWORD_MIN_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
 import { Credentials } from 'app/core/auth/auth-jwt.service';

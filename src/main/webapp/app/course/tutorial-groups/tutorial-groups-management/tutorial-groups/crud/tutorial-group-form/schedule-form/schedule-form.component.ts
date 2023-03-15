@@ -2,13 +2,14 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } 
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { NgbDateParserFormatter, NgbTimeAdapter } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
+import * as _ from 'lodash-es';
+
 import { NgbTimeStringAdapter } from 'app/course/tutorial-groups/shared/ngbTimeStringAdapter';
 import { validTimeRange } from 'app/course/tutorial-groups/shared/timeRangeValidator';
 import { weekDays } from 'app/course/tutorial-groups/shared/weekdays';
 import { Course } from 'app/entities/course.model';
 import { dayOfWeekZeroSundayToZeroMonday } from 'app/utils/date.utils';
-import dayjs from 'dayjs/esm';
-import * as _ from 'lodash-es';
 
 export interface ScheduleFormData {
     dayOfWeek?: number;

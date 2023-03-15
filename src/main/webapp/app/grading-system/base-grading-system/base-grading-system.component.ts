@@ -3,6 +3,10 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faExclamationTriangle, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { ExportToCsv } from 'export-to-csv';
+import { Observable, Subject, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
+
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -11,9 +15,6 @@ import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { EntityResponseType, GradingSystemService } from 'app/grading-system/grading-system.service';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { ExportToCsv } from 'export-to-csv';
-import { Observable, Subject, of } from 'rxjs';
-import { catchError, finalize } from 'rxjs/operators';
 
 const csvColumnsGrade = Object.freeze({
     gradeName: 'gradeName',

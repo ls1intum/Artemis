@@ -2,6 +2,11 @@ import { HttpResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { MockDirective, MockProvider } from 'ng-mocks';
+import { Observable, of } from 'rxjs';
+
+import { ArtemisTestModule } from '../../test.module';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
@@ -9,10 +14,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import dayjs from 'dayjs/esm';
-import { MockDirective, MockProvider } from 'ng-mocks';
-import { Observable, of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 
 @Component({ selector: 'jhi-course-group', template: '' })
 class CourseGroupStubComponent {

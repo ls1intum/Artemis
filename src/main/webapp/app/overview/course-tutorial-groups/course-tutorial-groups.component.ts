@@ -1,6 +1,9 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subject, finalize } from 'rxjs';
+import { map, takeUntil } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -11,8 +14,6 @@ import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutoria
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { BarControlConfiguration } from 'app/overview/tab-bar/tab-bar';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, finalize } from 'rxjs';
-import { map, takeUntil } from 'rxjs/operators';
 
 type filter = 'all' | 'registered';
 

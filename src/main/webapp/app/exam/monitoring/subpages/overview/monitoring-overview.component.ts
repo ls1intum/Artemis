@@ -1,9 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faListAlt } from '@fortawesome/free-solid-svg-icons';
+import { Subscription } from 'rxjs';
+
 import { Exam } from 'app/entities/exam.model';
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
-import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-monitoring-overview',

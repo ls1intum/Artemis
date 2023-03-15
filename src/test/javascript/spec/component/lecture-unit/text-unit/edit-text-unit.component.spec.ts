@@ -3,15 +3,16 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Alert, AlertService } from 'app/core/util/alert.service';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { EditTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-text-unit/edit-text-unit.component';
 import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
-import dayjs from 'dayjs/esm';
-import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
 
 @Component({ selector: 'jhi-text-unit-form', template: '' })
 class TextUnitFormStubComponent {

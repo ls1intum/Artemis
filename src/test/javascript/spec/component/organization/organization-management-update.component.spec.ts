@@ -1,13 +1,14 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import { MockDirective } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { ArtemisTestModule } from '../../test.module';
 import { OrganizationManagementUpdateComponent } from 'app/admin/organization-management/organization-management-update.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockDirective } from 'ng-mocks';
-import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('OrganizationManagementUpdateComponent', () => {
     let component: OrganizationManagementUpdateComponent;

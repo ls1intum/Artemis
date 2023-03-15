@@ -1,4 +1,5 @@
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseType } from 'app/entities/exercise.model';

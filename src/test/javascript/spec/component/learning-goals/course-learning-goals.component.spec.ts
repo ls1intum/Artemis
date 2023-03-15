@@ -3,6 +3,11 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { LearningGoalCardStubComponent } from './learning-goal-card-stub.component';
+import { ArtemisTestModule } from '../../test.module';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -13,10 +18,6 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
-import { LearningGoalCardStubComponent } from './learning-goal-card-stub.component';
 
 class MockActivatedRoute {
     parent: any;

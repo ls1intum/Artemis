@@ -1,5 +1,6 @@
 import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { faFlag } from '@fortawesome/free-solid-svg-icons';
+
 import { LearningGoal } from 'app/entities/learningGoal.model';
 
 @Component({

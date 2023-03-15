@@ -4,6 +4,11 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { cloneDeep } from 'lodash-es';
+import { Observable, Subject } from 'rxjs';
+import { switchMap, tap } from 'rxjs/operators';
+
+import { ProgrammingExerciseService } from '../services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -25,10 +30,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { cloneDeep } from 'lodash-es';
-import { Observable, Subject } from 'rxjs';
-import { switchMap, tap } from 'rxjs/operators';
-import { ProgrammingExerciseService } from '../services/programming-exercise.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',

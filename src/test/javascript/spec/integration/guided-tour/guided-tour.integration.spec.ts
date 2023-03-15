@@ -4,6 +4,17 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { PieChartModule } from '@swimlane/ngx-charts';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
+
+import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
@@ -33,16 +44,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
-import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('Guided tour integration', () => {
     const user = { id: 1 } as User;

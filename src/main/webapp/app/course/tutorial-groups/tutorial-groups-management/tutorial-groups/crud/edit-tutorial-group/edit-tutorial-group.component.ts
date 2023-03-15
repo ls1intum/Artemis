@@ -1,16 +1,17 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { Subject, combineLatest } from 'rxjs';
+import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
+
+import { TutorialGroupFormData } from '../tutorial-group-form/tutorial-group-form.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { onError } from 'app/shared/util/global.utils';
-import dayjs from 'dayjs/esm';
-import { Subject, combineLatest } from 'rxjs';
-import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
-import { TutorialGroupFormData } from '../tutorial-group-form/tutorial-group-form.component';
 
 @Component({
     selector: 'jhi-edit-tutorial-group',

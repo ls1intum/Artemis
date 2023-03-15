@@ -1,5 +1,6 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faQuoteLeft } from '@fortawesome/free-solid-svg-icons';
+
 import { Command } from './command';
 
 export class ReferenceCommand extends Command {

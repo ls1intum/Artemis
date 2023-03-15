@@ -1,14 +1,15 @@
 import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { faCircle, faHistory } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { orderBy } from 'lodash-es';
+import { Observable } from 'rxjs';
+import { map, throttleTime } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { OnlineTeamStudent, Team } from 'app/entities/team.model';
-import dayjs from 'dayjs/esm';
-import { orderBy } from 'lodash-es';
-import { Observable } from 'rxjs';
-import { map, throttleTime } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-team-students-online-list',

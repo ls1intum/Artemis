@@ -4,6 +4,16 @@ import { By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
+import { MockCourseService } from '../../../helpers/mocks/service/mock-course.service';
+import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisTestModule } from '../../../test.module';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
@@ -23,15 +33,6 @@ import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
-import { MockCourseService } from '../../../helpers/mocks/service/mock-course.service';
-import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 @Component({
     template: '',

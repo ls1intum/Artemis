@@ -1,6 +1,8 @@
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { faAngleDown, faAngleRight, faArrowsAltV, faChevronDown, faChevronUp, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { cloneDeep } from 'lodash-es';
+
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/correctOptionCommand';
@@ -8,7 +10,6 @@ import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommand
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
-import { cloneDeep } from 'lodash-es';
 
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',

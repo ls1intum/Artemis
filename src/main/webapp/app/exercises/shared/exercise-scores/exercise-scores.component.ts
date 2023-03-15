@@ -3,6 +3,9 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { faCodeBranch, faDownload, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
+import { Subscription, forkJoin, of, zip } from 'rxjs';
+import { take } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -24,8 +27,6 @@ import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Range } from 'app/shared/util/utils';
-import { Subscription, forkJoin, of, zip } from 'rxjs';
-import { take } from 'rxjs/operators';
 
 /**
  * Filter properties for a result

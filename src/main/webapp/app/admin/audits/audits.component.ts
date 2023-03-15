@@ -3,10 +3,11 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
-import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { combineLatest } from 'rxjs';
+
 import { Audit } from './audit.model';
 import { AuditsService } from './audits.service';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 
 @Component({
     selector: 'jhi-audit',

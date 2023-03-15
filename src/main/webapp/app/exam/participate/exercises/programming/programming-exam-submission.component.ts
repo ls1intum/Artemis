@@ -1,4 +1,6 @@
 import { ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import dayjs from 'dayjs/esm';
+
 import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -16,7 +18,6 @@ import {
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-programming-submission-exam',

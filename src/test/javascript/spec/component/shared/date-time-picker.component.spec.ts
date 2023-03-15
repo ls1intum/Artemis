@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgModel } from '@angular/forms';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
 import { MockDirective, MockModule } from 'ng-mocks';
+
 import { ArtemisTestModule } from '../../test.module';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 
 describe('FormDateTimePickerComponent', () => {
     let component: FormDateTimePickerComponent;

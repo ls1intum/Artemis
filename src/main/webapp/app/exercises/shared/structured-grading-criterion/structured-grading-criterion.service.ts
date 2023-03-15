@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+
 import { Feedback } from 'app/entities/feedback.model';
 
 @Injectable({ providedIn: 'root' })

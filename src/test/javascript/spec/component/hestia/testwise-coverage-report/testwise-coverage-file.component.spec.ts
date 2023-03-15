@@ -1,13 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import ace from 'brace';
+
+import { ArtemisTestModule } from '../../../test.module';
 import { CoverageFileReport } from 'app/entities/hestia/coverage-file-report.model';
 import { TestwiseCoverageReportEntry } from 'app/entities/hestia/testwise-coverage-report-entry.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { TestwiseCoverageFileComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-file.component';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
-import ace from 'brace';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('TestwiseCoverageFile Component', () => {
     let comp: TestwiseCoverageFileComponent;

@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { faInfoCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';

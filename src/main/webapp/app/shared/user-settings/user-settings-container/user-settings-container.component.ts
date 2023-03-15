@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { AccountInformationComponent } from 'app/shared/user-settings/account-information/account-information.component';
 

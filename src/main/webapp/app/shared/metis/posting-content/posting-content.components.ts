@@ -1,10 +1,11 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
+import { Subscription } from 'rxjs';
+
+import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { Subscription } from 'rxjs';
-import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
 
 @Component({
     selector: 'jhi-posting-content',

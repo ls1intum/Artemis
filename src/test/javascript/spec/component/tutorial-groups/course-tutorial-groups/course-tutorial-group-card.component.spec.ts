@@ -1,14 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent, MockPipe } from 'ng-mocks';
+
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { CourseTutorialGroupCardComponent } from 'app/overview/course-tutorial-groups/course-tutorial-group-card/course-tutorial-group-card.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 
 describe('CourseTutorialGroupCardComponent', () => {
     let component: CourseTutorialGroupCardComponent;

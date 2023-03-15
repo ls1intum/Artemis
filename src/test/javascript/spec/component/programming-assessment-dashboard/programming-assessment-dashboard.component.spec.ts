@@ -3,6 +3,14 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { BehaviorSubject, of } from 'rxjs';
+
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -13,13 +21,6 @@ import { ProgrammingExerciseSubmissionsComponent } from 'app/exercises/programmi
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, of } from 'rxjs';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 const route = { params: of({ courseId: 3, exerciseId: 22 }) };
 const programmingExercise1 = {

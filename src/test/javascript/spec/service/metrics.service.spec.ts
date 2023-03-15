@@ -1,5 +1,6 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+
 import { ThreadDump, ThreadState } from 'app/admin/metrics/metrics.model';
 import { MetricsService } from 'app/admin/metrics/metrics.service';
 

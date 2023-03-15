@@ -1,5 +1,7 @@
 import { ElementRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockProvider } from 'ng-mocks';
+
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
 import { CropperPosition } from 'app/shared/image-cropper/interfaces/cropper-position.interface';
 import { CropperSettings } from 'app/shared/image-cropper/interfaces/cropper.settings';
@@ -9,7 +11,6 @@ import { MoveStart } from 'app/shared/image-cropper/interfaces/move-start.interf
 import { CropService } from 'app/shared/image-cropper/services/crop.service';
 import { CropperPositionService } from 'app/shared/image-cropper/services/cropper-position.service';
 import { LoadImageService } from 'app/shared/image-cropper/services/load-image.service';
-import { MockProvider } from 'ng-mocks';
 
 describe('ImageCropperComponent', () => {
     let fixture: ComponentFixture<ImageCropperComponent>;

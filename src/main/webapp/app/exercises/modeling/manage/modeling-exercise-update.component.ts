@@ -4,6 +4,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { UMLModel } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { cloneDeep } from 'lodash-es';
+import { switchMap, tap } from 'rxjs/operators';
+
+import { ModelingExerciseService } from './modeling-exercise.service';
+import { ModelingEditorComponent } from '../shared/modeling-editor.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -20,10 +25,6 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { cloneDeep } from 'lodash-es';
-import { switchMap, tap } from 'rxjs/operators';
-import { ModelingEditorComponent } from '../shared/modeling-editor.component';
-import { ModelingExerciseService } from './modeling-exercise.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',

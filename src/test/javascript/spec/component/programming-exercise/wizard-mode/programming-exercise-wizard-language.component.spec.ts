@@ -1,5 +1,8 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { of } from 'rxjs';
+
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -7,8 +10,6 @@ import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
 import { ProgrammingExerciseUpdateWizardLanguageComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-language.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { of } from 'rxjs';
 
 describe('ProgrammingExerciseWizardLanguageComponent', () => {
     let wizardComponentFixture: ComponentFixture<ProgrammingExerciseUpdateWizardLanguageComponent>;

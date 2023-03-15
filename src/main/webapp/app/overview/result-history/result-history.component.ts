@@ -1,4 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
+
 import { Exercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';

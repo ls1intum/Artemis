@@ -2,6 +2,11 @@ import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By, SafeHtml } from '@angular/platform-browser';
 import { UMLModel } from '@ls1intum/apollon';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+
+import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../../../test.module';
 import { Course } from 'app/entities/course.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -12,10 +17,6 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTooltipMocks.module';
-import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('ModelingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ModelingExamSubmissionComponent>;

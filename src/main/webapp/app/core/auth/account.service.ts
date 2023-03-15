@@ -2,6 +2,10 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { setUser } from '@sentry/browser';
+import { SessionStorageService } from 'ngx-webstorage';
+import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
+import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
+
 import { User } from 'app/core/user/user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Course } from 'app/entities/course.model';
@@ -9,9 +13,6 @@ import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { SessionStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
-import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 
 export interface IAccountService {
     save: (account: any) => Observable<HttpResponse<any>>;

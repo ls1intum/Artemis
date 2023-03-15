@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
+
 import { Bean, PropertySource } from './configuration.model';
 import { ConfigurationService } from './configuration.service';
 

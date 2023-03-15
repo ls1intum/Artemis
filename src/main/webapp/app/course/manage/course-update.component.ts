@@ -4,6 +4,10 @@ import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faExclamationTriangle, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
+import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
+
+import { CourseManagementService } from './course-management.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -22,9 +26,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import dayjs from 'dayjs/esm';
-import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
-import { CourseManagementService } from './course-management.service';
 
 @Component({
     selector: 'jhi-course-update',

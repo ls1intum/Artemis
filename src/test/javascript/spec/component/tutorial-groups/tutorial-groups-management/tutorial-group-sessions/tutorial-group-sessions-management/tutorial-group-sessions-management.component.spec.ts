@@ -3,6 +3,15 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
+import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
+import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
+import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGroupSessionExampleModels';
+import { TutorialGroupSessionRowStubComponent, TutorialGroupSessionsTableStubComponent } from '../../../stubs/tutorial-group-sessions-table-stub.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
@@ -12,14 +21,6 @@ import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
-import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
-import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
-import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGroupSessionExampleModels';
-import { TutorialGroupSessionRowStubComponent, TutorialGroupSessionsTableStubComponent } from '../../../stubs/tutorial-group-sessions-table-stub.component';
 
 @Component({ selector: 'jhi-tutorial-group-session-row-buttons', template: '' })
 class TutorialGroupSessionRowButtonsStubComponent {

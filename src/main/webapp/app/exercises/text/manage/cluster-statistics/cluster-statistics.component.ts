@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
+
 import { TextExerciseService } from '../text-exercise/text-exercise.service';
+import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
 
 @Component({
     selector: 'jhi-text-exercise-cluster-statistics',

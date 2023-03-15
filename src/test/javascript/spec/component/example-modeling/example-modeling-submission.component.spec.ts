@@ -6,6 +6,13 @@ import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } fro
 import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { UMLModel } from '@ls1intum/apollon';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
+import { delay, of, throwError } from 'rxjs';
+
+import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
@@ -25,12 +32,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
-import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
-import { delay, of, throwError } from 'rxjs';
-import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('Example Modeling Submission Component', () => {
     let comp: ExampleModelingSubmissionComponent;

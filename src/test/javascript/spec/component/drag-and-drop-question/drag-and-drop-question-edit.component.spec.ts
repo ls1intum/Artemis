@@ -3,6 +3,12 @@ import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { NgModel } from '@angular/forms';
 import { NgbCollapse, NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { clone } from 'lodash-es';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { triggerChanges } from '../../helpers/utils/general.utils';
+import { ArtemisTestModule } from '../../test.module';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
@@ -22,11 +28,6 @@ import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.comm
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { clone } from 'lodash-es';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { triggerChanges } from '../../helpers/utils/general.utils';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('DragAndDropQuestionEditComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;

@@ -2,6 +2,10 @@ import { HttpResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { Subscription } from 'rxjs';
+
+import { TextExerciseService } from './text-exercise.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Course } from 'app/entities/course.model';
@@ -11,9 +15,6 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import dayjs from 'dayjs/esm';
-import { Subscription } from 'rxjs';
-import { TextExerciseService } from './text-exercise.service';
 
 @Component({
     selector: 'jhi-text-exercise-detail',

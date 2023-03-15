@@ -1,13 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UserService } from 'app/core/user/user.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initializer.component';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
+
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockUserService } from '../../../helpers/mocks/service/mock-user.service';
+import { UserService } from 'app/core/user/user.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initializer.component';
 
 describe('LtiInitializerComponent', () => {
     let comp: LtiInitializerComponent;

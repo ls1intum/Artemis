@@ -1,6 +1,12 @@
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgModel } from '@angular/forms';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective } from 'ng-mocks';
+
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { expectElementToBeDisabled, expectElementToBeEnabled } from '../../helpers/utils/general.utils';
+import { ArtemisTestModule } from '../../test.module';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Course } from 'app/entities/course.model';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -8,11 +14,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective } from 'ng-mocks';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { expectElementToBeDisabled, expectElementToBeEnabled } from '../../helpers/utils/general.utils';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;

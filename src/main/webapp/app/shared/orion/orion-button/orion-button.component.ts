@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({

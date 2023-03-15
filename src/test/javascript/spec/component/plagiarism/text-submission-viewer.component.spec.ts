@@ -1,6 +1,12 @@
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
+
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisTestModule } from '../../test.module';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -12,11 +18,6 @@ import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/Plag
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('Text Submission Viewer Component', () => {
     let comp: TextSubmissionViewerComponent;

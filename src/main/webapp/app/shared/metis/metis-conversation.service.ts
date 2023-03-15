@@ -1,6 +1,9 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { EMPTY, Observable, ReplaySubject, Subject, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -17,8 +20,6 @@ import { GroupChatService } from 'app/shared/metis/conversations/group-chat.serv
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
 import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
 import { onError } from 'app/shared/util/global.utils';
-import dayjs from 'dayjs/esm';
-import { EMPTY, Observable, ReplaySubject, Subject, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE

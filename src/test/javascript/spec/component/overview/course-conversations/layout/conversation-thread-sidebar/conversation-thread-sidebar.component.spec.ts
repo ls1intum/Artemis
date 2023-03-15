@@ -1,13 +1,14 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent, MockPipe } from 'ng-mocks';
+
+import { NgbTooltipMocksModule } from '../../../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { post } from '../../../../../helpers/sample/metis-sample-data';
 import { Post } from 'app/entities/metis/post.model';
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/message-reply-inline-input/message-reply-inline-input.component';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { NgbTooltipMocksModule } from '../../../../../helpers/mocks/directive/ngbTooltipMocks.module';
-import { post } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('ConversationThreadSidebarComponent', () => {
     let component: ConversationThreadSidebarComponent;

@@ -1,3 +1,5 @@
+import dayjs from 'dayjs/esm';
+
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -8,7 +10,6 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
-import dayjs from 'dayjs/esm';
 
 export enum ProgrammingLanguage {
     JAVA = 'JAVA',

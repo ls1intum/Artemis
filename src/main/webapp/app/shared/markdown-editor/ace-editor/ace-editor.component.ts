@@ -1,12 +1,13 @@
 import { Component, ElementRef, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Subscription } from 'rxjs';
+
+import { ThemeService } from 'app/core/theme/theme.service';
 import 'brace';
 import 'brace/theme/monokai';
 import 'brace/theme/chrome';
 import 'brace/theme/dreamweaver';
 import 'brace/theme/dracula';
-import { ThemeService } from 'app/core/theme/theme.service';
-import { Subscription } from 'rxjs';
 
 declare let ace: any;
 

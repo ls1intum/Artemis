@@ -1,5 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subject } from 'rxjs';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -11,7 +13,6 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { Subject } from 'rxjs';
 
 export enum FilterProp {
     ALL = 'all',

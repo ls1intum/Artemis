@@ -1,12 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import dayjs from 'dayjs/esm';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { EntityResponseType, ResultService } from 'app/exercises/shared/result/result.service';
-import dayjs from 'dayjs/esm';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ExternalSubmissionService {

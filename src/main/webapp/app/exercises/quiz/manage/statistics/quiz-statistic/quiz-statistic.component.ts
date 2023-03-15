@@ -3,6 +3,8 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -12,7 +14,6 @@ import { QuizStatistics } from 'app/exercises/quiz/manage/statistics/quiz-statis
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { round } from 'app/shared/util/utils';
-import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-quiz-statistic',

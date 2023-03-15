@@ -1,8 +1,9 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+
 import { Audit } from 'app/admin/audits/audit.model';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class AuditsService {

@@ -5,6 +5,18 @@ import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { TranslateModule } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
+
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
+import { fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
+import { MockFileUploadSubmissionService, createFileUploadSubmission } from '../../helpers/mocks/service/mock-file-upload-submission.service';
+import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisTestModule } from '../../test.module';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
@@ -31,17 +43,6 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
-import { MockFileUploadSubmissionService, createFileUploadSubmission } from '../../helpers/mocks/service/mock-file-upload-submission.service';
-import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('FileUploadSubmissionComponent', () => {
     let comp: FileUploadSubmissionComponent;

@@ -1,6 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subject } from 'rxjs';
+import { finalize, takeUntil, tap } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -9,8 +12,6 @@ import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutor
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject } from 'rxjs';
-import { finalize, takeUntil, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-registered-students',

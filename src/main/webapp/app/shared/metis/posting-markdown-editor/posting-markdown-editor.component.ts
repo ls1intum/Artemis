@@ -1,5 +1,6 @@
 import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+
 import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
 import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
 import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';

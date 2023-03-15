@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseHintResponse, ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';

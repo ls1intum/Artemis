@@ -1,4 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
+
 import { round } from 'app/shared/util/utils';
 
 @Component({

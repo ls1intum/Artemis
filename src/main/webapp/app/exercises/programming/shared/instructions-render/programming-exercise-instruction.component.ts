@@ -2,6 +2,11 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleCha
 import { SafeHtml } from '@angular/platform-browser';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { Observable, Subscription, merge, of } from 'rxjs';
+import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { ShowdownExtension } from 'showdown';
+
+import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
 import { Feedback } from 'app/entities/feedback.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -17,10 +22,6 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { findLatestResult } from 'app/shared/util/utils';
-import { Observable, Subscription, merge, of } from 'rxjs';
-import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
-import { ShowdownExtension } from 'showdown';
-import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',

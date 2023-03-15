@@ -1,6 +1,11 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { faChevronDown, faCircleNotch, faTerminal } from '@fortawesome/free-solid-svg-icons';
 import { Interactable } from '@interactjs/core/Interactable';
+import interact from 'interactjs';
+import { Observable, Subscription, of } from 'rxjs';
+import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
+
+import { Annotation } from '../ace/code-editor-ace.component';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { Participation, getExercise } from 'app/entities/participation/participation.model';
@@ -14,10 +19,6 @@ import { hasParticipationChanged } from 'app/exercises/shared/participation/part
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { findLatestResult } from 'app/shared/util/utils';
-import interact from 'interactjs';
-import { Observable, Subscription, of } from 'rxjs';
-import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
-import { Annotation } from '../ace/code-editor-ace.component';
 
 @Component({
     selector: 'jhi-code-editor-build-output',

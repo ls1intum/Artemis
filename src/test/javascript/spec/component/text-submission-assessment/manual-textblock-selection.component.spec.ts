@@ -1,5 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { MockComponent, MockProvider } from 'ng-mocks';
+
+import { ArtemisTestModule } from '../../test.module';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextBlock } from 'app/entities/text-block.model';
@@ -8,8 +11,6 @@ import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/man
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
 import { ManualTextSelectionComponent, wordSelection } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
 import { TextSelectDirective } from 'app/exercises/text/shared/text-select.directive';
-import { MockComponent, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ManualTextblockSelectionComponent', () => {
     let component: ManualTextblockSelectionComponent;

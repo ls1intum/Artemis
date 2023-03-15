@@ -5,6 +5,13 @@ import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
+
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -15,12 +22,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 @Component({ selector: 'jhi-course-lecture-row', template: '' })
 class CourseLectureRowStubComponent {

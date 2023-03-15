@@ -2,6 +2,11 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, S
 import { faPlayCircle } from '@fortawesome/free-regular-svg-icons';
 import { faCircleNotch, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { isEmpty as _isEmpty } from 'lodash-es';
+import { Observable, Subscription, of, throwError } from 'rxjs';
+import { catchError, switchMap, tap } from 'rxjs/operators';
+
+import { CodeEditorConfirmRefreshModalComponent } from './code-editor-confirm-refresh-modal.component';
 import { CodeEditorResolveConflictModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-resolve-conflict-modal.component';
 import { CommitState, EditorState, FileSubmission, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
@@ -9,10 +14,6 @@ import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, Connectio
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { isEmpty as _isEmpty } from 'lodash-es';
-import { Observable, Subscription, of, throwError } from 'rxjs';
-import { catchError, switchMap, tap } from 'rxjs/operators';
-import { CodeEditorConfirmRefreshModalComponent } from './code-editor-confirm-refresh-modal.component';
 
 @Component({
     selector: 'jhi-code-editor-actions',

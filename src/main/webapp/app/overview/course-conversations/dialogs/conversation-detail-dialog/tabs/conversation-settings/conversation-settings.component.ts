@@ -2,6 +2,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { EMPTY, Subject, from, takeUntil } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
@@ -13,8 +16,6 @@ import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { canChangeChannelArchivalState, canDeleteChannel, canLeaveConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { onError } from 'app/shared/util/global.utils';
-import { EMPTY, Subject, from, takeUntil } from 'rxjs';
-import { catchError } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-conversation-settings',

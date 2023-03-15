@@ -1,7 +1,8 @@
+import dayjs from 'dayjs/esm';
+
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import dayjs from 'dayjs/esm';
 
 // IMPORTANT NOTICE: The following strings have to be consistent with
 // the ones defined in LectureUnit.java

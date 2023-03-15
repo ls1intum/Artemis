@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';

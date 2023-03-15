@@ -2,14 +2,15 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+import * as shape from 'd3-shape';
+import dayjs from 'dayjs/esm';
+import { mean } from 'simple-statistics';
+
+import { CourseManagementService } from '../course-management.service';
 import { Course } from 'app/entities/course.model';
 import { GraphColors } from 'app/entities/statistics.model';
 import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import * as shape from 'd3-shape';
-import dayjs from 'dayjs/esm';
-import { mean } from 'simple-statistics';
-import { CourseManagementService } from '../course-management.service';
 
 @Component({
     selector: 'jhi-course-detail-line-chart',

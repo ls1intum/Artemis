@@ -1,5 +1,6 @@
-import { Rating } from 'app/entities/rating.model';
 import { Observable, of } from 'rxjs';
+
+import { Rating } from 'app/entities/rating.model';
 
 export class MockRatingService {
     createRating = (rating: Rating): Observable<Rating> => of(rating);

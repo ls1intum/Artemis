@@ -1,13 +1,14 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { AccountService } from 'app/core/auth/account.service';
-import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
-import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { map, take } from 'rxjs/operators';
+
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../helpers/conversationExampleModels';
+import { AccountService } from 'app/core/auth/account.service';
+import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
 
 describe('ConversationService', () => {
     let service: ConversationService;

@@ -3,6 +3,15 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { NgModel } from '@angular/forms';
 import { ActivatedRoute, Params } from '@angular/router';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -23,14 +32,6 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;

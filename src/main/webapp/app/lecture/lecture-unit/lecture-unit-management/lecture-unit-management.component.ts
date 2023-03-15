@@ -3,6 +3,9 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { faPencilAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, filter, finalize, map } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
@@ -12,8 +15,6 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { LectureService } from 'app/lecture/lecture.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, Subscription } from 'rxjs';
-import { debounceTime, filter, finalize, map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-lecture-unit-management',

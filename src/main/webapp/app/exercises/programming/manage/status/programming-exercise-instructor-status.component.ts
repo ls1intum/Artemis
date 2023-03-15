@@ -1,5 +1,8 @@
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
+
 import { Participation } from 'app/entities/participation/participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
@@ -9,8 +12,6 @@ import { Result } from 'app/entities/result.model';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { findLatestResult } from 'app/shared/util/utils';
-import { Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-status',

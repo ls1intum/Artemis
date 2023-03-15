@@ -3,6 +3,10 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { cloneDeep } from 'lodash-es';
+import { switchMap, tap } from 'rxjs/operators';
+
+import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
@@ -17,9 +21,6 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { cloneDeep } from 'lodash-es';
-import { switchMap, tap } from 'rxjs/operators';
-import { FileUploadExerciseService } from './file-upload-exercise.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',

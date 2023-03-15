@@ -1,4 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
+
 import { ExerciseType } from 'app/entities/exercise.model';
 
 @Pipe({

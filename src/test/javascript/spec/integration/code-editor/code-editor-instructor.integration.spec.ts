@@ -3,6 +3,27 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
+import * as ace from 'brace';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
+
+import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
+import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
+import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
+import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
+import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
+import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
+import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
+import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
+import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
+import { problemStatement } from '../../helpers/sample/problemStatement.json';
+import { ArtemisTestModule } from '../../test.module';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -45,26 +66,6 @@ import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-edi
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
-import * as ace from 'brace';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
-import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
-import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
-import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
-import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
-import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
-import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
-import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
-import { problemStatement } from '../../helpers/sample/problemStatement.json';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('CodeEditorInstructorIntegration', () => {
     // needed to make sure ace is defined

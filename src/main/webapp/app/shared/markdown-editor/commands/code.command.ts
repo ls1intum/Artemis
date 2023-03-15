@@ -1,5 +1,6 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCode } from '@fortawesome/free-solid-svg-icons';
+
 import { Command } from './command';
 
 export class CodeCommand extends Command {

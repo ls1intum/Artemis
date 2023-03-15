@@ -1,4 +1,11 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { Observable, of } from 'rxjs';
+
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
+import { ArtemisTestModule } from '../../test.module';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
@@ -17,12 +24,6 @@ import { Submission } from 'app/entities/submission.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { Observable, of } from 'rxjs';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ComplaintsStudentViewComponent', () => {
     const complaintTimeLimitDays = 7;

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+
 import { GroupNotification } from 'app/entities/group-notification.model';
 import {
     ATTACHMENT_CHANGE_TITLE,

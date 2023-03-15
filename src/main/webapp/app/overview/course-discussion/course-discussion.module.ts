@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+
 import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { Authority } from 'app/shared/constants/authority.constants';

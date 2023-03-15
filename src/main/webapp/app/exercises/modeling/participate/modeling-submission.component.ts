@@ -6,6 +6,11 @@ import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-
 import { Selection, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { omit } from 'lodash-es';
+import { Subject, Subscription } from 'rxjs';
+
+import { getNamesForAssessments } from '../assess/modeling-assessment.util';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -32,10 +37,6 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import dayjs from 'dayjs/esm';
-import { omit } from 'lodash-es';
-import { Subject, Subscription } from 'rxjs';
-import { getNamesForAssessments } from '../assess/modeling-assessment.util';
 
 @Component({
     selector: 'jhi-modeling-submission',

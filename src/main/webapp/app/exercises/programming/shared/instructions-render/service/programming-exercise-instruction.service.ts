@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+
 import { Result } from 'app/entities/result.model';
 import { isLegacyResult } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 

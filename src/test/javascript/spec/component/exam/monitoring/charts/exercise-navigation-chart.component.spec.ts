@@ -2,6 +2,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { BarChartModule } from '@swimlane/ngx-charts';
+import { MockModule, MockPipe } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
+import { ArtemisTestModule } from '../../../../test.module';
+import { createTestExercises } from '../exam-monitoring-helper';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Course } from 'app/entities/course.model';
 import { SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
@@ -16,12 +23,6 @@ import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockModule, MockPipe } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
-import { ArtemisTestModule } from '../../../../test.module';
-import { createTestExercises } from '../exam-monitoring-helper';
 
 describe('Exercise Navigation Chart Component', () => {
     let comp: ExerciseNavigationChartComponent;

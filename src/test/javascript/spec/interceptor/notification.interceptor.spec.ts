@@ -1,7 +1,8 @@
 import { HttpHandler, HttpHeaders, HttpRequest, HttpResponse } from '@angular/common/http';
+import { of } from 'rxjs';
+
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { AlertService } from 'app/core/util/alert.service';
-import { of } from 'rxjs';
 
 describe(`NotificationInterceptor`, () => {
     let notificationInterceptor: NotificationInterceptor;

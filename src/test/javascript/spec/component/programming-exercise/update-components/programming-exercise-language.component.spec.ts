@@ -1,12 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { CheckboxControlValueAccessor, DefaultValueAccessor, NgModel, NumberValueAccessor, SelectControlValueAccessor } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { MockPipe } from 'ng-mocks';
+import { of } from 'rxjs';
+
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { MockPipe } from 'ng-mocks';
-import { of } from 'rxjs';
 
 describe('ProgrammingExerciseLanguageComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseLanguageComponent>;

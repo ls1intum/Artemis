@@ -1,10 +1,11 @@
 import { Color } from '@swimlane/ngx-charts';
+import dayjs from 'dayjs/esm';
+import { groupBy } from 'lodash-es';
+
 import { ExamAction, ExamActionType, SavedExerciseAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { Exam } from 'app/entities/exam.model';
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import dayjs from 'dayjs/esm';
-import { groupBy } from 'lodash-es';
 
 // Collection of colors used for the exam monitoring
 const colors = [GraphColors.LIGHT_BLUE, GraphColors.LIGHT_GREY, GraphColors.BLUE, GraphColors.GREY, GraphColors.DARK_BLUE];

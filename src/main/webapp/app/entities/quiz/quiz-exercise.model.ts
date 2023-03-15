@@ -1,9 +1,10 @@
+import dayjs from 'dayjs/esm';
+
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
-import dayjs from 'dayjs/esm';
 
 export enum QuizStatus {
     CLOSED,

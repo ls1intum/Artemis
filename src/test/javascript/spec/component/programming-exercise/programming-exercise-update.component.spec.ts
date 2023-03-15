@@ -7,6 +7,18 @@ import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
+
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { NgbAlertsMocksModule } from '../../helpers/mocks/directive/ngbAlertsMocks.module';
+import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
@@ -49,17 +61,7 @@ import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
-import { NgbAlertsMocksModule } from '../../helpers/mocks/directive/ngbAlertsMocks.module';
-import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
+
 import '@angular/localize/init';
 
 describe('ProgrammingExercise Management Update Component', () => {

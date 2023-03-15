@@ -1,6 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import dayjs from 'dayjs/esm';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
@@ -20,7 +22,6 @@ import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-managem
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import { onError } from 'app/shared/util/global.utils';
 import { objectToJsonBlob } from 'app/utils/blob-util';
-import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-lecture-update-wizard-units',

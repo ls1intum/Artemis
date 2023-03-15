@@ -1,9 +1,10 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import * as Sentry from '@sentry/browser';
-import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { of } from 'rxjs';
+
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 
 describe('EntityTitleService', () => {
     let service: EntityTitleService;

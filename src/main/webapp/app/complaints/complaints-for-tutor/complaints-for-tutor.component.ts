@@ -2,6 +2,8 @@ import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { finalize } from 'rxjs/operators';
+
 import { isAllowedToRespondToComplaintAction } from 'app/assessment/assessment.service';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -11,7 +13,6 @@ import { Course } from 'app/entities/course.model';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
-import { finalize } from 'rxjs/operators';
 
 export type AssessmentAfterComplaint = { complaintResponse: ComplaintResponse; onSuccess: () => void; onError: () => void };
 

@@ -1,10 +1,11 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { SystemNotification } from 'app/entities/system-notification.model';
-import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+
+import { SystemNotification } from 'app/entities/system-notification.model';
+import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 
 type EntityResponseType = HttpResponse<SystemNotification>;
 

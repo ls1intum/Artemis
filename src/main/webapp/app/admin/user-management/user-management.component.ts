@@ -4,6 +4,10 @@ import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { LocalStorageService } from 'ngx-webstorage';
+import { Subject, Subscription, combineLatest } from 'rxjs';
+import { debounceTime, switchMap, tap } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { AdminUserService } from 'app/core/user/admin-user.service';
 import { User } from 'app/core/user/user.model';
@@ -18,9 +22,6 @@ import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/constants/pagination
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { onError } from 'app/shared/util/global.utils';
-import { LocalStorageService } from 'ngx-webstorage';
-import { Subject, Subscription, combineLatest } from 'rxjs';
-import { debounceTime, switchMap, tap } from 'rxjs/operators';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();

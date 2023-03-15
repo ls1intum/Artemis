@@ -2,6 +2,13 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { NgForm, NgModel } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { flatMap } from 'lodash-es';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+
+import { mockExercise, mockSourceExercise, mockSourceTeamStudents, mockSourceTeams, mockTeam, mockTeamStudents, mockTeams } from '../../helpers/mocks/service/mock-team.service';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise } from 'app/entities/exercise.model';
@@ -14,12 +21,6 @@ import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/team
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { flatMap } from 'lodash-es';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
-import { mockExercise, mockSourceExercise, mockSourceTeamStudents, mockSourceTeams, mockTeam, mockTeamStudents, mockTeams } from '../../helpers/mocks/service/mock-team.service';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('TeamsImportDialogComponent', () => {
     let comp: TeamsImportDialogComponent;

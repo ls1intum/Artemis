@@ -1,11 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
-import { AccountService } from 'app/core/auth/account.service';
-import { SessionStorageStrategy } from 'app/shared/image/session-storage-strategy';
-import { blobToBase64String } from 'app/utils/blob-util';
 import { Observable, Subject, Subscription, UnaryFunction, pipe } from 'rxjs';
 import { distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
 import { Cacheable, LocalStorageStrategy } from 'ts-cacheable';
+
+import { AccountService } from 'app/core/auth/account.service';
+import { SessionStorageStrategy } from 'app/shared/image/session-storage-strategy';
+import { blobToBase64String } from 'app/utils/blob-util';
 
 const logoutSubject = new Subject<void>();
 

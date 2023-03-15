@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+
 import { FeedbackConflictType } from 'app/entities/feedback-conflict';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';

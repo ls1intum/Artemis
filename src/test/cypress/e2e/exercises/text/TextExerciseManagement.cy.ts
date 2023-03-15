@@ -1,7 +1,6 @@
-import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import { Interception } from 'cypress/types/net-stubbing';
 import dayjs from 'dayjs/esm';
+
 import {
     courseManagement,
     courseManagementExercises,
@@ -15,6 +14,8 @@ import { BASE_API, DELETE } from '../../../support/constants';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
+import { Course } from 'app/entities/course.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 describe('Text exercise management', () => {
     let course: Course;

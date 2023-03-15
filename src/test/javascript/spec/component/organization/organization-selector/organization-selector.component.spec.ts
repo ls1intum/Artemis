@@ -1,13 +1,14 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { Organization } from 'app/entities/organization.model';
-import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
+
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { Organization } from 'app/entities/organization.model';
+import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 
 describe('OrganizationSelectorComponent', () => {
     let component: OrganizationSelectorComponent;

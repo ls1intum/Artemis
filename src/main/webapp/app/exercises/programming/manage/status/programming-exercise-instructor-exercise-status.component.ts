@@ -1,12 +1,13 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { Subscription } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
+
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { hasSolutionParticipationChanged, hasTemplateParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { findLatestResult } from 'app/shared/util/utils';
-import { Subscription } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
 
 /**
  * Describes programming exercise issues

@@ -1,6 +1,10 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { BehaviorSubject, of, throwError } from 'rxjs';
+
+import { ArtemisTestModule } from '../../test.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
@@ -13,9 +17,6 @@ import { OrionState } from 'app/shared/orion/orion';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('OrionExerciseAssessmentDashboardComponent', () => {
     let comp: OrionExerciseAssessmentDashboardComponent;

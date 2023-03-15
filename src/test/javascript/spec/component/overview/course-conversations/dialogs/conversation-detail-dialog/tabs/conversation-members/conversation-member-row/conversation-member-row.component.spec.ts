@@ -4,6 +4,11 @@ import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { NgbDropdownMocksModule } from '../../../../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../../helpers/conversationExampleModels';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -18,10 +23,7 @@ import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversatio
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { NgbDropdownMocksModule } from '../../../../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
-import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../../helpers/conversationExampleModels';
+
 const memberTemplate = {
     id: 1,
     login: 'login',

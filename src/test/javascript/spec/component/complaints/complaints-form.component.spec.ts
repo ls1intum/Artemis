@@ -3,6 +3,12 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+
+import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
 import { AlertService } from 'app/core/util/alert.service';
@@ -11,11 +17,6 @@ import { Exercise } from 'app/entities/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
-import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ComplaintsFormComponent', () => {
     const teamComplaints = 42;

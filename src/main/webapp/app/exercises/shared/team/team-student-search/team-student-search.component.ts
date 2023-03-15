@@ -1,13 +1,14 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { get } from 'lodash-es';
+import { Observable, combineLatest, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
+
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { Team } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import { get } from 'lodash-es';
-import { Observable, combineLatest, of } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-team-student-search',

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+
 import { ProcessMetrics } from 'app/admin/metrics/metrics.model';
 
 @Component({

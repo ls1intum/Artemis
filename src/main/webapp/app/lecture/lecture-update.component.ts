@@ -2,6 +2,10 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faHandshakeAngle, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { Observable } from 'rxjs';
+
+import { LectureService } from './lecture.service';
+import { CourseManagementService } from '../course/manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -12,9 +16,6 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { Observable } from 'rxjs';
-import { CourseManagementService } from '../course/manage/course-management.service';
-import { LectureService } from './lecture.service';
 
 @Component({
     selector: 'jhi-lecture-update',

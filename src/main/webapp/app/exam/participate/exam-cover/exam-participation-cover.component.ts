@@ -2,6 +2,8 @@ import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angu
 import { SafeHtml } from '@angular/platform-browser';
 import { faArrowLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+
 import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -12,7 +14,6 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-exam-participation-cover',

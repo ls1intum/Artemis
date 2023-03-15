@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+
 import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 
 @Component({

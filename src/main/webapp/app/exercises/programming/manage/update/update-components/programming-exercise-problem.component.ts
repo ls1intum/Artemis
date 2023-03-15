@@ -1,8 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { Observable } from 'rxjs';
+
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
-import { Observable } from 'rxjs';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',

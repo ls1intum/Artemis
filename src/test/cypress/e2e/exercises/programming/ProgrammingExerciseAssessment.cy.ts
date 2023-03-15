@@ -1,7 +1,6 @@
-import { Course } from 'app/entities/course.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Interception } from 'cypress/types/net-stubbing';
 import dayjs from 'dayjs/esm';
+
 import {
     courseAssessment,
     courseManagement,
@@ -14,6 +13,8 @@ import {
 } from '../../../support/artemis';
 import { CypressAssessmentType, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
+import { Course } from 'app/entities/course.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('Programming exercise assessment', () => {
     let course: Course;

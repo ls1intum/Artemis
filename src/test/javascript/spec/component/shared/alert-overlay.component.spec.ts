@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+
+import { ArtemisTestModule } from '../../test.module';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { CloseCircleComponent } from 'app/shared/close-circle/close-circle.component';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('Alert Overlay Component Tests', () => {
     let comp: AlertOverlayComponent;

@@ -3,6 +3,13 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute } from '@angular/router';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of, throwError } from 'rxjs';
+
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { OrganizationManagementDetailComponent } from 'app/admin/organization-management/organization-management-detail.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { User } from 'app/core/user/user.model';
@@ -11,12 +18,6 @@ import { Course } from 'app/entities/course.model';
 import { Organization } from 'app/entities/organization.model';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { iconsAsHTML } from 'app/utils/icons.utils';
-import { MockComponent } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of, throwError } from 'rxjs';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('OrganizationManagementDetailComponent', () => {
     let component: OrganizationManagementDetailComponent;

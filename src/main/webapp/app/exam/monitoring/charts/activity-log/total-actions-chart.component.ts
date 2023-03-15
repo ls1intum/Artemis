@@ -1,11 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import dayjs from 'dayjs/esm';
+
+import { ExamActionService } from '../../exam-action.service';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
 import { getColor } from 'app/exam/monitoring/charts/monitoring-chart';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import dayjs from 'dayjs/esm';
-import { ExamActionService } from '../../exam-action.service';
 
 @Component({
     selector: 'jhi-total-actions-chart',

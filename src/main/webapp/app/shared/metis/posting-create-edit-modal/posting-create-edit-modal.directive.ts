@@ -1,6 +1,7 @@
 import { Directive, OnChanges, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PostingCreateEditDirective } from 'app/shared/metis/posting-create-edit.directive';

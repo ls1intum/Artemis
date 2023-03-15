@@ -1,5 +1,10 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
+import { ArtemisTestModule } from '../../../test.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -8,10 +13,6 @@ import { SubmissionExportService } from 'app/exercises/shared/submission-export/
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as DownloadUtil from 'app/shared/util/download.util';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('Submission Export Dialog Component', () => {
     let fixture: ComponentFixture<SubmissionExportDialogComponent>;

@@ -4,6 +4,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
@@ -33,7 +35,6 @@ import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment
 import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess/text-submission-assessment.route';
 import { notUndefined, onError } from 'app/shared/util/global.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-text-submission-assessment',

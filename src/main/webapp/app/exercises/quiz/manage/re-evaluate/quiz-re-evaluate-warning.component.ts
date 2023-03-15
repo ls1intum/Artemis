@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { faBan, faCheck, faCheckCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+
+import { QuizReEvaluateService } from './quiz-re-evaluate.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
@@ -9,7 +11,6 @@ import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { QuizReEvaluateService } from './quiz-re-evaluate.service';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate-warning',

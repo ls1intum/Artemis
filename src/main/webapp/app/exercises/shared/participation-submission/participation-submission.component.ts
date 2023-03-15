@@ -3,6 +3,10 @@ import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { Subject, Subscription, combineLatest, of } from 'rxjs';
+import { catchError, map, take, tap } from 'rxjs/operators';
+
 import { EventManager } from 'app/core/util/event-manager.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
@@ -25,9 +29,6 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import dayjs from 'dayjs/esm';
-import { Subject, Subscription, combineLatest, of } from 'rxjs';
-import { catchError, map, take, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-participation-submission',

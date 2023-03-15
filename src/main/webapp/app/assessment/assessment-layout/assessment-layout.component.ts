@@ -1,4 +1,5 @@
 import { Component, EventEmitter, HostBinding, Input, Output } from '@angular/core';
+
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Exercise } from 'app/entities/exercise.model';

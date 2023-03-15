@@ -2,14 +2,15 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockDirective } from 'ng-mocks';
+
+import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockDirective } from 'ng-mocks';
-import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ButtonComponent', () => {
     let comp: ButtonComponent;

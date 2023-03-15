@@ -1,4 +1,9 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import dayjs from 'dayjs/esm';
+import { orderBy as _orderBy } from 'lodash-es';
+import { Subscription } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
+
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -12,10 +17,6 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MissingResultInformation } from 'app/exercises/shared/result/result.utils';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import dayjs from 'dayjs/esm';
-import { orderBy as _orderBy } from 'lodash-es';
-import { Subscription } from 'rxjs';
-import { filter, map, tap } from 'rxjs/operators';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged-in user.

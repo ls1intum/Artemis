@@ -5,6 +5,9 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faBook, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { filter } from 'rxjs/operators';
+
+import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -17,8 +20,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
-import { filter } from 'rxjs/operators';
-import { FileUploadExerciseService } from './file-upload-exercise.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise',

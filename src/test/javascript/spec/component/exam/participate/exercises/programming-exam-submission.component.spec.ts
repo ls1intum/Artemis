@@ -1,5 +1,8 @@
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -17,8 +20,6 @@ import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-re
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 
 describe('ProgrammingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ProgrammingExamSubmissionComponent>;

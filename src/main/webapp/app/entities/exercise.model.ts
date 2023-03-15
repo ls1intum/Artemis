@@ -1,5 +1,7 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Attachment } from 'app/entities/attachment.model';
@@ -16,7 +18,6 @@ import { Team } from 'app/entities/team.model';
 import { ExerciseInfo } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import dayjs from 'dayjs/esm';
 
 export enum DifficultyLevel {
     EASY = 'EASY',

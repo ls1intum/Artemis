@@ -1,5 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { Observable, of } from 'rxjs';
+
+import { ArtemisTestModule } from '../../../test.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -10,10 +15,6 @@ import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.com
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { Observable, of } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('CourseExamsComponent', () => {
     let component: CourseExamsComponent;

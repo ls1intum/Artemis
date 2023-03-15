@@ -1,6 +1,10 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
 import { Interactable } from '@interactjs/core/Interactable';
+import interact from 'interactjs';
+import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
+import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
@@ -16,9 +20,6 @@ import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainC
 import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/testCase.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
-import interact from 'interactjs';
-import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
-import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',

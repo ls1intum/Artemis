@@ -1,18 +1,19 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { TutorialGroupManagementDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/detail/tutorial-group-management-detail.component';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
+
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { TutorialGroupDetailStubComponent } from '../../../stubs/tutorial-group-detail-stub.component';
 import { TutorialGroupRowButtonsStubComponent } from '../../../stubs/tutorial-group-row-buttons-stub.component';
+import { AlertService } from 'app/core/util/alert.service';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
+import { TutorialGroupManagementDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/detail/tutorial-group-management-detail.component';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 describe('TutorialGroupManagementDetailComponent', () => {
     let fixture: ComponentFixture<TutorialGroupManagementDetailComponent>;

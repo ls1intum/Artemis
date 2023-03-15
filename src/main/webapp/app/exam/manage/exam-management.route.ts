@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { AssessmentDashboardComponent } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard.component';
 import { exerciseTypes } from 'app/entities/exercise.model';

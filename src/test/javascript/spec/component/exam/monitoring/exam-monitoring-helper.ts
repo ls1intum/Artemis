@@ -1,3 +1,5 @@
+import dayjs from 'dayjs/esm';
+
 import {
     ConnectionUpdatedAction,
     ContinuedAfterHandedInEarlyAction,
@@ -13,7 +15,6 @@ import { Exercise } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import dayjs from 'dayjs/esm';
 
 export const createExamActionBasedOnType = (examActionType: ExamActionType): ExamAction => {
     let examAction: ExamAction;

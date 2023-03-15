@@ -4,6 +4,9 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
+import { Observable, of } from 'rxjs';
+import { filter, mergeMap, switchMap, tap } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExampleSubmission, ExampleSubmissionMode } from 'app/entities/example-submission.model';
@@ -28,8 +31,6 @@ import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { notUndefined } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { Observable, of } from 'rxjs';
-import { filter, mergeMap, switchMap, tap } from 'rxjs/operators';
 
 type ExampleSubmissionResponseType = EntityResponseType;
 

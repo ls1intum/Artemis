@@ -4,6 +4,12 @@ import { Component, ContentChild, EventEmitter, Input, OnDestroy, OnInit, Output
 import { ActivatedRoute, Router } from '@angular/router';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { DiffMatchPatch } from 'diff-match-patch-typescript';
+import { cloneDeep } from 'lodash-es';
+import { Observable, Subscription } from 'rxjs';
+import { switchMap, tap } from 'rxjs/operators';
+
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
@@ -31,11 +37,6 @@ import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util'
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import dayjs from 'dayjs/esm';
-import { DiffMatchPatch } from 'diff-match-patch-typescript';
-import { cloneDeep } from 'lodash-es';
-import { Observable, Subscription } from 'rxjs';
-import { switchMap, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',

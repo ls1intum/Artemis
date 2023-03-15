@@ -1,7 +1,8 @@
 import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { Subscription } from 'rxjs';
+
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { round } from 'app/shared/util/utils';
-import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-progress-bar',

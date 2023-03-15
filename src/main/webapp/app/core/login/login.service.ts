@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { finalize } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { finalize } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class LoginService {

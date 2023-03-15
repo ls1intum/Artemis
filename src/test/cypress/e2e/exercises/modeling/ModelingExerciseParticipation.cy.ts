@@ -1,8 +1,8 @@
-import { Course } from 'app/entities/course.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { courseManagementRequest, courseOverview, modelingExerciseEditor } from '../../../support/artemis';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, studentOne } from '../../../support/users';
+import { Course } from 'app/entities/course.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 // Common primitives
 let course: Course;

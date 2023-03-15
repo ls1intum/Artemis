@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+
 import { Submission } from 'app/entities/submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 

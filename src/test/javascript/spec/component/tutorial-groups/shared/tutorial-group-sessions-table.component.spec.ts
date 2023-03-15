@@ -1,16 +1,17 @@
 import { Component, Input, QueryList, SimpleChange, SimpleChanges, ViewChild, ViewChildren } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
+import { MockPipe } from 'ng-mocks';
+
+import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
+import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
+import { generateExampleTutorialGroupSession } from '../helpers/tutorialGroupSessionExampleModels';
+import { TutorialGroupSessionRowStubComponent } from '../stubs/tutorial-group-sessions-table-stub.component';
 import { TutorialGroupSessionsTableComponent } from 'app/course/tutorial-groups/shared/tutorial-group-sessions-table/tutorial-group-sessions-table.component';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockPipe } from 'ng-mocks';
-import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
-import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
-import { generateExampleTutorialGroupSession } from '../helpers/tutorialGroupSessionExampleModels';
-import { TutorialGroupSessionRowStubComponent } from '../stubs/tutorial-group-sessions-table-stub.component';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {

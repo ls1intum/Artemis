@@ -1,12 +1,13 @@
-import { Course } from 'app/entities/course.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Interception } from 'cypress/types/net-stubbing';
+
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { courseManagement, courseManagementRequest, quizExerciseCreation } from '../../../support/artemis';
 import { DELETE } from '../../../support/constants';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
+import { Course } from 'app/entities/course.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 // Common primitives
 let course: Course;

@@ -1,18 +1,19 @@
 import { HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
+import { Observable, of } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
+
+import { LectureDetailComponent } from './lecture-detail.component';
+import { LectureUpdateComponent } from './lecture-update.component';
+import { LectureComponent } from './lecture.component';
+import { LectureService } from './lecture.service';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import { lectureUnitRoute } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.route';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { Observable, of } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
-import { LectureDetailComponent } from './lecture-detail.component';
-import { LectureUpdateComponent } from './lecture-update.component';
-import { LectureComponent } from './lecture.component';
-import { LectureService } from './lecture.service';
 
 @Injectable({ providedIn: 'root' })
 export class LectureResolve implements Resolve<Lecture> {

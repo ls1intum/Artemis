@@ -6,24 +6,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { AnswerPostService } from 'app/shared/metis/answer-post.service';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { CourseWideContext, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
-import { PostService } from 'app/shared/metis/post.service';
-import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
-import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll.component';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Observable, of } from 'rxjs';
+
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockAnswerPostService } from '../../../helpers/mocks/service/mock-answer-post.service';
 import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
@@ -43,6 +29,21 @@ import {
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
 import { getElement } from '../../../helpers/utils/general.utils';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { AnswerPostService } from 'app/shared/metis/answer-post.service';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { CourseWideContext, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { PostService } from 'app/shared/metis/post.service';
+import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll.component';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;

@@ -3,6 +3,14 @@ import { TestBed } from '@angular/core/testing';
 import { SafeHtml } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { Observable } from 'rxjs';
+
+import { MockRouter } from '../helpers/mocks/mock-router';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -16,13 +24,6 @@ import { EntityResponseType, ExerciseService } from 'app/exercises/shared/exerci
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import dayjs from 'dayjs/esm';
-import { MockProvider } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { Observable } from 'rxjs';
-import { MockRouter } from '../helpers/mocks/mock-router';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 
 describe('Exercise Service', () => {
     let service: ExerciseService;

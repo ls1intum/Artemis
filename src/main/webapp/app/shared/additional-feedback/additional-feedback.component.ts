@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { faCommentDots } from '@fortawesome/free-regular-svg-icons';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+
 import { Course } from 'app/entities/course.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.model';

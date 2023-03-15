@@ -1,9 +1,10 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { PostingService } from 'app/shared/metis/posting.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { PostingService } from 'app/shared/metis/posting.service';
 
 type EntityResponseType = HttpResponse<AnswerPost>;
 

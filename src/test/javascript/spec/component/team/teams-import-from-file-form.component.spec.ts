@@ -3,12 +3,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { unparse } from 'papaparse';
+
+import { mockFileStudents, mockFileTeamsConverted } from '../../helpers/mocks/service/mock-team.service';
 import { Team } from 'app/entities/team.model';
 import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { MockComponent, MockProvider } from 'ng-mocks';
-import { unparse } from 'papaparse';
-import { mockFileStudents, mockFileTeamsConverted } from '../../helpers/mocks/service/mock-team.service';
 
 describe('TeamsImportFromFileFormComponent', () => {
     let comp: TeamsImportFromFileFormComponent;

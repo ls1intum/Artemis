@@ -1,11 +1,12 @@
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import dayjs from 'dayjs/esm';
+
 import { courseManagementRequest, courseOverview, examNavigation, examStartEnd, textExerciseEditor } from '../../support/artemis';
 import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, studentOne } from '../../support/users';
 import { generateUUID } from '../../support/utils';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 describe('Exam date verification', () => {
     let course: Course;

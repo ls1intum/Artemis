@@ -1,12 +1,13 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+
+import { ExamActionService } from '../../exam-action.service';
 import { Exam } from 'app/entities/exam.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { GraphColors } from 'app/entities/statistics.model';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
 import { getCurrentExercisePerStudent } from 'app/exam/monitoring/charts/monitoring-chart';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { ExamActionService } from '../../exam-action.service';
 
 @Component({
     selector: 'jhi-exercise-detail-current-chart',

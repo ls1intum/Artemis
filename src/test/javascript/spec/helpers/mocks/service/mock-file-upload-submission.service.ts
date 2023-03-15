@@ -1,8 +1,9 @@
+import { of } from 'rxjs';
+
+import { fileUploadExercise } from './mock-file-upload-exercise.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { of } from 'rxjs';
-import { fileUploadExercise } from './mock-file-upload-exercise.service';
 
 export const fileUploadParticipation = new StudentParticipation();
 fileUploadParticipation.exercise = fileUploadExercise;

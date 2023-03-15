@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { MockComponent } from 'ng-mocks';
+
+import { ArtemisTestModule } from '../../test.module';
 import { OrionCourseExerciseDetailsComponent } from 'app/orion/participation/orion-course-exercise-details.component';
 import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participation/orion-exercise-details-student-actions.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
-import { MockComponent } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('OrionCourseExerciseDetailsComponent', () => {
     let fixture: ComponentFixture<OrionCourseExerciseDetailsComponent>;

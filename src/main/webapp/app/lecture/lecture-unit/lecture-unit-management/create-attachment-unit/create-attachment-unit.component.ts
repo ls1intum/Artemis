@@ -1,6 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { combineLatest } from 'rxjs';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
@@ -8,8 +11,6 @@ import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { onError } from 'app/shared/util/global.utils';
 import { objectToJsonBlob } from 'app/utils/blob-util';
-import dayjs from 'dayjs/esm';
-import { combineLatest } from 'rxjs';
 
 @Component({
     selector: 'jhi-create-attachment-unit',

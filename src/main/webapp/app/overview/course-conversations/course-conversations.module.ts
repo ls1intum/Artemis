@@ -1,15 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
-import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
-import { ConversationSelectionSidebarComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-selection-sidebar.component';
-import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { CourseUsersSelectorModule } from 'app/shared/course-users-selector/course-users-selector.module';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
-import { MetisModule } from 'app/shared/metis/metis.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
+
 import { ChannelFormComponent } from './dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { ChannelsCreateDialogComponent } from './dialogs/channels-create-dialog/channels-create-dialog.component';
 import { ChannelItemComponent } from './dialogs/channels-overview-dialog/channel-item/channel-item.component';
@@ -30,6 +22,15 @@ import { ConversationSidebarEntryComponent } from './layout/conversation-selecti
 import { ConversationSidebarSectionComponent } from './layout/conversation-selection-sidebar/conversation-sidebar-section/conversation-sidebar-section.component';
 import { ChannelIconComponent } from './other/channel-icon/channel-icon.component';
 import { GroupChatIconComponent } from './other/group-chat-icon/group-chat-icon.component';
+import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
+import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
+import { ConversationSelectionSidebarComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-selection-sidebar.component';
+import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { CourseUsersSelectorModule } from 'app/shared/course-users-selector/course-users-selector.module';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
+import { MetisModule } from 'app/shared/metis/metis.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 const routes: Routes = [
     {

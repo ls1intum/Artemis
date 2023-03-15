@@ -3,16 +3,17 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { TestBed, fakeAsync } from '@angular/core/testing';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { throwError } from 'rxjs';
+
+import { MockRouter } from '../helpers/mocks/mock-router';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { TextBlockType } from 'app/entities/text-block.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { throwError } from 'rxjs';
-import { MockRouter } from '../helpers/mocks/mock-router';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 
 describe('TextAssessmentAnalytics Service', () => {
     let service: TextAssessmentAnalytics;

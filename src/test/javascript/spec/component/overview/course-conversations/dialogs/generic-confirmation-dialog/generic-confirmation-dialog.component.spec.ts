@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockPipe, MockProvider } from 'ng-mocks';
+
+import { initializeDialog } from '../dialog-test-helpers';
 import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { initializeDialog } from '../dialog-test-helpers';
 
 describe('GenericConfirmationDialogComponent', () => {
     let component: GenericConfirmationDialogComponent;

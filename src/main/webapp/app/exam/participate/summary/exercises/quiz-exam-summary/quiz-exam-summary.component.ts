@@ -1,4 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
+import dayjs from 'dayjs/esm';
+
 import { Exam } from 'app/entities/exam.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
@@ -13,7 +15,6 @@ import { Result } from 'app/entities/result.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',

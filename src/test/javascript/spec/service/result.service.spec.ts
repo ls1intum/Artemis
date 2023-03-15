@@ -3,6 +3,12 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import * as Sentry from '@sentry/browser';
+import dayjs from 'dayjs/esm';
+import { MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -18,11 +24,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import dayjs from 'dayjs/esm';
-import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 
 describe('ResultService', () => {
     let resultService: ResultService;

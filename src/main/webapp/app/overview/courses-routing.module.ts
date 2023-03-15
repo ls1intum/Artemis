@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';

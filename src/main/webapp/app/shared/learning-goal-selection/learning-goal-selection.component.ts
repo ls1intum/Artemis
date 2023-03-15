@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output, forwardRef } from '@ang
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { LearningGoal, getIcon } from 'app/entities/learningGoal.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';

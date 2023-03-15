@@ -5,6 +5,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UMLModel } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
@@ -29,7 +31,6 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',

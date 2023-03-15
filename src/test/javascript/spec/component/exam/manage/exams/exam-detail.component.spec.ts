@@ -7,6 +7,11 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -27,10 +32,6 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
-import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 
 @Component({
     template: '',

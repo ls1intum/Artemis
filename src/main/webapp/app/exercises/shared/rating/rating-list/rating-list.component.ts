@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Rating } from 'app/entities/rating.model';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';

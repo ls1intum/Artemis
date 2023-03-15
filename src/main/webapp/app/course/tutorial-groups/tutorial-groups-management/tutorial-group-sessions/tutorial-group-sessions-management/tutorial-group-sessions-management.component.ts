@@ -2,6 +2,9 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { EMPTY, Subject, from } from 'rxjs';
+import { catchError, finalize, map, takeUntil } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { getDayTranslationKey } from 'app/course/tutorial-groups/shared/weekdays';
@@ -11,8 +14,6 @@ import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-grou
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { onError } from 'app/shared/util/global.utils';
-import { EMPTY, Subject, from } from 'rxjs';
-import { catchError, finalize, map, takeUntil } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-session-management',

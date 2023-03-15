@@ -5,6 +5,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { filter, finalize } from 'rxjs/operators';
+
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
@@ -29,8 +32,6 @@ import { FileService } from 'app/shared/http/file.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import dayjs from 'dayjs/esm';
-import { filter, finalize } from 'rxjs/operators';
 
 @Component({
     providers: [FileUploadAssessmentService],

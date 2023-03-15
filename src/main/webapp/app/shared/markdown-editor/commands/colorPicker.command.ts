@@ -1,4 +1,5 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+
 import { Command } from './command';
 
 export class ColorPickerCommand extends Command {

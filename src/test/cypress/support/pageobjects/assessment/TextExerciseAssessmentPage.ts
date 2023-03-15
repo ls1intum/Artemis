@@ -1,5 +1,5 @@
-import { BASE_API, EXERCISE_TYPE, POST } from '../../constants';
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
+import { BASE_API, EXERCISE_TYPE, POST } from '../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the text exercise assessment page.

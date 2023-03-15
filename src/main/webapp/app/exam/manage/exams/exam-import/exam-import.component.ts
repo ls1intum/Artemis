@@ -2,6 +2,9 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subject } from 'rxjs';
+import { debounceTime, switchMap, tap } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -11,8 +14,6 @@ import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-
 import { SortService } from 'app/shared/service/sort.service';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject } from 'rxjs';
-import { debounceTime, switchMap, tap } from 'rxjs/operators';
 
 enum TableColumn {
     ID = 'ID',

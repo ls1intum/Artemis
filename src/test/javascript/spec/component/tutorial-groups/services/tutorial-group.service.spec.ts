@@ -1,9 +1,10 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { map, take } from 'rxjs/operators';
+
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { map, take } from 'rxjs/operators';
 
 describe('TutorialGroupService', () => {
     let service: TutorialGroupsService;

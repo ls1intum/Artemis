@@ -2,10 +2,11 @@ import { HttpClient } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router, convertToParamMap } from '@angular/router';
-import { Lti13DynamicRegistrationComponent } from 'app/lti/lti13-dynamic-registration.component';
 import { of, throwError } from 'rxjs';
+
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ArtemisTestModule } from '../../test.module';
+import { Lti13DynamicRegistrationComponent } from 'app/lti/lti13-dynamic-registration.component';
 
 describe('Lti13DynamicRegistrationComponentTest', () => {
     let fixture: ComponentFixture<Lti13DynamicRegistrationComponent>;

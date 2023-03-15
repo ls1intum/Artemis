@@ -2,6 +2,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { Observable, Subject, Subscription, of } from 'rxjs';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
+
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
@@ -10,8 +13,6 @@ import { Organization } from 'app/entities/organization.model';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { iconsAsHTML } from 'app/utils/icons.utils';
-import { Observable, Subject, Subscription, of } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 const cssClasses = {
     alreadyMember: 'already-member',

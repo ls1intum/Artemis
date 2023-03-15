@@ -2,6 +2,18 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import dayjs from 'dayjs/esm';
+import { MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { BehaviorSubject, Subject, of } from 'rxjs';
+
+import { MockRouter } from '../helpers/mocks/mock-router';
+import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
+import { MockCourseManagementService } from '../helpers/mocks/service/mock-course-management.service';
+import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.service';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { TranslateTestingModule } from '../helpers/mocks/service/mock-translate.service';
+import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -12,17 +24,6 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import dayjs from 'dayjs/esm';
-import { MockProvider } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, Subject, of } from 'rxjs';
-import { MockRouter } from '../helpers/mocks/mock-router';
-import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
-import { MockCourseManagementService } from '../helpers/mocks/service/mock-course-management.service';
-import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.service';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { TranslateTestingModule } from '../helpers/mocks/service/mock-translate.service';
-import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 
 describe('Notification Service', () => {
     let notificationService: NotificationService;

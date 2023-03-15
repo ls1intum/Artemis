@@ -3,6 +3,20 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { BehaviorSubject, ReplaySubject, of } from 'rxjs';
+
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { MockNotificationSettingsService } from '../../../helpers/mocks/service/mock-notification-settings.service';
+import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';
+import { MockUserService } from '../../../helpers/mocks/service/mock-user.service';
+import { ArtemisTestModule } from '../../../test.module';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
@@ -15,19 +29,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, ReplaySubject, of } from 'rxjs';
-import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { MockNotificationSettingsService } from '../../../helpers/mocks/service/mock-notification-settings.service';
-import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';
-import { MockUserService } from '../../../helpers/mocks/service/mock-user.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('Notification Sidebar Component', () => {
     let notificationSidebarComponent: NotificationSidebarComponent;

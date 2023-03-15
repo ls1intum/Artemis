@@ -2,13 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { median } from 'simple-statistics';
+
 import { GraphColors } from 'app/entities/statistics.model';
 import { TutorEffort } from 'app/entities/tutor-effort.model';
 import { PlagiarismAndTutorEffortDirective } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { round } from 'app/shared/util/utils';
-import { median } from 'simple-statistics';
 
 interface TutorEffortRange {
     minimumTimeSpent: number;

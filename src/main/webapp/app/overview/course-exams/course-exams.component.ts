@@ -1,6 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { Subscription } from 'rxjs';
+
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -8,8 +11,6 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import dayjs from 'dayjs/esm';
-import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-exams',

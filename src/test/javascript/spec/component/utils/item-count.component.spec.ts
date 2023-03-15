@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
+
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 

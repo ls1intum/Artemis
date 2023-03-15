@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { faArrowLeft, faArrowRight, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+
 import { ThemeService } from 'app/core/theme/theme.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';

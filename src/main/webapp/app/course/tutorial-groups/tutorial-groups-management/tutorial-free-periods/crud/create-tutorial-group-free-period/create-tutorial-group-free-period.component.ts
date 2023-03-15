@@ -1,13 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, Input, OnDestroy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subject } from 'rxjs';
+import { finalize, takeUntil } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { TutorialGroupFreePeriodFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { Course } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject } from 'rxjs';
-import { finalize, takeUntil } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-create-tutorial-group-free-day',

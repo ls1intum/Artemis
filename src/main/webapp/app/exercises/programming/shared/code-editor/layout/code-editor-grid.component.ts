@@ -1,10 +1,11 @@
 import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, Renderer2, ViewChild, ViewEncapsulation } from '@angular/core';
 import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { Interactable } from '@interactjs/core/Interactable';
+import interact from 'interactjs';
+
 import { CollapsableCodeEditorElement } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { ResizeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import interact from 'interactjs';
 
 @Component({
     selector: 'jhi-code-editor-grid',

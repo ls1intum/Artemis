@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+
 import { ArtemisParticipationSubmissionRoutingModule } from 'app/exercises/shared/participation-submission/participation-submission-routing.module';
 import { ParticipationSubmissionComponent } from 'app/exercises/shared/participation-submission/participation-submission.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';

@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+
 import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
 
 @Component({

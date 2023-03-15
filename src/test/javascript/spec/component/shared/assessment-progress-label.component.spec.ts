@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
+
+import { ArtemisTestModule } from '../../test.module';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Result } from 'app/entities/result.model';
 import { Submission } from 'app/entities/submission.model';
 import { AssessmentProgressLabelComponent } from 'app/exercises/shared/assessment-progress-label/assessment-progress-label.component';
-import dayjs from 'dayjs/esm';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('Assessment progress label test', () => {
     let comp: AssessmentProgressLabelComponent;

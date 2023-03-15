@@ -1,10 +1,11 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Result } from 'app/entities/result.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<QuizSubmission>;
 export type ResultResponseType = HttpResponse<Result>;

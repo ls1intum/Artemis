@@ -1,5 +1,8 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
+import { BehaviorSubject, Observable, Subject, Subscription, from, merge, of, timer } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
+
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -11,8 +14,6 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { findLatestResult } from 'app/shared/util/utils';
-import { BehaviorSubject, Observable, Subject, Subscription, from, merge, of, timer } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.

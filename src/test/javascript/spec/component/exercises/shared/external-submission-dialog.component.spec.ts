@@ -2,6 +2,10 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgForm, NgModel } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockDirective } from 'ng-mocks';
+import { Subject, throwError } from 'rxjs';
+
+import { ArtemisTestModule } from '../../../test.module';
 import { User } from 'app/core/user/user.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { Exercise } from 'app/entities/exercise.model';
@@ -9,9 +13,6 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
 import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external-submission/external-submission-dialog.component';
 import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
-import { MockDirective } from 'ng-mocks';
-import { Subject, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('External Submission Dialog', () => {
     let fixture: ComponentFixture<ExternalSubmissionDialogComponent>;

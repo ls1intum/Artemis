@@ -4,6 +4,11 @@ import { faCircleNotch, faExclamationTriangle, faXmark } from '@fortawesome/free
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { LegendPosition, ScaleType } from '@swimlane/ngx-charts';
+import dayjs from 'dayjs/esm';
+import { of, throwError } from 'rxjs';
+import { catchError, switchMap, tap } from 'rxjs/operators';
+
+import { evaluateTemplateStatus, isOnlyCompilationTested, resultIsPreliminary } from '../result/result.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
 import { Course } from 'app/entities/course.model';
@@ -26,10 +31,6 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import dayjs from 'dayjs/esm';
-import { of, throwError } from 'rxjs';
-import { catchError, switchMap, tap } from 'rxjs/operators';
-import { evaluateTemplateStatus, isOnlyCompilationTested, resultIsPreliminary } from '../result/result.utils';
 
 // Modal -> Result details view
 @Component({

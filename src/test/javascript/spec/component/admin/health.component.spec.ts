@@ -2,17 +2,18 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockDirective } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { HealthModalComponent } from 'app/admin/health/health-modal.component';
 import { HealthComponent } from 'app/admin/health/health.component';
 import { Health } from 'app/admin/health/health.model';
 import { HealthService } from 'app/admin/health/health.service';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockComponent, MockDirective } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('HealthComponent', () => {
     let comp: HealthComponent;

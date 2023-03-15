@@ -3,6 +3,9 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { map } from 'rxjs/operators';
+
+import { ProgrammingAssessmentManualResultService } from '../manual-result/programming-assessment-manual-result.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -16,8 +19,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.utils';
 import { SortService } from 'app/shared/service/sort.service';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { map } from 'rxjs/operators';
-import { ProgrammingAssessmentManualResultService } from '../manual-result/programming-assessment-manual-result.service';
 
 @Component({
     templateUrl: './programming-exercise-submissions.component.html',

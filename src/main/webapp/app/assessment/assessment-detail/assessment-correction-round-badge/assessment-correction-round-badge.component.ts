@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+
 import { Feedback } from 'app/entities/feedback.model';
 
 @Component({

@@ -3,6 +3,8 @@ import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild } fr
 import { ActivatedRoute } from '@angular/router';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -17,7 +19,6 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { FileService } from 'app/shared/http/file.service';
-import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',

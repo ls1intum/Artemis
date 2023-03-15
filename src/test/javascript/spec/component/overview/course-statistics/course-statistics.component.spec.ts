@@ -4,6 +4,12 @@ import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BarChartModule, PieChartModule } from '@swimlane/ngx-charts';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
+import { ArtemisTestModule } from '../../../test.module';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { Course } from 'app/entities/course.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
@@ -22,11 +28,6 @@ import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;

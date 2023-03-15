@@ -1,6 +1,10 @@
 import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Observable, Subscription, of, throwError } from 'rxjs';
+import { catchError, filter, map, tap } from 'rxjs/operators';
+
+import { CodeEditorContainerComponent } from '../../shared/code-editor/container/code-editor-container.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -16,9 +20,6 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { Observable, Subscription, of, throwError } from 'rxjs';
-import { catchError, filter, map, tap } from 'rxjs/operators';
-import { CodeEditorContainerComponent } from '../../shared/code-editor/container/code-editor-container.component';
 
 /**
  * Enumeration specifying the repository type

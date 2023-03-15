@@ -2,6 +2,11 @@ import { AfterViewInit, Component, OnChanges, OnDestroy, OnInit, TemplateRef, Vi
 import { ActivatedRoute } from '@angular/router';
 import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { flatten, maxBy, sum } from 'lodash-es';
+import { LocalStorageService } from 'ngx-webstorage';
+import { Subject, Subscription } from 'rxjs';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -18,10 +23,6 @@ import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercis
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { isOrion } from 'app/shared/orion/orion';
-import dayjs from 'dayjs/esm';
-import { flatten, maxBy, sum } from 'lodash-es';
-import { LocalStorageService } from 'ngx-webstorage';
-import { Subject, Subscription } from 'rxjs';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',

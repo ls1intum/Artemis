@@ -3,6 +3,10 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnD
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { isEqual } from 'lodash-es';
+import { Observable, OperatorFunction, Subject, catchError, concat, finalize, forkJoin, map, merge, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, takeUntil } from 'rxjs/operators';
+
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -13,9 +17,6 @@ import {
 } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
 import { Course, CourseGroup, Language } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
-import { isEqual } from 'lodash-es';
-import { Observable, OperatorFunction, Subject, catchError, concat, finalize, forkJoin, map, merge, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, takeUntil } from 'rxjs/operators';
 
 export interface TutorialGroupFormData {
     title?: string;

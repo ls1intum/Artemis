@@ -1,6 +1,6 @@
-import path from 'path';
 import { registerMultilanguageCoveragePlugin } from '@heddendorp/cypress-plugin-multilanguage-coverage';
 import { defineConfig } from 'cypress';
+import path from 'path';
 
 export default defineConfig({
     clientCertificates: [

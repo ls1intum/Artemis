@@ -1,4 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
+
 import { GradeStep } from 'app/entities/grade-step.model';
 import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { round } from 'app/shared/util/utils';

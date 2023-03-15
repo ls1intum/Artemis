@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';

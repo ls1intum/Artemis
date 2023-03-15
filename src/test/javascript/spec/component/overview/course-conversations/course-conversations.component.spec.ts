@@ -1,5 +1,11 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { BehaviorSubject, EMPTY } from 'rxjs';
+
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
@@ -12,11 +18,7 @@ import { ConversationSelectionSidebarComponent } from 'app/overview/course-conve
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { MockComponent, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, EMPTY } from 'rxjs';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
-import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
+
 const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
 examples.forEach((activeConversation) => {

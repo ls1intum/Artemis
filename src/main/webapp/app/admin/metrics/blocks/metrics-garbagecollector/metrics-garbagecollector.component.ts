@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+
 import { GarbageCollector } from 'app/admin/metrics/metrics.model';
 
 @Component({

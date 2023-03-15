@@ -2,6 +2,11 @@ import { HttpResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { Observable, of } from 'rxjs';
+
+import { LoadingIndicatorContainerStubComponent } from '../../../../helpers/stubs/loading-indicator-container-stub.component';
+import { ArtemisTestModule } from '../../../../test.module';
 import { User } from 'app/core/user/user.model';
 import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -12,10 +17,6 @@ import { TutorialGroupRegistration, TutorialGroupRegistrationType } from 'app/en
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Observable, of } from 'rxjs';
-import { LoadingIndicatorContainerStubComponent } from '../../../../helpers/stubs/loading-indicator-container-stub.component';
-import { ArtemisTestModule } from '../../../../test.module';
 
 @Component({ selector: 'jhi-course-group', template: '' })
 class CourseGroupStubComponent {

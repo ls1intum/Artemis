@@ -1,9 +1,10 @@
-import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import { Interception } from 'cypress/types/net-stubbing';
+
 import { courseManagementRequest, courseOverview, textExerciseEditor } from '../../../support/artemis';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, studentOne } from '../../../support/users';
+import { Course } from 'app/entities/course.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 describe('Text exercise participation', () => {
     let course: Course;

@@ -1,6 +1,9 @@
 import { Component, Injector, Input, OnInit } from '@angular/core';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subject } from 'rxjs';
+import { debounceTime, switchMap, tap } from 'rxjs/operators';
+
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { FileUploadExercisePagingService } from 'app/exercises/file-upload/manage/file-upload-exercise-paging.service';
@@ -12,8 +15,6 @@ import { ExercisePagingService } from 'app/exercises/shared/manage/exercise-pagi
 import { TextExercisePagingService } from 'app/exercises/text/manage/text-exercise/text-exercise-paging.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { Subject } from 'rxjs';
-import { debounceTime, switchMap, tap } from 'rxjs/operators';
 
 export type TableColumn = 'ID' | 'TITLE' | 'COURSE_TITLE' | 'EXAM_TITLE' | 'PROGRAMMING_LANGUAGE';
 

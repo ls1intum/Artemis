@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+
 import { CacheMetrics } from 'app/admin/metrics/metrics.model';
 import { filterNaN } from 'app/core/util/operators';
 

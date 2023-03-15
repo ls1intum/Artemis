@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NgxChartsModule, PieChartModule } from '@swimlane/ngx-charts';
+
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';

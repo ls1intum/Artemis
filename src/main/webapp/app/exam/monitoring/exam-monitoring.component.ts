@@ -1,6 +1,11 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { tap } from 'rxjs/operators';
+
+import { ExamActionService } from './exam-action.service';
+import { ExamMonitoringService } from './exam-monitoring.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
 import { Exam } from 'app/entities/exam.model';
@@ -8,10 +13,6 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { onError } from 'app/shared/util/global.utils';
-import { Subscription } from 'rxjs';
-import { tap } from 'rxjs/operators';
-import { ExamActionService } from './exam-action.service';
-import { ExamMonitoringService } from './exam-monitoring.service';
 
 export class TableContent {
     translateValue: string;

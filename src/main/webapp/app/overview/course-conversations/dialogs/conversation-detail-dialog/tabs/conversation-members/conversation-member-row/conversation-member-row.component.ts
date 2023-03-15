@@ -4,6 +4,9 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChalkboardTeacher, faEllipsis, faUser, faUserCheck, faUserGear } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { EMPTY, Observable, Subject, from, takeUntil } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -18,8 +21,6 @@ import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { canGrantChannelModeratorRole, canRemoveUsersFromConversation, canRevokeChannelModeratorRole } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { onError } from 'app/shared/util/global.utils';
-import { EMPTY, Observable, Subject, from, takeUntil } from 'rxjs';
-import { catchError } from 'rxjs/operators';
 
 @Component({
     // eslint-disable-next-line @angular-eslint/component-selector

@@ -1,6 +1,10 @@
 import { CUSTOM_ELEMENTS_SCHEMA, DebugElement, Directive, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+
+import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
+import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
+import { getElement } from '../../../../helpers/utils/general.utils';
 import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
 import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
 import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
@@ -12,9 +16,6 @@ import { ReferenceCommand } from 'app/shared/markdown-editor/commands/reference.
 import { UnderlineCommand } from 'app/shared/markdown-editor/commands/underline.command';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
-import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
-import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
-import { getElement } from '../../../../helpers/utils/general.utils';
 
 // eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: 'jhi-markdown-editor' })

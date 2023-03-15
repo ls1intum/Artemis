@@ -1,6 +1,7 @@
+import dayjs from 'dayjs/esm';
+
 import { TutorialGroupsConfigurationFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import dayjs from 'dayjs/esm';
 
 export const generateExampleTutorialGroupsConfiguration = ({
     id = 1,

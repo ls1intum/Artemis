@@ -1,4 +1,6 @@
 import { NgModule } from '@angular/core';
+
+import { ModelingSubmissionComponent } from './modeling-submission.component';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { ArtemisModelingParticipationRoutingModule } from 'app/exercises/modeling/participate/modeling-participation.route';
@@ -12,7 +14,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ModelingSubmissionComponent } from './modeling-submission.component';
 
 @NgModule({
     imports: [

@@ -4,6 +4,10 @@ import { MatChipsModule } from '@angular/material/chips';
 import { RouterModule } from '@angular/router';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { LineChartModule, PieChartModule } from '@swimlane/ngx-charts';
+
+import { CourseGroupMembershipComponent } from './course-group-membership/course-group-membership.component';
+import { CourseManagementExerciseRowComponent } from './overview/course-management-exercise-row.component';
+import { CourseManagementOverviewStatisticsComponent } from './overview/course-management-overview-statistics.component';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ArtemisListOfComplaintsModule } from 'app/complaints/list-of-complaints/list-of-complaints.module';
@@ -56,9 +60,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { CourseGroupMembershipComponent } from './course-group-membership/course-group-membership.component';
-import { CourseManagementExerciseRowComponent } from './overview/course-management-exercise-row.component';
-import { CourseManagementOverviewStatisticsComponent } from './overview/course-management-overview-statistics.component';
 
 @NgModule({
     imports: [

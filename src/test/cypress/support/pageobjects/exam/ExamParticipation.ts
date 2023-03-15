@@ -1,6 +1,5 @@
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
 import { Interception } from 'cypress/types/net-stubbing';
+
 import {
     courseList,
     courseOverview,
@@ -15,6 +14,8 @@ import { EXERCISE_TYPE } from '../../constants';
 import { CypressCredentials } from '../../users';
 import { getExercise } from '../../utils';
 import { ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEditorPage';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam details page.

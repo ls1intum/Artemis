@@ -5,14 +5,15 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { ArtemisTestModule } from '../../test.module';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
-import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('LearningGoalSelection', () => {
     let fixture: ComponentFixture<LearningGoalSelectionComponent>;

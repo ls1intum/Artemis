@@ -4,6 +4,10 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+
+import { TutorialGroupsRegistrationImportDialogComponent } from './tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
+import { TutorialGroupsChecklistComponent } from './tutorial-groups-checklist/tutorial-groups-checklist.component';
+import { ArtemisTutorialGroupsSharedModule } from '../shared/tutorial-groups-shared.module';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/registered-students/registered-students.component';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
@@ -35,9 +39,7 @@ import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module'
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
-import { ArtemisTutorialGroupsSharedModule } from '../shared/tutorial-groups-shared.module';
-import { TutorialGroupsRegistrationImportDialogComponent } from './tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
-import { TutorialGroupsChecklistComponent } from './tutorial-groups-checklist/tutorial-groups-checklist.component';
+
 @NgModule({
     imports: [
         RouterModule.forChild(tutorialGroupManagementRoutes),

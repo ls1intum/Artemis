@@ -2,6 +2,10 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, ContentChild, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
+
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -42,9 +46,6 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import dayjs from 'dayjs/esm';
-import { Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-course-exercise-details',

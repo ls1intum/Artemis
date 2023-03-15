@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-complaint-alert/assessment-complaint-alert.component';
-import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
+import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-complaint-alert/assessment-complaint-alert.component';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 
 describe('AssessmentComplaintAlertComponent', () => {
     let component: AssessmentComplaintAlertComponent;

@@ -1,6 +1,9 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { DefaultValueAccessor, NgModel } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { of } from 'rxjs';
+
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -11,8 +14,6 @@ import { CategorySelectorComponent } from 'app/shared/category-selector/category
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { of } from 'rxjs';
 
 describe('ProgrammingExerciseInformationComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;

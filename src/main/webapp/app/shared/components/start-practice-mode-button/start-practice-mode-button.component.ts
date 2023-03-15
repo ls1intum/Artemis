@@ -1,5 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
+import { finalize } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
@@ -8,7 +10,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-start-practice-mode-button',

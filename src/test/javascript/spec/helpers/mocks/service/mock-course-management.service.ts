@@ -1,10 +1,11 @@
 import { HttpResponse } from '@angular/common/http';
 import { User } from '@sentry/browser';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+
 import { EntityArrayResponseType } from 'app/course/manage/course-management.service';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { BehaviorSubject, Observable, of } from 'rxjs';
 
 export class MockCourseManagementService {
     mockExercises: Exercise[] = [new TextExercise(undefined, undefined)];

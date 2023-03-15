@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, HostBinding, Input, TemplateRef, ViewEncapsulation } from '@angular/core';
+
+import { getDayTranslationKey } from '../../weekdays';
 import { Course, Language } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { getDayTranslationKey } from '../../weekdays';
 
 @Component({
     // eslint-disable-next-line @angular-eslint/component-selector

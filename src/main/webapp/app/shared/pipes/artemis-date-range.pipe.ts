@@ -1,4 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
+
 import { ArtemisDatePipe, DateFormat, DateType } from 'app/shared/pipes/artemis-date.pipe';
 
 @Pipe({

@@ -2,6 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { LineChartModule } from '@swimlane/ngx-charts';
+import dayjs from 'dayjs/esm';
+import { MockModule, MockPipe } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
+import { ArtemisTestModule } from '../../../../test.module';
+import { createActions, createSingleSeriesDataEntriesWithTimestamps } from '../exam-monitoring-helper';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Course } from 'app/entities/course.model';
 import { ExamActionType } from 'app/entities/exam-user-activity.model';
@@ -15,13 +23,6 @@ import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockModule, MockPipe } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
-import { ArtemisTestModule } from '../../../../test.module';
-import { createActions, createSingleSeriesDataEntriesWithTimestamps } from '../exam-monitoring-helper';
 
 describe('Category Actions Chart Component', () => {
     let comp: CategoryActionsChartComponent;

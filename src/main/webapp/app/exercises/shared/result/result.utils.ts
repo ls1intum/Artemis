@@ -1,5 +1,8 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import dayjs from 'dayjs/esm';
+import { cloneDeep } from 'lodash-es';
+
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -15,8 +18,6 @@ import { TestCaseResult } from 'app/entities/test-case-result.model';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercises/shared/participation/participation.utils';
-import dayjs from 'dayjs/esm';
-import { cloneDeep } from 'lodash-es';
 
 /**
  * Enumeration object representing the possible options that

@@ -1,13 +1,14 @@
 import { Component, Input } from '@angular/core';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+
+import { TextResultBlock } from './text-result-block';
 import { Course } from 'app/entities/course.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { TextResultBlock } from './text-result-block';
 
 @Component({
     selector: 'jhi-text-result',

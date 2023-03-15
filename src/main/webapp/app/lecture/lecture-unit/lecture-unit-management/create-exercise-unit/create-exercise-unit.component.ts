@@ -2,6 +2,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { combineLatest, forkJoin, from } from 'rxjs';
+import { concatMap, finalize, switchMap, take } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exercise } from 'app/entities/exercise.model';
@@ -9,8 +12,6 @@ import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/exerciseUnit.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
-import { combineLatest, forkJoin, from } from 'rxjs';
-import { concatMap, finalize, switchMap, take } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-create-exercise-unit',

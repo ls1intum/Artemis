@@ -14,11 +14,7 @@ import {
     ViewChild,
 } from '@angular/core';
 import { DomSanitizer, SafeStyle, SafeUrl } from '@angular/platform-browser';
-import { CropperPosition } from 'app/shared/image-cropper/interfaces/cropper-position.interface';
-import { Dimensions } from 'app/shared/image-cropper/interfaces/dimensions.interface';
-import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
-import { ImageTransform } from 'app/shared/image-cropper/interfaces/image-transform.interface';
-import { LoadedImage } from 'app/shared/image-cropper/interfaces/loaded-image.interface';
+
 import { OutputFormat } from '../interfaces/cropper-options.interface';
 import { CropperSettings } from '../interfaces/cropper.settings';
 import { MoveStart, MoveTypes } from '../interfaces/move-start.interface';
@@ -26,6 +22,11 @@ import { CropService } from '../services/crop.service';
 import { CropperPositionService } from '../services/cropper-position.service';
 import { LoadImageService } from '../services/load-image.service';
 import { getEventForKey, getInvertedPositionForKey, getPositionForKey } from '../utils/keyboard.utils';
+import { CropperPosition } from 'app/shared/image-cropper/interfaces/cropper-position.interface';
+import { Dimensions } from 'app/shared/image-cropper/interfaces/dimensions.interface';
+import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
+import { ImageTransform } from 'app/shared/image-cropper/interfaces/image-transform.interface';
+import { LoadedImage } from 'app/shared/image-cropper/interfaces/loaded-image.interface';
 
 // Note: this component and all files in the image-cropper folder were taken from https://github.com/Mawi137/ngx-image-cropper because the framework was not maintained anymore
 // Note: Partially adapted to fit Artemis needs

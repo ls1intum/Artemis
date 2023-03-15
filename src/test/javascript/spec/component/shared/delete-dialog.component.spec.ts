@@ -4,15 +4,17 @@ import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { Observable, Subject } from 'rxjs';
+
+import { ArtemisTestModule } from '../../test.module';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AlertService } from 'app/core/util/alert.service';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { Observable, Subject } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
+
 import '@angular/localize/init';
 
 describe('DeleteDialogComponent', () => {

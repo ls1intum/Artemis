@@ -2,6 +2,12 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { ArtemisTestModule } from '../../test.module';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -14,11 +20,6 @@ import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/tex
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('TextExercise Management Detail Component', () => {
     let comp: TextExerciseDetailComponent;

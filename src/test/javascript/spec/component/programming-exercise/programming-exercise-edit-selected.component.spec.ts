@@ -2,17 +2,18 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/entities/course.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import dayjs from 'dayjs/esm';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
+
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
+import { Course } from 'app/entities/course.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 
 describe('ProgrammingExercise Edit Selected Component', () => {
     let comp: ProgrammingExerciseEditSelectedComponent;

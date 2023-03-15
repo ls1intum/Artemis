@@ -1,10 +1,11 @@
 import { Component, Input } from '@angular/core';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+
+import { SubmissionExportDialogComponent } from './submission-export-dialog.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { SubmissionExportDialogComponent } from './submission-export-dialog.component';
 
 @Component({
     selector: 'jhi-exercise-submission-export',

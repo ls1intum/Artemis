@@ -1,11 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { of } from 'rxjs';
+
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-difficulty.component';
 import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { of } from 'rxjs';
 
 describe('ProgrammingExerciseDifficultyComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseDifficultyComponent>;

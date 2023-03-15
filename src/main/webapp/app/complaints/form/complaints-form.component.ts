@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';

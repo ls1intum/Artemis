@@ -1,4 +1,5 @@
 import { SafeHtml } from '@angular/platform-browser';
+
 import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestionStatistic } from 'app/entities/quiz/quiz-question-statistic.model';

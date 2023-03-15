@@ -1,12 +1,13 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { QuizBatch, QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { downloadFile } from 'app/shared/util/download.util';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;

@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 
 @Component({

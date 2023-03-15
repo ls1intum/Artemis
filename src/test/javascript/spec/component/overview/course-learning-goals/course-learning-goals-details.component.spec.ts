@@ -5,6 +5,12 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { ArtemisTestModule } from '../../../test.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningGoalRingsComponent } from 'app/course/learning-goals/learning-goal-rings/learning-goal-rings.component';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
@@ -23,11 +29,6 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { FireworksComponent } from 'app/shared/fireworks/fireworks.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('CourseLearningGoalsDetails', () => {
     let fixture: ComponentFixture<CourseLearningGoalsDetailsComponent>;

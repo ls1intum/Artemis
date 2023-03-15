@@ -2,15 +2,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgModel } from '@angular/forms';
 import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { BehaviorSubject } from 'rxjs';
+
+import { ArtemisTestModule } from '../../test.module';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { BaseGradingSystemComponent } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { GradingSystemInfoModalComponent } from 'app/grading-system/grading-system-info-modal/grading-system-info-modal.component';
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { BehaviorSubject } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('Grading System Component', () => {
     let comp: GradingSystemComponent;

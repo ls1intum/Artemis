@@ -1,11 +1,12 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
+
 import { CourseLearningGoalProgress, LearningGoal, LearningGoalProgress, LearningGoalRelation } from 'app/entities/learningGoal.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
-import { Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<LearningGoal>;
 type EntityArrayResponseType = HttpResponse<LearningGoal[]>;

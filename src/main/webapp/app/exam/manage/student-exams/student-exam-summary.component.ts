@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+
 import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({

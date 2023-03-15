@@ -1,7 +1,8 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import ace from 'brace';
+
 import { CoverageFileReport } from 'app/entities/hestia/coverage-file-report.model';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import ace from 'brace';
 
 @Component({
     selector: 'jhi-testwise-coverage-file',

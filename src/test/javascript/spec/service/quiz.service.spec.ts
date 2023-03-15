@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+
 import { ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';

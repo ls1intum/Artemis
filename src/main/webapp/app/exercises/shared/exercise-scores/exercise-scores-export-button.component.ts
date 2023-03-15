@@ -1,5 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { ExportToCsv } from 'export-to-csv';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -11,7 +13,6 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { getTestCaseNamesFromResults, getTestCaseResults } from 'app/exercises/shared/result/result.utils';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { ExportToCsv } from 'export-to-csv';
 
 @Component({
     selector: 'jhi-exercise-scores-export-button',

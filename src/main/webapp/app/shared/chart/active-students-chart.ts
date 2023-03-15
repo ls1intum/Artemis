@@ -1,5 +1,6 @@
-import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
+
+import { Course } from 'app/entities/course.model';
 
 export abstract class ActiveStudentsChart {
     startDateAlreadyPassed = true;

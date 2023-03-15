@@ -2,6 +2,11 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { TranslateService } from '@ngx-translate/core';
+import { MockModule, MockPipe } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../../test.module';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseHintExpandableComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-expandable.component';
@@ -9,10 +14,6 @@ import { CastToCodeHintPipe } from 'app/exercises/shared/exercise-hint/services/
 import { ExerciseHintResponse, ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockModule, MockPipe } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('Exercise Hint Expandable Component', () => {
     let comp: ExerciseHintExpandableComponent;

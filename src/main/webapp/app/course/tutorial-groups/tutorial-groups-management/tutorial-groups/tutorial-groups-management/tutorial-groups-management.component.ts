@@ -2,6 +2,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faPlus, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
+import { Subject, combineLatest, finalize } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -10,8 +13,6 @@ import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-gr
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, combineLatest, finalize } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-tutorial-groups-management',

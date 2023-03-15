@@ -1,8 +1,9 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { Observable } from 'rxjs';
+
+import { ExerciseType } from 'app/entities/exercise.model';
 
 export type SubmissionExportOptions = {
     exportAllParticipants: boolean;

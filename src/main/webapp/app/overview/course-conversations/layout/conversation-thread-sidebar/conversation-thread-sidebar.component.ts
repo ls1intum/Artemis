@@ -1,9 +1,10 @@
 import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/core';
 import { faArrowLeft, faChevronLeft, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
+import interact from 'interactjs';
+
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
-import interact from 'interactjs';
 
 @Component({
     selector: 'jhi-conversation-thread-sidebar',

@@ -1,15 +1,16 @@
 import { HttpResponse } from '@angular/common/http';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
+import { MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { ArtemisTestModule } from '../../../test.module';
 import { Exam } from 'app/entities/exam.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('Exam Resolve', () => {
     let resolve: ExamResolve;

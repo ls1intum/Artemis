@@ -2,6 +2,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { Router } from '@angular/router';
 import { faFlag, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { get } from 'lodash-es';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -16,8 +19,6 @@ import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shar
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import dayjs from 'dayjs/esm';
-import { get } from 'lodash-es';
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 

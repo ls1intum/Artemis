@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, Router } from '@angular/router';
+
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ThemeService } from 'app/core/theme/theme.service';

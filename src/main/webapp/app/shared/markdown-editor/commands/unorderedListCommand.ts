@@ -1,5 +1,6 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faListUl } from '@fortawesome/free-solid-svg-icons';
+
 import { Command } from './command';
 
 export class UnorderedListCommand extends Command {

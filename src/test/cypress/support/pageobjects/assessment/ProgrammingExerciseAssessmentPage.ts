@@ -1,5 +1,5 @@
-import { EXERCISE_TYPE } from '../../constants';
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
+import { EXERCISE_TYPE } from '../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the programming exercise assessment page.

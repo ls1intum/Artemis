@@ -1,6 +1,6 @@
+import { Setting, UserSettingsStructure } from '../user-settings.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { Setting, UserSettingsStructure } from '../user-settings.model';
 
 export interface NotificationSetting extends Setting {
     // Status indicating if the settings was activated for a specific communication channel by the user or the default settings

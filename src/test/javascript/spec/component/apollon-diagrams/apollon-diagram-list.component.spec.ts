@@ -4,6 +4,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { isEqual } from 'lodash-es';
+import { MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -13,11 +19,6 @@ import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ApollonDiagramListComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-list.component';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { isEqual } from 'lodash-es';
-import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('ApollonDiagramList Component', () => {
     let apollonDiagramService: ApollonDiagramService;

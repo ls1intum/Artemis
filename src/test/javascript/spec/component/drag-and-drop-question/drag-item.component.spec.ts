@@ -1,10 +1,11 @@
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockComponent } from 'ng-mocks';
+
+import { ArtemisTestModule } from '../../test.module';
 import { FitTextModule } from 'app/exercises/quiz/shared/fit-text/fit-text.module';
 import { DragItemComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-item.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { MockComponent } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('DragItemComponent', () => {
     let fixture: ComponentFixture<DragItemComponent>;

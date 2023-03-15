@@ -1,4 +1,7 @@
 import { ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { cloneDeep } from 'lodash-es';
+import * as smoothscroll from 'smoothscroll-polyfill';
+
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
@@ -16,8 +19,6 @@ import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/quest
 import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
-import { cloneDeep } from 'lodash-es';
-import * as smoothscroll from 'smoothscroll-polyfill';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',

@@ -4,16 +4,17 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('QuizVisualEditorComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceVisualQuestionComponent>;

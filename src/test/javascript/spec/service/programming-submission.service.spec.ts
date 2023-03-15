@@ -1,5 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
+import { range as _range } from 'lodash-es';
+import { BehaviorSubject, Subject, lastValueFrom, of } from 'rxjs';
+
+import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
+import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock-participation-websocket.service';
+import { MockProgrammingExerciseParticipationService } from '../helpers/mocks/service/mock-programming-exercise-participation.service';
+import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -13,13 +21,6 @@ import {
     ProgrammingSubmissionStateObj,
 } from 'app/exercises/programming/participate/programming-submission.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import dayjs from 'dayjs/esm';
-import { range as _range } from 'lodash-es';
-import { BehaviorSubject, Subject, lastValueFrom, of } from 'rxjs';
-import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
-import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock-participation-websocket.service';
-import { MockProgrammingExerciseParticipationService } from '../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 
 describe('ProgrammingSubmissionService', () => {
     let websocketService: JhiWebsocketService;

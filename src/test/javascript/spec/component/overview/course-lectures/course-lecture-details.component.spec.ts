@@ -7,6 +7,13 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningGoalsPopoverComponent } from 'app/course/learning-goals/learning-goals-popover/learning-goals-popover.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
@@ -35,12 +42,6 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('CourseLectureDetails', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;

@@ -1,11 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import dayjs from 'dayjs/esm';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamAction, ExamActionType, SavedExerciseAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { Exam } from 'app/entities/exam.model';
 import { ceilDayjsSeconds, getEmptyCategories } from 'app/exam/monitoring/charts/monitoring-chart';
-import dayjs from 'dayjs/esm';
-import { BehaviorSubject, Observable, of } from 'rxjs';
 
 export const EXAM_MONITORING_ACTION_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/action`;
 export const EXAM_MONITORING_ACTIONS_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/actions`;

@@ -1,3 +1,5 @@
+import dayjs from 'dayjs/esm';
+
 import { User } from 'app/core/user/user.model';
 import { Attachment } from 'app/entities/attachment.model';
 import { Course } from 'app/entities/course.model';
@@ -9,7 +11,6 @@ import { Conversation } from 'app/entities/metis/conversation/conversation.model
 import { Post } from 'app/entities/metis/post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { CourseWideContext, DisplayPriority, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
-import dayjs from 'dayjs/esm';
 
 export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/Metis-Attachment.pdf' } as Attachment;
 

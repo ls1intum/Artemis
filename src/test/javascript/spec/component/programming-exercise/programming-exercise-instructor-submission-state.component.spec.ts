@@ -2,6 +2,15 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { Subject, of } from 'rxjs';
+
+import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { triggerChanges } from '../../helpers/utils/general.utils';
+import { ArtemisTestModule } from '../../test.module';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-build-run.service';
@@ -14,14 +23,6 @@ import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-to
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DurationPipe } from 'app/shared/pipes/duration.pipe';
-import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { Subject, of } from 'rxjs';
-import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { triggerChanges } from '../../helpers/utils/general.utils';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     let comp: ProgrammingExerciseInstructorSubmissionStateComponent;

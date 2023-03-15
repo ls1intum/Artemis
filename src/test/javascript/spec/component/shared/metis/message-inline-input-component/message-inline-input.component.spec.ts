@@ -1,15 +1,16 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { LocalStorageService } from 'ngx-webstorage';
 import { throwError } from 'rxjs';
+
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { directMessageUser1, metisPostToCreateUser1 } from '../../../../helpers/sample/metis-sample-data';
+import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('MessageInlineInputComponent', () => {
     let component: MessageInlineInputComponent;

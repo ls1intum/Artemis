@@ -2,6 +2,14 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params, convertToParamMap } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+
+import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { ArtemisTestModule } from '../../test.module';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -13,13 +21,6 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
-import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ExamAssessmentButtons', () => {
     let examAssessmentButtonsFixture: ComponentFixture<ExamAssessmentButtonsComponent>;

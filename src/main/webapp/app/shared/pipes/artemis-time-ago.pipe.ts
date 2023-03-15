@@ -1,7 +1,8 @@
 import { ChangeDetectorRef, NgZone, OnDestroy, Pipe, PipeTransform } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { isDate } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
+
+import { isDate } from 'app/shared/util/utils';
 
 @Pipe({
     name: 'artemisTimeAgo',

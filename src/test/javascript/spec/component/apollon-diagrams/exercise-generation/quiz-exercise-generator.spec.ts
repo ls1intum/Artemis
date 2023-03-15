@@ -5,6 +5,15 @@ import { Router } from '@angular/router';
 import { Selection, UMLModel } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
+
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import * as testClassDiagram from '../../../util/modeling/test-models/class-diagram.json';
 import { Course } from 'app/entities/course.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -12,14 +21,6 @@ import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.
 import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import dayjs from 'dayjs/esm';
-import { MockProvider } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import * as testClassDiagram from '../../../util/modeling/test-models/class-diagram.json';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {

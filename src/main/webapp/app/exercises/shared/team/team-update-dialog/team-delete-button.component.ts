@@ -1,11 +1,12 @@
 import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { Subject } from 'rxjs';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-team-delete-button',

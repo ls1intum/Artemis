@@ -3,6 +3,10 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { ActivatedRoute, Router } from '@angular/router';
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
+import { EMPTY, Subject, combineLatest, finalize, from, switchMap, take } from 'rxjs';
+import { catchError, takeUntil } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
@@ -11,9 +15,6 @@ import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-gr
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
-import dayjs from 'dayjs/esm';
-import { EMPTY, Subject, combineLatest, finalize, from, switchMap, take } from 'rxjs';
-import { catchError, takeUntil } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-tutorial-free-periods',

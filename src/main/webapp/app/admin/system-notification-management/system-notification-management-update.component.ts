@@ -2,10 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+
 import { UserService } from 'app/core/user/user.service';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { AdminSystemNotificationService } from 'app/shared/notification/system-notification/admin-system-notification.service';
-import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-system-notification-management-update',

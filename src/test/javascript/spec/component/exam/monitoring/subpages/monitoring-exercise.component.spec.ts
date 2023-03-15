@@ -2,6 +2,15 @@ import { HttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { PieChartModule } from '@swimlane/ngx-charts';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { BehaviorSubject, of } from 'rxjs';
+
+import { MockHttpService } from '../../../../helpers/mocks/service/mock-http.service';
+import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
+import { ArtemisTestModule } from '../../../../test.module';
+import { createTestExercises } from '../exam-monitoring-helper';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -22,14 +31,6 @@ import { MonitoringCardComponent } from 'app/exam/monitoring/subpages/monitoring
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, of } from 'rxjs';
-import { MockHttpService } from '../../../../helpers/mocks/service/mock-http.service';
-import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
-import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
-import { ArtemisTestModule } from '../../../../test.module';
-import { createTestExercises } from '../exam-monitoring-helper';
 
 describe('Monitoring Exercise Component', () => {
     // Course

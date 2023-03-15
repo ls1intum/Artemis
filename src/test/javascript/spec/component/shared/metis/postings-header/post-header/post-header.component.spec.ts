@@ -3,6 +3,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+
+import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
+import { metisAnnouncement, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { getElement } from '../../../../../helpers/utils/general.utils';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { UserRole } from 'app/shared/metis/metis.util';
@@ -12,10 +17,6 @@ import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
-import { metisAnnouncement, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
-import { getElement } from '../../../../../helpers/utils/general.utils';
 
 describe('PostHeaderComponent', () => {
     let component: PostHeaderComponent;

@@ -4,6 +4,12 @@ import { ActivatedRoute } from '@angular/router';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from '@sentry/browser';
+import dayjs from 'dayjs/esm';
+import isMobile from 'ismobilejs-es5';
+import { debounce } from 'lodash-es';
+import { Subscription } from 'rxjs';
+import * as smoothscroll from 'smoothscroll-polyfill';
+
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
@@ -34,11 +40,6 @@ import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { onError } from 'app/shared/util/global.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import dayjs from 'dayjs/esm';
-import isMobile from 'ismobilejs-es5';
-import { debounce } from 'lodash-es';
-import { Subscription } from 'rxjs';
-import * as smoothscroll from 'smoothscroll-polyfill';
 
 @Component({
     selector: 'jhi-quiz',

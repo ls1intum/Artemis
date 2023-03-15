@@ -1,4 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
+import { Subject, Subscription } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -6,8 +9,6 @@ import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/ex
 import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { DomainDependentService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain-dependent.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { Subject, Subscription } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
 
 /**
  * Wrapper service for using the currently selected participation id in the code-editor for retrieving the submission state.

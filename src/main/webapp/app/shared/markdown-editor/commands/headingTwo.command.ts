@@ -1,5 +1,6 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faHeading } from '@fortawesome/free-solid-svg-icons';
+
 import { Command } from 'app/shared/markdown-editor/commands/command';
 
 export class HeadingTwoCommand extends Command {

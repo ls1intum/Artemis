@@ -3,6 +3,11 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { BarChartModule } from '@swimlane/ngx-charts';
+
+import { PlagiarismRunDetailsComponent } from './plagiarism-run-details/plagiarism-run-details.component';
+import { ModelingSubmissionViewerComponent } from './plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
+import { SplitPaneHeaderComponent } from './plagiarism-split-view/split-pane-header/split-pane-header.component';
+import { TextSubmissionViewerComponent } from './plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { PlagiarismDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-details/plagiarism-details.component';
 import { PlagiarismHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-header/plagiarism-header.component';
@@ -12,10 +17,6 @@ import { PlagiarismSplitViewComponent, SplitPaneDirective } from 'app/exercises/
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { PlagiarismRunDetailsComponent } from './plagiarism-run-details/plagiarism-run-details.component';
-import { ModelingSubmissionViewerComponent } from './plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
-import { SplitPaneHeaderComponent } from './plagiarism-split-view/split-pane-header/split-pane-header.component';
-import { TextSubmissionViewerComponent } from './plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisModelingEditorModule, FormsModule, RouterModule, TranslateModule, BarChartModule, FeatureToggleModule],

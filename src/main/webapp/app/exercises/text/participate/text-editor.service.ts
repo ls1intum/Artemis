@@ -1,9 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Language } from 'app/entities/course.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { francAll } from 'franc-min';
 import { Observable } from 'rxjs';
+
+import { Language } from 'app/entities/course.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Injectable({ providedIn: 'root' })
 export class TextEditorService {

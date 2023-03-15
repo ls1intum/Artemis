@@ -1,6 +1,9 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent } from 'ng-mocks';
+import { of } from 'rxjs';
+
 import { JvmMemoryComponent } from 'app/admin/metrics/blocks/jvm-memory/jvm-memory.component';
 import { JvmThreadsComponent } from 'app/admin/metrics/blocks/jvm-threads/jvm-threads.component';
 import { MetricsCacheComponent } from 'app/admin/metrics/blocks/metrics-cache/metrics-cache.component';
@@ -12,8 +15,6 @@ import { MetricsSystemComponent } from 'app/admin/metrics/blocks/metrics-system/
 import { MetricsComponent } from 'app/admin/metrics/metrics.component';
 import { Metrics } from 'app/admin/metrics/metrics.model';
 import { MetricsService } from 'app/admin/metrics/metrics.service';
-import { MockComponent } from 'ng-mocks';
-import { of } from 'rxjs';
 
 describe('MetricsComponent', () => {
     let comp: MetricsComponent;

@@ -4,6 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective } from 'ng-mocks';
+
+import { TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../test.module';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AlertService } from 'app/core/util/alert.service';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -11,9 +15,6 @@ import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.co
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockComponent, MockDirective } from 'ng-mocks';
-import { TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../test.module';
 
 @Component({
     selector: 'jhi-test-component',

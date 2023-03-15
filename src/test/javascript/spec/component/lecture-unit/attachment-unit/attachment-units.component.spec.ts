@@ -5,6 +5,14 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
+import { MockAttachmentUnitsService } from '../../../helpers/mocks/service/mock-attachment-units.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../../test.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { AttachmentUnitsComponent } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-units/attachment-units.component';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
@@ -12,13 +20,6 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { objectToJsonBlob } from 'app/utils/blob-util';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { MockAttachmentUnitsService } from '../../../helpers/mocks/service/mock-attachment-units.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 @Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content></ng-content>' })
 class LectureUnitLayoutStubComponent {

@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { GradingKeyOverviewModule } from 'app/grading-system/grading-key-overview/grading-key-overview.module';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';

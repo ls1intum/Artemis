@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
+
 import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';

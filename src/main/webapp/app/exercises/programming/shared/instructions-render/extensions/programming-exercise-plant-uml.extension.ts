@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
+import { sanitize } from 'dompurify';
+import { Subject } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { ShowdownExtension } from 'showdown';
+
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { ProgrammingExercisePlantUmlService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-plant-uml.service';
 import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/extensions/artemis-showdown-extension-wrapper';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
-import { sanitize } from 'dompurify';
-import { Subject } from 'rxjs';
-import { tap } from 'rxjs/operators';
-import { ShowdownExtension } from 'showdown';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowdownExtensionWrapper {

@@ -1,5 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PieChartModule } from '@swimlane/ngx-charts';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { ArtemisTestModule } from '../../test.module';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -9,10 +14,6 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('CourseCardComponent', () => {
     let fixture: ComponentFixture<CourseCardComponent>;

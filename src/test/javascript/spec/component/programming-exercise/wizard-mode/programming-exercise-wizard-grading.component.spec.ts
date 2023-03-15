@@ -2,6 +2,10 @@ import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { DefaultValueAccessor, NgModel } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -10,9 +14,6 @@ import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/m
 import { ProgrammingExerciseUpdateWizardGradingComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-grading.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingExerciseWizardGradingComponent', () => {
     let wizardComponentFixture: ComponentFixture<ProgrammingExerciseUpdateWizardGradingComponent>;

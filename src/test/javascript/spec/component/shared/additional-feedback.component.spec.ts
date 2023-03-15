@@ -1,11 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('AdditionalFeedbackComponent', () => {
     let fixture: ComponentFixture<AdditionalFeedbackComponent>;

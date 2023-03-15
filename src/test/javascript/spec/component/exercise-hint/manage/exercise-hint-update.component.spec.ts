@@ -3,6 +3,10 @@ import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core
 import { FormBuilder, FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { ArtemisTestModule } from '../../../test.module';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
@@ -12,9 +16,6 @@ import { ExerciseHintUpdateComponent } from 'app/exercises/shared/exercise-hint/
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
-import { MockComponent, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('ExerciseHint Management Update Component', () => {
     let comp: ExerciseHintUpdateComponent;

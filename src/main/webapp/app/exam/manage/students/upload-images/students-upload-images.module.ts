@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+
 import { StudentsUploadImagesButtonComponent } from 'app/exam/manage/students/upload-images/students-upload-images-button.component';
 import { StudentsUploadImagesDialogComponent } from 'app/exam/manage/students/upload-images/students-upload-images-dialog.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';

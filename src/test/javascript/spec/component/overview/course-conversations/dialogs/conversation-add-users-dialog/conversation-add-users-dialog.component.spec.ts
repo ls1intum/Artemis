@@ -3,6 +3,11 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../helpers/conversationExampleModels';
+import { initializeDialog } from '../dialog-test-helpers';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
@@ -17,10 +22,7 @@ import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../helpers/conversationExampleModels';
-import { initializeDialog } from '../dialog-test-helpers';
+
 @Component({
     selector: 'jhi-conversation-add-users-form',
     template: '',

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';

@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { LearningGoal, LearningGoalProgress, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';

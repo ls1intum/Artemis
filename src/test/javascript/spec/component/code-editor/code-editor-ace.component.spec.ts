@@ -2,6 +2,16 @@ import { DebugElement, EventEmitter } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
+import { MockComponent, MockDirective } from 'ng-mocks';
+import { LocalStorageService } from 'ngx-webstorage';
+import { Subject } from 'rxjs';
+
+import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
+import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { triggerChanges } from '../../helpers/utils/general.utils';
+import { ArtemisTestModule } from '../../test.module';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { CreateFileChange, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
@@ -9,15 +19,6 @@ import { CodeEditorFileService } from 'app/exercises/programming/shared/code-edi
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { MAX_TAB_SIZE } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
-import { MockComponent, MockDirective } from 'ng-mocks';
-import { LocalStorageService } from 'ngx-webstorage';
-import { Subject } from 'rxjs';
-import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
-import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
-import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { triggerChanges } from '../../helpers/utils/general.utils';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('CodeEditorAceComponent', () => {
     let comp: CodeEditorAceComponent;

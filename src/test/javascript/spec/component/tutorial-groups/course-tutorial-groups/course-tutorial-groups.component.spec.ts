@@ -2,6 +2,12 @@ import { HttpResponse } from '@angular/common/http';
 import { Component, Input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { BehaviorSubject, of } from 'rxjs';
+
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
+import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -11,11 +17,6 @@ import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutoria
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CourseTutorialGroupsComponent } from 'app/overview/course-tutorial-groups/course-tutorial-groups.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, of } from 'rxjs';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
-import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 
 @Component({
     selector: 'jhi-course-tutorial-groups-overview',

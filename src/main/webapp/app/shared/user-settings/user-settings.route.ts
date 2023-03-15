@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { AccountInformationComponent } from 'app/shared/user-settings/account-information/account-information.component';

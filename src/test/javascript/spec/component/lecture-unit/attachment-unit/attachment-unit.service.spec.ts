@@ -1,15 +1,16 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
+import { MockProvider } from 'ng-mocks';
+import { take } from 'rxjs/operators';
+
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { objectToJsonBlob } from 'app/utils/blob-util';
-import dayjs from 'dayjs/esm';
-import { MockProvider } from 'ng-mocks';
-import { take } from 'rxjs/operators';
 
 describe('AttachmentUnitService', () => {
     let service: AttachmentUnitService;

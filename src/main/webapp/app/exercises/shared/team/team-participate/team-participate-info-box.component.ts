@@ -1,7 +1,8 @@
 import { Component, Input } from '@angular/core';
+import { Observable } from 'rxjs';
+
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Observable } from 'rxjs';
 
 @Component({
     selector: 'jhi-team-participate-info-box',

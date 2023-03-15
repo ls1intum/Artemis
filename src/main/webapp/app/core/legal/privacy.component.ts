@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
+
 import { StaticContentService } from 'app/shared/service/static-content.service';
 
 const privacyStatementFile = 'privacy_statement.html';

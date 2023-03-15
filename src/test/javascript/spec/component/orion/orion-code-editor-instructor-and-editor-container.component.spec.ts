@@ -1,5 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { BehaviorSubject } from 'rxjs';
+
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { ArtemisTestModule } from '../../test.module';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -15,10 +20,6 @@ import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject } from 'rxjs';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
     let comp: CodeEditorInstructorAndEditorOrionContainerComponent;

@@ -4,6 +4,11 @@ import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { Observable, of } from 'rxjs';
+
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../../test.module';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { Course } from 'app/entities/course.model';
@@ -18,10 +23,6 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { Observable, of } from 'rxjs';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;

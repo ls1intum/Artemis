@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { faSquareCaretRight } from '@fortawesome/free-regular-svg-icons';
 import { faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ComplaintType } from 'app/entities/complaint.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';

@@ -1,5 +1,8 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
+
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Complaint } from 'app/entities/complaint.model';
@@ -10,8 +13,6 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import { Observable } from 'rxjs';
-import { filter, map, tap } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;

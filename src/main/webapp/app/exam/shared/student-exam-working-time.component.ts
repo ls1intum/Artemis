@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+
 import { StudentExam } from 'app/entities/student-exam.model';
 import { getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils';
 

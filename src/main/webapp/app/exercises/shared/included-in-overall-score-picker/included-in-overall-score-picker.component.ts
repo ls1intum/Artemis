@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
 @Component({

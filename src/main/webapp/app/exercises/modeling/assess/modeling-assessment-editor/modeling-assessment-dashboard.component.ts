@@ -4,6 +4,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -22,7 +24,6 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { SortService } from 'app/shared/service/sort.service';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-assessment-dashboard',

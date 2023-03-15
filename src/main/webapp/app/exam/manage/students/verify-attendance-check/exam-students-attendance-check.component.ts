@@ -2,6 +2,9 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faCheck, faInfoCircle, faPlus, faSort, faUpload, faUserSlash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { Subject, Subscription } from 'rxjs';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { UserService } from 'app/core/user/user.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -12,8 +15,6 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { SortService } from 'app/shared/service/sort.service';
-import dayjs from 'dayjs/esm';
-import { Subject, Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-exam-students-attendance-check',

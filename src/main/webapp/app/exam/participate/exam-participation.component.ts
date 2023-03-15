@@ -3,6 +3,11 @@ import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren } f
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from '@sentry/browser';
+import dayjs from 'dayjs/esm';
+import { cloneDeep } from 'lodash-es';
+import { BehaviorSubject, Observable, Subject, Subscription, of, throwError } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
+
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Course } from 'app/entities/course.model';
@@ -43,10 +48,6 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import dayjs from 'dayjs/esm';
-import { cloneDeep } from 'lodash-es';
-import { BehaviorSubject, Observable, Subject, Subscription, of, throwError } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 

@@ -1,5 +1,6 @@
-import { convertDateFromClient, convertDateFromServer, dayOfWeekZeroSundayToZeroMonday, toISO8601DateString, toISO8601DateTimeString } from 'app/utils/date.utils';
 import dayjs from 'dayjs/esm';
+
+import { convertDateFromClient, convertDateFromServer, dayOfWeekZeroSundayToZeroMonday, toISO8601DateString, toISO8601DateTimeString } from 'app/utils/date.utils';
 
 describe('DateUtils', () => {
     // month of js date is 0-based

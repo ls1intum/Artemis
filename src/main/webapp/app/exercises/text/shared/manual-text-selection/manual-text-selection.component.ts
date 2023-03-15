@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { TextBlockType } from 'app/entities/text-block.model';

@@ -1,5 +1,6 @@
 import { Directive } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { yAxisTickFormatting } from 'app/shared/statistics-graph/statistics-graph.utils';
 

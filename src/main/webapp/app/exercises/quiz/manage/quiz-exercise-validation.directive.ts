@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Directive } from '@angular/core';
 import { captureException } from '@sentry/browser';
+
 import { ValidationReason } from 'app/entities/exercise.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';

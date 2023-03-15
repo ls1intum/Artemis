@@ -1,5 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockPipe } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock-exam-checklist.service';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
+import { ArtemisTestModule } from '../../../../test.module';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Course } from 'app/entities/course.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
@@ -8,13 +16,6 @@ import { ExamConductionState, ExamReviewState, ExamStatusComponent } from 'app/e
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockPipe } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock-exam-checklist.service';
-import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
-import { ArtemisTestModule } from '../../../../test.module';
 
 enum DateOffsetType {
     HOURS = 'hours',

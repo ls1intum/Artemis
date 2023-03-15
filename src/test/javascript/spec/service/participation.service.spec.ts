@@ -3,18 +3,19 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { map, take } from 'rxjs/operators';
+
+import { MockRouter } from '../helpers/mocks/mock-router';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/entities/course.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import dayjs from 'dayjs/esm';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { map, take } from 'rxjs/operators';
-import { MockRouter } from '../helpers/mocks/mock-router';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 
 describe('Participation Service', () => {
     let service: ParticipationService;

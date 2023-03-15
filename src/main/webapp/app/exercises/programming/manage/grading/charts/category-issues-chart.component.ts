@@ -1,4 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
+
 import { IssuesMap } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 

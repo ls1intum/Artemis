@@ -1,13 +1,14 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
+import { cloneDeep } from 'lodash-es';
+import { take } from 'rxjs/operators';
+
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { cloneDeep } from 'lodash-es';
-import { take } from 'rxjs/operators';
 
 describe('Bonus Service', () => {
     type GradeStepBuilder = {

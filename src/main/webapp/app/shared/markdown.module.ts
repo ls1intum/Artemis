@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';

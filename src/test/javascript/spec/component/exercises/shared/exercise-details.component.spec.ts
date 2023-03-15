@@ -1,6 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+
+import { getElement } from '../../../helpers/utils/general.utils';
+import { ArtemisTestModule } from '../../../test.module';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -9,9 +13,6 @@ import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming
 import { ExerciseDetailsComponent } from 'app/exercises/shared/exercise/exercise-details/exercise-details.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { getElement } from '../../../helpers/utils/general.utils';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('ExerciseDetailsComponent', () => {
     let component: ExerciseDetailsComponent;

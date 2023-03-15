@@ -1,7 +1,8 @@
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+
 import { User } from 'app/core/user/user.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { Observable, of } from 'rxjs';
 
 export class MockUserService {
     query(req?: any): Observable<HttpResponse<User[]>> {

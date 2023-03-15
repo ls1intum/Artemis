@@ -1,5 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
+
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 @Pipe({

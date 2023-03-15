@@ -1,4 +1,5 @@
 import { ComponentFixture } from '@angular/core/testing';
+
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 
 export function initializeDialog(component: AbstractDialogComponent, fixture: ComponentFixture<AbstractDialogComponent>, requiredInputs: object) {

@@ -1,6 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+
+import { TextAssessmentAreaComponent } from './text-assessment-area/text-assessment-area.component';
+import { TextSubmissionAssessmentComponent } from './text-submission-assessment.component';
+import { textSubmissionAssessmentRoutes } from './text-submission-assessment.route';
+import { TextblockAssessmentCardComponent } from './textblock-assessment-card/textblock-assessment-card.component';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
@@ -18,10 +23,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { TextAssessmentAreaComponent } from './text-assessment-area/text-assessment-area.component';
-import { TextSubmissionAssessmentComponent } from './text-submission-assessment.component';
-import { textSubmissionAssessmentRoutes } from './text-submission-assessment.route';
-import { TextblockAssessmentCardComponent } from './textblock-assessment-card/textblock-assessment-card.component';
 
 const ENTITY_STATES = [...textSubmissionAssessmentRoutes];
 

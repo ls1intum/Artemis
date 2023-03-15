@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';

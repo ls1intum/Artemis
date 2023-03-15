@@ -1,5 +1,6 @@
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
+
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Submission } from 'app/entities/submission.model';

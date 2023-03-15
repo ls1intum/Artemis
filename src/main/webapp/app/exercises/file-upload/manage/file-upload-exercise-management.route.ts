@@ -1,11 +1,12 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+
+import { FileUploadExerciseDetailComponent } from './file-upload-exercise-detail.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { FileUploadExerciseManagementResolve } from 'app/exercises/file-upload/manage/file-upload-exercise-management-resolve.service';
 import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { FileUploadExerciseDetailComponent } from './file-upload-exercise-detail.component';
 
 const routes: Routes = [
     {

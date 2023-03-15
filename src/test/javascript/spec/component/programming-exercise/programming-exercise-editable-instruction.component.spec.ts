@@ -3,6 +3,15 @@ import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core
 import { By } from '@angular/platform-browser';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { Subject } from 'rxjs';
+
+import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
+import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
+import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { triggerChanges } from '../../helpers/utils/general.utils';
+import { ArtemisTestModule } from '../../test.module';
 import { Participation } from 'app/entities/participation/participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -16,14 +25,6 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { Subject } from 'rxjs';
-import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
-import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { triggerChanges } from '../../helpers/utils/general.utils';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;

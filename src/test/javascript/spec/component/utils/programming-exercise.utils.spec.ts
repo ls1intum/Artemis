@@ -1,3 +1,5 @@
+import dayjs from 'dayjs/esm';
+
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -17,7 +19,6 @@ import {
     isProgrammingExerciseStudentParticipation,
     isResultPreliminary,
 } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
-import dayjs from 'dayjs/esm';
 
 describe('ProgrammingExerciseUtils URL utils', () => {
     let commitHashURLTemplate: string | undefined;

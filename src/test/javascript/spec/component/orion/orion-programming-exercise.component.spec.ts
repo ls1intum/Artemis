@@ -1,14 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { BehaviorSubject } from 'rxjs';
+
+import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { OrionProgrammingExerciseComponent } from 'app/orion/management/orion-programming-exercise.component';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('OrionProgrammingExerciseComponent', () => {
     let comp: OrionProgrammingExerciseComponent;

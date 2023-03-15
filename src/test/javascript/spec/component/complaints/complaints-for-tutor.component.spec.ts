@@ -3,6 +3,9 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
@@ -14,8 +17,6 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
 
 // Mock getCourseFromExercise(exercise) to get a course even if there isn't a course.
 jest.mock('app/entities/exercise.model', () => ({

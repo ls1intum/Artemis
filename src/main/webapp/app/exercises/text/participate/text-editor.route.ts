@@ -1,7 +1,8 @@
 import { Routes } from '@angular/router';
+
+import { TextEditorComponent } from './text-editor.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { TextEditorComponent } from './text-editor.component';
 
 export const textEditorRoute: Routes = [
     {

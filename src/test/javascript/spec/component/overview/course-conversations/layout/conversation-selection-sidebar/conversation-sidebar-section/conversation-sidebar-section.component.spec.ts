@@ -1,16 +1,17 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService } from 'ngx-webstorage';
+
+import { NgbCollapseMocksModule } from '../../../../../../helpers/mocks/directive/ngbCollapseMocks.module';
+import { MockLocalStorageService } from '../../../../../../helpers/mocks/service/mock-local-storage.service';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../helpers/conversationExampleModels';
 import { Course } from 'app/entities/course.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationSidebarSectionComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-sidebar-section/conversation-sidebar-section.component';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService } from 'ngx-webstorage';
-import { NgbCollapseMocksModule } from '../../../../../../helpers/mocks/directive/ngbCollapseMocks.module';
-import { MockLocalStorageService } from '../../../../../../helpers/mocks/service/mock-local-storage.service';
-import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../helpers/conversationExampleModels';
 
 @Component({
     // eslint-disable-next-line @angular-eslint/component-selector

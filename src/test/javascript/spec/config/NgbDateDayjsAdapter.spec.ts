@@ -1,5 +1,6 @@
-import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 import dayjs from 'dayjs/esm';
+
+import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 
 describe('NgbDateDayjsAdapter', () => {
     let adapter: NgbDateDayjsAdapter;

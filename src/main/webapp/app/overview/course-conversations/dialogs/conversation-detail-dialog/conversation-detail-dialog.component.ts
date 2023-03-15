@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+
 import { Course } from 'app/entities/course.model';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';

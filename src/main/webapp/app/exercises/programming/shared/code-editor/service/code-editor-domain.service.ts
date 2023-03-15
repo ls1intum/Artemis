@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { DomainChange, DomainParticipationChange, DomainTestRepositoryChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { BehaviorSubject, Observable } from 'rxjs';
+
+import { DomainChange, DomainParticipationChange, DomainTestRepositoryChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 /**
  * This service provides subscribing services with the most recently selected domain (participation vs repository).

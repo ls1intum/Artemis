@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExportButtonComponent } from 'app/shared/export/export-button.component';
 import { ExportModalComponent } from 'app/shared/export/export-modal.component';

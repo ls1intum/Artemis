@@ -1,14 +1,15 @@
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
 import { Interception } from 'cypress/types/net-stubbing';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
+
 import submission from '../../fixtures/exercise/programming/all_successful/submission.json';
 import { courseManagementRequest, examExerciseGroupCreation, examNavigation, examParticipation, examStartEnd, textExerciseEditor } from '../../support/artemis';
 import { EXERCISE_TYPE } from '../../support/constants';
 import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, studentOne, studentThree, studentTwo } from '../../support/users';
 import { generateUUID } from '../../support/utils';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';

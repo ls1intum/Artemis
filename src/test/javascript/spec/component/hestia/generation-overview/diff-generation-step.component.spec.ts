@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
+
+import { ArtemisTestModule } from '../../../test.module';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DiffGenerationStepComponent } from 'app/exercises/programming/hestia/generation-overview/steps/diff-generation-step/diff-generation-step.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('DiffGenerationStep Component', () => {
     let comp: DiffGenerationStepComponent;

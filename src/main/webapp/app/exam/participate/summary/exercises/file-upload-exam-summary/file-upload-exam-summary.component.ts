@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileService } from 'app/shared/http/file.service';
 

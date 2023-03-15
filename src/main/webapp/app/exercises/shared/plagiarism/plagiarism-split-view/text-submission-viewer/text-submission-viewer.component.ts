@@ -1,4 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { escape } from 'lodash-es';
+
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -9,7 +11,6 @@ import { FileWithHasMatch } from 'app/exercises/shared/plagiarism/plagiarism-spl
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { FromToElement, TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { escape } from 'lodash-es';
 
 type FilesWithType = { [p: string]: FileType };
 

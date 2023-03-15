@@ -1,13 +1,14 @@
 import { HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { filter, map, of } from 'rxjs';
+
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
-import { filter, map, of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadExerciseManagementResolve implements Resolve<FileUploadExercise> {

@@ -1,5 +1,8 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
+
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -10,8 +13,6 @@ import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import dayjs from 'dayjs/esm';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('ComplaintService', () => {
     let complaintService: ComplaintService;

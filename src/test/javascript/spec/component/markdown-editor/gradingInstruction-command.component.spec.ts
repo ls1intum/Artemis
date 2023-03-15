@@ -1,5 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgModel } from '@angular/forms';
+import { MockDirective, MockPipe } from 'ng-mocks';
+
+import { ArtemisTestModule } from '../../test.module';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
 import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
@@ -11,8 +14,6 @@ import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usa
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('Grading Instruction Command', () => {
     let comp: MarkdownEditorComponent;

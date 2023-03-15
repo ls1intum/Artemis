@@ -1,12 +1,13 @@
 import { Component, EventEmitter, OnDestroy, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subject } from 'rxjs';
+
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
 import { ProgrammingExerciseSolutionEntryService } from 'app/exercises/shared/exercise-hint/services/programming-exercise-solution-entry.service';
-import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-manual-solution-entry-creation-modal',

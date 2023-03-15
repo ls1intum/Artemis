@@ -1,12 +1,13 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { captureException } from '@sentry/angular';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { Course } from 'app/entities/course.model';
 import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<GradingScale>;
 export type EntityArrayResponseType = HttpResponse<GradingScale[]>;

@@ -1,6 +1,11 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { MockProvider } from 'ng-mocks';
+import { take } from 'rxjs/operators';
+
+import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
+import { ArtemisTestModule } from '../test.module';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -10,10 +15,6 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
-import { MockProvider } from 'ng-mocks';
-import { take } from 'rxjs/operators';
-import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
-import { ArtemisTestModule } from '../test.module';
 
 describe('Example Submission Service', () => {
     let httpMock: HttpTestingController;

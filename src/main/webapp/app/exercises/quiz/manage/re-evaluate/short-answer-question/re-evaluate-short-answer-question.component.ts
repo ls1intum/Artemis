@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 

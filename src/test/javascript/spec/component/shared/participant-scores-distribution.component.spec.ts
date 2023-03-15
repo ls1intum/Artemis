@@ -1,6 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { BarChartModule } from '@swimlane/ngx-charts';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GraphColors } from 'app/entities/statistics.model';
@@ -8,9 +12,6 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ParticipantScoresDistributionComponent', () => {
     let fixture: ComponentFixture<ParticipantScoresDistributionComponent>;

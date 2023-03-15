@@ -2,6 +2,11 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { Subject, of, throwError } from 'rxjs';
+
+import { NgbPaginationMocksModule } from '../../../helpers/mocks/directive/ngbPaginationMocks.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -18,10 +23,6 @@ import { SortService } from 'app/shared/service/sort.service';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SearchResult } from 'app/shared/table/pageable-table';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Subject, of, throwError } from 'rxjs';
-import { NgbPaginationMocksModule } from '../../../helpers/mocks/directive/ngbPaginationMocks.module';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('Exam Import Component', () => {
     let component: ExamImportComponent;

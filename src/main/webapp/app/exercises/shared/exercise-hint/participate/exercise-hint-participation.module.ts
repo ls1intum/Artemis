@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { MatExpansionModule } from '@angular/material/expansion';
+
 import { ArtemisExerciseHintManagementModule } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-management.module';
 import { ExerciseHintButtonOverlayComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-button-overlay.component';
 import { ExerciseHintExpandableComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-expandable.component';

@@ -4,6 +4,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { faBook, faCheckDouble, faDownload, faFileSignature, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+
+import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -23,7 +25,6 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
-import { ProgrammingExerciseService } from './services/programming-exercise.service';
 
 @Component({
     selector: 'jhi-programming-exercise',

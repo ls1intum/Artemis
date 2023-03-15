@@ -14,6 +14,8 @@ import {
     faTrash,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { lastValueFrom } from 'rxjs';
+
 import { FeedbackConflictType } from 'app/entities/feedback-conflict';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -24,7 +26,6 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
-import { lastValueFrom } from 'rxjs';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',

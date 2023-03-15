@@ -18,6 +18,9 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { Subject } from 'rxjs';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -47,8 +50,6 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import dayjs from 'dayjs/esm';
-import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',

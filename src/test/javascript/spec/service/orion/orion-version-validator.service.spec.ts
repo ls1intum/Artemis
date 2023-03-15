@@ -1,11 +1,12 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import { MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { ArtemisTestModule } from '../../test.module';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/orion-version-validator.service';
-import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 
 function setUserAgent(userAgent: string) {
     if (window.navigator.userAgent !== userAgent) {

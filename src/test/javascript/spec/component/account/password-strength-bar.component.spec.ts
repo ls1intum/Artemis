@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+
 import { PasswordStrengthBarComponent } from 'app/account/password/password-strength-bar.component';
 
 describe('Component Tests', () => {

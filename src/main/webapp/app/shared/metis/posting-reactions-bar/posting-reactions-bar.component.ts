@@ -1,5 +1,6 @@
 import { Directive, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+
 import { Posting } from 'app/entities/metis/posting.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { MetisService } from 'app/shared/metis/metis.service';

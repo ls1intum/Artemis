@@ -4,6 +4,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChalkboardTeacher, faCheck, faCircle, faCodeBranch, faExclamation, faExclamationTriangle, faInfoCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { UMLModel } from '@ls1intum/apollon';
+import { forkJoin } from 'rxjs';
+import { catchError, concatMap, map, tap } from 'rxjs/operators';
+
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
@@ -25,8 +28,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { forkJoin } from 'rxjs';
-import { catchError, concatMap, map, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-example-modeling-submission',

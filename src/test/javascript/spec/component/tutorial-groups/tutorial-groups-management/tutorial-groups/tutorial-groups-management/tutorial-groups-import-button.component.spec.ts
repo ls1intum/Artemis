@@ -1,11 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockPipe } from 'ng-mocks';
+
+import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { TutorialGroupsImportButtonComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-button/tutorial-groups-import-button.component';
 import { TutorialGroupsRegistrationImportDialogComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('TutorialGroupsImportButtonComponent', () => {
     let component: TutorialGroupsImportButtonComponent;

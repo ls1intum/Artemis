@@ -3,6 +3,14 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService } from 'ngx-webstorage';
+import { of, throwError } from 'rxjs';
+
+import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
+import { ArtemisTestModule } from '../../../test.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Course } from 'app/entities/course.model';
@@ -40,13 +48,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService } from 'ngx-webstorage';
-import { of, throwError } from 'rxjs';
-import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
-import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;

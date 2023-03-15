@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faSquare, faSquareCheck } from '@fortawesome/free-regular-svg-icons';
 import { faLink, faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
+
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 

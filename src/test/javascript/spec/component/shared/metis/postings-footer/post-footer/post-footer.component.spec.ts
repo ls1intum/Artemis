@@ -1,15 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
-import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
-import { AnswerPostService } from 'app/shared/metis/answer-post.service';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { PostComponent } from 'app/shared/metis/post/post.component';
-import { PostService } from 'app/shared/metis/post.service';
-import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
-import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { MockComponent, MockModule } from 'ng-mocks';
+
 import { MockAnswerPostService } from '../../../../../helpers/mocks/service/mock-answer-post.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { MockPostService } from '../../../../../helpers/mocks/service/mock-post.service';
@@ -24,6 +16,15 @@ import {
     unsortedAnswerArray,
 } from '../../../../../helpers/sample/metis-sample-data';
 import { getElements } from '../../../../../helpers/utils/general.utils';
+import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
+import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
+import { AnswerPostService } from 'app/shared/metis/answer-post.service';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { PostComponent } from 'app/shared/metis/post/post.component';
+import { PostService } from 'app/shared/metis/post.service';
+import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
+import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 
 describe('PostFooterComponent', () => {
     let component: PostFooterComponent;

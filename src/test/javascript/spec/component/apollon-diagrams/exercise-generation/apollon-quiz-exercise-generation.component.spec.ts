@@ -7,6 +7,13 @@ import { ApollonEditor, ApollonMode, Locale } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
+
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import * as testClassDiagram from '../../../util/modeling/test-models/class-diagram.json';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
@@ -19,12 +26,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import * as testClassDiagram from '../../../util/modeling/test-models/class-diagram.json';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {

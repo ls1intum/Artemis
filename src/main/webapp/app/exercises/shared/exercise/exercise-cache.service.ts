@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import dayjs from 'dayjs/esm';
 import { Observable, of, tap } from 'rxjs';
+
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Injectable()
 export class ExerciseCacheService {

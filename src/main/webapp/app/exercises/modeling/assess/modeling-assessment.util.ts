@@ -1,4 +1,5 @@
 import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+
 import { Feedback } from 'app/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
 

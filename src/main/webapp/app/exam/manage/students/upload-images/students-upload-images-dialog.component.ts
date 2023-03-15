@@ -3,12 +3,13 @@ import { Component, Input, OnDestroy, ViewChild, ViewEncapsulation } from '@angu
 import { NgForm } from '@angular/forms';
 import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subject } from 'rxjs';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject } from 'rxjs';
 
 class NotFoundExamUserType {
     numberOfUsersNotFound: number;

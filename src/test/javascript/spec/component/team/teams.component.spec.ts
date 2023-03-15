@@ -5,6 +5,16 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import * as ace from 'brace';
+import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
+import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
+import { MockTeamService, mockTeams } from '../../helpers/mocks/service/mock-team.service';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-participate/team-students-list.component';
@@ -16,15 +26,6 @@ import { TeamsExportButtonComponent } from 'app/exercises/shared/team/teams-impo
 import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-button.component';
 import { TeamsComponent } from 'app/exercises/shared/team/teams.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import * as ace from 'brace';
-import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
-import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
-import { MockTeamService, mockTeams } from '../../helpers/mocks/service/mock-team.service';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('TeamsComponent', () => {
     // needed to make sure ace is defined

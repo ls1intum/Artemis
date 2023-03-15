@@ -6,6 +6,10 @@ import { faCheckCircle, faExclamationTriangle, faFolderOpen, faQuestionCircle, f
 import { UMLModel } from '@ls1intum/apollon';
 import { TranslateService } from '@ngx-translate/core';
 import { LegendPosition } from '@swimlane/ngx-charts';
+import dayjs from 'dayjs/esm';
+import { Observable, of } from 'rxjs';
+import { finalize, map } from 'rxjs/operators';
+
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -44,9 +48,6 @@ import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ArtemisNavigationUtilService, getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import dayjs from 'dayjs/esm';
-import { Observable, of } from 'rxjs';
-import { finalize, map } from 'rxjs/operators';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;

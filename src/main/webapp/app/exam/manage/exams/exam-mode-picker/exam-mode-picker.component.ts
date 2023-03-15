@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+
 import { Exam } from 'app/entities/exam.model';
 
 @Component({

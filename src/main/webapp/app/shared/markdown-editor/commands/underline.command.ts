@@ -1,5 +1,6 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faUnderline } from '@fortawesome/free-solid-svg-icons';
+
 import { Command } from './command';
 
 export class UnderlineCommand extends Command {

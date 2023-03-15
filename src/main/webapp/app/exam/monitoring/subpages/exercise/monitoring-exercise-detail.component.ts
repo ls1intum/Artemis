@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+
 import { Exam } from 'app/entities/exam.model';
 import { Exercise } from 'app/entities/exercise.model';
 

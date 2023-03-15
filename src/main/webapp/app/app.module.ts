@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
+
 import { ArtemisAppRoutingModule } from 'app/app-routing.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisCoreModule } from 'app/core/core.module';

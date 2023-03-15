@@ -3,6 +3,9 @@ import { Component, Input, OnDestroy, ViewChild, ViewEncapsulation } from '@angu
 import { NgForm } from '@angular/forms';
 import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { parse } from 'papaparse';
+import { Subject } from 'rxjs';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -12,8 +15,6 @@ import { StudentDTO } from 'app/entities/student-dto.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { parse } from 'papaparse';
-import { Subject } from 'rxjs';
 
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
 const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];

@@ -3,6 +3,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+
+import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
+import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
+import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
+import { metisExercise, metisLecture, metisPostExerciseUser1, metisPostLectureUser1, metisPostTechSupport } from '../../../../helpers/sample/metis-sample-data';
+import { getElement } from '../../../../helpers/utils/general.utils';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PageType } from 'app/shared/metis/metis.util';
 import { PostComponent } from 'app/shared/metis/post/post.component';
@@ -10,12 +17,6 @@ import { PostingContentComponent } from 'app/shared/metis/posting-content/postin
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
-import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
-import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
-import { metisExercise, metisLecture, metisPostExerciseUser1, metisPostLectureUser1, metisPostTechSupport } from '../../../../helpers/sample/metis-sample-data';
-import { getElement } from '../../../../helpers/utils/general.utils';
 
 describe('PostComponent', () => {
     let component: PostComponent;

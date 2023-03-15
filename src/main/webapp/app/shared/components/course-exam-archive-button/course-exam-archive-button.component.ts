@@ -2,6 +2,11 @@ import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit, TemplateRef, Vi
 import { faArchive, faCircleNotch, faDownload, faEraser } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { Subject } from 'rxjs';
+import { tap } from 'rxjs/operators';
+
+import { ButtonSize } from '../button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -12,10 +17,6 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
-import dayjs from 'dayjs/esm';
-import { Subject } from 'rxjs';
-import { tap } from 'rxjs/operators';
-import { ButtonSize } from '../button.component';
 
 export type CourseExamArchiveState = {
     exportState: 'COMPLETED' | 'RUNNING' | 'COMPLETED_WITH_WARNINGS';

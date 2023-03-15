@@ -1,4 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
+
 import { Result } from 'app/entities/result.model';
 import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
 

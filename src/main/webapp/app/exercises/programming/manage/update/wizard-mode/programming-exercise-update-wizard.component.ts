@@ -1,11 +1,12 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Observable } from 'rxjs';
+
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ValidationReason } from 'app/entities/exercise.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
-import { Observable } from 'rxjs';
 
 export type InfoStepInputs = {
     titleNamePattern: string;

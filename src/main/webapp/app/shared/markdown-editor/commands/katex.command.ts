@@ -1,5 +1,6 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faEquals } from '@fortawesome/free-solid-svg-icons';
+
 import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/domainTag.command';
 import { addTextAtCursor } from 'app/shared/util/markdown.util';
 

@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
 import { Authority } from 'app/shared/constants/authority.constants';

@@ -1,14 +1,15 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faExclamationTriangle, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { Subscription, filter } from 'rxjs';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import dayjs from 'dayjs/esm';
-import { Subscription, filter } from 'rxjs';
 
 export const WEBSOCKET_CHANNEL = '/topic/system-notification';
 

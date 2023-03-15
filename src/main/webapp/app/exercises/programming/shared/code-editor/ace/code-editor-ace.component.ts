@@ -1,6 +1,12 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { faFileAlt } from '@fortawesome/free-regular-svg-icons';
 import { faCircleNotch, faGear, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
+import { UndoManager, acequire } from 'brace';
+import { fromPairs, pickBy } from 'lodash-es';
+import { LocalStorageService } from 'ngx-webstorage';
+import { Subscription, fromEvent, of } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
+
 import { Course } from 'app/entities/course.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { TextChange } from 'app/entities/text-change.model';
@@ -9,11 +15,6 @@ import { CodeEditorFileService } from 'app/exercises/programming/shared/code-edi
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { AceEditorComponent, MAX_TAB_SIZE } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import { UndoManager, acequire } from 'brace';
-import { fromPairs, pickBy } from 'lodash-es';
-import { LocalStorageService } from 'ngx-webstorage';
-import { Subscription, fromEvent, of } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
 import 'brace/ext/language_tools';
 import 'brace/ext/modelist';
 import 'brace/mode/java';

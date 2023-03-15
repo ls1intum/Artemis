@@ -1,7 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
+import dayjs from 'dayjs/esm';
+
 import { StudentExam } from 'app/entities/student-exam.model';
 import { round } from 'app/shared/util/utils';
-import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-testexam-working-time',

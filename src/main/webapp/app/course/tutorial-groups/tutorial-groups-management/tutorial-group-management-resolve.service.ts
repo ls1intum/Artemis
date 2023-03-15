@@ -1,10 +1,11 @@
 import { HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
 import { Observable, filter, map, pipe } from 'rxjs';
 import { tap } from 'rxjs/operators';
+
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupManagementResolve implements Resolve<Course> {

@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+
 import { AuditsComponent } from 'app/admin/audits/audits.component';
 import { ConfigurationComponent } from 'app/admin/configuration/configuration.component';
 import { DocsComponent } from 'app/admin/docs/docs.component';

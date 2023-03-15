@@ -1,4 +1,5 @@
 import { Route } from '@angular/router';
+
 import { UserManagementDetailComponent } from 'app/admin/user-management/user-management-detail.component';
 import { UserManagementResolve } from 'app/admin/user-management/user-management-resolve.service';
 import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';

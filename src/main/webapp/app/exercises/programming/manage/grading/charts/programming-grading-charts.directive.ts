@@ -1,5 +1,6 @@
 import { Directive } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 
 @Directive()

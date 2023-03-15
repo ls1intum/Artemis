@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { tap } from 'rxjs/operators';
+
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 type FeatureToggleState = {
     index: number;

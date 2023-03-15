@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
+import { tap } from 'rxjs/operators';
+
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { tap } from 'rxjs/operators';
 
 /**
  * ProgrammingLanguageFeature, defined on the server, allows to customize the user interface during programming exercise generation

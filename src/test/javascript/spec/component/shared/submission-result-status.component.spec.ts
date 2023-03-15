@@ -1,13 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
+import { MockComponent } from 'ng-mocks';
+
+import { ArtemisTestModule } from '../../test.module';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
-import dayjs from 'dayjs/esm';
-import { MockComponent } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('SubmissionResultStatusComponent', () => {
     let comp: SubmissionResultStatusComponent;

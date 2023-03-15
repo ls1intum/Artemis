@@ -1,6 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { ArtemisTestModule } from '../../test.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { ConsistencyCheckError, ErrorType } from 'app/entities/consistency-check-result.model';
 import { Course } from 'app/entities/course.model';
@@ -9,10 +14,6 @@ import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consiste
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ConsistencyCheckComponent', () => {
     let component: ConsistencyCheckComponent;

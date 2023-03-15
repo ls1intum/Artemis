@@ -1,8 +1,9 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Observable } from 'rxjs';
 
 export interface ICodeHintService {
     /**

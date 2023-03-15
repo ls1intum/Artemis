@@ -2,6 +2,9 @@ import { HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faClipboard, faHeartBroken, faSort, faTable } from '@fortawesome/free-solid-svg-icons';
+
+import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
+import { CourseManagementService } from '../../manage/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -21,8 +24,6 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
-import { CourseManagementService } from '../../manage/course-management.service';
-import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 
 @Component({
     selector: 'jhi-assessment-dashboard',

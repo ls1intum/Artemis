@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';

@@ -3,6 +3,12 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
+
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { Bonus } from 'app/entities/bonus.model';
 import { Course } from 'app/entities/course.model';
@@ -17,11 +23,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 
 describe('GradeKeyOverviewComponent', () => {
     let fixture: ComponentFixture<GradingKeyOverviewComponent>;

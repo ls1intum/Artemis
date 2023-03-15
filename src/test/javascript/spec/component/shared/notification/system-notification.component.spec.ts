@@ -1,16 +1,17 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
+
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
+import { ArtemisTestModule } from '../../../test.module';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { SystemNotificationComponent, WEBSOCKET_CHANNEL } from 'app/shared/notification/system-notification/system-notification.component';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
-import dayjs from 'dayjs/esm';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
-import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('System Notification Component', () => {
     let systemNotificationComponent: SystemNotificationComponent;

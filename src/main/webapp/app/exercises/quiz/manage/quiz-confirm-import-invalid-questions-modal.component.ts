@@ -1,6 +1,7 @@
 import { Component, EventEmitter } from '@angular/core';
 import { faBan, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+
 import { ValidationReason } from 'app/entities/exercise.model';
 
 @Component({

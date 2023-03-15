@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';

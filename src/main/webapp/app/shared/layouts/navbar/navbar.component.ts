@@ -25,6 +25,10 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { SessionStorageService } from 'ngx-webstorage';
+import { Subscription } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
+
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { VERSION } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
@@ -51,9 +55,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { onError } from 'app/shared/util/global.utils';
-import { SessionStorageService } from 'ngx-webstorage';
-import { Subscription } from 'rxjs';
-import { filter, map, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-navbar',

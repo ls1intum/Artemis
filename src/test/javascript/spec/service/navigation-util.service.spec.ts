@@ -1,9 +1,10 @@
 import { Location } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { Router, UrlTree } from '@angular/router';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { ArtemisTestModule } from '../test.module';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 describe('Navigation Util Service', () => {
     let service: ArtemisNavigationUtilService;

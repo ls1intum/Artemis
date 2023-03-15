@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faCheck, faFileUpload, faLink, faScroll, faVideo } from '@fortawesome/free-solid-svg-icons';
+
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';

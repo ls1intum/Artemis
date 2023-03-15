@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+
 import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participation/orion-exercise-details-student-actions.component';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';

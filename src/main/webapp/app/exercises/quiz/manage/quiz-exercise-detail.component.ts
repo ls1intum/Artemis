@@ -5,6 +5,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { cloneDeep } from 'lodash-es';
+
+import { Duration } from './quiz-exercise-interfaces';
+import { QuizExerciseService } from './quiz-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
@@ -40,10 +45,6 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { onError } from 'app/shared/util/global.utils';
 import { round } from 'app/shared/util/utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import dayjs from 'dayjs/esm';
-import { cloneDeep } from 'lodash-es';
-import { Duration } from './quiz-exercise-interfaces';
-import { QuizExerciseService } from './quiz-exercise.service';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',

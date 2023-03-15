@@ -1,9 +1,10 @@
+import dayjs from 'dayjs/esm';
+
 import { Attachment } from 'app/entities/attachment.model';
 import { Course } from 'app/entities/course.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { Post } from 'app/entities/metis/post.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import dayjs from 'dayjs/esm';
 
 export class Lecture implements BaseEntity {
     id?: number;

@@ -2,14 +2,15 @@ import { Component, Input, IterableDiffers } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent, FaStackComponent } from '@fortawesome/angular-fontawesome';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+
+import { generateExampleTutorialGroupFreePeriod } from '../helpers/tutorialGroupFreePeriodExampleModel';
 import { TutorialGroupFreeDaysOverviewComponent } from 'app/course/tutorial-groups/shared/tutorial-group-free-days-overview/tutorial-group-free-days-overview.component';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { generateExampleTutorialGroupFreePeriod } from '../helpers/tutorialGroupFreePeriodExampleModel';
 
 @Component({ selector: 'jhi-side-panel', template: '' })
 class MockSidePanelComponent {

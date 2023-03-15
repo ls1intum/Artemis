@@ -2,15 +2,16 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { take } from 'rxjs/operators';
+
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { take } from 'rxjs/operators';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('Course Admin Service', () => {
     let courseAdminService: CourseAdminService;

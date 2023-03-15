@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+
 import { CastToCodeHintPipe } from 'app/exercises/shared/exercise-hint/services/code-hint-cast.pipe';
 import { CodeHintContainerComponent } from 'app/exercises/shared/exercise-hint/shared/code-hint-container.component';
 import { SolutionEntryComponent } from 'app/exercises/shared/exercise-hint/shared/solution-entry.component';

@@ -5,6 +5,27 @@ import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/t
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockModule } from 'ng-mocks';
+import { LocalStorageService } from 'ngx-webstorage';
+import { Subject, Subscription, of, throwError } from 'rxjs';
+
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
+import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
+import { MockRepositoryFileService } from '../../helpers/mocks/service/mock-repository-file.service';
+import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import {
+    problemStatement,
+    problemStatementBubbleSortFailsHtml,
+    problemStatementBubbleSortNotExecutedHtml,
+    problemStatementEmptySecondTask,
+    problemStatementEmptySecondTaskNotExecutedHtml,
+} from '../../helpers/sample/problemStatement.json';
+import { triggerChanges } from '../../helpers/utils/general.utils';
+import { ArtemisTestModule } from '../../test.module';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -20,28 +41,9 @@ import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.compon
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import dayjs from 'dayjs/esm';
-import { MockModule } from 'ng-mocks';
-import { LocalStorageService } from 'ngx-webstorage';
-import { Subject, Subscription, of, throwError } from 'rxjs';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { MockRepositoryFileService } from '../../helpers/mocks/service/mock-repository-file.service';
-import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import {
-    problemStatement,
-    problemStatementBubbleSortFailsHtml,
-    problemStatementBubbleSortNotExecutedHtml,
-    problemStatementEmptySecondTask,
-    problemStatementEmptySecondTaskNotExecutedHtml,
-} from '../../helpers/sample/problemStatement.json';
+
 // eslint-disable-next-line max-len
-import { triggerChanges } from '../../helpers/utils/general.utils';
 // eslint-disable-next-line max-len
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ProgrammingExerciseInstructionComponent', () => {
     let comp: ProgrammingExerciseInstructionComponent;

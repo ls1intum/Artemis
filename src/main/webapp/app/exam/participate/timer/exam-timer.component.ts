@@ -1,11 +1,12 @@
 import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { round } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { Observable, Subject, timer } from 'rxjs';
 import { distinctUntilChanged, first, map, takeUntil } from 'rxjs/operators';
+
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-exam-timer',

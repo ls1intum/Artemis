@@ -1,5 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { lastValueFrom, of } from 'rxjs';
+
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Rating } from 'app/entities/rating.model';
@@ -9,11 +15,6 @@ import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { lastValueFrom, of } from 'rxjs';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('RatingListComponent', () => {
     let component: RatingListComponent;

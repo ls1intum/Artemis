@@ -1,13 +1,14 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { CourseManagementStatisticsDTO } from 'app/course/manage/course-management-statistics-dto';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { round } from 'app/shared/util/utils';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {

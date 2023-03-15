@@ -6,6 +6,8 @@ import { faCircleNotch, faExclamationCircle, faFile } from '@fortawesome/free-so
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from '@sentry/browser';
+import dayjs from 'dayjs/esm';
+
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
@@ -24,7 +26,6 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { Badge, ResultService } from 'app/exercises/shared/result/result.service';
 import { MissingResultInformation, ResultTemplateStatus, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-result',

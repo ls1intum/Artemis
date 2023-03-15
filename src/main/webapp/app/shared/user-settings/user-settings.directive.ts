@@ -1,5 +1,6 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Directive, OnInit } from '@angular/core';
+
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';

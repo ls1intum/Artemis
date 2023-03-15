@@ -1,4 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock-exam-checklist.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
+import { ArtemisTestModule } from '../../../../test.module';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { Exam } from 'app/entities/exam.model';
@@ -8,11 +14,6 @@ import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-compo
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock-exam-checklist.service';
-import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
-import { ArtemisTestModule } from '../../../../test.module';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];

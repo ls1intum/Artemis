@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+
 import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TableEditableCheckboxComponent } from 'app/shared/table/table-editable-checkbox.component';

@@ -1,6 +1,8 @@
 import { Component, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -24,7 +26,6 @@ import {
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,

@@ -2,6 +2,12 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockComponent } from 'ng-mocks';
+import { Observable, of } from 'rxjs';
+
+import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { PlagiarismCasesInstructorViewComponent } from 'app/course/plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.component';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -9,11 +15,6 @@ import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/Plagiarism
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import * as DownloadUtil from 'app/shared/util/download.util';
-import dayjs from 'dayjs/esm';
-import { MockComponent } from 'ng-mocks';
-import { Observable, of } from 'rxjs';
-import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),

@@ -2,9 +2,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { faEye, faSync } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Health, HealthDetails, HealthStatus } from 'app/admin/health/health.model';
+
 import { HealthModalComponent } from './health-modal.component';
 import { HealthService } from './health.service';
+import { Health, HealthDetails, HealthStatus } from 'app/admin/health/health.model';
 
 @Component({
     selector: 'jhi-health',

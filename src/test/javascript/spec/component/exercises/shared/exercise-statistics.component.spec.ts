@@ -2,6 +2,13 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
+
+import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisTestModule } from '../../../test.module';
 import { Exercise } from 'app/entities/exercise.model';
 import { SpanType } from 'app/entities/statistics.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -14,12 +21,6 @@ import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-grap
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/statistics-score-distribution-graph.component';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
-import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('ExerciseStatisticsComponent', () => {
     let fixture: ComponentFixture<ExerciseStatisticsComponent>;

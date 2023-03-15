@@ -1,8 +1,9 @@
 import { ActivatedRouteSnapshot } from '@angular/router';
+import { of } from 'rxjs';
+
 import { OrganizationManagementResolve } from 'app/admin/organization-management/organization-management-resolve.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
-import { of } from 'rxjs';
 
 describe('OrganizationManagementResolve', () => {
     let organizationManagementService: OrganizationManagementService;

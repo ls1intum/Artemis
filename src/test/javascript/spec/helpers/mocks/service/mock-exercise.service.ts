@@ -1,8 +1,9 @@
 import { HttpResponse } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+
 import { Exercise } from 'app/entities/exercise.model';
 import { EntityArrayResponseType, EntityResponseType } from 'app/exercises/shared/exercise/exercise.service';
 import { convertDateFromClient } from 'app/utils/date.utils';
-import { Observable, of } from 'rxjs';
 
 export class MockExerciseService {
     find(exerciseId: number) {

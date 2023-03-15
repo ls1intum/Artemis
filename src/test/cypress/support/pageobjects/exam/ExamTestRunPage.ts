@@ -1,8 +1,8 @@
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
 import { examStartEnd } from '../../artemis';
 import { BASE_API, DELETE, PATCH, POST } from '../../constants';
 import { CypressCredentials } from '../../users';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam details page.

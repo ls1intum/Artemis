@@ -1,16 +1,17 @@
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
 import { Interception } from 'cypress/types/net-stubbing';
 import dayjs from 'dayjs/esm';
 import { examExerciseGroupCreation, examNavigation, examParticipation, examStartEnd } from 'src/test/cypress/support/artemis';
 import { Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
 import { courseManagementRequest } from 'src/test/cypress/support/requests/ArtemisRequests';
 import { admin, studentOne, studentThree, studentTwo } from 'src/test/cypress/support/users';
+
 import allSuccessful from '../../../fixtures/exercise/programming/all_successful/submission.json';
 import buildError from '../../../fixtures/exercise/programming/build_error/submission.json';
 import { EXERCISE_TYPE } from '../../../support/constants';
 import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { generateUUID } from '../../../support/utils';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';

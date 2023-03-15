@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+
 import { Exercise } from 'app/entities/exercise.model';
 import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-data';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';

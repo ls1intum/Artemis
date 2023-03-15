@@ -2,6 +2,11 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, O
 import { faAngleDoubleDown, faAngleDoubleUp, faChevronLeft, faChevronRight, faCircleNotch, faFile, faFolder, faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { Interactable } from '@interactjs/core/Interactable';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import interact from 'interactjs';
+import { fromPairs, toPairs } from 'lodash-es';
+import { Observable, Subscription, of, throwError } from 'rxjs';
+import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
+
 import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-delete';
 import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
 import { supportedTextFileExtensions } from 'app/exercises/programming/shared/code-editor/file-browser/supported-file-extensions';
@@ -21,10 +26,6 @@ import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { findItemInList } from 'app/exercises/programming/shared/code-editor/treeview/helpers/treeview-helper';
 import { TreeItem, TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
-import interact from 'interactjs';
-import { fromPairs, toPairs } from 'lodash-es';
-import { Observable, Subscription, of, throwError } from 'rxjs';
-import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 
 export type InteractableEvent = {
     // Click event object; contains target information

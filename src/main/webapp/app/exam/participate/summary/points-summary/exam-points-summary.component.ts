@@ -1,12 +1,13 @@
 import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { faAward, faClipboard } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+
 import { BonusStrategy } from 'app/entities/bonus.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-exam-points-summary',

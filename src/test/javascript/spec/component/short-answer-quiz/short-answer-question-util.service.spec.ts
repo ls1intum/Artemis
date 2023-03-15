@@ -1,4 +1,5 @@
 import { TestBed, fakeAsync } from '@angular/core/testing';
+
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 

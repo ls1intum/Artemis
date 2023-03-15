@@ -3,6 +3,10 @@ import { ActivatedRoute } from '@angular/router';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+import dayjs from 'dayjs/esm';
+import { sortBy } from 'lodash-es';
+import { Subject, Subscription } from 'rxjs';
+
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -18,9 +22,6 @@ import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-data
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import dayjs from 'dayjs/esm';
-import { sortBy } from 'lodash-es';
-import { Subject, Subscription } from 'rxjs';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';

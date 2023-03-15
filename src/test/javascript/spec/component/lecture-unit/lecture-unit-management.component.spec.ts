@@ -6,6 +6,11 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
@@ -28,10 +33,6 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { MockRouter } from '../../helpers/mocks/mock-router';
 
 @Component({ selector: 'jhi-learning-goals-popover', template: '' })
 class LearningGoalsPopoverStubComponent {

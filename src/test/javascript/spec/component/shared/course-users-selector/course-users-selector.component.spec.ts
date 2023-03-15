@@ -5,14 +5,15 @@ import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angul
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/shared/course-users-selector/course-users-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
 
 @Component({
     template: `

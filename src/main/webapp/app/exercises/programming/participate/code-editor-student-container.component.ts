@@ -2,6 +2,10 @@ import { HttpResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { Observable, Subscription, of } from 'rxjs';
+import { catchError, map, mergeMap, tap } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
@@ -26,9 +30,6 @@ import { getUnreferencedFeedback } from 'app/exercises/shared/result/result.util
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
 import { ButtonSize } from 'app/shared/components/button.component';
-import dayjs from 'dayjs/esm';
-import { Observable, Subscription, of } from 'rxjs';
-import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-code-editor-student',

@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { BarChartModule, PieChartModule } from '@swimlane/ngx-charts';
+
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';

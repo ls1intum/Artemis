@@ -2,6 +2,11 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { LearningGoalFormStubComponent } from './learning-goal-form-stub.component';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 import { AlertService } from 'app/core/util/alert.service';
 import { CreateLearningGoalComponent } from 'app/course/learning-goals/create-learning-goal/create-learning-goal.component';
 import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
@@ -11,10 +16,6 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { LearningGoalFormStubComponent } from './learning-goal-form-stub.component';
 
 describe('CreateLearningGoal', () => {
     let createLearningGoalComponentFixture: ComponentFixture<CreateLearningGoalComponent>;

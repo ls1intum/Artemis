@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { CanDeactivate } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 
 @Injectable({ providedIn: 'root' })

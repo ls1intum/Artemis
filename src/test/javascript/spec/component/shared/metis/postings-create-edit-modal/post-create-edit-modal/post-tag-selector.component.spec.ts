@@ -4,12 +4,13 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
+import { MockModule, MockPipe } from 'ng-mocks';
+
+import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
+import { metisTags } from '../../../../../helpers/sample/metis-sample-data';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockModule, MockPipe } from 'ng-mocks';
-import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
-import { metisTags } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('PostTagSelectorComponent', () => {
     let component: PostTagSelectorComponent;

@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';

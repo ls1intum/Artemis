@@ -1,6 +1,12 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { ActivatedRoute, Data } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
+import { ArtemisTestModule } from '../../../test.module';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
@@ -19,11 +25,6 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;

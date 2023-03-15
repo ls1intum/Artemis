@@ -3,6 +3,9 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faCheck, faInfo, faPrint, faUser } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { Subscription } from 'rxjs';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { User } from 'app/core/user/user.model';
@@ -15,8 +18,6 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PageType } from 'app/shared/metis/metis.util';
 import { abbreviateString } from 'app/utils/text.utils';
-import dayjs from 'dayjs/esm';
-import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',

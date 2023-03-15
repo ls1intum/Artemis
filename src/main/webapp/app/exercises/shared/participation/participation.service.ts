@@ -1,5 +1,9 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import dayjs from 'dayjs/esm';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
@@ -9,9 +13,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
-import dayjs from 'dayjs/esm';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;

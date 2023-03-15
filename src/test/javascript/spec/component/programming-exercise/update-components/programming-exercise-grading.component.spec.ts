@@ -4,6 +4,11 @@ import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { NgbAlertsMocksModule } from '../../../helpers/mocks/directive/ngbAlertsMocks.module';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -17,10 +22,6 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { of } from 'rxjs';
-import { NgbAlertsMocksModule } from '../../../helpers/mocks/directive/ngbAlertsMocks.module';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingExerciseGradingComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseGradingComponent>;

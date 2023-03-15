@@ -1,6 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { of } from 'rxjs';
+
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
+import { createActions, createSingleSeriesDataEntriesWithTimestamps } from '../exam-monitoring-helper';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -8,11 +14,6 @@ import { TotalActionsChartComponent } from 'app/exam/monitoring/charts/activity-
 import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import dayjs from 'dayjs/esm';
-import { of } from 'rxjs';
-import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
-import { createActions, createSingleSeriesDataEntriesWithTimestamps } from '../exam-monitoring-helper';
 
 class MockExamActionService {
     cachedExamActionsGroupedByTimestamp = new Map();

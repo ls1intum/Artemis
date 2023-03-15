@@ -5,12 +5,13 @@ import { MatChipInput, MatChipInputEvent, MatChipsModule } from '@angular/materi
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 
 describe('Category Selector Component', () => {
     let comp: CategorySelectorComponent;

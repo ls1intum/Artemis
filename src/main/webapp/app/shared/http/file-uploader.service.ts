@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { lastValueFrom } from 'rxjs';
+
 import { FILE_EXTENSIONS, MARKDOWN_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { lastValueFrom } from 'rxjs';
 
 export interface FileUploadResponse {
     path?: string;

@@ -4,6 +4,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { faExclamationTriangle, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { Observable, combineLatestWith } from 'rxjs';
+
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -14,7 +16,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { Observable, combineLatestWith } from 'rxjs';
 
 @Component({
     selector: 'jhi-complaint-list',

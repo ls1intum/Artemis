@@ -2,6 +2,13 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
+import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
+import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
+import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGroupSessionExampleModels';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { EditTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
 import { CancellationModalComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/cancellation-modal/cancellation-modal.component';
@@ -12,12 +19,6 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
-import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
-import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
-import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGroupSessionExampleModels';
 
 describe('TutorialGroupSessionRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupSessionRowButtonsComponent>;

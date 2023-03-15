@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 /**

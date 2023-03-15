@@ -2,6 +2,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faCircleNotch, faEraser, faFilePowerpoint, faTimes } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { Subject, Subscription } from 'rxjs';
+import { tap } from 'rxjs/operators';
+
+import { ParticipationService } from './participation.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -17,10 +22,6 @@ import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import dayjs from 'dayjs/esm';
-import { Subject, Subscription } from 'rxjs';
-import { tap } from 'rxjs/operators';
-import { ParticipationService } from './participation.service';
 
 enum FilterProp {
     ALL = 'all',

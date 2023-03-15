@@ -1,8 +1,9 @@
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AlertService } from 'app/core/util/alert.service';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+
+import { AlertService } from 'app/core/util/alert.service';
 
 @Injectable()
 export class NotificationInterceptor implements HttpInterceptor {

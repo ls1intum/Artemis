@@ -4,6 +4,10 @@ import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { cloneDeep } from 'lodash-es';
+import { switchMap, tap } from 'rxjs/operators';
+
+import { TextExerciseService } from './text-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -20,9 +24,6 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { cloneDeep } from 'lodash-es';
-import { switchMap, tap } from 'rxjs/operators';
-import { TextExerciseService } from './text-exercise.service';
 
 @Component({
     selector: 'jhi-text-exercise-update',

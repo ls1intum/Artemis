@@ -1,10 +1,11 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { Attachment } from 'app/entities/attachment.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<Attachment>;
 type EntityArrayResponseType = HttpResponse<Attachment[]>;

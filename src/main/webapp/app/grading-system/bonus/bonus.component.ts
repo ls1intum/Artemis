@@ -2,6 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { Subject, forkJoin, of } from 'rxjs';
+import { catchError, finalize, tap } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
@@ -11,8 +14,6 @@ import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { PageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
-import { Subject, forkJoin, of } from 'rxjs';
-import { catchError, finalize, tap } from 'rxjs/operators';
 
 export enum BonusStrategyOption {
     GRADES,

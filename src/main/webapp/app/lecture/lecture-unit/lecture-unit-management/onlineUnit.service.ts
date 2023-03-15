@@ -1,10 +1,11 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-management/online-resource-dto.model';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<OnlineUnit>;
 

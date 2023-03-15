@@ -3,6 +3,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -18,8 +21,6 @@ import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.mo
 import { ExamPointsSummaryComponent } from 'app/exam/participate/summary/points-summary/exam-points-summary.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 
 let fixture: ComponentFixture<ExamPointsSummaryComponent>;
 let component: ExamPointsSummaryComponent;

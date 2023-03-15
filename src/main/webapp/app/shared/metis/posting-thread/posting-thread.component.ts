@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Post } from 'app/entities/metis/post.model';
 import dayjs from 'dayjs/esm';
+
+import { Post } from 'app/entities/metis/post.model';
 
 @Component({
     selector: 'jhi-posting-thread',

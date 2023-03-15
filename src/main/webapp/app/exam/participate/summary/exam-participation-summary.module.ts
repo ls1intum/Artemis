@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';

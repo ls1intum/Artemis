@@ -1,12 +1,13 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { MockProvider } from 'ng-mocks';
+import { take } from 'rxjs/operators';
+
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { CourseLearningGoalProgress, LearningGoal, LearningGoalProgress, LearningGoalRelation } from 'app/entities/learningGoal.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { MockProvider } from 'ng-mocks';
-import { take } from 'rxjs/operators';
 
 describe('LearningGoalService', () => {
     let learningGoalService: LearningGoalService;

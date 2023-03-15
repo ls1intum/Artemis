@@ -1,6 +1,10 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
+import { of } from 'rxjs';
+import { take } from 'rxjs/operators';
+
+import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
@@ -17,9 +21,6 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { FeedbackConflictResolver, NewStudentParticipationResolver, StudentParticipationResolver } from 'app/exercises/text/assess/text-submission-assessment.route';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { of } from 'rxjs';
-import { take } from 'rxjs/operators';
-import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 
 describe('TextAssessment Service', () => {
     let service: TextAssessmentService;

@@ -2,6 +2,9 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faEye, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { Subject, Subscription } from 'rxjs';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -12,8 +15,6 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { AdminSystemNotificationService } from 'app/shared/notification/system-notification/admin-system-notification.service';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { onError } from 'app/shared/util/global.utils';
-import dayjs from 'dayjs/esm';
-import { Subject, Subscription } from 'rxjs';
 
 enum NotificationState {
     SCHEDULED = 'SCHEDULED',

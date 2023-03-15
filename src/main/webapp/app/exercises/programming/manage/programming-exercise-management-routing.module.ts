@@ -1,6 +1,9 @@
 import { HttpResponse } from '@angular/common/http';
 import { Injectable, NgModule } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/router';
+import { of } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CodeHintGenerationOverviewComponent } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-overview.component';
@@ -11,8 +14,6 @@ import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/ma
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { of } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {

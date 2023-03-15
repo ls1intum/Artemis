@@ -8,6 +8,15 @@ import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import * as Sentry from '@sentry/browser';
+import { MockDirective, MockModule } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { Subject, of } from 'rxjs';
+
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';
 import { LANGUAGES } from 'app/core/language/language.constants';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -18,14 +27,6 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
-import { MockDirective, MockModule } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { Subject, of } from 'rxjs';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('User Management Update Component', () => {
     let comp: UserManagementUpdateComponent;

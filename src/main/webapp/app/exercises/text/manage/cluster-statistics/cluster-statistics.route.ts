@@ -1,7 +1,8 @@
 import { Routes } from '@angular/router';
+
+import { ClusterStatisticsComponent } from './cluster-statistics.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ClusterStatisticsComponent } from './cluster-statistics.component';
 
 export const clusterStatisticsRoute: Routes = [
     {

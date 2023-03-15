@@ -1,6 +1,11 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
+
+import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { Course } from 'app/entities/course.model';
@@ -10,10 +15,6 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { onError } from 'app/shared/util/global.utils';
-import dayjs from 'dayjs/esm';
-import { Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
-import { FileUploadExerciseService } from './file-upload-exercise.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',

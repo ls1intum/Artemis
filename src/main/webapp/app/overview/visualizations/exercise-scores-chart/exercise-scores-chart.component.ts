@@ -4,6 +4,9 @@ import { ActivatedRoute } from '@angular/router';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { cloneDeep, sortBy } from 'lodash-es';
+import { finalize } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { GraphColors } from 'app/entities/statistics.model';
@@ -12,8 +15,6 @@ import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-fi
 import { onError } from 'app/shared/util/global.utils';
 import { round } from 'app/shared/util/utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { cloneDeep, sortBy } from 'lodash-es';
-import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exercise-scores-chart',

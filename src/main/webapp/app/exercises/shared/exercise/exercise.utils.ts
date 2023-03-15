@@ -1,5 +1,9 @@
 import { SimpleChanges } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
+import { Observable, from, of } from 'rxjs';
+import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
+
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -10,9 +14,6 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ExerciseServicable } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
-import dayjs from 'dayjs/esm';
-import { Observable, from, of } from 'rxjs';
-import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
 
 export enum EditType {
     IMPORT,

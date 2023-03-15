@@ -3,13 +3,14 @@ import { TestBed, inject } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { MockProvider } from 'ng-mocks';
 import { SessionStorageService } from 'ngx-webstorage';
+
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 
 describe('Language Helper', () => {
     const renderer2: Renderer2 = {

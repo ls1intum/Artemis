@@ -2,6 +2,11 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { BarChartModule } from '@swimlane/ngx-charts';
+
+import { FileUploadExerciseGroupCellComponent } from './exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
+import { ModelingExerciseGroupCellComponent } from './exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
+import { ProgrammingExerciseGroupCellComponent } from './exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
+import { QuizExerciseGroupCellComponent } from './exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
 import { ArtemisExamScoresModule } from 'app/exam/exam-scores/exam-scores.module';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
 import { examManagementState } from 'app/exam/manage/exam-management.route';
@@ -49,10 +54,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { FileUploadExerciseGroupCellComponent } from './exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
-import { ModelingExerciseGroupCellComponent } from './exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
-import { ProgrammingExerciseGroupCellComponent } from './exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
-import { QuizExerciseGroupCellComponent } from './exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
 
 const ENTITY_STATES = [...examManagementState];
 

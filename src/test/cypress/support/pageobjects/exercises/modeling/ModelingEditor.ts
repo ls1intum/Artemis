@@ -1,6 +1,6 @@
+import scrollBehaviorOptions = Cypress.scrollBehaviorOptions;
 import { BASE_API, PUT } from '../../../constants';
 import { getExercise } from '../../../utils';
-import scrollBehaviorOptions = Cypress.scrollBehaviorOptions;
 
 export const MODELING_EDITOR_CANVAS = '#modeling-editor-canvas';
 

@@ -1,7 +1,8 @@
 import { Component, Input, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
+
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { EmojiUtils } from 'app/shared/metis/emoji/emoji.utils';
-import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-emoji',

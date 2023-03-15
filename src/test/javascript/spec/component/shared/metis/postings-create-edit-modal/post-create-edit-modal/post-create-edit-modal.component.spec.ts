@@ -2,6 +2,12 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+
+import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
+import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
+import { metisCourse, metisCoursePosts, metisExercise, metisLecture, metisPostLectureUser1, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { ArtemisTestModule } from '../../../../../test.module';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { CourseWideContext, PageType } from 'app/shared/metis/metis.util';
@@ -11,11 +17,6 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-ed
 import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
-import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
-import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
-import { metisCourse, metisCoursePosts, metisExercise, metisLecture, metisPostLectureUser1, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
-import { ArtemisTestModule } from '../../../../../test.module';
 
 describe('PostCreateEditModalComponent', () => {
     let component: PostCreateEditModalComponent;

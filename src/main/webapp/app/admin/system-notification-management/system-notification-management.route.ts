@@ -1,4 +1,5 @@
 import { Route } from '@angular/router';
+
 import { SystemNotificationManagementDetailComponent } from 'app/admin/system-notification-management/system-notification-management-detail.component';
 import { SystemNotificationManagementResolve } from 'app/admin/system-notification-management/system-notification-management-resolve.service';
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';

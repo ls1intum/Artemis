@@ -4,6 +4,15 @@ import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService } from 'ngx-webstorage';
+import { BehaviorSubject, EMPTY } from 'rxjs';
+
+import { NgbCollapseMocksModule } from '../../../../../helpers/mocks/directive/ngbCollapseMocks.module';
+import { NgbDropdownMocksModule } from '../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
+import { NgbTooltipMocksModule } from '../../../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { AccountService } from 'app/core/auth/account.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -23,14 +32,6 @@ import { GroupChatIconComponent } from 'app/overview/course-conversations/other/
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, EMPTY } from 'rxjs';
-import { NgbCollapseMocksModule } from '../../../../../helpers/mocks/directive/ngbCollapseMocks.module';
-import { NgbDropdownMocksModule } from '../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
-import { NgbTooltipMocksModule } from '../../../../../helpers/mocks/directive/ngbTooltipMocks.module';
-import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
-import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 
 const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 

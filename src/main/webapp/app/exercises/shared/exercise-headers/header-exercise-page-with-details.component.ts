@@ -1,6 +1,8 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Course } from 'app/entities/course.model';
@@ -15,7 +17,6 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { SortService } from 'app/shared/service/sort.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import dayjs from 'dayjs/esm';
 
 export enum NextDate {
     START_OR_RELEASE_DATE = 'START_OR_RELEASE_DATE',

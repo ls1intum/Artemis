@@ -3,6 +3,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+
+import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
+import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockViewContainerRef } from '../../../../../helpers/mocks/service/mock-view-container-ref.service';
+import { metisAnswerPostUser2, metisResolvingAnswerPostUser1, metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { getElement } from '../../../../../helpers/utils/general.utils';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
@@ -11,13 +19,6 @@ import { AnswerPostHeaderComponent } from 'app/shared/metis/posting-header/answe
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
-import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
-import { MockViewContainerRef } from '../../../../../helpers/mocks/service/mock-view-container-ref.service';
-import { metisAnswerPostUser2, metisResolvingAnswerPostUser1, metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
-import { getElement } from '../../../../../helpers/utils/general.utils';
 
 describe('AnswerPostHeaderComponent', () => {
     let component: AnswerPostHeaderComponent;

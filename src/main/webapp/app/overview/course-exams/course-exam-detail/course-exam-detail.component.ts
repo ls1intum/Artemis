@@ -1,10 +1,11 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { faBook, faCalendarDay, faCirclePlay, faCircleStop, faMagnifyingGlass, faPenAlt, faPlay, faUserClock } from '@fortawesome/free-solid-svg-icons';
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { Subscription, interval } from 'rxjs';
+
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
 
 // Enum to dynamically change the template-content
 export const enum ExamState {

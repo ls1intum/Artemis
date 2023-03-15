@@ -1,6 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { EMPTY, Subject, from, takeUntil } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
 import { Course } from 'app/entities/course.model';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
@@ -14,8 +17,6 @@ import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversation
 import { canAddUsersToConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { EMPTY, Subject, from, takeUntil } from 'rxjs';
-import { catchError } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-conversation-header',

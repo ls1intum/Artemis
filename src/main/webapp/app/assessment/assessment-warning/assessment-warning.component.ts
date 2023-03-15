@@ -1,8 +1,9 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+
 import { Exercise } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
-import dayjs from 'dayjs/esm';
 
 /**
  * Displays a warning for instructors on submission page, team page and the assessment page.

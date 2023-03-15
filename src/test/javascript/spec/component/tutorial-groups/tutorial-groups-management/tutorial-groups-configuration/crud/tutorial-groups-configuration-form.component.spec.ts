@@ -3,6 +3,10 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockPipe } from 'ng-mocks';
+
+import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
+import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
 import {
     TutorialGroupsConfigurationFormComponent,
     TutorialGroupsConfigurationFormData,
@@ -10,9 +14,7 @@ import {
 import { Course } from 'app/entities/course.model';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
-import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
+
 import '@angular/localize/init';
 
 describe('TutorialGroupsConfigurationFormComponent', () => {

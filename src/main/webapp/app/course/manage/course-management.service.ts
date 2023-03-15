@@ -1,5 +1,9 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import dayjs from 'dayjs/esm';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
@@ -19,9 +23,6 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { convertDateFromClient } from 'app/utils/date.utils';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
-import dayjs from 'dayjs/esm';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { filter, map, tap } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;

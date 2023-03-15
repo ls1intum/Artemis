@@ -4,6 +4,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+
+import { TextExerciseService } from './text-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -16,7 +18,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
-import { TextExerciseService } from './text-exercise.service';
 
 @Component({
     selector: 'jhi-text-exercise',

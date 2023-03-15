@@ -1,6 +1,7 @@
 import { Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+
 import { GradeStep } from 'app/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GraphColors } from 'app/entities/statistics.model';

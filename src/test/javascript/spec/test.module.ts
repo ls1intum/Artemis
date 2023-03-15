@@ -6,20 +6,21 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbActiveModal, NgbDatepickerConfig, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { AccountService } from 'app/core/auth/account.service';
-import { ThemeService } from 'app/core/theme/theme.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
-import { ParseLinks } from 'app/core/util/parse-links.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockProvider } from 'ng-mocks';
+
 import { MockActivatedRoute } from './helpers/mocks/activated-route/mock-activated-route';
 import { MockRouter } from './helpers/mocks/mock-router';
 import { MockAccountService } from './helpers/mocks/service/mock-account.service';
 import { MockProfileService } from './helpers/mocks/service/mock-profile.service';
 import { MockThemeService } from './helpers/mocks/service/mock-theme.service';
 import { MockTranslateService } from './helpers/mocks/service/mock-translate.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { ParseLinks } from 'app/core/util/parse-links.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @NgModule({
     imports: [HttpClientTestingModule],

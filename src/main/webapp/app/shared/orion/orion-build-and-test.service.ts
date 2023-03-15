@@ -1,4 +1,7 @@
 import { Injectable } from '@angular/core';
+import { Observable, Subject, Subscription } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
+
 import { BuildLogEntryArray } from 'app/entities/build-log.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -9,8 +12,6 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { Observable, Subject, Subscription } from 'rxjs';
-import { filter, map, tap } from 'rxjs/operators';
 
 /**
  * Notifies the IDE about a result, that is currently building and forwards incoming test results.

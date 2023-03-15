@@ -1,3 +1,5 @@
+import dayjs from 'dayjs/esm';
+
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { Exam } from 'app/entities/exam.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -10,7 +12,6 @@ import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import dayjs from 'dayjs/esm';
 
 export const enum Language {
     ENGLISH = 'ENGLISH',

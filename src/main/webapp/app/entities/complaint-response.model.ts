@@ -1,7 +1,8 @@
+import dayjs from 'dayjs/esm';
+
 import { User } from 'app/core/user/user.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import dayjs from 'dayjs/esm';
 
 export class ComplaintResponse implements BaseEntity {
     public id?: number;

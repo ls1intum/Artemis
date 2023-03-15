@@ -3,16 +3,10 @@ import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { AccountService } from 'app/core/auth/account.service';
-import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification } from 'app/entities/notification.model';
-import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
-import { NotificationService } from 'app/shared/notification/notification.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ReplaySubject } from 'rxjs';
+
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { MockExamExerciseUpdateService } from '../../../helpers/mocks/service/mock-exam-exercise-update.service';
 import { MockExamParticipationService } from '../../../helpers/mocks/service/mock-exam-participation.service';
@@ -20,6 +14,13 @@ import { MockNotificationService } from '../../../helpers/mocks/service/mock-not
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { AccountService } from 'app/core/auth/account.service';
+import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification } from 'app/entities/notification.model';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('Notification Popup Component', () => {
     let notificationPopupComponent: NotificationPopupComponent;

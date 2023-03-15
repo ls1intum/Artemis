@@ -4,6 +4,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faAngleDown, faAngleUp, faCheckDouble, faFileUpload, faFont, faKeyboard, faPlus, faProjectDiagram, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
+import { Subject, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { Course } from 'app/entities/course.model';
@@ -17,9 +21,6 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { onError } from 'app/shared/util/global.utils';
-import dayjs from 'dayjs/esm';
-import { Subject, forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exercise-groups',

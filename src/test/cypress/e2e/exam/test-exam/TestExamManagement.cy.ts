@@ -1,6 +1,3 @@
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import {
     courseManagement,
     courseManagementRequest,
@@ -16,6 +13,9 @@ import {
 import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 // Common primitives
 const uid = generateUUID();

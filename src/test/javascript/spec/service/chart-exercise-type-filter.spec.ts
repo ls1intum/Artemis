@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 

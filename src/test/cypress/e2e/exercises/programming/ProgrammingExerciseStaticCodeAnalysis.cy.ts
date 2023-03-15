@@ -1,9 +1,9 @@
-import { Course } from 'app/entities/course.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import scaSubmission from '../../../fixtures/exercise/programming/static_code_analysis/submission.json';
 import { courseManagementRequest, programmingExerciseEditor, programmingExerciseScaFeedback, programmingExercisesScaConfig } from '../../../support/artemis';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, studentOne } from '../../../support/users';
+import { Course } from 'app/entities/course.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('Static code analysis tests', () => {
     let course: Course;

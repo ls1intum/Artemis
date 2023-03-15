@@ -1,14 +1,15 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
+import { MockProvider } from 'ng-mocks';
+import { take } from 'rxjs/operators';
+
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-management/online-resource-dto.model';
 import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
-import dayjs from 'dayjs/esm';
-import { MockProvider } from 'ng-mocks';
-import { take } from 'rxjs/operators';
 
 describe('OnlineUnitService', () => {
     let service: OnlineUnitService;

@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
 describe('Exercise Group Service', () => {
     let httpClient: any;

@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 
 @Component({

@@ -1,19 +1,20 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import { MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { mockedActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
+import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
+import { TutorialGroupDetailStubComponent } from '../stubs/tutorial-group-detail-stub.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { CourseTutorialGroupDetailComponent } from 'app/overview/tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component';
-import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { mockedActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
-import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
-import { TutorialGroupDetailStubComponent } from '../stubs/tutorial-group-detail-stub.component';
 describe('CourseTutorialGroupDetailComponent', () => {
     let fixture: ComponentFixture<CourseTutorialGroupDetailComponent>;
     let component: CourseTutorialGroupDetailComponent;

@@ -1,7 +1,8 @@
+import dayjs from 'dayjs/esm';
+
 import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { round } from 'app/shared/util/utils';
-import dayjs from 'dayjs/esm';
 
 /**
  * Calculates the individual end time based on the studentExam

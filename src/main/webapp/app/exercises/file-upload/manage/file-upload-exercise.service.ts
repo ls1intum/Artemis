@@ -1,10 +1,11 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<FileUploadExercise>;
 export type EntityArrayResponseType = HttpResponse<FileUploadExercise[]>;

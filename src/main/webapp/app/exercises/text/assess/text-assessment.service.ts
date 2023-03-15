@@ -1,5 +1,9 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { cloneDeep } from 'lodash-es';
+import { Observable } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
@@ -13,9 +17,6 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import { cloneDeep } from 'lodash-es';
-import { Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<Result>;
 type EntityResponseEventType = HttpResponse<TextAssessmentEvent>;

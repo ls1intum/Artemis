@@ -1,9 +1,10 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { take } from 'rxjs/operators';
+
+import { metisReactionToCreate, metisReactionUser2 } from '../../helpers/sample/metis-sample-data';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
-import { take } from 'rxjs/operators';
-import { metisReactionToCreate, metisReactionUser2 } from '../../helpers/sample/metis-sample-data';
 
 describe('Reaction Service', () => {
     let service: ReactionService;

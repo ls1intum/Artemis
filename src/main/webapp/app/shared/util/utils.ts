@@ -1,7 +1,8 @@
 import { captureException } from '@sentry/browser';
+import { omit, sum } from 'lodash-es';
+
 import { Course } from 'app/entities/course.model';
 import { Result } from 'app/entities/result.model';
-import { omit, sum } from 'lodash-es';
 
 // Cartesian product helper function
 const cartesianConcatHelper = (a: any[], b: any[]): any[][] => ([] as any[][]).concat(...a.map((a2) => b.map((b2) => ([] as any[]).concat(a2, b2))));

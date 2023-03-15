@@ -1,9 +1,10 @@
 import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
-import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
-import { base64StringToBlob } from 'app/utils/blob-util';
 import { BehaviorSubject, Observable, isObservable, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
+
+import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
+import { base64StringToBlob } from 'app/utils/blob-util';
 
 // Status that is emitted to the client to describe the loading status of the picture
 export const enum ImageLoadingStatus {

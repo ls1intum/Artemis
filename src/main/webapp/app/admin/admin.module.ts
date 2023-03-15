@@ -6,6 +6,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { RouterModule } from '@angular/router';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+
+import { adminState } from './admin.route';
+import { OrganizationManagementDetailComponent } from './organization-management/organization-management-detail.component';
+import { OrganizationManagementUpdateComponent } from './organization-management/organization-management-update.component';
+import { OrganizationManagementComponent } from './organization-management/organization-management.component';
+import { UpcomingExamsAndExercisesComponent } from './upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
 import { AuditsComponent } from 'app/admin/audits/audits.component';
 import { ConfigurationComponent } from 'app/admin/configuration/configuration.component';
 import { DocsComponent } from 'app/admin/docs/docs.component';
@@ -26,11 +32,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { adminState } from './admin.route';
-import { OrganizationManagementDetailComponent } from './organization-management/organization-management-detail.component';
-import { OrganizationManagementUpdateComponent } from './organization-management/organization-management-update.component';
-import { OrganizationManagementComponent } from './organization-management/organization-management.component';
-import { UpcomingExamsAndExercisesComponent } from './upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
 
 const ENTITY_STATES = [...adminState];
 

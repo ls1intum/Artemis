@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
+import { filter, tap } from 'rxjs/operators';
+
 import { VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { filter, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-footer',

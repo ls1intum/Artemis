@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockComponent } from 'ng-mocks';
+
+import { ArtemisTestModule } from '../../test.module';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { TextblockFeedbackDropdownComponent } from 'app/exercises/text/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { MockComponent } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('TextblockFeedbackDropdownComponent', () => {
     let component: TextblockFeedbackDropdownComponent;

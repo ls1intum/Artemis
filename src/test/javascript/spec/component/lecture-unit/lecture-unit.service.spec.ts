@@ -1,6 +1,8 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
+
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { Course } from 'app/entities/course.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
@@ -10,7 +12,6 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import dayjs from 'dayjs/esm';
 
 describe('LectureUnitService', () => {
     let service: LectureUnitService;

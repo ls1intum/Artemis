@@ -2,6 +2,13 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, RouterModule } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockTranslateService, TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../../test.module';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -21,12 +28,6 @@ import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/tex
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { MockTranslateService, TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('Exam Exercise Row Buttons Component', () => {
     const course = new Course();

@@ -1,5 +1,7 @@
 import { Injectable, Injector } from '@angular/core';
 import { Router } from '@angular/router';
+import { BehaviorSubject, Observable } from 'rxjs';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -8,7 +10,6 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/cod
 import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { stringifyCircular } from 'app/shared/util/utils';
-import { BehaviorSubject, Observable } from 'rxjs';
 
 /**
  * Return the global native browser window object with any type to prevent type errors

@@ -4,6 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of, throwError } from 'rxjs';
+
+import { MockRouter } from '../../../../helpers/mocks/mock-router';
+import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { EntityResponseType } from 'app/complaints/complaint.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
@@ -12,12 +19,6 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupUpdateComponent } from 'app/exam/manage/exercise-groups/exercise-group-update.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of, throwError } from 'rxjs';
-import { MockRouter } from '../../../../helpers/mocks/mock-router';
-import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 
 describe('ExerciseGroupUpdateComponent', () => {
     const course = { id: 456 } as Course;

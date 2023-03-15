@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Organization } from 'app/entities/organization.model';

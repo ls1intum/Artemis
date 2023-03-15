@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+
 import { ExerciseGroupVariantColumn } from 'app/entities/exercise-group-variant-column.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { getIcon, getIconTooltip } from 'app/entities/exercise.model';

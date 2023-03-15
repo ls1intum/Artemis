@@ -3,6 +3,10 @@ import { SafeHtml } from '@angular/platform-browser';
 import { faAngleRight, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 // Note: this import has to be before the 'brace' imports
 import { Interactable } from '@interactjs/core/Interactable';
+import interact from 'interactjs';
+import { v4 as uuid } from 'uuid';
+
+import { DomainTagCommand } from './domainCommands/domainTag.command';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
@@ -33,9 +37,7 @@ import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainC
 import { DomainMultiOptionCommand } from 'app/shared/markdown-editor/domainCommands/domainMultiOptionCommand';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
-import interact from 'interactjs';
-import { v4 as uuid } from 'uuid';
-import { DomainTagCommand } from './domainCommands/domainTag.command';
+
 export enum MarkdownEditorHeight {
     INLINE = 100,
     SMALL = 200,

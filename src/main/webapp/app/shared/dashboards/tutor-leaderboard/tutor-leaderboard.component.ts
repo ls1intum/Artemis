@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';

@@ -1,6 +1,11 @@
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+
+import { DragAndDropQuestionEditComponent } from './drag-and-drop-question/drag-and-drop-question-edit.component';
+import { MultipleChoiceQuestionEditComponent } from './multiple-choice-question/multiple-choice-question-edit.component';
+import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-scoring-info-modal.component';
+import { ShortAnswerQuestionEditComponent } from './short-answer-question/short-answer-question-edit.component';
 import { ArtemisApollonDiagramsModule } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.module';
 import { MatchPercentageInfoModalComponent } from 'app/exercises/quiz/manage/match-percentage-info-modal/match-percentage-info-modal.component';
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
@@ -26,10 +31,6 @@ import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-edito
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { DragAndDropQuestionEditComponent } from './drag-and-drop-question/drag-and-drop-question-edit.component';
-import { MultipleChoiceQuestionEditComponent } from './multiple-choice-question/multiple-choice-question-edit.component';
-import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-scoring-info-modal.component';
-import { ShortAnswerQuestionEditComponent } from './short-answer-question/short-answer-question-edit.component';
 
 const ENTITY_STATES = [...quizManagementRoute];
 

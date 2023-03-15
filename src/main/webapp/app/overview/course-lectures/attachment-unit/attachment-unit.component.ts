@@ -15,6 +15,7 @@ import {
     faFilePowerpoint,
     faFileWord,
 } from '@fortawesome/free-solid-svg-icons';
+
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { FileService } from 'app/shared/http/file.service';

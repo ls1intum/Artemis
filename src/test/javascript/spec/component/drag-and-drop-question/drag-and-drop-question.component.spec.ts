@@ -1,5 +1,8 @@
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+
+import { ArtemisTestModule } from '../../test.module';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
@@ -13,8 +16,6 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('DragAndDropQuestionComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionComponent>;

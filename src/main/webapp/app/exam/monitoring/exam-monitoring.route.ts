@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ExamMonitoringComponent } from 'app/exam/monitoring/exam-monitoring.component';
 import { MonitoringActivityLogComponent } from 'app/exam/monitoring/subpages/activity-log/monitoring-activity-log.component';

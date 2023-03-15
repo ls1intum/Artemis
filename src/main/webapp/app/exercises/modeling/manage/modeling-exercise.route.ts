@@ -1,5 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+
+import { ModelingExerciseDetailComponent } from './modeling-exercise-detail.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise-resolver.service';
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
@@ -7,7 +9,6 @@ import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submis
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ModelingExerciseDetailComponent } from './modeling-exercise-detail.component';
 
 export const routes: Routes = [
     {

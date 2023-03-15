@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+
 import { ArtemisTestModule } from '../../test.module';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 
 describe('ResizeableContainerComponent', () => {
     let component: ResizeableContainerComponent;

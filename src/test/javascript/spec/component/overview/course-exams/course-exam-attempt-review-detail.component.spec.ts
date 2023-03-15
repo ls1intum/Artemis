@@ -1,5 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockPipe } from 'ng-mocks';
+
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { ArtemisTestModule } from '../../../test.module';
 import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { TestexamWorkingTimeComponent } from 'app/exam/shared/testExam-workingTime/testexam-working-time.component';
@@ -7,10 +12,6 @@ import { CourseExamAttemptReviewDetailComponent } from 'app/overview/course-exam
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('CourseExamAttemptReviewDetailComponent', () => {
     let component: CourseExamAttemptReviewDetailComponent;

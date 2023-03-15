@@ -1,5 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable, map } from 'rxjs';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -13,7 +15,6 @@ import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/share
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import { Observable, map } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {

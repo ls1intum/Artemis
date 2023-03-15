@@ -1,9 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { faEye, faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { Subject } from 'rxjs';
+
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
-import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-organization-management',

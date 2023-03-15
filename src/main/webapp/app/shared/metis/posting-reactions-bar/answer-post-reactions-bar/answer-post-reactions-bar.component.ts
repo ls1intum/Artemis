@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { faSmile } from '@fortawesome/free-regular-svg-icons';
+
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { MetisService } from 'app/shared/metis/metis.service';

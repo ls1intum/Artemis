@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { Dimensions } from 'app/shared/image-cropper/interfaces/dimensions.interface';
-import { LoadedImage } from 'app/shared/image-cropper/interfaces/loaded-image.interface';
+
 import { CropperSettings } from '../interfaces/cropper.settings';
 import { ExifTransform } from '../interfaces/exif-transform.interface';
 import { getTransformationsFromExifData, supportsAutomaticRotation } from '../utils/exif.utils';
+import { Dimensions } from 'app/shared/image-cropper/interfaces/dimensions.interface';
+import { LoadedImage } from 'app/shared/image-cropper/interfaces/loaded-image.interface';
 
 interface LoadImageBase64 {
     originalImage: HTMLImageElement;

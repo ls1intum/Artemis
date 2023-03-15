@@ -1,4 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockComponent } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockRatingService } from '../../helpers/mocks/service/mock-rating.service';
+import { ArtemisTestModule } from '../../test.module';
 import { AccountService } from 'app/core/auth/account.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Rating } from 'app/entities/rating.model';
@@ -7,11 +13,6 @@ import { Submission } from 'app/entities/submission.model';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
-import { MockComponent } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { MockRatingService } from '../../helpers/mocks/service/mock-rating.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('RatingComponent', () => {
     let ratingComponent: RatingComponent;

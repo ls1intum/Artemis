@@ -1,5 +1,6 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+
 import { Bean, ConfigProps, Env, PropertySource } from 'app/admin/configuration/configuration.model';
 import { ConfigurationService } from 'app/admin/configuration/configuration.service';
 

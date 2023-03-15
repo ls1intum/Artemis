@@ -3,6 +3,10 @@ import { Component, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular
 import { AbstractControl, NgForm } from '@angular/forms';
 import { faBan, faExclamationTriangle, faSave, faSpinner, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { cloneDeep, isEmpty, omit } from 'lodash-es';
+import { Observable, Subject } from 'rxjs';
+import { debounceTime, switchMap } from 'rxjs/operators';
+
 import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
@@ -10,9 +14,6 @@ import { Team } from 'app/entities/team.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
-import { cloneDeep, isEmpty, omit } from 'lodash-es';
-import { Observable, Subject } from 'rxjs';
-import { debounceTime, switchMap } from 'rxjs/operators';
 
 export type StudentTeamConflict = { studentLogin: string; teamId: string };
 

@@ -2,6 +2,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { faBook, faChartBar, faListAlt, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { Subject } from 'rxjs';
+
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Course } from 'app/entities/course.model';
@@ -9,7 +11,6 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',

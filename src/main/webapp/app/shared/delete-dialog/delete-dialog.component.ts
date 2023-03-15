@@ -1,10 +1,11 @@
 import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import { faBan, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/util/alert.service';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { mapValues } from 'lodash-es';
 import { Observable, Subscription } from 'rxjs';
+
+import { AlertService } from 'app/core/util/alert.service';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Component({
     selector: 'jhi-delete-dialog',

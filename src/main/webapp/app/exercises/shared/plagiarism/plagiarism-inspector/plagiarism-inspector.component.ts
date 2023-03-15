@@ -4,6 +4,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { ExportToCsv } from 'export-to-csv';
+import { tap } from 'rxjs/operators';
+
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
@@ -22,8 +25,6 @@ import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/tex
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { downloadFile, downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { Range } from 'app/shared/util/utils';
-import { ExportToCsv } from 'export-to-csv';
-import { tap } from 'rxjs/operators';
 
 export type PlagiarismCheckState = {
     state: 'COMPLETED' | 'RUNNING';

@@ -2,6 +2,8 @@ import { HttpResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
+import { Subscription, combineLatest } from 'rxjs';
+
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { getCourseFromExercise, getIcon } from 'app/entities/exercise.model';
 import { Post } from 'app/entities/metis/post.model';
@@ -11,7 +13,6 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PageType } from 'app/shared/metis/metis.util';
 import { PostComponent } from 'app/shared/metis/post/post.component';
-import { Subscription, combineLatest } from 'rxjs';
 
 @Component({
     selector: 'jhi-plagiarism-case-student-detail-view',

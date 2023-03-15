@@ -3,6 +3,9 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -10,8 +13,6 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import dayjs from 'dayjs/esm';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('Create Test Run Modal Component', () => {
     let comp: CreateTestRunModalComponent;

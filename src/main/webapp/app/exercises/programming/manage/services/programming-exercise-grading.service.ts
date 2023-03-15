@@ -1,11 +1,12 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
+
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
 import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-category.model';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 export class ProgrammingExerciseTestCaseUpdate {
     constructor(public id?: number, public weight?: number, public bonusPoints?: number, public bonusMultiplier?: number, public visibility?: Visibility) {}

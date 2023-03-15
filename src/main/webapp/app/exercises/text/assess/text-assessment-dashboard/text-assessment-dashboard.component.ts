@@ -3,6 +3,9 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { map } from 'rxjs/operators';
+
+import { TextAssessmentService } from '../text-assessment.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -15,8 +18,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { map } from 'rxjs/operators';
-import { TextAssessmentService } from '../text-assessment.service';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',

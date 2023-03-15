@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { Exam } from 'app/entities/exam.model';

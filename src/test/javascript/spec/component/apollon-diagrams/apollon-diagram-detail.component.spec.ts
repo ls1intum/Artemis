@@ -7,6 +7,12 @@ import { UMLModel } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { of } from 'rxjs';
+
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockLanguageHelper, MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AlertService } from 'app/core/util/alert.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
@@ -14,11 +20,6 @@ import { Course } from 'app/entities/course.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ApollonDiagramDetailComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-detail.component';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
-import { of } from 'rxjs';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { MockLanguageHelper, MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {

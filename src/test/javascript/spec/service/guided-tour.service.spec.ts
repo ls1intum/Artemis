@@ -4,6 +4,15 @@ import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/cor
 import { By } from '@angular/platform-browser';
 import { NavigationEnd, NavigationStart, Router, RouterState } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { Observable, of } from 'rxjs';
+
+import { MockHasAnyAuthorityDirective } from '../helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockRouter } from '../helpers/mocks/mock-router';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService, TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../test.module';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -29,14 +38,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { Observable, of } from 'rxjs';
-import { MockHasAnyAuthorityDirective } from '../helpers/mocks/directive/mock-has-any-authority.directive';
-import { MockRouter } from '../helpers/mocks/mock-router';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService, TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../test.module';
 
 class MockRouterWithEvents {
     public url = 'courses';

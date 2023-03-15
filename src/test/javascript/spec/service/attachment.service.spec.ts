@@ -2,15 +2,16 @@ import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-import { Lecture } from 'app/entities/lecture.model';
-import { AttachmentService } from 'app/lecture/attachment.service';
 import dayjs from 'dayjs/esm';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { take } from 'rxjs/operators';
+
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../test.module';
+import { Attachment, AttachmentType } from 'app/entities/attachment.model';
+import { Lecture } from 'app/entities/lecture.model';
+import { AttachmentService } from 'app/lecture/attachment.service';
 
 describe('Attachment Service', () => {
     let httpMock: HttpTestingController;

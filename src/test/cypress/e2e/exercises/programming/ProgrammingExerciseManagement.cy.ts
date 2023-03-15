@@ -1,11 +1,12 @@
-import { Course } from 'app/entities/course.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Interception } from 'cypress/types/net-stubbing';
+
 import { courseManagement, courseManagementExercises, courseManagementRequest, navigationBar, programmingExerciseCreation } from '../../../support/artemis';
 import { DELETE } from '../../../support/constants';
 import { PROGRAMMING_EXERCISE_BASE, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
+import { Course } from 'app/entities/course.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('Programming Exercise Management', () => {
     let course: Course;

@@ -1,10 +1,11 @@
 import { HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
+
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Observable } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ExamChecklistService {

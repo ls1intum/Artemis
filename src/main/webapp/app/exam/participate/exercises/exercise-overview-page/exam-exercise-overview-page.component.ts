@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
+
 import { ExamExerciseOverviewItem } from 'app/entities/exam-exercise-overview-item.model';
 import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { StudentExam } from 'app/entities/student-exam.model';

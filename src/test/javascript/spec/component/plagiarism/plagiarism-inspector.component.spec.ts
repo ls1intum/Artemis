@@ -4,6 +4,12 @@ import { NgModel } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { ExportToCsv } from 'export-to-csv';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { ArtemisTestModule } from '../../test.module';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -26,11 +32,6 @@ import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/tex
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { downloadFile } from 'app/shared/util/download.util';
 import { Range } from 'app/shared/util/utils';
-import { ExportToCsv } from 'export-to-csv';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { ArtemisTestModule } from '../../test.module';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),

@@ -2,6 +2,10 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy, OnInit, QueryList, TemplateRef, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faCircleNotch, faMessage, faSync } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { Subject, Subscription, forkJoin, takeUntil } from 'rxjs';
+
+import { CourseManagementService } from '../course/manage/course-management.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
@@ -18,9 +22,6 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import dayjs from 'dayjs/esm';
-import { Subject, Subscription, forkJoin, takeUntil } from 'rxjs';
-import { CourseManagementService } from '../course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-course-overview',

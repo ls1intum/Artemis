@@ -1,5 +1,11 @@
 import { HttpResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
+import { MockProvider } from 'ng-mocks';
+import { Subject, forkJoin, of } from 'rxjs';
+
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../helpers/conversationExampleModels';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -15,11 +21,6 @@ import { GroupChatService } from 'app/shared/metis/conversations/group-chat.serv
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { MetisPostAction } from 'app/shared/metis/metis.util';
-import dayjs from 'dayjs/esm';
-import { MockProvider } from 'ng-mocks';
-import { Subject, forkJoin, of } from 'rxjs';
-import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
-import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../helpers/conversationExampleModels';
 
 describe('MetisConversationService', () => {
     let metisConversationService: MetisConversationService;

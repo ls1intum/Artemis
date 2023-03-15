@@ -2,11 +2,12 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { FeatureOverviewComponent, TargetAudience } from 'app/feature-overview/feature-overview.component';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
+import { FeatureOverviewComponent, TargetAudience } from 'app/feature-overview/feature-overview.component';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 describe('Feature Overview Component', () => {
     let comp: FeatureOverviewComponent;

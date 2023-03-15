@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { Color } from '@swimlane/ngx-charts';
+
 import { NgxChartsEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 @Component({

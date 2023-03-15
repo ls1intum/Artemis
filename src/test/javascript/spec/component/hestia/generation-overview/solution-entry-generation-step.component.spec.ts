@@ -1,6 +1,10 @@
 import { EventEmitter } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { Observable, of } from 'rxjs';
+
+import { ArtemisTestModule } from '../../../test.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { ProgrammingExerciseTestCase, ProgrammingExerciseTestCaseType } from 'app/entities/programming-exercise-test-case.model';
@@ -11,9 +15,6 @@ import { ProgrammingExerciseSolutionEntryService } from 'app/exercises/shared/ex
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortingOrder } from 'app/shared/table/pageable-table';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { Observable, of } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('SolutionEntryGenerationStep Component', () => {
     let comp: SolutionEntryGenerationStepComponent;

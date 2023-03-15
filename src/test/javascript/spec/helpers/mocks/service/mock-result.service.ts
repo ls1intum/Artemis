@@ -1,7 +1,8 @@
+import { EMPTY, Observable, of } from 'rxjs';
+
 import { Exercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { IResultService, ResultsWithPointsArrayResponseType } from 'app/exercises/shared/result/result.service';
-import { EMPTY, Observable, of } from 'rxjs';
 
 export class MockResultService implements IResultService {
     create = (result: Result) => of();

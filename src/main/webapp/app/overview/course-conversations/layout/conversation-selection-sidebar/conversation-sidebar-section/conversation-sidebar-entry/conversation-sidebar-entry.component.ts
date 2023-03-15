@@ -2,6 +2,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { faEllipsis, faMessage } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
@@ -15,8 +18,6 @@ import {
 import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { onError } from 'app/shared/util/global.utils';
-import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
-import { catchError } from 'rxjs/operators';
 
 @Component({
     // eslint-disable-next-line @angular-eslint/component-selector

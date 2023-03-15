@@ -17,6 +17,9 @@ import {
     faUserCheck,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
+import { Subject, Subscription } from 'rxjs';
+
+import { CourseManagementService } from '../course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
@@ -26,8 +29,6 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, Subscription } from 'rxjs';
-import { CourseManagementService } from '../course-management.service';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',

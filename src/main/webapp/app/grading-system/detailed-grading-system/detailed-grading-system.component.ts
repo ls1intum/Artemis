@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
-import { BaseGradingSystemComponent, CsvGradeStep } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { parse } from 'papaparse';
+
+import { BaseGradingSystemComponent, CsvGradeStep } from 'app/grading-system/base-grading-system/base-grading-system.component';
 
 @Component({
     selector: 'jhi-detailed-grading-system',

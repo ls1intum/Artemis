@@ -1,5 +1,10 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import dayjs from 'dayjs/esm';
+import { omit as _omit } from 'lodash-es';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
@@ -16,10 +21,6 @@ import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
-import dayjs from 'dayjs/esm';
-import { omit as _omit } from 'lodash-es';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;

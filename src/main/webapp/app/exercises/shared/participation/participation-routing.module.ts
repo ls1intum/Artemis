@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { exerciseTypes } from 'app/entities/exercise.model';
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';

@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
+import { cloneDeep } from 'lodash-es';
+
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
-import { cloneDeep } from 'lodash-es';
 
 @Injectable({ providedIn: 'root' })
 export class ShortAnswerQuestionUtil {

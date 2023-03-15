@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';

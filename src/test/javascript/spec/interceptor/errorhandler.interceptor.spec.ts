@@ -1,8 +1,9 @@
 import { HttpErrorResponse, HttpRequest } from '@angular/common/http';
+import { throwError } from 'rxjs';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { throwError } from 'rxjs';
 
 describe(`ErrorHandlerInterceptor`, () => {
     let errorHandlerInterceptor: ErrorHandlerInterceptor;

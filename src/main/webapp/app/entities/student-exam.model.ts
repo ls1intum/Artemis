@@ -1,10 +1,11 @@
+import dayjs from 'dayjs/esm';
+
 import { User } from 'app/core/user/user.model';
 import { ExamSession } from 'app/entities/exam-session.model';
 import { ExamActivity } from 'app/entities/exam-user-activity.model';
 import { Exam } from 'app/entities/exam.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import dayjs from 'dayjs/esm';
 
 export class StudentExam implements BaseEntity {
     public id?: number;

@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockModule } from 'ng-mocks';
+
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ExportButtonComponent } from 'app/shared/export/export-button.component';
-import { MockComponent, MockModule } from 'ng-mocks';
 
 describe('ExportButtonComponent', () => {
     let fixture: ComponentFixture<ExportButtonComponent>;

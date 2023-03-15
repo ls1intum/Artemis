@@ -1,5 +1,6 @@
-import { Theme } from 'app/core/theme/theme.service';
 import { BehaviorSubject, Observable } from 'rxjs';
+
+import { Theme } from 'app/core/theme/theme.service';
 
 export class MockThemeService {
     private currentTheme: Theme = Theme.LIGHT;

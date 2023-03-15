@@ -1,7 +1,6 @@
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { Post } from 'app/entities/metis/post.model';
-import { CourseWideContext, DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
 import { Observable, of } from 'rxjs';
+
 import {
     messagesBetweenUser1User2,
     metisCoursePosts,
@@ -13,6 +12,8 @@ import {
     metisPostTechSupport,
     metisTags,
 } from '../../sample/metis-sample-data';
+import { Post } from 'app/entities/metis/post.model';
+import { CourseWideContext, DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
 
 export class MockPostService {
     create(courseId: number, post: Post): Observable<HttpResponse<Post>> {

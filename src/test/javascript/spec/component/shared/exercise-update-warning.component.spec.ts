@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { NgModel } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+
+import { ArtemisTestModule } from '../../test.module';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('Exercise Update Warning Component Tests', () => {
     let fixture: ComponentFixture<ExerciseUpdateWarningComponent>;

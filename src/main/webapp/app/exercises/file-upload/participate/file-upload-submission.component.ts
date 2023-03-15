@@ -4,6 +4,9 @@ import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { omit } from 'lodash-es';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
@@ -26,8 +29,6 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { FileService } from 'app/shared/http/file.service';
 import { onError } from 'app/shared/util/global.utils';
-import dayjs from 'dayjs/esm';
-import { omit } from 'lodash-es';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',

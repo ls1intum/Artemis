@@ -1,13 +1,6 @@
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { Participation } from 'app/entities/participation/participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import day from 'dayjs/esm';
 import { Exercise as CypressExercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
+
 import examTemplate from '../../fixtures/exam/template.json';
 import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling/submission.json';
 import modelingExerciseTemplate from '../../fixtures/exercise/modeling/template.json';
@@ -21,6 +14,14 @@ import lectureTemplate from '../../fixtures/lecture/template.json';
 import { BASE_API, DELETE, EXERCISE_TYPE, GET, POST, PUT } from '../constants';
 import { CypressCredentials } from '../users';
 import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject } from '../utils';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { Participation } from 'app/entities/participation/participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_ADMIN_BASE = BASE_API + 'admin/courses';

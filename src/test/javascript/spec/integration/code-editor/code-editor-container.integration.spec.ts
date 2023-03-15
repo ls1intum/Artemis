@@ -3,6 +3,26 @@ import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick
 import { NgModel } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import * as ace from 'brace';
+import dayjs from 'dayjs/esm';
+import { omit } from 'lodash-es';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { BehaviorSubject, Subject, of } from 'rxjs';
+
+import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
+import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
+import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
+import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
+import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
+import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
+import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
+import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
+import { buildLogs, extractedBuildLogErrors, extractedErrorFiles } from '../../helpers/sample/build-logs';
+import { problemStatement } from '../../helpers/sample/problemStatement.json';
+import { ArtemisTestModule } from '../../test.module';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildLogEntryArray } from 'app/entities/build-log.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -45,25 +65,6 @@ import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-edito
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
-import * as ace from 'brace';
-import dayjs from 'dayjs/esm';
-import { omit } from 'lodash-es';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, Subject, of } from 'rxjs';
-import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
-import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
-import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
-import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
-import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
-import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
-import { buildLogs, extractedBuildLogErrors, extractedErrorFiles } from '../../helpers/sample/build-logs';
-import { problemStatement } from '../../helpers/sample/problemStatement.json';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('CodeEditorContainerIntegration', () => {
     // needed to make sure ace is defined

@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 

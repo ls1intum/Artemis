@@ -1,6 +1,11 @@
 import { HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
+import { of } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
+
+import { TextExerciseDetailComponent } from './text-exercise-detail.component';
+import { TextExerciseUpdateComponent } from './text-exercise-update.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
@@ -12,10 +17,6 @@ import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/pl
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { of } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
-import { TextExerciseDetailComponent } from './text-exercise-detail.component';
-import { TextExerciseUpdateComponent } from './text-exercise-update.component';
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseResolver implements Resolve<TextExercise> {

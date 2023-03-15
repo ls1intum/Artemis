@@ -1,10 +1,11 @@
 import { ChangeDetectorRef, Component, EventEmitter, Output } from '@angular/core';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { parse } from 'papaparse';
+
 import { User } from 'app/core/user/user.model';
 import { StudentWithTeam, Team } from 'app/entities/team.model';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
-import { parse } from 'papaparse';
 
 const csvColumns = Object.freeze({
     registrationNumber: 'registrationnumber',

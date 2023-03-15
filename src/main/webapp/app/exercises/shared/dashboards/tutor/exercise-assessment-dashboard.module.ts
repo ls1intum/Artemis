@@ -1,6 +1,9 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { PieChartModule } from '@swimlane/ngx-charts';
+
+import { ExerciseAssessmentDashboardComponent } from './exercise-assessment-dashboard.component';
+import { exerciseAssessmentDashboardRoute } from './exercise-assessment-dashboard.route';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
@@ -20,8 +23,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
-import { ExerciseAssessmentDashboardComponent } from './exercise-assessment-dashboard.component';
-import { exerciseAssessmentDashboardRoute } from './exercise-assessment-dashboard.route';
 
 const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
 

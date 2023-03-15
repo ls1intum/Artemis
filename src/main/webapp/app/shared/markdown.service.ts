@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { addCSSClass, htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import showdown from 'showdown';
+
+import { addCSSClass, htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisMarkdownService {

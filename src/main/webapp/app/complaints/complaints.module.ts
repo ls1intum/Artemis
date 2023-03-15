@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';

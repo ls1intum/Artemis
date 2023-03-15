@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { ArtemisTestModule } from '../../test.module';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { FullscreenCommand } from 'app/shared/markdown-editor/commands/fullscreen.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import * as FullscreenUtil from 'app/shared/util/fullscreen.util';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('FullscreenCommand', () => {
     let comp: MarkdownEditorComponent;

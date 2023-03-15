@@ -1,5 +1,3 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
@@ -8,6 +6,12 @@ import { Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import * as fs from 'fs';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import * as path from 'path';
+import { of } from 'rxjs';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { ExamUserDTO } from 'app/entities/exam-user-dto.model';
@@ -17,9 +21,6 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { UsersImportDialogComponent } from 'app/shared/import/users-import-dialog.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
 
 describe('UsersImportButtonComponent', () => {
     let fixture: ComponentFixture<UsersImportDialogComponent>;

@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
 import { UsersImportDialogComponent } from 'app/shared/import/users-import-dialog.component';

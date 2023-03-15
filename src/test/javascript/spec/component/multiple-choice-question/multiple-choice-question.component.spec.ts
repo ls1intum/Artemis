@@ -1,5 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SafeHtml } from '@angular/platform-browser';
+import { MockComponent, MockPipe } from 'ng-mocks';
+
+import { ArtemisTestModule } from '../../test.module';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
@@ -7,8 +10,6 @@ import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/quest
 import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('MultipleChoiceQuestionComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionComponent>;

@@ -1,4 +1,7 @@
 import { NgModule } from '@angular/core';
+
+import { ProgrammingExerciseInstructorExerciseDownloadComponent } from '../shared/actions/programming-exercise-instructor-exercise-download.component';
+import { ProgrammingExerciseInstructorRepoDownloadComponent } from '../shared/actions/programming-exercise-instructor-repo-download.component';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
@@ -23,8 +26,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ProgrammingExerciseInstructorExerciseDownloadComponent } from '../shared/actions/programming-exercise-instructor-exercise-download.component';
-import { ProgrammingExerciseInstructorRepoDownloadComponent } from '../shared/actions/programming-exercise-instructor-repo-download.component';
 
 @NgModule({
     imports: [

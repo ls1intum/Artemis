@@ -3,6 +3,10 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { FormsModule, NgModel, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+
+import { ArtemisTestModule } from '../../test.module';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -16,9 +20,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('BonusComponent', () => {
     let component: BonusComponent;

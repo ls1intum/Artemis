@@ -4,6 +4,13 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockRouter } from '../../../../helpers/mocks/mock-router';
+import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
+import { ArtemisTestModule } from '../../../../test.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { Course } from 'app/entities/course.model';
@@ -24,12 +31,6 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockRouter } from '../../../../helpers/mocks/mock-router';
-import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('Exercise Groups Component', () => {
     const course = new Course();

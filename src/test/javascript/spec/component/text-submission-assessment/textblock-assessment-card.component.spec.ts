@@ -3,6 +3,10 @@ import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
@@ -17,9 +21,6 @@ import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/text
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('TextblockAssessmentCardComponent', () => {
     let component: TextblockAssessmentCardComponent;

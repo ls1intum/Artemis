@@ -1,8 +1,6 @@
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Interception } from 'cypress/types/net-stubbing';
 import dayjs, { Dayjs } from 'dayjs/esm';
+
 import partiallySuccessful from '../../fixtures/exercise/programming/partially_successful/submission.json';
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
 import textSubmission from '../../fixtures/exercise/text/submission.json';
@@ -24,6 +22,9 @@ import {
 import { EXERCISE_TYPE } from '../../support/constants';
 import { CypressAssessmentType, CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, tutor } from '../../support/users';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 let exam: Exam;
 let exerciseGroup: ExerciseGroup;

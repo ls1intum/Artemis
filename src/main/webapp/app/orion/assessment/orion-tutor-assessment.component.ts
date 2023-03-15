@@ -1,4 +1,5 @@
 import { Component, ViewChild } from '@angular/core';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';

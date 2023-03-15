@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+
 import { Exercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 

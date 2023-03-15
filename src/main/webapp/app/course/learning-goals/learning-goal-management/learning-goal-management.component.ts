@@ -4,6 +4,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { faPencilAlt, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ClusterNode, Edge, Node } from '@swimlane/ngx-graph';
+import { Subject, forkJoin } from 'rxjs';
+import { filter, finalize, map, switchMap } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
@@ -11,8 +14,6 @@ import { LearningGoalService } from 'app/course/learning-goals/learningGoal.serv
 import { CourseLearningGoalProgress, LearningGoal, LearningGoalRelation, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, forkJoin } from 'rxjs';
-import { filter, finalize, map, switchMap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-learning-goal-management',

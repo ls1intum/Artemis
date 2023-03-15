@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({

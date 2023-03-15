@@ -1,5 +1,8 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -7,8 +10,6 @@ import { Submission } from 'app/entities/submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<ExampleSubmission>;
 

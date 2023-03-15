@@ -1,4 +1,8 @@
 import { TestBed } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockPipe } from 'ng-mocks';
+
+import { ArtemisTestModule } from '../../../../test.module';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -17,9 +21,6 @@ import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseTypePipe } from 'app/shared/pipes/exercise-type.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('HeaderExercisePageWithDetails', () => {
     let component: HeaderExercisePageWithDetailsComponent;

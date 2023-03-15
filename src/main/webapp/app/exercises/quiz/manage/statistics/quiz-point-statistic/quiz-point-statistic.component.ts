@@ -2,6 +2,8 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { PointCounter } from 'app/entities/quiz/point-counter.model';
@@ -16,7 +18,6 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { round } from 'app/shared/util/utils';
-import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',

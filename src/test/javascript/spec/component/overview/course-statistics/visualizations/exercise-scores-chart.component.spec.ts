@@ -5,6 +5,12 @@ import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { LineChartModule } from '@swimlane/ngx-charts';
+import dayjs from 'dayjs/esm';
+import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../../../test.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { GraphColors } from 'app/entities/statistics.model';
@@ -13,11 +19,6 @@ import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visu
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import dayjs from 'dayjs/esm';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../../test.module';
 
 class MockActivatedRoute {
     parent: any;

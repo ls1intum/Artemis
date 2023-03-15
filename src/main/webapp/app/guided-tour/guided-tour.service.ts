@@ -1,6 +1,14 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { NavigationEnd, NavigationStart, Router } from '@angular/router';
+import isMobile from 'ismobilejs-es5';
+import { cloneDeep } from 'lodash-es';
+import { BehaviorSubject, Observable, Subject, fromEvent } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, map, mergeMap, switchMap } from 'rxjs/operators';
+
+import { AssessmentObject } from './guided-tour-task.model';
+import { GuidedTourState, Orientation, OrientationConfiguration, ResetParticipation, UserInteractionEvent } from './guided-tour.constants';
+import { CourseManagementService } from '../course/manage/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -15,13 +23,6 @@ import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { checkPageUrlEnding, clickOnElement, determineUrlMatching, getUrlParams } from 'app/guided-tour/guided-tour.utils';
 import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import isMobile from 'ismobilejs-es5';
-import { cloneDeep } from 'lodash-es';
-import { BehaviorSubject, Observable, Subject, fromEvent } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, map, mergeMap, switchMap } from 'rxjs/operators';
-import { CourseManagementService } from '../course/manage/course-management.service';
-import { AssessmentObject } from './guided-tour-task.model';
-import { GuidedTourState, Orientation, OrientationConfiguration, ResetParticipation, UserInteractionEvent } from './guided-tour.constants';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 

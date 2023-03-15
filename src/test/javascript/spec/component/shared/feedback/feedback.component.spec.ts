@@ -3,6 +3,11 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { BarChartModule } from '@swimlane/ngx-charts';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { BehaviorSubject, of, throwError } from 'rxjs';
+
+import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../../test.module';
 import { Course } from 'app/entities/course.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
@@ -21,10 +26,6 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, of, throwError } from 'rxjs';
-import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('FeedbackComponent', () => {
     let comp: FeedbackComponent;

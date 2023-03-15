@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+
 import { CoverageFileReport } from 'app/entities/hestia/coverage-file-report.model';
 import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 

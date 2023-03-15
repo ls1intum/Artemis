@@ -1,9 +1,10 @@
 import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AccountService } from 'app/core/auth/account.service';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+
+import { AccountService } from 'app/core/auth/account.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Injectable()
 export class ErrorHandlerInterceptor implements HttpInterceptor {

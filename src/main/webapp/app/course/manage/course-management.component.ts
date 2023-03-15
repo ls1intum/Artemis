@@ -1,6 +1,9 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { faAngleDown, faAngleUp, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { Subject, Subscription } from 'rxjs';
+
+import { CourseManagementService } from './course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
@@ -11,8 +14,6 @@ import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour
 import { LectureService } from 'app/lecture/lecture.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, Subscription } from 'rxjs';
-import { CourseManagementService } from './course-management.service';
 
 @Component({
     selector: 'jhi-course',

@@ -3,11 +3,12 @@ import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angula
 import { FormBuilder } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+
+import { PasswordResetInitService } from './password-reset-init.service';
 import { ExternalUserPasswordResetModalComponent } from 'app/account/password-reset/external/external-user-password-reset-modal.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { onError } from 'app/shared/util/global.utils';
-import { PasswordResetInitService } from './password-reset-init.service';
 
 @Component({
     selector: 'jhi-password-reset-init',

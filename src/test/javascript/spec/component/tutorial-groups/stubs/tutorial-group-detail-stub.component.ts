@@ -1,4 +1,5 @@
 import { Component, ContentChild, Input, TemplateRef } from '@angular/core';
+
 import { Course } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 

@@ -1,13 +1,14 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { captureException } from '@sentry/browser';
+import dayjs from 'dayjs/esm';
+import { BehaviorSubject, Observable } from 'rxjs';
+
 import { ExamAction, ExamActivity } from 'app/entities/exam-user-activity.model';
 import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import dayjs from 'dayjs/esm';
-import { BehaviorSubject, Observable } from 'rxjs';
 
 export const EXAM_MONITORING_UPDATE_URL = (courseId: number, examId: number) => `${SERVER_API_URL}/api/courses/${courseId}/exams/${examId}/statistics`;
 

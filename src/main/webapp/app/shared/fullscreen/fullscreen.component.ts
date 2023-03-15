@@ -1,5 +1,6 @@
 import { Component, ElementRef, Input } from '@angular/core';
 import { faCompress } from '@fortawesome/free-solid-svg-icons';
+
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
 
 @Component({

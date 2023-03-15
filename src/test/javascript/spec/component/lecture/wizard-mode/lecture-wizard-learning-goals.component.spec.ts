@@ -3,6 +3,11 @@ import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
@@ -15,10 +20,6 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { LectureUpdateWizardLearningGoalsComponent } from 'app/lecture/wizard-mode/lecture-wizard-learning-goals.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('LectureWizardLearningGoalsComponent', () => {
     let wizardLearningGoalsComponentFixture: ComponentFixture<LectureUpdateWizardLearningGoalsComponent>;

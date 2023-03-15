@@ -1,10 +1,11 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { LegendPosition } from '@swimlane/ngx-charts';
+import { Subscription } from 'rxjs';
+
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { Course } from 'app/entities/course.model';
 import { GraphColors } from 'app/entities/statistics.model';
-import { Subscription } from 'rxjs';
 
 export class AssessmentDashboardInformationEntry {
     constructor(public total: number, public tutor: number, public done?: number) {}

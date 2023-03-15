@@ -1,11 +1,12 @@
 import { SimpleChange, SimpleChanges } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { NavigationStart, Router, RouterEvent } from '@angular/router';
-import { Post } from 'app/entities/metis/post.model';
-import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll.component';
 import { ReplaySubject } from 'rxjs';
+
 import { metisCoursePosts, metisCoursePostsWithCourseWideContext } from '../../helpers/sample/metis-sample-data';
 import { ArtemisTestModule } from '../../test.module';
+import { Post } from 'app/entities/metis/post.model';
+import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll.component';
 
 const routerEventSubject = new ReplaySubject<RouterEvent>(1);
 

@@ -3,6 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { map } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -14,7 +16,6 @@ import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tut
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { map } from 'rxjs/operators';
 
 @Component({
     templateUrl: './file-upload-assessment-dashboard.component.html',

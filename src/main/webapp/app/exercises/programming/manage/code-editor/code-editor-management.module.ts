@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component';
 import { ArtemisCodeEditorManagementRoutingModule } from 'app/exercises/programming/manage/code-editor/code-editor-management-routing.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-instructions-editor.module';

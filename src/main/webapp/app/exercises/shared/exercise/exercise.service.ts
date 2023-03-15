@@ -2,6 +2,11 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { Observable } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
+
+import { ParticipationService } from '../participation/participation.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
@@ -20,10 +25,6 @@ import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
-import dayjs from 'dayjs/esm';
-import { Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
-import { ParticipationService } from '../participation/participation.service';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;

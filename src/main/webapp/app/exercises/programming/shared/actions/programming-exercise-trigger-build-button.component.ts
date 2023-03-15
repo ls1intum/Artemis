@@ -1,4 +1,8 @@
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { head, orderBy } from 'lodash-es';
+import { Subscription } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -10,9 +14,6 @@ import { hasParticipationChanged } from 'app/exercises/shared/participation/part
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { head, orderBy } from 'lodash-es';
-import { Subscription } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).

@@ -1,5 +1,11 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+
+import { AssessmentComplaintAlertComponent } from './assessment-complaint-alert/assessment-complaint-alert.component';
+import { AssessmentDetailComponent } from './assessment-detail/assessment-detail.component';
+import { AssessmentHeaderComponent } from './assessment-header/assessment-header.component';
+import { AssessmentLayoutComponent } from './assessment-layout/assessment-layout.component';
+import { ScoreDisplayComponent } from '../shared/score-display/score-display.component';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { AssessmentFiltersComponent } from 'app/assessment/assessment-filters/assessment-filters.component';
 import { AssessmentLocksComponent } from 'app/assessment/assessment-locks/assessment-locks.component';
@@ -12,11 +18,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ScoreDisplayComponent } from '../shared/score-display/score-display.component';
-import { AssessmentComplaintAlertComponent } from './assessment-complaint-alert/assessment-complaint-alert.component';
-import { AssessmentDetailComponent } from './assessment-detail/assessment-detail.component';
-import { AssessmentHeaderComponent } from './assessment-header/assessment-header.component';
-import { AssessmentLayoutComponent } from './assessment-layout/assessment-layout.component';
 
 const ENTITY_STATES = [...assessmentLocksRoute];
 

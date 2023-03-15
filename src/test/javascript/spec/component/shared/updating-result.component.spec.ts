@@ -1,5 +1,13 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
+import { MockComponent } from 'ng-mocks';
+import { BehaviorSubject, of } from 'rxjs';
+
+import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
+import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
+import { triggerChanges } from '../../helpers/utils/general.utils';
+import { ArtemisTestModule } from '../../test.module';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Result } from 'app/entities/result.model';
@@ -9,13 +17,6 @@ import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { MissingResultInformation } from 'app/exercises/shared/result/result.utils';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import dayjs from 'dayjs/esm';
-import { MockComponent } from 'ng-mocks';
-import { BehaviorSubject, of } from 'rxjs';
-import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
-import { triggerChanges } from '../../helpers/utils/general.utils';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('UpdatingResultComponent', () => {
     let comp: UpdatingResultComponent;

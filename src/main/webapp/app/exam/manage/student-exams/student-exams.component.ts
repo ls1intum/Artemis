@@ -3,6 +3,10 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
+import { Subscription } from 'rxjs';
+import { tap } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -16,9 +20,6 @@ import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-au
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { onError } from 'app/shared/util/global.utils';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import dayjs from 'dayjs/esm';
-import { Subscription } from 'rxjs';
-import { tap } from 'rxjs/operators';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 

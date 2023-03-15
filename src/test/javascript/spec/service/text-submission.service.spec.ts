@@ -1,10 +1,11 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { take } from 'rxjs/operators';
+
+import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { take } from 'rxjs/operators';
-import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 
 describe('TextSubmission Service', () => {
     let service: TextSubmissionService;

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ApollonEditor } from '@ls1intum/apollon';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';

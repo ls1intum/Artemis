@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+
 import { AlertService } from 'app/core/util/alert.service';
 import { Submission } from 'app/entities/submission.model';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';

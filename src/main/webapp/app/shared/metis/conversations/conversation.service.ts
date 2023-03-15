@@ -1,6 +1,10 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
@@ -9,9 +13,6 @@ import { Conversation, ConversationDto } from 'app/entities/metis/conversation/c
 import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
-import dayjs from 'dayjs/esm';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 type EntityArrayResponseType = HttpResponse<ConversationDto[]>;
 

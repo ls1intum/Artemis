@@ -2,15 +2,16 @@ import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } f
 import { ActivatedRoute } from '@angular/router';
 import { faAngleDown, faAngleUp, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { LocalStorageService } from 'ngx-webstorage';
+import { Subject, Subscription } from 'rxjs';
+
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
-import dayjs from 'dayjs/esm';
-import { LocalStorageService } from 'ngx-webstorage';
-import { Subject, Subscription } from 'rxjs';
 
 export enum LectureSortingOrder {
     ASC = 1,

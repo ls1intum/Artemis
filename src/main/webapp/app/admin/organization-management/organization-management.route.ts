@@ -1,4 +1,5 @@
 import { Route } from '@angular/router';
+
 import { OrganizationManagementDetailComponent } from 'app/admin/organization-management/organization-management-detail.component';
 import { OrganizationManagementResolve } from 'app/admin/organization-management/organization-management-resolve.service';
 import { OrganizationManagementUpdateComponent } from 'app/admin/organization-management/organization-management-update.component';

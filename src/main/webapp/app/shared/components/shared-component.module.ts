@@ -1,5 +1,6 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NgModule } from '@angular/core';
+
 import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { ButtonComponent } from 'app/shared/components/button.component';

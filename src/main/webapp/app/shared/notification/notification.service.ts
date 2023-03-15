@@ -1,6 +1,10 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Params, Router, UrlSerializer } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { Observable, ReplaySubject } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -24,9 +28,6 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { RouteComponents } from 'app/shared/metis/metis.util';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import dayjs from 'dayjs/esm';
-import { Observable, ReplaySubject } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {

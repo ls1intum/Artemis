@@ -4,6 +4,15 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
+import { MockExamParticipationService } from '../../../helpers/mocks/service/mock-exam-participation.service';
+import { MockArtemisServerDateService } from '../../../helpers/mocks/service/mock-server-date.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -21,14 +30,6 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
-import { MockExamParticipationService } from '../../../helpers/mocks/service/mock-exam-participation.service';
-import { MockArtemisServerDateService } from '../../../helpers/mocks/service/mock-server-date.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('ExamParticipationCoverComponent', () => {
     const course = { id: 456 } as Course;

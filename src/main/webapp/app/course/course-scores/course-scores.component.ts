@@ -3,6 +3,15 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { ActivatedRoute } from '@angular/router';
 import { faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/browser';
+import dayjs from 'dayjs/esm';
+import { ExportToCsv } from 'export-to-csv';
+import { sum } from 'lodash-es';
+import { Subscription, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { mean, median, standardDeviation } from 'simple-statistics';
+import * as XLSX from 'xlsx';
+
+import { CourseManagementService } from '../manage/course-management.service';
 import { VERSION } from 'app/app.constants';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
@@ -39,14 +48,6 @@ import { LocaleConversionService } from 'app/shared/service/locale-conversion.se
 import { SortService } from 'app/shared/service/sort.service';
 import { average, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import dayjs from 'dayjs/esm';
-import { ExportToCsv } from 'export-to-csv';
-import { sum } from 'lodash-es';
-import { Subscription, forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import { mean, median, standardDeviation } from 'simple-statistics';
-import * as XLSX from 'xlsx';
-import { CourseManagementService } from '../manage/course-management.service';
 
 export enum HighlightType {
     AVERAGE = 'average',

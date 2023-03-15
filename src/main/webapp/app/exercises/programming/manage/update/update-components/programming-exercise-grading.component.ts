@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';

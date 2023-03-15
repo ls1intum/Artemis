@@ -1,6 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { MockPipe } from 'ng-mocks';
+
+import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../../test.module';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
@@ -14,10 +19,6 @@ import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
 import { Result } from 'app/entities/result.model';
 import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
-import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('Quiz Scoring Info Student Modal Component', () => {
     let fixture: ComponentFixture<QuizScoringInfoStudentModalComponent>;

@@ -4,6 +4,18 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { cloneDeep } from 'lodash-es';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { BehaviorSubject, of, throwError } from 'rxjs';
+
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
+import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { AccountService } from 'app/core/auth/account.service';
@@ -53,17 +65,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import dayjs from 'dayjs/esm';
-import { cloneDeep } from 'lodash-es';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, of, throwError } from 'rxjs';
-import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
-import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;

@@ -1,7 +1,8 @@
 import { Component, EventEmitter, Input, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import dayjs from 'dayjs/esm';
+
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
-import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-answer-post',

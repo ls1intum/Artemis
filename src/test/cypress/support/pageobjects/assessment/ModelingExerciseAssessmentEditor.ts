@@ -1,6 +1,6 @@
+import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
 import { BASE_API, EXERCISE_TYPE, PUT } from '../../constants';
 import { MODELING_EDITOR_CANVAS } from '../exercises/modeling/ModelingEditor';
-import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
 
 const ASSESSMENT_CONTAINER = '#modeling-assessment-container';
 

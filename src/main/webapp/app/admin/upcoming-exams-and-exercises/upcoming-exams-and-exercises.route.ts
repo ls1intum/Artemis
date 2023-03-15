@@ -1,4 +1,5 @@
 import { Route } from '@angular/router';
+
 import { UpcomingExamsAndExercisesComponent } from 'app/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
 
 export const upcomingExamsAndExercisesRoute: Route = {

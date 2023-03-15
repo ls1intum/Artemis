@@ -1,6 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, Input, OnDestroy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subject, takeUntil } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
@@ -14,8 +17,6 @@ import { MAX_GROUP_CHAT_PARTICIPANTS } from 'app/shared/metis/conversations/conv
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, takeUntil } from 'rxjs';
-import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-conversation-add-users-dialog',

@@ -32,6 +32,9 @@ import {
     faUpload,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { cloneDeep } from 'lodash-es';
+import { debounceTime, filter } from 'rxjs/operators';
+
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
@@ -51,8 +54,6 @@ import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-edi
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { round } from 'app/shared/util/utils';
-import { cloneDeep } from 'lodash-es';
-import { debounceTime, filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',

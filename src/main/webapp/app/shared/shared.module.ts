@@ -1,5 +1,9 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+
+import { AdditionalFeedbackComponent } from './additional-feedback/additional-feedback.component';
+import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
+import { ResizeableContainerComponent } from './resizeable-container/resizeable-container.component';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { CircularProgressBarComponent } from 'app/shared/circular-progress-bar/circular-progress-bar.component';
@@ -20,9 +24,6 @@ import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
 import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
-import { AdditionalFeedbackComponent } from './additional-feedback/additional-feedback.component';
-import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
-import { ResizeableContainerComponent } from './resizeable-container/resizeable-container.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],

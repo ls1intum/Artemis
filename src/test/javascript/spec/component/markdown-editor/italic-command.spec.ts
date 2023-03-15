@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { ArtemisTestModule } from '../../test.module';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { Command } from 'app/shared/markdown-editor/commands/command';
 import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ItalicCommand', () => {
     let comp: MarkdownEditorComponent;

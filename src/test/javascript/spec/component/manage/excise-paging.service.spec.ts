@@ -2,13 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { take } from 'rxjs';
+
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ExercisePagingService } from 'app/exercises/shared/manage/exercise-paging.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { take } from 'rxjs';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 class DummyPagingService extends ExercisePagingService<any> {
     constructor(http: HttpClient) {

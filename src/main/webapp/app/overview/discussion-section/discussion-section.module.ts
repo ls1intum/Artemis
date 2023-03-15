@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { MetisModule } from 'app/shared/metis/metis.module';

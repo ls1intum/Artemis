@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { DeleteFileChange, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { isEmpty as _isEmpty, fromPairs, toPairs } from 'lodash-es';
+
+import { DeleteFileChange, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 /**
  * Updates references to files based on FileChanges.

@@ -2,9 +2,10 @@ import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, 
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
-import dayjs from 'dayjs/esm';
 
 export interface AttachmentUnitFormData {
     formProperties: FormProperties;

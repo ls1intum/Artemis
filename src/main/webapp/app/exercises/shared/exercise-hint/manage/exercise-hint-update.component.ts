@@ -3,6 +3,9 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faBan, faCircleNotch, faSave } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { Observable, Subscription } from 'rxjs';
+
+import { ExerciseHintService } from '../shared/exercise-hint.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
@@ -14,8 +17,6 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { EditorMode, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { Observable, Subscription } from 'rxjs';
-import { ExerciseHintService } from '../shared/exercise-hint.service';
 
 const DEFAULT_DISPLAY_THRESHOLD = 3;
 

@@ -1,12 +1,13 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { take } from 'rxjs/operators';
+
+import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
-import { take } from 'rxjs/operators';
-import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
 
 describe('ExerciseHint Service', () => {
     let service: ExerciseHintService;

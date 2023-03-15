@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { ExampleSolutionComponent } from 'app/exercises/shared/example-solution/example-solution.component';

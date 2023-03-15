@@ -1,8 +1,9 @@
 import { ElementRef, Injectable } from '@angular/core';
+
+import { CropperSettings } from '../interfaces/cropper.settings';
 import { CropperPosition } from 'app/shared/image-cropper/interfaces/cropper-position.interface';
 import { Dimensions } from 'app/shared/image-cropper/interfaces/dimensions.interface';
 import { MoveStart } from 'app/shared/image-cropper/interfaces/move-start.interface';
-import { CropperSettings } from '../interfaces/cropper.settings';
 
 @Injectable({ providedIn: 'root' })
 export class CropperPositionService {

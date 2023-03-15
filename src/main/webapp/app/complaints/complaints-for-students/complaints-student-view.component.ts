@@ -2,6 +2,9 @@ import { HttpResponse } from '@angular/common/http';
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { filter } from 'rxjs/operators';
+
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
@@ -12,8 +15,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Result } from 'app/entities/result.model';
 import { Submission } from 'app/entities/submission.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import dayjs from 'dayjs/esm';
-import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-complaint-student-view',
