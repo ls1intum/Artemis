@@ -17,16 +17,15 @@ public class ConversationNotificationFactory {
      * @return the created notification
      */
     public static ConversationNotification createConversationMessageNotification(Post message, NotificationType notificationType, String notificationText) {
-        var title = findCorrespondingNotificationTitleOrThrow(notificationType);
-        var notification = new ConversationNotification(message, message.getConversation(), title, notificationText, notificationType);
-        notification.setAuthor(message.getAuthor());
+        String title = findCorrespondingNotificationTitleOrThrow(notificationType);
+        var notification = new ConversationNotification(message.getAuthor(), message, message.getConversation(), title, notificationText, notificationType);
         setNotificationTarget(notification);
         return notification;
     }
 
     private static void setNotificationTarget(ConversationNotification notification) {
-        if (notification.notificationType == NotificationType.CONVERSATION_NEW_MESSAGE) {
-            notification.setTransientAndStringTarget(createConversationMessageTarget(notification.getMessage(), notification.getMessage().getConversation().getCourse().getId()));
-        }
+        Long courseId = notification.getMessage().getConversation().getCourse().getId();
+        NotificationTarget notificationTarget = createConversationMessageTarget(notification.getMessage(), courseId);
+        notification.setTransientAndStringTarget(notificationTarget);
     }
 }

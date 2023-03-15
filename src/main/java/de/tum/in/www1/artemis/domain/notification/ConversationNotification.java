@@ -5,11 +5,15 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
-import javax.persistence.*;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
@@ -33,22 +37,18 @@ public class ConversationNotification extends Notification {
     @JoinColumn(name = "conversation_id")
     private Conversation conversation;
 
-    @Transient
-    @JsonIgnore
-    public NotificationType notificationType;
-
     public ConversationNotification() {
         // Empty constructor needed for Jackson.
     }
 
-    public ConversationNotification(Post message, Conversation conversation, String title, String text, NotificationType notificationType) {
+    public ConversationNotification(User author, Post message, Conversation conversation, String title, String text, NotificationType notificationType) {
         verifySupportedNotificationType(notificationType);
-        this.notificationType = notificationType;
         this.setMessage(message);
         this.setConversation(conversation);
         this.setNotificationDate(ZonedDateTime.now());
         this.setTitle(title);
         this.setText(text);
+        this.setAuthor(author);
     }
 
     public Post getMessage() {
@@ -74,10 +74,6 @@ public class ConversationNotification extends Notification {
      */
     public String getTopic() {
         return "/topic/conversation/" + message.getConversation().getId() + "/notifications";
-    }
-
-    public NotificationType getNotificationType() {
-        return notificationType;
     }
 
     /**

@@ -124,7 +124,7 @@ export class NotificationSettingsService {
             notification instanceof GroupNotification ||
             notification.notificationType === NotificationType.GROUP ||
             notification.notificationType === NotificationType.SINGLE ||
-            NotificationType.CONVERSATION
+            notification.notificationType === NotificationType.CONVERSATION
         ) {
             if (notification.title) {
                 return notificationTitleActivationMap.get(notification.title) ?? true;

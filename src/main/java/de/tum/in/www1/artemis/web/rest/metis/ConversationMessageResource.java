@@ -18,7 +18,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
-import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
 import de.tum.in.www1.artemis.service.notifications.ConversationNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
@@ -34,15 +33,11 @@ public class ConversationMessageResource {
 
     private final ConversationMessagingService conversationMessagingService;
 
-    private final ConversationRepository conversationRepository;
-
     private final ConversationNotificationService conversationNotificationService;
 
-    public ConversationMessageResource(ConversationRepository conversationRepository, ConversationNotificationService conversationNotificationService,
-            ConversationMessagingService conversationMessagingService) {
+    public ConversationMessageResource(ConversationNotificationService conversationNotificationService, ConversationMessagingService conversationMessagingService) {
         this.conversationMessagingService = conversationMessagingService;
         this.conversationNotificationService = conversationNotificationService;
-        this.conversationRepository = conversationRepository;
     }
 
     /**

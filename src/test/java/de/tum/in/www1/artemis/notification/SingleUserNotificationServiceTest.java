@@ -1,6 +1,12 @@
 package de.tum.in.www1.artemis.notification;
 
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_ADD_USER_CHANNEL;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_ADD_USER_GROUP_CHAT;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_CREATE_GROUP_CHAT;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_CREATE_ONE_TO_ONE_CHAT;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_DELETE_CHANNEL;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_REMOVE_USER_CHANNEL;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_REMOVE_USER_GROUP_CHAT;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -344,7 +350,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    void testConversationNotifications_oneToOneChatCreation() {
+    void testConversationNotificationsOneToOneChatCreation() {
         singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(oneToOneChat, user, userTwo, CONVERSATION_CREATE_ONE_TO_ONE_CHAT);
         List<Notification> capturedNotifications = notificationRepository.findAll();
         assertThat(capturedNotifications).as("Notification should not have been saved").hasSize(0);
@@ -353,7 +359,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    void testConversationNotifications_groupChatCreation() {
+    void testConversationNotificationsGroupChatCreation() {
         singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChat, user, userTwo, CONVERSATION_CREATE_GROUP_CHAT);
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
@@ -369,7 +375,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    void testConversationNotifications_groupChatAddUsers() {
+    void testConversationNotificationsGroupChatAddUsers() {
         singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChat, user, userTwo, CONVERSATION_ADD_USER_GROUP_CHAT);
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
@@ -377,8 +383,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    void testConversationNotifications_groupChatRemoveUser() {
-        notificationSettingRepository.deleteAll();
+    void testConversationNotificationsGroupChatRemoveUser() {
         singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChat, user, userTwo, CONVERSATION_REMOVE_USER_GROUP_CHAT);
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
@@ -386,8 +391,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    void testConversationNotifications_deleteChannel() {
-        notificationSettingRepository.deleteAll();
+    void testConversationNotificationsDeleteChannel() {
         singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(channel, user, userTwo, CONVERSATION_DELETE_CHANNEL);
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
@@ -395,7 +399,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    void testConversationNotifications_channelAddUsers() {
+    void testConversationNotificationsChannelAddUsers() {
         singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(channel, user, userTwo, CONVERSATION_ADD_USER_CHANNEL);
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
@@ -403,7 +407,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    void testConversationNotifications_channelRemoveUser() {
+    void testConversationNotificationsChannelRemoveUser() {
         singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(channel, user, userTwo, CONVERSATION_REMOVE_USER_CHANNEL);
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
@@ -411,7 +415,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    void testConversationNotifications_newMessageReply() {
+    void testConversationNotificationsNewMessageReply() {
         Post post = new Post();
         post.setAuthor(user);
         post.setCreationDate(ZonedDateTime.now());

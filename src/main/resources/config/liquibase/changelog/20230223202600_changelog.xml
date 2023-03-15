@@ -18,7 +18,8 @@
         <addForeignKeyConstraint baseColumnNames="conversation_id"
                                  baseTableName="notification"
                                  constraintName="fk_conversation_notification"
-                                 deferrable="false" initiallyDeferred="false"
+                                 deferrable="false"
+                                 initiallyDeferred="false"
                                  referencedColumnNames="id"
                                  referencedTableName="conversation"
                                  onDelete="SET NULL"/>

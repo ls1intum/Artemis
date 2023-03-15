@@ -7,7 +7,7 @@ import dayjs from 'dayjs/esm';
 import { map } from 'rxjs/operators';
 
 import { createRequestOption } from 'app/shared/util/request.util';
-import { ActivatedRoute, NavigationExtras, Params, Route, Router, UrlSerializer } from '@angular/router';
+import { Params, Router, UrlSerializer } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
@@ -37,7 +37,6 @@ import { convertDateFromServer } from 'app/utils/date.utils';
 import { TutorialGroupsNotificationService } from 'app/course/tutorial-groups/services/tutorial-groups-notification.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -127,8 +126,8 @@ export class NotificationService {
      */
     navigateToNotificationTarget(targetCourseId: number, routeComponents: RouteComponents, queryParams: Params): void {
         const currentCourseId = NotificationService.getCurrentCourseId();
-        // determine if reload is required when notification is clicked
-        // by comparing the id of the course the user is currently in and the course the post associated with the notification belongs to
+        // determine if component recreation is required when notification is clicked
+        // by comparing the id of the course the user is currently in, the course the post associated with the notification belongs to and if the user is already in the messages tab
         if (currentCourseId === undefined || currentCourseId !== targetCourseId || this.isUnderMessagesTabOfSpecificCourse(targetCourseId.toString())) {
             this.router.navigate(['/courses'], { skipLocationChange: true }).then(() => {
                 this.router.navigate(routeComponents, { queryParams });

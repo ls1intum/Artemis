@@ -27,8 +27,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                     LEFT JOIN notification.course
                     LEFT JOIN notification.recipient
                     LEFT JOIN notification.message.author
-                    LEFT JOIN notification.conversation.conversationParticipants cp
-                    LEFT JOIN cp.user
+                    LEFT JOIN notification.conversation.conversationParticipants conversationParticipant
+                    LEFT JOIN conversationParticipant.user
                 WHERE notification.notificationDate IS NOT NULL
                     AND (cast(:hideUntil as timestamp ) IS NULL OR notification.notificationDate > :hideUntil)
                     AND (
@@ -44,8 +44,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                         OR type(notification) = ConversationNotification
                             AND (notification.conversation.id IN :#{#conversationIds}
                                  AND notification.message.author.login != :#{#login}
-                                 AND cp.user.login = :#{#login}
-                                 AND notification.message.creationDate > cp.lastRead
+                                 AND conversationParticipant.user.login = :#{#login}
+                                 AND notification.message.creationDate > conversationParticipant.lastRead
                             )
                     )
             """)
@@ -59,8 +59,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                     LEFT JOIN notification.course
                     LEFT JOIN notification.recipient
                     LEFT JOIN notification.message.author
-                    LEFT JOIN notification.conversation.conversationParticipants cp
-                    LEFT JOIN cp.user
+                    LEFT JOIN notification.conversation.conversationParticipants conversationParticipant
+                    LEFT JOIN conversationParticipant.user
                 WHERE notification.notificationDate IS NOT NULL
                     AND (:#{#hideUntil} IS NULL OR notification.notificationDate > :#{#hideUntil})
                     AND (
@@ -87,8 +87,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                      OR (type(notification) = ConversationNotification
                         AND (notification.conversation.id IN :#{#conversationIds}
                             AND notification.message.author.login != :#{#login}
-                            AND cp.user.login = :#{#login}
-                            AND notification.message.creationDate > cp.lastRead
+                            AND conversationParticipant.user.login = :#{#login}
+                            AND notification.message.creationDate > conversationParticipant.lastRead
                         )
                         AND (notification.title NOT IN :#{#deactivatedTitles}
                             OR notification.title IS NULL

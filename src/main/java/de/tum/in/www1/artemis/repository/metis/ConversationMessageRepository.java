@@ -52,7 +52,6 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
             LEFT JOIN p.conversation c
             LEFT JOIN c.conversationParticipants cp
             WHERE p.id = :#{#postId}
-            AND p.author IS NOT NULL
             AND answer.author.id = cp.user.id
             """)
     Set<User> findUsersWhoRepliedInMessage(@Param("postId") Long postId);

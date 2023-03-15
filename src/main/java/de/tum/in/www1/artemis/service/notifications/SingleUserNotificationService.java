@@ -77,10 +77,10 @@ public class SingleUserNotificationService {
                     ((TutorialGroupNotificationSubject) notificationSubject).responsibleUser);
             // Conversation creation related
             case CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT, CONVERSATION_ADD_USER_CHANNEL, CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_CHANNEL, CONVERSATION_DELETE_CHANNEL -> createNotification(
-                    ((ConversationNotificationSubject) notificationSubject).conversation, notificationType, ((ConversationNotificationSubject) notificationSubject).users,
+                    ((ConversationNotificationSubject) notificationSubject).conversation, notificationType, ((ConversationNotificationSubject) notificationSubject).user,
                     ((ConversationNotificationSubject) notificationSubject).responsibleUser);
             case CONVERSATION_NEW_REPLY_MESSAGE -> createNotification(((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType,
-                    ((NewReplyNotificationSubject) notificationSubject).users, ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
+                    ((NewReplyNotificationSubject) notificationSubject).user, ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
         saveAndSend(singleUserNotification, notificationSubject);
@@ -304,26 +304,27 @@ public class SingleUserNotificationService {
     }
 
     /**
-     * Record to store conversation, users and responsible user in one notification subject.
+     * Record to store conversation, user and responsible user in one notification subject.
      */
-    public record ConversationNotificationSubject(Conversation conversation, Set<User> users, User responsibleUser) {
+    public record ConversationNotificationSubject(Conversation conversation, User user, User responsibleUser) {
     }
 
     /**
      * Record to store Answer post, users and responsible user in one notification subject.
      */
-    public record NewReplyNotificationSubject(AnswerPost answerPost, Set<User> users, User responsibleUser) {
+    public record NewReplyNotificationSubject(AnswerPost answerPost, User user, User responsibleUser) {
     }
 
     /**
      * Notify a user about new chat creation or conversation deletion.
      *
-     * @param conversation    the conversation the student has been added for or removed from
-     * @param user            the user that has been added for the conversation or removed from the conversation
-     * @param responsibleUser the responsibleUser that has registered/removed the user for the conversation
+     * @param conversation     the conversation the student has been added for or removed from
+     * @param user             the user that has been added for the conversation or removed from the conversation
+     * @param responsibleUser  the responsibleUser that has registered/removed the user for the conversation
+     * @param notificationType the type of notification to be sent
      */
     public void notifyUserAboutConversationCreationOrDeletion(Conversation conversation, User user, User responsibleUser, NotificationType notificationType) {
-        notifyRecipientWithNotificationType(new ConversationNotificationSubject(conversation, Set.of(user), responsibleUser), notificationType, null, null);
+        notifyRecipientWithNotificationType(new ConversationNotificationSubject(conversation, user, responsibleUser), notificationType, null, null);
     }
 
     /**
@@ -334,7 +335,7 @@ public class SingleUserNotificationService {
      * @param responsibleUser the responsibleUser sending the message reply
      */
     public void notifyUserAboutNewMessageReply(AnswerPost answerPost, User user, User responsibleUser) {
-        notifyRecipientWithNotificationType(new NewReplyNotificationSubject(answerPost, Set.of(user), responsibleUser), CONVERSATION_NEW_REPLY_MESSAGE, null, null);
+        notifyRecipientWithNotificationType(new NewReplyNotificationSubject(answerPost, user, responsibleUser), CONVERSATION_NEW_REPLY_MESSAGE, null, null);
     }
 
     /**
@@ -370,8 +371,9 @@ public class SingleUserNotificationService {
         else if (Objects.equals(notification.getTitle(), MESSAGE_REPLY_IN_CONVERSATION_TITLE)) {
             return (!Objects.equals(notification.getAuthor().getLogin(), notification.getRecipient().getLogin()));
         }
-        else
+        else {
             return true;
+        }
     }
 
     /**
