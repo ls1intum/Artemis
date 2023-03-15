@@ -232,7 +232,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" *ngIf="newManualResultAllowed" [sortable]="true" [minWidth]="130" [width]="140">
+                <ngx-datatable-column prop="" *ngIf="newManualResultAllowed || exercise.allowComplaintsForAutomaticAssessments" [sortable]="true" [minWidth]="130" [width]="140">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.[0].assessmentType')">
                             <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.type' | artemisTranslate }}</span>
