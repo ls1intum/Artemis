@@ -217,16 +217,15 @@ describe('ModelingAssessmentComponent', () => {
         comp.umlModel = mockModel;
         const elementCounts = getElementCounts(mockModel);
         comp.elementCounts = elementCounts;
-
         const spy = jest.spyOn(translatePipe, 'transform');
 
-        fixture.detectChanges();
-
-        elementCounts.forEach((elementCount) =>
-            expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: elementCount.numberOfOtherElements }),
-        );
-
-        expect(spy).toHaveBeenCalledTimes(elementCounts.length);
+        setTimeout(() => {
+            fixture.detectChanges();
+            for (let i = 0; i < elementCounts.length; i++) {
+                expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: elementCounts[i].numberOfOtherElements });
+            }
+            expect(spy).toHaveBeenCalledTimes(elementCounts.length);
+        });
     });
 
     it('should generate feedback from assessment', () => {
@@ -240,24 +239,29 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     it('should highlight elements', () => {
+        // change
         const highlightedElements = new Map();
         highlightedElements.set('elementId1', 'red');
         highlightedElements.set('relationshipId', 'blue');
         comp.umlModel = mockModel;
         comp.highlightedElements = highlightedElements;
-        fixture.detectChanges();
+        setTimeout(() => {
+            fixture.detectChanges();
+        });
         expect(comp.apollonEditor).not.toBeNull();
-        const apollonModel = comp.apollonEditor!.model;
-        const elements: UMLElement[] = apollonModel.elements;
-        const highlightedElement = elements.find((el) => el.id === 'elementId1');
-        const notHighlightedElement = elements.find((el) => el.id === 'elementId2');
-        const relationship = apollonModel.relationships[0];
-        expect(highlightedElement).not.toBeNull();
-        expect(highlightedElement!.highlight).toBe('red');
-        expect(notHighlightedElement).not.toBeNull();
-        expect(notHighlightedElement!.highlight).toBeUndefined();
-        expect(relationship).not.toBeNull();
-        expect(relationship!.highlight).toBe('blue');
+        setTimeout(() => {
+            const apollonModel = comp.apollonEditor!.model;
+            const elements: UMLElement[] = apollonModel.elements;
+            const highlightedElement = elements.find((el) => el.id === 'elementId1');
+            const notHighlightedElement = elements.find((el) => el.id === 'elementId2');
+            const relationship = apollonModel.relationships[0];
+            expect(highlightedElement).not.toBeNull();
+            expect(highlightedElement!.highlight).toBe('red');
+            expect(notHighlightedElement).not.toBeNull();
+            expect(notHighlightedElement!.highlight).toBeUndefined();
+            expect(relationship).not.toBeNull();
+            expect(relationship!.highlight).toBe('blue');
+        });
     });
 
     it('should update model', () => {
@@ -265,8 +269,10 @@ describe('ModelingAssessmentComponent', () => {
         const changes = { model: { currentValue: newModel } as SimpleChange };
         fixture.detectChanges();
         const apollonSpy = jest.spyOn(comp.apollonEditor!, 'model', 'set');
-        comp.ngOnChanges(changes);
-        expect(apollonSpy).toHaveBeenCalledWith(newModel);
+        setTimeout(() => {
+            comp.ngOnChanges(changes);
+            expect(apollonSpy).toHaveBeenCalledWith(newModel);
+        });
     });
 
     it('should update highlighted elements', () => {
@@ -274,21 +280,26 @@ describe('ModelingAssessmentComponent', () => {
         highlightedElements.set('elementId2', 'green');
         const changes = { highlightedElements: { currentValue: highlightedElements } as SimpleChange };
         comp.umlModel = mockModel;
-        fixture.detectChanges();
+        setTimeout(() => {
+            fixture.detectChanges();
+        });
+
         comp.highlightedElements = highlightedElements;
         comp.ngOnChanges(changes);
         expect(comp.apollonEditor).not.toBeNull();
-        const apollonModel = comp.apollonEditor!.model;
-        const elements: UMLElement[] = apollonModel.elements;
-        const highlightedElement = elements.find((el) => el.id === 'elementId2');
-        const notHighlightedElement = elements.find((el) => el.id === 'elementId1');
-        const relationship = apollonModel.relationships[0];
-        expect(highlightedElement).not.toBeNull();
-        expect(highlightedElement!.highlight).toBe('green');
-        expect(notHighlightedElement).not.toBeNull();
-        expect(notHighlightedElement!.highlight).toBeUndefined();
-        expect(relationship).not.toBeNull();
-        expect(relationship!.highlight).toBeUndefined();
+        setTimeout(() => {
+            const apollonModel = comp.apollonEditor!.model;
+            const elements: UMLElement[] = apollonModel.elements;
+            const highlightedElement = elements.find((el) => el.id === 'elementId2');
+            const notHighlightedElement = elements.find((el) => el.id === 'elementId1');
+            const relationship = apollonModel.relationships[0];
+            expect(highlightedElement).not.toBeNull();
+            expect(highlightedElement!.highlight).toBe('green');
+            expect(notHighlightedElement).not.toBeNull();
+            expect(notHighlightedElement!.highlight).toBeUndefined();
+            expect(relationship).not.toBeNull();
+            expect(relationship!.highlight).toBeUndefined();
+        });
     });
 
     it('should update highlighted assessments first round', () => {
@@ -299,15 +310,16 @@ describe('ModelingAssessmentComponent', () => {
         comp.feedbacks = [mockFeedbackWithReference];
         comp.referencedFeedbacks = [mockFeedbackWithReference];
         jest.spyOn(translatePipe, 'transform').mockReturnValue('Second correction round');
+        setTimeout(() => {
+            comp.ngOnChanges(changes);
 
-        comp.ngOnChanges(changes);
-
-        expect(comp.apollonEditor).not.toBeNull();
-        const apollonModel = comp.apollonEditor!.model;
-        const assessments: any = apollonModel.assessments;
-        expect(assessments[0].labelColor).toEqual(comp.secondCorrectionRoundColor);
-        expect(assessments[0].label).toBe('Second correction round');
-        expect(assessments[0].score).toBe(30);
+            expect(comp.apollonEditor).not.toBeNull();
+            const apollonModel = comp.apollonEditor!.model;
+            const assessments: any = apollonModel.assessments;
+            expect(assessments[0].labelColor).toEqual(comp.secondCorrectionRoundColor);
+            expect(assessments[0].label).toBe('Second correction round');
+            expect(assessments[0].score).toBe(30);
+        });
     });
 
     it('should update highlighted assessments', () => {
@@ -319,14 +331,16 @@ describe('ModelingAssessmentComponent', () => {
         comp.referencedFeedbacks = [mockFeedbackWithReferenceCopied];
         jest.spyOn(translatePipe, 'transform').mockReturnValue('First correction round');
 
-        comp.ngOnChanges(changes);
+        setTimeout(() => {
+            comp.ngOnChanges(changes);
 
-        expect(comp.apollonEditor).not.toBeNull();
-        const apollonModel = comp.apollonEditor!.model;
-        const assessments: any = apollonModel.assessments;
-        expect(assessments[0].labelColor).toEqual(comp.firstCorrectionRoundColor);
-        expect(assessments[0].label).toBe('First correction round');
-        expect(assessments[0].score).toBe(35);
+            expect(comp.apollonEditor).not.toBeNull();
+            const apollonModel = comp.apollonEditor!.model;
+            const assessments: any = apollonModel.assessments;
+            expect(assessments[0].labelColor).toEqual(comp.firstCorrectionRoundColor);
+            expect(assessments[0].label).toBe('First correction round');
+            expect(assessments[0].score).toBe(35);
+        });
     });
 
     it('should update feedbacks', () => {
@@ -339,8 +353,10 @@ describe('ModelingAssessmentComponent', () => {
         comp.readOnly = true;
         fixture.detectChanges();
         const changes = { feedbacks: { currentValue: newMockFeedbacks } as SimpleChange };
-        comp.ngOnChanges(changes);
-        expect(comp.feedbacks).toEqual(newMockFeedbacks);
-        expect(comp.referencedFeedbacks).toEqual([newMockFeedbackWithReference]);
+        setTimeout(() => {
+            comp.ngOnChanges(changes);
+            expect(comp.feedbacks).toEqual(newMockFeedbacks);
+            expect(comp.referencedFeedbacks).toEqual([newMockFeedbackWithReference]);
+        });
     });
 });

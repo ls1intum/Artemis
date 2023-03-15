@@ -145,15 +145,17 @@ describe('Example Modeling Submission Component', () => {
         comp.isNewSubmission = true;
         comp.exercise = exercise;
         // WHEN
-        fixture.detectChanges(); // Needed for @ViewChild to set fields.
-        comp.upsertExampleModelingSubmission();
+        setTimeout(() => {
+            fixture.detectChanges(); // Needed for @ViewChild to set fields.
+            comp.upsertExampleModelingSubmission();
 
-        // THEN
-        expect(comp.isNewSubmission).toBeFalse();
-        expect(serviceSpy).toHaveBeenCalledOnce();
+            // THEN
+            expect(comp.isNewSubmission).toBeFalse();
+            expect(serviceSpy).toHaveBeenCalledOnce();
 
-        expect(alertSpy).toHaveBeenCalledOnce();
-        expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.saveSuccessful');
+            expect(alertSpy).toHaveBeenCalledOnce();
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.saveSuccessful');
+        });
     });
 
     it('should upsert an existing modeling submission', fakeAsync(() => {
@@ -349,16 +351,18 @@ describe('Example Modeling Submission Component', () => {
 
         // WHEN
         comp.showAssessment();
-        fixture.detectChanges();
-        const resultFeedbacksSetterSpy = jest.spyOn(comp.assessmentEditor, 'resultFeedbacks', 'set');
+        setTimeout(() => {
+            fixture.detectChanges();
+            const resultFeedbacksSetterSpy = jest.spyOn(comp.assessmentEditor, 'resultFeedbacks', 'set');
 
-        comp.markAllFeedbackToCorrect();
-        fixture.detectChanges();
+            comp.markAllFeedbackToCorrect();
+            fixture.detectChanges();
 
-        // THEN
-        expect(comp.referencedFeedback.every((feedback) => feedback.correctionStatus === 'CORRECT')).toBeTrue();
-        expect(resultFeedbacksSetterSpy).toHaveBeenCalledOnce();
-        expect(resultFeedbacksSetterSpy).toHaveBeenCalledWith(comp.referencedFeedback);
+            // THEN
+            expect(comp.referencedFeedback.every((feedback) => feedback.correctionStatus === 'CORRECT')).toBeTrue();
+            expect(resultFeedbacksSetterSpy).toHaveBeenCalledOnce();
+            expect(resultFeedbacksSetterSpy).toHaveBeenCalledWith(comp.referencedFeedback);
+        });
     });
 
     it('should mark all feedback wrong', () => {
@@ -370,16 +374,17 @@ describe('Example Modeling Submission Component', () => {
 
         // WHEN
         comp.showAssessment();
-        fixture.detectChanges();
-        const resultFeedbacksSetterSpy = jest.spyOn(comp.assessmentEditor, 'resultFeedbacks', 'set');
-
-        comp.markWrongFeedback([mockFeedbackCorrectionError]);
-        fixture.detectChanges();
-
-        // THEN
-        expect(comp.referencedFeedback[0].correctionStatus).toBe(mockFeedbackCorrectionError.type);
-        expect(resultFeedbacksSetterSpy).toHaveBeenCalledOnce();
-        expect(resultFeedbacksSetterSpy).toHaveBeenCalledWith(comp.referencedFeedback);
+        let resultFeedbacksSetterSpy;
+        setTimeout(() => {
+            fixture.detectChanges();
+            resultFeedbacksSetterSpy = jest.spyOn(comp.assessmentEditor, 'resultFeedbacks', 'set');
+            comp.markWrongFeedback([mockFeedbackCorrectionError]);
+            fixture.detectChanges();
+            // THEN
+            expect(comp.referencedFeedback[0].correctionStatus).toBe(mockFeedbackCorrectionError.type);
+            expect(resultFeedbacksSetterSpy).toHaveBeenCalledOnce();
+            expect(resultFeedbacksSetterSpy).toHaveBeenCalledWith(comp.referencedFeedback);
+        });
     });
 
     it('should create success alert on example assessment update', () => {

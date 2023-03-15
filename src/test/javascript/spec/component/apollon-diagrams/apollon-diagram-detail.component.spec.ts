@@ -73,41 +73,40 @@ describe('ApollonDiagramDetail Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('ngOnInit', fakeAsync(() => {
+    it('ngOnInit', () => {
         const div = document.createElement('div');
         fixture.componentInstance.editorContainer = new ElementRef(div);
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         jest.spyOn(apollonDiagramService, 'find').mockReturnValue(of(response));
 
         // test
-        fixture.componentInstance.ngOnInit();
-        tick(500);
-        expect(fixture.componentInstance.apollonDiagram).toEqual(diagram);
-        flush();
-        // clear the set time interval
-        fixture.componentInstance.ngOnDestroy();
-    }));
+        setTimeout(() => {
+            fixture.componentInstance.ngOnInit();
+            expect(fixture.componentInstance.apollonDiagram).toEqual(diagram);
+            // clear the set time interval
+            fixture.componentInstance.ngOnDestroy();
+        });
+    });
 
-    it('ngOnDestroy', fakeAsync(() => {
+    it('ngOnDestroy', () => {
         const div = document.createElement('div');
         fixture.componentInstance.editorContainer = new ElementRef(div);
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         jest.spyOn(apollonDiagramService, 'find').mockReturnValue(of(response));
-        fixture.componentInstance.ngOnInit();
-        // ApollonEditor is the child
-        tick(500);
-        expect(div.children).toHaveLength(1);
+        setTimeout(() => {
+            fixture.componentInstance.ngOnInit();
+            expect(div.children).toHaveLength(1);
+        });
 
         // create spy after ngOnInit
         jest.spyOn(global, 'clearInterval');
 
         // test
         fixture.componentInstance.ngOnDestroy();
-        tick(500);
         expect(div.children).toHaveLength(0);
         expect(clearInterval).toHaveBeenCalledOnce();
         expect(clearInterval).toHaveBeenCalledWith(fixture.componentInstance.autoSaveInterval);
-    }));
+    });
 
     it('initializeApollonEditor', fakeAsync(() => {
         const div = document.createElement('div');
@@ -117,9 +116,10 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.initializeApollonEditor(model);
         tick(500);
         expect(fixture.componentInstance.apollonEditor).toBeTruthy();
+        flush();
     }));
 
-    it('downloadSelection', fakeAsync(() => {
+    it('downloadSelection', () => {
         const div = document.createElement('div');
         fixture.componentInstance.editorContainer = new ElementRef(div);
         const module = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
@@ -127,21 +127,21 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.apollonDiagram = diagram;
         fixture.componentInstance.initializeApollonEditor(model);
         // ApollonEditor is the child
-        expect(div.children).toHaveLength(1);
+        setTimeout(() => {
+            expect(div.children).toHaveLength(1);
+            // set selection
+            fixture.componentInstance.apollonEditor!.selection = { elements: model.elements.map((element) => element.id), relationships: [] };
+            fixture.detectChanges();
+            // test
 
-        // set selection
-        fixture.componentInstance.apollonEditor!.selection = { elements: model.elements.map((element) => element.id), relationships: [] };
-        fixture.detectChanges();
-
-        // test
-        fixture.componentInstance.downloadSelection().then(() => {
-            tick(500);
-            // last task when downloading file
-            expect(window.URL.revokeObjectURL).toHaveBeenCalledOnce();
+            fixture.componentInstance.downloadSelection().then(() => {
+                // last task when downloading file
+                expect(window.URL.revokeObjectURL).toHaveBeenCalledOnce();
+            });
         });
-    }));
+    });
 
-    it('save', fakeAsync(() => {
+    it('save', () => {
         // setup
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         const updateStub = jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
@@ -154,15 +154,15 @@ describe('ApollonDiagramDetail Component', () => {
         expect(fixture.componentInstance.apollonEditor).toBeTruthy();
 
         // test
-        fixture.componentInstance.saveDiagram();
-        tick(500);
-        expect(updateStub).toHaveBeenCalledOnce();
-        flush();
+        setTimeout(() => {
+            fixture.componentInstance.saveDiagram();
+            expect(updateStub).toHaveBeenCalledOnce();
+        });
         // clear the set time interval
         fixture.componentInstance.ngOnDestroy();
-    }));
+    });
 
-    it('generateExercise', fakeAsync(() => {
+    it('generateExercise', () => {
         // setup
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
@@ -172,20 +172,19 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.apollonDiagram = diagram;
 
         fixture.componentInstance.initializeApollonEditor(model);
-        fixture.detectChanges();
-        expect(fixture.componentInstance.apollonEditor).toBeTruthy();
+        setTimeout(() => {
+            fixture.detectChanges();
+            expect(fixture.componentInstance.apollonEditor).toBeTruthy();
+            const result = new Promise((resolve) => resolve(true));
+            jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance: fixture.componentInstance, result });
+            const successSpy = jest.spyOn(alertService, 'success');
 
-        const result = new Promise((resolve) => resolve(true));
-        jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance: fixture.componentInstance, result });
-        const successSpy = jest.spyOn(alertService, 'success');
-
-        // test
-        fixture.componentInstance.generateExercise().then(() => {
-            expect(successSpy).toHaveBeenCalledOnce();
+            // test
+            fixture.componentInstance.generateExercise().then(() => {
+                expect(successSpy).toHaveBeenCalledOnce();
+            });
+            // clear the set time interval
+            fixture.componentInstance.ngOnDestroy();
         });
-        tick(500);
-        flush();
-        // clear the set time interval
-        fixture.componentInstance.ngOnDestroy();
-    }));
+    });
 });

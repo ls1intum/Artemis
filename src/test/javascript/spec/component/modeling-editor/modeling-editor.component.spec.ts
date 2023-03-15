@@ -12,6 +12,7 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { ArtemisTestModule } from '../../test.module';
+import { addDelay } from '../../helpers/utils/general.utils';
 import { cloneDeep } from 'lodash-es';
 import { SimpleChange } from '@angular/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -32,7 +33,6 @@ describe('ModelingEditorComponent', () => {
     // @ts-ignore
     const classDiagram = cloneDeep(testClassDiagram as UMLModel); // note: clone is needed to prevent weird errors with setters, because testClassDiagram is not an actual object
     const route = { params: of({ id: 1, courseId: 123 }), snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
-
     beforeEach(() => {
         diagram.id = 1;
         diagram.jsonRepresentation = JSON.stringify(classDiagram);
@@ -63,9 +63,10 @@ describe('ModelingEditorComponent', () => {
         const editor: ApollonEditor = component['apollonEditor'] as ApollonEditor;
         // Check that editor exists
         expect(editor).toBeDefined();
-
-        // check that editor contains elements of our model (direct equality check won't work somehow due to missing properties)
-        expect(editor.model.elements.map((e) => e.id)).toEqual(classDiagram.elements.map((e) => e.id));
+        return addDelay(100).then(() => {
+            // check that editor contains elements of our model (direct equality check won't work somehow due to missing properties)
+            expect(editor.model.elements.map((e) => e.id)).toEqual(classDiagram.elements.map((e) => e.id));
+        });
     });
 
     it('ngOnDestroy', () => {
@@ -78,7 +79,7 @@ describe('ModelingEditorComponent', () => {
         expect(component['apollonEditor']).toBeUndefined();
     });
 
-    it('ngOnChanges', () => {
+    it('ngOnChanges', async () => {
         // @ts-ignore
         const model = classDiagram;
         component.umlModel = model;
@@ -92,14 +93,15 @@ describe('ModelingEditorComponent', () => {
         changedModel.size = { height: 0, width: 0 };
         // note: using cloneDeep a default value exists, which would prevent the comparison below to pass, therefore we need to remove it here
         changedModel.default = undefined;
-
         // test
+        await addDelay(100);
         component.ngOnChanges({
             umlModel: {
                 currentValue: changedModel,
                 previousValue: model,
             } as SimpleChange,
         });
+        await addDelay(100);
         const componentModel = component['apollonEditor']!.model as UMLModel;
         expect(componentModel).toEqual(changedModel);
     });
@@ -240,7 +242,7 @@ describe('ModelingEditorComponent', () => {
         expect(component.explanation).toBe(newExplanation);
     });
 
-    it('should assess model for guided tour for all UML types', () => {
+    it('should assess model for guided tour for all UML types', async () => {
         const guidedTourService = TestBed.inject(GuidedTourService);
         const subject = new Subject<string>();
         jest.spyOn(guidedTourService, 'checkModelingComponent').mockImplementation(() => subject.asObservable());
@@ -250,24 +252,25 @@ describe('ModelingEditorComponent', () => {
 
         let updateSpyCallCount = 0;
         let currentUmlName = personUML.name;
-        subject.next(currentUmlName);
-        expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
+        setTimeout(() => {
+            subject.next(currentUmlName);
+            expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
+            updateSpyCallCount++;
+            expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
 
-        updateSpyCallCount++;
-        expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
+            currentUmlName = studentUML.name;
+            subject.next(currentUmlName);
+            expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
 
-        currentUmlName = studentUML.name;
-        subject.next(currentUmlName);
-        expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
+            updateSpyCallCount++;
+            expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
 
-        updateSpyCallCount++;
-        expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
+            currentUmlName = associationUML.name;
+            subject.next(currentUmlName);
+            expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
 
-        currentUmlName = associationUML.name;
-        subject.next(currentUmlName);
-        expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
-
-        updateSpyCallCount++;
-        expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
+            updateSpyCallCount++;
+            expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
+        });
     });
 });

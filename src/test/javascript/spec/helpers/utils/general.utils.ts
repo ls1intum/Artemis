@@ -37,3 +37,7 @@ export const triggerChanges = (comp: OnChanges, ...changes: Array<{ property: st
     }, {});
     comp.ngOnChanges(simpleChanges);
 };
+
+export const addDelay = async (t: number) => {
+    return new Promise((res) => setTimeout(res, t));
+};
