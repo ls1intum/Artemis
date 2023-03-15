@@ -10,7 +10,7 @@
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung:",
             "register": {
-                "signUp": "Kursanmeldung",
+                "title": "Kursanmeldung",
                 "registerSuccessful": "Anmeldung erfolgreich",
                 "registerForCourse": "Anmelden",
                 "notInCourseButCanRegister": "Du bist nicht in diesem Kurs, kannst dich aber anmelden.",
