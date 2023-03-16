@@ -29,8 +29,8 @@ public class GitLabCIResultService extends AbstractContinuousIntegrationResultSe
 
     private final Logger log = LoggerFactory.getLogger(GitLabCIResultService.class);
 
-    public GitLabCIResultService(FeedbackRepository feedbackRepository,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
+    public GitLabCIResultService(FeedbackRepository feedbackRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
+            TestwiseCoverageService testwiseCoverageService) {
         super(feedbackRepository, buildLogStatisticsEntryRepository, testwiseCoverageService);
     }
 

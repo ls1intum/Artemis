@@ -5,10 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.text.StringEscapeUtils;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import org.apache.commons.text.StringEscapeUtils;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -139,11 +140,12 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
     /**
      * Represents all the information returned by the local CI system about a job.
      * In the current implementation of local CI, there is always one job per build.
-     * @param failedTests list of failed tests.
-     * @param successfulTests list of successful tests.
+     *
+     * @param failedTests               list of failed tests.
+     * @param successfulTests           list of successful tests.
      * @param staticCodeAnalysisReports list of static code analysis reports.
-     * @param testwiseCoverageReport list of testwise coverage reports.
-     * @param logs list of logs.
+     * @param testwiseCoverageReport    list of testwise coverage reports.
+     * @param logs                      list of logs.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -163,6 +165,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     /**
      * Represents the information about one test case, including the test case's name and potential error messages that indicate what went wrong.
+     *
      * @param name
      * @param errors
      */

@@ -108,7 +108,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             and participation.student.login = :#{#username}
             and participation.testRun = :#{#testRun}
             """)
-    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId, @Param("username") String username, @Param("testRun") boolean testRun);
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId,
+            @Param("username") String username, @Param("testRun") boolean testRun);
 
     @Query("""
             SELECT p

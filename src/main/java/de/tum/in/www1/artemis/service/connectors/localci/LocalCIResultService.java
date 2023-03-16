@@ -24,8 +24,8 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 @Profile("localci")
 public class LocalCIResultService extends AbstractContinuousIntegrationResultService {
 
-    public LocalCIResultService(FeedbackRepository feedbackRepository,
-            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+    public LocalCIResultService(FeedbackRepository feedbackRepository, TestwiseCoverageService testwiseCoverageService,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         super(feedbackRepository, buildLogStatisticsEntryRepository, testwiseCoverageService);
     }
 

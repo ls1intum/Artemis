@@ -30,8 +30,8 @@ public class JenkinsResultService extends AbstractContinuousIntegrationResultSer
 
     private final Logger log = LoggerFactory.getLogger(JenkinsResultService.class);
 
-    public JenkinsResultService(FeedbackRepository feedbackRepository,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
+    public JenkinsResultService(FeedbackRepository feedbackRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
+            TestwiseCoverageService testwiseCoverageService) {
         super(feedbackRepository, buildLogStatisticsEntryRepository, testwiseCoverageService);
     }
 

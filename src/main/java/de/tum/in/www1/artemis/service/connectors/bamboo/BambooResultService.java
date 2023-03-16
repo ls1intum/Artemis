@@ -30,8 +30,8 @@ public class BambooResultService extends AbstractContinuousIntegrationResultServ
 
     private final ObjectMapper mapper;
 
-    public BambooResultService(FeedbackRepository feedbackRepository,
-            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ObjectMapper mapper) {
+    public BambooResultService(FeedbackRepository feedbackRepository, TestwiseCoverageService testwiseCoverageService,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ObjectMapper mapper) {
         super(feedbackRepository, buildLogStatisticsEntryRepository, testwiseCoverageService);
         this.mapper = mapper;
     }

@@ -126,7 +126,8 @@ public class ProgrammingMessagingService {
 
     /**
      * Notify user about new result.
-     * @param result the result created from the result returned from the CI system.
+     *
+     * @param result        the result created from the result returned from the CI system.
      * @param participation the participation for which the result was created.
      */
     public void notifyUserAboutNewResult(Result result, ProgrammingExerciseParticipation participation) {

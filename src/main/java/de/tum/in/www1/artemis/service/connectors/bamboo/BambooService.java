@@ -72,8 +72,7 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    public BambooService(GitService gitService,
-            Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService,
+    public BambooService(GitService gitService, Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
             UrlService urlService) {
         this.gitService = gitService;

@@ -5,12 +5,6 @@ import java.util.Base64;
 
 import javax.servlet.http.HttpServletRequest;
 
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCBadRequestException;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +18,12 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCBadRequestException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -71,9 +71,9 @@ public class LocalVCFilterService {
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
     public LocalVCFilterService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, ProgrammingExerciseService programmingExerciseService,
-                                TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-                                SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-                                ProgrammingExerciseParticipationService programmingExerciseParticipationService, RepositoryAccessService repositoryAccessService) {
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, RepositoryAccessService repositoryAccessService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
         this.programmingExerciseService = programmingExerciseService;
@@ -209,21 +209,26 @@ public class LocalVCFilterService {
 
     /**
      * Returns the participation for the given repository type or username.
-     * @param repositoryTypeOrUserName The repository type or username (e.g. "exercise" for the template repository, or "artemis_test_user_1" for the repository of artemis_test_user_1).
-     * @param exercise The programming exercise.
-     * @param isPracticeRepository True if the repository is a practice repository, i.e. the repository name contains "-practice-". This is not true for exam test runs conducted by an instructor, because there is no way to tell just from the repository URL!
-     * @param user The authenticated user.
+     *
+     * @param repositoryTypeOrUserName The repository type or username (e.g. "exercise" for the template repository, or "artemis_test_user_1" for the repository of
+     *                                     artemis_test_user_1).
+     * @param exercise                 The programming exercise.
+     * @param isPracticeRepository     True if the repository is a practice repository, i.e. the repository name contains "-practice-". This is not true for exam test runs
+     *                                     conducted by an instructor, because there is no way to tell just from the repository URL!
+     * @param user                     The authenticated user.
      * @return The participation for the given repository type or username.
      */
     private ProgrammingExerciseParticipation getParticipation(String repositoryTypeOrUserName, ProgrammingExercise exercise, boolean isPracticeRepository, User user) {
         try {
             if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
                 return solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
-            } else if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
+            }
+            else if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
                 return templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
             }
 
-            return programmingExerciseParticipationService.findStudentParticipationByExerciseAndUserNameAndTestRunOrThrow(exercise, repositoryTypeOrUserName, isPracticeRepository, user);
+            return programmingExerciseParticipationService.findStudentParticipationByExerciseAndUserNameAndTestRunOrThrow(exercise, repositoryTypeOrUserName, isPracticeRepository,
+                    user);
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException(

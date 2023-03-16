@@ -45,7 +45,8 @@ public class ProgrammingExerciseFeedbackService {
     }
 
     /**
-     * From a list of build run feedbacks, extract all test cases. If an already stored test case is not found anymore in the build result, it will not be deleted, but set inactive.
+     * From a list of build run feedbacks, extract all test cases. If an already stored test case is not found anymore in the build result, it will not be deleted, but set
+     * inactive.
      * This way old test cases are not lost, some interfaces in the client might need this information to e.g. show warnings.
      *
      * @param feedbacks list of build log output.

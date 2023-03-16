@@ -27,8 +27,8 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
     protected final TestwiseCoverageService testwiseCoverageService;
 
-    public AbstractContinuousIntegrationResultService(FeedbackRepository feedbackRepository,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
+    public AbstractContinuousIntegrationResultService(FeedbackRepository feedbackRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
+            TestwiseCoverageService testwiseCoverageService) {
         this.feedbackRepository = feedbackRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.testwiseCoverageService = testwiseCoverageService;
