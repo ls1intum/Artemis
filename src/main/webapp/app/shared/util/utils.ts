@@ -148,6 +148,10 @@ export const isDate = (input: any) => {
     return input instanceof Date || Object.prototype.toString.call(input) === '[object Date]';
 };
 
+export const addDelay = async (t: number) => {
+    return new Promise((res) => setTimeout(res, t));
+};
+
 /**
  * Represents the inclusive range with a lower and upper bound
  */
