@@ -91,7 +91,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
                 next: (resp) => {
                     const updatedConfiguration = resp.body!;
                     this.course.tutorialGroupsConfiguration = updatedConfiguration;
-                    this.courseStorageService.notifyCourseUpdatesSubscribers(this.course);
+                    this.courseStorageService.updateCourse(this.course);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             })

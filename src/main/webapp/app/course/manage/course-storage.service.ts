@@ -7,7 +7,7 @@ import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 export class CourseStorageService {
     private storedCourses: Course[] = [];
 
-    private readonly courseUpdates: Map<number, SubjectObservablePair<Course>> = new Map();
+    private readonly courseUpdateSubscriptions: Map<number, SubjectObservablePair<Course>> = new Map();
 
     setCourses(courses: Course[]) {
         this.storedCourses = courses;
@@ -17,22 +17,19 @@ export class CourseStorageService {
         return this.storedCourses.find((course) => course.id === courseId);
     }
 
-    updateCourse(course: Course) {
-        // filter out the old course object with the same id
-        this.storedCourses = this.storedCourses.filter((existingCourse) => existingCourse.id !== course.id);
-        this.storedCourses.push(course);
-    }
-
-    notifyCourseUpdatesSubscribers(course: Course | null): void {
+    updateCourse(course: Course | null): void {
         if (course) {
-            return this.courseUpdates.get(course.id!)?.subject.next(course);
+            // filter out the old course object with the same id
+            this.storedCourses = this.storedCourses.filter((existingCourse) => existingCourse.id !== course.id);
+            this.storedCourses.push(course);
+            return this.courseUpdateSubscriptions.get(course.id!)?.subject.next(course);
         }
     }
 
     subscribeToCourseUpdates(courseId: number): Observable<Course> {
-        if (!this.courseUpdates.has(courseId)) {
-            this.courseUpdates.set(courseId, new SubjectObservablePair());
+        if (!this.courseUpdateSubscriptions.has(courseId)) {
+            this.courseUpdateSubscriptions.set(courseId, new SubjectObservablePair());
         }
-        return this.courseUpdates.get(courseId)!.observable;
+        return this.courseUpdateSubscriptions.get(courseId)!.observable;
     }
 }

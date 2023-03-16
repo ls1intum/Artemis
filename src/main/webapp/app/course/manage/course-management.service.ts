@@ -21,9 +21,8 @@ import { objectToJsonBlob } from 'app/utils/blob-util';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
-import { ExerciseType, ExerciseTypeTOTAL } from 'app/entities/exercise.model';
+import { ExerciseType, ExerciseTypeTOTAL, ScoresPerExerciseType } from 'app/entities/exercise.model';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
-import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
@@ -181,22 +180,22 @@ export class CourseManagementService {
                 return res;
             }),
             map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
-            tap((res: EntityResponseType) => this.courseStorageService.notifyCourseUpdatesSubscribers(res.body)),
+            tap((res: EntityResponseType) => this.courseStorageService.updateCourse(res.body)),
         );
     }
 
     saveScoresInStorage(courseForDashboardDTO: CourseForDashboardDTO) {
         // Convert the received object to a Map.
-        const scoresPerExerciseType: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO> = new Map();
+        const scoresPerExerciseType: ScoresPerExerciseType = new Map();
         Object.entries(courseForDashboardDTO.scoresPerExerciseType).forEach(([exerciseType, courseScores]) => {
             let exerciseTypeTyped: ExerciseType | ExerciseTypeTOTAL | undefined = undefined;
             if (exerciseType === ExerciseTypeTOTAL.TOTAL) {
                 exerciseTypeTyped = ExerciseTypeTOTAL.TOTAL;
             } else if (Object.values(ExerciseType).some((value) => value === exerciseType)) {
-                exerciseTypeTyped = <ExerciseType>exerciseType;
+                exerciseTypeTyped = exerciseType as ExerciseType;
             }
 
-            if (exerciseTypeTyped !== undefined) {
+            if (exerciseTypeTyped) {
                 scoresPerExerciseType.set(exerciseTypeTyped, courseScores);
             }
         });

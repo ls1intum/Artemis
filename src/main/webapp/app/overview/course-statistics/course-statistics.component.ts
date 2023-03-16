@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash-es';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { Exercise, ExerciseType, ExerciseTypeTOTAL, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, ExerciseTypeTOTAL, IncludedInOverallScore, ScoresPerExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { GradeType } from 'app/entities/grading-scale.model';
@@ -23,7 +23,6 @@ import { ScoreType } from 'app/shared/constants/score-type.constants';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
@@ -547,9 +546,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      */
     private retrieveScoreTypeForExerciseType(exerciseType: ExerciseType | ExerciseTypeTOTAL, scoreType: ScoreType): number {
         if (exerciseType != undefined && scoreType != undefined) {
-            const scoresPerExerciseTypeForCourse: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO> | undefined = this.scoresStorageService.getStoredScoresPerExerciseType(
-                this.courseId,
-            );
+            const scoresPerExerciseTypeForCourse: ScoresPerExerciseType | undefined = this.scoresStorageService.getStoredScoresPerExerciseType(this.courseId);
             if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse.get(exerciseType)) {
                 if ([ScoreType.ABSOLUTE_SCORE, ScoreType.RELATIVE_SCORE, ScoreType.PRESENTATION_SCORE, ScoreType.CURRENT_RELATIVE_SCORE].includes(scoreType)) {
                     return scoresPerExerciseTypeForCourse.get(exerciseType)!.studentScores[scoreType];

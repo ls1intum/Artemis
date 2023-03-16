@@ -22,6 +22,8 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
 
     newTutorialGroupsConfiguration = new TutorialGroupsConfiguration();
     isLoading: boolean;
+    course: Course;
+
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
@@ -32,8 +34,6 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
 
         private cdr: ChangeDetectorRef,
     ) {}
-
-    course: Course;
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -75,7 +75,6 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
             .subscribe({
                 next: (resp) => {
                     this.course.tutorialGroupsConfiguration = resp.body!;
-                    this.courseStorageService.notifyCourseUpdatesSubscribers(this.course);
                     this.courseStorageService.updateCourse(this.course);
                     this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups-checklist']);
                 },
