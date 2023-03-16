@@ -46,7 +46,11 @@
         <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.tutorialGroupSchedule ? tutorialGroup.tutorialGroupSchedule?.location : '' }} </span>
     </td>
     <td>
-        {{ tutorialGroup.tutorialGroupSchedule ? tutorialGroup.tutorialGroupSchedule?.startTime + '-' + tutorialGroup.tutorialGroupSchedule?.endTime : '' }}
+        {{
+            tutorialGroup.tutorialGroupSchedule
+                ? (tutorialGroup.tutorialGroupSchedule?.startTime | removeSeconds) + '-' + (tutorialGroup.tutorialGroupSchedule?.endTime | removeSeconds)
+                : ''
+        }}
     </td>
     <td>{{ tutorialGroup.numberOfRegisteredUsers }}</td>
     <td>
