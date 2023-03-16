@@ -449,8 +449,8 @@ public class CourseResource {
         courseService.fetchPlagiarismCasesForCourses(courses, user.getId());
         List<CourseForDashboardDTO> coursesForDashboard = new ArrayList<>();
         for (Course course : courses) {
-            CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
-            coursesForDashboard.add(courseForDashboard);
+            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
+            coursesForDashboard.add(courseForDashboardDTO);
         }
         logDuration(courses, user, timeNanoStart);
         return coursesForDashboard;

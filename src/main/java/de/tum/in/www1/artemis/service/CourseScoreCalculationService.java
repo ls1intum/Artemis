@@ -188,6 +188,8 @@ public class CourseScoreCalculationService {
             // If no participations are found for the course, no value is set to the course's participations and trying to access them here would throw a
             // LazyInitializationException. This is why we first need to check if the participations are initialized before adding them to the list of participations.
             // If they are not initialized, this means that there are no participations for this exercise and user.
+            // TODO: Look into refactoring the fetchParticipationsWithSubmissionsAndResultsForCourses method in the CourseService to always initialize the participations (to an
+            // empty list if there aren't any). This way you don't need this very unintuitive check for the initialization state.
             if (Hibernate.isInitialized(exercise.getStudentParticipations())) {
                 exerciseParticipation = exercise.getStudentParticipations().iterator().next();
                 exerciseParticipation.setExercise(exercise);
