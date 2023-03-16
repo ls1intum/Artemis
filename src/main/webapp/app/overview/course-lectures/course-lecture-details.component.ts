@@ -88,10 +88,6 @@ export class CourseLectureDetailsComponent implements OnInit {
             });
     }
 
-    showGoToLectureManagementButton(): boolean {
-        return !!this.lecture?.course?.isAtLeastTutor;
-    }
-
     redirectToLectureManagement(): void {
         this.router.navigate(['course-management', this.lecture?.course?.id, 'lectures', this.lecture?.id]);
     }

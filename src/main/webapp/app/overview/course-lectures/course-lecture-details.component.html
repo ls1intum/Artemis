@@ -19,7 +19,7 @@
                     </span>
                 </h4>
             </div>
-            <div class="col-auto wrapper-btn-manage-lecture" *ngIf="showGoToLectureManagementButton()">
+            <div class="col-auto wrapper-btn-manage-lecture" *ngIf="!!this.lecture?.course?.isAtLeastTutor">
                 <button id="manageLectureButton" class="btn btn-secondary" (click)="redirectToLectureManagement()">
                     {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
                 </button>
