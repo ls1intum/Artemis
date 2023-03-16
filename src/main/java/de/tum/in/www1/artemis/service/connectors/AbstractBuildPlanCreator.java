@@ -39,7 +39,7 @@ public abstract class AbstractBuildPlanCreator {
      */
     public String generateBuildPlanURL(ProgrammingExercise exercise) {
         programmingExerciseRepository.generateBuildPlanAccessSecretIfNotExists(exercise);
-        return String.format("%s/api/programming-exercises/%s/build-plan?secret=%s", artemisServerUrl, exercise.getId(), exercise.getBuildPlanAccessSecret());
+        return String.format("%s/api/programming-exercises/%d/build-plan?secret=%s", artemisServerUrl, exercise.getId(), exercise.getBuildPlanAccessSecret());
     }
 
     /**
