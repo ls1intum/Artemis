@@ -1,3 +1,8 @@
+# defines the default .war file build stage (options: builder, external_builder)
+ARG WAR_FILE_STAGE="builder"
+#default path of the built .war files
+ARG WAR_FILE_PATH="/opt/artemis/build/libs"
+
 #-----------------------------------------------------------------------------------------------------------------------
 # build stage
 #-----------------------------------------------------------------------------------------------------------------------
@@ -8,6 +13,23 @@ WORKDIR /opt/artemis
 COPY . .
 
 RUN ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar
+
+#-----------------------------------------------------------------------------------------------------------------------
+# external build stage
+#-----------------------------------------------------------------------------------------------------------------------
+FROM docker.io/library/alpine:3 as external_builder
+
+#default import path of the externally built .war file (./build/libs for IDE builds, . for bamboo)
+ARG WAR_FILE_IMPORT_PATH=.
+
+# transfer the .war file from the current directory to the default WAR_FILE_PATH
+WORKDIR ${WAR_FILE_PATH}
+COPY ${WAR_FILE_IMPORT_PATH}/*.war Artemis.war
+
+#-----------------------------------------------------------------------------------------------------------------------
+# war file stage (decides whether an external .war file will be used or the Docker built .war file)
+#-----------------------------------------------------------------------------------------------------------------------
+FROM ${WAR_FILE_STAGE} as war_file
 
 #-----------------------------------------------------------------------------------------------------------------------
 # runtime stage
@@ -37,9 +59,8 @@ USER artemis:artemis
 
 # Copy Artemis.war to execution location
 WORKDIR /opt/artemis
-ARG WAR_PATH=build/libs
 
-COPY --chown=artemis:artemis --from=builder /opt/artemis/$WAR_PATH/*.war Artemis.war
+COPY --chown=artemis:artemis --from=war_file ${WAR_FILE_PATH}/*.war Artemis.war
 
 VOLUME ["/opt/artemis/config"]
 VOLUME ["/opt/artemis/data"]

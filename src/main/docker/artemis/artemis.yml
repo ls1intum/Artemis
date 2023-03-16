@@ -13,6 +13,7 @@ services:
             context: ../../../..
             dockerfile: src/main/docker/artemis/Dockerfile
             pull: true
+            target: runtime
         volumes:
             - artemis-data:/opt/artemis/data
         env_file:
