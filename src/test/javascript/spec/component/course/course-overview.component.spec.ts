@@ -187,13 +187,11 @@ describe('CourseOverviewComponent', () => {
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
-                jhiWebsocketServiceReceiveStub = jest.spyOn(jhiWebsocketService, 'receive');
-                jhiWebsocketServiceReceiveStub.mockReturnValue(of(quizExercise));
+                jhiWebsocketServiceReceiveStub = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(quizExercise));
                 jhiWebsocketServiceSubscribeStub = jest.spyOn(jhiWebsocketService, 'subscribe');
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
-                findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
-                // default is to return the course
-                findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+                // default for findOneForDashboardStub is to return the course
+                findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
             });
     }));
 

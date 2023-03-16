@@ -17,10 +17,10 @@ describe('CourseRegistrationButtonComponent', () => {
     let courseService: CourseManagementService;
     let accountService: AccountService;
     let profileService: ProfileService;
-    let registerForCourseSpy: jest.SpyInstance;
+    let registerForCourseStub: jest.SpyInstance;
     let identityStub: jest.SpyInstance;
     let getProfileInfoStub: jest.SpyInstance;
-    let onRegistrationStub: jest.SpyInstance;
+    let onRegistrationSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -36,9 +36,9 @@ describe('CourseRegistrationButtonComponent', () => {
                 courseService = TestBed.inject(CourseManagementService);
                 accountService = TestBed.inject(AccountService);
                 profileService = TestBed.inject(ProfileService);
-                onRegistrationStub = jest.spyOn(component.onRegistration, 'emit');
+                onRegistrationSpy = jest.spyOn(component.onRegistration, 'emit');
 
-                registerForCourseSpy = jest.spyOn(courseService, 'registerForCourse').mockReturnValue(of(new HttpResponse({ body: new User() })));
+                registerForCourseStub = jest.spyOn(courseService, 'registerForCourse').mockReturnValue(of(new HttpResponse({ body: new User() })));
                 identityStub = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'ga12tes' } as User));
                 getProfileInfoStub = jest
                     .spyOn(profileService, 'getProfileInfo')
@@ -60,12 +60,12 @@ describe('CourseRegistrationButtonComponent', () => {
     it('should register for course', () => {
         component.registerForCourse(1);
 
-        expect(registerForCourseSpy).toHaveBeenCalledOnce();
+        expect(registerForCourseStub).toHaveBeenCalledOnce();
     });
 
     it('should should fire onRegistration after registration', () => {
         component.registerForCourse(1);
 
-        expect(onRegistrationStub).toHaveBeenCalledOnce();
+        expect(onRegistrationSpy).toHaveBeenCalledOnce();
     });
 });

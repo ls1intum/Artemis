@@ -3,9 +3,8 @@ package de.tum.in.www1.artemis.util;
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -187,10 +186,10 @@ public class CourseTestService {
 
     // Test
     public void testCreateCourseWithPermission() throws Exception {
-        assertThrows(EntityNotFoundException.class, () -> courseRepo.findByIdElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> courseRepo.findByIdWithExercisesAndLecturesElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> courseRepo.findWithEagerOrganizationsElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> courseRepo.findByIdWithEagerExercisesElseThrow(Long.MAX_VALUE));
+        assertThatThrownBy(() -> courseRepo.findByIdElseThrow(Long.MAX_VALUE)).isInstanceOf(EntityNotFoundException.class);
+        assertThatThrownBy(() -> courseRepo.findByIdWithExercisesAndLecturesElseThrow(Long.MAX_VALUE)).isInstanceOf(EntityNotFoundException.class);
+        assertThatThrownBy(() -> courseRepo.findWithEagerOrganizationsElseThrow(Long.MAX_VALUE)).isInstanceOf(EntityNotFoundException.class);
+        assertThatThrownBy(() -> courseRepo.findByIdWithEagerExercisesElseThrow(Long.MAX_VALUE)).isInstanceOf(EntityNotFoundException.class);
 
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
@@ -2590,7 +2589,7 @@ public class CourseTestService {
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getLtiKey()).isNotNull();
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getLtiSecret()).isNotNull();
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getRegistrationId()).isNotNull();
-        assertEquals(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getUserPrefix(), courseWithOnlineConfiguration.getShortName());
+        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo(courseWithOnlineConfiguration.getShortName());
     }
 
     public void testUpdateToOnlineCourse() throws Exception {
@@ -2606,7 +2605,7 @@ public class CourseTestService {
         assertThat(updatedCourse.getOnlineCourseConfiguration().getLtiKey()).isNotNull();
         assertThat(updatedCourse.getOnlineCourseConfiguration().getLtiSecret()).isNotNull();
         assertThat(updatedCourse.getOnlineCourseConfiguration().getRegistrationId()).isNotNull();
-        assertEquals(updatedCourse.getOnlineCourseConfiguration().getUserPrefix(), updatedCourse.getShortName());
+        assertThat(updatedCourse.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo(updatedCourse.getShortName());
     }
 
     public void testOnlineCourseConfigurationIsLazyLoaded() throws Exception {
@@ -2641,7 +2640,7 @@ public class CourseTestService {
         assertThat(ocConfiguration.getLtiKey()).isNotNull();
         assertThat(ocConfiguration.getLtiSecret()).isNotNull();
         assertThat(ocConfiguration.getRegistrationId()).isNotNull();
-        assertEquals(ocConfiguration.getUserPrefix(), actualCourse.getShortName());
+        assertThat(ocConfiguration.getUserPrefix()).isEqualTo(actualCourse.getShortName());
     }
 
     // Test
@@ -2775,13 +2774,7 @@ public class CourseTestService {
 
         OnlineCourseConfiguration response = request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class,
                 HttpStatus.OK);
-        assertEquals("key", response.getLtiKey());
-        assertEquals("secret", response.getLtiSecret());
-        assertEquals("prefix", response.getUserPrefix());
-        assertEquals("random", response.getRegistrationId());
-        assertEquals("authUri", response.getAuthorizationUri());
-        assertEquals("tokenUri", response.getTokenUri());
-        assertEquals("jwksUri", response.getJwkSetUri());
+        assertThat(response).usingRecursiveComparison().ignoringFields("id").isEqualTo(ocConfiguration);
     }
 
     public MockHttpServletRequestBuilder buildCreateCourse(@NotNull Course course) throws JsonProcessingException {

@@ -149,7 +149,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                   AND course.onlineCourse = false
                   AND course.registrationEnabled = true
             """)
-    List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
+    List<Course> findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
 
     @Query("""
                 SELECT course
@@ -317,8 +317,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      *
      * @return the list of course entities
      */
-    default List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites() {
-        return findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(ZonedDateTime.now());
+    default List<Course> findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites() {
+        return findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(ZonedDateTime.now());
     }
 
     /**

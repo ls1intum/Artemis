@@ -243,7 +243,7 @@ public class CourseService {
      * @return an unmodifiable set of all courses for the user
      */
     public Set<Course> findAllActiveForUser(User user) {
-        return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> isCourseVisibleForUser(user, course)).collect(Collectors.toUnmodifiableSet());
+        return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> isCourseVisibleForUser(user, course)).collect(Collectors.toSet());
     }
 
     /**

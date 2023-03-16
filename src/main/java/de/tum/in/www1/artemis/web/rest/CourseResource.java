@@ -388,7 +388,7 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
         Set<Course> allRegisteredCourses = courseService.findAllActiveForUser(user);
-        List<Course> allCoursesToPotentiallyRegister = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites();
+        List<Course> allCoursesToPotentiallyRegister = courseRepository.findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites();
         // check whether registration is actually possible for each of the courses
         return allCoursesToPotentiallyRegister.stream().filter(course -> {
             // check that self-registration is allowed for the user in this course

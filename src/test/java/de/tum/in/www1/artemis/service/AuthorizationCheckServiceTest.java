@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
 
 import java.time.ZonedDateTime;
 
@@ -63,7 +63,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
         void testIsUserAllowedToSelfRegisterForCourseForAllowed() {
             Course course = getCourseForSelfRegistrationAllowedTest();
             courseRepository.save(course);
-            assertDoesNotThrow(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course));
+            assertThatCode(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course)).doesNotThrowAnyException();
         }
 
         @Test
@@ -73,7 +73,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
             var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
             Course course = getCourseForSelfRegistrationAllowedTest();
             courseRepository.save(course);
-            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(student2, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(student2, course));
         }
 
         @Test
@@ -82,7 +82,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
             Course course = getCourseForSelfRegistrationAllowedTest();
             course.setStartDate(ZonedDateTime.now().plusDays(1));
             courseRepository.save(course);
-            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course));
         }
 
         @Test
@@ -91,7 +91,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
             Course course = getCourseForSelfRegistrationAllowedTest();
             course.setEndDate(ZonedDateTime.now().minusDays(1));
             courseRepository.save(course);
-            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course));
         }
 
         @Test
@@ -100,14 +100,15 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
             Course course = getCourseForSelfRegistrationAllowedTest();
             course.setRegistrationEnabled(false);
             courseRepository.save(course);
-            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course));
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToSelfRegisterForCourseForDifferentOrganizations() {
             var courseWithOrganizations = database.createCourseWithOrganizations();
-            assertThrows(AccessForbiddenException.class, () -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, courseWithOrganizations));
+            assertThatExceptionOfType(AccessForbiddenException.class)
+                    .isThrownBy(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, courseWithOrganizations));
         }
     }
 }
