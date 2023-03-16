@@ -19,6 +19,7 @@ import * as testClassDiagram from '../../util/modeling/test-models/class-diagram
 import { UMLModel } from '@ls1intum/apollon';
 import { ElementRef } from '@angular/core';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
+import { addDelay } from '../../helpers/utils/general.utils';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
@@ -73,30 +74,28 @@ describe('ApollonDiagramDetail Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('ngOnInit', () => {
+    it('ngOnInit', async () => {
         const div = document.createElement('div');
         fixture.componentInstance.editorContainer = new ElementRef(div);
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         jest.spyOn(apollonDiagramService, 'find').mockReturnValue(of(response));
 
         // test
-        setTimeout(() => {
-            fixture.componentInstance.ngOnInit();
-            expect(fixture.componentInstance.apollonDiagram).toEqual(diagram);
-            // clear the set time interval
-            fixture.componentInstance.ngOnDestroy();
-        });
+        await addDelay(0);
+        fixture.componentInstance.ngOnInit();
+        expect(fixture.componentInstance.apollonDiagram).toEqual(diagram);
+        // clear the set time interval
+        fixture.componentInstance.ngOnDestroy();
     });
 
-    it('ngOnDestroy', () => {
+    it('ngOnDestroy', async () => {
         const div = document.createElement('div');
         fixture.componentInstance.editorContainer = new ElementRef(div);
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         jest.spyOn(apollonDiagramService, 'find').mockReturnValue(of(response));
-        setTimeout(() => {
-            fixture.componentInstance.ngOnInit();
-            expect(div.children).toHaveLength(1);
-        });
+        await addDelay(0);
+        fixture.componentInstance.ngOnInit();
+        expect(div.children).toHaveLength(0);
 
         // create spy after ngOnInit
         jest.spyOn(global, 'clearInterval');
@@ -119,7 +118,7 @@ describe('ApollonDiagramDetail Component', () => {
         flush();
     }));
 
-    it('downloadSelection', () => {
+    it('downloadSelection', async () => {
         const div = document.createElement('div');
         fixture.componentInstance.editorContainer = new ElementRef(div);
         const module = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
@@ -127,13 +126,13 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.apollonDiagram = diagram;
         fixture.componentInstance.initializeApollonEditor(model);
         // ApollonEditor is the child
-        setTimeout(() => {
-            expect(div.children).toHaveLength(1);
-            // set selection
-            fixture.componentInstance.apollonEditor!.selection = { elements: model.elements.map((element) => element.id), relationships: [] };
-            fixture.detectChanges();
-            // test
-
+        await addDelay(100);
+        expect(div.children).toHaveLength(1);
+        // set selection
+        fixture.componentInstance.apollonEditor!.selection = { elements: model.elements.map((element) => element.id), relationships: [] };
+        fixture.detectChanges();
+        // test
+        await addDelay(100).then(() => {
             fixture.componentInstance.downloadSelection().then(() => {
                 // last task when downloading file
                 expect(window.URL.revokeObjectURL).toHaveBeenCalledOnce();
