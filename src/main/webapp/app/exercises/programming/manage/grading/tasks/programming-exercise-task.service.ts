@@ -109,17 +109,14 @@ export class ProgrammingExerciseTaskService {
 
     private initializeTasks = () => {
         this.getTasksByExercise(this.exercise).subscribe((serverSideTasks) => {
-            const tasks = serverSideTasks
-                .map((task) => task as ProgrammingExerciseTask)
-                .map((task) => {
-                    task.testCases = task.testCases ?? [];
-                    return task;
-                })
-                .map(this.updateTask);
-            this.totalWeights = sum(tasks.map((task) => task.weight ?? 0));
+            this.tasks = serverSideTasks.map((task) => task as ProgrammingExerciseTask);
+
+            // configureTestCases needs tasks to be set be to be able to use the testCases getter
+            this.tasks = this.tasks.map(this.configureTestCases).map(this.updateTask);
+            this.totalWeights = sum(this.tasks.map((task) => task.weight ?? 0));
 
             // Task points need to be updated again here since weight is not available before
-            this.tasks = tasks.map(this.updateTaskPoints).map(this.addGradingStats);
+            this.tasks = this.tasks.map(this.updateTaskPoints).map(this.addGradingStats);
         });
     };
 
@@ -143,6 +140,14 @@ export class ProgrammingExerciseTaskService {
             task.stats!.numFailed += testStats.numFailed;
         });
 
+        return task;
+    };
+
+    private configureTestCases = (task: ProgrammingExerciseTask): ProgrammingExerciseTask => {
+        task.testCases = task.testCases ?? [];
+
+        // Set same testcases in tasks to same reference
+        task.testCases = task.testCases.map((testCase) => this.testCases.find((firstTestCase) => firstTestCase.id === testCase.id)) as ProgrammingExerciseTestCase[];
         return task;
     };
 
