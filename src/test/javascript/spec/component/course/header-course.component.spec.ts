@@ -84,7 +84,7 @@ describe('Header Course Component', () => {
         const urlSpy = jest.spyOn(router, 'url', 'get');
         urlSpy.mockReturnValue('/some-url');
 
-        const showManageLectureButton = component.showGoToCourseManagementButton();
+        const showManageLectureButton = component.shouldShowGoToCourseManagementButton();
         expect(showManageLectureButton).toBeTrue();
     });
 
@@ -95,7 +95,7 @@ describe('Header Course Component', () => {
         const urlSpy = jest.spyOn(router, 'url', 'get');
         urlSpy.mockReturnValue('/course-management/some-path');
 
-        const showManageLectureButton = component.showGoToCourseManagementButton();
+        const showManageLectureButton = component.shouldShowGoToCourseManagementButton();
         expect(showManageLectureButton).toBeFalse();
     });
 
@@ -106,7 +106,7 @@ describe('Header Course Component', () => {
         const urlSpy = jest.spyOn(router, 'url', 'get');
         urlSpy.mockReturnValue('/some-url');
 
-        const showManageLectureButton = component.showGoToCourseManagementButton();
+        const showManageLectureButton = component.shouldShowGoToCourseManagementButton();
         expect(showManageLectureButton).toBeFalse();
     });
 

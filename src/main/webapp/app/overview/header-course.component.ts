@@ -53,7 +53,7 @@ export class HeaderCourseComponent implements OnChanges {
         }
     }
 
-    showGoToCourseManagementButton() {
+    shouldShowGoToCourseManagementButton() {
         const courseManagementPage = this.router.url.startsWith('/course-management');
         return !courseManagementPage && this.course.isAtLeastTutor;
     }

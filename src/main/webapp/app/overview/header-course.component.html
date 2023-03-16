@@ -9,7 +9,7 @@
                 </h6>
             </ng-container>
         </div>
-        <div class="col-auto wrapper-btn-manage-course" *ngIf="showGoToCourseManagementButton()">
+        <div class="col-auto wrapper-btn-manage-course" *ngIf="shouldShowGoToCourseManagementButton()">
             <button class="btn btn-secondary" (click)="redirectToCourseManagement()">
                 {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
             </button>
