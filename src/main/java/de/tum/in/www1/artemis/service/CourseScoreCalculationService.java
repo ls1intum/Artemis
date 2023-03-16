@@ -35,6 +35,8 @@ public class CourseScoreCalculationService {
 
     /**
      * Scores are calculated for all exercises ("total") as well as for the subset of exercises of each exercise type.
+     * The client then receives a scoresPerExerciseType map with one entry for each exercise type ({@link ExerciseType} enum) and one for the key "total".
+     * This constant defines the name of the key for the total score.
      */
     public static final String TOTAL = "total";
 
@@ -51,7 +53,7 @@ public class CourseScoreCalculationService {
         this.plagiarismCaseRepository = plagiarismCaseRepository;
     }
 
-    private record MaxAndReachablePoints(double maxPoints, double reachablePoints) {
+    record MaxAndReachablePoints(double maxPoints, double reachablePoints) {
     }
 
     /**
@@ -144,8 +146,7 @@ public class CourseScoreCalculationService {
 
     private StudentScoresForExamBonusSourceDTO constructStudentScoresForExamBonusSourceDTO(Course course, Long studentId, List<StudentParticipation> participations,
             MaxAndReachablePoints maxAndReachablePoints, List<PlagiarismCase> plagiarismCases) {
-        StudentScoresDTO studentScores = calculateCourseScoreForStudent(course, studentId, participations, maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints,
-                plagiarismCases);
+        StudentScoresDTO studentScores = calculateCourseScoreForStudent(course, studentId, participations, maxAndReachablePoints, plagiarismCases);
 
         boolean presentationScorePassed;
         PlagiarismVerdict mostSeverePlagiarismVerdict = null;
@@ -241,8 +242,7 @@ public class CourseScoreCalculationService {
         }
 
         // Get scores for all exercises in course.
-        StudentScoresDTO totalStudentScores = calculateCourseScoreForStudent(course, userId, studentParticipations, maxAndReachablePoints.maxPoints,
-                maxAndReachablePoints.reachablePoints, plagiarismCases);
+        StudentScoresDTO totalStudentScores = calculateCourseScoreForStudent(course, userId, studentParticipations, maxAndReachablePoints, plagiarismCases);
         CourseScoresDTO totalScores = new CourseScoresDTO(maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints, totalStudentScores);
         scoresPerExerciseType.put(TOTAL, totalScores);
 
@@ -259,8 +259,8 @@ public class CourseScoreCalculationService {
             List<PlagiarismCase> plagiarismCasesOfExerciseType = plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getExercise().getExerciseType() == exerciseType)
                     .toList();
 
-            StudentScoresDTO studentScoresOfExerciseType = calculateCourseScoreForStudent(course, userId, studentParticipationsOfExerciseType,
-                    maxAndReachablePointsOfExerciseType.maxPoints, maxAndReachablePointsOfExerciseType.reachablePoints, plagiarismCasesOfExerciseType);
+            StudentScoresDTO studentScoresOfExerciseType = calculateCourseScoreForStudent(course, userId, studentParticipationsOfExerciseType, maxAndReachablePointsOfExerciseType,
+                    plagiarismCasesOfExerciseType);
             CourseScoresDTO scoresOfExerciseType = new CourseScoresDTO(maxAndReachablePointsOfExerciseType.maxPoints, maxAndReachablePointsOfExerciseType.reachablePoints,
                     studentScoresOfExerciseType);
             scoresPerExerciseType.put(exerciseType.getExerciseTypeAsString(), scoresOfExerciseType);
@@ -273,16 +273,15 @@ public class CourseScoreCalculationService {
      * Calculates the presentation score, relative and absolute points for the given studentId and corresponding participationsOfStudent
      * and takes the effects of related plagiarism verdicts on the grade into account.
      *
-     * @param course                     the course the scores are calculated for.
-     * @param studentId                  the id of the student who has participated in the course exercises.
-     * @param participationsOfStudent    should be non-empty. The exercise participations of the given student.
-     * @param maxPointsInCourse          max points in the given course.
-     * @param reachableMaxPointsInCourse max points achievable in the given course depending on the due dates of the exercises.
-     * @param plagiarismCases            the plagiarism verdicts for the student.
+     * @param course                  the course the scores are calculated for.
+     * @param studentId               the id of the student who has participated in the course exercises.
+     * @param participationsOfStudent should be non-empty. The exercise participations of the given student.
+     * @param maxAndReachablePoints   max points and max reachable points in the given course.
+     * @param plagiarismCases         the plagiarism verdicts for the student.
      * @return a StudentScoresDTO instance with the presentation score, relative and absolute points achieved by the given student.
      */
-    public StudentScoresDTO calculateCourseScoreForStudent(Course course, Long studentId, List<StudentParticipation> participationsOfStudent, double maxPointsInCourse,
-            double reachableMaxPointsInCourse, List<PlagiarismCase> plagiarismCases) {
+    public StudentScoresDTO calculateCourseScoreForStudent(Course course, Long studentId, List<StudentParticipation> participationsOfStudent,
+            MaxAndReachablePoints maxAndReachablePoints, List<PlagiarismCase> plagiarismCases) {
 
         PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
 
@@ -310,9 +309,11 @@ public class CourseScoreCalculationService {
         }
 
         double absolutePoints = roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse, course);
-        double relativeScore = maxPointsInCourse > 0 ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxPointsInCourse * 100.0, course) : 0.0;
-        double currentRelativeScore = reachableMaxPointsInCourse > 0
-                ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / reachableMaxPointsInCourse * 100.0, course)
+        double relativeScore = maxAndReachablePoints.maxPoints > 0
+                ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxAndReachablePoints.maxPoints * 100.0, course)
+                : 0.0;
+        double currentRelativeScore = maxAndReachablePoints.reachablePoints > 0
+                ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxAndReachablePoints.reachablePoints * 100.0, course)
                 : 0.0;
 
         return new StudentScoresDTO(absolutePoints, relativeScore, currentRelativeScore, presentationScore);

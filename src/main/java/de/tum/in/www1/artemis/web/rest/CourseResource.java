@@ -423,10 +423,11 @@ public class CourseResource {
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, refresh);
-        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user);
-        courseService.fetchPlagiarismCasesForCourses(List.of(course), user.getId());
+        List<Course> courses = List.of(course);
+        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user);
+        courseService.fetchPlagiarismCasesForCourses(courses, user.getId());
         CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
-        logDuration(List.of(course), user, timeNanoStart);
+        logDuration(courses, user, timeNanoStart);
         return courseForDashboardDTO;
     }
 

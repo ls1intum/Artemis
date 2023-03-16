@@ -11,11 +11,11 @@ public class StudentScoresDTO {
 
     protected double absoluteScore;
 
-    private double relativeScore;
+    private final double relativeScore;
 
     private final double currentRelativeScore;
 
-    private int presentationScore;
+    private final int presentationScore;
 
     /**
      * @param absoluteScore        the points achieved by the student in the course.
@@ -40,19 +40,11 @@ public class StudentScoresDTO {
         return relativeScore;
     }
 
-    public void setRelativeScore(double relativeScore) {
-        this.relativeScore = relativeScore;
-    }
-
     public double getCurrentRelativeScore() {
         return currentRelativeScore;
     }
 
     public int getPresentationScore() {
         return presentationScore;
-    }
-
-    public void setPresentationScore(int presentationScore) {
-        this.presentationScore = presentationScore;
     }
 }

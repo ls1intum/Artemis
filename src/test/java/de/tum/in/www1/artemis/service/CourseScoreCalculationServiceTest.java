@@ -208,8 +208,8 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         User student = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
 
-        StudentScoresDTO studentScore = courseScoreCalculationService.calculateCourseScoreForStudent(course, student.getId(), Collections.emptyList(), 100.00, 100.00,
-                Collections.emptyList());
+        StudentScoresDTO studentScore = courseScoreCalculationService.calculateCourseScoreForStudent(course, student.getId(), Collections.emptyList(),
+                new CourseScoreCalculationService.MaxAndReachablePoints(100.00, 100.00), Collections.emptyList());
         assertThat(studentScore.getAbsoluteScore()).isEqualTo(0.0);
         assertThat(studentScore.getRelativeScore()).isEqualTo(0.0);
         assertThat(studentScore.getCurrentRelativeScore()).isEqualTo(0.0);
