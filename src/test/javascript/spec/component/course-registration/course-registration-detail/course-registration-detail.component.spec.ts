@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -86,8 +86,10 @@ describe('CourseRegistrationDetailComponent', () => {
         jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(of(httpResponseComingFromForDashboardEndpoint));
 
         component.ngOnInit();
+        tick();
 
-        return expect(component.isCourseFullyAccessible()).resolves.toBeTrue();
+        // eslint-disable-next-line jest/valid-expect
+        expect(component.isCourseFullyAccessible()).resolves.toBeTrue();
     }));
 
     it('should have a function isCourseFullyAccessible that returns false if the for-dashboard endpoint returns a 403', fakeAsync(() => {
@@ -98,8 +100,10 @@ describe('CourseRegistrationDetailComponent', () => {
         jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(throwError(httpResponseComingFromForDashboardEndpoint));
 
         component.ngOnInit();
+        tick();
 
-        return expect(component.isCourseFullyAccessible()).resolves.toBeFalse();
+        // eslint-disable-next-line jest/valid-expect
+        expect(component.isCourseFullyAccessible()).resolves.toBeFalse();
     }));
 
     it('should redirect to the course page if the dashboard version is fully accessible', fakeAsync(() => {

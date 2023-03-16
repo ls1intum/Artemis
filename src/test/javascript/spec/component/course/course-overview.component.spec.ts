@@ -2,7 +2,7 @@ import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { EMPTY, Subject, of, throwError } from 'rxjs';
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -238,9 +238,9 @@ describe('CourseOverviewComponent', () => {
             ),
         );
 
-        component.ngOnInit().then(() => {
-            expect(router.navigate).toHaveBeenCalledWith(['courses', course1.id, 'register']);
-        });
+        component.ngOnInit();
+        tick();
+        expect(router.navigate).toHaveBeenCalledWith(['courses', course1.id, 'register']);
     }));
 
     it('should call load Course methods on init', async () => {
