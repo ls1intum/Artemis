@@ -119,6 +119,13 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         }
     }
 
+    /**
+     * XML uses special characters for its syntax. If the content of XML file also contains those characters, they have
+     * to be escaped. That way, they aren't confused with the structural meaning of the XML characters.
+     *
+     * @param script The raw script containing unescaped characters.
+     * @return The script with escaped XML characters.
+     */
     private String makeSafeForXml(final String script) {
         String result = script;
         result = result.replace("'", "&apos;");
