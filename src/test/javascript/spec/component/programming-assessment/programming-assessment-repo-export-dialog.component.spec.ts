@@ -151,4 +151,18 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
         expect(exportReposStub).toHaveBeenCalledOnceWith(exerciseId, participationIdList, comp.repositoryExportOptions);
     }));
+
+    it('Export a repo with excludePracticeSubmissions as true should call exportReposByParticipantIdentifiers with correct options', fakeAsync(() => {
+        comp.participationIdList = [];
+        comp.participantIdentifierList = 'ALL';
+        const httpResponse = createBlobHttpResponse();
+        const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
+        fixture.detectChanges();
+
+        comp.repositoryExportOptions.excludePracticeSubmissions = true;
+        comp.exportRepos();
+        tick();
+
+        expect(exportReposStub).toHaveBeenCalledWith(exerciseId, ['ALL'], comp.repositoryExportOptions);
+    }));
 });
