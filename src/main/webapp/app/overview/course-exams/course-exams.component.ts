@@ -48,8 +48,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         this.course = this.courseStorageService.getCourse(this.courseId);
 
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
-            this.courseStorageService.updateCourse(course);
-            this.course = this.courseStorageService.getCourse(this.courseId);
+            this.course = course;
         });
 
         this.studentExamTestExamUpdateSubscription = this.examParticipationService
