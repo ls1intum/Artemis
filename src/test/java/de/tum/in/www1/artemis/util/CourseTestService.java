@@ -672,59 +672,51 @@ public class CourseTestService {
         }
     }
 
-    // Test
-    public void testGetCourseForDashboardAccessDenied(boolean userRefresh) throws Exception {
-        // test that a user cannot access a course he is not part of
+    private Course createCourseWithRegistrationEnabled(boolean registrationEnabled) throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
+        Course course = courses.get(0);
+        course.setRegistrationEnabled(registrationEnabled);
+        courseRepo.save(course);
+        return course;
+    }
+
+    private User removeAllGroupsFromStudent1() {
         User student = database.getUserByLogin(userPrefix + "student1");
-        // remove student from course so that they are not already registered
+        // remove student from all courses so that they are not already registered
         student.setGroups(new HashSet<>());
         userRepo.save(student);
-        // expect forbidden (403) from endpoint
-        request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.FORBIDDEN, Course.class);
+        return student;
+    }
+
+    // Test
+    public void testGetCourseForDashboardAccessDenied(boolean userRefresh) throws Exception {
+        Course course = createCourseWithRegistrationEnabled(true);
+        removeAllGroupsFromStudent1();
+        request.get("/api/courses/" + course.getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
     public void testGetCourseForDashboardForbiddenWithRegistrationPossible() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
-        // enable registration
-        Course courseToRequest = courses.get(0);
-        courseToRequest.setRegistrationEnabled(true);
-        courseRepo.save(courseToRequest);
-        User student = database.getUserByLogin(userPrefix + "student1");
-        // remove student from course so that they are not already registered
-        student.setGroups(new HashSet<>());
-        userRepo.save(student);
+        Course course = createCourseWithRegistrationEnabled(true);
+        removeAllGroupsFromStudent1();
         // still expect forbidden (403) from endpoint (only now the skipAlert flag will be set)
-        request.get("/api/courses/" + courseToRequest.getId() + "/for-dashboard", HttpStatus.FORBIDDEN, Course.class);
+        request.get("/api/courses/" + course.getId() + "/for-dashboard", HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
     public void testGetCourseForRegistration() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
-        Course courseToRequest = courses.get(0);
+        Course course = createCourseWithRegistrationEnabled(true);
         // remove student from course so that they are not already registered
-        courseToRequest.setStudentGroupName("someNonExistingStudentGroupName");
-        // however, enable registration
-        courseToRequest.setRegistrationEnabled(true);
-        courseRepo.save(courseToRequest);
-        // expect normal response
-        request.get("/api/courses/" + courseToRequest.getId() + "/for-registration", HttpStatus.OK, Course.class);
+        course.setStudentGroupName("someNonExistingStudentGroupName");
+        courseRepo.save(course);
+        request.get("/api/courses/" + course.getId() + "/for-registration", HttpStatus.OK, Course.class);
     }
 
     // Test
     public void testGetCourseForRegistrationAccessDenied() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
-        Course courseToRequest = courses.get(0);
-        User student = database.getUserByLogin(userPrefix + "student1");
-        // remove student from course so that they are not already registered
-        student.setGroups(new HashSet<>());
-        userRepo.save(student);
-        // also, explicitly DON't enable registration
-        courseToRequest.setRegistrationEnabled(false);
-        courseRepo.save(courseToRequest);
-        // expect forbidden(403)
-        request.get("/api/courses/" + courseToRequest.getId() + "/for-registration", HttpStatus.FORBIDDEN, Course.class);
+        Course course = createCourseWithRegistrationEnabled(false);
+        removeAllGroupsFromStudent1();
+        request.get("/api/courses/" + course.getId() + "/for-registration", HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
