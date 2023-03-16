@@ -121,8 +121,8 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
             restrictionLevels: [Authority.USER],
             settings: [
                 {
-                    key: 'conversationMessage',
-                    descriptionKey: 'conversationMessageDescription',
+                    key: 'newConversationMessages',
+                    descriptionKey: 'newConversationMessageDescription',
                     settingId: SettingId.NOTIFICATION__USER_NOTIFICATION__CONVERSATION_MESSAGE,
                     emailSupport: false,
                 },

@@ -19,6 +19,9 @@ public class SingleUserNotification extends Notification {
     @ManyToOne
     private User recipient;
 
+    @Column(name = "read_conversation")
+    private boolean readConversation = false;
+
     public User getRecipient() {
         return recipient;
     }
@@ -29,6 +32,14 @@ public class SingleUserNotification extends Notification {
 
     public String getTopic() {
         return "/topic/user/" + getRecipient().getId() + "/notifications";
+    }
+
+    public boolean hasReadConversation() {
+        return readConversation;
+    }
+
+    public void setReadConversation(boolean readConversation) {
+        this.readConversation = readConversation;
     }
 
     public SingleUserNotification() {

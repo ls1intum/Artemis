@@ -46,7 +46,7 @@
                 "fileSubmissionSuccessful": "File Submission Successful",
                 "programmingTestCasesChanged": "Changed Test Cases for Programming Exercises",
                 "registrationTutorialGroup": "Registration and Deregistration for Tutorial Group",
-                "conversationMessage": "New messages in conversations",
+                "newConversationMessages": "New messages in conversations",
                 "newReplyMessage": "New replies in conversations",
                 "tutorialGroupUpdateDelete": "Update and Delete of Tutorial Groups",
                 "assignUnassignTutorialGroup": "Assign and Unassign of Tutorial Groups"

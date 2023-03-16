@@ -47,7 +47,7 @@
                 "programmingTestCasesChanged": "Veränderte Testfälle bei Programmieraufgaben",
                 "registrationTutorialGroup": "An- und Abmeldungen von Übungsgruppen",
                 "tutorialGroupUpdateDelete": "Änderungen und Löschungen von Übungsgruppen",
-                "conversationMessage": "Neue Nachrichten in Unterhaltungen",
+                "newConversationMessages": "Neue Nachrichten in Unterhaltungen",
                 "newReplyMessage": "Neue Antworten in Unterhaltungen",
                 "assignUnassignTutorialGroup": "Anmeldungen und Abmeldungen von Übungsgruppenleitung"
             },
@@ -70,8 +70,8 @@
                 "registrationTutorialGroupTutorDescription": "Erhalte eine Mitteilung, wenn ein:e Student:in für deine Übungsgruppe registriert oder abgemeldet wurde",
                 "registrationTutorialGroupStudentDescription": "Erhalte eine Mitteilung, wenn du für eine Übungsgruppe registriert oder abgemeldet wurdest",
                 "tutorialGroupUpdateDeleteDescription": "Erhalte eine Mitteilung, wenn eine Übungsgruppe aktualisiert oder gelöscht wurde in der du registriert oder Tutor:in bist",
-                "conversationMessageDescription": "Lassen Sie sich benachrichtigen, wenn Sie eine neue Nachricht in einer Unterhaltung erhalten",
-                "conversationNewReplyMessageDescription": "Lassen Sie sich benachrichtigen, wenn Sie eine neue Antwort in einer Unterhaltung erhalten",
+                "conversationMessageDescription": "Lass dich benachrichtigen, wenn du eine neue Nachricht in einer Unterhaltung erhältst",
+                "conversationNewReplyMessageDescription": "Lass dich benachrichtigen, wenn du eine neue Antwort in einer Unterhaltung erhältst",
                 "assignUnassignTutorialGroupDescription": "Erhalte eine Mitteilung, wenn du als Tutor:in der Leitung einer Übungsgruppe zugewiesen oder entzogen wurdest"
             }
         }

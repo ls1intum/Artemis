@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "notificationType")
 // Annotation necessary to distinguish between concrete implementations of Notification when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = GroupNotification.class, name = "group"), @JsonSubTypes.Type(value = SingleUserNotification.class, name = "single"),
-        @JsonSubTypes.Type(value = SystemNotification.class, name = "system") })
+        @JsonSubTypes.Type(value = SystemNotification.class, name = "system"), @JsonSubTypes.Type(value = ConversationNotification.class, name = "conversation") })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Notification extends DomainObject {
 

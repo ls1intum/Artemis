@@ -216,17 +216,15 @@ public class SingleUserNotificationFactory {
             throw new IllegalArgumentException("No users provided for notification");
         }
 
-        if (notificationType == NotificationType.CONVERSATION_NEW_REPLY_MESSAGE) {
-            String text = "You have new reply in a message by " + responsibleForAction.getName() + " in course (" + answerPost.getPost().getConversation().getCourse().getTitle()
-                    + ").";
-            SingleUserNotification notification = new SingleUserNotification(user, title, text);
-            notification.setTransientAndStringTarget(createMessageReplyTarget(answerPost, answerPost.getPost().getConversation().getCourse().getId()));
-            notification.setAuthor(responsibleForAction);
-            return notification;
-        }
-        else {
+        if (notificationType != NotificationType.CONVERSATION_NEW_REPLY_MESSAGE) {
             throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
+        String text = "You have new reply in a message by " + responsibleForAction.getName() + " in course (" + answerPost.getPost().getConversation().getCourse().getTitle()
+                + ").";
+        SingleUserNotification notification = new SingleUserNotification(user, title, text);
+        notification.setTransientAndStringTarget(createMessageReplyTarget(answerPost, answerPost.getPost().getConversation().getCourse().getId()));
+        notification.setAuthor(responsibleForAction);
+        return notification;
     }
 
     /**
@@ -239,7 +237,7 @@ public class SingleUserNotificationFactory {
      * @return an instance of SingleUserNotification
      */
     public static SingleUserNotification createNotification(Conversation conversation, NotificationType notificationType, User user, User responsibleForAction) {
-        var title = findCorrespondingNotificationTitleOrThrow(notificationType);
+        String title = findCorrespondingNotificationTitleOrThrow(notificationType);
         if (user == null) {
             throw new IllegalArgumentException("No user provided for notification");
         }

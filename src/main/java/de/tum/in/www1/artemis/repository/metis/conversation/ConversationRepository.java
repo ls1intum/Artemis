@@ -1,13 +1,10 @@
 package de.tum.in.www1.artemis.repository.metis.conversation;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
 import java.util.List;
 
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -28,22 +25,22 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
         return this.findById(conversationId).orElseThrow(() -> new EntityNotFoundException("Conversation", conversationId));
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "course" })
     @Query("""
             SELECT DISTINCT c
             FROM Conversation c
                 LEFT JOIN FETCH c.conversationParticipants conversationParticipants
                 LEFT JOIN FETCH conversationParticipants.user user
+                LEFT JOIN c.course
             WHERE (user.id = :userId)
             """)
     List<Conversation> findAllWhereUserIsParticipant(@Param("userId") Long userId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "course" })
     @Query("""
             SELECT DISTINCT c
             FROM Conversation c
                 LEFT JOIN FETCH c.conversationParticipants conversationParticipants
                 LEFT JOIN FETCH conversationParticipants.user user
+                LEFT JOIN c.course
             WHERE (user.id = :userId AND conversationParticipants.unreadMessagesCount > 0)
             """)
     List<Conversation> findAllUnreadConversationsWhereUserIsParticipant(@Param("userId") Long userId);

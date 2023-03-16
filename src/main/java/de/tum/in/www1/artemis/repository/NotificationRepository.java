@@ -39,7 +39,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                                 OR (notification.course.studentGroupName IN :#{#currentGroups} AND notification.type = 'STUDENT')
                             )
                         )
-                        OR type(notification) = SingleUserNotification and notification.recipient.login = :#{#login}
+                        OR type(notification) = SingleUserNotification and notification.recipient.login = :#{#login} and notification.readConversation = false
                         OR type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :#{#tutorialGroupIds}
                         OR type(notification) = ConversationNotification
                             AND (notification.conversation.id IN :#{#conversationIds}
@@ -78,6 +78,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                         AND (notification.title NOT IN :#{#deactivatedTitles}
                             OR notification.title IS NULL
                         )
+                        AND notification.readConversation = false
                      )
                      OR (type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :#{#tutorialGroupIds}
                         AND (notification.title NOT IN :#{#deactivatedTitles}
@@ -108,4 +109,17 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             WHERE n.author.id = :userId
             """)
     void removeAuthor(@Param("userId") long userId);
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Notification notification
+            SET notification.readConversation = true
+            WHERE type(notification) = SingleUserNotification
+                AND JSON_VALUE(target, '$.conversation') = :conversationId
+                AND notification.recipient.id = :recipientId
+                AND notification.title = :newReplyMessageTitle
+            """)
+    void updateNotificationsForConversation(@Param("conversationId") long conversationId, @Param("recipientId") long recipientId,
+            @Param("newReplyMessageTitle") String newReplyMessageTitle);
 }

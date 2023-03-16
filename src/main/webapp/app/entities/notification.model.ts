@@ -7,7 +7,7 @@ export enum NotificationType {
     CONNECTION = 'connection',
     GROUP = 'group',
     SINGLE = 'single',
-    CONVERSATION = 'ConversationNotification',
+    CONVERSATION = 'conversation',
 }
 
 export class Notification implements BaseEntity {

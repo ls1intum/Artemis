@@ -23,7 +23,6 @@ import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.se
 import { TutorialGroupsNotificationService } from 'app/course/tutorial-groups/services/tutorial-groups-notification.service';
 import { MockProvider } from 'ng-mocks';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { CourseConversationsNotificationsService } from 'app/overview/course-conversations-notifications-service';
 import { OneToOneChat } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
