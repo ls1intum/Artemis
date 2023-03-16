@@ -109,7 +109,13 @@ export class ProgrammingExerciseTaskService {
 
     private initializeTasks = () => {
         this.getTasksByExercise(this.exercise).subscribe((serverSideTasks) => {
-            const tasks = (serverSideTasks ?? []).map((task) => task as ProgrammingExerciseTask).map(this.updateTask);
+            const tasks = serverSideTasks
+                .map((task) => task as ProgrammingExerciseTask)
+                .map((task) => {
+                    task.testCases = task.testCases ?? [];
+                    return task;
+                })
+                .map(this.updateTask);
             this.totalWeights = sum(tasks.map((task) => task.weight ?? 0));
 
             // Task points need to be updated again here since weight is not available before
@@ -190,6 +196,6 @@ const getSingleValue = (values: any[]) => {
     }
 };
 
-const sum = (values: any[]) => {
-    return (values ?? []).reduce((a: number, b: number) => Number(a) + Number(b));
+const sum = (values: any[]): number => {
+    return (values ?? []).reduce((a: number, b: number) => Number(a) + Number(b), 0);
 };
