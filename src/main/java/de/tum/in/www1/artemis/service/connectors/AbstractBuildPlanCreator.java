@@ -50,7 +50,6 @@ public abstract class AbstractBuildPlanCreator {
      * @param exercise The exercise for which a new build plan is created.
      */
     public void createBuildPlanForExercise(ProgrammingExercise exercise) {
-        buildPlanRepository.disconnectBuildPlanFromExercise(exercise);
         var defaultBuildPlan = generateDefaultBuildPlan(exercise);
         buildPlanRepository.setBuildPlanForExercise(defaultBuildPlan, exercise);
     }

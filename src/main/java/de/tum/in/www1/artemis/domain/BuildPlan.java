@@ -45,8 +45,4 @@ public class BuildPlan extends DomainObject {
     public Optional<ProgrammingExercise> getProgrammingExerciseById(Long exerciseId) {
         return programmingExercises.stream().filter(programmingExercise -> Objects.equals(programmingExercise.getId(), exerciseId)).findFirst();
     }
-
-    public void disconnectFromExercise(ProgrammingExercise exercise) {
-        programmingExercises.remove(exercise);
-    }
 }

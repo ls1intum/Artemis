@@ -31,22 +31,11 @@ public interface BuildPlanRepository extends JpaRepository<BuildPlan, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "programmingExercises" })
     Optional<BuildPlan> findByBuildPlan(String buildPlan);
 
-    default void setBuildPlanForExercise(String buildPlan, ProgrammingExercise exercise) {
+    default void setBuildPlanForExercise(final String buildPlan, final ProgrammingExercise exercise) {
         BuildPlan buildPlanWrapper = findByBuildPlan(buildPlan).orElse(new BuildPlan());
         buildPlanWrapper.setBuildPlan(buildPlan);
         buildPlanWrapper.addProgrammingExercise(exercise);
-        save(buildPlanWrapper);
-    }
-
-    /**
-     * Disconnects the build plan from this exercise in case it exists.
-     *
-     * @param exercise The programming exercise from which the build plan should be removed.
-     */
-    default void disconnectBuildPlanFromExercise(final ProgrammingExercise exercise) {
-        findByProgrammingExercises_IdWithProgrammingExercises(exercise.getId()).ifPresent(buildPlan -> {
-            buildPlan.disconnectFromExercise(exercise);
-            save(buildPlan);
-        });
+        buildPlanWrapper = save(buildPlanWrapper);
+        exercise.setBuildPlan(buildPlanWrapper);
     }
 }
