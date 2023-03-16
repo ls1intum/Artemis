@@ -1,5 +1,4 @@
 import { Location } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faQuestionCircle, faSort, faSortDown, faSortUp, faSquare } from '@fortawesome/free-solid-svg-icons';
@@ -361,60 +360,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         return newValue;
     }
 
-    /**
-     * Save the unsaved (edited) changes of the test cases.
-     * TODO: moved to programming-exercise-task.service.ts
-     */
-    saveTestCases() {
-        this.isSaving = true;
-
-        const testCasesToUpdate = _intersectionWith(this.testCases, this.changedTestCaseIds, (testCase: ProgrammingExerciseTestCase, id: number) => testCase.id === id);
-
-        const testCaseUpdates = testCasesToUpdate.map((testCase) => ProgrammingExerciseTestCaseUpdate.from(testCase));
-
-        if (!this.isSumOfWeightsOk(testCaseUpdates)) {
-            this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.weightSumError`);
-            this.isSaving = false;
-            return;
-        }
-
-        const saveTestCases = this.gradingService.updateTestCase(this.programmingExercise.id!, testCaseUpdates).pipe(
-            tap((updatedTestCases: ProgrammingExerciseTestCase[]) => {
-                // From successfully updated test cases from dirty checking list.
-                this.changedTestCaseIds = _differenceWith(
-                    this.changedTestCaseIds,
-                    updatedTestCases,
-                    (testCaseId: number, testCase: ProgrammingExerciseTestCase) => testCase.id === testCaseId,
-                );
-
-                // Generate the new list of test cases with the updated weights and notify the test case service.
-                const newTestCases = _unionBy(updatedTestCases, this.testCases, 'id');
-
-                this.gradingService.notifyTestCases(this.programmingExercise.id!, newTestCases);
-
-                // Find out if there are test cases that were not updated, show an error.
-                const notUpdatedTestCases = _differenceBy(testCasesToUpdate, updatedTestCases, 'id');
-                if (notUpdatedTestCases.length) {
-                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.couldNotBeUpdated`, { testCases: notUpdatedTestCases });
-                } else {
-                    this.alertService.success(`artemisApp.programmingExercise.configureGrading.testCases.updated`);
-                }
-            }),
-            catchError((error: HttpErrorResponse) => {
-                if (error.status === 400 && error.error?.errorKey) {
-                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.` + error.error.errorKey, error.error);
-                } else {
-                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.couldNotBeUpdated`, { testCases: testCasesToUpdate });
-                }
-                return of(null);
-            }),
-        );
-
-        saveTestCases.subscribe(() => {
-            this.isSaving = false;
-        });
-    }
-
     saveCategories() {
         this.isSaving = true;
 
@@ -483,29 +428,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 }),
             )
             .subscribe(() => (this.isSaving = false));
-    }
-
-    /**
-     * Reset all test cases.
-     */
-    resetTestCases() {
-        this.isSaving = true;
-        this.gradingService
-            .resetTestCases(this.programmingExercise.id!)
-            .pipe(
-                tap((testCases: ProgrammingExerciseTestCase[]) => {
-                    this.alertService.success(`artemisApp.programmingExercise.configureGrading.testCases.resetSuccessful`);
-                    this.gradingService.notifyTestCases(this.programmingExercise.id!, testCases);
-                }),
-                catchError(() => {
-                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.resetFailed`);
-                    return of(null);
-                }),
-            )
-            .subscribe(() => {
-                this.isSaving = false;
-                this.changedTestCaseIds = [];
-            });
     }
 
     resetCategories() {
