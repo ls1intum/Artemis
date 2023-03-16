@@ -17,6 +17,8 @@ export class ProgrammingExerciseTaskComponent {
     faAngleDown = faAngleDown;
     faAngleRight = faAngleRight;
 
+    readonly NOT_ASSIGNED_TO_TASK_NAME = 'Not assigned to task';
+
     testCaseVisibilityList = Object.entries(Visibility).map(([name, value]) => ({ value, name }));
 
     get numParticipations(): number {

@@ -9,16 +9,46 @@
                 <span class="task__field">{{ task.taskName }}</span>
             </div>
             <div class="task__row__cell">
-                <input type="text" class="form-control" min="0" [(ngModel)]="task.weight" name="{{ task.taskName }}-name" (change)="taskUpdateHandler()" />
+                <input
+                    [disabled]="task.taskName === NOT_ASSIGNED_TO_TASK_NAME"
+                    type="text"
+                    class="form-control"
+                    min="0"
+                    [(ngModel)]="task.weight"
+                    name="{{ task.taskName }}-name"
+                    (change)="taskUpdateHandler()"
+                />
             </div>
             <div class="task__row__cell">
-                <input type="text" class="form-control" min="0" [(ngModel)]="task.bonusMultiplier" name="{{ task.taskName }}-bonusMultiplier" (change)="taskUpdateHandler()" />
+                <input
+                    [disabled]="task.taskName === NOT_ASSIGNED_TO_TASK_NAME"
+                    type="text"
+                    class="form-control"
+                    min="0"
+                    [(ngModel)]="task.bonusMultiplier"
+                    name="{{ task.taskName }}-bonusMultiplier"
+                    (change)="taskUpdateHandler()"
+                />
             </div>
             <div class="task__row__cell">
-                <input type="text" class="form-control" min="0" [(ngModel)]="task.bonusPoints" name="{{ task.taskName }}-bonusPoints" (change)="taskUpdateHandler()" />
+                <input
+                    [disabled]="task.taskName === NOT_ASSIGNED_TO_TASK_NAME"
+                    type="text"
+                    class="form-control"
+                    min="0"
+                    [(ngModel)]="task.bonusPoints"
+                    name="{{ task.taskName }}-bonusPoints"
+                    (change)="taskUpdateHandler()"
+                />
             </div>
             <div class="task__row__cell">
-                <select [(ngModel)]="task.visibility" class="form-select" name="{{ task.taskName }}-visibility" (change)="taskUpdateHandler()">
+                <select
+                    [disabled]="task.taskName === NOT_ASSIGNED_TO_TASK_NAME"
+                    [(ngModel)]="task.visibility"
+                    class="form-select"
+                    name="{{ task.taskName }}-visibility"
+                    (change)="taskUpdateHandler()"
+                >
                     <option *ngFor="let s of testCaseVisibilityList" [value]="s.value">
                         {{ 'artemisApp.programmingExerciseTestCase.visibility.' + s.name | artemisTranslate }}
                     </option>
