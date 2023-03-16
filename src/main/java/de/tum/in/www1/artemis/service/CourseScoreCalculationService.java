@@ -56,6 +56,11 @@ public class CourseScoreCalculationService {
 
     /**
      * Calculates max and reachable max points for the given exercises.
+     * Max points are the sum of all included (see {@link #includeIntoScoreCalculation(Exercise)}) exercises, whose due date is over or unset or who are automatically assessed and
+     * assessment is done (see {@link #isAssessmentDone(Exercise)}).
+     * Reachable max points are the sum of all included and already assessed exercises.
+     * Example: An automatically assessed programming exercise that has the buildAndTestStudentSubmissionsAfterDueDate set in the future is included in the max points calculation,
+     * but not in the reachable max points calculation.
      *
      * @param exercises the exercises which are included into max points calculation
      * @return the max and reachable max points for the given exercises
@@ -66,8 +71,8 @@ public class CourseScoreCalculationService {
             return new MaxAndReachablePoints(0, 0);
         }
 
-        double maxPointsInCourse = 0.0; // the sum of all included exercises, whose due date is over or unset or who are automatically assessed and assessment is done
-        double reachableMaxPointsInCourse = 0.0; // the sum of all included and already assessed exercises
+        double maxPointsInCourse = 0.0;
+        double reachableMaxPointsInCourse = 0.0;
 
         for (var exercise : exercises) {
             if (!includeIntoScoreCalculation(exercise)) {
@@ -93,8 +98,9 @@ public class CourseScoreCalculationService {
      * @param studentIds the id of the students whose scores in the course will be calculated.
      * @return the max and reachable max points for the given course and the student scores with related plagiarism verdicts for the given student ids.
      */
+    @Nullable
     public CourseScoresForExamBonusSourceDTO calculateCourseScoresForExamBonusSource(long courseId, Collection<Long> studentIds) {
-        Set<Exercise> courseExercises = exerciseRepository.findByCourseIdWithCategories(courseId);
+        Set<Exercise> courseExercises = exerciseRepository.findAllExercisesByCourseId(courseId);
         if (courseExercises.isEmpty()) {
             return null;
         }
@@ -130,38 +136,38 @@ public class CourseScoreCalculationService {
         Course course = courseExercises.iterator().next().getCourseViaExerciseGroupOrCourseMember();
 
         List<StudentScoresForExamBonusSourceDTO> studentScoresForExamBonusSource = studentIdToParticipations.entrySet().parallelStream()
-                .map(entry -> constructStudentScoresForExamBonusSourceDTO(course, entry, maxAndReachablePoints, plagiarismCases)).toList();
+                .map(entry -> constructStudentScoresForExamBonusSourceDTO(course, entry.getKey(), entry.getValue(), maxAndReachablePoints, plagiarismCases)).toList();
 
         return new CourseScoresForExamBonusSourceDTO(maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints, course.getPresentationScore(),
                 studentScoresForExamBonusSource);
     }
 
-    private StudentScoresForExamBonusSourceDTO constructStudentScoresForExamBonusSourceDTO(Course course, Map.Entry<Long, List<StudentParticipation>> entry,
+    private StudentScoresForExamBonusSourceDTO constructStudentScoresForExamBonusSourceDTO(Course course, Long studentId, List<StudentParticipation> participations,
             MaxAndReachablePoints maxAndReachablePoints, List<PlagiarismCase> plagiarismCases) {
-        StudentScoresDTO studentScores = calculateCourseScoreForStudent(course, entry.getKey(), entry.getValue(), maxAndReachablePoints.maxPoints,
-                maxAndReachablePoints.reachablePoints, plagiarismCases);
+        StudentScoresDTO studentScores = calculateCourseScoreForStudent(course, studentId, participations, maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints,
+                plagiarismCases);
 
         boolean presentationScorePassed;
         PlagiarismVerdict mostSeverePlagiarismVerdict = null;
         boolean hasParticipated;
         PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
-        if (entry.getValue().isEmpty()) {
+        if (participations.isEmpty()) {
             presentationScorePassed = false;
             hasParticipated = false;
         }
-        else if (plagiarismMapping.studentHasVerdict(entry.getKey(), PlagiarismVerdict.PLAGIARISM)) {
+        else if (plagiarismMapping.studentHasVerdict(studentId, PlagiarismVerdict.PLAGIARISM)) {
             presentationScorePassed = false;
             mostSeverePlagiarismVerdict = PlagiarismVerdict.PLAGIARISM;
             hasParticipated = true;
         }
         else {
             presentationScorePassed = isPresentationScoreSufficientForBonus(studentScores.getPresentationScore(), course.getPresentationScore());
-            Map<Long, PlagiarismCase> plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(entry.getKey());
+            Map<Long, PlagiarismCase> plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(studentId);
             mostSeverePlagiarismVerdict = findMostServerePlagiarismVerdict(plagiarismCasesForStudent.values());
             hasParticipated = true;
         }
         return new StudentScoresForExamBonusSourceDTO(studentScores.getAbsoluteScore(), studentScores.getRelativeScore(), studentScores.getCurrentRelativeScore(),
-                studentScores.getPresentationScore(), entry.getKey(), presentationScorePassed, mostSeverePlagiarismVerdict, hasParticipated);
+                studentScores.getPresentationScore(), studentId, presentationScorePassed, mostSeverePlagiarismVerdict, hasParticipated);
     }
 
     /**
@@ -178,8 +184,7 @@ public class CourseScoreCalculationService {
             exercise.setCourse(course);
             StudentParticipation exerciseParticipation;
             // This method is used in the CourseResource where the course is first fetched with lazy participations, and participations are then fetched separately in the
-            // CourseService
-            // and added to the course if found.
+            // CourseService and added to the course if found.
             // If no participations are found for the course, no value is set to the course's participations and trying to access them here would throw a
             // LazyInitializationException. This is why we first need to check if the participations are initialized before adding them to the list of participations.
             // If they are not initialized, this means that there are no participations for this exercise and user.

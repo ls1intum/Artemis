@@ -316,6 +316,7 @@ public class ExamService {
         };
     }
 
+    @Nullable
     private Map<Long, BonusSourceResultDTO> calculateBonusSourceStudentPoints(GradingScale sourceGradingScale, Collection<Long> studentIds) {
         try {
             if (sourceGradingScale.getCourse() != null) {
