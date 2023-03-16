@@ -126,14 +126,16 @@ public class ProgrammingExerciseTaskService {
         Set<ProgrammingExerciseTestCase> testsWithTasks = tasks.stream().flatMap(task -> task.getTestCases().stream()).collect(Collectors.toSet());
 
         // Additionally add all tests that are not manually assigned to a task
-        Set<ProgrammingExerciseTestCase> testsWithoutTasks = programmingExerciseTestCaseRepository.findByExerciseId(exerciseId);
-        testsWithTasks.removeAll(testsWithTasks);
+        Set<ProgrammingExerciseTestCase> testsWithoutTasks = programmingExerciseTestCaseRepository.findByExerciseId(exerciseId).stream()
+                .filter(test -> !testsWithTasks.contains(test)).collect(Collectors.toSet());
 
-        ProgrammingExerciseTask unassignedTask = new ProgrammingExerciseTask();
-        unassignedTask.setTaskName("Not assigned to task");
-        unassignedTask.setTestCases(testsWithoutTasks);
+        if (!testsWithoutTasks.isEmpty()) {
+            ProgrammingExerciseTask unassignedTask = new ProgrammingExerciseTask();
+            unassignedTask.setTaskName("Not assigned to task");
+            unassignedTask.setTestCases(testsWithoutTasks);
 
-        tasks.add(unassignedTask);
+            tasks.add(unassignedTask);
+        }
 
         return tasks;
     }
