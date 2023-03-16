@@ -24,7 +24,7 @@ export interface LectureUnitCompletionEvent {
 @Component({
     selector: 'jhi-course-lecture-details',
     templateUrl: './course-lecture-details.component.html',
-    styleUrls: ['../course-overview.scss', './course-lectures.scss', 'course-lecture-details.component.scss'],
+    styleUrls: ['../course-overview.scss', './course-lectures.scss'],
 })
 export class CourseLectureDetailsComponent implements OnInit {
     lectureId?: number;
