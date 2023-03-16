@@ -130,7 +130,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
 
     @Query("""
-                SELECT DISTINCT course
+                SELECT course
                 FROM Course course
                 LEFT JOIN FETCH course.organizations organizations
                 LEFT JOIN FETCH course.prerequisites prerequisites
