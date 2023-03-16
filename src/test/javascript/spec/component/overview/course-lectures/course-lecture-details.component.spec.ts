@@ -196,7 +196,7 @@ describe('CourseLectureDetails', () => {
         fixture.detectChanges();
 
         courseLecturesDetailsComponent.redirectToLectureManagement();
-        expect(navigateSpy).toHaveBeenCalledWith([`/course-management/456/lectures/1`]);
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 456, 'lectures', 1]);
     }));
 
     it('should check attachment release date', fakeAsync(() => {

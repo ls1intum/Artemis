@@ -116,6 +116,6 @@ describe('Header Course Component', () => {
         const navigateSpy = jest.spyOn(router, 'navigate');
 
         component.redirectToCourseManagement();
-        expect(navigateSpy).toHaveBeenCalledWith([`/course-management/234`]);
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 234]);
     });
 });

@@ -93,7 +93,7 @@ export class CourseLectureDetailsComponent implements OnInit {
     }
 
     redirectToLectureManagement(): void {
-        this.router.navigate([`/course-management/${this.lecture?.course?.id}/lectures/${this.lecture?.id}`]);
+        this.router.navigate(['course-management', this.lecture?.course?.id, 'lectures', this.lecture?.id]);
     }
 
     attachmentNotReleased(attachment: Attachment): boolean {

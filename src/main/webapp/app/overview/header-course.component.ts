@@ -59,6 +59,6 @@ export class HeaderCourseComponent implements OnChanges {
     }
 
     redirectToCourseManagement() {
-        this.router.navigate([`/course-management/${this.course.id}`]);
+        this.router.navigate(['course-management', this.course.id]);
     }
 }
