@@ -11,6 +11,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { TranslateService } from '@ngx-translate/core';
 import { faDownload, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { addDelay } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
@@ -80,7 +81,9 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
         this.languageHelper.language.subscribe((languageKey: string) => {
             if (this.apollonEditor) {
-                this.apollonEditor.locale = languageKey as Locale;
+                addDelay(500).then(() => {
+                    this.apollonEditor!.locale = languageKey as Locale;
+                });
             }
         });
     }
