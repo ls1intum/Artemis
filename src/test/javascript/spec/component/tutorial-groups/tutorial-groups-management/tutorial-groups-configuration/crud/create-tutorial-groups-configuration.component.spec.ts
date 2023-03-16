@@ -84,7 +84,7 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
 
         const createStub = jest.spyOn(tutorialGroupsConfigurationService, 'create').mockReturnValue(of(createResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
-        const updateCourseSpy = jest.spyOn(courseStorageService, 'notifyCourseUpdatesSubscribers');
+        const updateCourseSpy = jest.spyOn(courseStorageService, 'updateCourse');
 
         const sessionForm: TutorialGroupsConfigurationFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupsConfigurationFormStubComponent)).componentInstance;
 

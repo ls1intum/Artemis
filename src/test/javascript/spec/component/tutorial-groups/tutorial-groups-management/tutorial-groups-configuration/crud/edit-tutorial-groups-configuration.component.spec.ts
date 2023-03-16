@@ -96,7 +96,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
             status: 200,
         });
 
-        const updateCourseSpy = jest.spyOn(courseStorageService, 'notifyCourseUpdatesSubscribers');
+        const updateCourseSpy = jest.spyOn(courseStorageService, 'updateCourse');
         const updatedStub = jest.spyOn(configurationService, 'update').mockReturnValue(of(updateResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
 

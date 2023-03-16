@@ -458,7 +458,7 @@ describe('CourseStatisticsComponent', () => {
 
         const updateCourseSpy = jest.spyOn(courseStorageService, 'updateCourse');
 
-        courseStorageService.notifyCourseUpdatesSubscribers(courseToSubscribeTo);
+        courseStorageService.updateCourse(courseToSubscribeTo);
 
         expect(comp.course).toEqual(courseToSubscribeTo);
         expect(updateCourseSpy).toHaveBeenCalledWith(courseToSubscribeTo);

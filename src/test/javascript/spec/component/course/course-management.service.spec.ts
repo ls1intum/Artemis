@@ -8,7 +8,7 @@ import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.mod
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { Course, CourseGroup } from 'app/entities/course.model';
-import { Exercise, ExerciseType, ExerciseTypeTOTAL } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, ExerciseTypeTOTAL, ScoresPerExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { Organization } from 'app/entities/organization.model';
@@ -44,8 +44,8 @@ describe('Course Management Service', () => {
     let course: Course;
     let courseForDashboard: CourseForDashboardDTO;
     let courseScores: CourseScoresDTO;
-    let scoresPerExerciseType: { [key: string]: CourseScoresDTO };
-    let scoresPerExerciseTypeMap: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO>;
+    let scoresPerExerciseType: { [key in ExerciseType | ExerciseTypeTOTAL]: CourseScoresDTO };
+    let scoresPerExerciseTypeMap: ScoresPerExerciseType;
     let participationResult: Result;
     let onlineCourseConfiguration: OnlineCourseConfiguration;
     let exercises: Exercise[];
@@ -87,11 +87,15 @@ describe('Course Management Service', () => {
         courseForDashboard = new CourseForDashboardDTO();
         courseForDashboard.course = course;
         courseScores = { maxPoints: 0, reachablePoints: 0, studentScores: { absoluteScore: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 } };
-        scoresPerExerciseType = { total: courseScores, programming: courseScores };
+        scoresPerExerciseType = { total: courseScores, programming: courseScores, modeling: courseScores, quiz: courseScores, text: courseScores, 'file-upload': courseScores };
         courseForDashboard.scoresPerExerciseType = scoresPerExerciseType;
         scoresPerExerciseTypeMap = new Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO>();
         scoresPerExerciseTypeMap.set(ExerciseTypeTOTAL.TOTAL, courseScores);
         scoresPerExerciseTypeMap.set(ExerciseType.PROGRAMMING, courseScores);
+        scoresPerExerciseTypeMap.set(ExerciseType.MODELING, courseScores);
+        scoresPerExerciseTypeMap.set(ExerciseType.QUIZ, courseScores);
+        scoresPerExerciseTypeMap.set(ExerciseType.TEXT, courseScores);
+        scoresPerExerciseTypeMap.set(ExerciseType.FILE_UPLOAD, courseScores);
         participationResult = new Result();
         courseForDashboard.participationResults = [participationResult];
         onlineCourseConfiguration = new OnlineCourseConfiguration();
