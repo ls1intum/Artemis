@@ -192,11 +192,13 @@ public class AuthorizationCheckService {
     /**
      * Checks if the user is allowed to self register for the given course.
      * Throws an AccessForbiddenException if the user is not allowed to self register for the course.
+     * See also: {@link #isUserAllowedToSelfRegisterForCourse(User, Course)}
      *
      * @param user   The user that wants to self register
      * @param course The course to which the user wants to self register
      */
     public void checkUserAllowedToSelfRegisterForCourseElseThrow(User user, Course course) throws AccessForbiddenException {
+        // We do it this way (not checking and then throwing) to still have the error messages when using checkUserAllowedToSelfRegisterForCourseElseThrow
         if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
             throw new AccessForbiddenException("Registration with this username is not allowed.");
         }
@@ -209,6 +211,25 @@ public class AuthorizationCheckService {
         Set<Organization> courseOrganizations = course.getOrganizations();
         if (courseOrganizations != null && !courseOrganizations.isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
             throw new AccessForbiddenException("User is not member of any organization of this course.");
+        }
+    }
+
+    /**
+     * Checks if the user is allowed to self register for the given course.
+     * Returns true if the user is allowed to self register for the course, false otherwise.
+     * See also: {@link #checkUserAllowedToSelfRegisterForCourseElseThrow(User, Course)}
+     *
+     * @param user   The user that wants to self register
+     * @param course The course to which the user wants to self register
+     * @return true if the user is allowed to self register for the course, false otherwise
+     */
+    public boolean isUserAllowedToSelfRegisterForCourse(User user, Course course) {
+        try {
+            checkUserAllowedToSelfRegisterForCourseElseThrow(user, course);
+            return true;
+        }
+        catch (AccessForbiddenException e) {
+            return false;
         }
     }
 

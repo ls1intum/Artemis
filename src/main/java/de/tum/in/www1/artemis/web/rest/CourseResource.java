@@ -421,14 +421,12 @@ public class CourseResource {
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, refresh);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             // user might be allowed to register for the course
-            try {
-                Course courseWithOrganizations = courseRepository.findSingleNotOnlineWithOrganizationsAndPrerequisitesElseThrow(courseId);
-                authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, courseWithOrganizations);
+            if (authCheckService.isUserAllowedToSelfRegisterForCourse(user, course)) {
                 // suppress error alert with skipAlert: true so that the client can redirect to the registration page
                 throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could register.", ENTITY_NAME,
                         "noAccessButCouldRegister", true);
             }
-            catch (AccessForbiddenException e) {
+            else {
                 // user is not even allowed to self-register
                 // just normally throw the access forbidden exception
                 throw new AccessForbiddenException(ENTITY_NAME, courseId);
