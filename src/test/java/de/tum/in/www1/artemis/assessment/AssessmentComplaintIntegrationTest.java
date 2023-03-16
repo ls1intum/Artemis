@@ -350,6 +350,20 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void getComplaintByResultid_student_sensitiveDataHidden() throws Exception {
+        complaint = complaintRepo.save(complaint);
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        complaintResponseRepo.save(complaintResponse);
+
+        final var received = request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.OK, Complaint.class);
+
+        assertThat(received.getParticipant()).as("The participant should always be hidden").isNull();
+        assertThat(received.getResult().getAssessor()).as("Students should not see the initial assessor").isNull();
+        assertThat(received.getComplaintResponse().getReviewer()).as("Students should not see the complaint reviewer").isNull();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getComplaintsForTutor_tutor_sensitiveDataHidden() throws Exception {
         complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
