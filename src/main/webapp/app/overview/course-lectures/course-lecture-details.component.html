@@ -19,13 +19,11 @@
                     </span>
                 </h4>
             </div>
-            <ng-container *ngIf="showGoToLectureManagementButton()">
-                <div class="col-auto wrapper-btn-manage-lecture">
-                    <button id="manageLectureButton" class="btn btn-manage-lecture" (click)="redirectToLectureManagement()">
-                        {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
-                    </button>
-                </div>
-            </ng-container>
+            <div class="col-auto wrapper-btn-manage-lecture" *ngIf="showGoToLectureManagementButton()">
+                <button id="manageLectureButton" class="btn btn-secondary" (click)="redirectToLectureManagement()">
+                    {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
+                </button>
+            </div>
         </div>
     </div>
     <!-- HEADER INFORMATION END -->
