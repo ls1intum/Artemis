@@ -15,6 +15,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -551,7 +552,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
-    // TODO why is this here?
     private QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) throws Exception {
         Course course = database.createCourse();
 
@@ -1323,18 +1323,15 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     /**
-     * test non-instructors and non-editors can't create quiz exercises
+     * test non-editors can't create quiz exercises
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCreateQuizExerciseAsTutorForbidden() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null, QuizMode.SYNCHRONIZED);
-        final Course course = database.createCourse();
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), ZonedDateTime.now().plusHours(5), QuizMode.SYNCHRONIZED);
-        quizExerciseService.save(quizExercise);
+        Course course = database.createCourse();
+        quizExercise = database.createQuiz(course, ZonedDateTime.now().plusSeconds(5), null, QuizMode.SYNCHRONIZED);
 
-        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.FORBIDDEN); // FORBIDDEN... what if the instructor is not even in the
-                                                                                                                     // course?
+        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -1343,62 +1340,60 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllQuizExercisesAsStudentForbidden() throws Exception {
-        final Course course = database.addCourseWithOneQuizExercise();
+        Course course = database.createCourse();
 
         request.getList("/api/courses/" + course.getId() + "/quiz-exercises", HttpStatus.FORBIDDEN, QuizExercise.class);
     }
 
     /**
-     * test non-instructors can't perform start-now, set-visible or open-for-practice on quiz exercises
+     * test non-editors can't perform start-now, set-visible or open-for-practice on quiz exercises
      */
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testPerformPutActionAsTutorForbidden() throws Exception {
-        final Course course = database.addCourseWithOneQuizExercise();
-        // TODO
-        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        assertThat(quizExercise.isIsOpenForPractice()).isFalse();
+    @ValueSource(strings = { "start-now", "set-visible", "open-for-practice" })
+    void testPerformPutActionAsTutorForbidden(String action) throws Exception {
+        Course course = database.createCourse();
+        quizExercise = database.createQuiz(course, ZonedDateTime.now().plusSeconds(5), null, QuizMode.SYNCHRONIZED);
+        quizExerciseRepository.save(quizExercise);
 
-        request.put("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, HttpStatus.FORBIDDEN);
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/set-visible", quizExercise, QuizExercise.class, HttpStatus.FORBIDDEN);
-
-        assertThat(quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0).isIsOpenForPractice()).isFalse();
+        request.put("/api/quiz-exercises/" + quizExercise.getId() + "/" + action, quizExercise, HttpStatus.FORBIDDEN);
     }
 
-    // TODO: students can't see the exercise if not set to visible
     /**
-     * test non-instructors can't see the exercise if it is not set to visible
+     * test students can't see the exercise if it is not set to visible
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testViewQuizExerciseAsStudentNotVisible() throws Exception {
-        final Course course = database.addCourseWithOneQuizExercise();  // TODO: does this get added to the
-        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        assertThat(quizExercise.isVisibleToStudents()).isFalse();
+        Course course = database.createCourse();
+        quizExercise = database.createQuiz(course, ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
+        exerciseRepository.save(quizExercise);
 
-        request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.FORBIDDEN, QuizExercise.class);
+        request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.FORBIDDEN, QuizExercise.class);
     }
 
     /**
-     * test non-instructors can't delete an exercise
+     * test non-editors can't delete an exercise
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeleteQuizExerciseAsNonInstructor() throws Exception {
-        final Course course = database.addCourseWithOneQuizExercise();
-        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        Course course = database.createCourse();
+        quizExercise = database.createQuiz(course, ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
+        exerciseRepository.save(quizExercise);
 
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.FORBIDDEN);
     }
 
     /**
-     * test non tutors cant recalculate quiz exercise statistics
+     * test students can't recalculate quiz exercise statistics
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
     void testRecalculateStatisticsAsNonInstructor() throws Exception {
-        final Course course = database.addCourseWithOneQuizExercise();
-        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        Course course = database.createCourse();
+        quizExercise = database.createQuiz(course, ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
+        exerciseRepository.save(quizExercise);
 
         request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.FORBIDDEN, QuizExercise.class);
     }
@@ -1412,9 +1407,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
-        courseRepo.save(course);
-        quizExerciseRepository.save(quizExercise);
 
+        // remove student1 from courses
         User user = database.getUserByLogin(TEST_PREFIX + "student1");
         user.setGroups(Set.of());
         userRepo.save(user);
@@ -1426,22 +1420,12 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      * test non-instructors in this course can't re-evaluate quiz exercises
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testReEvaluateQuizAsNonInstructorForbidden() throws Exception {
-        final Course course = database.createCourse();
+        Course course = database.createCourse();
         quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
-        /*
-         * quizExercise.setTitle("Title");
-         * quizExercise.setDuration(200);
-         * assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
-         * assertThat(quizExercise.isExamExercise()).as("Is an exam exercise!").isFalse();
-         * assertThat(quizExercise.isQuizEnded()).as("Is not ended!").isTrue();
-         */
-        course.addExercises(quizExercise);
-        // TODO check if it works with instructor
-
-        courseRepo.save(course);
         quizExerciseRepository.save(quizExercise);
+
         request.put("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, HttpStatus.FORBIDDEN);
     }
 
@@ -1451,49 +1435,45 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUnfinishedExamReEvaluateBadRequest() throws Exception {
+        // todo: new helper method for creating an exam exercise
+        // unfinished: when the finish date is in the future, something similar to quiz exercise
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         quizExercise = database.createQuizForExam(exerciseGroup);
-        quizExercise.setTitle("Title");
-        quizExercise.setDuration(200);
-        assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
+        // TODO: how do we know exam is unfinished?
+        // assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
         quizExerciseRepository.save(quizExercise);
+
         request.put("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, HttpStatus.BAD_REQUEST);
+        // todo: maybe also check what kind of bad request, what the message of the response is?
     }
 
     /**
-     * test non editor can't update quiz exercise
+     * test non-editor can't update quiz exercise
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testUpdateQuizExerciseAsNonEditorForbidden() throws Exception {
-        final Course course = database.createCourse();
+        Course course = database.createCourse();
         quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
-        course.addExercises(quizExercise);
-        courseRepo.save(course);
         quizExerciseRepository.save(quizExercise);
-        // change some stuff
-        quizExercise.setTitle("new Title");
 
+        quizExercise.setTitle("new Title");
         request.put("/api/quiz-exercises", quizExercise, HttpStatus.FORBIDDEN);
     }
 
     /**
-     * test quiz exercise cant be edited to be invalid
+     * test quiz exercise can't be edited to be invalid
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizExerciseInvalidBadRequest() throws Exception {
-        final Course course = database.createCourse();
+        Course course = database.createCourse();
         quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
-        quizExercise.setTitle("Title");
-        quizExercise.setDuration(200);
+        // save a valid exercise
         assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
-        assertThat(quizExercise.isExamExercise()).as("Is an exam exercise!").isFalse();
-        assertThat(quizExercise.isQuizEnded()).as("Is not ended!").isTrue();
-        course.addExercises(quizExercise);
-        courseRepo.save(course);
         quizExerciseRepository.save(quizExercise);
-        // change some stuff
+
+        // make the exercise invalid
         quizExercise.setTitle(null);
         assertThat(quizExercise.isValid()).isFalse();
         request.put("/api/quiz-exercises", quizExercise, HttpStatus.BAD_REQUEST);
