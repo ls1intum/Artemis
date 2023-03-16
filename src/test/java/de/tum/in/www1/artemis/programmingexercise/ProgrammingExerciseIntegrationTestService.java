@@ -296,7 +296,7 @@ class ProgrammingExerciseIntegrationTestService {
 
         // Make sure that the practice submission is not included
         assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString()))
-                .noneMatch(entry -> entry.toString().endsWith(Path.of("student2", ".git").toString()));
+                .noneMatch(entry -> entry.toString().matches(".*practice-[^\\/]*student2.*.git$"));
     }
 
     void testExportSubmissionsByParticipationIds_includePracticeSubmissions() throws Exception {
@@ -325,7 +325,7 @@ class ProgrammingExerciseIntegrationTestService {
 
         // Make sure that the practice submission is included
         assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString()))
-                .anyMatch(entry -> entry.toString().endsWith(Path.of("student2_practice", ".git").toString()));
+                .anyMatch(entry -> entry.toString().matches(".*practice-[^\\/]*student2.*.git$"));
     }
 
     void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName() throws Exception {
