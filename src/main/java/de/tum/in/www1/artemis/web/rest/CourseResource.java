@@ -471,10 +471,10 @@ public class CourseResource {
      */
     @GetMapping("courses/for-notifications")
     @PreAuthorize("hasRole('USER')")
-    public List<Course> getAllCoursesForNotifications() {
+    public Set<Course> getAllCoursesForNotifications() {
         log.debug("REST request to get all Courses the user has access to");
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        return courseService.findAllActiveForUser(user).stream().toList();
+        return courseService.findAllActiveForUser(user);
     }
 
     /**
