@@ -114,7 +114,7 @@ describe('CourseOverviewComponent', () => {
     let jhiWebsocketService: JhiWebsocketService;
     let router: MockRouter;
     let jhiWebsocketServiceReceiveStub: jest.SpyInstance;
-    let jhiWebsocketServiceSubscribeStub: jest.SpyInstance;
+    let jhiWebsocketServiceSubscribeSpy: jest.SpyInstance;
     let findOneForDashboardStub: jest.SpyInstance;
 
     let metisConversationService: MetisConversationService;
@@ -188,7 +188,7 @@ describe('CourseOverviewComponent', () => {
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
                 jhiWebsocketServiceReceiveStub = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(quizExercise));
-                jhiWebsocketServiceSubscribeStub = jest.spyOn(jhiWebsocketService, 'subscribe');
+                jhiWebsocketServiceSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
                 // default for findOneForDashboardStub is to return the course
                 findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
@@ -333,7 +333,7 @@ describe('CourseOverviewComponent', () => {
         component.ngOnInit();
         component.subscribeForQuizChanges();
 
-        expect(jhiWebsocketServiceSubscribeStub).toHaveBeenCalledOnce();
+        expect(jhiWebsocketServiceSubscribeSpy).toHaveBeenCalledOnce();
         expect(jhiWebsocketServiceReceiveStub).toHaveBeenCalledOnce();
     });
 
