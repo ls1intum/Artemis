@@ -15,12 +15,25 @@
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.title' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
-                <th jhiSortBy="teachingAssistantName">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.teachingAssistant' | artemisTranslate }}</a>
+                <th>
+                    <span>{{ 'artemisApp.entities.tutorialGroup.utilization' | artemisTranslate }}</span>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.utilizationHelp' | artemisTranslate }}"></fa-icon>
+                </th>
+                <th jhiSortBy="averageAttendance">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
+                    <fa-icon
+                        [icon]="faQuestionCircle"
+                        class="text-secondary"
+                        ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.averageAttendanceHelp' | artemisTranslate }}"
+                    ></fa-icon>
                 </th>
                 <th jhiSortBy="capacity">
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.capacity' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="teachingAssistantName">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.teachingAssistant' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
                 <th jhiSortBy="tutorialGroupSchedule.dayOfWeek">

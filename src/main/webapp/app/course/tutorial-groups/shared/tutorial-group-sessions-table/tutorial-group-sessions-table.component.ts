@@ -1,4 +1,16 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef, ViewEncapsulation } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    ContentChild,
+    EventEmitter,
+    Input,
+    OnChanges,
+    Output,
+    SimpleChanges,
+    TemplateRef,
+    ViewEncapsulation,
+} from '@angular/core';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
@@ -30,6 +42,8 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
 
     @Input()
     isReadOnly = false;
+
+    @Output() attendanceUpdated = new EventEmitter<void>();
 
     upcomingSessions: TutorialGroupSession[] = [];
     pastSessions: TutorialGroupSession[] = [];
@@ -120,5 +134,6 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
             }
             this.changeDetectorRef.detectChanges();
         }
+        this.attendanceUpdated.emit();
     }
 }

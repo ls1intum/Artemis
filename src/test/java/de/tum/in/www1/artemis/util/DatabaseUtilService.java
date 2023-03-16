@@ -1594,14 +1594,14 @@ public class DatabaseUtilService {
     public Exam addExamWithExerciseGroup(Course course, boolean mandatory) {
         Exam exam = ModelFactory.generateExam(course);
         ModelFactory.generateExerciseGroup(mandatory, exam);
-        examRepository.save(exam);
+        exam = examRepository.save(exam);
         return exam;
     }
 
     public Exam addTestExamWithExerciseGroup(Course course, boolean mandatory) {
         Exam exam = ModelFactory.generateTestExam(course);
         ModelFactory.generateExerciseGroup(mandatory, exam);
-        examRepository.save(exam);
+        exam = examRepository.save(exam);
         return exam;
     }
 
@@ -1612,7 +1612,7 @@ public class DatabaseUtilService {
         exam.setEndDate(endDate);
         exam.setWorkingTime((int) Duration.between(startDate, endDate).toSeconds());
         exam.setGracePeriod(180);
-        examRepository.save(exam);
+        exam = examRepository.save(exam);
         return exam;
     }
 
@@ -1624,7 +1624,7 @@ public class DatabaseUtilService {
         exam.setPublishResultsDate(publishResultDate);
         exam.setWorkingTime((int) Duration.between(startDate, endDate).toSeconds());
         exam.setGracePeriod(180);
-        examRepository.save(exam);
+        exam = examRepository.save(exam);
         return exam;
     }
 
@@ -1699,21 +1699,25 @@ public class DatabaseUtilService {
 
     public StudentExam addStudentExam(Exam exam) {
         StudentExam studentExam = ModelFactory.generateStudentExam(exam);
-        studentExamRepository.save(studentExam);
+        studentExam = studentExamRepository.save(studentExam);
         return studentExam;
+    }
+
+    public StudentExam addStudentExamWithUser(Exam exam, String user) {
+        return addStudentExamWithUser(exam, userRepo.findOneByLogin(user).orElseThrow());
     }
 
     public StudentExam addStudentExamWithUser(Exam exam, User user) {
         StudentExam studentExam = ModelFactory.generateStudentExam(exam);
         studentExam.setUser(user);
-        studentExamRepository.save(studentExam);
+        studentExam = studentExamRepository.save(studentExam);
         return studentExam;
     }
 
     public StudentExam addStudentExamForTestExam(Exam exam, User user) {
         StudentExam studentExam = ModelFactory.generateStudentExamForTestExam(exam);
         studentExam.setUser(user);
-        studentExamRepository.save(studentExam);
+        studentExam = studentExamRepository.save(studentExam);
         return studentExam;
     }
 
@@ -1721,7 +1725,7 @@ public class DatabaseUtilService {
         StudentExam studentExam = ModelFactory.generateStudentExam(exam);
         studentExam.setUser(user);
         studentExam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds() + additionalWorkingTime);
-        studentExamRepository.save(studentExam);
+        studentExam = studentExamRepository.save(studentExam);
         return studentExam;
     }
 
@@ -2231,7 +2235,7 @@ public class DatabaseUtilService {
 
     public ProgrammingExercise addProgrammingExerciseToExam(Exam exam, int exerciseGroupNumber) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
-        programmingExercise.setExerciseGroup(exam.getExerciseGroups().get(0));
+        programmingExercise.setExerciseGroup(exam.getExerciseGroups().get(exerciseGroupNumber));
         populateProgrammingExercise(programmingExercise, "TESTEXFOREXAM", "Testtitle", false);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -4607,7 +4611,7 @@ public class DatabaseUtilService {
         }
     }
 
-    public TutorialGroupSession createIndividualTutorialGroupSession(Long tutorialGroupId, ZonedDateTime start, ZonedDateTime end) {
+    public TutorialGroupSession createIndividualTutorialGroupSession(Long tutorialGroupId, ZonedDateTime start, ZonedDateTime end, Integer attendanceCount) {
         var tutorialGroup = tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
 
         TutorialGroupSession tutorialGroupSession = new TutorialGroupSession();
@@ -4616,6 +4620,7 @@ public class DatabaseUtilService {
         tutorialGroupSession.setTutorialGroup(tutorialGroup);
         tutorialGroupSession.setLocation("LoremIpsum");
         tutorialGroupSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
+        tutorialGroupSession.setAttendanceCount(attendanceCount);
         tutorialGroupSession = tutorialGroupSessionRepository.save(tutorialGroupSession);
         return tutorialGroupSession;
     }
