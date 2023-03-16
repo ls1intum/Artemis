@@ -8,15 +8,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
@@ -32,6 +23,7 @@ import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -39,10 +31,18 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationPushService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -81,9 +81,11 @@ public class LocalCIPushService implements ContinuousIntegrationPushService {
     private URL localVCBaseUrl;
 
     public LocalCIPushService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionService programmingSubmissionService,
-                              ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService, LocalCIExecutorService localCIExecutorService,
-                              ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-                              LocalCITriggerService localCITriggerService, UserRepository userRepository, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
+            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService, LocalCIExecutorService localCIExecutorService,
+            ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            LocalCITriggerService localCITriggerService, UserRepository userRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
@@ -185,12 +187,8 @@ public class LocalCIPushService implements ContinuousIntegrationPushService {
         programmingTriggerService.setTestCasesChanged(exercise.getId(), true);
 
         // Retrieve the solution participation.
-        SolutionProgrammingExerciseParticipation participation = (SolutionProgrammingExerciseParticipation) getParticipation(RepositoryType.SOLUTION.toString(), exercise, localVCRepositoryUrl);
-
-        // For now do not allow adding build jobs to the queue if there is still one running for that participation.
-        if (participation.getBuildPlanId().endsWith("_QUEUED") || participation.getBuildPlanId().endsWith("_BUILDING")) {
-            throw new LocalCIException("There is already a build job running for participation " + participation.getId() + ".");
-        }
+        SolutionProgrammingExerciseParticipation participation = (SolutionProgrammingExerciseParticipation) getParticipation(RepositoryType.SOLUTION.toString(), exercise,
+                localVCRepositoryUrl);
 
         // Trigger a build of the solution repository.
         CompletableFuture<LocalCIBuildResult> futureSolutionBuildResult = localCIExecutorService.addBuildJobToQueue(participation);
@@ -234,11 +232,6 @@ public class LocalCIPushService implements ContinuousIntegrationPushService {
         // Retrieve participation for the repository.
         ProgrammingExerciseParticipation participation = getParticipation(repositoryTypeOrUserName, exercise, localVCRepositoryUrl);
 
-        // For now do not allow adding build jobs to the queue if there is still one running for that participation.
-        if (participation.getBuildPlanId().endsWith("_QUEUED") || participation.getBuildPlanId().endsWith("_BUILDING")) {
-            throw new LocalCIException("There is already a build job running for participation " + participation.getId() + ".");
-        }
-
         try {
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
             // Therefore, a mock auth object has to be created.
@@ -262,7 +255,8 @@ public class LocalCIPushService implements ContinuousIntegrationPushService {
         try {
             if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
                 return solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
-            } else if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
+            }
+            else if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
                 return templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
             }
 
@@ -271,10 +265,13 @@ public class LocalCIPushService implements ContinuousIntegrationPushService {
                 return programmingExerciseParticipationService.findTeamParticipationByExerciseAndTeamShortNameAndTestRunOrThrow(exercise, repositoryTypeOrUserName, true);
             }
 
-            // Try to retrieve the user from the repositoryTypeOrUserName extracted from the repository URL. The user is needed to check if the repository belongs to an exam test run.
-            User user = userRepository.findOneByLogin(repositoryTypeOrUserName).orElseThrow(() -> new EntityNotFoundException("User with login " + repositoryTypeOrUserName + " does not exist"));
+            // Try to retrieve the user from the repositoryTypeOrUserName extracted from the repository URL. The user is needed to check if the repository belongs to an exam test
+            // run.
+            User user = userRepository.findOneByLogin(repositoryTypeOrUserName)
+                    .orElseThrow(() -> new EntityNotFoundException("User with login " + repositoryTypeOrUserName + " does not exist"));
 
-            return programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(exercise,repositoryTypeOrUserName, localVCRepositoryUrl.isPracticeRepository(), true, user);
+            return programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(exercise, repositoryTypeOrUserName,
+                    localVCRepositoryUrl.isPracticeRepository(), true, user);
         }
         catch (EntityNotFoundException e) {
             throw new LocalCIException("No participation found for the given repository: " + localVCRepositoryUrl.getURI(), e);
