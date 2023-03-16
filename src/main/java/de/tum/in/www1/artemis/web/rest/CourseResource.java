@@ -467,7 +467,7 @@ public class CourseResource {
     /**
      * GET /courses/for-notifications
      *
-     * @return the list of courses (the user has access to)
+     * @return the set of courses (the user has access to)
      */
     @GetMapping("courses/for-notifications")
     @PreAuthorize("hasRole('USER')")
