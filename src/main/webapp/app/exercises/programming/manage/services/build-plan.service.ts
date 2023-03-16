@@ -13,7 +13,7 @@ export class BuildPlanService {
 
     getBuildPlan(programmingExerciseId: number): Observable<EntityResponseType> {
         console.log(`${this.resourceUrl}/${programmingExerciseId}/build-plan`);
-        return this.http.get<BuildPlan>(`${this.resourceUrl}/${programmingExerciseId}/build-plan`, { observe: 'response' });
+        return this.http.get<BuildPlan>(`${this.resourceUrl}/${programmingExerciseId}/build-plan/for-editor`, { observe: 'response' });
     }
 
     putBuildPlan(programmingExerciseId: number, buildPlan: BuildPlan): Observable<EntityResponseType> {

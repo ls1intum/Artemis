@@ -47,7 +47,7 @@ public class BuildPlanResource {
      */
     @GetMapping(BUILD_PLAN)
     @PreAuthorize("permitAll()")
-    public ResponseEntity<BuildPlan> getBuildPlan(@PathVariable Long exerciseId, @RequestParam(value = "secret", required = false) String secret) {
+    public ResponseEntity<String> getBuildPlan(@PathVariable Long exerciseId, @RequestParam("secret") String secret) {
         log.debug("REST request to get build plan for programming exercise with id {}", exerciseId);
 
         final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(exerciseId);
@@ -55,14 +55,31 @@ public class BuildPlanResource {
         final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Could not find connected exercise for build plan."));
 
-        // authorization when called from the build plan editor UI can be checked via the user token,
-        // if the endpoint was called from the continuous integration system, the secret is checked
-        if (secret == null) {
-            authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
-        }
-        else if (!programmingExercise.hasBuildPlanAccessSecretSet() || !secret.equals(programmingExercise.getBuildPlanAccessSecret())) {
+        if (!programmingExercise.hasBuildPlanAccessSecretSet() || !secret.equals(programmingExercise.getBuildPlanAccessSecret())) {
             throw new AccessForbiddenException();
         }
+
+        return ResponseEntity.ok().body(buildPlan.getBuildPlan());
+    }
+
+    /**
+     * Returns the build plan for a given programming exercise.
+     *
+     * @param exerciseId the exercise for which the build plan should be retrieved
+     * @return the build plan stored in the database
+     */
+    @GetMapping(BUILD_PLAN + "/for-editor")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<BuildPlan> getBuildPlanForEditor(@PathVariable Long exerciseId) {
+        log.debug("REST request to get build plan for programming exercise with id {}", exerciseId);
+
+        final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(exerciseId);
+        // orElseThrow is safe here since the query above ensures that we find a build plan that is attached to that exercise
+        final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Could not find connected exercise for build plan."));
+
+        // authorization when called from the build plan editor UI can be checked via the user token
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         return ResponseEntity.ok().body(buildPlan);
     }

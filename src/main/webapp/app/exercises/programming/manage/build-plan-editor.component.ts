@@ -127,7 +127,6 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
         this.editor.getEditor().resize();
         this.editor.getEditor().focus();
         this.editor.getEditor().setShowPrintMargin(false);
-        this.editor.setMode('java'); // groovy doesn't seem to work, so java is the closest mode for the groovy syntax
         // Reset the undo stack after file change, otherwise the user can undo back to the old file
         this.editor.getEditor().getSession().setUndoManager(new UndoManager());
 
