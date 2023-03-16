@@ -1247,8 +1247,9 @@ public class GitService {
             zipRepoName += "-student-submission.git.zip";
         }
         else {
-            zipRepoName += "-" + studentTeamOrDefault + (participation.isTestRun() ? "_practice" : "") + ".zip";
+            zipRepoName += "-" + studentTeamOrDefault + ".zip";
         }
+        zipRepoName = participation.addPracticePrefixIfTestRun(zipRepoName);
         return zipFiles(repo.getLocalPath(), zipRepoName, repositoryDir, null);
     }
 
