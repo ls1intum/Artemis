@@ -677,6 +677,15 @@ public class ModelFactory {
         return generateExamHelper(course, false);
     }
 
+    /**
+     * Generates an exam
+     *
+     * @param course    the associated course
+     * @param startDate the startDate of the exam, also used as the visibleDate
+     * @param endDate   the end date of the exam
+     * @param testExam  if the exam is a test exam
+     * @return the created exam
+     */
     public static Exam generateExam(Course course, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam) {
         Exam exam = new Exam();
         exam.setTitle((testExam ? "Test " : "Real ") + "exam 1");

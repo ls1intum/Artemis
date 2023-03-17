@@ -2302,21 +2302,6 @@ public class DatabaseUtilService {
         return exerciseRepo.save(fileUploadExercise);
     }
 
-    public QuizExercise createAndSaveExamQuizExercise(ZonedDateTime startDate, ZonedDateTime endDate) {
-        Course course = ModelFactory.generateCourse(null, startDate, endDate, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        Exam exam = ModelFactory.generateExam(course);
-        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam);
-
-        courseRepo.save(course);
-        examRepository.save(exam);
-
-        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
-        initializeQuizExercise(quizExercise);
-        quizExerciseRepository.save(quizExercise);
-
-        return quizExercise;
-    }
-
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam = ModelFactory.generateExam(course);
@@ -2325,19 +2310,17 @@ public class DatabaseUtilService {
         course = courseRepo.save(course);
         exam = examRepository.save(exam);
 
-        /*
-         * Optional<Course> optionalCourse = courseRepo.findById(course.getId());
-         * assertThat(optionalCourse).as("course can be retrieved").isPresent();
-         * Course courseDB = optionalCourse.get();
-         * Optional<Exam> optionalExam = examRepository.findById(exam.getId());
-         * assertThat(optionalCourse).as("exam can be retrieved").isPresent();
-         * Exam examDB = optionalExam.get();
-         * Optional<ExerciseGroup> optionalExerciseGroup = exerciseGroupRepository.findById(exerciseGroup.getId());
-         * assertThat(optionalExerciseGroup).as("exerciseGroup can be retrieved").isPresent();
-         * ExerciseGroup exerciseGroupDB = optionalExerciseGroup.get();
-         * assertThat(examDB.getCourse().getId()).as("exam and course are linked correctly").isEqualTo(courseDB.getId());
-         * assertThat(exerciseGroupDB.getExam().getId()).as("exerciseGroup and exam are linked correctly").isEqualTo(examDB.getId());
-         */
+        Optional<Course> optionalCourse = courseRepo.findById(course.getId());
+        assertThat(optionalCourse).as("course can be retrieved").isPresent();
+        Course courseDB = optionalCourse.get();
+        Optional<Exam> optionalExam = examRepository.findById(exam.getId());
+        assertThat(optionalCourse).as("exam can be retrieved").isPresent();
+        Exam examDB = optionalExam.get();
+        Optional<ExerciseGroup> optionalExerciseGroup = exerciseGroupRepository.findById(exerciseGroup.getId());
+        assertThat(optionalExerciseGroup).as("exerciseGroup can be retrieved").isPresent();
+        ExerciseGroup exerciseGroupDB = optionalExerciseGroup.get();
+        assertThat(examDB.getCourse().getId()).as("exam and course are linked correctly").isEqualTo(courseDB.getId());
+        assertThat(exerciseGroupDB.getExam().getId()).as("exerciseGroup and exam are linked correctly").isEqualTo(examDB.getId());
 
         return exerciseGroup;
     }
@@ -3936,15 +3919,37 @@ public class DatabaseUtilService {
         return quizExercise;
     }
 
-    @NotNull // todo if null
     public QuizExercise createAndSaveQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
-        Course course = ModelFactory.generateCourse(null, null, null, Set.of());
+        Course course = ModelFactory.generateCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
         courseRepo.save(course);
+
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
         initializeQuizExercise(quizExercise);
-
         quizExerciseRepository.save(quizExercise);
+
         return quizExercise;
+    }
+
+    public QuizExercise createAndSaveExamQuiz(ZonedDateTime startDate, ZonedDateTime endDate) {
+        Course course = ModelFactory.generateCourse(null, startDate == null ? null : startDate.minusDays(1), endDate == null ? null : endDate.plusDays(1), new HashSet<>(),
+                "tumuser", "tutor", "editor", "instructor");
+        courseRepo.save(course);
+
+        Exam exam = ModelFactory.generateExam(course, startDate, endDate, false);
+        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam);
+        examRepository.save(exam);
+
+        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
+        initializeQuizExercise(quizExercise);
+        quizExerciseRepository.save(quizExercise);
+
+        return quizExercise;
+    }
+
+    public void removeUserFromCourses(String login) {
+        User user = getUserByLogin(login);
+        user.setGroups(Set.of());
+        userRepo.save(user);
     }
 
     @NotNull
