@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -278,6 +279,26 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void getResult_asStudent() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         request.get("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN, Result.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetResultsWithPointsForExamExercise() throws Exception {
+        setupExamModelingExerciseWithResults();
+        List<Result> results = request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.OK, Result.class);
+        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request
+                .getList("/api/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
+
+        // with points should return the same results as the /results endpoint
+        assertThat(results).hasSize(numberOfStudents);
+        assertThat(resultsWithPoints).hasSameSizeAs(results);
+        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
+        assertThat(resultWithPoints2).containsExactlyElementsOf(results);
+
+        // the exercise has no grading criteria -> empty points map in every resultWithPoints
+        for (final var resultWithPoints : resultsWithPoints) {
+            assertThat(resultWithPoints.pointsPerCriterion()).isEmpty();
+        }
     }
 
     @Test
