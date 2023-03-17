@@ -26,9 +26,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                 FROM Notification notification
                     LEFT JOIN notification.course
                     LEFT JOIN notification.recipient
-                    LEFT JOIN notification.message.author
-                    LEFT JOIN notification.conversation.conversationParticipants conversationParticipant
-                    LEFT JOIN conversationParticipant.user
                 WHERE notification.notificationDate IS NOT NULL
                     AND (cast(:hideUntil as timestamp ) IS NULL OR notification.notificationDate > :hideUntil)
                     AND (
@@ -39,28 +36,18 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                                 OR (notification.course.studentGroupName IN :#{#currentGroups} AND notification.type = 'STUDENT')
                             )
                         )
-                        OR type(notification) = SingleUserNotification and notification.recipient.login = :#{#login} and notification.readConversation = false
+                        OR type(notification) = SingleUserNotification and notification.recipient.login = :#{#login} and notification.title NOT IN :#{#titles}
                         OR type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :#{#tutorialGroupIds}
-                        OR type(notification) = ConversationNotification
-                            AND (notification.conversation.id IN :#{#conversationIds}
-                                 AND notification.message.author.login != :#{#login}
-                                 AND conversationParticipant.user.login = :#{#login}
-                                 AND notification.message.creationDate > conversationParticipant.lastRead
-                            )
                     )
             """)
     Page<Notification> findAllNotificationsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
-            @Param("hideUntil") ZonedDateTime hideUntil, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds, @Param("conversationIds") Set<Long> conversationIds,
-            Pageable pageable);
+            @Param("hideUntil") ZonedDateTime hideUntil, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds, @Param("titles") Set<String> titles, Pageable pageable);
 
     @Query("""
                 SELECT notification
                 FROM Notification notification
                     LEFT JOIN notification.course
                     LEFT JOIN notification.recipient
-                    LEFT JOIN notification.message.author
-                    LEFT JOIN notification.conversation.conversationParticipants conversationParticipant
-                    LEFT JOIN conversationParticipant.user
                 WHERE notification.notificationDate IS NOT NULL
                     AND (:#{#hideUntil} IS NULL OR notification.notificationDate > :#{#hideUntil})
                     AND (
@@ -74,23 +61,12 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                            OR (notification.course.studentGroupName IN :#{#currentGroups} AND notification.type = 'STUDENT'))
                      )
                      OR (type(notification) = SingleUserNotification
-                        AND notification.recipient.login = :#{#login}
+                        AND notification.recipient.login = :#{#login} AND notification.title NOT IN :#{#titles}
                         AND (notification.title NOT IN :#{#deactivatedTitles}
                             OR notification.title IS NULL
                         )
-                        AND notification.readConversation = false
                      )
                      OR (type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :#{#tutorialGroupIds}
-                        AND (notification.title NOT IN :#{#deactivatedTitles}
-                            OR notification.title IS NULL
-                        )
-                     )
-                     OR (type(notification) = ConversationNotification
-                        AND (notification.conversation.id IN :#{#conversationIds}
-                            AND notification.message.author.login != :#{#login}
-                            AND conversationParticipant.user.login = :#{#login}
-                            AND notification.message.creationDate > conversationParticipant.lastRead
-                        )
                         AND (notification.title NOT IN :#{#deactivatedTitles}
                             OR notification.title IS NULL
                         )
@@ -99,7 +75,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             """)
     Page<Notification> findAllNotificationsFilteredBySettingsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
             @Param("hideUntil") ZonedDateTime hideUntil, @Param("deactivatedTitles") Set<String> deactivatedTitles, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
-            Set<Long> conversationIds, Pageable pageable);
+            @Param("titles") Set<String> titles, Pageable pageable);
 
     @Transactional // ok because of modifying query
     @Modifying
@@ -109,17 +85,4 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             WHERE n.author.id = :userId
             """)
     void removeAuthor(@Param("userId") long userId);
-
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("""
-            UPDATE Notification notification
-            SET notification.readConversation = true
-            WHERE type(notification) = SingleUserNotification
-                AND JSON_VALUE(target, '$.conversation') = :conversationId
-                AND notification.recipient.id = :recipientId
-                AND notification.title = :newReplyMessageTitle
-            """)
-    void updateNotificationsForConversation(@Param("conversationId") long conversationId, @Param("recipientId") long recipientId,
-            @Param("newReplyMessageTitle") String newReplyMessageTitle);
 }

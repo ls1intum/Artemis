@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.MESSAGE_REPLY_IN_CONVERSATION_TITLE;
-
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -45,17 +43,14 @@ public class ConversationMessagingService extends PostingService {
 
     private final ChannelAuthorizationService channelAuthorizationService;
 
-    private final NotificationRepository notificationRepository;
-
-    protected ConversationMessagingService(NotificationRepository notificationRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository,
-            LectureRepository lectureRepository, ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService,
-            SimpMessageSendingOperations messagingTemplate, UserRepository userRepository, ConversationService conversationService,
-            ConversationParticipantRepository conversationParticipantRepository, ChannelAuthorizationService channelAuthorizationService) {
+    protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
+            ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate,
+            UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
+            ChannelAuthorizationService channelAuthorizationService) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
         this.channelAuthorizationService = channelAuthorizationService;
-        this.notificationRepository = notificationRepository;
     }
 
     /**
@@ -133,7 +128,6 @@ public class ConversationMessagingService extends PostingService {
             participantOfRequestingUser.setLastRead(ZonedDateTime.now());
             participantOfRequestingUser.setUnreadMessagesCount(0L);
             conversationParticipantRepository.save(participantOfRequestingUser);
-            notificationRepository.updateNotificationsForConversation(conversation.getId(), requestingUser.getId(), MESSAGE_REPLY_IN_CONVERSATION_TITLE);
         }
         else {
             throw new BadRequestAlertException("A new message post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");

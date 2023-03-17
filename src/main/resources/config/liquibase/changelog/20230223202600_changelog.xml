@@ -23,8 +23,5 @@
                                  referencedColumnNames="id"
                                  referencedTableName="conversation"
                                  onDelete="SET NULL"/>
-        <addColumn tableName="notification">
-            <column name="read_conversation" type="boolean" defaultValueBoolean="false"/>
-        </addColumn>
     </changeSet>
 </databaseChangeLog>

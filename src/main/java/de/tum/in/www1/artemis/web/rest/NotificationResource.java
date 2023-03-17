@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.MESSAGE_REPLY_IN_CONVERSATION_TITLE;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.NEW_MESSAGE_TITLE;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
@@ -75,8 +78,7 @@ public class NotificationResource {
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         var tutorialGroupIds = tutorialGroupService.findAllForNotifications(currentUser).stream().map(DomainObject::getId).collect(Collectors.toSet());
-        var conversationIds = conversationService.findAllConversationsForNotifications(currentUser, true).stream().map(DomainObject::getId).collect(Collectors.toSet());
-
+        Set<String> titlesToNotLoadNotification = Set.of(NEW_MESSAGE_TITLE, MESSAGE_REPLY_IN_CONVERSATION_TITLE);
         log.debug("REST request to get all Notifications for current user {} filtered by settings", currentUser);
         Set<NotificationSetting> notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
         Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.WEBAPP,
@@ -86,11 +88,11 @@ public class NotificationResource {
         final Page<Notification> page;
         if (deactivatedTitles.isEmpty()) {
             page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), hideNotificationsUntilDate, tutorialGroupIds,
-                    conversationIds, pageable);
+                    titlesToNotLoadNotification, pageable);
         }
         else {
             page = notificationRepository.findAllNotificationsFilteredBySettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), hideNotificationsUntilDate,
-                    deactivatedTitles, tutorialGroupIds, conversationIds, pageable);
+                    deactivatedTitles, tutorialGroupIds, titlesToNotLoadNotification, pageable);
         }
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);

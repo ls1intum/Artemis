@@ -4,7 +4,7 @@ import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import dayjs from 'dayjs/esm';
 import { GroupNotification } from 'app/entities/group-notification.model';
-import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification } from 'app/entities/notification.model';
+import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, NEW_MESSAGE_TITLE, NEW_REPLY_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
@@ -201,7 +201,9 @@ export class NotificationSidebarComponent implements OnInit {
                 if (!this.notifications.some(({ id }) => id === notification.id)) {
                     this.totalNotifications += 1;
                 }
-                this.addNotifications([notification]);
+                if (notification.title !== NEW_MESSAGE_TITLE && notification.title !== NEW_REPLY_MESSAGE_TITLE) {
+                    this.addNotifications([notification]);
+                }
             }
         });
     }

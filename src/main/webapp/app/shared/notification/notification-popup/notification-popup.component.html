@@ -5,7 +5,10 @@
                 <fa-icon [icon]="faExclamationTriangle"></fa-icon>
             </div>
             <ng-template #displayQuizIcon>
-                <fa-icon [icon]="faCheckDouble"></fa-icon>
+                <fa-icon *ngIf="notification.title === QuizNotificationTitleHtmlConst; else displayMessageIcon" [icon]="faCheckDouble"></fa-icon>
+            </ng-template>
+            <ng-template #displayMessageIcon>
+                <fa-icon [icon]="faMessage" class="text-info"></fa-icon>
             </ng-template>
         </div>
         <div class="pe-4 py-3">

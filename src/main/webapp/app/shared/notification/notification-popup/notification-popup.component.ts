@@ -1,14 +1,16 @@
 import { Component, OnInit } from '@angular/core';
-import { IsActiveMatchOptions, Router, UrlTree } from '@angular/router';
+import { IsActiveMatchOptions, Params, Router, UrlTree } from '@angular/router';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification } from 'app/entities/notification.model';
+import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, NEW_MESSAGE_TITLE, NEW_REPLY_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { faCheckDouble, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faExclamationTriangle, faMessage, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { RouteComponents } from 'app/shared/metis/metis.util';
 
 @Component({
     selector: 'jhi-notification-popup',
@@ -19,11 +21,13 @@ export class NotificationPopupComponent implements OnInit {
     notifications: Notification[] = [];
 
     LiveExamExerciseUpdateNotificationTitleHtmlConst = LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
+    QuizNotificationTitleHtmlConst = 'Quiz started';
 
     private studentExamExerciseIds: number[];
 
     // Icons
     faTimes = faTimes;
+    faMessage = faMessage;
     faCheckDouble = faCheckDouble;
     faExclamationTriangle = faExclamationTriangle;
 
@@ -60,9 +64,23 @@ export class NotificationPopupComponent implements OnInit {
      * @param notification {Notification}
      */
     navigateToTarget(notification: Notification): void {
+        const currentCourseId = this.getCurrentCourseId();
+        const target = JSON.parse(notification.target!);
+        const targetCourseId = target.course;
+        const targetConversationId = target.conversation;
+
         if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
-            const target = JSON.parse(notification.target!);
             this.examExerciseUpdateService.navigateToExamExercise(target.exercise);
+        } else if (notification.title === NEW_REPLY_MESSAGE_TITLE || notification.title === NEW_MESSAGE_TITLE) {
+            const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
+            const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
+            if (currentCourseId === undefined || currentCourseId !== targetCourseId || this.isUnderMessagesTabOfSpecificCourse(targetCourseId)) {
+                this.router.navigate(['/courses'], { skipLocationChange: true }).then(() => {
+                    this.router.navigate(routeComponents, { queryParams });
+                });
+            } else {
+                this.router.navigate(routeComponents, { queryParams });
+            }
         } else {
             this.router.navigateByUrl(this.notificationTargetRoute(notification));
         }
@@ -98,7 +116,37 @@ export class NotificationPopupComponent implements OnInit {
             if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
                 this.checkIfNotificationAffectsCurrentStudentExamExercises(notification);
             }
+            if (notification.title === NEW_MESSAGE_TITLE || notification.title === NEW_REPLY_MESSAGE_TITLE) {
+                this.addMessageNotification(notification);
+                this.setRemovalTimeout(notification);
+            }
         }
+    }
+
+    /**
+     * Will add a notification about a new message or reply to the component's state.
+     * @param notification {Notification}
+     */
+    private addMessageNotification(notification: Notification): void {
+        if (notification.target) {
+            const target = JSON.parse(notification.target);
+            if (!this.isUnderMessagesTabOfSpecificCourse(target.course)) {
+                this.notifications.unshift(notification);
+            }
+        }
+    }
+
+    /**
+     * Check if user is under messages tab.
+     * @returns {boolean} true if user is under messages tab, false otherwise
+     */
+    private isUnderMessagesTabOfSpecificCourse(targetCourseId: string): boolean {
+        return this.router.url.includes(`courses/${targetCourseId}/messages`);
+    }
+
+    private getCurrentCourseId(): number | undefined {
+        const matchCourseIdInURL = window.location.pathname.match(/.*\/courses\/(\d+)\/.*/);
+        return matchCourseIdInURL ? +matchCourseIdInURL[1] : undefined;
     }
 
     /**
