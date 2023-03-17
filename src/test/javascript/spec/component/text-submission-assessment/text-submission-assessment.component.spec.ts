@@ -114,7 +114,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     const route = (): ActivatedRoute =>
         ({
-            paramMap: of(convertToParamMap({ courseId: 123, exerciseId: 1, examId: 2 })),
+            paramMap: of(convertToParamMap({ courseId: 123, exerciseId: 1, examId: 2, exerciseGroupId: 3 })),
             queryParamMap: of(convertToParamMap({ testRun: 'false', correctionRound: 2 })),
             data: of({
                 studentParticipation: participation,
