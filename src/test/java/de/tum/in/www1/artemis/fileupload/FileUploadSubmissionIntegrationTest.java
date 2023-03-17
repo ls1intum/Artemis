@@ -144,7 +144,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
             }
         }
 
-        String publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
+        String publicFilePath = fileService.publicPathForActualPathOrThrow(actualFilePath, returnedSubmission.getId());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
         var fileBytes = Files.readAllBytes(Path.of(actualFilePath));
