@@ -20,13 +20,13 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.loading = true;
-        this.paramSubscription = this.route.parent!.params.subscribe(async (params) => {
+        this.paramSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId']);
             this.courseService.findOneForRegistration(this.courseId).subscribe((res) => {
                 this.course = res.body!;
                 this.loading = false;
             });
-            await this.redirectIfCourseIsFullyAccessible();
+            this.redirectIfCourseIsFullyAccessible();
         });
     }
 
@@ -54,7 +54,7 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
         );
     }
 
-    async redirectIfCourseIsFullyAccessible(): Promise<void> {
+    redirectIfCourseIsFullyAccessible() {
         this.isCourseFullyAccessible().subscribe((isFullyAccessible) => {
             if (isFullyAccessible) {
                 this.redirectToCoursePage();

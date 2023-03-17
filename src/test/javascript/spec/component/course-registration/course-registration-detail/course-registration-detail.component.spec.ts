@@ -110,17 +110,17 @@ describe('CourseRegistrationDetailComponent', () => {
         jest.spyOn(component, 'isCourseFullyAccessible').mockReturnValue(of(true));
 
         component.courseId = course1.id;
-        component.redirectIfCourseIsFullyAccessible().then(() => {
-            expect(router.navigate).toHaveBeenCalledWith(['courses', course1.id]);
-        });
+        component.redirectIfCourseIsFullyAccessible();
+
+        expect(router.navigate).toHaveBeenCalledWith(['courses', course1.id]);
     }));
 
     it('should not redirect to the course page if the dashboard version is not fully accessible', fakeAsync(() => {
         jest.spyOn(component, 'isCourseFullyAccessible').mockReturnValue(of(false));
 
         component.courseId = course1.id;
-        component.redirectIfCourseIsFullyAccessible().then(() => {
-            expect(router.navigate).not.toHaveBeenCalled();
-        });
+        component.redirectIfCourseIsFullyAccessible();
+
+        expect(router.navigate).not.toHaveBeenCalled();
     }));
 });
