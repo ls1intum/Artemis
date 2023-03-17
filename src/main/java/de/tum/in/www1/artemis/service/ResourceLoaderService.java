@@ -107,7 +107,7 @@ public class ResourceLoaderService {
                 resources = resourceLoader.getResources(resourceLocation);
             }
             catch (IOException e) {
-                log.warn("Could not load resources '{}' from filesystem.", resourceLocation, e);
+                log.debug("Could not load resources '{}' from filesystem.", resourceLocation, e);
             }
         }
 
@@ -118,7 +118,7 @@ public class ResourceLoaderService {
                 resources = resourceLoader.getResources(resourceLocation);
             }
             catch (IOException e) {
-                log.warn("Could not load resources '{}' from classpath.", resourceLocation, e);
+                log.debug("Could not load resources '{}' from classpath.", resourceLocation, e);
             }
         }
 
