@@ -32,6 +32,7 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 /**
  * Filter properties for a result
@@ -379,5 +380,22 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 this.refresh();
             });
         }
+    }
+
+    getAssessmentLink(participation: Participation) {
+        if (!this.exercise.type || !this.course.id || !this.exercise.id || !participation.results?.[0]?.submission?.id) {
+            return;
+        }
+        const newAssessment = !participation.results?.[0]?.assessmentType || participation.results?.[0].assessmentType === AssessmentType.AUTOMATIC;
+        return getLinkToSubmissionAssessment(
+            this.exercise.type,
+            this.course.id,
+            this.exercise.id,
+            participation.id,
+            newAssessment ? 'new' : participation.results[0].submission.id,
+            this.exercise.exerciseGroup?.exam?.id,
+            this.exercise.exerciseGroup?.id,
+            participation.results[0].id,
+        );
     }
 }

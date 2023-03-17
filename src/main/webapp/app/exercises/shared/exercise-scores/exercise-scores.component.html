@@ -314,16 +314,7 @@
                                         value.results?.[0]?.submission"
                             >
                                 <a
-                                    *ngIf="exercise.course"
-                                    [routerLink]="[
-                                        '/course-management',
-                                        exercise.course?.id,
-                                        exercise.type + '-exercises',
-                                        exercise.id,
-                                        'submissions',
-                                        value.results[0].submission.id,
-                                        'assessment'
-                                    ]"
+                                    [routerLink]="getAssessmentLink(value)"
                                     class="btn btn-sm me-1"
                                     [class.btn-success]="(!value.results?.[0]?.assessmentType || value.results?.[0].assessmentType === AssessmentType.AUTOMATIC) && !value.results?.[0]?.hasComplaint"
                                     [class.btn-primary]="value.results?.[0]?.completionDate || value.results?.[0]?.hasComplaint"
@@ -337,38 +328,6 @@
                                         }}
                                     </ng-container>
                                     <ng-template #courseComplaint>
-                                        {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
-                                    </ng-template>
-                                </a>
-                                <a
-                                    *ngIf="exercise.exerciseGroup"
-                                    [routerLink]="[
-                                        '/course-management',
-                                        exercise.exerciseGroup.exam!.course!.id,
-                                        'exams',
-                                        exercise.exerciseGroup.exam!.id,
-                                        'exercise-groups',
-                                        exercise.exerciseGroup.id,
-                                        exercise.type + '-exercises',
-                                        exercise.id,
-                                        'submissions',
-                                        value.results[0].submission.id,
-                                        'assessment'
-                                    ]"
-                                    [queryParams]="{ 'correction-round': exercise.exerciseGroup.exam!.numberOfCorrectionRoundsInExam }"
-                                    class="btn btn-sm me-1"
-                                    [class.btn-success]="(!value.results?.[0]?.assessmentType || value.results?.[0].assessmentType === AssessmentType.AUTOMATIC) && !value.results?.[0]?.hasComplaint"
-                                    [class.btn-primary]="value.results?.[0]?.completionDate || value.results?.[0]?.hasComplaint"
-                                    [class.btn-warning]="!value.results?.[0]?.completionDate && !value.results?.[0]?.hasComplaint"
-                                >
-                                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
-                                    <ng-container *ngIf="!value.results?.[0].hasComplaint; else examComplaint">
-                                        {{ ('artemisApp.assessment.dashboard.actions.' +
-                                            (!value.results?.[0]?.assessmentType || value.results?.[0].assessmentType === AssessmentType.AUTOMATIC ? 'assess' : (value.results?.[0]?.completionDate ? 'open' : 'continue')))
-                                            | artemisTranslate
-                                        }}
-                                    </ng-container>
-                                    <ng-template #examComplaint>
                                         {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
                                     </ng-template>
                                 </a>

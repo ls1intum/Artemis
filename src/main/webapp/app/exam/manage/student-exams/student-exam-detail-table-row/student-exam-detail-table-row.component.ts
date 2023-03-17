@@ -72,8 +72,7 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
                 this.studentParticipation?.id,
                 submission.id!,
                 this.examId,
-                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                exercise.exerciseGroup?.id!,
+                exercise.exerciseGroup?.id,
                 resultId,
             );
             this.openingAssessmentEditorForNewSubmission = false;

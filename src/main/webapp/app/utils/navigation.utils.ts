@@ -111,11 +111,11 @@ export const getLinkToSubmissionAssessment = (
     exerciseId: number,
     participationId: number | undefined,
     submissionId: number | 'new',
-    examId: number,
-    exerciseGroupId: number,
+    examId: number | undefined,
+    exerciseGroupId: number | undefined,
     resultId?: number,
 ): string[] => {
-    if (examId > 0) {
+    if (examId && exerciseGroupId) {
         let route;
         if (exerciseType === ExerciseType.TEXT && submissionId !== 'new' && participationId !== undefined) {
             route = [
