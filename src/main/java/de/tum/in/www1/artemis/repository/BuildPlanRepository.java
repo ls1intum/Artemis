@@ -31,6 +31,12 @@ public interface BuildPlanRepository extends JpaRepository<BuildPlan, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "programmingExercises" })
     Optional<BuildPlan> findByBuildPlan(String buildPlan);
 
+    /**
+     * Adds the given build plan to the exercise.
+     *
+     * @param buildPlan The build plan script.
+     * @param exercise  The exercise the build plan will be added to.
+     */
     default void setBuildPlanForExercise(final String buildPlan, final ProgrammingExercise exercise) {
         BuildPlan buildPlanWrapper = findByBuildPlan(buildPlan).orElse(new BuildPlan());
         buildPlanWrapper.setBuildPlan(buildPlan);
