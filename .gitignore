@@ -18,7 +18,7 @@ node_modules/
 npm-debug.log.*
 /.awcache/*
 .node-gyp/
-/.cache-loader/*
+/.cache-loader/
 
 ######################
 # SASS
@@ -152,6 +152,11 @@ Desktop.ini
 repos/
 repos-download/
 /templates/
+.bash_history
+.v8flags.*.json
+/src/main/generated
+/coverage
+/exports
 
 ######################
 # Gradle Wrapper
@@ -172,19 +177,21 @@ repos-download/
 ######################
 # Docker
 ######################
-.bash_history
-.v8flags.*.json
-/.cache-loader
-/src/main/generated
-/coverage
-/exports
 /src/main/docker/.env
-/src/main/resources/config/application-local*.yml
-/src/main/resources/id_*
-/src/main/resources/known_hosts
+
+######################
+# Cypress
+######################
 /src/test/cypress/screenshots/
 /src/test/cypress/videos/
 /src/test/cypress/build
+
+######################
+# Artemis configs
+######################
+/src/main/resources/config/application-local*.yml
+/src/main/resources/id_*
+/src/main/resources/known_hosts
 
 ######################
 # Coverage Files
