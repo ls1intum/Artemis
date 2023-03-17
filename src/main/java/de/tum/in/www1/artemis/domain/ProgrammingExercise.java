@@ -89,7 +89,7 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "project_key", table = "programming_exercise_details", nullable = false)
     private String projectKey;
 
-    @ManyToOne(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "build_plan_id", table = "exercise")
     private BuildPlan buildPlan;
 
