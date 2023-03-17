@@ -56,8 +56,6 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
 
     @Output()
     onError = new EventEmitter<string>();
-    @Output()
-    onFileLoad = new EventEmitter<string>();
 
     /** Ace Editor Options **/
     isLoading = false;
@@ -180,8 +178,6 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
         this.editor.getEditor().setShowPrintMargin(false);
         // Reset the undo stack after file change, otherwise the user can undo back to the old file
         this.editor.getEditor().getSession().setUndoManager(new UndoManager());
-
-        this.onFileLoad.emit(this.selectedFile);
     }
 
     submit() {
