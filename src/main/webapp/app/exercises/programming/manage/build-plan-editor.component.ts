@@ -43,7 +43,6 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     @ViewChild('editor', { static: true }) editor: AceEditorComponent;
     selectedFile = 'pipeline.groovy';
     buildPlan: BuildPlan;
-    buildPlanId: number;
     exerciseId: number;
     @Input()
     sessionId: number | string;
@@ -159,7 +158,6 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
                 tap((buildPlanObj) => {
                     if (buildPlanObj.body && buildPlanObj.body.buildPlan && buildPlanObj.body.id) {
                         this.buildPlan = buildPlanObj.body;
-                        this.buildPlanId = buildPlanObj.body.id;
                         this.fileSession[buildPlanObj.body.id] = { code: buildPlanObj.body.buildPlan, cursor: { column: 0, row: 0 } };
                         this.initEditor();
                     } else {
@@ -176,7 +174,7 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     }
 
     private initEditor() {
-        this.editor.getEditor().getSession().setValue(this.fileSession[this.buildPlanId].code);
+        this.editor.getEditor().getSession().setValue(this.fileSession[this.buildPlan.id!].code);
         this.editor.getEditor().resize();
         this.editor.getEditor().focus();
         this.editor.getEditor().setShowPrintMargin(false);
@@ -188,8 +186,8 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
 
     submit() {
         const buildPlanToSave = new BuildPlan();
-        buildPlanToSave.id = this.buildPlanId;
-        buildPlanToSave.buildPlan = this.fileSession[this.buildPlanId].code;
+        buildPlanToSave.id = this.buildPlan.id;
+        buildPlanToSave.buildPlan = this.fileSession[this.buildPlan.id!].code;
         buildPlanToSave.programmingExercises = this.buildPlan.programmingExercises;
         this.buildPlanService.putBuildPlan(this.exerciseId, buildPlanToSave).subscribe(() => {
             console.log(buildPlanToSave.buildPlan);
@@ -199,7 +197,7 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     onTextChanged(event: any) {
         const code = event as string;
         const cursor = this.editor.getEditor().getCursorPosition();
-        this.fileSession[this.buildPlanId] = { code, cursor };
+        this.fileSession[this.buildPlan.id!] = { code, cursor };
     }
 
     updateTabSize(tabSize: number) {
