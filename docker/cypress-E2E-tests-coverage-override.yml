@@ -12,6 +12,7 @@ services:
             _JAVA_OPTIONS: -javaagent:jacocoagent.jar=output=tcpserver,address=*
 
     artemis-cypress:
+        pull_policy: never
         build:
             context: ./cypress
             dockerfile: cypress.Dockerfile
