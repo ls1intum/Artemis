@@ -90,10 +90,15 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             if (!this.course.learningGoals || !this.course.prerequisites || !this.course.tutorialGroups || !this.course.tutorialGroupsConfiguration) {
                 this.loadLearningGoalsAndTutorialGroups();
             }
+            await this.initAfterCourseLoad();
         } else {
-            await this.loadCourse().toPromise();
+            this.loadCourse().subscribe(() => {
+                this.initAfterCourseLoad();
+            });
         }
+    }
 
+    async initAfterCourseLoad() {
         await this.subscribeToTeamAssignmentUpdates();
         this.subscribeForQuizChanges();
         this.metisConversationService
@@ -194,17 +199,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.router.navigate(['courses', this.courseId, 'register']);
     }
 
-    redirectToCourseRegistrationPageIfCanRegisterOrElseThrow(error: Error): Observable<void | never> {
-        return this.canRegisterForCourse().pipe(
-            map((canRegister) => {
-                if (canRegister) {
-                    this.redirectToCourseRegistrationPage();
-                    return;
-                } else {
-                    throw error;
-                }
-            }),
-        );
+    redirectToCourseRegistrationPageIfCanRegisterOrElseThrow(error: Error): void {
+        this.canRegisterForCourse().subscribe((canRegister) => {
+            if (canRegister) {
+                this.redirectToCourseRegistrationPage();
+            } else {
+                throw error;
+            }
+        });
     }
 
     /**
@@ -222,7 +224,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             // catch 403 errors where registration is possible
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 403) {
-                    return this.redirectToCourseRegistrationPageIfCanRegisterOrElseThrow(error);
+                    this.redirectToCourseRegistrationPageIfCanRegisterOrElseThrow(error);
                 }
                 return throwError(() => error);
             }),
