@@ -553,7 +553,7 @@ public class QuizExerciseResource {
                 return null;
             }
             try {
-                return Path.of(fileService.actualPathForPublicPath(path));
+                return Path.of(fileService.actualPathForPublicPathOrThrow(path));
             }
             catch (FilePathParsingException e) {
                 // if the path is invalid, we can't delete it, but we don't want to fail the whole deletion

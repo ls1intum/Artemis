@@ -77,7 +77,7 @@ public class AttachmentResource {
             throw new BadRequestAlertException("A new attachment cannot already have an ID", ENTITY_NAME, "idExists");
         }
         Attachment result = attachmentRepository.save(attachment);
-        this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
+        this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPathOrThrow(result.getLink()));
         return ResponseEntity.created(new URI("/api/attachments/" + result.getId())).body(result);
     }
 
@@ -102,7 +102,7 @@ public class AttachmentResource {
         originalAttachment.ifPresent(value -> attachment.setAttachmentUnit(value.getAttachmentUnit()));
 
         Attachment result = attachmentRepository.save(attachment);
-        this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
+        this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPathOrThrow(result.getLink()));
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
         }
@@ -157,7 +157,7 @@ public class AttachmentResource {
             course = attachment.getLecture().getCourse();
             relatedEntity = "lecture " + attachment.getLecture().getTitle();
             try {
-                this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(attachment.getLink()));
+                this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPathOrThrow(attachment.getLink()));
             }
             catch (RuntimeException exception) {
                 // this catch is required for deleting wrongly formatted attachment database entries

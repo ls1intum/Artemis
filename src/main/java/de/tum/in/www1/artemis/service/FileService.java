@@ -250,11 +250,11 @@ public class FileService implements DisposableBean {
     public String copyExistingFileToTarget(String oldFilePath, String targetFolder, Long entityId) {
         if (oldFilePath != null && !oldFilePath.contains("files/temp")) {
             try {
-                Path source = Path.of(actualPathForPublicPath(oldFilePath));
+                Path source = Path.of(actualPathForPublicPathOrThrow(oldFilePath));
                 File targetFile = generateTargetFile(oldFilePath, targetFolder, false);
                 Path target = targetFile.toPath();
                 Files.copy(source, target, REPLACE_EXISTING);
-                String newFilePath = publicPathForActualPath(target.toString(), entityId);
+                String newFilePath = publicPathForActualPathOrThrow(target.toString(), entityId);
                 log.debug("Moved File from {} to {}", source, target);
                 return newFilePath;
             }
@@ -301,7 +301,7 @@ public class FileService implements DisposableBean {
                 // delete old file
                 log.debug("Delete old file {}", oldFilePath);
                 try {
-                    File oldFile = new File(actualPathForPublicPath(oldFilePath));
+                    File oldFile = new File(actualPathForPublicPathOrThrow(oldFilePath));
 
                     if (!FileSystemUtils.deleteRecursively(oldFile)) {
                         log.warn("FileService.manageFilesForUpdatedFilePath: Could not delete old file: {}", oldFile);
@@ -319,11 +319,11 @@ public class FileService implements DisposableBean {
         if (newFilePath != null && newFilePath.contains("files/temp")) {
             // rename and move file
             try {
-                Path source = Path.of(actualPathForPublicPath(newFilePath));
+                Path source = Path.of(actualPathForPublicPathOrThrow(newFilePath));
                 File targetFile = generateTargetFile(newFilePath, targetFolder, keepFileName);
                 Path target = targetFile.toPath();
                 Files.move(source, target, REPLACE_EXISTING);
-                newFilePath = publicPathForActualPath(target.toString(), entityId);
+                newFilePath = publicPathForActualPathOrThrow(target.toString(), entityId);
                 log.debug("Moved File from {} to {}", source, target);
             }
             catch (IOException e) {
@@ -331,6 +331,23 @@ public class FileService implements DisposableBean {
             }
         }
         return newFilePath;
+    }
+
+    /**
+     * Convert the given public file url to its corresponding local path
+     *
+     * @param publicPath the public file url to convert
+     * @throws FilePathParsingException if the path is unknown
+     * @return the actual path to that file in the local filesystem
+     */
+    public String actualPathForPublicPathOrThrow(String publicPath) {
+        String actualPath = actualPathForPublicPath(publicPath);
+        if (actualPath == null) {
+            // path is unknown => cannot convert
+            throw new FilePathParsingException("Unknown Filepath: " + publicPath);
+        }
+
+        return actualPath;
     }
 
     /**
@@ -382,8 +399,26 @@ public class FileService implements DisposableBean {
             return Path.of(FileUploadSubmission.buildFilePath(exerciseId, submissionId), filename).toString();
         }
 
-        // path is unknown => cannot convert
-        throw new FilePathParsingException("Unknown Filepath: " + publicPath);
+        return null;
+    }
+
+    /**
+     * Generate the public path for the file at the given path
+     *
+     * @param actualPathString the path to the file in the local filesystem
+     * @param entityId         the id of the entity associated with the file
+     * @throws FilePathParsingException if the path is unknown
+     * @return the public file url that can be used by users to access the file from outside
+     */
+    public String publicPathForActualPathOrThrow(String actualPathString, @Nullable Long entityId) {
+        String publicPath = publicPathForActualPath(actualPathString, entityId);
+        if (publicPath == null) {
+
+            // path is unknown => cannot convert
+            throw new FilePathParsingException("Unknown Filepath: " + actualPathString);
+        }
+
+        return publicPath;
     }
 
     /**
@@ -439,8 +474,7 @@ public class FileService implements DisposableBean {
             return "/api/files/file-upload-exercises/" + exerciseId + "/submissions/" + id + "/" + filename;
         }
 
-        // path is unknown => cannot convert
-        throw new FilePathParsingException("Unknown Filepath: " + actualPathString);
+        return null;
     }
 
     /**

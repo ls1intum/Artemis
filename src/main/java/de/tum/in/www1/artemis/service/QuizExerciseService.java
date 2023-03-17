@@ -581,7 +581,7 @@ public class QuizExerciseService {
         exerciseFileNames.addAll(dragItemFileNames);
         Set<String> newFileNames = isCreate ? exerciseFileNames : exerciseFileNames.stream().filter(fileName -> {
             try {
-                return !Files.exists(Paths.get(fileService.actualPathForPublicPath(fileName)));
+                return !Files.exists(Paths.get(fileService.actualPathForPublicPathOrThrow(fileName)));
             }
             catch (FilePathParsingException e) {
                 // File is not in the internal API format and hence expected to be a new file
@@ -629,7 +629,7 @@ public class QuizExerciseService {
         String savedFileName = fileService.saveFile(FilenameUtils.getPath(filePath), FilenameUtils.getName(filePath), null, FilenameUtils.getExtension(filePath), true, file);
         String id = questionId == null ? Constants.FILEPATH_ID_PLACEHOLDER : questionId.toString();
         Path path = Path.of(basePath, id, savedFileName);
-        return fileService.publicPathForActualPath(path.toString(), questionId);
+        return fileService.publicPathForActualPathOrThrow(path.toString(), questionId);
     }
 
     /**

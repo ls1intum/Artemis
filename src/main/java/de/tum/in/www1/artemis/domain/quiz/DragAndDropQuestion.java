@@ -161,7 +161,7 @@ public class DragAndDropQuestion extends QuizQuestion {
         // delete old file if necessary
         try {
             if (backgroundFilePath != null) {
-                fileService.deleteFiles(List.of(Path.of(fileService.actualPathForPublicPath(backgroundFilePath))));
+                fileService.deleteFiles(List.of(Path.of(fileService.actualPathForPublicPathOrThrow(backgroundFilePath))));
             }
         }
         catch (FilePathParsingException ignored) {

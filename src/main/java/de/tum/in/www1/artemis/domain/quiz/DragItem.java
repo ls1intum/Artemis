@@ -128,7 +128,7 @@ public class DragItem extends TempIdObject {
         // delete old file if necessary
         try {
             if (pictureFilePath != null) {
-                fileService.deleteFiles(List.of(Path.of(fileService.actualPathForPublicPath(pictureFilePath))));
+                fileService.deleteFiles(List.of(Path.of(fileService.actualPathForPublicPathOrThrow(pictureFilePath))));
             }
         }
         catch (FilePathParsingException ignored) {
