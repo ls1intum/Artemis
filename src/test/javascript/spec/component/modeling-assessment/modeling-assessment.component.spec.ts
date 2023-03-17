@@ -251,15 +251,12 @@ describe('ModelingAssessmentComponent', () => {
         highlightedElements.set('relationshipId', 'blue');
         comp.umlModel = mockModel;
         comp.highlightedElements = highlightedElements;
-        let apollonModel: UMLModel;
-        let elements: UMLElement[];
         fixture.detectChanges();
         expect(comp.apollonEditor).not.toBeNull();
 
-        await addDelay(500).then(() => {
-            apollonModel = comp.apollonEditor!.model;
-            elements = apollonModel.elements;
-        });
+        await addDelay(500);
+        const apollonModel = comp.apollonEditor!.model;
+        const elements = apollonModel.elements;
         const highlightedElement = elements!.find((el) => el.id === 'elementId1');
         const notHighlightedElement = elements!.find((el) => el.id === 'elementId2');
         const relationship = apollonModel!.relationships[0];
@@ -318,13 +315,12 @@ describe('ModelingAssessmentComponent', () => {
         jest.spyOn(translatePipe, 'transform').mockReturnValue('Second correction round');
         comp.ngOnChanges(changes);
         expect(comp.apollonEditor).not.toBeNull();
-        await addDelay(500).then(() => {
-            const apollonModel = comp.apollonEditor!.model;
-            const assessments: any = apollonModel.assessments;
-            expect(assessments[0].labelColor).toEqual(comp.secondCorrectionRoundColor);
-            expect(assessments[0].label).toBe('Second correction round');
-            expect(assessments[0].score).toBe(30);
-        });
+        await addDelay(500);
+        const apollonModel = comp.apollonEditor!.model;
+        const assessments: any = apollonModel.assessments;
+        expect(assessments[0].labelColor).toEqual(comp.secondCorrectionRoundColor);
+        expect(assessments[0].label).toBe('Second correction round');
+        expect(assessments[0].score).toBe(30);
     });
 
     it('should update highlighted assessments', async () => {
@@ -340,16 +336,15 @@ describe('ModelingAssessmentComponent', () => {
         comp.ngOnChanges(changes);
         expect(comp.apollonEditor).not.toBeNull();
 
-        await addDelay(500).then(() => {
-            const apollonModel = comp.apollonEditor!.model;
-            const assessments: any = apollonModel.assessments;
-            expect(assessments[0].labelColor).toEqual(comp.firstCorrectionRoundColor);
-            expect(assessments[0].label).toBe('First correction round');
-            expect(assessments[0].score).toBe(35);
-        });
+        await addDelay(500);
+        const apollonModel = comp.apollonEditor!.model;
+        const assessments: any = apollonModel.assessments;
+        expect(assessments[0].labelColor).toEqual(comp.firstCorrectionRoundColor);
+        expect(assessments[0].label).toBe('First correction round');
+        expect(assessments[0].score).toBe(35);
     });
 
-    it('should update feedbacks', async () => {
+    it('should update feedbacks', () => {
         const newMockFeedbackWithReference = { text: 'NewFeedbackWithReference', referenceId: 'relationshipId', reference: 'reference', credits: 30 } as Feedback;
         const newMockFeedbackWithoutReference = { text: 'NewFeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
         const newMockFeedbackInvalid = { text: 'NewFeedbackInvalid', referenceId: '4', reference: 'reference' };
