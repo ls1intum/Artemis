@@ -170,7 +170,7 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     }
 
     private initEditor() {
-        this.editor.getEditor().getSession().setValue(this.buildPlan.buildPlan);
+        this.onBuildPlanUpdate();
         this.editor.getEditor().resize();
         this.editor.getEditor().focus();
         this.editor.getEditor().setShowPrintMargin(false);
@@ -178,8 +178,14 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
         this.editor.getEditor().getSession().setUndoManager(new UndoManager());
     }
 
+    private onBuildPlanUpdate() {
+        this.editor.getEditor().getSession().setValue(this.buildPlan.buildPlan);
+    }
+
     submit() {
-        this.buildPlanService.putBuildPlan(this.exerciseId, this.buildPlan).subscribe(() => {
+        this.buildPlanService.putBuildPlan(this.exerciseId, this.buildPlan).subscribe((buildPlan) => {
+            this.buildPlan = buildPlan.body!;
+            this.onBuildPlanUpdate();
             console.log(this.buildPlan.buildPlan);
         });
     }
