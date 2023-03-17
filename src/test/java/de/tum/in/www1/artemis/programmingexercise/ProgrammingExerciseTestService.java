@@ -63,7 +63,6 @@ import de.tum.in.www1.artemis.service.CourseExamExportService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
@@ -176,8 +175,6 @@ public class ProgrammingExerciseTestService {
     public static final String studentLogin = "student1";
 
     public static final String teamShortName = "team1";
-
-    public static final String REPO_BASE_URL = "/api/repository/";
 
     public static final String PARTICIPATION_BASE_URL = "/api/participations/";
 
@@ -1459,40 +1456,6 @@ public class ProgrammingExerciseTestService {
         team = teamRepository.save(exercise, team);
         assertThat(team.getStudents()).as("Student was correctly added to team").hasSize(1);
         return team;
-    }
-
-    // TEST
-    void startProgrammingExerciseStudentSubmissionFailedWithBuildlog() throws Exception {
-        persistProgrammingExercise();
-        User user = userRepo.findOneByLogin(userPrefix + studentLogin).orElseThrow();
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true);
-        final var participation = createUserParticipation();
-
-        // create a submission which fails
-        database.createProgrammingSubmission(participation, true);
-
-        mockDelegate.resetMockProvider();
-
-        var log1 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "java.lang.AssertionError: BubbleSort does not sort correctly");
-        var log2 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[INFO] Test");
-        var log3 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[WARNING]");
-        var log4 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[ERROR] [Help 1]");
-        var log5 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[ERROR] To see the full stack trace of the errors\"");
-        var log6 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "Unable to publish artifact");
-        var log7 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "NOTE: Picked up JDK_JAVA_OPTIONS");
-        var log8 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin");
-        var log9 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[INFO] Downloading error");
-        var log10 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[INFO] Downloaded error");
-
-        var logs = List.of(log1, log2, log3, log4, log5, log6, log7, log8, log9, log10);
-        // TODO: change the test case by sending the logs over processNewProgrammingExerciseResult
-
-        // get the failed build log
-        var buildLogs = request.get(REPO_BASE_URL + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
-
-        assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
-        // some build logs have been filtered out
-        assertThat(buildLogs).as("Failed build log was created").hasSize(1);
     }
 
     // TEST
