@@ -20,7 +20,7 @@ services:
         environment:
             # The following enables the Java Remote Debugging port. More infos in the documentation:
             # https://docs.artemis.cit.tum.de/dev/setup.html#debugging-with-docker
-            _JAVA_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005
+            _JAVA_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
             SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,dev,docker
         # healthcheck can't be unified in artemis.yml as they aren't overridden as stated in the docker compose docs
         # https://docs.docker.com/compose/compose-file/#finding-referenced-service
