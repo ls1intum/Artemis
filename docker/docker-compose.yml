@@ -3,7 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 # this links to /docker/artemis-prod-mysql.yml which is the default artemis production docker compose setup
-# just using a symlink doesn't work because of the relative paths ;) (TODO: recheck this after the refactoring to .zs/docker)
+# just using a symlink doesn't work because of the relative paths ;) (TODO: recheck this after the refactoring to ./docker)
 
 services:
     artemis-app:
