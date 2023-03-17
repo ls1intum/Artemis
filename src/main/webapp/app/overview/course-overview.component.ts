@@ -3,7 +3,7 @@ import { Course } from 'app/entities/course.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, Subscription, forkJoin, takeUntil } from 'rxjs';
+import { Observable, Subject, Subscription, catchError, forkJoin, map, of, takeUntil, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -91,7 +91,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 this.loadLearningGoalsAndTutorialGroups();
             }
         } else {
-            await this.loadCourse();
+            await this.loadCourse().toPromise();
         }
 
         await this.subscribeToTeamAssignmentUpdates();
@@ -177,61 +177,66 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     /**
      * Determines whether the user can register for the course by trying to fetch the for-registration version
      */
-    canRegisterForCourse(): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            this.courseService.findOneForRegistration(this.courseId).subscribe({
-                next: () => {
-                    resolve(true);
-                },
-                error: (res: HttpErrorResponse) => {
-                    if (res.status === 403) {
-                        resolve(false);
-                    } else {
-                        reject(res);
-                    }
-                },
-            });
-        });
+    canRegisterForCourse(): Observable<boolean> {
+        return this.courseService.findOneForRegistration(this.courseId).pipe(
+            map(() => true),
+            catchError((error: HttpErrorResponse) => {
+                if (error.status === 403) {
+                    return of(false);
+                } else {
+                    return throwError(error);
+                }
+            }),
+        );
     }
 
     redirectToCourseRegistrationPage() {
         this.router.navigate(['courses', this.courseId, 'register']);
     }
 
+    redirectToCourseRegistrationPageIfCanRegisterOrElseThrow(error: Error): Observable<void | never> {
+        return this.canRegisterForCourse().pipe(
+            map((canRegister) => {
+                if (canRegister) {
+                    this.redirectToCourseRegistrationPage();
+                    return;
+                } else {
+                    throw error;
+                }
+            }),
+        );
+    }
+
     /**
      * Fetch the course from the server including all exercises, lectures, exams and learning goals
      * @param refresh Whether this is a force refresh (displays loader animation)
      */
-    loadCourse(refresh = false): Promise<void> {
+    loadCourse(refresh = false): Observable<void> {
         this.refreshingCourse = refresh;
-        return new Promise<void>((resolve, reject) => {
-            this.courseService.findOneForDashboard(this.courseId, refresh).subscribe({
-                next: (res: HttpResponse<Course>) => {
-                    this.courseCalculationService.updateCourse(res.body!);
-                    this.course = this.courseCalculationService.getCourse(this.courseId);
-                    setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
-                    resolve();
-                },
-                error: async (error: HttpErrorResponse) => {
-                    if (error.status === 403) {
-                        const canRegister = await this.canRegisterForCourse();
-                        if (canRegister) {
-                            // the user can register, so we want to redirect them
-                            this.redirectToCourseRegistrationPage();
-                            // no need to show the permission error
-                            return;
-                        }
-                    }
-                    const errorMessage = error.headers.get('X-artemisApp-message')!;
-                    this.alertService.addAlert({
-                        type: AlertType.DANGER,
-                        message: errorMessage,
-                        disableTranslation: true,
-                    });
-                    reject();
-                },
-            });
-        });
+        return this.courseService.findOneForDashboard(this.courseId, refresh).pipe(
+            map((res: HttpResponse<Course>) => {
+                this.courseCalculationService.updateCourse(res.body!);
+                this.course = this.courseCalculationService.getCourse(this.courseId);
+                setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
+            }),
+            // catch 403 errors where registration is possible
+            catchError((error: HttpErrorResponse) => {
+                if (error.status === 403) {
+                    return this.redirectToCourseRegistrationPageIfCanRegisterOrElseThrow(error);
+                }
+                return throwError(() => error);
+            }),
+            // handle other errors
+            catchError((error: HttpErrorResponse) => {
+                const errorMessage = error.headers.get('X-artemisApp-message')!;
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: errorMessage,
+                    disableTranslation: true,
+                });
+                return throwError(() => error);
+            }),
+        );
     }
 
     ngOnDestroy() {

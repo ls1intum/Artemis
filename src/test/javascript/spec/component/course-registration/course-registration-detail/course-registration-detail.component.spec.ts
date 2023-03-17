@@ -11,7 +11,7 @@ import { CourseRegistrationButtonComponent } from 'app/overview/course-registrat
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { throwError } from 'rxjs';
+import { lastValueFrom, throwError } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 
 describe('CourseRegistrationDetailComponent', () => {
@@ -88,8 +88,8 @@ describe('CourseRegistrationDetailComponent', () => {
         component.ngOnInit();
         tick();
 
-        // eslint-disable-next-line jest/valid-expect
-        expect(component.isCourseFullyAccessible()).resolves.toBeTrue();
+        const observable = component.isCourseFullyAccessible();
+        return expect(lastValueFrom(observable)).resolves.toBeTrue();
     }));
 
     it('should have a function isCourseFullyAccessible that returns false if the for-dashboard endpoint returns a 403', fakeAsync(() => {
@@ -102,12 +102,12 @@ describe('CourseRegistrationDetailComponent', () => {
         component.ngOnInit();
         tick();
 
-        // eslint-disable-next-line jest/valid-expect
-        expect(component.isCourseFullyAccessible()).resolves.toBeFalse();
+        const observable = component.isCourseFullyAccessible();
+        return expect(lastValueFrom(observable)).resolves.toBeFalse();
     }));
 
     it('should redirect to the course page if the dashboard version is fully accessible', fakeAsync(() => {
-        jest.spyOn(component, 'isCourseFullyAccessible').mockReturnValue(Promise.resolve(true));
+        jest.spyOn(component, 'isCourseFullyAccessible').mockReturnValue(of(true));
 
         component.courseId = course1.id;
         component.redirectIfCourseIsFullyAccessible().then(() => {
@@ -116,7 +116,7 @@ describe('CourseRegistrationDetailComponent', () => {
     }));
 
     it('should not redirect to the course page if the dashboard version is not fully accessible', fakeAsync(() => {
-        jest.spyOn(component, 'isCourseFullyAccessible').mockReturnValue(Promise.resolve(false));
+        jest.spyOn(component, 'isCourseFullyAccessible').mockReturnValue(of(false));
 
         component.courseId = course1.id;
         component.redirectIfCourseIsFullyAccessible().then(() => {

@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
+import { Observable, catchError, map, of, throwError } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-registration-detail-selector',
@@ -40,25 +41,24 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
     /**
      * Determines whether the user is already registered for the course by trying to fetch the for-dashboard version
      */
-    isCourseFullyAccessible(): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            this.courseService.findOneForDashboard(this.courseId).subscribe({
-                next: () => resolve(true),
-                error: (res: HttpErrorResponse) => {
-                    if (res.status === 403) {
-                        resolve(false);
-                    } else {
-                        reject(res);
-                    }
-                },
-            });
-        });
+    isCourseFullyAccessible(): Observable<boolean> {
+        return this.courseService.findOneForDashboard(this.courseId).pipe(
+            map(() => true),
+            catchError((res: HttpErrorResponse) => {
+                if (res.status === 403) {
+                    return of(false);
+                } else {
+                    return throwError(res);
+                }
+            }),
+        );
     }
 
     async redirectIfCourseIsFullyAccessible(): Promise<void> {
-        const isFullyAccessible = await this.isCourseFullyAccessible();
-        if (isFullyAccessible) {
-            this.redirectToCoursePage();
-        }
+        this.isCourseFullyAccessible().subscribe((isFullyAccessible) => {
+            if (isFullyAccessible) {
+                this.redirectToCoursePage();
+            }
+        });
     }
 }
