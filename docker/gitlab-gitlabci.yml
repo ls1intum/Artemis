@@ -6,7 +6,7 @@ services:
     gitlab:
         # TODO: check if more settings can also be integrated into gitlab.yml
         extends:
-            file: ./gitlab/gitlab.yml
+            file: ./gitlab.yml
             service: gitlab
         volumes:
             - artemis-gitlab-data:/var/opt/gitlab

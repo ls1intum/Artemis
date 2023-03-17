@@ -9,10 +9,10 @@ git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
 
 git fetch --unshallow || git fetch --all
 
-docker build . -f ./src/main/docker/Dockerfile -t artemis:coverage-latest
+docker build . -f ./docker/Dockerfile -t artemis:coverage-latest
 
 # Start Artemis docker containers with docker-compose
-cd src/main/docker/cypress
+cd docker/cypress
 
 # pass current host's hostname to the docker container for server.url (see docker compose config file)
 export HOST_HOSTNAME=$(hostname)

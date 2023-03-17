@@ -5,11 +5,11 @@
 services:
     gitlab:
         extends:
-            file: ./gitlab/gitlab.yml
+            file: ./gitlab.yml
             service: gitlab
     jenkins:
         extends:
-            file: ./jenkins/jenkins.yml
+            file: ./jenkins.yml
             service: jenkins
 
 networks:

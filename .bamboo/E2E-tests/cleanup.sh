@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cd src/main/docker/cypress
+cd docker/cypress
 
 # HOST_HOSTNAME not really necessary for shutdown but otherwise docker-compose complains
 export HOST_HOSTNAME=$(hostname)

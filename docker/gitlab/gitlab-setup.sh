@@ -3,7 +3,7 @@
 # Gitlab setup script                                                                             #
 # If you have any questions, ask Simon Leiß <simon.leiss@tum.de>                                  #
 # This script can be run by using the command                                                     #
-# docker compose -f src/main/docker/gitlab-jenkins.yml exec artemis-gitlab /./gitlab-setup.sh     #
+# docker compose -f docker/gitlab-jenkins.yml exec artemis-gitlab /./gitlab-setup.sh     #
 ###################################################################################################
 
 

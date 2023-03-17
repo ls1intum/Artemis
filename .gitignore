@@ -177,7 +177,7 @@ repos-download/
 ######################
 # Docker
 ######################
-/src/main/docker/.env
+/docker/.env
 
 ######################
 # Cypress

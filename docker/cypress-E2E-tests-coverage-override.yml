@@ -1,8 +1,7 @@
-version: '2.4'
 services:
     artemis-app:
         build:
-            dockerfile: src/main/docker/cypress/coverage.Dockerfile
+            dockerfile: docker/cypress/coverage.Dockerfile
         ports:
             - "6300:6300" # JaCoCo agent port
         # expose the port to make it reachable docker internally even if the external port mapping changes
@@ -11,7 +10,7 @@ services:
 
     artemis-cypress:
         build:
-            context: .
+            context: ./cypress
             dockerfile: cypress.Dockerfile
             args:
                 - CYPRESS_BROWSER=node18.12.0-chrome107

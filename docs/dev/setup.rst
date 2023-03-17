@@ -62,7 +62,7 @@ server application.
 You have to run a database on your local machine to be able to start Artemis.
 
 We recommend to start the database in a docker container. You can run the MySQL Database Server
-using e.g. ``docker compose -f src/main/docker/mysql.yml up``.
+using e.g. ``docker compose -f docker/mysql.yml up``.
 
 If you run your own MySQL server, make sure to specify the default ``character-set``
 as ``utf8mb4`` and the default ``collation`` as ``utf8mb4_unicode_ci``.
@@ -285,7 +285,7 @@ Run the server via Docker
 Dockerfile
 """"""""""
 
-You can find the latest Artemis Dockerfile at ``src/main/docker/artemis/Dockerfile``.
+You can find the latest Artemis Dockerfile at ``docker/artemis/Dockerfile``.
 
 * The Dockerfile has `multiple stages <https://docs.docker.com/build/building/multi-stage/>`__: A **builder** stage,
   building the ``.war`` file, an optional **external_builder** stage to import a pre-built ``.war`` file,
@@ -649,9 +649,9 @@ Getting Started with Docker Compose
 
 2. Check that all local network ports used by Docker Compose are free (e.g. you haven't started a local MySQL server
    when you would like to start a Docker Compose instance of mysql)
-3. Run ``docker compose pull && docker compose up`` in the project root
-4. Open the Artemis instance in your browser at http://localhost:8080
-5. Run ``docker compose down`` in the project root to stop and remove the docker containers
+3. Run ``docker compose pull && docker compose up`` in the directory ``docker/``
+4. Open the Artemis instance in your browser at https://localhost
+5. Run ``docker compose down`` in the directory ``docker/`` to stop and remove the docker containers
 
 .. tip::
   | The first ``docker compose pull`` command is just necessary the first time as an extra step,
@@ -670,7 +670,7 @@ Other Docker Compose Setups
    Overview of the Artemis Docker / Docker Compose structure
 
 The easiest way to configure a local deployment via Docker is a deployment with a *docker compose* file.
-In the directory ``src/main/docker/`` you can find the following *docker compose* files for different **setups**:
+In the directory ``docker/`` you can find the following *docker compose* files for different **setups**:
 
 * ``artemis-dev-mysql.yml``: **Artemis-Dev-MySQL** Setup containing the development build of Artemis and a MySQL DB
 * ``artemis-prod-mysql.yml``: **Artemis-Prod-MySQL** Setup containing the production build of Artemis and a MySQL DB
@@ -689,33 +689,35 @@ Two example commands to run such setups:
 
 .. code:: bash
 
-  docker compose -f src/main/docker/atlassian.yml up
-  docker compose -f src/main/docker/mysql.yml -f src/main/docker/gitlab-jenkins.yml up
+  docker compose -f docker/atlassian.yml up
+  docker compose -f docker/mysql.yml -f docker/gitlab-jenkins.yml up
 
 .. tip::
-  There is also a single ``docker-compose.yml`` in the project root which mirrors the setup of ``artemis-prod-mysql.yml``.
+  There is also a single ``docker-compose.yml`` in the directory ``docker/`` which mirrors the setup of ``artemis-prod-mysql.yml``.
   This should provide a quick way, without manual changes necessary, for new contributors to startup an Artemis instance.
+  If the documentation just mentions to run ``docker compose`` without a ``-f <file.yml>`` argument, it's
+  assumed you are running the command from the ``docker/`` directory.F
 
 For each service being used in these *docker compose* files a **base service** (containing similar settings)
 is defined in the following files:
 
-* ``artemis/artemis.yml``: **Artemis Service**
+* ``artemis.yml``: **Artemis Service**
 * ``mysql.yml``: **MySQL DB Service**
 * ``nginx.yml``: **Nginx Service**
 * ``postgresql.yml``: **PostgreSQL DB Service**
-* ``gitlab/gitlab.yml``: **GitLab Service**
-* ``jenkins/jenkins.yml``: **Jenkins Service**
+* ``gitlab.yml``: **GitLab Service**
+* ``jenkins.yml``: **Jenkins Service**
 
 For testing mails or SAML logins you can append the following services to any setup with an artemis container:
 
 * ``mailhog.yml``: **Mailhog Service** (email testing tool)
-* ``saml-test/saml-test.yml``: **Saml-Test Service** (SAML Test Identity Provider for testing SAML features)
+* ``saml-test.yml``: **Saml-Test Service** (SAML Test Identity Provider for testing SAML features)
 
 An example command to run such an extended setup:
 
 .. code:: bash
 
-  docker compose -f src/main/docker/artemis-dev-mysql.yml -f src/main/docker/mailhog.yml up
+  docker compose -f docker/artemis-dev-mysql.yml -f docker/mailhog.yml up
 
 .. warning::
   If you want to run multiple *docker compose* setups in parallel on one host you might have to modify
@@ -724,11 +726,10 @@ An example command to run such an extended setup:
 Folder structure
 """"""""""""""""
 
-| **Base services** (compose file with just one service) without any additional files and **setups**
-  (compose files with multiple services) should be located directly in ``src/main/docker/``.
-| **Base services** with additional files like configuration files, Dockerfile, ...
-  should be in a subdirectory with the service name (``src/main/docker/<service name>/``).
-  Additional files for **setups** should also be stored in a subdirectory with the setup name.
+| **Base services** (compose file with just one service) and **setups** (compose files with multiple services)
+  should be located directly in ``docker/``.
+| Additional files like configuration files, Dockerfile, ...
+  should be in a subdirectory with the **base service** or **setup** name (``docker/<base service or setup name>/``).
 
 Artemis Base Service
 ^^^^^^^^^^^^^^^^^^^^
@@ -763,7 +764,7 @@ Get a shell into the containers
 
 .. tip::
   To keep the documentation short, we will use the standard form of ``docker compose COMMAND`` from this point on.
-  You can use the following commands also with the ``-f src/main/docker/<setup to be launched>.yml`` argument pointing
+  You can use the following commands also with the ``-f docker/<setup to be launched>.yml`` argument pointing
   to a specific setup.
 
 -  app container:

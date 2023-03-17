@@ -146,11 +146,11 @@ the random password in step 2) and generate random access tokens (instead of the
 Set the variable ``GENERATE_ACCESS_TOKENS`` to ``true`` in the ``gitlab-local-setup.sh`` script and use the generated
 tokens instead of the predefined ones.
 
-1. Start the GitLab container defined in `src/main/docker/gitlab-jenkins-mysql.yml` by running
+1. Start the GitLab container defined in `docker/gitlab-jenkins-mysql.yml` by running
 
    ::
 
-        GITLAB_ROOT_PASSWORD=artemis_admin docker compose -f src/main/docker/<Jenkins setup to be launched>.yml up --build -d gitlab
+        GITLAB_ROOT_PASSWORD=artemis_admin docker compose -f docker/<Jenkins setup to be launched>.yml up --build -d gitlab
 
    If you want to generate a random password for the ``root`` user, remove the part before ``docker compose`` from
    the command.
@@ -169,7 +169,7 @@ tokens instead of the predefined ones.
 
    .. code:: bash
 
-        docker compose -f src/main/docker/<Jenkins setup to be launched>.yml exec gitlab cat /etc/gitlab/initial_root_password
+        docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab cat /etc/gitlab/initial_root_password
 
 3. Insert the GitLab root user password in the file ``application-local.yml`` (in src/main/resources) and insert
    the GitLab admin account.
@@ -188,19 +188,19 @@ tokens instead of the predefined ones.
 
    ::
 
-        docker compose -f src/main/docker/<Jenkins setup to be launched>.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api, :read_user, :read_api, :read_repository, :write_repository, :sudo], name: 'Artemis Admin Token'); token.set_token('artemis-gitlab-token'); token.save!"
+        docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api, :read_user, :read_api, :read_repository, :write_repository, :sudo], name: 'Artemis Admin Token'); token.set_token('artemis-gitlab-token'); token.save!"
 
    | You can also manually create in by navigating to ``http://localhost:8081/-/profile/personal_access_tokens`` and
      generate a token with all scopes.
    | Copy this token into the ``ADMIN_PERSONAL_ACCESS_TOKEN`` field in the
-     ``src/main/docker/gitlab/gitlab-local-setup.sh`` file.
+     ``docker/gitlab/gitlab-local-setup.sh`` file.
    | If you used the command to generate the token, you don't have to change the ``gitlab-local-setup.sh`` file.
 
 5. Adjust the GitLab setup by running, this will configure GitLab's network setting to allow local requests:
 
    ::
 
-        docker compose -f src/main/docker/<Jenkins setup to be launched>.yml exec gitlab /bin/sh -c "sh /gitlab-local-setup.sh"
+        docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab /bin/sh -c "sh /gitlab-local-setup.sh"
 
    This script can also generate random access tokens, which should be used in a production setup. Change the
    variable ``$GENERATE_ACCESS_TOKENS`` to ``true`` to generate the random tokens and insert them into the Artemis
@@ -469,7 +469,7 @@ do either do it manually or using the following command:
 
     ::
 
-        docker compose -f src/main/docker/<Jenkins setup to be launched>.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api, :read_repository], name: 'Jenkins'); token.set_token('jenkins-gitlab-token'); token.save!"
+        docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api, :read_repository], name: 'Jenkins'); token.set_token('jenkins-gitlab-token'); token.save!"
 
 
 
@@ -477,8 +477,8 @@ do either do it manually or using the following command:
 
     ::
 
-       JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker compose -f src/main/docker/<Jenkins setup to be launched>.yml up --build -d jenkins
-       docker compose -f src/main/docker/<Jenkins setup to be launched>.yml up -d
+       JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker compose -f docker/<Jenkins setup to be launched>.yml up --build -d jenkins
+       docker compose -f docker/<Jenkins setup to be launched>.yml up -d
 
    Jenkins is then reachable under ``http://localhost:8082/`` and you can login using the credentials specified
    in ``jenkins-casc-config.yml`` (defaults to ``artemis_admin`` as both username and password).
@@ -553,7 +553,7 @@ Manual Jenkins Server Setup
    To perform all these steps automatically, you can prepare a Docker
    image:
 
-   Create a Dockerfile with the content found `here <src/main/docker/jenkins/Dockerfile>`.
+   Create a Dockerfile with the content found `here <docker/jenkins/Dockerfile>`.
    Copy it in a file named ``Dockerfile``, e.g. in
    the folder ``/opt/jenkins/`` using ``vim Dockerfile``.
 
@@ -701,7 +701,7 @@ Required Jenkins Plugins
 `Plugin Installation Manager Tool for Jenkins <https://github.com/jenkinsci/plugin-installation-manager-tool>`__
 to automatically install the plugins listed below. If you used the Dockerfile, you can skip these steps and
 `Server Notification Plugin <#server-notification-plugin>`__.
-The list of plugins is maintained in ``src/main/docker/jenkins/plugins.yml``.
+The list of plugins is maintained in ``docker/jenkins/plugins.yml``.
 
 
 You will need to install the following plugins (apart from the
@@ -938,7 +938,7 @@ the following steps:
 
 12. In a local setup, you have to disable CSRF otherwise some API endpoints will return HTTP Status 403 Forbidden.
     This is done be executing the following command:
-    ``docker compose -f src/main/docker/<Jenkins setup to be launched>.yml exec -T jenkins dd of=/var/jenkins_home/init.groovy < src/main/docker/jenkins/jenkins-disable-csrf.groovy``
+    ``docker compose -f docker/<Jenkins setup to be launched>.yml exec -T jenkins dd of=/var/jenkins_home/init.groovy < docker/jenkins/jenkins-disable-csrf.groovy``
 
     The last step is to disable the ``use-crumb`` option in ``application-local.yml``:
 
@@ -966,7 +966,7 @@ and the corresponding Docker image can be found on
 
    ::
 
-        docker compose -f src/main/docker/<Jenkins setup to be launched>.yml up --build -d
+        docker compose -f docker/<Jenkins setup to be launched>.yml up --build -d
 
 3. Build the new Docker image:
 

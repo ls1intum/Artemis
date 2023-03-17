@@ -5,7 +5,7 @@
 services:
     artemis-app:
         extends:
-            file: ./artemis/artemis.yml
+            file: ./artemis.yml
             service: artemis-app
         # just add this linux workaround for docker compose in a development version of artemis as developers
         # might want to access external services on the docker host
@@ -33,7 +33,7 @@ services:
                 condition: service_healthy
     mysql:
         extends:
-            file: mysql.yml
+            file: ./mysql.yml
             service: mysql
 
 networks:

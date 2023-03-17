@@ -1,7 +1,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # Mailhog service
 #
-# Out of the box this setup just works with a containerized Artemis instance
+# Out of the box this setup just works with a containerized dev Artemis instance
 # see comments above artemis-app on how to get it working wit a non-containerized Artemis instance
 # ----------------------------------------------------------------------------------------------------------------------
 services:

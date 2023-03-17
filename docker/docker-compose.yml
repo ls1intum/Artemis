@@ -2,21 +2,21 @@
 # Artemis-Prod-MySQL Setup
 # ----------------------------------------------------------------------------------------------------------------------
 
-# this links to /src/main/docker/artemis-prod-mysql.yml which is the default artemis production docker compose setup
-# just using a symlink doesn't work because of the relative paths ;)
+# this links to /docker/artemis-prod-mysql.yml which is the default artemis production docker compose setup
+# just using a symlink doesn't work because of the relative paths ;) (TODO: recheck this after the refactoring to .zs/docker)
 
 services:
     artemis-app:
         extends:
-            file: ./src/main/docker/artemis-prod-mysql.yml
+            file: ./artemis-prod-mysql.yml
             service: artemis-app
     mysql:
         extends:
-            file: ./src/main/docker/artemis-prod-mysql.yml
+            file: ./artemis-prod-mysql.yml
             service: mysql
     artemis-nginx:
         extends:
-            file: ./src/main/docker/artemis-prod-mysql.yml
+            file: ./artemis-prod-mysql.yml
             service: artemis-nginx
 
 networks:

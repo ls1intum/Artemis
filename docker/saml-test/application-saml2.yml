@@ -9,7 +9,7 @@ saml2:
           registration-id: testidp
           entity-id: artemis
           cert-file: # data/saml/cert (optional) Set this path to the Certificate for encryption/signing or leave it blank
-          key-file: # data/saml/key path-to-key (optional) Set this path to the Key for encryption/ssigning or leave it blank
+          key-file: # data/saml/key path-to-key (optional) Set this path to the Key for encryption/signing or leave it blank
 
 info.saml2:
     # The name of the SAML2 identity provider shown on the login page (optional)

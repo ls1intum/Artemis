@@ -10,14 +10,14 @@ services:
         # https://docs.artemis.cit.tum.de/dev/setup/#
         image: ghcr.io/ls1intum/artemis
         build:
-            context: ../../../..
-            dockerfile: src/main/docker/artemis/Dockerfile
+            context: ..
+            dockerfile: docker/artemis/Dockerfile
             pull: true
             target: runtime
         volumes:
             - artemis-data:/opt/artemis/data
         env_file:
-            - ../../resources/config/docker-artemis-prod-application-local.env
+            - ./artemis/config/prod-application-local.env
         # environments can also be used for custom overrides (alternative to application-local.yml)
         # the following environments are necessary for docker images orchestrated by docker compose
         environment:

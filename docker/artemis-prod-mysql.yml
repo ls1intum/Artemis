@@ -7,7 +7,7 @@
 services:
     artemis-app:
         extends:
-            file: ./artemis/artemis.yml
+            file: ./artemis.yml
             service: artemis-app
         depends_on:
             mysql:
@@ -21,12 +21,12 @@ services:
         restart: on-failure:3
     mysql:
         extends:
-            file: mysql.yml
+            file: ./mysql.yml
             service: mysql
         restart: on-failure:3
     artemis-nginx:
         extends:
-            file: ./nginx/nginx.yml
+            file: ./nginx.yml
             service: artemis-nginx
         # TODO: for now the artemis-app service needs to be started, otherwise there are problems with name resolution in docker
         depends_on:

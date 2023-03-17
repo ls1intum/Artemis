@@ -39,20 +39,20 @@ In total there are three Docker containers started in the Bamboo build agent:
    The container automatically creates a new database 'Artemis' and configures it
    with the recommended settings for Artemis.
    The Cypress setup reuses the already existing
-   `MySQL docker image <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/mysql.yml>`__
+   `MySQL docker image <https://github.com/ls1intum/Artemis/blob/develop/docker/mysql.yml>`__
    from the standard Artemis Docker setup.
 
 2. Artemis
 
    The Docker image for the Artemis container is created from the already existing
-   `Dockerfile <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/Dockerfile>`__.
+   `Dockerfile <https://github.com/ls1intum/Artemis/blob/develop/docker/Dockerfile>`__.
    When the Bamboo build of the Cypress test suite starts, it retrieves the Artemis executable (.war file)
    from the `Artemis build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`_.
    Upon creation of the Artemis Docker image the executable is copied into the image together with configuration files
    for the Artemis server.
 
    The main configuration of the Artemis server is contained in the
-   `application.yml file <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/cypress/application.yml>`__.
+   `application.yml file <https://github.com/ls1intum/Artemis/blob/develop/docker/cypress/application.yml>`__.
    However, this file does not contain any security relevant information.
    Security relevant settings like the credentials to the Jira admin account in the prelive system are instead passed to
    the Docker container via environment variables.
@@ -115,20 +115,20 @@ flaky tests based on the changed code. To do this, we have some special Docker c
 
 1. Docker Image Extensions
 
-   We extend the existing `Dockerfile <./src/main/docker/Dockerfile>`__ to create the Docker image for the Artemis
+   We extend the existing `Dockerfile <./docker/Dockerfile>`__ to create the Docker image for the Artemis
    container. For the flaky test detection build plan, we need to change the Artemis startup and add the :code:`unzip`
    dependency. To do this, we have a special Dockerfile that extends the original one and adds these changes. The
-   Dockerfile can be found `here <./src/main/docker/cypress/coverage.Dockerfile>`__. To do this, the regular image
+   Dockerfile can be found `here <./docker/cypress/coverage.Dockerfile>`__. To do this, the regular image
    has to be built and tagged with :code:`artemis:coverage-latest`.
 
    Additionally, we need Java in the Cypress container for the flaky test detection, so we have a special Dockerfile for
    the Cypress container that extends the original one and adds the Java installation. This Dockerfile can be found
-   `here <./src/main/docker/cypress/cypress.Dockerfile>`__.
+   `here <./docker/cypress/cypress.Dockerfile>`__.
 
 2. Docker Compose Changes
 
    The Docker Compose file for the flaky test detection is located
-   `here <./src/main/docker/cypress/cypress-E2E-tests-coverage-override.yml>`__. This file includes some overrides for the regular
+   `here <./docker/cypress/cypress-E2E-tests-coverage-override.yml>`__. This file includes some overrides for the regular
    Docker Compose file. The main differences are that we use the extended Dockerfiles for the Artemis and Cypress
    containers, and we also change the Cypress startup command to include our coverage analysis. To use the overrides,
    you can run the following command: :code:`docker-compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml up`.
@@ -165,7 +165,7 @@ Since the Cypress test suite simulates a real user, it makes sense to execute th
 the latest Chrome browser.
 The Cypress Docker image we use always has a specific Chrome version installed.
 Therefore, the
-`docker-compose file <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/cypress/docker-compose.yml>`__
+`docker-compose file <https://github.com/ls1intum/Artemis/blob/develop/docker/cypress/docker-compose.yml>`__
 as well as the
 `build plan configuration for the Cypress tests on test server 3 <https://bamboo.ase.in.tum.de/build/admin/edit/editBuildDocker.action?buildKey=ARTEMIS-AETBB-QE>`__
 should be updated every month to make sure that the latest Cypress image for the Chrome browser is used.

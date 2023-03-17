@@ -37,12 +37,12 @@ Docker-Compose
 Before you start the *docker compose*, check if the bamboo version in the
 ``build.gradle`` (search for ``com.atlassian.bamboo:bamboo-specs``) is
 equal to the bamboo version number in the docker compose in
-``src/main/docker/atlassian.yml``
+``docker/atlassian.yml``
 If the version number is not equal, adjust the version number.
-Further details about the *docker compose* setup can be found in ``src/main/docker``
+Further details about the *docker compose* setup can be found in ``docker``
 
 Execute the *docker compose* file e.g. with
-``docker compose -f src/main/docker/atlassian.yml up -d``.
+``docker compose -f docker/atlassian.yml up -d``.
 
 Error Handling: It can happen that there is an overload with other
 docker networks
@@ -53,7 +53,7 @@ Make sure that docker has enough memory (~ 6GB). To adapt it, go to ``Settings â
 
 
 In case you want to enable Swift or C programming exercises, refer to the readme in
-``src/main/docker``
+``docker``
 
 
 Configure Bamboo, Bitbucket and Jira
@@ -106,8 +106,8 @@ under ``localhost:7990``.
 
 
    Execute the shell script ``atlassian-setup.sh`` in the
-   ``src/main/docker/atlassian`` directory (e.g. with
-   ``src/main/docker/./atlassian-setup.sh``). This script creates
+   ``docker/atlassian`` directory (e.g. with
+   ``./docker/atlassian/atlassian-setup.sh``). This script creates
    groups, users and assigns the user to their respective group.
    In addition, it configures disabled application links between the 3 applications.
 
