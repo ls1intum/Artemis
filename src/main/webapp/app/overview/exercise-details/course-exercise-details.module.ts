@@ -26,6 +26,7 @@ import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initi
 import { LtiInitializerModalComponent } from 'app/overview/exercise-details/lti-initializer-modal.component';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-participation.module';
+import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
 
 const routes: Routes = [
     {
@@ -69,7 +70,7 @@ const routes: Routes = [
         ArtemisProgrammingExerciseManagementModule,
         ArtemisExerciseHintParticipationModule,
     ],
-    declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, LtiInitializerComponent, LtiInitializerModalComponent],
+    declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, LtiInitializerComponent, LtiInitializerModalComponent, ProblemStatementComponent],
     exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
 })
 export class CourseExerciseDetailsModule {}

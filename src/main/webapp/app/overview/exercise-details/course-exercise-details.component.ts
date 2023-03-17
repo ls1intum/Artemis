@@ -440,7 +440,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         });
 
         if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
-            return this.gradedStudentParticipation?.results?.find((result: Result) => !!result.completionDate) || undefined;
+            return;
         }
 
         const ratedResults = this.gradedStudentParticipation?.results?.filter((result: Result) => result.rated).sort(this.resultSortFunction);

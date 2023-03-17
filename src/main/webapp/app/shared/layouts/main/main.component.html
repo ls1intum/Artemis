@@ -1,16 +1,19 @@
 <jhi-alert-overlay></jhi-alert-overlay>
 <div class="page-wrapper">
     <jhi-page-ribbon></jhi-page-ribbon>
-    <div>
+    <div *ngIf="showSkeleton">
         <router-outlet name="navbar"></router-outlet>
     </div>
-    <div class="container-fluid main-container">
+    <div *ngIf="showSkeleton" class="container-fluid main-container">
         <div class="card">
             <div class="card-body">
                 <router-outlet></router-outlet>
             </div>
         </div>
     </div>
+
+    <router-outlet *ngIf="!showSkeleton"></router-outlet>
+
     <jhi-notification-popup></jhi-notification-popup>
     <jhi-footer></jhi-footer>
 </div>

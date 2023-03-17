@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, Router } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, NavigationError, Router } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -11,6 +11,8 @@ import { ThemeService } from 'app/core/theme/theme.service';
     templateUrl: './main.component.html',
 })
 export class JhiMainComponent implements OnInit {
+    public showSkeleton = true;
+
     constructor(
         private jhiLanguageHelper: JhiLanguageHelper,
         private router: Router,
@@ -45,6 +47,9 @@ export class JhiMainComponent implements OnInit {
                 // noinspection JSIgnoredPromiseFromCall
                 this.router.navigate(['/404']);
             }
+
+            // Do now show skeleton when the url links to a problem statement which is displayed on the native clients
+            this.showSkeleton = !this.router.url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/problem-statement(\\/\\d*)?');
         });
 
         this.themeService.initialize();

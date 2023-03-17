@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { errorRoute } from 'app/shared/layouts/error/error.route';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -31,6 +32,14 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     // TODO: check that the LTI integration still works correctly (if not, we should implement it differently)
                     path: 'courses/:courseId/exercises/:exerciseId',
                     loadChildren: () => import('./overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
+                },
+                {
+                    path: 'courses/:courseId/exercises/:exerciseId/problem-statement',
+                    component: ProblemStatementComponent,
+                },
+                {
+                    path: 'courses/:courseId/exercises/:exerciseId/problem-statement/:participationId',
+                    component: ProblemStatementComponent,
                 },
                 {
                     path: 'courses/:courseId/tutorial-groups/:tutorialGroupId',
