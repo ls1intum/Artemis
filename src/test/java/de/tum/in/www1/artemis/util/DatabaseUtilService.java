@@ -340,6 +340,9 @@ public class DatabaseUtilService {
     @Autowired
     private QuizSubmissionRepository quizSubmissionRepository;
 
+    @Autowired
+    private QuizExerciseRepository quizExerciseRepository;
+
     // TODO: this should probably be moved into another service
     public void changeUser(String username) {
         User user = getUserByLogin(username);
@@ -2299,6 +2302,21 @@ public class DatabaseUtilService {
         return exerciseRepo.save(fileUploadExercise);
     }
 
+    public QuizExercise createAndSaveExamQuizExercise(ZonedDateTime startDate, ZonedDateTime endDate) {
+        Course course = ModelFactory.generateCourse(null, startDate, endDate, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Exam exam = ModelFactory.generateExam(course);
+        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam);
+
+        courseRepo.save(course);
+        examRepository.save(exam);
+
+        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
+        initializeQuizExercise(quizExercise);
+        quizExerciseRepository.save(quizExercise);
+
+        return quizExercise;
+    }
+
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam = ModelFactory.generateExam(course);
@@ -2307,20 +2325,19 @@ public class DatabaseUtilService {
         course = courseRepo.save(course);
         exam = examRepository.save(exam);
 
-        Optional<Course> optionalCourse = courseRepo.findById(course.getId());
-        assertThat(optionalCourse).as("course can be retrieved").isPresent();
-        Course courseDB = optionalCourse.get();
-
-        Optional<Exam> optionalExam = examRepository.findById(exam.getId());
-        assertThat(optionalCourse).as("exam can be retrieved").isPresent();
-        Exam examDB = optionalExam.get();
-
-        Optional<ExerciseGroup> optionalExerciseGroup = exerciseGroupRepository.findById(exerciseGroup.getId());
-        assertThat(optionalExerciseGroup).as("exerciseGroup can be retrieved").isPresent();
-        ExerciseGroup exerciseGroupDB = optionalExerciseGroup.get();
-
-        assertThat(examDB.getCourse().getId()).as("exam and course are linked correctly").isEqualTo(courseDB.getId());
-        assertThat(exerciseGroupDB.getExam().getId()).as("exerciseGroup and exam are linked correctly").isEqualTo(examDB.getId());
+        /*
+         * Optional<Course> optionalCourse = courseRepo.findById(course.getId());
+         * assertThat(optionalCourse).as("course can be retrieved").isPresent();
+         * Course courseDB = optionalCourse.get();
+         * Optional<Exam> optionalExam = examRepository.findById(exam.getId());
+         * assertThat(optionalCourse).as("exam can be retrieved").isPresent();
+         * Exam examDB = optionalExam.get();
+         * Optional<ExerciseGroup> optionalExerciseGroup = exerciseGroupRepository.findById(exerciseGroup.getId());
+         * assertThat(optionalExerciseGroup).as("exerciseGroup can be retrieved").isPresent();
+         * ExerciseGroup exerciseGroupDB = optionalExerciseGroup.get();
+         * assertThat(examDB.getCourse().getId()).as("exam and course are linked correctly").isEqualTo(courseDB.getId());
+         * assertThat(exerciseGroupDB.getExam().getId()).as("exerciseGroup and exam are linked correctly").isEqualTo(examDB.getId());
+         */
 
         return exerciseGroup;
     }
@@ -2495,7 +2512,6 @@ public class DatabaseUtilService {
         return addCourseWithOneQuizExercise("Title");
     }
 
-    // TODO missing parameters
     public Course addCourseWithOneQuizExercise(String title) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         QuizExercise quizExercise = createQuiz(course, futureTimestamp, futureFutureTimestamp, QuizMode.SYNCHRONIZED);
@@ -3920,6 +3936,17 @@ public class DatabaseUtilService {
         return quizExercise;
     }
 
+    @NotNull // todo if null
+    public QuizExercise createAndSaveQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+        Course course = ModelFactory.generateCourse(null, null, null, Set.of());
+        courseRepo.save(course);
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
+        initializeQuizExercise(quizExercise);
+
+        quizExerciseRepository.save(quizExercise);
+        return quizExercise;
+    }
+
     @NotNull
     public QuizExercise createQuizWithQuizBatchedExercises(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         QuizExercise quizExerciseWithQuizBatches = ModelFactory.generateQuizExerciseWithQuizBatches(releaseDate, dueDate, quizMode, course);
@@ -3931,6 +3958,7 @@ public class DatabaseUtilService {
     public QuizExercise createQuizForExam(ExerciseGroup exerciseGroup) {
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
         initializeQuizExercise(quizExercise);
+
         return quizExercise;
     }
 

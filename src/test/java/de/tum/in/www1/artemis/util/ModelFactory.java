@@ -677,6 +677,25 @@ public class ModelFactory {
         return generateExamHelper(course, false);
     }
 
+    public static Exam generateExam(Course course, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam) {
+        Exam exam = new Exam();
+        exam.setTitle((testExam ? "Test " : "Real ") + "exam 1");
+        exam.setTestExam(testExam);
+        exam.setVisibleDate(startDate);
+        exam.setStartDate(startDate);
+        exam.setEndDate(endDate);
+        exam.setStartText("Start Text");
+        exam.setEndText("End Text");
+        exam.setConfirmationStartText("Confirmation Start Text");
+        exam.setConfirmationEndText("Confirmation End Text");
+        exam.setExamMaxPoints(90);
+        exam.setNumberOfExercisesInExam(1);
+        exam.setRandomizeExerciseOrder(false);
+        exam.setNumberOfCorrectionRoundsInExam(testExam ? 0 : 1);
+        exam.setCourse(course);
+        return exam;
+    }
+
     /**
      * Generates a test eam (test exams have no student review dates)
      *

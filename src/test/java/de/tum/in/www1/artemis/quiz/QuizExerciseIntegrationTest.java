@@ -1422,9 +1422,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testReEvaluateQuizAsNonInstructorForbidden() throws Exception {
-        Course course = database.createCourse();
-        quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
-        quizExerciseRepository.save(quizExercise);
+        quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(2), QuizMode.SYNCHRONIZED);
 
         request.put("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, HttpStatus.FORBIDDEN);
     }
@@ -1435,16 +1433,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUnfinishedExamReEvaluateBadRequest() throws Exception {
-        // todo: new helper method for creating an exam exercise
-        // unfinished: when the finish date is in the future, something similar to quiz exercise
-        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
-        quizExercise = database.createQuizForExam(exerciseGroup);
-        // TODO: how do we know exam is unfinished?
-        // assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
-        quizExerciseRepository.save(quizExercise);
+        quizExercise = database.createAndSaveExamQuizExercise(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(2));
 
         request.put("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, HttpStatus.BAD_REQUEST);
-        // todo: maybe also check what kind of bad request, what the message of the response is?
     }
 
     /**
@@ -1470,7 +1461,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course = database.createCourse();
         quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
         // save a valid exercise
-        assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
+        assertThat(quizExercise.isValid()).isTrue();
         quizExerciseRepository.save(quizExercise);
 
         // make the exercise invalid
