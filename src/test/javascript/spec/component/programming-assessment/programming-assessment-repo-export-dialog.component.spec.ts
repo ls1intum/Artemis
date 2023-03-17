@@ -140,29 +140,29 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         expect(exportReposStub).toHaveBeenCalledTimes(2);
     }));
 
-    it('Export a repo with excludePracticeSubmissions as true should call exportReposByParticipations with correct options', fakeAsync(() => {
+    describe('Export a repo with excludePracticeSubmissions as true', () => {
         const httpResponse = createBlobHttpResponse();
-        const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
-        fixture.detectChanges();
 
-        comp.repositoryExportOptions.excludePracticeSubmissions = true;
-        comp.exportRepos();
-        tick();
+        beforeEach(() => {
+            fixture.detectChanges();
+            comp.repositoryExportOptions.excludePracticeSubmissions = true;
+        });
 
-        expect(exportReposStub).toHaveBeenCalledOnceWith(exerciseId, participationIdList, comp.repositoryExportOptions);
-    }));
+        it('should call exportReposByParticipations with correct options', fakeAsync(() => {
+            comp.participationIdList = participationIdList;
+            const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
+            comp.exportRepos();
+            tick();
+            expect(exportReposStub).toHaveBeenCalledOnceWith(exerciseId, participationIdList, comp.repositoryExportOptions);
+        }));
 
-    it('Export a repo with excludePracticeSubmissions as true should call exportReposByParticipantIdentifiers with correct options', fakeAsync(() => {
-        comp.participationIdList = [];
-        comp.participantIdentifierList = 'ALL';
-        const httpResponse = createBlobHttpResponse();
-        const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
-        fixture.detectChanges();
-
-        comp.repositoryExportOptions.excludePracticeSubmissions = true;
-        comp.exportRepos();
-        tick();
-
-        expect(exportReposStub).toHaveBeenCalledWith(exerciseId, ['ALL'], comp.repositoryExportOptions);
-    }));
+        it('should call exportReposByParticipantIdentifiers with correct options', fakeAsync(() => {
+            comp.participationIdList = [];
+            comp.participantIdentifierList = 'ALL';
+            const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
+            comp.exportRepos();
+            tick();
+            expect(exportReposStub).toHaveBeenCalledOnceWith(exerciseId, ['ALL'], comp.repositoryExportOptions);
+        }));
+    });
 });
