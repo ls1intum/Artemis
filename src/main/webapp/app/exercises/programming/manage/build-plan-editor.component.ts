@@ -15,14 +15,13 @@ import 'brace/mode/assembly_x86';
 import 'brace/mode/vhdl';
 import 'brace/theme/dreamweaver';
 import 'brace/theme/dracula';
-import { AceEditorComponent, MAX_TAB_SIZE } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
+import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { CommitState, EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Course } from 'app/entities/course.model';
-import { faFileAlt } from '@fortawesome/free-regular-svg-icons';
-import { faCircleNotch, faGear, faPlayCircle, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
 import { BuildPlanService } from 'app/exercises/programming/manage/services/build-plan.service';
 import { catchError, of, tap } from 'rxjs';
 import { BuildPlan } from 'app/entities/build-plan.model';
@@ -55,8 +54,6 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     @Output()
     onFileLoad = new EventEmitter<string>();
 
-    readonly MAX_TAB_SIZE = MAX_TAB_SIZE;
-
     /** Ace Editor Options **/
     isLoading = false;
     fileSession: { [id: number]: { code: string; cursor: { column: number; row: number } } } = {};
@@ -64,11 +61,8 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     tabSize = 4;
 
     // Icons
-    farFileAlt = faFileAlt;
-    faPlusSquare = faPlusSquare;
-    faCircleNotch = faCircleNotch;
-    faGear = faGear;
-    farPlayCircle = faPlayCircle;
+    readonly faCircleNotch = faCircleNotch;
+    readonly farPlayCircle = faPlayCircle;
 
     constructor(
         private repositoryFileService: CodeEditorRepositoryFileService,
@@ -149,12 +143,7 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
         this.fileSession[this.buildPlanId] = { code, cursor };
     }
 
-    /**
-     * Changes the tab size to a valid value in case it is not.
-     *
-     * Valid values are in range [1, {@link MAX_TAB_SIZE}].
-     */
-    validateTabSize(): void {
-        this.tabSize = Math.max(1, Math.min(this.tabSize, MAX_TAB_SIZE));
+    updateTabSize(tabSize: number) {
+        this.tabSize = tabSize;
     }
 }
