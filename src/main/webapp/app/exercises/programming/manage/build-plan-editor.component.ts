@@ -179,12 +179,8 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     }
 
     submit() {
-        const buildPlanToSave = new BuildPlan();
-        buildPlanToSave.id = this.buildPlan.id;
-        buildPlanToSave.buildPlan = this.buildPlan.buildPlan;
-        buildPlanToSave.programmingExercises = this.buildPlan.programmingExercises;
-        this.buildPlanService.putBuildPlan(this.exerciseId, buildPlanToSave).subscribe(() => {
-            console.log(buildPlanToSave.buildPlan);
+        this.buildPlanService.putBuildPlan(this.exerciseId, this.buildPlan).subscribe(() => {
+            console.log(this.buildPlan.buildPlan);
         });
     }
 
