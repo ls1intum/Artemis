@@ -16,7 +16,7 @@ import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
+import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 
 describe('CodeEditorAceComponent', () => {
     let comp: CodeEditorAceComponent;
@@ -27,8 +27,14 @@ describe('CodeEditorAceComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, AceEditorModule, NgbDropdownMocksModule],
-            declarations: [CodeEditorAceComponent, TranslatePipeMock, MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent), MockDirective(NgModel)],
+            imports: [ArtemisTestModule, AceEditorModule],
+            declarations: [
+                CodeEditorAceComponent,
+                TranslatePipeMock,
+                MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
+                MockComponent(CodeEditorHeaderComponent),
+                MockDirective(NgModel),
+            ],
             providers: [
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
