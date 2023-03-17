@@ -27,10 +27,10 @@ services:
         expose:
             - "54321"
 
-    artemis-nginx:
+    nginx:
         extends:
             file: ./nginx.yml
-            service: artemis-nginx
+            service: nginx
         # TODO: for now the artemis-app service needs to be started, otherwise there are problems with name resolution in docker
         depends_on:
             artemis-app:

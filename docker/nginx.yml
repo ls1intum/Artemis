@@ -3,7 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
-    artemis-nginx:
+    nginx:
         # nginx setup based on artemis prod ansible repository
         # TODO: merge KIT settings for the proxy
         # TODO: Adjust worker_rlimit_nofile in nginx.conf (from ansible task)
