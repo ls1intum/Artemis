@@ -1,7 +1,5 @@
 # defines the default .war file build stage (options: builder, external_builder)
 ARG WAR_FILE_STAGE="builder"
-#default path of the built .war files
-ARG WAR_FILE_PATH="/opt/artemis/build/libs"
 
 #-----------------------------------------------------------------------------------------------------------------------
 # build stage
@@ -21,6 +19,8 @@ FROM docker.io/library/alpine:3 as external_builder
 
 #default import path of the externally built .war file (./build/libs for IDE builds, . for bamboo)
 ARG WAR_FILE_IMPORT_PATH=.
+#default path of the built .war files
+ARG WAR_FILE_PATH="/opt/artemis/build/libs"
 
 # transfer the .war file from the current directory to the default WAR_FILE_PATH
 WORKDIR ${WAR_FILE_PATH}
@@ -35,6 +35,9 @@ FROM ${WAR_FILE_STAGE} as war_file
 # runtime stage
 #-----------------------------------------------------------------------------------------------------------------------
 FROM docker.io/library/eclipse-temurin:17-jdk as runtime
+
+#default path of the built .war files
+ARG WAR_FILE_PATH="/opt/artemis/build/libs"
 
 # Docker Compose: wget (healthcheck docker compose)
 # Artemis: graphviz, locales
