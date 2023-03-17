@@ -48,4 +48,9 @@ export class ProfileInfo {
             };
         };
     };
+
+    public hasEditableBuildPlan(): boolean {
+        const cisWithEditableBuildPlan = ['gitlabci', 'jenkins'];
+        return this.activeProfiles.some((profile) => cisWithEditableBuildPlan.includes(profile));
+    }
 }

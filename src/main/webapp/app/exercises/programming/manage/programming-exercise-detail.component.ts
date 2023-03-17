@@ -84,6 +84,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     addedLineCount: number;
     removedLineCount: number;
     isLoadingDiffReport: boolean;
+    isBuildPlanEditable = false;
 
     plagiarismCheckSupported = false; // default value
 
@@ -127,6 +128,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
+        this.checkBuildPlanEditable();
+
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
             const exerciseId = this.programmingExercise.id!;
@@ -219,6 +222,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
+    }
+
+    private checkBuildPlanEditable() {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => (this.isBuildPlanEditable = profileInfo.hasEditableBuildPlan()));
     }
 
     onParticipationChange(): void {
