@@ -5,14 +5,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -29,6 +38,14 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Autowired
     private ParticipationRepository participationRepository;
 
+    @Autowired
+    private ExamRepository examRepository;
+
+    @Autowired
+    private StudentExamRepository studentExamRepository;
+
+    private Course course;
+
     private ModelingExercise exercise;
 
     @BeforeEach
@@ -36,7 +53,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         SecurityUtils.setAuthorizationObject();
 
         database.addUsers(TEST_PREFIX, 3, 2, 0, 2);
-        final Course course = database.addCourseWithOneModelingExercise();
+        course = database.addCourseWithOneModelingExercise();
         exercise = database.getFirstExerciseWithType(course, ModelingExercise.class);
 
         for (int i = 1; i <= 3; ++i) {
@@ -129,4 +146,96 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(exerciseDateService.isBeforeDueDate(participation)).isTrue();
         assertThat(exerciseDateService.isAfterDueDate(participation)).isFalse();
     }
+
+    @Nested
+    class ExamTest {
+
+        private Exam exam;
+
+        private ModelingExercise exercise;
+
+        @BeforeEach
+        void init() {
+            exam = database.addExamWithExerciseGroup(course, true);
+            exercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exam.getExerciseGroups().get(0));
+            exercise = exerciseRepository.save(exercise);
+        }
+
+        @Test
+        void testExamExerciseDueDate_duringRegularWorkingTime() {
+            Participation participation = database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+            boolean result = exerciseDateService.isAfterDueDate(participation);
+            assertThat(result).isFalse(); // Exam is not started yet
+        }
+
+        @Test
+        void testExamExerciseDueDate_workingTimeEnded() {
+            updateExamDatesToPast();
+            Participation participation = database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+
+            boolean result = exerciseDateService.isAfterDueDate(participation);
+            assertThat(result).isTrue(); // Exam working period is over
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = { TEST_PREFIX + "student1", TEST_PREFIX + "student2" })
+        void testExamExerciseDueDate_individualTimeExtension(String ownerOfStudentExam) {
+            updateExamDatesToPast();
+
+            StudentExam studentExam = database.addStudentExamWithUser(exam, ownerOfStudentExam);
+            studentExam.setWorkingTime(exam.getWorkingTime() + 20 * 60);
+            studentExam = studentExamRepository.save(studentExam);
+            Participation participation = database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+
+            boolean result = exerciseDateService.isAfterDueDate(participation);
+            assertThat(result).isFalse(); // Exam working period is over but the time extension is still active
+        }
+
+        private void updateExamDatesToPast() {
+            exam.setStartDate(ZonedDateTime.now().minusMinutes(20));
+            exam.setEndDate(ZonedDateTime.now().minusMinutes(10));
+            exam = examRepository.save(exam);
+        }
+    }
+
+    @Nested
+    class TestExamTest {
+
+        private Exam testExam;
+
+        private ModelingExercise exercise;
+
+        @BeforeEach
+        void init() {
+            testExam = database.addTestExamWithExerciseGroup(course, true);
+            exercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, testExam.getExerciseGroups().get(0));
+            exercise = exerciseRepository.save(exercise);
+        }
+
+        @Test
+        void testTestExamExerciseDueDate_duringOwnWorkingTime() {
+            Participation participation = database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+
+            boolean result = exerciseDateService.isAfterDueDate(participation);
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        void testTestExamExerciseDueDate_afterSubmittingOwnExam() {
+            StudentExam studentExam = database.addStudentExamWithUser(testExam, TEST_PREFIX + "student1");
+            studentExam.setSubmitted(true);
+            studentExam = studentExamRepository.save(studentExam);
+            Participation participation = database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+
+            boolean result = exerciseDateService.isAfterDueDate(participation);
+            assertThat(result).isTrue();
+
+            // Should also be true if other students are stil working - only the own test exam matters
+            database.addStudentExamWithUser(testExam, TEST_PREFIX + "student2");
+            result = exerciseDateService.isAfterDueDate(participation);
+            assertThat(result).isTrue();
+        }
+
+    }
+
 }

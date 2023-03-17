@@ -21,20 +21,7 @@
             ></jhi-mode-picker>
         </div>
     </div>
-    <div *ngIf="currentBonusStrategyOption === BonusStrategyOption.GRADES" class="row mt-4">
-        <div class="bonus-form-step col-1"></div>
-        <div class="form-group col">
-            <label class="no-flex-shrink h5" jhiTranslate="artemisApp.bonus.discreteness.title">Select discreteness</label>
-            <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.discreteness.helpText' }"></ng-container>
-            <jhi-mode-picker
-                class="d-block mt-1"
-                [options]="bonusStrategyDiscreteness"
-                [(value)]="currentBonusStrategyDiscreteness"
-                (valueChange)="onBonusStrategyInputChange()"
-            ></jhi-mode-picker>
-        </div>
-    </div>
-    <div *ngIf="bonus.id || currentBonusStrategyOption === BonusStrategyOption.POINTS || currentBonusStrategyDiscreteness !== undefined" class="row mt-4">
+    <div *ngIf="bonus.id || currentBonusStrategyOption !== undefined" class="row mt-4">
         <div class="bonus-form-step col-1"></div>
         <div class="form-group col">
             <label class="no-flex-shrink h5" jhiTranslate="artemisApp.bonus.calculation.title">Select calculation</label>
