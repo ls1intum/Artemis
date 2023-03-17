@@ -5,7 +5,7 @@ mkdir -p build/libs
 mv ./*.war build/libs/
 
 # Start Artemis docker containers with docker-compose
-cd docker/cypress
+cd docker
 
 # pass current host's hostname to the docker container for server.url (see docker compose config file)
 export HOST_HOSTNAME=$(hostname)
@@ -17,7 +17,7 @@ exitCode=$?
 echo "Cypress container exit code: $exitCode"
 if [ $exitCode -eq 0 ]
 then
-    touch ../../../../.successful
+    touch ../.successful
 else
     echo "Not creating success file because the tests failed"
 fi

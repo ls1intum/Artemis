@@ -45,7 +45,7 @@ In total there are three Docker containers started in the Bamboo build agent:
 2. Artemis
 
    The Docker image for the Artemis container is created from the already existing
-   `Dockerfile <https://github.com/ls1intum/Artemis/blob/develop/docker/Dockerfile>`__.
+   `Dockerfile <https://github.com/ls1intum/Artemis/blob/develop/docker/artemis/Dockerfile>`__.
    When the Bamboo build of the Cypress test suite starts, it retrieves the Artemis executable (.war file)
    from the `Artemis build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`_.
    Upon creation of the Artemis Docker image the executable is copied into the image together with configuration files
@@ -115,7 +115,7 @@ flaky tests based on the changed code. To do this, we have some special Docker c
 
 1. Docker Image Extensions
 
-   We extend the existing `Dockerfile <./docker/Dockerfile>`__ to create the Docker image for the Artemis
+   We extend the existing `Dockerfile <./docker/artemis/Dockerfile>`__ to create the Docker image for the Artemis
    container. For the flaky test detection build plan, we need to change the Artemis startup and add the :code:`unzip`
    dependency. To do this, we have a special Dockerfile that extends the original one and adds these changes. The
    Dockerfile can be found `here <./docker/cypress/coverage.Dockerfile>`__. To do this, the regular image
