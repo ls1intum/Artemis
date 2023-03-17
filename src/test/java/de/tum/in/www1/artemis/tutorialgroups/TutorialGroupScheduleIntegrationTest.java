@@ -3,12 +3,14 @@ package de.tum.in.www1.artemis.tutorialgroups;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource;
 
@@ -181,6 +183,55 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         // then
         assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId())).hasSize(1);
         assertThat(tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateTutorialGroupWithSchedule_NoChangesToSchedule_ShouldNotRecreateSessionsOrSchedule() throws Exception {
+        // given
+        var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday, "tutor1");
+        var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
+        tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(persistedTutorialGroupId);
+        var sessionIds = tutorialGroup.getTutorialGroupSessions().stream().map(DomainObject::getId).collect(Collectors.toSet());
+        var scheduleId = tutorialGroup.getTutorialGroupSchedule().getId();
+
+        // when
+        tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
+        tutorialGroup.setCapacity(2000);
+        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + tutorialGroup.getId(), dto, TutorialGroup.class, HttpStatus.OK);
+
+        // then
+        tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(persistedTutorialGroupId);
+        assertThat(tutorialGroup.getCapacity()).isEqualTo(2000);
+        assertThat(tutorialGroup.getTutorialGroupSessions().stream().map(DomainObject::getId).collect(Collectors.toSet())).containsExactlyInAnyOrderElementsOf(sessionIds);
+        assertThat(tutorialGroup.getTutorialGroupSchedule().getId()).isEqualTo(scheduleId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateTutorialGroupWithSchedule_OnlyLocationChanged_ShouldNotRecreateSessionsOrScheduleButUpdateLocation() throws Exception {
+        // given
+        var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday, "tutor1");
+        var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
+        tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(persistedTutorialGroupId);
+        var sessionIds = tutorialGroup.getTutorialGroupSessions().stream().map(DomainObject::getId).collect(Collectors.toSet());
+        var scheduleId = tutorialGroup.getTutorialGroupSchedule().getId();
+
+        // when
+        tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
+        tutorialGroup.getTutorialGroupSchedule().setLocation("updated");
+        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + tutorialGroup.getId(), dto, TutorialGroup.class, HttpStatus.OK);
+
+        // then
+        tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(persistedTutorialGroupId);
+        assertThat(tutorialGroup.getTutorialGroupSchedule().getLocation()).isEqualTo("updated");
+        assertThat(tutorialGroup.getTutorialGroupSessions().stream().map(DomainObject::getId).collect(Collectors.toSet())).containsExactlyInAnyOrderElementsOf(sessionIds);
+        assertThat(tutorialGroup.getTutorialGroupSchedule().getId()).isEqualTo(scheduleId);
+        tutorialGroup.getTutorialGroupSessions().forEach(tutorialGroupSession -> {
+            assertThat(tutorialGroupSession.getLocation()).isEqualTo("updated");
+        });
     }
 
     @Test
