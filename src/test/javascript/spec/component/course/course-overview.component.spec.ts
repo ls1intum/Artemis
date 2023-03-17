@@ -209,11 +209,12 @@ describe('CourseOverviewComponent', () => {
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
-        component.ngOnInit().then(() => {
-            expect(getCourseStub).toHaveBeenCalledOnce();
-            expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
-            expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
-        });
+        component.ngOnInit();
+        tick();
+
+        expect(getCourseStub).toHaveBeenCalledOnce();
+        expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
+        expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
     }));
 
     it('should redirect to the registration page if the API endpoint returned a 403, but the user can register', fakeAsync(() => {
