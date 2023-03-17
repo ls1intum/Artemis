@@ -700,7 +700,7 @@ public class QuizExercise extends Exercise {
         if (isQuizEnded()) {
             return QuizView.After.class;
         }
-        else if (batch != null && batch.isSubmissionAllowed()) {
+        else if (batch != null && batch.isStarted()) {
             return QuizView.During.class;
         }
         else {

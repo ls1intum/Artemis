@@ -113,7 +113,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private studentExam?: StudentExam;
     private examId?: number;
     private routeExamId = 0;
-    private lastRouteUrlSegment: string;
+    private lastRouteUrlSegment?: string;
 
     constructor(
         private loginService: LoginService,
@@ -558,7 +558,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 } else if (this.lastRouteUrlSegment === 'code-editor' && segment === 'new') {
                     // - This route is bogus and needs to be replaced in the future, display no crumb
                     break;
-                } else if (this.lastRouteUrlSegment === 'programming-exercises' && segment === 'import') {
+                } else if (this.lastRouteUrlSegment?.endsWith('-exercises') && segment === 'import') {
                     // - This route is bogus and needs to be replaced in the future, display no crumb
                     break;
                 } else if (this.lastRouteUrlSegment === 'exercise-groups') {

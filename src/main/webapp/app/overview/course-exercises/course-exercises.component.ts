@@ -95,7 +95,6 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     // Provides the control configuration to be read and used by "CourseOverviewComponent"
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
-        useIndentation: true,
     };
 
     constructor(

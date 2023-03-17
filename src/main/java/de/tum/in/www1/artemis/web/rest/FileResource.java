@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -73,8 +72,6 @@ public class FileResource {
 
     private final ExamUserRepository examUserRepository;
 
-    private final ExamRepository examRepository;
-
     private final AuthorizationCheckService authorizationCheckService;
 
     private final JHipsterProperties jHipsterProperties;
@@ -82,7 +79,7 @@ public class FileResource {
     public FileResource(AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
             AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExamUserRepository examUserRepository, ExamRepository examRepository, JHipsterProperties jHipsterProperties) {
+            ExamUserRepository examUserRepository, JHipsterProperties jHipsterProperties) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -93,7 +90,6 @@ public class FileResource {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.examRepository = examRepository;
         this.examUserRepository = examUserRepository;
         this.jHipsterProperties = jHipsterProperties;
     }
@@ -292,10 +288,9 @@ public class FileResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        ExamUser examUser = examUserRepository.findById(examUserId).orElseThrow();
-        Exam exam = examRepository.findById(examUser.getExam().getId()).orElseThrow();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, exam.getCourse(), null);
-        return buildFileResponse(Path.of(FilePathService.getExamUserSignatureFilePath()).toString(), filename);
+        ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
+        return buildFileResponse(FilePathService.getExamUserSignatureFilePath(), filename);
     }
 
     /**
@@ -309,10 +304,9 @@ public class FileResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<byte[]> getExamUserImage(@PathVariable Long examUserId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        ExamUser examUser = examUserRepository.findById(examUserId).orElseThrow();
-        Exam exam = examRepository.findById(examUser.getExam().getId()).orElseThrow();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, exam.getCourse(), null);
-        return buildFileResponse(Path.of(FilePathService.getStudentImageFilePath()).toString(), filename, true);
+        ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
+        return buildFileResponse(FilePathService.getStudentImageFilePath(), filename, true);
     }
 
     /**
