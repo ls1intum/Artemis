@@ -15,5 +15,7 @@
     <router-outlet *ngIf="!showSkeleton"></router-outlet>
 
     <jhi-notification-popup></jhi-notification-popup>
-    <jhi-footer></jhi-footer>
+    <div *ngIf="showSkeleton">
+        <jhi-footer></jhi-footer>
+    </div>
 </div>
