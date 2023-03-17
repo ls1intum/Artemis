@@ -747,7 +747,7 @@ public class StudentExamResource {
             throw new BadRequestException("You cannot retrieve the student exam of a test exam");
         }
         else if (exam.getVisibleDate() == null || ZonedDateTime.now().isBefore(exam.getVisibleDate())) {
-            throw new AccessForbiddenException("You cannot retrieve the student exam before the start date");
+            throw new AccessForbiddenException("You cannot retrieve the student exam before the visibility date");
         }
 
         User student = userRepository.getUser();
