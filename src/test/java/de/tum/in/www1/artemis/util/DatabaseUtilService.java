@@ -2313,12 +2313,15 @@ public class DatabaseUtilService {
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
         assertThat(optionalCourse).as("course can be retrieved").isPresent();
         Course courseDB = optionalCourse.get();
+
         Optional<Exam> optionalExam = examRepository.findById(exam.getId());
         assertThat(optionalCourse).as("exam can be retrieved").isPresent();
         Exam examDB = optionalExam.get();
+
         Optional<ExerciseGroup> optionalExerciseGroup = exerciseGroupRepository.findById(exerciseGroup.getId());
         assertThat(optionalExerciseGroup).as("exerciseGroup can be retrieved").isPresent();
         ExerciseGroup exerciseGroupDB = optionalExerciseGroup.get();
+
         assertThat(examDB.getCourse().getId()).as("exam and course are linked correctly").isEqualTo(courseDB.getId());
         assertThat(exerciseGroupDB.getExam().getId()).as("exerciseGroup and exam are linked correctly").isEqualTo(examDB.getId());
 
@@ -3920,8 +3923,7 @@ public class DatabaseUtilService {
     }
 
     public QuizExercise createAndSaveQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
-        Course course = ModelFactory.generateCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
-        courseRepo.save(course);
+        Course course = createAndSaveCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
 
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
         initializeQuizExercise(quizExercise);
@@ -3930,12 +3932,17 @@ public class DatabaseUtilService {
         return quizExercise;
     }
 
-    public QuizExercise createAndSaveExamQuiz(ZonedDateTime startDate, ZonedDateTime endDate) {
-        Course course = ModelFactory.generateCourse(null, startDate == null ? null : startDate.minusDays(1), endDate == null ? null : endDate.plusDays(1), new HashSet<>(),
-                "tumuser", "tutor", "editor", "instructor");
+    public Course createAndSaveCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
+        Course course = ModelFactory.generateCourse(id, startDate, endDate, exercises, "tumuser", "tutor", "editor", "instructor");
         courseRepo.save(course);
+        return course;
+    }
 
-        Exam exam = ModelFactory.generateExam(course, startDate, endDate, false);
+    @NotNull
+    public QuizExercise createAndSaveExamQuiz(ZonedDateTime startDate, ZonedDateTime endDate) {
+        Course course = createAndSaveCourse(null, startDate.minusDays(1), endDate.plusDays(1), new HashSet<>());
+
+        Exam exam = ModelFactory.generateExam(course, startDate.minusMinutes(5), startDate, endDate, false);
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam);
         examRepository.save(exam);
 

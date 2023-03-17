@@ -1322,8 +1322,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCreateQuizExerciseAsTutorForbidden() throws Exception {
-        Course course = database.createCourse();
-        quizExercise = database.createQuiz(course, ZonedDateTime.now().plusDays(5), null, QuizMode.SYNCHRONIZED);
+        Course course = database.createAndSaveCourse(null, ZonedDateTime.now().minusDays(1), null, Set.of());
+        quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().plusDays(5), null, QuizMode.SYNCHRONIZED, course);
 
         request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.FORBIDDEN);
     }
