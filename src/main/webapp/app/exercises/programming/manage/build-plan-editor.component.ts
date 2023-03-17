@@ -157,7 +157,7 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
             .getBuildPlan(exerciseId)
             .pipe(
                 tap((buildPlanObj) => {
-                    if (buildPlanObj.body !== null && buildPlanObj.body.buildPlan !== undefined && buildPlanObj.body.id !== undefined) {
+                    if (buildPlanObj.body && buildPlanObj.body.buildPlan && buildPlanObj.body.id) {
                         this.buildPlan = buildPlanObj.body;
                         this.buildPlanId = buildPlanObj.body.id;
                         this.fileSession[buildPlanObj.body.id] = { code: buildPlanObj.body.buildPlan, cursor: { column: 0, row: 0 } };
