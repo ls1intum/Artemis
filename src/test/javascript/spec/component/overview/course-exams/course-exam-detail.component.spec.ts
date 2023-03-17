@@ -117,6 +117,20 @@ describe('CourseExamDetailComponent', () => {
         expect(component.examState).toBe('TIMEEXTENSION');
     });
 
+    it('should determine the exam state to be timeExtension with started exam', () => {
+        component.exam = { id: 1 };
+        component.course = { id: 2 };
+        component.exam.startDate = currentDateMinus60;
+        component.exam.endDate = currentDateMinus35;
+        component.exam.workingTime = 25 * 60;
+        const studentExam: StudentExam = { numberOfExamSessions: 1, workingTime: 65 * 60 };
+        studentExamServiceSpy.mockReturnValue(of(new HttpResponse({ body: studentExam })));
+
+        component.ngOnInit();
+        component.updateExamState();
+        expect(component.examState).toBe('TIMEEXTENSION');
+    });
+
     it('should determine the exam state to be closed', () => {
         component.exam = { id: 1 };
         component.course = { id: 2 };

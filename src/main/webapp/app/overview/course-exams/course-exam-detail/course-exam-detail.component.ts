@@ -112,7 +112,9 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
         }
 
         this.loadStudentExam();
-        if ((!this.studentExam || !this.studentExam.submitted) && !this.exam.testExam) {
+        const potentialLaterEndDate = this.studentExam?.workingTime ? dayjs(this.exam.startDate).add(this.studentExam.workingTime, 'seconds') : undefined;
+        const noOrOverPotentialLaterEndDate = !potentialLaterEndDate || dayjs().isAfter(potentialLaterEndDate);
+        if ((!this.studentExam || (!this.studentExam.submitted && noOrOverPotentialLaterEndDate)) && !this.exam.testExam) {
             // Normal exam is over and student did not participate (no student exam was loaded or not submitted). We can cancel the subscription and the exam is closed
             this.examState = ExamState.CLOSED;
             this.cancelExamStateSubscription();
