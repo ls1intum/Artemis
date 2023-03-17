@@ -21,8 +21,8 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
     @Query("""
             SELECT DISTINCT plagiarismCase
             FROM PlagiarismCase plagiarismCase
-            LEFT JOIN FETCH plagiarismCase.post
-            LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmission
+                LEFT JOIN FETCH plagiarismCase.post
+                LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmission
             WHERE plagiarismCase.student.login = :studentLogin
                 AND plagiarismCase.exercise.id = :exerciseId
             """)
@@ -31,9 +31,9 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
     @Query("""
             SELECT DISTINCT plagiarismCase
             FROM PlagiarismCase plagiarismCase
-            LEFT JOIN FETCH plagiarismCase.post
-            LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
-            LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
+                LEFT JOIN FETCH plagiarismCase.post
+                LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
+                LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
             WHERE plagiarismCase.exercise.course.id = :courseId
             """)
     List<PlagiarismCase> findByCourseIdWithPlagiarismSubmissionsAndComparison(@Param("courseId") Long courseId);
@@ -41,9 +41,9 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
     @Query("""
             SELECT DISTINCT plagiarismCase
             FROM PlagiarismCase plagiarismCase
-            LEFT JOIN FETCH plagiarismCase.post
-            LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
-            LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
+                LEFT JOIN FETCH plagiarismCase.post
+                LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
+                LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
             WHERE plagiarismCase.exercise.exerciseGroup.exam.id = :examId
             """)
     List<PlagiarismCase> findByExamIdWithPlagiarismSubmissionsAndComparison(@Param("examId") Long examId);
@@ -51,7 +51,7 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
     @Query("""
             SELECT DISTINCT plagiarismCase
             FROM PlagiarismCase plagiarismCase
-            LEFT JOIN FETCH plagiarismCase.post p
+                LEFT JOIN FETCH plagiarismCase.post p
             WHERE plagiarismCase.exercise.id = :exerciseId
                 AND plagiarismCase.student.id = :userId
                 AND p.id IS NOT NULL
@@ -83,7 +83,7 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
     @Query("""
             SELECT plagiarismCase
             FROM PlagiarismCase plagiarismCase
-            LEFT JOIN plagiarismCase.team.students teamStudent
+                LEFT JOIN plagiarismCase.team.students teamStudent
             WHERE plagiarismCase.exercise.course.id = :courseId
                 AND (plagiarismCase.student.id = :studentId OR teamStudent.id = :studentId)
             """)
@@ -100,7 +100,7 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
     @Query("""
             SELECT DISTINCT plagiarismCase
             FROM PlagiarismCase plagiarismCase
-            LEFT JOIN FETCH plagiarismCase.post p
+                LEFT JOIN FETCH plagiarismCase.post p
             WHERE plagiarismCase.exercise.id IN :exerciseIds
                 AND plagiarismCase.student.id = :userId
                 AND p.id IS NOT NULL
@@ -110,7 +110,7 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
     @Query("""
             SELECT DISTINCT plagiarismCase
             FROM PlagiarismCase plagiarismCase
-            LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
+                LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
             WHERE plagiarismCase.id = :plagiarismCaseId
             """)
     Optional<PlagiarismCase> findByIdWithPlagiarismSubmissions(@Param("plagiarismCaseId") long plagiarismCaseId);
