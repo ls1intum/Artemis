@@ -19,16 +19,18 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, Long> {
 
     @Query("""
-            SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
+            SELECT DISTINCT plagiarismCase
+            FROM PlagiarismCase plagiarismCase
             LEFT JOIN FETCH plagiarismCase.post
             LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmission
             WHERE plagiarismCase.student.login = :studentLogin
-            AND plagiarismCase.exercise.id = :exerciseId
+                AND plagiarismCase.exercise.id = :exerciseId
             """)
     Optional<PlagiarismCase> findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(@Param("studentLogin") String studentLogin, @Param("exerciseId") Long exerciseId);
 
     @Query("""
-            SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
+            SELECT DISTINCT plagiarismCase
+            FROM PlagiarismCase plagiarismCase
             LEFT JOIN FETCH plagiarismCase.post
             LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
             LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
@@ -37,7 +39,8 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
     List<PlagiarismCase> findByCourseIdWithPlagiarismSubmissionsAndComparison(@Param("courseId") Long courseId);
 
     @Query("""
-            SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
+            SELECT DISTINCT plagiarismCase
+            FROM PlagiarismCase plagiarismCase
             LEFT JOIN FETCH plagiarismCase.post
             LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
             LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
@@ -46,57 +49,67 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
     List<PlagiarismCase> findByExamIdWithPlagiarismSubmissionsAndComparison(@Param("examId") Long examId);
 
     @Query("""
-            SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
+            SELECT DISTINCT plagiarismCase
+            FROM PlagiarismCase plagiarismCase
             LEFT JOIN FETCH plagiarismCase.post p
             WHERE plagiarismCase.exercise.id = :exerciseId
-            AND plagiarismCase.student.id = :userId
-            AND p.id IS NOT NULL
+                AND plagiarismCase.student.id = :userId
+                AND p.id IS NOT NULL
             """)
     Optional<PlagiarismCase> findByStudentIdAndExerciseIdWithPost(@Param("userId") Long userId, @Param("exerciseId") Long exerciseId);
 
     @Query("""
-            SELECT plagiarismCase FROM PlagiarismCase plagiarismCase
+            SELECT plagiarismCase
+            FROM PlagiarismCase plagiarismCase
             WHERE plagiarismCase.exercise.exerciseGroup.exam.id = :examId
             """)
     List<PlagiarismCase> findByExamId(@Param("examId") Long examId);
 
     @Query("""
-            SELECT plagiarismCase FROM PlagiarismCase plagiarismCase
-            WHERE plagiarismCase.exercise.exerciseGroup.exam.id = :examId AND plagiarismCase.student.id = :studentId
+            SELECT plagiarismCase
+            FROM PlagiarismCase plagiarismCase
+            WHERE plagiarismCase.exercise.exerciseGroup.exam.id = :examId
+                AND plagiarismCase.student.id = :studentId
             """)
     List<PlagiarismCase> findByExamIdAndStudentId(@Param("examId") Long examId, @Param("studentId") Long studentId);
 
     @Query("""
-            SELECT plagiarismCase FROM PlagiarismCase plagiarismCase
+            SELECT plagiarismCase
+            FROM PlagiarismCase plagiarismCase
             WHERE plagiarismCase.exercise.course.id = :courseId
             """)
     List<PlagiarismCase> findByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
-            SELECT plagiarismCase FROM PlagiarismCase plagiarismCase
+            SELECT plagiarismCase
+            FROM PlagiarismCase plagiarismCase
             LEFT JOIN plagiarismCase.team.students teamStudent
-            WHERE plagiarismCase.exercise.course.id = :courseId AND (plagiarismCase.student.id = :studentId OR teamStudent.id = :studentId)
+            WHERE plagiarismCase.exercise.course.id = :courseId
+                AND (plagiarismCase.student.id = :studentId OR teamStudent.id = :studentId)
             """)
     List<PlagiarismCase> findByCourseIdAndStudentId(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
 
     @Query("""
-            SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
+            SELECT DISTINCT plagiarismCase
+            FROM PlagiarismCase plagiarismCase
             WHERE plagiarismCase.exercise.id IN :exerciseIds
-            AND plagiarismCase.student.id = :userId
+                AND plagiarismCase.student.id = :userId
             """)
     List<PlagiarismCase> findByStudentIdAndExerciseIds(@Param("userId") Long userId, @Param("exerciseIds") Set<Long> exerciseIds);
 
     @Query("""
-            SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
+            SELECT DISTINCT plagiarismCase
+            FROM PlagiarismCase plagiarismCase
             LEFT JOIN FETCH plagiarismCase.post p
             WHERE plagiarismCase.exercise.id IN :exerciseIds
-            AND plagiarismCase.student.id = :userId
-            AND p.id IS NOT NULL
+                AND plagiarismCase.student.id = :userId
+                AND p.id IS NOT NULL
             """)
     List<PlagiarismCase> findByStudentIdAndExerciseIdsWithPost(@Param("userId") Long userId, @Param("exerciseIds") Set<Long> exerciseIds);
 
     @Query("""
-            SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
+            SELECT DISTINCT plagiarismCase
+            FROM PlagiarismCase plagiarismCase
             LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
             WHERE plagiarismCase.id = :plagiarismCaseId
             """)

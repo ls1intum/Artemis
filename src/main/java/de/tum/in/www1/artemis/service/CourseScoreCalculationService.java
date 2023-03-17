@@ -351,40 +351,41 @@ public class CourseScoreCalculationService {
             return null;
         }
         var resultsSet = participation.getResults();
-        Result chosenResult;
 
-        if (resultsSet != null && !resultsSet.isEmpty()) {
+        Result emptyResult = new Result();
+        emptyResult.setScore(0.0);
 
-            var resultsList = new ArrayList<>(resultsSet);
-
-            var ratedResults = resultsList.stream().filter(result -> Boolean.TRUE.equals(result.isRated())).toList();
-
-            if (ratedResults.size() == 1) {
-                return ratedResults.get(0);
-            }
-
-            Result latestResult = Collections.max(resultsList, Comparator.comparing(Result::getCompletionDate));
-
-            long gracePeriodInSeconds = 10L;
-            if (dueDate == null || (latestResult.getCompletionDate() != null && !dueDate.plusSeconds(gracePeriodInSeconds).isBefore(latestResult.getCompletionDate()))) {
-                // find the first result that is before the due date
-                chosenResult = latestResult;
-            }
-            else if (latestResult.getCompletionDate() == null || dueDate.plusSeconds(gracePeriodInSeconds).isBefore(latestResult.getCompletionDate())) {
-                chosenResult = new Result();
-                chosenResult.setScore(0.0);
-            }
-            else {
-                // Choose the oldest result.
-                chosenResult = Collections.min(resultsList, Comparator.comparing(Result::getCompletionDate));
-            }
-        }
-        else {
-            chosenResult = new Result();
-            chosenResult.setScore(0.0);
+        if (resultsSet == null || resultsSet.isEmpty()) {
+            return emptyResult;
         }
 
-        return chosenResult;
+        var resultsList = new ArrayList<>(resultsSet);
+
+        List<Result> ratedResultsWithCompletionDate = resultsList.stream().filter(result -> Boolean.TRUE.equals(result.isRated() && result.getCompletionDate() != null)).toList();
+
+        if (ratedResultsWithCompletionDate.isEmpty()) {
+            return emptyResult;
+        }
+
+        if (ratedResultsWithCompletionDate.size() == 1) {
+            return ratedResultsWithCompletionDate.get(0);
+        }
+
+        // Sort the list in descending order to have the latest result at the beginning.
+        resultsList.sort(Comparator.comparing(Result::getCompletionDate).reversed());
+
+        if (dueDate == null) {
+            // If the due date is null, you can always submit something and it will always ge graded. Just take the latest graded result.
+            return resultsList.get(0);
+        }
+
+        // The due date is set and we need to find the latest result that was completed before the due date.
+        long gracePeriodInSeconds = 10L;
+
+        Optional<Result> latestResultBeforeDueDate = resultsList.stream().filter(result -> result.getCompletionDate().isBefore(dueDate.plusSeconds(gracePeriodInSeconds)))
+                .findFirst();
+
+        return latestResultBeforeDueDate.orElse(emptyResult);
     }
 
     /**
