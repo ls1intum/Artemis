@@ -287,7 +287,9 @@ Dockerfile
 
 You can find the latest Artemis Dockerfile at ``src/main/docker/artemis/Dockerfile``.
 
-* The Dockerfile has `multiple stages <https://docs.docker.com/build/building/multi-stage/>`__: A `build stage`, building the ``.war`` file, and a `runtime stage` with minimal
+* The Dockerfile has `multiple stages <https://docs.docker.com/build/building/multi-stage/>`__: A **builder** stage,
+  building the ``.war`` file, an optional **external_builder** stage to import a pre-built ``.war`` file,
+  a **war_file** stage to choose between the builder stages via build argument and a **runtime** stage with minimal
   dependencies just for running artemis.
 
 * The Dockerfile defines three Docker volumes (at the specified paths inside the container):
