@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
@@ -55,16 +54,13 @@ public class NotificationResource {
 
     private final TutorialGroupService tutorialGroupService;
 
-    private final ConversationService conversationService;
-
-    public NotificationResource(ConversationService conversationService, NotificationRepository notificationRepository, UserRepository userRepository,
-            NotificationSettingRepository notificationSettingRepository, NotificationSettingsService notificationSettingsService, TutorialGroupService tutorialGroupService) {
+    public NotificationResource(NotificationRepository notificationRepository, UserRepository userRepository, NotificationSettingRepository notificationSettingRepository,
+            NotificationSettingsService notificationSettingsService, TutorialGroupService tutorialGroupService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.notificationSettingRepository = notificationSettingRepository;
         this.notificationSettingsService = notificationSettingsService;
         this.tutorialGroupService = tutorialGroupService;
-        this.conversationService = conversationService;
     }
 
     /**
