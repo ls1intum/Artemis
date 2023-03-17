@@ -7,6 +7,9 @@ services:
         # expose the port to make it reachable docker internally even if the external port mapping changes
         expose:
             - "6300"
+        environment:
+            # add jacocoagent to java command
+            _JAVA_OPTIONS: -javaagent:jacocoagent.jar=output=tcpserver,address=*
 
     artemis-cypress:
         build:
