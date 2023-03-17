@@ -17,7 +17,7 @@ cd docker
 # pass current host's hostname to the docker container for server.url (see docker compose config file)
 export HOST_HOSTNAME=$(hostname)
 
-docker compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml pull artemis-nginx mysql
+docker compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml pull nginx mysql
 docker compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml build --no-cache --pull artemis-cypress
 #do not pull the base image artemis:coverage-latest for artemis-app as it's stored locally and built above
 docker compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml build --build-arg WAR_FILE_IMPORT_PATH=./build/libs --build-arg WAR_FILE_STAGE=external_builder --no-cache artemis-app
