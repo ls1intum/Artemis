@@ -192,14 +192,14 @@ public class MetricsBean {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return exerciseRepository.countExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(now, endDate, exerciseType.getDiscriminator());
+        return exerciseRepository.countExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(now, endDate, exerciseType.getExerciseClass());
     }
 
     private double getUpcomingDueExercisesCountWithStudentMultiplier(int minutes, ExerciseType exerciseType) {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return exerciseRepository.countStudentsInExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(now, endDate, exerciseType.getDiscriminator());
+        return exerciseRepository.countStudentsInExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(now, endDate, exerciseType.getExerciseClass());
     }
 
     private double getUpcomingDueExercisesCountWithActiveStudentMultiplier(int minutes, ExerciseType exerciseType, int numberOfDaysToCountAsActive) {
@@ -211,21 +211,21 @@ public class MetricsBean {
         var activeUsers = statisticsRepository.getActiveUsers(ZonedDateTime.now().minusDays(numberOfDaysToCountAsActive), ZonedDateTime.now());
         var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).collect(Collectors.toList());
 
-        return exerciseRepository.countActiveStudentsInExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(now, endDate, exerciseType.getDiscriminator(), activeUserNames);
+        return exerciseRepository.countActiveStudentsInExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(now, endDate, exerciseType.getExerciseClass(), activeUserNames);
     }
 
     private double getUpcomingReleasedExercisesCount(int minutes, ExerciseType exerciseType) {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return exerciseRepository.countExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate, exerciseType.getDiscriminator());
+        return exerciseRepository.countExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate, exerciseType.getExerciseClass());
     }
 
     private double getUpcomingReleasedExercisesCountWithStudentMultiplier(int minutes, ExerciseType exerciseType) {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return exerciseRepository.countStudentsInExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate, exerciseType.getDiscriminator());
+        return exerciseRepository.countStudentsInExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate, exerciseType.getExerciseClass());
     }
 
     private double getUpcomingReleasedExercisesCountWithActiveStudentMultiplier(int minutes, ExerciseType exerciseType, int numberOfDaysToCountAsActive) {
@@ -237,7 +237,7 @@ public class MetricsBean {
         var activeUsers = statisticsRepository.getActiveUsers(ZonedDateTime.now().minusDays(numberOfDaysToCountAsActive), ZonedDateTime.now());
         var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).collect(Collectors.toList());
 
-        return exerciseRepository.countActiveStudentsInExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate, exerciseType.getDiscriminator(), activeUserNames);
+        return exerciseRepository.countActiveStudentsInExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate, exerciseType.getExerciseClass(), activeUserNames);
     }
 
     private double getUpcomingEndingExamCount(int minutes) {

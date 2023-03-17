@@ -32,7 +32,12 @@ public enum ExerciseType {
         return value.value();
     }
 
-    private Class<? extends Exercise> getExerciseClass() {
+    /**
+     * Used to filter the exercise type using the TYPE-operator.
+     *
+     * @return the class corresponding to the ExerciseType
+     */
+    public Class<? extends Exercise> getExerciseClass() {
         return switch (this) {
             case TEXT -> TextExercise.class;
             case PROGRAMMING -> ProgrammingExercise.class;
