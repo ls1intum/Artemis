@@ -126,13 +126,13 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.apollonDiagram = diagram;
         fixture.componentInstance.initializeApollonEditor(model);
         // ApollonEditor is the child
-        await addDelay(100);
+        await addDelay(300);
         expect(div.children).toHaveLength(1);
         // set selection
         fixture.componentInstance.apollonEditor!.selection = { elements: model.elements.map((element) => element.id), relationships: [] };
         fixture.detectChanges();
         // test
-        await addDelay(100).then(() => {
+        await addDelay(0).then(() => {
             fixture.componentInstance.downloadSelection().then(() => {
                 // last task when downloading file
                 expect(window.URL.revokeObjectURL).toHaveBeenCalledOnce();
