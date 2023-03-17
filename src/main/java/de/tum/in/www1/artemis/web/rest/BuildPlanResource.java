@@ -78,7 +78,6 @@ public class BuildPlanResource {
         final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Could not find connected exercise for build plan."));
 
-        // authorization when called from the build plan editor UI can be checked via the user token
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         return ResponseEntity.ok().body(buildPlan);
@@ -90,14 +89,11 @@ public class BuildPlanResource {
         log.debug("REST request to set build plan for programming exercise with id {}", exerciseId);
 
         final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
-        buildPlanRepository.disconnectBuildPlanFromExercise(programmingExercise);
-        buildPlan.addProgrammingExercise(programmingExercise);
+        final BuildPlan createdBuildPlan = buildPlanRepository.setBuildPlanForExercise(buildPlan.getBuildPlan(), programmingExercise);
         programmingExerciseRepository.save(programmingExercise);
-        buildPlan = buildPlanRepository.save(buildPlan);
 
-        return ResponseEntity.ok(buildPlan);
+        return ResponseEntity.ok(createdBuildPlan);
     }
 }

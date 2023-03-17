@@ -36,12 +36,15 @@ public interface BuildPlanRepository extends JpaRepository<BuildPlan, Long> {
      *
      * @param buildPlan The build plan script.
      * @param exercise  The exercise the build plan will be added to.
+     * @return The new build plan.
      */
-    default void setBuildPlanForExercise(final String buildPlan, final ProgrammingExercise exercise) {
+    default BuildPlan setBuildPlanForExercise(final String buildPlan, final ProgrammingExercise exercise) {
         BuildPlan buildPlanWrapper = findByBuildPlan(buildPlan).orElse(new BuildPlan());
         buildPlanWrapper.setBuildPlan(buildPlan);
         buildPlanWrapper.addProgrammingExercise(exercise);
         buildPlanWrapper = save(buildPlanWrapper);
         exercise.setBuildPlan(buildPlanWrapper);
+
+        return buildPlanWrapper;
     }
 }
