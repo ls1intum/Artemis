@@ -189,6 +189,10 @@ public class AuthorizationCheckService {
         }
     }
 
+    /**
+     * An enum that represents the different reasons why a user is not allowed to self register for a course,
+     * or ALLOWED if the user is allowed to self register for the course.
+     */
     public enum RegistrationAuthorization {
         ALLOWED, USERNAME_PATTERN, COURSE_STATUS, REGISTRATION_STATUS, ORGANIZATIONS
     }
