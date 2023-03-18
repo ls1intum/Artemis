@@ -5,7 +5,7 @@
                 "title": "Quiz Exercises",
                 "createLabel": "Create Quiz",
                 "editLabel": "Edit Quiz",
-                "importLabel": "Import a Quiz",
+                "importLabel": "Import Quiz",
                 "exportLabel": "Export Quiz Exercises",
                 "createModelDragAndDrop": "Create Drag and Drop Model Quiz",
                 "createOrEditLabel": "Create or edit a Quiz Exercise"
