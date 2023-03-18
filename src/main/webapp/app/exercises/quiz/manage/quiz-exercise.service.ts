@@ -7,6 +7,7 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { downloadFile } from 'app/shared/util/download.util';
+import { objectToJsonBlob } from 'app/utils/blob-util';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
@@ -20,12 +21,20 @@ export class QuizExerciseService {
     /**
      * Create the given quiz exercise
      * @param quizExercise the quiz exercise that should be created
+     * @param files the files that should be uploaded
      */
-    create(quizExercise: QuizExercise): Observable<EntityResponseType> {
+    create(quizExercise: QuizExercise, files: Map<string, Blob>): Observable<EntityResponseType> {
         const copy = ExerciseService.convertExerciseDatesFromClient(quizExercise);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+
+        const formData = new FormData();
+        formData.append('exercise', objectToJsonBlob(copy));
+        files.forEach((file, fileName) => {
+            formData.append('files', file, fileName);
+        });
+
         return this.http
-            .post<QuizExercise>(this.resourceUrl, copy, { observe: 'response' })
+            .post<QuizExercise>(this.resourceUrl, formData, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
@@ -35,27 +44,44 @@ export class QuizExerciseService {
      * @param adaptedSourceQuizExercise The exercise that should be imported, including adapted values for the
      * new exercise. E.g. with another title than the original exercise. Old values that should get discarded
      * (like the old ID) will be handled by the server.
+     * @param files The files that should be uploaded
      */
-    import(adaptedSourceQuizExercise: QuizExercise) {
+    import(adaptedSourceQuizExercise: QuizExercise, files: Map<string, Blob>) {
         let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceQuizExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+
+        const formData = new FormData();
+        formData.append('exercise', objectToJsonBlob(copy));
+        files.forEach((file, fileName) => {
+            formData.append('files', file, fileName);
+        });
+
         return this.http
-            .post<QuizExercise>(`${this.resourceUrl}/import/${adaptedSourceQuizExercise.id}`, copy, { observe: 'response' })
+            .post<QuizExercise>(`${this.resourceUrl}/import/${adaptedSourceQuizExercise.id}`, formData, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
      * Update the given quiz exercise
+     * @param id the id of the quiz exercise that should be updated
      * @param quizExercise the quiz exercise that should be updated
+     * @param files the files that should be uploaded
      * @param req Additional parameters that should be passed to the server when updating the exercise
      */
-    update(quizExercise: QuizExercise, req?: any): Observable<EntityResponseType> {
+    update(id: number, quizExercise: QuizExercise, files: Map<string, Blob>, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = ExerciseService.convertExerciseDatesFromClient(quizExercise);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+
+        const formData = new FormData();
+        formData.append('exercise', objectToJsonBlob(copy));
+        files.forEach((file, fileName) => {
+            formData.append('files', file, fileName);
+        });
+
         return this.http
-            .put<QuizExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
+            .put<QuizExercise>(this.resourceUrl + '/' + id, formData, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
