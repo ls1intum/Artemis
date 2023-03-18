@@ -147,6 +147,33 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(exerciseDateService.isAfterDueDate(participation)).isFalse();
     }
 
+    @Test
+    void testAssessmentDueDate_notSet() {
+        exercise.setAssessmentDueDate(null);
+        exercise = exerciseRepository.save(exercise);
+
+        assertThat(exerciseDateService.isBeforeAssessmentDueDate(exercise)).isFalse();
+        assertThat(exerciseDateService.isAfterAssessmentDueDate(exercise)).isTrue();
+    }
+
+    @Test
+    void testAssessmentDueDate_inFuture() {
+        exercise.setAssessmentDueDate(ZonedDateTime.now().plusHours(1));
+        exercise = exerciseRepository.save(exercise);
+
+        assertThat(exerciseDateService.isBeforeAssessmentDueDate(exercise)).isTrue();
+        assertThat(exerciseDateService.isAfterAssessmentDueDate(exercise)).isFalse();
+    }
+
+    @Test
+    void testAssessmentDueDate_inPast() {
+        exercise.setAssessmentDueDate(ZonedDateTime.now().minusHours(1));
+        exercise = exerciseRepository.save(exercise);
+
+        assertThat(exerciseDateService.isBeforeAssessmentDueDate(exercise)).isFalse();
+        assertThat(exerciseDateService.isAfterAssessmentDueDate(exercise)).isTrue();
+    }
+
     @Nested
     class ExamTest {
 
@@ -195,6 +222,46 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
             exam.setStartDate(ZonedDateTime.now().minusMinutes(20));
             exam.setEndDate(ZonedDateTime.now().minusMinutes(10));
             exam = examRepository.save(exam);
+        }
+
+        @Test
+        void testExamAssessmentDueDate_reviewPeriodUnset() {
+            exam.setExamStudentReviewStart(null);
+            exam.setExamStudentReviewEnd(null);
+            exam = examRepository.save(exam);
+
+            assertThat(exerciseDateService.isBeforeAssessmentDueDate(exercise)).isTrue();
+            assertThat(exerciseDateService.isAfterAssessmentDueDate(exercise)).isFalse();
+        }
+
+        @Test
+        void testExamAssessmentDueDate_reviewPeriodInFuture() {
+            exam.setExamStudentReviewStart(ZonedDateTime.now().plusHours(1));
+            exam.setExamStudentReviewEnd(ZonedDateTime.now().plusHours(2));
+            exam = examRepository.save(exam);
+
+            assertThat(exerciseDateService.isBeforeAssessmentDueDate(exercise)).isTrue();
+            assertThat(exerciseDateService.isAfterAssessmentDueDate(exercise)).isFalse();
+        }
+
+        @Test
+        void testExamAssessementDueDate_duringReviewPeriod() {
+            exam.setExamStudentReviewStart(ZonedDateTime.now().minusHours(1));
+            exam.setExamStudentReviewEnd(ZonedDateTime.now().plusHours(2));
+            exam = examRepository.save(exam);
+
+            assertThat(exerciseDateService.isBeforeAssessmentDueDate(exercise)).isFalse();
+            assertThat(exerciseDateService.isAfterAssessmentDueDate(exercise)).isTrue();
+        }
+
+        @Test
+        void testExamAssessmentDueDate_afterReviewPeriod() {
+            exam.setExamStudentReviewStart(ZonedDateTime.now().minusHours(2));
+            exam.setExamStudentReviewEnd(ZonedDateTime.now().minusHours(1));
+            exam = examRepository.save(exam);
+
+            assertThat(exerciseDateService.isBeforeAssessmentDueDate(exercise)).isFalse();
+            assertThat(exerciseDateService.isAfterAssessmentDueDate(exercise)).isTrue();
         }
     }
 

@@ -5,7 +5,6 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -488,7 +487,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             StudentParticipation studentParticipation = participations.next();
             // connect it with a student (!= tutor assessing it)
             User user = database.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
-            studentParticipation.setInitializationDate(ZonedDateTime.now());
+            studentParticipation.setInitializationDate(now());
             studentParticipation.setParticipant(user);
             studentParticipationRepository.save(studentParticipation);
         }
@@ -507,8 +506,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getParticipationForNonTextExercise() throws Exception {
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
-                ZonedDateTime.now().plusDays(2), "png,pdf", textExercise.getCourseViaExerciseGroupOrCourseMember());
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(now().minusDays(1), now().plusDays(1), now().plusDays(2), "png,pdf",
+                textExercise.getCourseViaExerciseGroupOrCourseMember());
         exerciseRepo.save(fileUploadExercise);
 
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
@@ -538,8 +537,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getDataForTextEditorForNonTextExercise_badRequest() throws Exception {
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
-                ZonedDateTime.now().plusDays(2), "png,pdf", textExercise.getCourseViaExerciseGroupOrCourseMember());
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(now().minusDays(1), now().plusDays(1), now().plusDays(2), "png,pdf",
+                textExercise.getCourseViaExerciseGroupOrCourseMember());
         exerciseRepo.save(fileUploadExercise);
 
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
@@ -623,7 +622,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getDataForTextEditor_beforeAssessmentDueDate_noResult() throws Exception {
-        database.updateAssessmentDueDate(textExercise.getId(), ZonedDateTime.now().plusDays(1));
+        database.updateAssessmentDueDate(textExercise.getId(), now().plusDays(1));
 
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
@@ -992,17 +991,17 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     private void exerciseDueDatePassed() {
-        database.updateExerciseDueDate(textExercise.getId(), ZonedDateTime.now().minusHours(2));
+        database.updateExerciseDueDate(textExercise.getId(), now().minusHours(2));
     }
 
     private void assessmentDueDatePassed() {
-        database.updateAssessmentDueDate(textExercise.getId(), ZonedDateTime.now().minusSeconds(10));
+        database.updateAssessmentDueDate(textExercise.getId(), now().minusSeconds(10));
     }
 
     private void overrideAssessment(String student, String originalAssessor, HttpStatus httpStatus, String submit, boolean originalAssessmentSubmitted) throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Test123", Language.ENGLISH, true);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, student, originalAssessor);
-        textSubmission.getLatestResult().setCompletionDate(originalAssessmentSubmitted ? ZonedDateTime.now() : null);
+        textSubmission.getLatestResult().setCompletionDate(originalAssessmentSubmitted ? now() : null);
         resultRepo.save(textSubmission.getLatestResult());
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", submit);
@@ -1291,9 +1290,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Exam exam = database.addExam(textExercise.getCourseViaExerciseGroupOrCourseMember());
         exam.setNumberOfCorrectionRoundsInExam(2);
         exam.addExerciseGroup(exerciseGroup1);
-        exam.setVisibleDate(ZonedDateTime.now().minusHours(3));
-        exam.setStartDate(ZonedDateTime.now().minusHours(2));
-        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        exam.setVisibleDate(now().minusHours(3));
+        exam.setStartDate(now().minusHours(2));
+        exam.setEndDate(now().minusHours(1));
         exam = examRepository.save(exam);
 
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
@@ -1314,7 +1313,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         // verify setup
         assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(2);
-        assertThat(exam.getEndDate()).isBefore(ZonedDateTime.now());
+        assertThat(exam.getEndDate()).isBefore(now());
         var optionalFetchedExercise = exerciseRepo.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId());
         assertThat(optionalFetchedExercise).isPresent();
         final var exerciseWithParticipation = optionalFetchedExercise.get();
