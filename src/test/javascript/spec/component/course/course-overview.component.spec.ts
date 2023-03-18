@@ -209,11 +209,12 @@ describe('CourseOverviewComponent', () => {
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
-        component.ngOnInit().then(() => {
-            expect(getCourseStub).toHaveBeenCalledOnce();
-            expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
-            expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
-        });
+        fixture.detectChanges();
+        tick();
+
+        expect(getCourseStub).toHaveBeenCalled();
+        expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
+        expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
     }));
 
     it('should redirect to the registration page if the API endpoint returned a 403, but the user can register', fakeAsync(() => {
@@ -238,23 +239,25 @@ describe('CourseOverviewComponent', () => {
             ),
         );
 
-        component.ngOnInit();
+        fixture.detectChanges();
         tick();
+
         expect(router.navigate).toHaveBeenCalledWith(['courses', course1.id, 'register']);
     }));
 
-    it('should call load Course methods on init', async () => {
+    it('should call load Course methods on init', fakeAsync(() => {
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
 
-        await component.ngOnInit();
+        fixture.detectChanges();
+        tick();
 
         expect(getCourseStub).toHaveBeenCalledTimes(2);
         expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
-    });
+    }));
 
     it('should have visible exams', () => {
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
