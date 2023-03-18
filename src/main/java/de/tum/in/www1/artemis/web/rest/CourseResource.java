@@ -386,15 +386,10 @@ public class CourseResource {
         List<Course> allCoursesToPotentiallyRegister = courseRepository.findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites();
         // check whether registration is actually possible for each of the courses
         return allCoursesToPotentiallyRegister.stream().filter(course -> {
-            // check that self-registration is allowed for the user in this course
-            try {
-                authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, course);
-            }
-            catch (AccessForbiddenException e) {
-                return false;
-            }
-            // check that the user is not already registered to the course
-            return !allRegisteredCourses.contains(course);
+            boolean selfRegistrationAllowed = AuthorizationCheckService.RegistrationAuthorization.ALLOWED
+                    .equals(authCheckService.getUserRegistrationAuthorizationForCourse(user, course));
+            boolean isAlreadyInCourse = allRegisteredCourses.contains(course);
+            return selfRegistrationAllowed && !isAlreadyInCourse;
         }).filter(course -> !allRegisteredCourses.contains(course)).toList();
     }
 
