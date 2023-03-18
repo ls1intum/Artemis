@@ -235,9 +235,8 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         }
 
         @Test
-        void testExamAssessmentDueDate_reviewPeriodInFuture() {
-            exam.setExamStudentReviewStart(ZonedDateTime.now().plusHours(1));
-            exam.setExamStudentReviewEnd(ZonedDateTime.now().plusHours(2));
+        void testExamAssessmentDueDate_resultsNotPublished() {
+            exam.setPublishResultsDate(ZonedDateTime.now().plusHours(1));
             exam = examRepository.save(exam);
 
             assertThat(exerciseDateService.isBeforeAssessmentDueDate(exercise)).isTrue();
@@ -245,9 +244,8 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         }
 
         @Test
-        void testExamAssessementDueDate_duringReviewPeriod() {
-            exam.setExamStudentReviewStart(ZonedDateTime.now().minusHours(1));
-            exam.setExamStudentReviewEnd(ZonedDateTime.now().plusHours(2));
+        void testExamAssessmentDueDate_resultsPublished() {
+            exam.setPublishResultsDate(ZonedDateTime.now().minusHours(1));
             exam = examRepository.save(exam);
 
             assertThat(exerciseDateService.isBeforeAssessmentDueDate(exercise)).isFalse();
@@ -256,6 +254,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         @Test
         void testExamAssessmentDueDate_afterReviewPeriod() {
+            exam.setPublishResultsDate(ZonedDateTime.now().minusHours(2));
             exam.setExamStudentReviewStart(ZonedDateTime.now().minusHours(2));
             exam.setExamStudentReviewEnd(ZonedDateTime.now().minusHours(1));
             exam = examRepository.save(exam);
