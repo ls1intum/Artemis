@@ -3803,6 +3803,9 @@ public class DatabaseUtilService {
             DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
             dragItem3.setQuestion((DragAndDropQuestion) question);
             System.out.println(dragItem3);
+            DragItem dragItem4 = ((DragAndDropQuestion) question).getDragItems().get(3);
+            dragItem4.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem4);
 
             DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().get(0);
             dropLocation1.setQuestion((DragAndDropQuestion) question);
@@ -3813,16 +3816,21 @@ public class DatabaseUtilService {
             DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
             dropLocation3.setQuestion((DragAndDropQuestion) question);
             System.out.println(dropLocation3);
+            DropLocation dropLocation4 = ((DragAndDropQuestion) question).getDropLocations().get(3);
+            dropLocation4.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation4);
 
             if (correct) {
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2));
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem4).dropLocation(dropLocation4));
             }
             else {
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation3));
-                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation2));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation4));
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation1));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem4).dropLocation(dropLocation2));
             }
 
             return submittedAnswer;
@@ -4067,7 +4075,7 @@ public class DatabaseUtilService {
 
     @NotNull
     public DragAndDropQuestion createDragAndDropQuestion() {
-        DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(3).text("Q2");
+        DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(4).text("Q2");
         dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
 
         var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
@@ -4076,19 +4084,24 @@ public class DatabaseUtilService {
         dropLocation2.setTempID(generateTempId());
         var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
         dropLocation3.setTempID(generateTempId());
+        var dropLocation4 = new DropLocation().posX(40d).posY(40d).height(10d).width(10d);
+        dropLocation4.setTempID(generateTempId());
         dnd.addDropLocation(dropLocation1);
         // also invoke remove once
         dnd.removeDropLocation(dropLocation1);
         dnd.addDropLocation(dropLocation1);
         dnd.addDropLocation(dropLocation2);
         dnd.addDropLocation(dropLocation3);
+        dnd.addDropLocation(dropLocation4);
 
         var dragItem1 = new DragItem().text("D1");
         dragItem1.setTempID(generateTempId());
-        var dragItem2 = new DragItem().text("D2");
+        var dragItem2 = new DragItem().pictureFilePath("dragItemImage2.png");
         dragItem2.setTempID(generateTempId());
         var dragItem3 = new DragItem().text("D3");
         dragItem3.setTempID(generateTempId());
+        var dragItem4 = new DragItem().pictureFilePath("dragItemImage4.png");
+        dragItem4.setTempID(generateTempId());
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
         // also invoke remove once
@@ -4096,6 +4109,7 @@ public class DatabaseUtilService {
         dnd.addDragItem(dragItem1);
         dnd.addDragItem(dragItem2);
         dnd.addDragItem(dragItem3);
+        dnd.addDragItem(dragItem4);
 
         var mapping1 = new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1);
         dragItem1.addMappings(mapping1);
@@ -4111,6 +4125,8 @@ public class DatabaseUtilService {
         dnd.addCorrectMapping(mapping2);
         var mapping3 = new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3);
         dnd.addCorrectMapping(mapping3);
+        var mapping4 = new DragAndDropMapping().dragItem(dragItem4).dropLocation(dropLocation4);
+        dnd.addCorrectMapping(mapping4);
         dnd.setExplanation("Explanation");
         // invoke some util methods
         System.out.println("DnD: " + dnd);

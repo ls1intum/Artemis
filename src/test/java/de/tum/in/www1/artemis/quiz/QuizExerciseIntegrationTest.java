@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.quiz;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.byLessThan;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -17,11 +18,20 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
@@ -75,6 +85,15 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private CourseRepository courseRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
     private QuizExercise quizExercise;
 
     // helper attributes for shorter code in assert statements
@@ -82,13 +101,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     private final PointCounter pc02 = pc(0, 2);
 
-    private final PointCounter pc03 = pc(0, 3);
-
     private final PointCounter pc04 = pc(0, 4);
 
     private final PointCounter pc05 = pc(0, 5);
 
     private final PointCounter pc06 = pc(0, 6);
+
+    private final PointCounter pc07 = pc(0, 7);
 
     private final PointCounter pc10 = pc(1, 0);
 
@@ -101,6 +120,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private final PointCounter pc50 = pc(5, 0);
 
     private final PointCounter pc60 = pc(6, 0);
+
+    private final PointCounter pc70 = pc(7, 0);
 
     @BeforeEach
     void init() {
@@ -138,11 +159,11 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 assertThat(answerOptions.get(1).isIsCorrect()).as("Is correct for answer option is correct").isFalse();
             }
             else if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                assertThat(dragAndDropQuestion.getDropLocations()).as("Drag and drop question drop locations were saved").hasSize(3);
-                assertThat(dragAndDropQuestion.getDragItems()).as("Drag and drop question drag items were saved").hasSize(3);
+                assertThat(dragAndDropQuestion.getDropLocations()).as("Drag and drop question drop locations were saved").hasSize(4);
+                assertThat(dragAndDropQuestion.getDragItems()).as("Drag and drop question drag items were saved").hasSize(4);
                 assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
                 assertThat(dragAndDropQuestion.getText()).as("Drag and drop question text is correct").isEqualTo("Q2");
-                assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(3);
+                assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(4);
 
                 List<DropLocation> dropLocations = dragAndDropQuestion.getDropLocations();
                 assertThat(dropLocations.get(0).getPosX()).as("Pos X for drop location is correct").isEqualTo(10);
@@ -154,10 +175,24 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 assertThat(dropLocations.get(1).getPosY()).as("Pos Y for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(1).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(1).getHeight()).as("Height for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(2).getPosX()).as("Pos X for drop location is correct").isEqualTo(30);
+                assertThat(dropLocations.get(2).getPosY()).as("Pos Y for drop location is correct").isEqualTo(30);
+                assertThat(dropLocations.get(2).getWidth()).as("Width for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(2).getHeight()).as("Height for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(3).getPosX()).as("Pos X for drop location is correct").isEqualTo(40);
+                assertThat(dropLocations.get(3).getPosY()).as("Pos Y for drop location is correct").isEqualTo(40);
+                assertThat(dropLocations.get(3).getWidth()).as("Width for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(3).getHeight()).as("Height for drop location is correct").isEqualTo(10);
 
                 List<DragItem> dragItems = dragAndDropQuestion.getDragItems();
                 assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isEqualTo("D1");
-                assertThat(dragItems.get(1).getText()).as("Text for drag item is correct").isEqualTo("D2");
+                assertThat(dragItems.get(0).getPictureFilePath()).as("Picture file path for drag item is correct").isNull();
+                assertThat(dragItems.get(1).getText()).as("Text for drag item is correct").isNull();
+                assertThat(dragItems.get(1).getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
+                assertThat(dragItems.get(2).getText()).as("Text for drag item is correct").isEqualTo("D3");
+                assertThat(dragItems.get(2).getPictureFilePath()).as("Picture file path for drag item is correct").isNull();
+                assertThat(dragItems.get(3).getText()).as("Text for drag item is correct").isNull();
+                assertThat(dragItems.get(3).getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
             }
             else if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
                 assertThat(shortAnswerQuestion.getSpots()).as("Short answer question spots were saved").hasSize(2);
@@ -208,11 +243,11 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 assertThat(answerOptions.get(1).isIsCorrect()).as("Is correct for answer option is correct").isFalse();
             }
             else if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                assertThat(dragAndDropQuestion.getDropLocations()).as("Drag and drop question drop locations were saved").hasSize(3);
-                assertThat(dragAndDropQuestion.getDragItems()).as("Drag and drop question drag items were saved").hasSize(3);
+                assertThat(dragAndDropQuestion.getDropLocations()).as("Drag and drop question drop locations were saved").hasSize(4);
+                assertThat(dragAndDropQuestion.getDragItems()).as("Drag and drop question drag items were saved").hasSize(4);
                 assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
                 assertThat(dragAndDropQuestion.getText()).as("Drag and drop question text is correct").isEqualTo("Q2");
-                assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(3);
+                assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(4);
 
                 List<DropLocation> dropLocations = dragAndDropQuestion.getDropLocations();
                 assertThat(dropLocations.get(0).getPosX()).as("Pos X for drop location is correct").isEqualTo(10);
@@ -223,10 +258,24 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 assertThat(dropLocations.get(1).getPosY()).as("Pos Y for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(1).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(1).getHeight()).as("Height for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(2).getPosX()).as("Pos X for drop location is correct").isEqualTo(30);
+                assertThat(dropLocations.get(2).getPosY()).as("Pos Y for drop location is correct").isEqualTo(30);
+                assertThat(dropLocations.get(2).getWidth()).as("Width for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(2).getHeight()).as("Height for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(3).getPosX()).as("Pos X for drop location is correct").isEqualTo(40);
+                assertThat(dropLocations.get(3).getPosY()).as("Pos Y for drop location is correct").isEqualTo(40);
+                assertThat(dropLocations.get(3).getWidth()).as("Width for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(3).getHeight()).as("Height for drop location is correct").isEqualTo(10);
 
                 List<DragItem> dragItems = dragAndDropQuestion.getDragItems();
                 assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isEqualTo("D1");
-                assertThat(dragItems.get(1).getText()).as("Text for drag item is correct").isEqualTo("D2");
+                assertThat(dragItems.get(0).getPictureFilePath()).as("Picture file path for drag item is correct").isNull();
+                assertThat(dragItems.get(1).getText()).as("Text for drag item is correct").isNull();
+                assertThat(dragItems.get(1).getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
+                assertThat(dragItems.get(2).getText()).as("Text for drag item is correct").isEqualTo("D3");
+                assertThat(dragItems.get(2).getPictureFilePath()).as("Picture file path for drag item is correct").isNull();
+                assertThat(dragItems.get(3).getText()).as("Text for drag item is correct").isNull();
+                assertThat(dragItems.get(3).getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
             }
             else if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
                 assertThat(shortAnswerQuestion.getSpots()).as("Short answer question spots were saved").hasSize(2);
@@ -254,14 +303,99 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
         quizExercise.setCourse(exerciseGroup.getExam().getCourse());
-        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
+    }
+
+    private QuizExercise importQuizExerciseWithFiles(QuizExercise quizExercise, Long id, List<MockMultipartFile> files, HttpStatus expectedStatus) throws Exception {
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/quiz-exercises/import/" + id);
+        builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
+                .contentType(MediaType.MULTIPART_FORM_DATA);
+        for (MockMultipartFile file : files) {
+            builder.file(file);
+        }
+        MvcResult result = request.getMvc().perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        request.restoreSecurityContext();
+        if (expectedStatus == HttpStatus.CREATED) {
+            return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
+        }
+        return null;
+    }
+
+    private QuizExercise reevalQuizExerciseWithFiles(QuizExercise quizExercise, Long id, List<MockMultipartFile> files, HttpStatus expectedStatus) throws Exception {
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/quiz-exercises/" + id + "/re-evaluate");
+        builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
+                .contentType(MediaType.MULTIPART_FORM_DATA);
+        for (MockMultipartFile file : files) {
+            builder.file(file);
+        }
+        MvcResult result = request.getMvc().perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        request.restoreSecurityContext();
+        if (expectedStatus == HttpStatus.OK) {
+            return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
+        }
+        return null;
+    }
+
+    /**
+     * Sends a create request for a quiz exercise. It automatically adds the files to the request and modifies the exercise to be sent.
+     *
+     * @param quizExercise       the quiz exercise to be sent
+     * @param expectedStatus     the expected status of the request
+     * @param addBackgroundImage whether to add a background image to the quiz exercise
+     * @return the created quiz exercise or null if the request failed
+     */
+    private QuizExercise createQuizExerciseWithFiles(QuizExercise quizExercise, HttpStatus expectedStatus, boolean addBackgroundImage) throws Exception {
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/quiz-exercises");
+        addFilesToBuilderAndModifyExercise(builder, quizExercise, addBackgroundImage);
+        builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
+                .contentType(MediaType.MULTIPART_FORM_DATA);
+        MvcResult result = request.getMvc().perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        request.restoreSecurityContext();
+        if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {
+            return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
+        }
+        return null;
+    }
+
+    private QuizExercise updateQuizExerciseWithFiles(QuizExercise quizExercise, List<String> fileNames, HttpStatus expectedStatus) throws Exception {
+        return updateQuizExerciseWithFiles(quizExercise, fileNames, expectedStatus, null);
+    }
+
+    /**
+     * Sends an update request for the given quiz exercise.
+     *
+     * @param quizExercise   the quiz exercise to update. Expects to contain changed filenames if appliccable
+     * @param fileNames      the filenames of changed or new files
+     * @param expectedStatus the expected status of the request
+     * @return the updated quiz exercise or null if the request failed
+     */
+    private QuizExercise updateQuizExerciseWithFiles(QuizExercise quizExercise, List<String> fileNames, HttpStatus expectedStatus, MultiValueMap<String, String> params)
+            throws Exception {
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/quiz-exercises/" + quizExercise.getId());
+        if (params != null) {
+            builder.params(params);
+        }
+        if (fileNames != null) {
+            for (String fileName : fileNames) {
+                builder.file(new MockMultipartFile("files", fileName, MediaType.IMAGE_PNG_VALUE, "test".getBytes()));
+            }
+        }
+        builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
+                .contentType(MediaType.MULTIPART_FORM_DATA);
+        MvcResult result = request.getMvc().perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        request.restoreSecurityContext();
+        if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {
+            return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
+        }
+        return null;
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createQuizExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(null);
-        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
 
     @Test
@@ -269,7 +403,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void createQuizExercise_InvalidMaxScore() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setMaxPoints(0.0);
-        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
 
     @Test
@@ -277,7 +411,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void createQuizExercise_InvalidDates_badRequest() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now()));
-        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
 
     @Test
@@ -287,7 +421,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise.setMaxPoints(10.0);
         quizExercise.setBonusPoints(1.0);
         quizExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
-        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
 
     @Test
@@ -297,7 +431,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise.setMaxPoints(10.0);
         quizExercise.setBonusPoints(1.0);
         quizExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -321,7 +455,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         sa.getSolutions().remove(0);
         sa.getCorrectMappings().remove(0);
 
-        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
+        quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.OK);
 
         // Quiz type specific assertions
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
@@ -346,20 +480,33 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 assertThat(answerOptions.get(2).isIsCorrect()).as("Is correct for answer option is correct").isTrue();
             }
             else if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                assertThat(dragAndDropQuestion.getDropLocations()).as("Drag and drop question drop locations were saved").hasSize(2);
-                assertThat(dragAndDropQuestion.getDragItems()).as("Drag and drop question drag items were saved").hasSize(2);
+                assertThat(dragAndDropQuestion.getDropLocations()).as("Drag and drop question drop locations were saved").hasSize(3);
+                assertThat(dragAndDropQuestion.getDragItems()).as("Drag and drop question drag items were saved").hasSize(3);
                 assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
                 assertThat(dragAndDropQuestion.getText()).as("Drag and drop question text is correct").isEqualTo("Q2");
-                assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(3);
+                assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(4);
 
                 List<DropLocation> dropLocations = dragAndDropQuestion.getDropLocations();
                 assertThat(dropLocations.get(0).getPosX()).as("Pos X for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(0).getPosY()).as("Pos Y for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(0).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(0).getHeight()).as("Height for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(1).getPosX()).as("Pos X for drop location is correct").isEqualTo(30);
+                assertThat(dropLocations.get(1).getPosY()).as("Pos Y for drop location is correct").isEqualTo(30);
+                assertThat(dropLocations.get(1).getWidth()).as("Width for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(1).getHeight()).as("Height for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(2).getPosX()).as("Pos X for drop location is correct").isEqualTo(40);
+                assertThat(dropLocations.get(2).getPosY()).as("Pos Y for drop location is correct").isEqualTo(40);
+                assertThat(dropLocations.get(2).getWidth()).as("Width for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(2).getHeight()).as("Height for drop location is correct").isEqualTo(10);
 
                 List<DragItem> dragItems = dragAndDropQuestion.getDragItems();
-                assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isEqualTo("D2");
+                assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isNull();
+                assertThat(dragItems.get(0).getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
+                assertThat(dragItems.get(1).getText()).as("Text for drag item is correct").isEqualTo("D3");
+                assertThat(dragItems.get(1).getPictureFilePath()).as("Picture file path for drag item is correct").isNull();
+                assertThat(dragItems.get(2).getText()).as("Text for drag item is correct").isNull();
+                assertThat(dragItems.get(2).getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
             }
             else if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
                 assertThat(shortAnswerQuestion.getSpots()).as("Short answer question spots were saved").hasSize(1);
@@ -386,13 +533,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         mc.setSingleChoice(true);
         mc.setScoringType(ScoringType.ALL_OR_NOTHING);
-        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
+        quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.OK);
         assertThat(quizExercise.getQuizQuestions().get(0).getScoringType()).as("Scoring type was changed").isEqualTo(ScoringType.ALL_OR_NOTHING);
 
         // multiple correct answers are not allowed
         mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         mc.getAnswerOptions().get(1).setIsCorrect(true);
-        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -403,7 +550,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         mc.setSingleChoice(true);
         mc.setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
-        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -414,7 +561,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         mc.setSingleChoice(true);
         mc.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
-        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -437,7 +584,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         sa.getSolutions().remove(0);
         sa.getCorrectMappings().remove(0);
 
-        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
+        quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.OK);
 
         // Quiz type specific assertions
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
@@ -462,20 +609,33 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 assertThat(answerOptions.get(2).isIsCorrect()).as("Is correct for answer option is correct").isTrue();
             }
             else if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                assertThat(dragAndDropQuestion.getDropLocations()).as("Drag and drop question drop locations were saved").hasSize(2);
-                assertThat(dragAndDropQuestion.getDragItems()).as("Drag and drop question drag items were saved").hasSize(2);
+                assertThat(dragAndDropQuestion.getDropLocations()).as("Drag and drop question drop locations were saved").hasSize(3);
+                assertThat(dragAndDropQuestion.getDragItems()).as("Drag and drop question drag items were saved").hasSize(3);
                 assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
                 assertThat(dragAndDropQuestion.getText()).as("Drag and drop question text is correct").isEqualTo("Q2");
-                assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(3);
+                assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(4);
 
                 List<DropLocation> dropLocations = dragAndDropQuestion.getDropLocations();
                 assertThat(dropLocations.get(0).getPosX()).as("Pos X for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(0).getPosY()).as("Pos Y for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(0).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(0).getHeight()).as("Height for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(1).getPosX()).as("Pos X for drop location is correct").isEqualTo(30);
+                assertThat(dropLocations.get(1).getPosY()).as("Pos Y for drop location is correct").isEqualTo(30);
+                assertThat(dropLocations.get(1).getWidth()).as("Width for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(1).getHeight()).as("Height for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(2).getPosX()).as("Pos X for drop location is correct").isEqualTo(40);
+                assertThat(dropLocations.get(2).getPosY()).as("Pos Y for drop location is correct").isEqualTo(40);
+                assertThat(dropLocations.get(2).getWidth()).as("Width for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(2).getHeight()).as("Height for drop location is correct").isEqualTo(10);
 
                 List<DragItem> dragItems = dragAndDropQuestion.getDragItems();
-                assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isEqualTo("D2");
+                assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isNull();
+                assertThat(dragItems.get(0).getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
+                assertThat(dragItems.get(1).getText()).as("Text for drag item is correct").isEqualTo("D3");
+                assertThat(dragItems.get(1).getPictureFilePath()).as("Picture file path for drag item is correct").isNull();
+                assertThat(dragItems.get(2).getText()).as("Text for drag item is correct").isNull();
+                assertThat(dragItems.get(2).getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
             }
             else if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
                 assertThat(shortAnswerQuestion.getSpots()).as("Short answer question spots were saved").hasSize(1);
@@ -501,7 +661,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setExerciseGroup(exerciseGroup);
 
-        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -510,7 +670,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setCourse(null);
 
-        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -518,7 +678,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void updateQuizExercise_InvalidDates_badRequest() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now()));
-        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -530,7 +690,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise.setCourse(null);
         quizExercise.setExerciseGroup(exerciseGroup);
 
-        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -543,7 +703,30 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise.setExerciseGroup(null);
         quizExercise.setCourse(course);
 
-        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
+    }
+
+    private void addFilesToBuilderAndModifyExercise(MockMultipartHttpServletRequestBuilder builder, QuizExercise quizExercise, boolean addBackgroundImage) {
+        int index = 0;
+        for (var question : quizExercise.getQuizQuestions()) {
+            if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
+                if (addBackgroundImage) {
+                    String backgroundFileName = "backgroundImage" + index++ + ".jpg";
+                    dragAndDropQuestion.setBackgroundFilePath(backgroundFileName);
+                    builder.file(new MockMultipartFile("files", backgroundFileName, MediaType.IMAGE_JPEG_VALUE, "backgroundImage".getBytes()));
+                }
+                else {
+                    dragAndDropQuestion.setBackgroundFilePath(null);
+                }
+                for (var dragItem : dragAndDropQuestion.getDragItems()) {
+                    if (dragItem.getPictureFilePath() != null) {
+                        String filename = "dragItemImage" + index++ + ".png";
+                        dragItem.setPictureFilePath(filename);
+                        builder.file(new MockMultipartFile("files", filename, MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()));
+                    }
+                }
+            }
+        }
     }
 
     private QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) throws Exception {
@@ -551,7 +734,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         QuizExercise quizExercise = database.createQuiz(course, releaseDate, dueDate, quizMode);
         quizExercise.setDuration(3600);
-        QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
+        QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
         QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
         assertThat(quizExerciseDatabase).isNotNull();
         checkQuizExercises(quizExercise, quizExerciseServer);
@@ -582,7 +765,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         QuizExercise quizExercise = database.createQuizForExam(exerciseGroup);
         quizExercise.setDuration(3600);
-        QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
+        QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
         QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
         assertThat(quizExerciseDatabase).isNotNull();
         checkQuizExercises(quizExercise, quizExerciseServer);
@@ -650,41 +833,29 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateNotExistingQuizExercise() throws Exception {
-        Course course = database.createCourse();
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
-        QuizExercise quizExerciseServer = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
-        assertThat(quizExerciseServer.getId()).isNotNull();
-        assertThat(quizExerciseServer.getQuizQuestions()).hasSize(quizExercise.getQuizQuestions().size());
-        assertThat(quizExerciseServer.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(quizExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        assertThat(quizExerciseServer.getMaxPoints()).isEqualTo(quizExercise.getMaxPoints());
-        // TODO: check more values for equality
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateRunningQuizExercise() throws Exception {
         Course course = database.createCourse();
         // create QuizExercise that already started
         QuizExercise startedQuizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(1), null, QuizMode.SYNCHRONIZED);
-        QuizExercise startedQuizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", startedQuizExercise, QuizExercise.class, HttpStatus.CREATED);
+        QuizExercise startedQuizExerciseServer = createQuizExerciseWithFiles(startedQuizExercise, HttpStatus.CREATED, true);
 
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) startedQuizExerciseServer.getQuizQuestions().get(0);
         mc.getAnswerOptions().remove(0);
         mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
         mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
 
-        QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises", startedQuizExerciseServer, QuizExercise.class, HttpStatus.BAD_REQUEST);
-        assertThat(updatedQuizExercise).isNull();
+        var putBuilder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/quiz-exercises/" + startedQuizExerciseServer.getId());
+        putBuilder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(startedQuizExerciseServer)))
+                .contentType(MediaType.MULTIPART_FORM_DATA);
+
+        request.getMvc().perform(putBuilder).andExpect(status().isBadRequest());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExistingQuizExercise() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
-
-        QuizExercise newQuizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
-        assertThat(newQuizExerciseServer).isNull();
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -868,7 +1039,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
         quizExercise.setDueDate(ZonedDateTime.now().minusHours(2));
-        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
+        quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.OK);
 
         var now = ZonedDateTime.now();
 
@@ -885,23 +1056,10 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         QuizExercise quizExerciseWithRecalculatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK,
                 QuizExercise.class);
 
-        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
+        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(11);
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
 
-        for (PointCounter pointCounter : quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints().equals(0.0)) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(3);
-            }
-            else if (pointCounter.getPoints().equals(3.0) || pointCounter.getPoints().equals(4.0) || pointCounter.getPoints().equals(6.0)) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(2);
-            }
-            else if (pointCounter.getPoints().equals(7.0)) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(1);
-            }
-            else {
-                assertThat(pointCounter.getRatedCounter()).isZero();
-            }
-        }
+        assertQuizPointStatisticsPointCounters(quizExerciseWithRecalculatedStatistics, Map.of(0.0, pc30, 4.0, pc40, 6.0, pc20, 8.0, pc10));
 
         // add more submissions and recalculate
         for (int i = numberOfParticipants; i <= 14; i++) {
@@ -913,29 +1071,10 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         // calculate statistics
         quizExerciseWithRecalculatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
 
-        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
+        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(11);
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants + 4);
 
-        for (PointCounter pointCounter : quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints().equals(0.0)) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(5);
-            }
-            else if (pointCounter.getPoints().equals(4.0)) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(3);
-            }
-            else if (pointCounter.getPoints().equals(3.0) || pointCounter.getPoints().equals(6.0)) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(2);
-            }
-            else if (pointCounter.getPoints().equals(7.0)) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(1);
-            }
-            else if (pointCounter.getPoints().equals(9.0)) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(1);
-            }
-            else {
-                assertThat(pointCounter.getRatedCounter()).isZero();
-            }
-        }
+        assertQuizPointStatisticsPointCounters(quizExerciseWithRecalculatedStatistics, Map.of(0.0, pc50, 4.0, pc50, 6.0, pc20, 8.0, pc10, 10.0, pc10));
     }
 
     @Test
@@ -944,10 +1083,10 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null, QuizMode.SYNCHRONIZED);
 
         // we expect a bad request because the quiz has not ended yet
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.BAD_REQUEST);
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
         quizExerciseService.endQuiz(quizExercise, ZonedDateTime.now().minusMinutes(1));
-        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
+        quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.OK);
 
         // generate rated submissions for each student
         int numberOfParticipants = 10;
@@ -982,11 +1121,10 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         System.out.println("QuizPointStatistic before re-evaluate: " + quizExercise.getQuizPointStatistic());
 
         // check that the statistic is correct before any re-evaluate
-        assertQuizPointStatisticsPointCounters(quizExercise, Map.of(0.0, pc30, 3.0, pc20, 4.0, pc20, 6.0, pc20, 7.0, pc10));
+        assertQuizPointStatisticsPointCounters(quizExercise, Map.of(0.0, pc30, 4.0, pc40, 6.0, pc20, 8.0, pc10));
 
         // reevaluate without changing anything and check if statistics are still correct (i.e. unchanged)
-        QuizExercise quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise,
-                QuizExercise.class, HttpStatus.OK);
+        QuizExercise quizExerciseWithReevaluatedStatistics = reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.OK);
         checkStatistics(quizExercise, quizExerciseWithReevaluatedStatistics);
 
         System.out.println("QuizPointStatistic after re-evaluate (without changes): " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
@@ -995,7 +1133,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var multipleChoiceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         multipleChoiceQuestion.getAnswerOptions().remove(1);
 
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+        reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.OK);
 
         // load the exercise again after it was re-evaluated
         quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
@@ -1009,13 +1147,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
         System.out.println("QuizPointStatistic after 1st re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
 
-        assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(0.0, pc20, 3.0, pc20, 4.0, pc30, 6.0, pc20, 7.0, pc10));
+        assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(0.0, pc20, 4.0, pc50, 6.0, pc20, 8.0, pc10));
 
         // set a question invalid and reevaluate
         var shortAnswerQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
         shortAnswerQuestion.setInvalid(true);
 
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+        reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.OK);
         // load the exercise again after it was re-evaluated
         quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
 
@@ -1025,19 +1163,19 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         // several students should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
         System.out.println("QuizPointStatistic after 2nd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
-        assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc20, 5.0, pc20, 6.0, pc50, 9.0, pc10));
+        assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc20, 6.0, pc70, 10.0, pc10));
 
         // delete a question and reevaluate
         quizExercise.getQuizQuestions().remove(1);
 
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+        reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.OK);
         // load the exercise again after it was re-evaluated
         quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
 
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizQuestions()).hasSize(2);
 
         // max score should be less
-        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(quizExercise.getQuizPointStatistic().getPointCounters().size() - 3);
+        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(quizExercise.getQuizPointStatistic().getPointCounters().size() - 4);
         System.out.println("QuizPointStatistic after 3rd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
         assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc40, 6.0, pc60));
     }
@@ -1053,12 +1191,12 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise.getQuizQuestions().get(2).setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);   // SA
 
         // we expect a bad request because the quiz has not ended yet
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.BAD_REQUEST);
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         quizExercise.setDuration(3600);
         quizExerciseService.endQuiz(quizExercise, ZonedDateTime.now().minusHours(1));
         quizExercise.setIsOpenForPractice(true);
-        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
+        quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.OK);
 
         // generate unrated submissions for each student
         int numberOfParticipants = 10;
@@ -1090,8 +1228,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         System.out.println("QuizPointStatistic before re-evaluate: " + quizExercise.getQuizPointStatistic());
 
         // reevaluate without changing anything and check if statistics are still correct
-        QuizExercise quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise,
-                QuizExercise.class, HttpStatus.OK);
+        QuizExercise quizExerciseWithReevaluatedStatistics = reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.OK);
         checkStatistics(quizExercise, quizExerciseWithReevaluatedStatistics);
 
         System.out.println("QuizPointStatistic after re-evaluate (without changes): " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
@@ -1100,37 +1237,34 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExerciseWithReevaluatedStatistics.getQuizQuestions().get(0);
         mc.getAnswerOptions().remove(1);
 
-        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExerciseWithReevaluatedStatistics.getId() + "/re-evaluate/",
-                quizExerciseWithReevaluatedStatistics, QuizExercise.class, HttpStatus.OK);
+        quizExerciseWithReevaluatedStatistics = reevalQuizExerciseWithFiles(quizExerciseWithReevaluatedStatistics, quizExercise.getId(), List.of(), HttpStatus.OK);
 
         // one student should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
 
         System.out.println("QuizPointStatistic after 1st re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
 
-        assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(0.0, pc02, 3.0, pc02, 4.0, pc03, 6.0, pc02, 7.0, pc01));
+        assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(0.0, pc02, 4.0, pc05, 6.0, pc02, 8.0, pc01));
 
         // set a question invalid and reevaluate
         quizExerciseWithReevaluatedStatistics.getQuizQuestions().get(2).setInvalid(true);
 
-        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExerciseWithReevaluatedStatistics.getId() + "/re-evaluate/",
-                quizExerciseWithReevaluatedStatistics, QuizExercise.class, HttpStatus.OK);
+        quizExerciseWithReevaluatedStatistics = reevalQuizExerciseWithFiles(quizExerciseWithReevaluatedStatistics, quizExercise.getId(), List.of(), HttpStatus.OK);
 
         // several students should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
         System.out.println("QuizPointStatistic after 2nd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
 
-        assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc02, 5.0, pc02, 6.0, pc05, 9.0, pc01));
+        assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc02, 6.0, pc07, 10.0, pc01));
 
         // delete a question and reevaluate
         quizExerciseWithReevaluatedStatistics.getQuizQuestions().remove(1);
 
-        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExerciseWithReevaluatedStatistics.getId() + "/re-evaluate/",
-                quizExerciseWithReevaluatedStatistics, QuizExercise.class, HttpStatus.OK);
+        quizExerciseWithReevaluatedStatistics = reevalQuizExerciseWithFiles(quizExerciseWithReevaluatedStatistics, quizExercise.getId(), List.of(), HttpStatus.OK);
 
         // max score should be less
         System.out.println("QuizPointStatistic after 3rd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
-        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(quizExercise.getQuizPointStatistic().getPointCounters().size() - 3);
+        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(quizExercise.getQuizPointStatistic().getPointCounters().size() - 4);
 
         assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc04, 6.0, pc06));
     }
@@ -1186,8 +1320,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
             quizExercise.getQuizQuestions().add(shortAnswerQuestion);
         }
         // PUT Request with the newly modified quizExercise
-        QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, QuizExercise.class,
-                HttpStatus.OK);
+        QuizExercise updatedQuizExercise = reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.OK);
         // Check that the updatedQuizExercise is equal to the modified quizExercise with special focus on the newly added solution and mapping
         assertThat(updatedQuizExercise).isEqualTo(quizExercise);
         ShortAnswerQuestion receivedShortAnswerQuestion = (ShortAnswerQuestion) updatedQuizExercise.getQuizQuestions().get(2);
@@ -1325,8 +1458,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course = database.createAndSaveCourse(null, ZonedDateTime.now().minusDays(1), null, Set.of());
         quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().plusDays(5), null, QuizMode.SYNCHRONIZED, course);
 
-        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.FORBIDDEN);
-        assertThat(course.getExercises()).isEmpty();
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.FORBIDDEN, true);
     }
 
     /**
@@ -1405,7 +1537,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testReEvaluateQuizAsNonInstructorForbidden() throws Exception {
         quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(2), QuizMode.SYNCHRONIZED);
 
-        request.put("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, HttpStatus.FORBIDDEN);
+        reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -1416,7 +1548,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testUnfinishedExamReEvaluateBadRequest() throws Exception {
         quizExercise = database.createAndSaveExamQuiz(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(2));
 
-        request.put("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, HttpStatus.BAD_REQUEST);
+        reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -1425,10 +1557,23 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testUpdateQuizExerciseAsNonEditorForbidden() throws Exception {
-        quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
-        quizExercise.setTitle("New Title");
-
-        request.put("/api/quiz-exercises", quizExercise, HttpStatus.FORBIDDEN);
+        final Course course = database.createCourse();
+        quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
+        quizExercise.setTitle("New Titel");
+        quizExercise.setDuration(200);
+        assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
+        assertThat(quizExercise.isExamExercise()).as("Is an exam exercise!").isFalse();
+        assertThat(quizExercise.isQuizEnded()).as("Is not ended!").isTrue();
+        course.addExercises(quizExercise);
+        courseRepository.save(course);
+        quizExerciseRepository.save(quizExercise);
+        // change some stuff
+        quizExercise.setTitle("new Titel");
+        // remove instructor rights in course
+        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        user.setGroups(Collections.emptySet());
+        userRepository.save(user);
+        updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -1443,7 +1588,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         // make the exercise invalid
         quizExercise.setTitle(null);
         assertThat(quizExercise.isValid()).isFalse();
-        request.put("/api/quiz-exercises", quizExercise, HttpStatus.BAD_REQUEST);
+        updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -1471,7 +1616,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("notificationText", "NotificationTextTEST!");
-        request.putWithResponseBodyAndParams("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK, params);
+        updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.OK, params);
         // TODO check if notifications arrived correctly
     }
 
@@ -1484,13 +1629,16 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var now = ZonedDateTime.now();
         Course course = database.addEmptyCourse();
         quizExercise = database.createQuiz(course, now.plusHours(2), null, QuizMode.SYNCHRONIZED);
+        quizExerciseService.handleDndQuizFileCreation(quizExercise,
+                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
 
         QuizExercise changedQuiz = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(changedQuiz).isNotNull();
         changedQuiz.setTitle("New title");
         changedQuiz.setReleaseDate(now);
-        QuizExercise importedExercise = request.postWithResponseBody("/api/quiz-exercises/import/" + changedQuiz.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
+        QuizExercise importedExercise = importQuizExerciseWithFiles(changedQuiz, changedQuiz.getId(), List.of(), HttpStatus.CREATED);
 
         assertThat(importedExercise.getId()).as("Imported exercise has different id").isNotEqualTo(quizExercise.getId());
         assertThat(importedExercise.getTitle()).as("Imported exercise has updated title").isEqualTo("New title");
@@ -1510,10 +1658,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course1 = database.addEmptyCourse();
         Course course2 = database.addEmptyCourse();
         quizExercise = database.createQuiz(course1, now.plusHours(2), null, QuizMode.SYNCHRONIZED);
+        quizExerciseService.handleDndQuizFileCreation(quizExercise,
+                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
         quizExercise.setCourse(course2);
 
-        QuizExercise importedExercise = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.CREATED);
+        QuizExercise importedExercise = importQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.CREATED);
 
         assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).as("Quiz was imported for different course").isEqualTo(course2);
     }
@@ -1528,6 +1679,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course1 = database.addEmptyCourse();
         ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
         quizExercise = database.createQuiz(course1, now.plusHours(2), null, QuizMode.SYNCHRONIZED);
+        quizExerciseService.handleDndQuizFileCreation(quizExercise,
+                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
         quizExercise.setReleaseDate(null);
         quizExercise.setCourse(null);
@@ -1536,7 +1690,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise.setQuizBatches(new HashSet<>());
         quizExercise.setExerciseGroup(exerciseGroup1);
 
-        QuizExercise importedExercise = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.CREATED);
+        QuizExercise importedExercise = importQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.CREATED);
 
         assertThat(importedExercise.getExerciseGroup()).as("Quiz was imported for different exercise group").isEqualTo(exerciseGroup1);
     }
@@ -1555,7 +1709,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise.setCourse(null);
         quizExercise.setExerciseGroup(exerciseGroup1);
 
-        request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.FORBIDDEN);
+        importQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -1567,11 +1721,14 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
         quizExercise = database.createQuizForExam(exerciseGroup1);
         Course course1 = database.addEmptyCourse();
+        quizExerciseService.handleDndQuizFileCreation(quizExercise,
+                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
         quizExercise.setCourse(course1);
         quizExercise.setExerciseGroup(null);
 
-        request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.CREATED);
+        importQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.CREATED);
     }
 
     /**
@@ -1587,7 +1744,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise.setCourse(course1);
         quizExercise.setExerciseGroup(null);
 
-        request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.FORBIDDEN);
+        importQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -1599,10 +1756,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
         ExerciseGroup exerciseGroup2 = database.addExerciseGroupWithExamAndCourse(true);
         quizExercise = database.createQuizForExam(exerciseGroup1);
+        quizExerciseService.handleDndQuizFileCreation(quizExercise,
+                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
         quizExercise.setExerciseGroup(exerciseGroup2);
 
-        QuizExercise importedExercise = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.CREATED);
+        QuizExercise importedExercise = importQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.CREATED);
 
         assertThat(importedExercise.getExerciseGroup()).as("Quiz was imported for different exercise group").isEqualTo(exerciseGroup2);
     }
@@ -1619,7 +1779,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExerciseService.save(quizExercise);
         quizExercise.setCourse(null);
 
-        request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        importQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -1632,6 +1792,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course1 = database.addEmptyCourse();
         Course course2 = database.addEmptyCourse();
         quizExercise = database.createQuiz(course1, now.plusHours(2), null, QuizMode.SYNCHRONIZED);
+        quizExerciseService.handleDndQuizFileCreation(quizExercise,
+                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
 
         QuizExercise changedQuiz = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
@@ -1646,19 +1809,19 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         changedQuiz.setCourse(course2);
         changedQuiz.setMaxPoints(1.0);
 
-        changedQuiz = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
+        var importedQuiz = importQuizExerciseWithFiles(changedQuiz, quizExercise.getId(), List.of(), HttpStatus.CREATED);
 
-        assertEquals(course2.getId(), changedQuiz.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
-        assertEquals(ExerciseMode.TEAM, changedQuiz.getMode());
-        assertEquals(teamAssignmentConfig.getMinTeamSize(), changedQuiz.getTeamAssignmentConfig().getMinTeamSize());
-        assertEquals(teamAssignmentConfig.getMaxTeamSize(), changedQuiz.getTeamAssignmentConfig().getMaxTeamSize());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, null).size());
+        assertEquals(course2.getId(), importedQuiz.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
+        assertEquals(ExerciseMode.TEAM, importedQuiz.getMode());
+        assertEquals(teamAssignmentConfig.getMinTeamSize(), importedQuiz.getTeamAssignmentConfig().getMinTeamSize());
+        assertEquals(teamAssignmentConfig.getMaxTeamSize(), importedQuiz.getTeamAssignmentConfig().getMaxTeamSize());
+        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise.getId()).size());
 
         quizExercise = quizExerciseRepository.findById(quizExercise.getId()).get();
         assertEquals(course1.getId(), quizExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         assertEquals(ExerciseMode.INDIVIDUAL, quizExercise.getMode());
         assertNull(quizExercise.getTeamAssignmentConfig());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, null).size());
+        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise.getId()).size());
     }
 
     /**
@@ -1679,6 +1842,10 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise.setTeamAssignmentConfig(teamAssignmentConfig);
         quizExercise.setCourse(course1);  // remove line
 
+        quizExerciseService.handleDndQuizFileCreation(quizExercise,
+                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
+
         quizExercise = quizExerciseService.save(quizExercise);
         var team = new Team();
         team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
@@ -1690,17 +1857,17 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         changedQuiz.setCourse(course2);
         changedQuiz.setMaxPoints(1.0);
 
-        changedQuiz = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
+        var importedQuiz = importQuizExerciseWithFiles(changedQuiz, quizExercise.getId(), List.of(), HttpStatus.CREATED);
 
-        assertEquals(course2.getId(), changedQuiz.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
-        assertEquals(ExerciseMode.INDIVIDUAL, changedQuiz.getMode());
-        assertNull(changedQuiz.getTeamAssignmentConfig());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, null).size());
+        assertEquals(course2.getId(), importedQuiz.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
+        assertEquals(ExerciseMode.INDIVIDUAL, importedQuiz.getMode());
+        assertNull(importedQuiz.getTeamAssignmentConfig());
+        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(importedQuiz.getId()).size());
 
         quizExercise = quizExerciseRepository.findById(quizExercise.getId()).get();
         assertEquals(course1.getId(), quizExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         assertEquals(ExerciseMode.TEAM, quizExercise.getMode());
-        assertEquals(1, teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, null).size());
+        assertEquals(1, teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise.getId()).size());
     }
 
     /**
@@ -1712,13 +1879,16 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var now = ZonedDateTime.now();
         Course course = database.addEmptyCourse();
         quizExercise = database.createQuiz(course, now.plusHours(2), null, QuizMode.SYNCHRONIZED);
+        quizExerciseService.handleDndQuizFileCreation(quizExercise,
+                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
 
         QuizExercise changedQuiz = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(changedQuiz).isNotNull();
         changedQuiz.setQuizMode(QuizMode.INDIVIDUAL);
         changedQuiz.setReleaseDate(now);
-        QuizExercise importedExercise = request.postWithResponseBody("/api/quiz-exercises/import/" + changedQuiz.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
+        QuizExercise importedExercise = importQuizExerciseWithFiles(changedQuiz, quizExercise.getId(), List.of(), HttpStatus.CREATED);
 
         assertThat(importedExercise.getId()).as("Imported exercise has different id").isNotEqualTo(quizExercise.getId());
         assertThat(importedExercise.getQuizMode()).as("Imported exercise has different quiz mode").isEqualTo(QuizMode.INDIVIDUAL);
@@ -1760,8 +1930,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         question.setExplanation("0".repeat(validityThreshold));
 
-        QuizExercise response = request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
-        assertNotNull(response);
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
     }
 
     /**
@@ -1776,7 +1945,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         question.setExplanation("0".repeat(validityThreshold + 1));
 
-        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.INTERNAL_SERVER_ERROR, true);
     }
 
     /**
@@ -1791,8 +1960,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         question.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold));
 
-        QuizExercise response = request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
-        assertNotNull(response);
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
     }
 
     /**
@@ -1807,7 +1975,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         question.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold + 1));
 
-        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.INTERNAL_SERVER_ERROR, true);
     }
 
     @Test
