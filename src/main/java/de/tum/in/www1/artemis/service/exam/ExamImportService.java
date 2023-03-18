@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -91,7 +92,7 @@ public class ExamImportService {
      * @param targetCourseId the course to which the exam should be imported
      * @return the copied Exam with Exercise Groups and Exercises
      */
-    public Exam importExamWithExercises(Exam examToCopy, long targetCourseId) {
+    public Exam importExamWithExercises(Exam examToCopy, long targetCourseId) throws IOException {
 
         Course targetCourse = courseRepository.findByIdElseThrow(targetCourseId);
 
@@ -116,7 +117,7 @@ public class ExamImportService {
      * @param courseId             the associated course of the exam
      * @return a List of all Exercise Groups of the target exam
      */
-    public List<ExerciseGroup> importExerciseGroupsWithExercisesToExistingExam(List<ExerciseGroup> exerciseGroupsToCopy, long targetExamId, long courseId) {
+    public List<ExerciseGroup> importExerciseGroupsWithExercisesToExistingExam(List<ExerciseGroup> exerciseGroupsToCopy, long targetExamId, long courseId) throws IOException {
 
         Course targetCourse = courseRepository.findByIdElseThrow(courseId);
 
@@ -167,7 +168,7 @@ public class ExamImportService {
      * @param exerciseGroupsToCopy the exerciseGroups to be copied
      * @param targetExam           the nex exam to which the new exerciseGroups should be linked
      */
-    private void copyExerciseGroupsWithExercisesToExam(List<ExerciseGroup> exerciseGroupsToCopy, Exam targetExam) {
+    private void copyExerciseGroupsWithExercisesToExam(List<ExerciseGroup> exerciseGroupsToCopy, Exam targetExam) throws IOException {
         // Only exercise groups with at least one exercise should be imported.
         List<ExerciseGroup> filteredExerciseGroupsToCopy = exerciseGroupsToCopy.stream().filter(exerciseGroup -> !exerciseGroup.getExercises().isEmpty()).toList();
         // If no exercise group is existent, we can aboard the process
@@ -207,38 +208,35 @@ public class ExamImportService {
      * @param exerciseGroupToCopy the exercise group to copy
      * @param exerciseGroupCopied the copied exercise group, i.e. the ones attached to the new exam
      */
-    private void addExercisesToExerciseGroup(ExerciseGroup exerciseGroupToCopy, ExerciseGroup exerciseGroupCopied) {
+    private void addExercisesToExerciseGroup(ExerciseGroup exerciseGroupToCopy, ExerciseGroup exerciseGroupCopied) throws IOException {
         // Copy each exercise within the existing Exercise Group
-        exerciseGroupToCopy.getExercises().forEach(exerciseToCopy -> {
-
+        for (Exercise exerciseToCopy : exerciseGroupToCopy.getExercises()) {
             // We need to set the new Exercise Group to the old exercise, so the new exercise group is correctly set for the new exercise
             exerciseToCopy.setExerciseGroup(exerciseGroupCopied);
-            Exercise exerciseCopied = null;
-
-            switch (exerciseToCopy.getExerciseType()) {
+            Optional<Exercise> exerciseCopied = switch (exerciseToCopy.getExerciseType()) {
                 case MODELING -> {
                     final Optional<ModelingExercise> optionalOriginalModellingExercise = modelingExerciseRepository
                             .findByIdWithExampleSubmissionsAndResults(exerciseToCopy.getId());
                     // We do not want to abort the whole exam import process, we only skip the relevant exercise
                     if (optionalOriginalModellingExercise.isEmpty()) {
-                        break;
+                        yield Optional.empty();
                     }
-                    exerciseCopied = modelingExerciseImportService.importModelingExercise(optionalOriginalModellingExercise.get(), (ModelingExercise) exerciseToCopy);
+                    yield Optional.of(modelingExerciseImportService.importModelingExercise(optionalOriginalModellingExercise.get(), (ModelingExercise) exerciseToCopy));
                 }
 
                 case TEXT -> {
                     final Optional<TextExercise> optionalOriginalTextExercise = textExerciseRepository.findByIdWithExampleSubmissionsAndResults(exerciseToCopy.getId());
                     if (optionalOriginalTextExercise.isEmpty()) {
-                        break;
+                        yield Optional.empty();
                     }
-                    exerciseCopied = textExerciseImportService.importTextExercise(optionalOriginalTextExercise.get(), (TextExercise) exerciseToCopy);
+                    yield Optional.of(textExerciseImportService.importTextExercise(optionalOriginalTextExercise.get(), (TextExercise) exerciseToCopy));
                 }
 
                 case PROGRAMMING -> {
                     final Optional<ProgrammingExercise> optionalOriginalProgrammingExercise = programmingExerciseRepository
                             .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(exerciseToCopy.getId());
                     if (optionalOriginalProgrammingExercise.isEmpty()) {
-                        break;
+                        yield Optional.empty();
                     }
                     var originalProgrammingExercise = optionalOriginalProgrammingExercise.get();
                     // Fetching the tasks separately, as putting it in the query above leads to Hibernate duplicating the tasks.
@@ -246,31 +244,29 @@ public class ExamImportService {
                     originalProgrammingExercise.setTasks(new ArrayList<>(templateTasks));
 
                     prepareProgrammingExerciseForExamImport((ProgrammingExercise) exerciseToCopy);
-                    exerciseCopied = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, (ProgrammingExercise) exerciseToCopy, false, false);
+                    yield Optional.of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, (ProgrammingExercise) exerciseToCopy, false, false));
                 }
 
                 case FILE_UPLOAD -> {
                     final Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseToCopy.getId());
                     if (optionalFileUploadExercise.isEmpty()) {
-                        break;
+                        yield Optional.empty();
                     }
-                    exerciseCopied = fileUploadExerciseImportService.importFileUploadExercise(optionalFileUploadExercise.get(), (FileUploadExercise) exerciseToCopy);
+                    yield Optional.of(fileUploadExerciseImportService.importFileUploadExercise(optionalFileUploadExercise.get(), (FileUploadExercise) exerciseToCopy));
                 }
 
                 case QUIZ -> {
                     final Optional<QuizExercise> optionalOriginalQuizExercise = quizExerciseRepository.findById(exerciseToCopy.getId());
                     if (optionalOriginalQuizExercise.isEmpty()) {
-                        break;
+                        yield Optional.empty();
                     }
-                    exerciseCopied = quizExerciseImportService.importQuizExercise(optionalOriginalQuizExercise.get(), (QuizExercise) exerciseToCopy);
+                    // We don't allow a modification of the exercise at this point, so we can just pass an empty list of files.
+                    yield Optional.of(quizExerciseImportService.importQuizExercise(optionalOriginalQuizExercise.get(), (QuizExercise) exerciseToCopy, new ArrayList<>()));
                 }
-
-            }
-            // Attach the newly created Exercise to the new Exercise Group only if the importing was sucessful
-            if (exerciseCopied != null) {
-                exerciseGroupCopied.addExercise(exerciseCopied);
-            }
-        });
+            };
+            // Attach the newly created Exercise to the new Exercise Group only if the importing was successful
+            exerciseCopied.ifPresent(exerciseGroupCopied::addExercise);
+        }
         exerciseGroupRepository.save(exerciseGroupCopied);
     }
 

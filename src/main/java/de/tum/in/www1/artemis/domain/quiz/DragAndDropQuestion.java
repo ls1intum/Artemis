@@ -232,6 +232,7 @@ public class DragAndDropQuestion extends QuizQuestion {
      */
     public void undoUnallowedChanges(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof DragAndDropQuestion dndOriginalQuestion) {
+            backgroundFilePath = dndOriginalQuestion.getBackgroundFilePath();
             // undo unallowed dragItemChanges
             undoUnallowedDragItemChanges(dndOriginalQuestion);
             // undo unallowed dragItemChanges
@@ -254,6 +255,7 @@ public class DragAndDropQuestion extends QuizQuestion {
             if (originalQuestion.getDragItems().contains(dragItem)) {
                 // find original dragItem
                 DragItem originalDragItem = originalQuestion.findDragItemById(dragItem.getId());
+
                 // correct invalid = null to invalid = false
                 if (dragItem.isInvalid() == null) {
                     dragItem.setInvalid(false);

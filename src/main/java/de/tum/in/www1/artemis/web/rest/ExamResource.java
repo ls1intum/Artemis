@@ -6,6 +6,7 @@ import static java.time.ZonedDateTime.now;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -237,7 +238,7 @@ public class ExamResource {
      */
     @PostMapping("courses/{courseId}/exam-import")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Exam> importExamWithExercises(@PathVariable Long courseId, @RequestBody Exam examToBeImported) throws URISyntaxException {
+    public ResponseEntity<Exam> importExamWithExercises(@PathVariable Long courseId, @RequestBody Exam examToBeImported) throws URISyntaxException, IOException {
         log.debug("REST request to import an exam : {}", examToBeImported);
 
         // Step 1: Check if Exam has an ID
