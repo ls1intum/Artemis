@@ -17,13 +17,11 @@ cd src/main/docker/cypress
 # pass current host's hostname to the docker container for server.url (see docker compose config file)
 export HOST_HOSTNAME=$(hostname)
 
-export GH_REGISTRY_TOKEN='${bamboo.GH_REGISTRY_TOKEN}'
-
-docker-compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml pull
-docker-compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml build --no-cache --pull artemis-cypress
+docker compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml pull
+docker compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml build --no-cache --pull artemis-cypress
 #do not pull the base image artemis:coverage-latest for artemis-app as it's stored locally and built above
-docker-compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml build --no-cache artemis-app
-docker-compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml up --exit-code-from artemis-cypress
+docker compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml build --no-cache artemis-app
+docker compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml up --exit-code-from artemis-cypress
 exitCode=$?
 echo "Cypress container exit code: $exitCode"
 if [ $exitCode -eq 0 ]

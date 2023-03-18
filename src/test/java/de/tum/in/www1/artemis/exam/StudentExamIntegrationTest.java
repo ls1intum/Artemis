@@ -55,6 +55,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
+import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
@@ -1756,6 +1757,52 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamGradeInfoFromServer.studentResult().overallGrade()).isEqualTo("1.0");
         assertThat(studentExamGradeInfoFromServer.studentResult().hasPassed()).isTrue();
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGradedStudentExamSummaryWithGradingScaleWithCorrectlyRoundedPoints() throws Exception {
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true);
+
+        GradingScale gradingScale = createGradeScale(false);
+        gradingScale.setExam(exam2);
+        gradingScaleRepository.save(gradingScale);
+
+        studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
+        List<StudentParticipation> participations = studentParticipationRepository
+                .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
+        var latestResults = participations.stream().flatMap(participation -> participation.getSubmissions().stream().map(Submission::getLatestResult)).toList();
+        for (var result : latestResults) {
+            // First set all results to 0 since we don't want any additions to affect the manually assigned results below.
+            result.setScore(0.0);
+        }
+
+        // The sum of the below scores have more than 1 digits after decimal due to how doubles are stored.
+        // i.e. 0.3 + 0.3 + 0.3 = 0.8999999999999999
+        latestResults.stream().limit(3).forEach(result -> {
+            Exercise exercise = result.getSubmission().getParticipation().getExercise();
+            exercise.setMaxPoints(100.0);  // To make points equal to scores for simplicity.
+            result.setScore(0.3);
+        });
+
+        resultRepository.saveAll(latestResults);
+        exerciseRepository.saveAll(latestResults.stream().map(result -> result.getSubmission().getParticipation().getExercise()).toList());
+
+        // Assert prerequisites of this test case
+        final int desiredAccuracyOfScores = 1;
+        assertThat(studentExam.getExam().getCourse().getAccuracyOfScores()).isEqualTo(desiredAccuracyOfScores);
+
+        double sumOfResultScores = latestResults.stream().mapToDouble(Result::getScore).sum();
+        double expectedOverallPoints = RoundingUtil.roundToNDecimalPlaces(sumOfResultScores, desiredAccuracyOfScores);
+
+        assertThat(sumOfResultScores).isNotEqualTo(expectedOverallPoints);
+
+        // Assert actual computed result.
+        database.changeUser(studentExam.getUser().getLogin());
+        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary", HttpStatus.OK,
+                StudentExamWithGradeDTO.class);
+
+        assertThat(studentExamGradeInfoFromServer.studentResult().overallPointsAchieved()).isEqualTo(expectedOverallPoints);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
