@@ -395,16 +395,19 @@ public class QuizExerciseService {
     /**
      * @param quizExercise         the changed quiz exercise from the client
      * @param originalQuizExercise the original quiz exercise (with statistics)
+     * @Param files the files that were uploaded
      * @return the updated quiz exercise with the changed statistics
      */
-    public QuizExercise reEvaluate(QuizExercise quizExercise, QuizExercise originalQuizExercise) {
-
+    public QuizExercise reEvaluate(QuizExercise quizExercise, QuizExercise originalQuizExercise, @Nonnull List<MultipartFile> files) throws IOException {
         quizExercise.undoUnallowedChanges(originalQuizExercise);
+        validateQuizExerciseFiles(quizExercise, files, false);
+
         boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
 
         // update QuizExercise
         quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.reconnectJSONIgnoreAttributes();
+        handleDndQuizFileUpdates(quizExercise, originalQuizExercise, files);
 
         // adjust existing results if an answer or a question was deleted and recalculate them
         updateResultsOnQuizChanges(quizExercise);
