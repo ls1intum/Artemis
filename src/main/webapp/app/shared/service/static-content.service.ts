@@ -24,4 +24,8 @@ export class StaticContentService {
     getStaticJsonFromArtemisServer(filename: string): Observable<any> {
         return this.http.get(`${this.staticContentUrl}${filename}`);
     }
+
+    getPrivacyStatementTemplate(): Observable<string> {
+        return this.http.get(`${this.staticContentUrl}privacy_statement_template.md`, { responseType: 'text' });
+    }
 }

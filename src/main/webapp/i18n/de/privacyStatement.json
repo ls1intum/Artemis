@@ -1,0 +1,10 @@
+{
+    "artemisApp": {
+        "privacyStatement": {
+            "title": "Privacy Statement",
+            "updatePrivacyStatement": "Update Privacy Statement",
+            "save": "Save",
+            "cancel": "Cancel"
+        }
+    }
+}
