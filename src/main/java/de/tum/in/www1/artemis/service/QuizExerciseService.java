@@ -289,7 +289,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         fileService.deleteFiles(filesToRemove.stream().map(Paths::get).collect(Collectors.toList()));
     }
 
-    private void validateQuizExerciseFiles(QuizExercise quizExercise, @Nonnull List<MultipartFile> providedFiles, boolean isCreate) {
+    /**
+     * Verifies that the provided files match the provided filenames in the exercise entity.
+     *
+     * @param quizExercise  the quiz exercise to validate
+     * @param providedFiles the provided files to validate
+     * @param isCreate      On create all files get validated, on update only changed files get validated
+     */
+    public void validateQuizExerciseFiles(QuizExercise quizExercise, @Nonnull List<MultipartFile> providedFiles, boolean isCreate) {
         long fileCount = providedFiles.size();
 
         List<QuizQuestion> dndQuestions = quizExercise.getQuizQuestions().stream().filter(question -> question instanceof DragAndDropQuestion).toList();
@@ -319,7 +326,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
     }
 
-    private void saveDndQuestionBackground(DragAndDropQuestion question, Map<String, MultipartFile> files, @Nullable Long questionId) throws IOException {
+    /**
+     * Saves the background image of a drag and drop question without saving the question itself
+     *
+     * @param question   the drag and drop question
+     * @param files      all provided files
+     * @param questionId the id of the question, null on creation
+     */
+    public void saveDndQuestionBackground(DragAndDropQuestion question, Map<String, MultipartFile> files, @Nullable Long questionId) throws IOException {
         MultipartFile file = files.get(question.getBackgroundFilePath());
         if (file == null) {
             // Should not be reached as the file is validated before
@@ -329,7 +343,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         question.setBackgroundFilePath(saveDragAndDropImage(FilePathService.getDragAndDropBackgroundFilePath(), file, questionId));
     }
 
-    private void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files, @Nullable Long questionId) throws IOException {
+    /**
+     * Saves the picture of a drag item without saving the drag item itself
+     *
+     * @param dragItem   the drag item
+     * @param files      all provided files
+     * @param questionId the id of the question, null on creation
+     */
+    public void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files, @Nullable Long questionId) throws IOException {
         MultipartFile file = files.get(dragItem.getPictureFilePath());
         if (file == null) {
             // Should not be reached as the file is validated before
