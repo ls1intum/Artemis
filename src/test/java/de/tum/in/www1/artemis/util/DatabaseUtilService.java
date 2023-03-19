@@ -3922,6 +3922,14 @@ public class DatabaseUtilService {
         return quizExercise;
     }
 
+    /**
+     * Creates a new quiz that gets saved in the QuizExercise repository.
+     *
+     * @param releaseDate release date of the quiz, is also used to set the start date of the course
+     * @param dueDate     due date of the quiz, is also used to set the end date of the course
+     * @param quizMode    SYNCHRONIZED, BATCHED or INDIVIDUAL
+     * @return quiz that was created
+     */
     public QuizExercise createAndSaveQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         Course course = createAndSaveCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
 
@@ -3932,12 +3940,28 @@ public class DatabaseUtilService {
         return quizExercise;
     }
 
+    /**
+     * Creates a new course that gets saved in the Course repository.
+     *
+     * @param id        the id of the course
+     * @param startDate start date of the course
+     * @param endDate   end date of the course
+     * @param exercises exercises of the course
+     * @return course that was created
+     */
     public Course createAndSaveCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
         Course course = ModelFactory.generateCourse(id, startDate, endDate, exercises, "tumuser", "tutor", "editor", "instructor");
         courseRepo.save(course);
         return course;
     }
 
+    /**
+     * Creates a new exam quiz that gets saved in the QuizExercise repository.
+     *
+     * @param startDate start date of the exam, is also used to set the end date of the course the exam is in
+     * @param endDate   end date of the exam, is also used to set the end date of the course the exam is in
+     * @return exam quiz that was created
+     */
     @NotNull
     public QuizExercise createAndSaveExamQuiz(ZonedDateTime startDate, ZonedDateTime endDate) {
         Course course = createAndSaveCourse(null, startDate.minusDays(1), endDate.plusDays(1), new HashSet<>());
@@ -3953,7 +3977,12 @@ public class DatabaseUtilService {
         return quizExercise;
     }
 
-    public void removeUserFromCourses(String login) {
+    /**
+     * Removes a user from all courses they are currently in
+     *
+     * @param login login to find user with
+     */
+    public void removeUserFromAllCourses(String login) {
         User user = getUserByLogin(login);
         user.setGroups(Set.of());
         userRepo.save(user);

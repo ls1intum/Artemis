@@ -1391,7 +1391,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetQuizExerciseForStudentNotInCourseForbidden() throws Exception {
         QuizExercise quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusHours(4), null, QuizMode.SYNCHRONIZED);
-        database.removeUserFromCourses(TEST_PREFIX + "student1");
+        database.removeUserFromAllCourses(TEST_PREFIX + "student1");
 
         request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.FORBIDDEN, QuizExercise.class);
     }

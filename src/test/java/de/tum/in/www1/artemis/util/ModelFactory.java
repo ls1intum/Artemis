@@ -689,7 +689,7 @@ public class ModelFactory {
      */
     public static Exam generateExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam) {
         Exam exam = new Exam();
-        exam.setTitle((testExam ? "Test " : "Real ") + "exam 1");
+        exam.setTitle((testExam ? "Test" : "Real") + " exam 1");
         exam.setTestExam(testExam);
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
