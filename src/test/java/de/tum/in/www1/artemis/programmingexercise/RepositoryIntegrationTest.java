@@ -10,7 +10,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import org.apache.commons.io.FileUtils;
@@ -710,10 +712,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC);
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
-        assertThat(receivedLogs.get(0).getTime()).isEqualTo(logs.get(0).getTime());
-        assertThat(receivedLogs.get(0).getLog()).isEqualTo(logs.get(0).getLog());
-        assertThat(receivedLogs.get(1).getTime()).isEqualTo(logs.get(1).getTime());
-        assertThat(receivedLogs.get(1).getLog()).isEqualTo(logs.get(1).getLog());
+        assertLogsContent(receivedLogs);
     }
 
     @Test
@@ -725,10 +724,18 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         database.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
-        assertThat(receivedLogs.get(0).getTime()).isEqualTo(logs.get(0).getTime());
-        assertThat(receivedLogs.get(0).getLog()).isEqualTo(logs.get(0).getLog());
-        assertThat(receivedLogs.get(1).getTime()).isEqualTo(logs.get(1).getTime());
-        assertThat(receivedLogs.get(1).getLog()).isEqualTo(logs.get(1).getLog());
+        assertLogsContent(receivedLogs);
+    }
+
+    private void assertLogsContent(List<BuildLogEntry> receivedLogs) {
+        for (int i = 0; i < receivedLogs.size(); i++) {
+            assertThat(receivedLogs.get(i).getLog()).isEqualTo(logs.get(i).getLog());
+            // When serializing and deserializing the logs, the time of each BuildLogEntry is converted to UTC.
+            // Convert the time in the logs set up above to UTC and round it to milliseconds for comparison.
+            ZonedDateTime expectedTime = ZonedDateTime.ofInstant(logs.get(i).getTime().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC"));
+            ZonedDateTime actualTime = receivedLogs.get(i).getTime().truncatedTo(ChronoUnit.MILLIS);
+            assertThat(actualTime).isEqualTo(expectedTime);
+        }
     }
 
     @Test
