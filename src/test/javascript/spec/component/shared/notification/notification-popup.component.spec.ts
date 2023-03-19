@@ -36,6 +36,13 @@ describe('Notification Popup Component', () => {
     };
     const quizNotification = generateQuizNotification(1);
 
+    const generateNewMessageNotification = (notificationId: number) => {
+        const generatedNotification = { id: notificationId, title: 'New message', text: 'New message from user. In course' } as Notification;
+        generatedNotification.target = JSON.stringify({ mainPage: 'courses', course: 1, entity: 'message', id: 20, conversation: 1 });
+        return generatedNotification;
+    };
+    const newMessageNotification = generateNewMessageNotification(2);
+
     const generateExamExerciseUpdateNotification = () => {
         const generatedNotification = { title: LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, text: 'Fixed mistake' } as Notification;
         generatedNotification.target = JSON.stringify({ mainPage: 'courses', course: 1, entity: 'exams', exam: 1, exercise: 7, problemStatement: 'Fixed Problem Statement' });
@@ -116,6 +123,22 @@ describe('Notification Popup Component', () => {
                 expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledOnce();
                 expect(router.navigateByUrl).toHaveBeenCalledOnce();
             });
+        });
+
+        it('should navigate to conversation target when New message notification is clicked', () => {
+            notificationPopupComponent.notifications.push(newMessageNotification);
+            notificationPopupComponentFixture.detectChanges();
+
+            jest.spyOn(notificationPopupComponent, 'navigateToTarget');
+            jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
+
+            const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
+            button.nativeElement.click();
+            expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledOnce();
+            // called two times because the first call is to navigate to the course overview and the second to the conversation
+            expect(router.navigate).toHaveBeenCalledTimes(2);
+            expect(router.navigate).toHaveBeenCalledWith(['/courses'], { skipLocationChange: true });
+            expect(router.navigate).toHaveBeenCalledWith(['/courses', 1, 'messages'], { queryParams: { conversationId: 1 } });
         });
 
         it('should navigate to exam exercise target when ExamExerciseUpdate notification is clicked', () => {

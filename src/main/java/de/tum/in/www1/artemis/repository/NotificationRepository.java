@@ -36,12 +36,16 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                                 OR (notification.course.studentGroupName IN :#{#currentGroups} AND notification.type = 'STUDENT')
                             )
                         )
-                        OR type(notification) = SingleUserNotification and notification.recipient.login = :#{#login} and notification.title NOT IN :#{#titles}
+                        OR type(notification) = SingleUserNotification and notification.recipient.login = :#{#login}
+                        AND (notification.title NOT IN :#{#titlesToNotLoadNotification}
+                            OR notification.title IS NULL
+                        )
                         OR type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :#{#tutorialGroupIds}
                     )
             """)
     Page<Notification> findAllNotificationsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
-            @Param("hideUntil") ZonedDateTime hideUntil, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds, @Param("titles") Set<String> titles, Pageable pageable);
+            @Param("hideUntil") ZonedDateTime hideUntil, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
+            @Param("titlesToNotLoadNotification") Set<String> titlesToNotLoadNotification, Pageable pageable);
 
     @Query("""
                 SELECT notification
@@ -61,7 +65,10 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                            OR (notification.course.studentGroupName IN :#{#currentGroups} AND notification.type = 'STUDENT'))
                      )
                      OR (type(notification) = SingleUserNotification
-                        AND notification.recipient.login = :#{#login} AND notification.title NOT IN :#{#titles}
+                        AND notification.recipient.login = :#{#login}
+                        AND (notification.title NOT IN :#{#titlesToNotLoadNotification}
+                            OR notification.title IS NULL
+                        )
                         AND (notification.title NOT IN :#{#deactivatedTitles}
                             OR notification.title IS NULL
                         )
@@ -75,7 +82,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             """)
     Page<Notification> findAllNotificationsFilteredBySettingsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
             @Param("hideUntil") ZonedDateTime hideUntil, @Param("deactivatedTitles") Set<String> deactivatedTitles, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
-            @Param("titles") Set<String> titles, Pageable pageable);
+            @Param("titlesToNotLoadNotification") Set<String> titlesToNotLoadNotification, Pageable pageable);
 
     @Transactional // ok because of modifying query
     @Modifying

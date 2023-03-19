@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { IsActiveMatchOptions, Params, Router, UrlTree } from '@angular/router';
+import { ActivatedRoute, IsActiveMatchOptions, Params, Router, UrlTree } from '@angular/router';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -35,6 +35,7 @@ export class NotificationPopupComponent implements OnInit {
         private accountService: AccountService,
         private notificationService: NotificationService,
         private router: Router,
+        private activatedRoute: ActivatedRoute,
         private examExerciseUpdateService: ExamExerciseUpdateService,
         private alertService: AlertService,
         private examParticipationService: ExamParticipationService,
@@ -64,7 +65,7 @@ export class NotificationPopupComponent implements OnInit {
      * @param notification {Notification}
      */
     navigateToTarget(notification: Notification): void {
-        const currentCourseId = this.getCurrentCourseId();
+        const currentCourseId = this.activatedRoute.snapshot.queryParams['courseId'];
         const target = JSON.parse(notification.target!);
         const targetCourseId = target.course;
         const targetConversationId = target.conversation;
@@ -142,11 +143,6 @@ export class NotificationPopupComponent implements OnInit {
      */
     private isUnderMessagesTabOfSpecificCourse(targetCourseId: string): boolean {
         return this.router.url.includes(`courses/${targetCourseId}/messages`);
-    }
-
-    private getCurrentCourseId(): number | undefined {
-        const matchCourseIdInURL = window.location.pathname.match(/.*\/courses\/(\d+)\/.*/);
-        return matchCourseIdInURL ? +matchCourseIdInURL[1] : undefined;
     }
 
     /**
