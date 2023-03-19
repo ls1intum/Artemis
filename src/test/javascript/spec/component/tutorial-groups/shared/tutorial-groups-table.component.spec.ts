@@ -168,7 +168,7 @@ describe('TutorialGroupsTableComponent', () => {
         expect(sortServiceSpy).toHaveBeenCalledOnce();
     });
 
-    it('should call sort service with multiple properties', () => {
+    it('should call sort service with day and time', () => {
         component.sortingPredicate = 'dayAndTime';
         component.ascending = false;
 
@@ -177,6 +177,18 @@ describe('TutorialGroupsTableComponent', () => {
 
         component.sortRows();
         expect(sortServiceSpy).toHaveBeenCalledWith([tutorialGroupOne, tutorialGroupTwo], ['tutorialGroupSchedule.dayOfWeek', 'tutorialGroupSchedule.startTime'], false);
+        expect(sortServiceSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should call sort service with capacity and number of registered users', () => {
+        component.sortingPredicate = 'capacityAndRegistrations';
+        component.ascending = false;
+
+        const sortService = TestBed.inject(SortService);
+        const sortServiceSpy = jest.spyOn(sortService, 'sortByMultipleProperties');
+
+        component.sortRows();
+        expect(sortServiceSpy).toHaveBeenCalledWith([tutorialGroupOne, tutorialGroupTwo], ['capacity', 'numberOfRegisteredUsers'], false);
         expect(sortServiceSpy).toHaveBeenCalledOnce();
     });
 
