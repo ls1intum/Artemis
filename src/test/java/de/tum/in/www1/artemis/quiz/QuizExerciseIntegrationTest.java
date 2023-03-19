@@ -1321,7 +1321,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testCreateQuizExerciseAsTutorForbidden() throws Exception {
+    void testCreateQuizExerciseAsNonEditorForbidden() throws Exception {
         Course course = database.createAndSaveCourse(null, ZonedDateTime.now().minusDays(1), null, Set.of());
         quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().plusDays(5), null, QuizMode.SYNCHRONIZED, course);
 
@@ -1345,7 +1345,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     @ValueSource(strings = { "start-now", "set-visible", "open-for-practice" })
-    void testPerformPutActionAsTutorForbidden(String action) throws Exception {
+    void testPerformPutActionAsNonEditorForbidden(String action) throws Exception {
         quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
 
         request.put("/api/quiz-exercises/" + quizExercise.getId() + "/" + action, quizExercise, HttpStatus.FORBIDDEN);
@@ -1356,18 +1356,18 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testViewQuizExerciseAsStudentNotVisible() throws Exception {
+    void testViewQuizExerciseAsStudentNotVisibleForbidden() throws Exception {
         quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
 
         request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.FORBIDDEN, QuizExercise.class);
     }
 
     /**
-     * test non-editors can't delete an exercise
+     * test non-instructors can't delete an exercise
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testDeleteQuizExerciseAsNonInstructor() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testDeleteQuizExerciseAsNonInstructorForbidden() throws Exception {
         quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusDays(1), null, QuizMode.SYNCHRONIZED);
 
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.FORBIDDEN);
@@ -1378,7 +1378,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRecalculateStatisticsAsNonInstructor() throws Exception {
+    void testRecalculateStatisticsAsStudentForbidden() throws Exception {
         quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
 
         request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.FORBIDDEN, QuizExercise.class);
@@ -1425,7 +1425,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testUpdateQuizExerciseAsNonEditorForbidden() throws Exception {
         quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
-        quizExercise.setTitle("new Title");
+        quizExercise.setTitle("New Title");
 
         request.put("/api/quiz-exercises", quizExercise, HttpStatus.FORBIDDEN);
     }
@@ -1434,7 +1434,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      * test quiz exercise can't be edited to be invalid
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testUpdateQuizExerciseInvalidBadRequest() throws Exception {
         quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
         assertThat(quizExercise.isValid()).isTrue();
