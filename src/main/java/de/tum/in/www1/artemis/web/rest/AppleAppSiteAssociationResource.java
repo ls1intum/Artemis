@@ -9,6 +9,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/.well-known")
 public class AppleAppSiteAssociationResource {
 
+    /**
+     * Provides the apple-app-site-association json content for the iOS client universal link feature.
+     * More information on the json content can be found <a href="URL#https://developer.apple.com/documentation/xcode/supporting-associated-domains">here</a>
+     *
+     * @return apple-app-site-association as json
+     */
     @GetMapping("/apple-app-site-association")
     public ResponseEntity<AppleAppSiteAssociation> getAppleAppSiteAssociation() {
         String[] paths = { "/courses/*" };
