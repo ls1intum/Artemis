@@ -91,7 +91,13 @@ describe('TutorialGroupDetailComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [NgbTooltipMocksModule],
-            declarations: [TutorialGroupDetailComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(TutorialGroupUtilizationIndicatorComponent)],
+            declarations: [
+                TutorialGroupDetailComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FaIconComponent),
+                MockComponent(TutorialGroupUtilizationIndicatorComponent),
+                MockPipe(RemoveSecondsPipe),
+            ],
             providers: [MockProvider(ArtemisMarkdownService), MockProvider(SortService)],
         })
             .compileComponents()
