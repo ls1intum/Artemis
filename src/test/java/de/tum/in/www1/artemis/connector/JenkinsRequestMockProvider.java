@@ -37,7 +37,6 @@ import com.offbytwo.jenkins.model.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.JenkinsUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
@@ -283,24 +282,6 @@ public class JenkinsRequestMockProvider {
         final var jobWithDetails = new JobWithDetails();
         doReturn(jobWithDetails).when(jenkinsServer).getJob(folderName);
         doReturn(Optional.of(folderJobToReturn)).when(jenkinsServer).getFolderJob(jobWithDetails);
-    }
-
-    public void mockGetLegacyBuildLogs(ProgrammingExerciseStudentParticipation participation) throws IOException {
-        String projectKey = participation.getProgrammingExercise().getProjectKey();
-        String buildPlanId = participation.getBuildPlanId();
-
-        final var job = mock(JobWithDetails.class);
-        mockGetJob(projectKey, buildPlanId, job, false);
-
-        final var build = mock(Build.class);
-        doReturn(build).when(job).getLastBuild();
-
-        final var buildWithDetails = mock(BuildWithDetails.class);
-        doReturn(buildWithDetails).when(build).details();
-
-        String htmlString = loadFileFromResources("test-data/jenkins-response/legacy-failed-build-log.html");
-        doReturn(htmlString).when(buildWithDetails).getConsoleOutputText();
-        doReturn(htmlString).when(buildWithDetails).getConsoleOutputHtml();
     }
 
     public void mockUpdateUserAndGroups(String oldLogin, User user, Set<String> groupsToAdd, Set<String> groupsToRemove, boolean userExistsInJenkins)

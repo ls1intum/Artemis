@@ -118,25 +118,6 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    // TODO: this test seems to be outdated
-    void shouldParseLegacyBuildLogsWhenPipelineLogsNotPresent() throws Exception {
-        // Precondition: Database has participation and a programming submission.
-        String userLogin = TEST_PREFIX + "student1";
-        var course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
-        var exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
-
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
-        database.createProgrammingSubmission(participation, true);
-
-        jenkinsRequestMockProvider.mockGetLegacyBuildLogs(participation);
-        database.changeUser(userLogin);
-        var receivedLogs = request.get("/api/repository/" + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
-        assertThat(receivedLogs).isNotEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldExtractBuildLogAnalytics_noSca() throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = TEST_PREFIX + "student1";
@@ -329,10 +310,15 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
     private final List<String> logs = List.of("[2023-03-10T15:19:49.741Z] [ERROR] Log1", "[2023-03-10T15:19:49.742Z] [ERROR] Log2", "[2023-03-10T15:19:49.743Z] [ERROR] Log3");
 
+    private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationWithoutResultArguments() {
+        return Arrays.stream(ProgrammingLanguage.values()).flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true, true),
+                Arguments.of(programmingLanguage, false, true), Arguments.of(programmingLanguage, true, false), Arguments.of(programmingLanguage, false, false)));
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @MethodSource("shouldSaveBuildLogsOnStudentParticipationArguments")
+    @MethodSource("shouldSaveBuildLogsOnStudentParticipationWithoutResultArguments")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldNotReceiveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
+    void shouldSaveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis, boolean buildFailed) throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = TEST_PREFIX + "student1";
         var course = database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
@@ -340,7 +326,9 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
 
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
-        var submission = database.createProgrammingSubmission(participation, false);
+        // It should not matter whether the submission has buildFailed set to true or false, because when the result is processed after sending it to Artemis, buildFailed is set to
+        // true anyway if no feedback is provided with the result.
+        var submission = database.createProgrammingSubmission(participation, buildFailed);
 
         // Call programming-exercises/new-result which does include build log entries
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of(), logs, null, new ArrayList<>());
@@ -357,7 +345,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("shouldSaveBuildLogsOnStudentParticipationArguments")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldNotReceiveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
+    void shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation without result and a programming
         String userLogin = TEST_PREFIX + "student1";
         var course = database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
@@ -382,7 +370,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         assertThat(result.isSuccessful()).isFalse();
         assertThat(result.getScore()).isEqualTo(0D);
 
-        // Assert that the submission linked to the participation
+        // Assert that the submission is linked to the participation
         var submission = (ProgrammingSubmission) result.getSubmission();
         assertThat(submission).isNotNull();
         assertThat(submission.isBuildFailed()).isTrue();
