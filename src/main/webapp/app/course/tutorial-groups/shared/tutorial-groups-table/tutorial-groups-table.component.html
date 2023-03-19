@@ -20,7 +20,7 @@
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.utilizationHelp' | artemisTranslate }}"></fa-icon>
                 </th>
                 <th jhiSortBy="capacity">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.capacity' | artemisTranslate }}</a>
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.capacityWithRegistrations' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
                 <th jhiSortBy="teachingAssistantName">
@@ -29,10 +29,6 @@
                 </th>
                 <th jhiSortBy="dayAndTime">
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.locationTime' | artemisTranslate }}</a>
-                    <fa-icon [icon]="faSort"></fa-icon>
-                </th>
-                <th jhiSortBy="numberOfRegisteredUsers">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.registrations' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
                 <th jhiSortBy="isOnline">

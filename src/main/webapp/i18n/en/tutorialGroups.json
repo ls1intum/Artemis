@@ -40,6 +40,7 @@
                 "language": "Language",
                 "teachingAssistant": "Tutor",
                 "registrations": "Registrations",
+                "capacityWithRegistrations": "Capacity / Registrations",
                 "schedule": "Schedule",
                 "sessions": "Sessions",
                 "nextSession": "Next Session",

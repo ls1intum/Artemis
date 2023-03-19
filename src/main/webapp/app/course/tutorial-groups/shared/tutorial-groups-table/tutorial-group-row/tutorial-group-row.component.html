@@ -20,7 +20,7 @@
     <td>
         <jhi-tutorial-group-utilization-indicator [tutorialGroup]="tutorialGroup"></jhi-tutorial-group-utilization-indicator>
     </td>
-    <td>{{ tutorialGroup.capacity }}</td>
+    <td>{{ tutorialGroup.capacity + ' / ' + tutorialGroup.numberOfRegisteredUsers }}</td>
     <td>{{ tutorialGroup.isUserTutor ? ('global.generic.you' | artemisTranslate) : tutorialGroup.teachingAssistantName }}</td>
     <td>
         <span *ngIf="tutorialGroup.tutorialGroupSchedule; else no_schedule">
@@ -29,7 +29,6 @@
         </span>
         <ng-template #no_schedule></ng-template>
     </td>
-    <td>{{ tutorialGroup.numberOfRegisteredUsers }}</td>
     <td>
         {{ (tutorialGroup.isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline') | artemisTranslate }}
     </td>
