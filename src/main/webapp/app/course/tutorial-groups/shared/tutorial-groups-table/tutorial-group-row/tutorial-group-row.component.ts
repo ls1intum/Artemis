@@ -17,6 +17,23 @@ export class TutorialGroupRowComponent {
     @Input()
     showIdColumn = false;
 
+    /**
+     * If true we show the campus column
+     */
+    @Input()
+    tutorialGroupsSplitAcrossMultipleCampuses = false;
+    /**
+     * If true we show the online / offline column
+     */
+    @Input()
+    mixOfOfflineAndOfflineTutorialGroups = false;
+
+    /**
+     * If true we show the language column
+     */
+    @Input()
+    mifOfDifferentLanguages = false;
+
     @Input()
     showChannelColumn = false;
 
