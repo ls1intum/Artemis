@@ -271,10 +271,14 @@ public class LocalVCService extends AbstractVersionControlService {
             return false;
         }
 
-        String projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-        String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+        try {
+            new LocalVCRepositoryUrl(repositoryUrl.toString(), localVCBaseUrl);
+        }
+        catch (LocalVCException e) {
+            return false;
+        }
 
-        return repositoryUrl.toString().endsWith(".git") && repositorySlug.toLowerCase().startsWith(projectKey.toLowerCase());
+        return true;
     }
 
     @Override

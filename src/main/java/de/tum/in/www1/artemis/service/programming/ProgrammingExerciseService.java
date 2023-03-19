@@ -918,12 +918,6 @@ public class ProgrammingExerciseService {
             gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
         }
 
-        programmingExercise.getAuxiliaryRepositories().forEach(repo -> {
-            if (repo.getRepositoryUrl() != null) {
-                gitService.deleteLocalRepository(repo.getVcsRepositoryUrl());
-            }
-        });
-
         programmingExerciseGitDiffReportRepository.deleteByProgrammingExerciseId(programmingExerciseId);
 
         SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();

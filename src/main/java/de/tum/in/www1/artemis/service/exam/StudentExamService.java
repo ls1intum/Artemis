@@ -387,8 +387,7 @@ public class StudentExamService {
                 if (exercise instanceof ProgrammingExercise programmingExercise) {
                     try {
                         log.debug("lock student repositories for {}", currentUser);
-                        ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService
-                                .findStudentParticipationByExerciseAndStudentId(programmingExercise, currentUser.getLogin());
+                        var participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise, currentUser.getLogin());
                         programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
                     }
                     catch (Exception e) {

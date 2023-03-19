@@ -61,6 +61,12 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
             throw new LocalVCException("Invalid local VC Repository URL: " + urlString);
         }
 
+        String projectKey = urlPath.getName(1).toString();
+        String repositorySlug = urlPath.getName(2).toString().replace(".git", "");
+        if (!repositorySlug.toLowerCase().startsWith(projectKey.toLowerCase())) {
+            throw new LocalVCException("Invalid repository URL: " + urlString);
+        }
+
         try {
             this.uri = new URI(urlString);
         }
@@ -68,8 +74,8 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
             throw new LocalVCException("Could not create local VC Repository URL", e);
         }
 
-        this.projectKey = urlPath.getName(1).toString();
-        this.repositorySlug = urlPath.getName(2).toString().replace(".git", "");
+        this.projectKey = projectKey;
+        this.repositorySlug = repositorySlug;
         this.repositoryTypeOrUserName = getRepositoryTypeOrUserName(repositorySlug, projectKey);
         this.isPracticeRepository = getIsPracticeRepository(repositorySlug, projectKey);
     }

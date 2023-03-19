@@ -40,7 +40,7 @@ artemis:
         login:
             account-name: TUM                   # optional: customization for the welcome page "please sign in with your <account-name> account"
     version-control:
-        url: http://localhost:8080
+        url: https://bitbucket.ase.in.tum.de
         user: <username>                # e.g. ga12abc
         password: <password>
         # token: <token>                # VCS API token giving Artemis full Admin access.

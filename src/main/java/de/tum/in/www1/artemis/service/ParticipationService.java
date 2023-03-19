@@ -385,12 +385,10 @@ public class ParticipationService {
      */
     public ProgrammingExerciseStudentParticipation resumeProgrammingExercise(ProgrammingExerciseStudentParticipation participation) {
         // this method assumes that the student git repository already exists (compare startProgrammingExercise) so steps 1, 2 and 5 are not necessary
-
         // Step 2a) create the build plan (based on the BASE build plan)
         participation = copyBuildPlan(participation);
         // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
         participation = configureBuildPlan(participation);
-
         // Note: the repository webhook (step 1c) already exists, so we don't need to set it up again, the empty commit hook (step 2c) is also not necessary here
         // and must be handled by the calling method in case it would be necessary
 
