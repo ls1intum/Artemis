@@ -7,7 +7,7 @@ import dayjs from 'dayjs/esm';
 import { map } from 'rxjs/operators';
 
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Params, Router, UrlSerializer } from '@angular/router';
+import { ActivatedRoute, Params, Router, UrlSerializer } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
@@ -24,7 +24,6 @@ import {
     NEW_REPLY_FOR_COURSE_POST_TITLE,
     NEW_REPLY_FOR_EXERCISE_POST_TITLE,
     NEW_REPLY_FOR_LECTURE_POST_TITLE,
-    NEW_REPLY_MESSAGE_TITLE,
     Notification,
 } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
@@ -49,6 +48,7 @@ export class NotificationService {
         private router: Router,
         private http: HttpClient,
         private accountService: AccountService,
+        private activatedRoute: ActivatedRoute,
         private courseManagementService: CourseManagementService,
         private serializer: UrlSerializer,
         private tutorialGroupsNotificationService: TutorialGroupsNotificationService,
@@ -119,7 +119,7 @@ export class NotificationService {
      * @param {Params} queryParams
      */
     navigateToNotificationTarget(targetCourseId: number, routeComponents: RouteComponents, queryParams: Params): void {
-        const currentCourseId = NotificationService.getCurrentCourseId();
+        const currentCourseId = this.getCurrentCourseId();
         // determine if component recreation is required when notification is clicked
         // by comparing the id of the course the user is currently in, the course the post associated with the notification belongs to and if the user is already in the messages tab
         if (currentCourseId === undefined || currentCourseId !== targetCourseId || this.isUnderMessagesTabOfSpecificCourse(targetCourseId.toString())) {
@@ -131,10 +131,8 @@ export class NotificationService {
         }
     }
 
-    private static getCurrentCourseId(): number | undefined {
-        // read course id from url
-        const matchCourseIdInURL = window.location.pathname.match(/.*\/courses\/(\d+)\/.*/);
-        return matchCourseIdInURL ? +matchCourseIdInURL[1] : undefined;
+    private getCurrentCourseId(): number | undefined {
+        return this.activatedRoute.snapshot.firstChild?.params['courseId'];
     }
 
     /**
