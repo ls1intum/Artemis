@@ -61,15 +61,19 @@
         <!-- Utilization -->
         <dt>
             <span>{{ 'artemisApp.entities.tutorialGroup.utilization' | artemisTranslate }}</span>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.utilizationHelp' | artemisTranslate }}"></fa-icon>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.utilizationHelpDetail' | artemisTranslate }}"></fa-icon>
         </dt>
         <dd>
             <jhi-tutorial-group-utilization-indicator [tutorialGroup]="tutorialGroup"></jhi-tutorial-group-utilization-indicator>
         </dd>
         <!-- Average Attendance -->
         <dt>
-            <span>{{ 'artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate }}</span>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.averageAttendanceHelp' | artemisTranslate }}"></fa-icon>
+            <span>{{ 'artemisApp.entities.tutorialGroup.averageAttendanceDetail' | artemisTranslate }}</span>
+            <fa-icon
+                [icon]="faQuestionCircle"
+                class="text-secondary"
+                ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.averageAttendanceHelpDetail' | artemisTranslate }}"
+            ></fa-icon>
         </dt>
         <dd>
             <ng-container *ngIf="tutorialGroup.averageAttendance !== undefined; else noAverageAttendance">
