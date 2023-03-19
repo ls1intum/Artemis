@@ -20,11 +20,16 @@
                 "saturday": "Saturday",
                 "sunday": "Sunday"
             },
+            "repetitions": {
+                "everyWeek": "Every week",
+                "everyNWeeks": "Every {{ n }} weeks"
+            },
             "timeZone": "Time Zone: {{ timeZone }}",
             "betaWarning": "This feature is currently in beta. Bugs and breaking changes may occur. Please report any issues on: https://github.com/ls1intum/Artemis/issues"
         },
         "entities": {
             "tutorialGroup": {
+                "locationTime": "Location and Time",
                 "plural": "Tutorial Groups",
                 "course": "Course",
                 "title": "Title",

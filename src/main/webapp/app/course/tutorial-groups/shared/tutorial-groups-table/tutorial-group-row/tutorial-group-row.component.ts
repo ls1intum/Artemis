@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, HostBinding, Input, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { getDayTranslationKey } from '../../weekdays';
 import { Course, Language } from 'app/entities/course.model';
 
 @Component({
@@ -34,6 +33,4 @@ export class TutorialGroupRowComponent {
 
     GERMAN = Language.GERMAN;
     ENGLISH = Language.ENGLISH;
-
-    getDayTranslationKey = getDayTranslationKey;
 }

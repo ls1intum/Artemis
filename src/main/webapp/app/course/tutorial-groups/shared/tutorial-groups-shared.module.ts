@@ -11,6 +11,7 @@ import { TutorialGroupRowComponent } from './tutorial-groups-table/tutorial-grou
 import { VerticalProgressBarModule } from 'app/shared/vertical-progress-bar/vertical-progress-bar.module';
 import { TutorialGroupUtilizationIndicatorComponent } from './tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
+import { MeetingPatternPipe } from 'app/course/tutorial-groups/shared/meeting-pattern.pipe';
 
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule, ArtemisSidePanelModule, VerticalProgressBarModule],
@@ -23,7 +24,15 @@ import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seco
         TutorialGroupRowComponent,
         TutorialGroupUtilizationIndicatorComponent,
         RemoveSecondsPipe,
+        MeetingPatternPipe,
     ],
-    exports: [TutorialGroupsTableComponent, TutorialGroupSessionsTableComponent, TutorialGroupDetailComponent, TutorialGroupFreeDaysOverviewComponent, RemoveSecondsPipe],
+    exports: [
+        TutorialGroupsTableComponent,
+        TutorialGroupSessionsTableComponent,
+        TutorialGroupDetailComponent,
+        TutorialGroupFreeDaysOverviewComponent,
+        RemoveSecondsPipe,
+        MeetingPatternPipe,
+    ],
 })
 export class ArtemisTutorialGroupsSharedModule {}

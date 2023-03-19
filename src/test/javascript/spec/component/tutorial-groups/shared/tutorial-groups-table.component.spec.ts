@@ -168,6 +168,18 @@ describe('TutorialGroupsTableComponent', () => {
         expect(sortServiceSpy).toHaveBeenCalledOnce();
     });
 
+    it('should call sort service with multiple properties', () => {
+        component.sortingPredicate = 'dayAndTime';
+        component.ascending = false;
+
+        const sortService = TestBed.inject(SortService);
+        const sortServiceSpy = jest.spyOn(sortService, 'sortByMultipleProperties');
+
+        component.sortRows();
+        expect(sortServiceSpy).toHaveBeenCalledWith([tutorialGroupOne, tutorialGroupTwo], ['tutorialGroupSchedule.dayOfWeek', 'tutorialGroupSchedule.startTime'], false);
+        expect(sortServiceSpy).toHaveBeenCalledOnce();
+    });
+
     it('should call tutorialGroupClickHandler', () => {
         const tutorialGroupClickHandler = jest.fn();
         component.tutorialGroupClickHandler = tutorialGroupClickHandler;

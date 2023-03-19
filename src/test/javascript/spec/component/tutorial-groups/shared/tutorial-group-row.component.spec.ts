@@ -6,7 +6,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
-import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
+import { MeetingPatternPipe } from 'app/course/tutorial-groups/shared/meeting-pattern.pipe';
 
 describe('TutorialGroupRowComponent', () => {
     let component: TutorialGroupRowComponent;
@@ -20,7 +20,7 @@ describe('TutorialGroupRowComponent', () => {
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
-                MockPipe(RemoveSecondsPipe),
+                MockPipe(MeetingPatternPipe),
             ],
         }).compileComponents();
 

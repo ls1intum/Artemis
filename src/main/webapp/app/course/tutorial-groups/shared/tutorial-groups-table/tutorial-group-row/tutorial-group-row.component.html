@@ -30,27 +30,11 @@
     </td>
     <td>{{ tutorialGroup.capacity }}</td>
     <td>{{ tutorialGroup.isUserTutor ? ('global.generic.you' | artemisTranslate) : tutorialGroup.teachingAssistantName }}</td>
-    <td>{{ tutorialGroup.tutorialGroupSchedule ? (getDayTranslationKey(tutorialGroup.tutorialGroupSchedule?.dayOfWeek) | artemisTranslate) : '' }}</td>
     <td>
         <span *ngIf="tutorialGroup.tutorialGroupSchedule; else no_schedule">
-            {{
-                (tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! === 1
-                    ? 'artemisApp.entities.tutorialGroupSchedule.repetitionOneWeek'
-                    : 'artemisApp.entities.tutorialGroupSchedule.repetitionNWeeks'
-                ) | artemisTranslate : { n: tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! }
-            }}
+            {{ tutorialGroup.tutorialGroupSchedule | meetingPattern }}
         </span>
         <ng-template #no_schedule></ng-template>
-    </td>
-    <td>
-        <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.tutorialGroupSchedule ? tutorialGroup.tutorialGroupSchedule?.location : '' }} </span>
-    </td>
-    <td>
-        {{
-            tutorialGroup.tutorialGroupSchedule
-                ? (tutorialGroup.tutorialGroupSchedule?.startTime | removeSeconds) + '-' + (tutorialGroup.tutorialGroupSchedule?.endTime | removeSeconds)
-                : ''
-        }}
     </td>
     <td>{{ tutorialGroup.numberOfRegisteredUsers }}</td>
     <td>

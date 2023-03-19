@@ -36,20 +36,8 @@
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.teachingAssistant' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
-                <th jhiSortBy="tutorialGroupSchedule.dayOfWeek">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.dayOfWeek' | artemisTranslate }}</a>
-                    <fa-icon [icon]="faSort"></fa-icon>
-                </th>
-                <th jhiSortBy="tutorialGroupSchedule.repetitionFrequency">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.repetitionFrequency' | artemisTranslate }}</a>
-                    <fa-icon [icon]="faSort"></fa-icon>
-                </th>
-                <th jhiSortBy="tutorialGroupSchedule.location">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSession.location' | artemisTranslate }}</a>
-                    <fa-icon [icon]="faSort"></fa-icon>
-                </th>
-                <th jhiSortBy="tutorialGroupSchedule.startTime">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.time' | artemisTranslate }}</a>
+                <th jhiSortBy="dayAndTime">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.locationTime' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
                 <th jhiSortBy="numberOfRegisteredUsers">

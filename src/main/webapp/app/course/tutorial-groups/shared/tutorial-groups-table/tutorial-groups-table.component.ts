@@ -46,7 +46,11 @@ export class TutorialGroupsTableComponent implements OnChanges {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.tutorialGroups, this.sortingPredicate, this.ascending);
+        if (this.sortingPredicate === 'dayAndTime') {
+            this.sortService.sortByMultipleProperties(this.tutorialGroups, ['tutorialGroupSchedule.dayOfWeek', 'tutorialGroupSchedule.startTime'], this.ascending);
+        } else {
+            this.sortService.sortByProperty(this.tutorialGroups, this.sortingPredicate, this.ascending);
+        }
         this.cdr.detectChanges();
     }
 
