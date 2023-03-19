@@ -47,9 +47,8 @@
                 "channelWithName": "Channel: {{ channel }}",
                 "channelReverse": "Channel of the tutorial group {{ title }}",
                 "utilization": "Utilization",
-                "utilizationHelp": "Average attendance divided by capacity",
-                "averageAttendance": "Average Attendance",
-                "averageAttendanceHelp": "Average attendance in the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session."
+                "utilizationHelp": "Average attendance divided by capacity (if defined). The average attendance considers the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session.",
+                "averageAttendance": "Average attendance: {{ averageAttendance }}"
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Day of Week",

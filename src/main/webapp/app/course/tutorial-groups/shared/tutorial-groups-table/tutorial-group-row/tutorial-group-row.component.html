@@ -20,14 +20,6 @@
     <td>
         <jhi-tutorial-group-utilization-indicator [tutorialGroup]="tutorialGroup"></jhi-tutorial-group-utilization-indicator>
     </td>
-    <td>
-        <ng-container *ngIf="tutorialGroup.averageAttendance !== undefined; else noAverageAttendance">
-            <span>{{ Math.round(tutorialGroup.averageAttendance) }}</span>
-        </ng-container>
-        <ng-template #noAverageAttendance>
-            <span>{{ '' }}</span>
-        </ng-template>
-    </td>
     <td>{{ tutorialGroup.capacity }}</td>
     <td>{{ tutorialGroup.isUserTutor ? ('global.generic.you' | artemisTranslate) : tutorialGroup.teachingAssistantName }}</td>
     <td>
