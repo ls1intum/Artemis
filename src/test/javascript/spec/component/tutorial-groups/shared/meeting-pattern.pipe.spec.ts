@@ -18,7 +18,7 @@ describe('MeetingPatternPipe', () => {
         const schedule = undefined;
         translateService.instant.mockImplementation((key) => key);
 
-        const result = pipe.transform(schedule);
+        const result = pipe.transform(schedule, true);
         expect(result).toBe('');
         expect(translateService.instant).toHaveBeenCalledTimes(0);
     });
@@ -32,7 +32,7 @@ describe('MeetingPatternPipe', () => {
         };
         translateService.instant.mockImplementation((key) => key);
 
-        const result = pipe.transform(schedule);
+        const result = pipe.transform(schedule, true);
 
         expect(result).toBe('artemisApp.generic.repetitions.everyWeek, artemisApp.generic.weekdays.monday, 14:00 - 15:00');
         expect(translateService.instant).toHaveBeenCalledTimes(2);
@@ -47,9 +47,24 @@ describe('MeetingPatternPipe', () => {
         };
         translateService.instant.mockImplementation((key) => key);
 
-        const result = pipe.transform(schedule);
+        const result = pipe.transform(schedule, true);
 
         expect(result).toBe('artemisApp.generic.repetitions.everyNWeeks, artemisApp.generic.weekdays.tuesday, 14:00 - 15:00');
         expect(translateService.instant).toHaveBeenCalledTimes(2);
+    });
+
+    it('should return a translated meeting pattern without meeting frequency by default', () => {
+        const schedule: TutorialGroupSchedule = {
+            dayOfWeek: 2,
+            repetitionFrequency: 2,
+            startTime: '14:00:00',
+            endTime: '15:00:00',
+        };
+        translateService.instant.mockImplementation((key) => key);
+
+        const result = pipe.transform(schedule);
+
+        expect(result).toBe('artemisApp.generic.weekdays.tuesday, 14:00 - 15:00');
+        expect(translateService.instant).toHaveBeenCalledOnce();
     });
 });

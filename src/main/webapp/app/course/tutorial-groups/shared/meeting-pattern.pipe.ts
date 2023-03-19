@@ -21,16 +21,16 @@ export class MeetingPatternPipe implements PipeTransform {
      * @param schedule The tutorial group schedule to transform.
      * @returns The translated meeting pattern.
      */
-    transform(schedule: TutorialGroupSchedule | undefined): string {
+    transform(schedule: TutorialGroupSchedule | undefined, includeRepetitionFrequency = false): string {
         if (!schedule) {
             return '';
         }
 
         const weekDayTranslated = this.translateService.instant(getDayTranslationKey(schedule.dayOfWeek));
-        const repetitionTranslated = this.getRepetitionTranslated(schedule.repetitionFrequency);
+        const repetitionTranslated = includeRepetitionFrequency ? `${this.getRepetitionTranslated(schedule.repetitionFrequency)}, ` : '';
         const startTime = this.removeSecondsPipe.transform(schedule.startTime);
         const endTime = this.removeSecondsPipe.transform(schedule.endTime);
-        return `${repetitionTranslated}, ${weekDayTranslated}, ${startTime} - ${endTime}`;
+        return `${repetitionTranslated}${weekDayTranslated}, ${startTime} - ${endTime}`;
     }
 
     private getRepetitionTranslated(repetitionFrequency?: number) {
