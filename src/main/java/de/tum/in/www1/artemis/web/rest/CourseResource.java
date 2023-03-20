@@ -392,7 +392,7 @@ public class CourseResource {
                     .equals(authCheckService.getUserRegistrationAuthorizationForCourse(user, course));
             boolean isAlreadyInCourse = allRegisteredCourses.contains(course);
             return selfRegistrationAllowed && !isAlreadyInCourse;
-        }).filter(course -> !allRegisteredCourses.contains(course)).toList();
+        }).toList();
     }
 
     /**
