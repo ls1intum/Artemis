@@ -44,7 +44,7 @@
                 "schedule": "Sitzungsplan",
                 "sessions": "Sitzungen",
                 "nextSession": "Nächste Sitzung",
-                "channel": "Nachrichtenkanal",
+                "channel": "Chat",
                 "channelWithName": "Kanal: {{ channel }}",
                 "channelReverse": "Kanal der Übungsgruppe {{ title }}",
                 "utilization": "Auslastung",

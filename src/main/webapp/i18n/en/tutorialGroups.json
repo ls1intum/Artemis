@@ -44,7 +44,7 @@
                 "schedule": "Schedule",
                 "sessions": "Sessions",
                 "nextSession": "Next Session",
-                "channel": "Channel",
+                "channel": "Chat",
                 "channelWithName": "Channel: {{ channel }}",
                 "channelReverse": "Channel of the tutorial group {{ title }}",
                 "utilization": "Utilization",
