@@ -166,7 +166,6 @@ public class BambooBuildPlanService {
         Stage defaultStage = new Stage("Default Stage");
         Job defaultJob = new Job("Default Job", new BambooKey("JOB1")).cleanWorkingDirectory(true);
 
-        // TODO: maybe add a bamboo profile flag to not run the builds in extra docker containers? instead of binding this to the dev profile
         // Xcode has no dockerfile, it only runs on agents (e.g. sb2-agent-0050562fddde)
         if (!ProjectType.XCODE.equals(projectType)) {
             defaultJob.dockerConfiguration(dockerConfigurationFor(programmingLanguage, Optional.ofNullable(projectType)));
