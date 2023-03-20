@@ -44,7 +44,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
             return this.createGradingInstructionFeedbackItem(feedback, showTestDetails);
         } else {
-            return this.createTutorFeedbackItem(feedback, showTestDetails);
+            return this.createReviewerFeedbackItem(feedback, showTestDetails);
         }
     }
 
@@ -136,12 +136,12 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
     }
 
     /**
-     * Creates a feedback item for a regular tutor feedback not using a grading instruction.
+     * Creates a feedback item for a regular reviewer feedback not using a grading instruction.
      * @param feedback The manual feedback from which the feedback item should be created.
      * @param showTestDetails
      * @private
      */
-    private createTutorFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
+    private createReviewerFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         return {
             type: 'Reviewer',
             name: showTestDetails ? this.translateService.instant('artemisApp.course.reviewer') : this.translateService.instant('artemisApp.result.detail.feedback'),
