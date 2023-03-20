@@ -24,7 +24,7 @@ import { SubmissionPolicyService } from 'app/exercises/programming/manage/servic
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash-es';
-import { Subscription, of, zip } from 'rxjs';
+import { Observable, Subscription, of, zip } from 'rxjs';
 import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
 
 /**
@@ -113,6 +113,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     activeTab: GradingTab;
 
     gradingStatistics?: ProgrammingExerciseGradingStatistics;
+    gradingStatisticsObservable: Observable<ProgrammingExerciseGradingStatistics>;
     maxIssuesPerCategory = 0;
 
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
@@ -731,25 +732,21 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @private
      */
     private loadStatistics(exerciseId: number) {
-        this.gradingService
-            .getGradingStatistics(exerciseId)
-            .pipe(
-                tap((statistics) => (this.gradingStatistics = statistics)),
-                tap(() => {
-                    this.maxIssuesPerCategory = 0;
-                    if (this.gradingStatistics?.categoryIssuesMap) {
-                        // calculate the maximum number of issues in one category
-                        Object.values(this.gradingStatistics?.categoryIssuesMap).forEach((issuesMap) => {
-                            const maxIssues = Object.keys(issuesMap).reduce((max, issues) => Math.max(max, parseInt(issues, 10)), 0);
-                            if (maxIssues > this.maxIssuesPerCategory) {
-                                this.maxIssuesPerCategory = maxIssues;
-                            }
-                        });
-                    }
-                }),
-                catchError(() => of(null)),
-            )
-            .subscribe();
+        this.gradingStatisticsObservable = this.gradingService.getGradingStatistics(exerciseId).pipe(
+            tap((statistics) => (this.gradingStatistics = statistics)),
+            tap(() => {
+                this.maxIssuesPerCategory = 0;
+                if (this.gradingStatistics?.categoryIssuesMap) {
+                    // calculate the maximum number of issues in one category
+                    Object.values(this.gradingStatistics?.categoryIssuesMap).forEach((issuesMap) => {
+                        const maxIssues = Object.keys(issuesMap).reduce((max, issues) => Math.max(max, parseInt(issues, 10)), 0);
+                        if (maxIssues > this.maxIssuesPerCategory) {
+                            this.maxIssuesPerCategory = maxIssues;
+                        }
+                    });
+                }
+            }),
+        );
     }
 
     /**

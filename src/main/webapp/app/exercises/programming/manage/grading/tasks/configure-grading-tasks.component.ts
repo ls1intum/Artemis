@@ -5,6 +5,7 @@ import { Course } from 'app/entities/course.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTask } from './programming-exercise-task';
+import { Observable } from 'rxjs';
 
 @Component({
     selector: 'jhi-configure-grading-task',
@@ -15,7 +16,7 @@ import { ProgrammingExerciseTask } from './programming-exercise-task';
 export class ConfigureGradingTasksComponent implements OnInit {
     @Input() exercise: ProgrammingExercise;
     @Input() course: Course;
-    @Input() gradingStatistics: ProgrammingExerciseGradingStatistics;
+    @Input() gradingStatisticsObservable: Observable<ProgrammingExerciseGradingStatistics>;
 
     faQuestionCircle = faQuestionCircle;
     isSaving = false;
@@ -25,8 +26,10 @@ export class ConfigureGradingTasksComponent implements OnInit {
     constructor(private taskService: ProgrammingExerciseTaskService) {}
 
     ngOnInit(): void {
-        this.taskService.configure(this.exercise, this.course, this.gradingStatistics).subscribe((tasks) => {
-            this.tasks = tasks;
+        this.gradingStatisticsObservable.subscribe((gradingStatistics) => {
+            this.taskService.configure(this.exercise, this.course, gradingStatistics).subscribe((tasks) => {
+                this.tasks = tasks;
+            });
         });
     }
 
