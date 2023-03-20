@@ -3,7 +3,7 @@
         "programmingExercise": {
             "home": {
                 "title": "Programmieraufgaben",
-                "createLabel": "Neue Programmieraufgabe erstellen",
+                "createLabel": "Programmieraufgabe erstellen",
                 "editLabel": "Programmieraufgabe bearbeiten",
                 "generateLabel": "Neue Programmieraufgabe generieren",
                 "importLabel": "Programmieraufgabe importieren",

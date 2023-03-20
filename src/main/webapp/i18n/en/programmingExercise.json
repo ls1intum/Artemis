@@ -3,7 +3,7 @@
         "programmingExercise": {
             "home": {
                 "title": "Programming Exercises",
-                "createLabel": "Create new Programming Exercise",
+                "createLabel": "Create Programming Exercise",
                 "editLabel": "Edit Programming Exercise",
                 "importLabel": "Import Programming Exercise",
                 "linkLabel": "Link new Programming Exercise",
