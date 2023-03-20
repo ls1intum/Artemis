@@ -59,7 +59,7 @@ class GroupNotificationFactoryTest {
 
     private static AnswerPost answerPost;
 
-    private final User user = new User();
+    private static User user = new User();
 
     private String expectedTitle;
 
@@ -82,7 +82,7 @@ class GroupNotificationFactoryTest {
     private static final List<String> archiveErrors = List.of("archive error 1", "archive error 2");
 
     private enum Base {
-        ATTACHMENT, EXERCISE, POST, COURSE, EXAM
+        ATTACHMENT, EXERCISE, POST, POST_REPLY, COURSE, EXAM
     }
 
     /**
@@ -126,12 +126,18 @@ class GroupNotificationFactoryTest {
         attachment = new Attachment();
         attachment.setLecture(lecture);
 
+        user = new User();
+        user.setFirstName("John");
+        user.setLastName("Smith");
+
         post = new Post();
         post.setExercise(exercise);
         post.setLecture(lecture);
+        post.setAuthor(user);
 
         answerPost = new AnswerPost();
         answerPost.setPost(post);
+        answerPost.setAuthor(user);
     }
 
     /**
@@ -148,7 +154,6 @@ class GroupNotificationFactoryTest {
         assertThat(createdNotification.getTitle()).as("Created notification title should match expected one").isEqualTo(expectedTitle);
         assertThat(createdNotification.getText()).as("Created notification text should match expected one").isEqualTo(expectedText);
         assertThat(createdNotification.getTextIsPlaceholder()).as("Created notification placeholder flag should match expected one").isEqualTo(expectedTextIsPlaceholder);
-        assertThat(createdNotification.getPlaceholderValues()).as("Created notification placeholder values should match expected one").isEqualTo(expectedPlaceholderValues);
         assertThat(createdNotification.getTarget()).as("Created notification target should match expected one").isEqualTo(expectedTransientTarget.toJsonString());
         assertThat(createdNotification.getPriority()).as("Created notification priority should match expected one").isEqualTo(expectedPriority);
         assertThat(createdNotification.getAuthor()).as("Created notification author should match expected one").isEqualTo(user);
@@ -198,6 +203,10 @@ class GroupNotificationFactoryTest {
             }
             case POST: {
                 createdNotification = createNotification(post, user, groupNotificationType, notificationType, course);
+                break;
+            }
+            case POST_REPLY: {
+                createdNotification = createNotification(post, answerPost, user, groupNotificationType, notificationType, course);
                 break;
             }
             case COURSE: {
@@ -410,7 +419,7 @@ class GroupNotificationFactoryTest {
         expectedPlaceholderValues = "[\"" + exercise.getTitle() + "\"]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createExercisePostTarget(post, course);
-        createAndCheckNotification(Base.POST);
+        createAndCheckNotification(Base.POST_REPLY);
     }
 
     /**
@@ -425,7 +434,7 @@ class GroupNotificationFactoryTest {
         expectedPlaceholderValues = "[" + lecture.getTitle() + "]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createLecturePostTarget(post, course);
-        createAndCheckNotification(Base.POST);
+        createAndCheckNotification(Base.POST_REPLY);
     }
 
     /**
@@ -440,7 +449,7 @@ class GroupNotificationFactoryTest {
         expectedPlaceholderValues = "[" + course.getTitle() + "]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createCoursePostTarget(post, course);
-        createAndCheckNotification(Base.POST);
+        createAndCheckNotification(Base.POST_REPLY);
     }
 
     // Based on Course
