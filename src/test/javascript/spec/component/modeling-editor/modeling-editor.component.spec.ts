@@ -54,7 +54,7 @@ describe('ModelingEditorComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('ngAfterViewInit', () => {
+    it('ngAfterViewInit', async () => {
         component.umlModel = classDiagram;
         fixture.detectChanges();
 
@@ -63,10 +63,9 @@ describe('ModelingEditorComponent', () => {
         const editor: ApollonEditor = component['apollonEditor'] as ApollonEditor;
         // Check that editor exists
         expect(editor).toBeDefined();
-        return addDelay(100).then(() => {
-            // check that editor contains elements of our model (direct equality check won't work somehow due to missing properties)
-            expect(editor.model.elements.map((e) => e.id)).toEqual(classDiagram.elements.map((e) => e.id));
-        });
+        await addDelay(0);
+        // check that editor contains elements of our model (direct equality check won't work somehow due to missing properties)
+        expect(editor.model.elements.map((e) => e.id)).toEqual(classDiagram.elements.map((e) => e.id));
     });
 
     it('ngOnDestroy', () => {

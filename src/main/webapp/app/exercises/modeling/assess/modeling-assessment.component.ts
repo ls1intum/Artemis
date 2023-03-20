@@ -208,17 +208,15 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
 
         if (this.apollonEditor != undefined) {
-            let model: UMLModel;
-            await addDelay(0).then(async () => {
-                model = this.apollonEditor!.model;
-                for (const element of model!.elements) {
-                    element.highlight = newElements.get(element.id);
-                }
-                for (const relationship of model!.relationships) {
-                    relationship.highlight = newElements.get(relationship.id);
-                }
-                this.apollonEditor!.model = model!;
-            });
+            await addDelay(0);
+            const model = this.apollonEditor!.model;
+            for (const element of model!.elements) {
+                element.highlight = newElements.get(element.id);
+            }
+            for (const relationship of model!.relationships) {
+                relationship.highlight = newElements.get(relationship.id);
+            }
+            this.apollonEditor!.model = model!;
         }
     }
 
@@ -237,16 +235,15 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         newElementCounts.forEach((elementCount) => elementCountMap.set(elementCount.elementId, elementCount.numberOfOtherElements));
 
         if (this.apollonEditor != undefined) {
-            await addDelay(0).then(() => {
-                const model: UMLModel = this.apollonEditor!.model;
-                for (const element of model.elements) {
-                    element.assessmentNote = this.calculateNote(elementCountMap.get(element.id));
-                }
-                for (const relationship of model.relationships) {
-                    relationship.assessmentNote = this.calculateNote(elementCountMap.get(relationship.id));
-                }
-                this.apollonEditor!.model = model;
-            });
+            await addDelay(0);
+            const model: UMLModel = this.apollonEditor!.model;
+            for (const element of model.elements) {
+                element.assessmentNote = this.calculateNote(elementCountMap.get(element.id));
+            }
+            for (const relationship of model.relationships) {
+                relationship.assessmentNote = this.calculateNote(elementCountMap.get(relationship.id));
+            }
+            this.apollonEditor!.model = model;
         }
     }
 
@@ -270,9 +267,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             dropInfo: this.calculateDropInfo(feedback),
         }));
         if (this.apollonEditor) {
-            await addDelay(0).then(() => {
-                this.apollonEditor!.model = this.umlModel;
-            });
+            await addDelay(0);
+            this.apollonEditor!.model = this.umlModel;
         }
     }
 

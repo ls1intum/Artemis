@@ -134,7 +134,6 @@ describe('ApollonDiagramDetail Component', () => {
         // test
         await addDelay(0).then(() => {
             fixture.componentInstance.downloadSelection().then(() => {
-                // last task when downloading file
                 expect(window.URL.revokeObjectURL).toHaveBeenCalledOnce();
             });
         });
@@ -177,11 +176,9 @@ describe('ApollonDiagramDetail Component', () => {
         const successSpy = jest.spyOn(alertService, 'success');
 
         // test
-        await addDelay(300).then(() => {
-            fixture.componentInstance.generateExercise().then(() => {
-                expect(successSpy).toHaveBeenCalledOnce();
-            });
-        });
+        await addDelay(0);
+        await fixture.componentInstance.generateExercise();
+        expect(successSpy).toHaveBeenCalledOnce();
 
         // clear the set time interval
         fixture.componentInstance.ngOnDestroy();
