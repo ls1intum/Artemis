@@ -31,9 +31,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ButtonSize } from 'app/shared/components/button.component';
 import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
-import { AccountService } from 'app/core/auth/account.service';
-import { Authority } from 'app/shared/constants/authority.constants';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
 import { ExcelExportRowBuilder } from 'app/shared/export/excel-export-row-builder';
 import { CsvExportOptions } from 'app/shared/export/export-modal.component';
@@ -142,8 +139,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private participantScoresService: ParticipantScoresService,
         private gradingSystemService: GradingSystemService,
         private courseManagementService: CourseManagementService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private accountService: AccountService,
     ) {}
 
     ngOnInit() {
@@ -858,15 +853,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     formatDataLabel(submissionCount: number): string {
         const percentage = this.noOfExamsFiltered && this.noOfExamsFiltered > 0 ? this.roundAndPerformLocalConversion((submissionCount * 100) / this.noOfExamsFiltered) : 0;
         return submissionCount + ' (' + percentage + '%)';
-    }
-
-    /**
-     * Handles the click event on a chart bar. The user is then delegated to the participant scores page of the exam
-     */
-    onSelect() {
-        if (this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
-            this.navigationUtilService.routeInNewTab(['course-management', this.course!.id, 'exams', this.examScoreDTO.examId, 'participant-scores']);
-        }
     }
 
     /**

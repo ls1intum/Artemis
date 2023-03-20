@@ -67,11 +67,8 @@ public class ExamUserResource {
         var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(examUserDTO.login())
                 .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + examUserDTO.login() + "\" does not exist"));
 
-        ExamUser examUser = examUserRepository.findByExamIdAndUserId(examId, student.getId());
-
-        if (examUser == null) {
-            throw new EntityNotFoundException("Exam user", examUserDTO.login());
-        }
+        ExamUser examUser = examUserRepository.findByExamIdAndUserId(examId, student.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Exam user with login: \"" + examUserDTO.login() + "\" does not exist"));
 
         if (signatureFile != null) {
             String responsePath = fileService.handleSaveFile(signatureFile, true, false);

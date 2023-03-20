@@ -23,7 +23,7 @@ export const isAllowedToRespondToComplaintAction = (isTestRun: boolean, isAssess
 
 /**
  * During assessment, modifying the feedback should be allowed.
- * After the assessment, modification should be allowed if the deadline hasn't passed yet. After that, it should be prevented.
+ * After the assessment, modification should be allowed if the assessment due date hasn't passed yet. After that, it should be prevented.
  * If a feedback request was filed, the feedback should not be modifiable.
  * If a complaint was filed, the feedback should be only modifiable if the user is allowed to handle the complaint.
  */
@@ -45,11 +45,7 @@ export const isAllowedToModifyFeedback = (
         return true;
     }
     if (complaint) {
-        if (exercise?.assessmentType === AssessmentType.AUTOMATIC) {
-            return isAllowedToRespondToComplaintAction(isTestRun, isAssessor, complaint, exercise);
-        } else {
-            return complaint.complaintType === ComplaintType.COMPLAINT && isAllowedToRespondToComplaintAction(isTestRun, isAssessor, complaint, exercise);
-        }
+        return complaint.complaintType === ComplaintType.COMPLAINT && isAllowedToRespondToComplaintAction(isTestRun, isAssessor, complaint, exercise);
     }
     return !hasAssessmentDueDatePassed;
 };

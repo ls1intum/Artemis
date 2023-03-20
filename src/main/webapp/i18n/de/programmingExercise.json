@@ -8,7 +8,10 @@
                 "generateLabel": "Neue Programmieraufgabe generieren",
                 "importLabel": "Programmieraufgabe importieren",
                 "linkLabel": "Neue Programmieraufgabe verlinken",
-                "createOrEditLabel": "Programmieraufgabe erstellen oder bearbeiten"
+                "createOrEditLabel": "Programmieraufgabe erstellen oder bearbeiten",
+                "switchToGuidedModeLabel": "Zum geführten Modus wechseln",
+                "switchToTraditionalModeLabel": "Zum normalen Modus wechseln",
+                "nextStepLabel": "Weiter"
             },
             "created": "Programmieraufgabe erstellt mit Titel {{ param }}",
             "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",
@@ -31,6 +34,44 @@
                 "showTemplateSubmissions": "Zeige Template-Abgaben",
                 "showSolutionSubmissions": "Zeige Lösungsabgaben"
             },
+            "wizardMode": {
+                "steps": {
+                    "generalInfoStepTitle": "Informationen",
+                    "difficultyStepTitle": "Schwierigkeit",
+                    "languageStepTitle": "Sprache",
+                    "gradingStepTitle": "Benotung",
+                    "problemStepTitle": "Problem"
+                },
+                "detailedSteps": {
+                    "generalInfoStepTitle": "Allgemeine Informationen",
+                    "generalInfoStepMessage": "Füge allgemeine Informationen über die neue Übung hinzu.",
+                    "difficultyStepTitle": "Schwierigkeit",
+                    "difficultyStepMessage": "Lege die Schwierigkeit für die neue Übung fest.",
+                    "languageStepTitle": "Programmiersprache",
+                    "languageStepMessage": "Lege die gewählte Programmiersprache sowie den Projekttyp für die neue Übung fest.",
+                    "gradingStepTitle": "Benotung",
+                    "gradingStepMessage": "Lege fest, wie Studenten bei dieser Übung benotet werden sollen.",
+                    "problemStepTitle": "Aufgabenstellung",
+                    "problemStepMessage": "Lege die Aufgabenstellung für die neue Übung fest."
+                },
+                "gradingLabels": {
+                    "points": "Es gibt insgesamt maximal {maxPoints} Punkte bei dieser {exerciseType} zu erreichen.",
+                    "noBonus": "Es gibt keine Bonuspunkte für diese Aufgabe.",
+                    "bonus": "Es können {bonusPoints} Bonuspunkte erreicht werden.",
+                    "assessment": "Diese Aufgabe wird {assessmentType} bewertet.",
+                    "lockedSubmission": "Die Repositories werden automatisch nach {submissionLimit} Abgaben gesperrt.",
+                    "penaltySubmission": "Es gibt einen Abzug von {exceedingPenalty} Punkten für jede Abgabe nach {submissionLimit} Abgaben.",
+                    "unrestrictedSubmission": "Es gibt keine Begrenzung für die Anzahl an Abgaben.",
+                    "staticAnalysisEnabled": "Statische Code-Analyse ist aktiviert für diese Aufgabe und es können maximal {maxPenalty} Punkte durch Probleme bei der Code-Analyse abgezogen werden.",
+                    "staticAnalysisDisabled": "Statische Code-Analyse ist deaktiviert für diese Aufgabe.",
+                    "normalExercise": "Aufgabe",
+                    "bonusExercise": "Bonusaufgabe",
+                    "assessmentAutomatic": "automatisch",
+                    "assessmentSemiautomatic": "halb-automatisch"
+                }
+            },
+            "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein. Sie können aber erst nach dem Startdatum an der Aufgabe teilnehmen.",
+            "noReleaseAndStartDateWarning": "Du hast kein Veröffentlichungs- und Startdatum definiert, daher wird die Aufgabe sofort veröffentlicht und Studierende können direkt an der Aufgabe teilnehmen.",
             "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",
             "unsavedChangesProjectTypeChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll der Projekt Typ wirklich geändert werden?",
             "templateRepositoryUrl": "Vorlagen-Repository-Url",

@@ -104,16 +104,17 @@ public class ExamUserService {
         examUserWithImageDTOs.forEach(examUserWithImageDTO -> {
             Optional<User> user = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(examUserWithImageDTO.studentRegistrationNumber());
             if (user.isPresent()) {
-                ExamUser examUser = examUserRepository.findByExamIdAndUserId(examId, user.get().getId());
-                if (examUser == null) {
-                    notFoundExamUsersRegistrationNumbers.add(examUserWithImageDTO.studentRegistrationNumber());
-                }
-                else {
+                Optional<ExamUser> examUserOptional = examUserRepository.findByExamIdAndUserId(examId, user.get().getId());
+                if (examUserOptional.isPresent()) {
+                    ExamUser examUser = examUserOptional.get();
                     MultipartFile studentImageFile = fileService.convertByteArrayToMultipart(examUserWithImageDTO.studentRegistrationNumber() + "_student_image", ".png",
                             examUserWithImageDTO.image().imageInBytes());
                     String responsePath = fileService.handleSaveFile(studentImageFile, false, false);
                     examUser.setStudentImagePath(responsePath);
                     examUserRepository.save(examUser);
+                }
+                else {
+                    notFoundExamUsersRegistrationNumbers.add(examUserWithImageDTO.studentRegistrationNumber());
                 }
             }
             else {

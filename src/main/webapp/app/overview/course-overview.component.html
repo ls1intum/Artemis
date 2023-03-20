@@ -2,7 +2,7 @@
     <div *ngIf="course">
         <jhi-header-course [course]="course"></jhi-header-course>
         <div class="tab-bar tab-bar-overview" id="tab-bar">
-            <div class="col-12" [ngClass]="{ 'no-indent': !controlConfiguration?.useIndentation, 'col-lg-8': controlConfiguration?.useIndentation }">
+            <div class="col-12 no-indent">
                 <div>
                     <div
                         id="exam-tab"

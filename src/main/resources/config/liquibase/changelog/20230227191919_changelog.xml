@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="b-fein" id="20230227191919-1">
+        <!-- only link the long feedback from the other side to reduce table size -->
+        <addColumn tableName="feedback">
+            <column name="has_long_feedback_text" type="boolean" defaultValueBoolean="false"/>
+        </addColumn>
+
+        <createTable tableName="long_feedback_text">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="feedback_text" type="longtext">
+                <constraints nullable="false" />
+            </column>
+            <column name="feedback_id" type="bigint">
+                <constraints foreignKeyName="fk_feedback_id" referencedTableName="feedback" referencedColumnNames="id" nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- change the enum values for visibility and type from strings to their ordinal numbers -->
+    <changeSet id="20230227191919-2" author="b-fein">
+        <addColumn tableName="feedback">
+            <column name="visibility_int" type="tinyint"/>
+        </addColumn>
+        <addColumn tableName="feedback">
+            <column name="type_int" type="tinyint"/>
+        </addColumn>
+
+        <sql>
+            update feedback set
+            visibility_int = case visibility
+                 when 'ALWAYS' then 0
+                 when 'AFTER_DUE_DATE' then 1
+                 when 'NEVER' then 2
+            end,
+            type_int = case type
+                when 'MANUAL' then 0
+                when 'MANUAL_UNREFERENCED' then 1
+                when 'AUTOMATIC_ADAPTED' then 2
+                when 'AUTOMATIC' then 3
+            end;
+        </sql>
+
+        <dropColumn tableName="feedback" columnName="visibility" />
+        <dropColumn tableName="feedback" columnName="type" />
+
+        <renameColumn tableName="feedback" oldColumnName="visibility_int" newColumnName="visibility" columnDataType="tinyint"/>
+        <renameColumn tableName="feedback" oldColumnName="type_int" newColumnName="type" columnDataType="tinyint"/>
+    </changeSet>
+</databaseChangeLog>

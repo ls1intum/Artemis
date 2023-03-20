@@ -5,13 +5,14 @@ import submission from '../../fixtures/exercise/programming/all_successful/submi
 import { Course } from 'app/entities/course.model';
 import { generateUUID } from '../../support/utils';
 import { EXERCISE_TYPE } from '../../support/constants';
-import { courseManagementRequest, examExerciseGroupCreation, examNavigation, examParticipation, examStartEnd } from '../../support/artemis';
+import { courseManagementRequest, examExerciseGroupCreation, examNavigation, examParticipation, examStartEnd, textExerciseEditor } from '../../support/artemis';
 import { Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
 import { Interception } from 'cypress/types/net-stubbing';
 import { admin, studentOne, studentThree, studentTwo } from '../../support/users';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
+const textFixtureAlternative = 'loremIpsum-alternative.txt';
 let exerciseArray: Array<Exercise> = [];
 
 describe('Exam participation', () => {
@@ -106,6 +107,92 @@ describe('Exam participation', () => {
                 }
             }
             examParticipation.handInEarly();
+        });
+    });
+
+    describe('Early hand-in with continue and reload page', () => {
+        let exam: Exam;
+        const examTitle = 'exam' + generateUUID();
+
+        before('Create exam', () => {
+            exerciseArray = [];
+
+            cy.login(admin);
+            const examContent = new CypressExamBuilder(course)
+                .title(examTitle)
+                .visibleDate(dayjs().subtract(3, 'minutes'))
+                .startDate(dayjs().subtract(2, 'minutes'))
+                .endDate(dayjs().add(1, 'hour'))
+                .examMaxPoints(10)
+                .numberOfExercises(1)
+                .build();
+            courseManagementRequest.createExam(examContent).then((examResponse) => {
+                exam = examResponse.body;
+                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Text, { textFixture });
+
+                courseManagementRequest.registerStudentForExam(exam, studentOne);
+                courseManagementRequest.registerStudentForExam(exam, studentTwo);
+                courseManagementRequest.registerStudentForExam(exam, studentThree);
+                courseManagementRequest.generateMissingIndividualExams(exam);
+                courseManagementRequest.prepareExerciseStartForExam(exam);
+            });
+        });
+
+        it('Participates in the exam, hand-in early, but instead continues', () => {
+            examParticipation.startParticipation(studentOne, course, exam);
+            const textExerciseIndex = 0;
+            const textExercise = exerciseArray[textExerciseIndex];
+            examNavigation.openExerciseAtIndex(textExerciseIndex);
+            examParticipation.makeTextExerciseSubmission(textExercise.id, textExercise.additionalData!.textFixture!);
+            examParticipation.clickSaveAndContinue();
+            examNavigation.handInEarly();
+
+            examStartEnd.clickContinue();
+            examNavigation.openExerciseAtIndex(textExerciseIndex);
+            textExerciseEditor.clearSubmission(textExercise.id);
+            examParticipation.makeTextExerciseSubmission(textExercise.id, textFixtureAlternative);
+            examParticipation.clickSaveAndContinue();
+
+            examParticipation.handInEarly();
+            examParticipation.verifyTextExerciseOnFinalPage(textFixtureAlternative);
+            examParticipation.checkExamTitle(examTitle);
+        });
+
+        it('Reloads exam page during participation and ensures that everything is as expected', () => {
+            examParticipation.startParticipation(studentTwo, course, exam);
+            const textExerciseIndex = 0;
+            const textExercise = exerciseArray[textExerciseIndex];
+            examNavigation.openExerciseAtIndex(textExerciseIndex);
+            examParticipation.makeTextExerciseSubmission(textExercise.id, textExercise.additionalData!.textFixture!);
+            examParticipation.clickSaveAndContinue();
+
+            cy.reload();
+            examParticipation.startParticipation(studentTwo, course, exam);
+            examNavigation.openExerciseAtIndex(textExerciseIndex);
+            textExerciseEditor.checkCurrentContent(textExercise.id, textExercise.additionalData!.textFixture!);
+            examParticipation.clickSaveAndContinue();
+            examParticipation.handInEarly();
+
+            examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
+            examParticipation.checkExamTitle(examTitle);
+        });
+
+        it('Reloads exam result page and ensures that everything is as expected', () => {
+            examParticipation.startParticipation(studentThree, course, exam);
+            const textExerciseIndex = 0;
+            const textExercise = exerciseArray[textExerciseIndex];
+            examNavigation.openExerciseAtIndex(textExerciseIndex);
+            examParticipation.makeTextExerciseSubmission(textExercise.id, textExercise.additionalData!.textFixture!);
+            examParticipation.clickSaveAndContinue();
+            examParticipation.handInEarly();
+
+            examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
+            examParticipation.checkExamTitle(examTitle);
+
+            cy.reload();
+
+            examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
+            examParticipation.checkExamTitle(examTitle);
         });
     });
 

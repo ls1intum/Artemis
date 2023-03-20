@@ -189,7 +189,7 @@ describe('Exercise Groups Component', () => {
         expect(comp.exerciseIcon(exercise)).toBe(icon);
     });
 
-    it.each([[ExerciseType.PROGRAMMING], [ExerciseType.TEXT], [ExerciseType.MODELING], [ExerciseType.QUIZ]])(
+    it.each([[ExerciseType.PROGRAMMING], [ExerciseType.TEXT], [ExerciseType.MODELING], [ExerciseType.QUIZ], [ExerciseType.FILE_UPLOAD]])(
         'opens the import modal',
         fakeAsync((exerciseType: ExerciseType) => {
             const mockReturnValue = { result: Promise.resolve({ id: 1 } as Exercise), componentInstance: {} } as NgbModalRef;

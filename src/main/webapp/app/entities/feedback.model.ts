@@ -56,6 +56,7 @@ export class Feedback implements BaseEntity {
     public gradingInstruction?: GradingInstruction;
     public text?: string;
     public detailText?: string;
+    public hasLongFeedbackText?: boolean;
     public reference?: string;
     public credits?: number;
     public type?: FeedbackType;

@@ -168,16 +168,9 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         if (!this.allRegisteredUsers.map((eu) => eu.user!.id).includes(user.id) && user.login) {
             this.isTransitioning = true;
             this.examManagementService.addStudentToExam(this.courseId, this.exam.id!, user.login).subscribe({
-                next: (student) => {
+                next: () => {
                     this.isTransitioning = false;
-
-                    // make sure the registration number is set in the user object
-                    user.visibleRegistrationNumber = student.body!.registrationNumber;
-
-                    // Add newly registered user to the list of all registered users for the exam
-                    this.allRegisteredUsers.push(user);
                     this.reloadExamWithRegisteredUsers();
-
                     // Flash green background color to signal to the user that this student was registered
                     this.flashRowClass(cssClasses.newlyRegistered);
                 },

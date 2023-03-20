@@ -15,6 +15,10 @@ export class ExamStartEndPage {
         cy.get('#start-exam').click();
     }
 
+    clickContinue() {
+        cy.get('#continue').click();
+    }
+
     pressFinish() {
         cy.intercept(POST, COURSE_BASE + '*/exams/*/student-exams/submit').as('finishExam');
         cy.get('#end-exam').click();

@@ -27,7 +27,6 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
     @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
-        useIndentation: true,
     };
     tutorialGroups: TutorialGroup[] = [];
     courseId: number;

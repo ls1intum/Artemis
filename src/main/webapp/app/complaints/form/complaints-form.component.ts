@@ -1,13 +1,12 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { Result } from 'app/entities/result.model';
-import { HttpErrorResponse } from '@angular/common/http';
-import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
-import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Course } from 'app/entities/course.model';
+import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
+import { Result } from 'app/entities/result.model';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-complaint-form',
@@ -27,9 +26,6 @@ export class ComplaintsFormComponent implements OnInit {
     complaintText?: string;
     ComplaintType = ComplaintType;
     course?: Course;
-
-    // Icons
-    faInfoCircle = faInfoCircle;
 
     constructor(private complaintService: ComplaintService, private alertService: AlertService) {}
 

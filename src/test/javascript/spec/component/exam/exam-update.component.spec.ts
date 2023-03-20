@@ -465,7 +465,7 @@ describe('Exam Update Component', () => {
         examForImport.course = course2;
         examForImport.numberOfExamUsers = 1;
         examForImport.exerciseGroups = [exerciseGroup1];
-        examForImport.examUsers = [new User(5)];
+        examForImport.examUsers = [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...new User(5) }];
         examForImport.studentExams = [new StudentExam()];
 
         beforeEach(() => {

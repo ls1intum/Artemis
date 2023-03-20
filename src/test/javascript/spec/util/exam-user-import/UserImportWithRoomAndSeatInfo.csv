@@ -1,0 +1,5 @@
+login,registrationNumber,email,room,firstname,lastname,seat
+artemis_test_user_2,03756882,krusche+testuser_2@in.tum.de, 101.2,ArTEMiS,Test User 2, 22F
+artemis_test_user_3,03756883,krusche+testuser_3@in.tum.de, 101.2,ArTEMiS,Test User 3, 28F
+artemis_test_user_4,03756884,krusche+testuser_4@in.tum.de, 101.2,ArTEMiS,Test User 4, 35F
+artemis_test_user_5,03756885,krusche+testuser_5@in.tum.de, 101.2,ArTEMiS,Test User 5, 26F
