@@ -16,7 +16,11 @@
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
         <div class="d-flex" *ngIf="!isImport && !programmingExercise.id">
             <div class="flex-grow-1 align-items-center">
-                <h4 *ngIf="!isImport && !programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">
+                <h4
+                    *ngIf="!isImport && !isImportFromFile && !programmingExercise.id"
+                    id="jhi-programming-exercise-heading-create"
+                    jhiTranslate="artemisApp.programmingExercise.home.generateLabel"
+                >
                     Generate new Programming Exercise
                 </h4>
                 <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
@@ -34,7 +38,9 @@
         <h4 *ngIf="!isImport && programmingExercise.id" id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel">
             Edit Programming Exercise
         </h4>
-        <h4 *ngIf="isImport" id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel">Import Programming Exercise</h4>
+        <h4 *ngIf="isImport || isImportFromFile" id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel">
+            Import Programming Exercise
+        </h4>
         <div class="update-programming-exercise">
             <div class="form-group" [hidden]="isImport || !programmingExercise.id">
                 <label for="id" jhiTranslate="global.field.id">ID</label>
