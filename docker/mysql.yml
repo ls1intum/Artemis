@@ -23,7 +23,7 @@ services:
         cap_add:
             - SYS_NICE  # CAP_SYS_NICE
         healthcheck:
-            test: mysqladmin ping -h localhost
+            test: mysqladmin ping -h 127.0.0.1 -u root --silent
             interval: 5s
             timeout: 3s
             retries: 30
