@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -8,6 +9,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/.well-known")
 public class AppleAppSiteAssociationResource {
+
+    @Value("${artemis.iosAppId}")
+    private String appId;
 
     /**
      * Provides the apple-app-site-association json content for the iOS client universal link feature.
@@ -18,7 +22,7 @@ public class AppleAppSiteAssociationResource {
     @GetMapping("/apple-app-site-association")
     public ResponseEntity<AppleAppSiteAssociation> getAppleAppSiteAssociation() {
         String[] paths = { "/courses/*" };
-        Detail detail = new Detail("6444123161.de.tum.cit.artemis", paths);
+        Detail detail = new Detail(appId, paths);
         Detail[] details = { detail };
         String[] apps = {};
         Applinks applinks = new Applinks(apps, details);

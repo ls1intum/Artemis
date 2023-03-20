@@ -34,6 +34,8 @@ artemis:
     external-system-request:
         batch-size: 50  # wait the time below after 50 requests
         batch-waiting-time: 30000   # in ms = 30s
+    iosAppId: "6444123161.de.tum.cit.artemis"
+
     continuous-integration:
         # Defines the used docker images for certain programming languages.
         # For each language at least the `default` image has to be defined.
