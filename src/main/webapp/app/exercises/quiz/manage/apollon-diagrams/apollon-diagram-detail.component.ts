@@ -81,9 +81,8 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
         this.languageHelper.language.subscribe(async (languageKey: string) => {
             if (this.apollonEditor) {
-                await addDelay(1500).then(() => {
-                    this.apollonEditor!.locale = languageKey as Locale;
-                });
+                await addDelay(2000);
+                this.apollonEditor.locale = languageKey as Locale;
             }
         });
     }
@@ -118,7 +117,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     /**
      * Saves the diagram
      */
-    async saveDiagram() {
+    saveDiagram() {
         if (!this.apollonDiagram) {
             return;
         }

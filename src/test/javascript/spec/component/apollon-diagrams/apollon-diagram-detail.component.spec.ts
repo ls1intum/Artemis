@@ -130,7 +130,7 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.apollonEditor!.selection = { elements: model.elements.map((element) => element.id), relationships: [] };
         fixture.detectChanges();
         // test
-        await addDelay(0).then(() => {
+        await addDelay(300).then(() => {
             fixture.componentInstance.downloadSelection().then(() => {
                 expect(window.URL.revokeObjectURL).toHaveBeenCalledOnce();
             });
