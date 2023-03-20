@@ -1,13 +1,16 @@
 import { TutorialGroupDetailComponent } from 'app/course/tutorial-groups/shared/tutorial-group-detail/tutorial-group-detail.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { Component, Input, ViewChild } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
 class MockHeaderComponent {
@@ -44,7 +47,15 @@ describe('TutorialGroupDetailWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [TutorialGroupDetailComponent, MockWrapperComponent, MockHeaderComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [NgbTooltipMocksModule],
+            declarations: [
+                TutorialGroupDetailComponent,
+                MockWrapperComponent,
+                MockHeaderComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FaIconComponent),
+                MockComponent(TutorialGroupUtilizationIndicatorComponent),
+            ],
             providers: [MockProvider(ArtemisMarkdownService), MockProvider(SortService)],
         })
             .compileComponents()
@@ -77,7 +88,8 @@ describe('TutorialGroupDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [TutorialGroupDetailComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [NgbTooltipMocksModule],
+            declarations: [TutorialGroupDetailComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(TutorialGroupUtilizationIndicatorComponent)],
             providers: [MockProvider(ArtemisMarkdownService), MockProvider(SortService)],
         })
             .compileComponents()
