@@ -174,11 +174,12 @@ describe('ApollonDiagramDetail Component', () => {
         const successSpy = jest.spyOn(alertService, 'success');
 
         // test
-        await addDelay(500);
-        await fixture.componentInstance.generateExercise();
-        expect(successSpy).toHaveBeenCalledOnce();
+        await addDelay(0);
+        await fixture.componentInstance.generateExercise().then(() => {
+            expect(successSpy).toHaveBeenCalledOnce();
 
-        // clear the set time interval
-        fixture.componentInstance.ngOnDestroy();
+            // clear the set time interval
+            fixture.componentInstance.ngOnDestroy();
+        });
     });
 });

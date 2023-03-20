@@ -81,7 +81,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
         this.languageHelper.language.subscribe(async (languageKey: string) => {
             if (this.apollonEditor) {
-                await addDelay(2000);
+                await addDelay(2500);
                 this.apollonEditor.locale = languageKey as Locale;
             }
         });
