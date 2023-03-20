@@ -140,7 +140,7 @@ describe('ApollonDiagramDetail Component', () => {
         });
     });
 
-    it('save', () => {
+    it('save', async () => {
         // setup
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         const updateStub = jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
@@ -153,15 +153,14 @@ describe('ApollonDiagramDetail Component', () => {
         expect(fixture.componentInstance.apollonEditor).toBeTruthy();
 
         // test
-        setTimeout(() => {
-            fixture.componentInstance.saveDiagram();
-            expect(updateStub).toHaveBeenCalledOnce();
-        });
+        await addDelay(100);
+        fixture.componentInstance.saveDiagram();
+        expect(updateStub).toHaveBeenCalledOnce();
         // clear the set time interval
         fixture.componentInstance.ngOnDestroy();
     });
 
-    it('generateExercise', () => {
+    it('generateExercise', async () => {
         // setup
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
@@ -171,19 +170,20 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.apollonDiagram = diagram;
 
         fixture.componentInstance.initializeApollonEditor(model);
-        setTimeout(() => {
-            fixture.detectChanges();
-            expect(fixture.componentInstance.apollonEditor).toBeTruthy();
-            const result = new Promise((resolve) => resolve(true));
-            jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance: fixture.componentInstance, result });
-            const successSpy = jest.spyOn(alertService, 'success');
+        fixture.detectChanges();
+        expect(fixture.componentInstance.apollonEditor).toBeTruthy();
+        const result = new Promise((resolve) => resolve(true));
+        jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance: fixture.componentInstance, result });
+        const successSpy = jest.spyOn(alertService, 'success');
 
-            // test
+        // test
+        await addDelay(300).then(() => {
             fixture.componentInstance.generateExercise().then(() => {
                 expect(successSpy).toHaveBeenCalledOnce();
             });
-            // clear the set time interval
-            fixture.componentInstance.ngOnDestroy();
         });
+
+        // clear the set time interval
+        fixture.componentInstance.ngOnDestroy();
     });
 });
