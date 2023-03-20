@@ -22,6 +22,7 @@ public class SingleUserNotificationFactory {
      * Creates an instance of SingleUserNotification.
      *
      * @param post             which is answered
+     * @param answerPost       that is replied with
      * @param notificationType type of the notification that should be created
      * @param course           that the post belongs to
      * @return an instance of SingleUserNotification

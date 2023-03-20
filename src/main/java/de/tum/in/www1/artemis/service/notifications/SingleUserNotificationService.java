@@ -107,8 +107,9 @@ public class SingleUserNotificationService {
     /**
      * Notify author of a post for an exercise that there is a new reply.
      *
-     * @param post   that is replied
-     * @param course that the post belongs to
+     * @param post          that is replied
+     * @param answerPost    that is replied with
+     * @param course        that the post belongs to
      */
     public void notifyUserAboutNewReplyForExercise(Post post, AnswerPost answerPost, Course course) {
         notifyRecipientWithNotificationType(Arrays.asList(post, answerPost), NEW_REPLY_FOR_EXERCISE_POST, course, post.getAuthor());
@@ -118,6 +119,7 @@ public class SingleUserNotificationService {
      * Notify author of a post for a lecture that there is a new reply.
      *
      * @param post   that is replied
+     * @param answerPost    that is replied with
      * @param course that the post belongs to
      */
     public void notifyUserAboutNewReplyForLecture(Post post, AnswerPost answerPost, Course course) {
@@ -129,6 +131,7 @@ public class SingleUserNotificationService {
      * Also creates and sends an email.
      *
      * @param post   that is replied
+     * @param answerPost    that is replied with
      * @param course that the post belongs to
      */
     public void notifyUserAboutNewReplyForCoursePost(Post post, AnswerPost answerPost, Course course) {
