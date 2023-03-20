@@ -7,17 +7,13 @@ import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { IssuesMap, ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { IssuesMap, ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { SubmissionPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.directive';
-import {
-    ProgrammingExerciseGradingService,
-    ProgrammingExerciseTestCaseUpdate,
-    StaticCodeAnalysisCategoryUpdate,
-} from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { ProgrammingExerciseGradingService, StaticCodeAnalysisCategoryUpdate } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
@@ -117,7 +113,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     maxIssuesPerCategory = 0;
 
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
-    testCaseVisibilityList = Object.entries(Visibility).map(([name, value]) => ({ value, name }));
 
     testCaseColors = {};
     categoryColors = {};
@@ -150,13 +145,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.testCasesValue = testCases;
         this.updateTestCaseFilter();
         this.updateTestPoints();
-    }
-
-    /**
-     * Returns the value of showInactive
-     */
-    get showInactive() {
-        return this.showInactiveValue;
     }
 
     /**
@@ -588,15 +576,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     }
 
     /**
-     * Makes inactive test cases grey.
-     *
-     * @param row
-     */
-    getRowClass(row: ProgrammingExerciseTestCase) {
-        return !row.active ? 'test-case--inactive' : '';
-    }
-
-    /**
      * Checks if there are unsaved test cases or there was no submission run after the test cases were changed.
      * Provides a fitting text for the confirm.
      */
@@ -618,14 +597,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         const parentUrl = this.router.url.substring(0, this.router.url.lastIndexOf('/'));
         this.location.replaceState(`${parentUrl}/${tab}`);
         this.activeTab = tab;
-    }
-
-    /**
-     * Get the stats for a specific test case
-     * @param testName The name of the test case
-     */
-    getTestCaseStats(testName: string): TestCaseStats | undefined {
-        return this.gradingStatistics?.testCaseStatsMap ? this.gradingStatistics.testCaseStatsMap[testName] : undefined;
     }
 
     /**
@@ -653,24 +624,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         }
         return propSort.dir === 'asc' ? faSortUp : faSortDown;
     }
-
-    /**
-     * Comparator function for the points of test-cases.
-     */
-    comparePoints = (_: any, __: any, rowA: ProgrammingExerciseTestCase, rowB: ProgrammingExerciseTestCase) => {
-        return this.testCasePoints[rowA.testName!] - this.testCasePoints[rowB.testName!];
-    };
-
-    /**
-     * Comparator function for the passed percentage of test-cases.
-     */
-    comparePassedPercent = (_: any, __: any, rowA: ProgrammingExerciseTestCase, rowB: ProgrammingExerciseTestCase) => {
-        const statsA = this.getTestCaseStats(rowA.testName!);
-        const statsB = this.getTestCaseStats(rowB.testName!);
-        const valA = (statsA?.numPassed ?? 0) - (statsA?.numFailed ?? 0);
-        const valB = (statsB?.numPassed ?? 0) - (statsB?.numFailed ?? 0);
-        return valA - valB;
-    };
 
     valForState = (s: StaticCodeAnalysisCategoryState) => (s === StaticCodeAnalysisCategoryState.Inactive ? 0 : s === StaticCodeAnalysisCategoryState.Feedback ? 1 : 2);
 
@@ -747,27 +700,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 }
             }),
         );
-    }
-
-    /**
-     * The sum of all test weights has to be at least zero.
-     * @param testCaseUpdates the changed test cases with not-yet-verified settings.
-     */
-    private isSumOfWeightsOk(testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): boolean {
-        return this.sumOfTestCaseWeights(testCaseUpdates) >= 0;
-    }
-
-    private sumOfTestCaseWeights(testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): number {
-        let weight = 0;
-        this.testCases.forEach((testCase) => {
-            const index = testCaseUpdates.findIndex((update) => testCase.id === update.id);
-            if (index !== -1) {
-                weight += testCaseUpdates[index].weight ?? 0;
-            } else {
-                weight += testCase.weight ?? 0;
-            }
-        });
-        return weight;
     }
 
     getEventValue(event: Event) {
