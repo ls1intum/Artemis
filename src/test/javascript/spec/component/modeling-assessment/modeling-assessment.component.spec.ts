@@ -2,7 +2,7 @@ import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { UMLDiagramType, UMLElement, UMLModel, UMLRelationship } from '@ls1intum/apollon';
+import { UMLDiagramType, UMLModel, UMLRelationship } from '@ls1intum/apollon';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
@@ -226,7 +226,7 @@ describe('ModelingAssessmentComponent', () => {
         comp.elementCounts = elementCounts;
         const spy = jest.spyOn(translatePipe, 'transform');
         fixture.detectChanges();
-        await addDelay(300);
+        await addDelay(0);
         for (let i = 0; i < elementCounts.length; i++) {
             expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: elementCounts[i].numberOfOtherElements });
         }
@@ -281,17 +281,15 @@ describe('ModelingAssessmentComponent', () => {
     it('should update highlighted elements', async () => {
         const highlightedElements = new Map();
         highlightedElements.set('elementId2', 'green');
-        let apollonModel: UMLModel;
-        let elements: UMLElement[];
         const changes = { highlightedElements: { currentValue: highlightedElements } as SimpleChange };
         comp.umlModel = mockModel;
         fixture.detectChanges();
         comp.highlightedElements = highlightedElements;
         comp.ngOnChanges(changes);
         expect(comp.apollonEditor).not.toBeNull();
-        await addDelay(100);
-        apollonModel = comp.apollonEditor!.model;
-        elements = apollonModel!.elements;
+        await addDelay(500);
+        const apollonModel = comp.apollonEditor!.model;
+        const elements = apollonModel!.elements;
         const highlightedElement = elements!.find((el) => el.id === 'elementId2');
         const notHighlightedElement = elements!.find((el) => el.id === 'elementId1');
         const relationship = apollonModel!.relationships[0];
