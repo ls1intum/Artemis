@@ -247,6 +247,7 @@ export class BonusComponent implements OnInit {
         } else if (bonusStrategyOption === BonusStrategyOption.GRADES) {
             switch (bonusStrategyDiscreteness) {
                 case BonusStrategyDiscreteness.CONTINUOUS:
+                case undefined: // undefined case also returns GRADES_CONTINUOUS because GRADES_DISCRETE is not implemented yet.
                     return BonusStrategy.GRADES_CONTINUOUS;
                 case BonusStrategyDiscreteness.DISCRETE:
                     return BonusStrategy.GRADES_DISCRETE;
