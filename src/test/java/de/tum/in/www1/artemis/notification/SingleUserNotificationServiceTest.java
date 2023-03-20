@@ -119,6 +119,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         answerPostPost.setCourse(course);
         answerPost = new AnswerPost();
         answerPost.setPost(new Post());
+        answerPost.setAuthor(user);
 
         PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission = new PlagiarismSubmission<>();
         plagiarismSubmission.setStudentLogin(user.getLogin());
