@@ -11,6 +11,7 @@ import { ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entitie
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService, ProgrammingExerciseTestCaseUpdate } from '../../services/programming-exercise-grading.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { map } from 'rxjs/operators';
 
 @Injectable()
 export class ProgrammingExerciseTaskService {
@@ -30,13 +31,13 @@ export class ProgrammingExerciseTaskService {
         return this.tasks.flatMap((task) => task.testCases);
     }
 
-    public configure(exercise: ProgrammingExercise, course: Course, gradingStatistics: ProgrammingExerciseGradingStatistics) {
+    public configure(exercise: ProgrammingExercise, course: Course, gradingStatistics: ProgrammingExerciseGradingStatistics): Observable<ProgrammingExerciseTask[]> {
         this.exercise = exercise;
         this.course = course;
         this.gradingStatistics = gradingStatistics;
 
         this.maxPoints = this.exercise.maxPoints ?? 0;
-        this.initializeTasks();
+        return this.initializeTasks();
     }
 
     /**
@@ -107,17 +108,21 @@ export class ProgrammingExerciseTaskService {
         );
     }
 
-    private initializeTasks = () => {
-        this.getTasksByExercise(this.exercise).subscribe((serverSideTasks) => {
-            this.tasks = serverSideTasks.map((task) => task as ProgrammingExerciseTask);
+    private initializeTasks = (): Observable<ProgrammingExerciseTask[]> => {
+        return this.getTasksByExercise(this.exercise).pipe(
+            map((serverSideTasks) => {
+                this.tasks = serverSideTasks.map((task) => task as ProgrammingExerciseTask);
 
-            // configureTestCases needs tasks to be set be to be able to use the testCases getter
-            this.tasks = this.tasks.map(this.configureTestCases).map(this.updateTask);
-            this.totalWeights = sum(this.tasks.map((task) => task.weight ?? 0));
+                // configureTestCases needs tasks to be set be to be able to use the testCases getter
+                this.tasks = this.tasks.map(this.configureTestCases).map(this.updateTask);
+                this.totalWeights = sum(this.tasks.map((task) => task.weight ?? 0));
 
-            // Task points need to be updated again here since weight is not available before
-            this.tasks = this.tasks.map(this.updateTaskPoints).map(this.addGradingStats);
-        });
+                // Task points need to be updated again here since weight is not available before
+                this.tasks = this.tasks.map(this.updateTaskPoints).map(this.addGradingStats);
+
+                return this.tasks;
+            }),
+        );
     };
 
     private getTasksByExercise = (exercise: Exercise): Observable<ProgrammingExerciseServerSideTask[]> => {

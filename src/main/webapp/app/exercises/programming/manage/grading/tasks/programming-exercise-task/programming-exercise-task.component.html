@@ -67,7 +67,7 @@
     </div>
 
     <div *ngIf="open" class="task__body">
-        <div *ngFor="let test of task.testCases" class="task__row">
+        <div *ngFor="let test of task.testCases" class="task__row" [class.bg-secondary]="!test.active">
             <div class="task__row__cell">
                 <span class="task__field ps-3">{{ test.testName }}</span>
             </div>

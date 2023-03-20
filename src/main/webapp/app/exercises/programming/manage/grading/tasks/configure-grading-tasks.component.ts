@@ -4,6 +4,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { ProgrammingExerciseTask } from './programming-exercise-task';
 
 @Component({
     selector: 'jhi-configure-grading-task',
@@ -18,15 +19,31 @@ export class ConfigureGradingTasksComponent implements OnInit {
 
     faQuestionCircle = faQuestionCircle;
     isSaving = false;
+    tasks: ProgrammingExerciseTask[];
+    showInactiveTestCases = false;
 
     constructor(private taskService: ProgrammingExerciseTaskService) {}
 
-    get tasks() {
-        return this.taskService.tasks;
+    ngOnInit(): void {
+        this.taskService.configure(this.exercise, this.course, this.gradingStatistics).subscribe((tasks) => {
+            this.tasks = tasks;
+        });
     }
 
-    ngOnInit(): void {
-        this.taskService.configure(this.exercise, this.course, this.gradingStatistics);
+    updateTasks() {
+        this.tasks = this.taskService.tasks;
+
+        if (!this.showInactiveTestCases) {
+            this.tasks = this.tasks.filter((task) => {
+                task.testCases = task.testCases.filter((test) => test.active);
+                return task.testCases.length;
+            });
+        }
+    }
+
+    toggleShowInactiveTestsShown() {
+        this.showInactiveTestCases = !this.showInactiveTestCases;
+        this.updateTasks();
     }
 
     saveTestCases() {
