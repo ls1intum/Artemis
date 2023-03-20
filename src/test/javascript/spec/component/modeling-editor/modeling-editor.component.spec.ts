@@ -63,9 +63,10 @@ describe('ModelingEditorComponent', () => {
         const editor: ApollonEditor = component['apollonEditor'] as ApollonEditor;
         // Check that editor exists
         expect(editor).toBeDefined();
-        await addDelay(0);
-        // check that editor contains elements of our model (direct equality check won't work somehow due to missing properties)
-        expect(editor.model.elements.map((e) => e.id)).toEqual(classDiagram.elements.map((e) => e.id));
+        await addDelay(500).then(() => {
+            // check that editor contains elements of our model (direct equality check won't work somehow due to missing properties)
+            expect(editor.model.elements.map((e) => e.id)).toEqual(classDiagram.elements.map((e) => e.id));
+        });
     });
 
     it('ngOnDestroy', () => {
@@ -252,24 +253,25 @@ describe('ModelingEditorComponent', () => {
         let updateSpyCallCount = 0;
         let currentUmlName = personUML.name;
 
-        await addDelay(100);
-        subject.next(currentUmlName);
-        expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
-        updateSpyCallCount++;
-        expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
+        await addDelay(500).then(() => {
+            subject.next(currentUmlName);
+            expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
+            updateSpyCallCount++;
+            expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
 
-        currentUmlName = studentUML.name;
-        subject.next(currentUmlName);
-        expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
+            currentUmlName = studentUML.name;
+            subject.next(currentUmlName);
+            expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
 
-        updateSpyCallCount++;
-        expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
+            updateSpyCallCount++;
+            expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
 
-        currentUmlName = associationUML.name;
-        subject.next(currentUmlName);
-        expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
+            currentUmlName = associationUML.name;
+            subject.next(currentUmlName);
+            expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
 
-        updateSpyCallCount++;
-        expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
+            updateSpyCallCount++;
+            expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
+        });
     });
 });

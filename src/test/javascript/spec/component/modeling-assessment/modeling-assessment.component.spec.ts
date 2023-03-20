@@ -226,10 +226,11 @@ describe('ModelingAssessmentComponent', () => {
         comp.elementCounts = elementCounts;
         const spy = jest.spyOn(translatePipe, 'transform');
         fixture.detectChanges();
-        await addDelay(0);
-        for (let i = 0; i < elementCounts.length; i++) {
-            expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: elementCounts[i].numberOfOtherElements });
-        }
+        await addDelay(500).then(() => {
+            for (let i = 0; i < elementCounts.length; i++) {
+                expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: elementCounts[i].numberOfOtherElements });
+            }
+        });
 
         expect(spy).toHaveBeenCalledTimes(elementCounts.length);
     });
@@ -254,18 +255,19 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
         expect(comp.apollonEditor).not.toBeNull();
 
-        await addDelay(500);
-        const apollonModel = comp.apollonEditor!.model;
-        const elements = apollonModel.elements;
-        const highlightedElement = elements!.find((el) => el.id === 'elementId1');
-        const notHighlightedElement = elements!.find((el) => el.id === 'elementId2');
-        const relationship = apollonModel!.relationships[0];
-        expect(highlightedElement).not.toBeNull();
-        expect(highlightedElement!.highlight).toBe('red');
-        expect(notHighlightedElement).not.toBeNull();
-        expect(notHighlightedElement!.highlight).toBeUndefined();
-        expect(relationship).not.toBeNull();
-        expect(relationship!.highlight).toBe('blue');
+        await addDelay(500).then(() => {
+            const apollonModel = comp.apollonEditor!.model;
+            const elements = apollonModel.elements;
+            const highlightedElement = elements!.find((el) => el.id === 'elementId1');
+            const notHighlightedElement = elements!.find((el) => el.id === 'elementId2');
+            const relationship = apollonModel!.relationships[0];
+            expect(highlightedElement).not.toBeNull();
+            expect(highlightedElement!.highlight).toBe('red');
+            expect(notHighlightedElement).not.toBeNull();
+            expect(notHighlightedElement!.highlight).toBeUndefined();
+            expect(relationship).not.toBeNull();
+            expect(relationship!.highlight).toBe('blue');
+        });
     });
 
     it('should update model', async () => {
@@ -273,9 +275,10 @@ describe('ModelingAssessmentComponent', () => {
         const changes = { model: { currentValue: newModel } as SimpleChange };
         fixture.detectChanges();
         const apollonSpy = jest.spyOn(comp.apollonEditor!, 'model', 'set');
-        await addDelay(0);
-        comp.ngOnChanges(changes);
-        expect(apollonSpy).toHaveBeenCalledWith(newModel);
+        await addDelay(500).then(() => {
+            comp.ngOnChanges(changes);
+            expect(apollonSpy).toHaveBeenCalledWith(newModel);
+        });
     });
 
     it('should update highlighted elements', async () => {
@@ -287,20 +290,21 @@ describe('ModelingAssessmentComponent', () => {
         comp.highlightedElements = highlightedElements;
         comp.ngOnChanges(changes);
         expect(comp.apollonEditor).not.toBeNull();
-        await addDelay(500);
-        const apollonModel = comp.apollonEditor!.model;
-        const elements = apollonModel!.elements;
-        const highlightedElement = elements!.find((el) => el.id === 'elementId2');
-        const notHighlightedElement = elements!.find((el) => el.id === 'elementId1');
-        const relationship = apollonModel!.relationships[0];
+        await addDelay(500).then(() => {
+            const apollonModel = comp.apollonEditor!.model;
+            const elements = apollonModel!.elements;
+            const highlightedElement = elements!.find((el) => el.id === 'elementId2');
+            const notHighlightedElement = elements!.find((el) => el.id === 'elementId1');
+            const relationship = apollonModel!.relationships[0];
 
-        expect(highlightedElement).not.toBeNull();
-        expect(highlightedElement!.highlight).toBe('green');
-        expect(notHighlightedElement).not.toBeNull();
-        expect(notHighlightedElement!.highlight).toBeUndefined();
-        expect(relationship).not.toBeNull();
-        expect(relationship!.highlight).toBeUndefined();
-        expect(relationship!.highlight).toBeUndefined();
+            expect(highlightedElement).not.toBeNull();
+            expect(highlightedElement!.highlight).toBe('green');
+            expect(notHighlightedElement).not.toBeNull();
+            expect(notHighlightedElement!.highlight).toBeUndefined();
+            expect(relationship).not.toBeNull();
+            expect(relationship!.highlight).toBeUndefined();
+            expect(relationship!.highlight).toBeUndefined();
+        });
     });
 
     it('should update highlighted assessments first round', async () => {
@@ -313,12 +317,13 @@ describe('ModelingAssessmentComponent', () => {
         jest.spyOn(translatePipe, 'transform').mockReturnValue('Second correction round');
         comp.ngOnChanges(changes);
         expect(comp.apollonEditor).not.toBeNull();
-        await addDelay(500);
-        const apollonModel = comp.apollonEditor!.model;
-        const assessments: any = apollonModel.assessments;
-        expect(assessments[0].labelColor).toEqual(comp.secondCorrectionRoundColor);
-        expect(assessments[0].label).toBe('Second correction round');
-        expect(assessments[0].score).toBe(30);
+        await addDelay(500).then(() => {
+            const apollonModel = comp.apollonEditor!.model;
+            const assessments: any = apollonModel.assessments;
+            expect(assessments[0].labelColor).toEqual(comp.secondCorrectionRoundColor);
+            expect(assessments[0].label).toBe('Second correction round');
+            expect(assessments[0].score).toBe(30);
+        });
     });
 
     it('should update highlighted assessments', async () => {
@@ -334,12 +339,13 @@ describe('ModelingAssessmentComponent', () => {
         comp.ngOnChanges(changes);
         expect(comp.apollonEditor).not.toBeNull();
 
-        await addDelay(500);
-        const apollonModel = comp.apollonEditor!.model;
-        const assessments: any = apollonModel.assessments;
-        expect(assessments[0].labelColor).toEqual(comp.firstCorrectionRoundColor);
-        expect(assessments[0].label).toBe('First correction round');
-        expect(assessments[0].score).toBe(35);
+        await addDelay(500).then(() => {
+            const apollonModel = comp.apollonEditor!.model;
+            const assessments: any = apollonModel.assessments;
+            expect(assessments[0].labelColor).toEqual(comp.firstCorrectionRoundColor);
+            expect(assessments[0].label).toBe('First correction round');
+            expect(assessments[0].score).toBe(35);
+        });
     });
 
     it('should update feedbacks', () => {
