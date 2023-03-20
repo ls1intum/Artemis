@@ -230,9 +230,8 @@ describe('ModelingAssessmentComponent', () => {
             for (let i = 0; i < elementCounts.length; i++) {
                 expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: elementCounts[i].numberOfOtherElements });
             }
+            expect(spy).toHaveBeenCalledTimes(elementCounts.length);
         });
-
-        expect(spy).toHaveBeenCalledTimes(elementCounts.length);
     });
 
     it('should generate feedback from assessment', () => {

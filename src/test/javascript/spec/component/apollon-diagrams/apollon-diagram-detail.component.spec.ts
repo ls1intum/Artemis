@@ -1,5 +1,5 @@
 import { Course } from 'app/entities/course.model';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
@@ -93,7 +93,7 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.editorContainer = new ElementRef(div);
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         jest.spyOn(apollonDiagramService, 'find').mockReturnValue(of(response));
-        await addDelay(0);
+        // await addDelay(500);
         fixture.componentInstance.ngOnInit();
         expect(div.children).toHaveLength(0);
 
@@ -107,16 +107,14 @@ describe('ApollonDiagramDetail Component', () => {
         expect(clearInterval).toHaveBeenCalledWith(fixture.componentInstance.autoSaveInterval);
     });
 
-    it('initializeApollonEditor', fakeAsync(() => {
+    it('initializeApollonEditor', () => {
         const div = document.createElement('div');
         fixture.componentInstance.editorContainer = new ElementRef(div);
         fixture.componentInstance.apollonDiagram = diagram;
 
         fixture.componentInstance.initializeApollonEditor(model);
-        tick(500);
         expect(fixture.componentInstance.apollonEditor).toBeTruthy();
-        flush();
-    }));
+    });
 
     it('downloadSelection', async () => {
         const div = document.createElement('div');
@@ -153,7 +151,7 @@ describe('ApollonDiagramDetail Component', () => {
 
         // test
         await addDelay(500);
-        fixture.componentInstance.saveDiagram();
+        await fixture.componentInstance.saveDiagram();
         expect(updateStub).toHaveBeenCalledOnce();
         // clear the set time interval
         fixture.componentInstance.ngOnDestroy();
@@ -176,7 +174,7 @@ describe('ApollonDiagramDetail Component', () => {
         const successSpy = jest.spyOn(alertService, 'success');
 
         // test
-        await addDelay(0);
+        await addDelay(500);
         await fixture.componentInstance.generateExercise();
         expect(successSpy).toHaveBeenCalledOnce();
 
