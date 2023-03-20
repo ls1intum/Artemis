@@ -201,7 +201,8 @@ public class GroupNotificationFactory {
                 Exercise exercise = post.getExercise();
                 title = NEW_EXERCISE_POST_TITLE;
                 text = NEW_EXERCISE_POST_TEXT;
-                placeholderValues = new String[] { exercise.getTitle(), course.getTitle(), author.getName(), post.getTitle(), post.getContent(), post.getCreationDate().toString() };
+                placeholderValues = new String[] { exercise.getTitle(), course.getTitle(), author.getName(), post.getTitle(), post.getContent(),
+                        post.getCreationDate().toString() };
                 notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
                 notification.setTransientAndStringTarget(createExercisePostTarget(post, course));
             }
@@ -243,7 +244,8 @@ public class GroupNotificationFactory {
      * @param course                the post belongs to
      * @return an instance of GroupNotification
      */
-    public static GroupNotification createNotification(Post post, AnswerPost answerPost, User author, GroupNotificationType groupNotificationType, NotificationType notificationType, Course course) {
+    public static GroupNotification createNotification(Post post, AnswerPost answerPost, User author, GroupNotificationType groupNotificationType,
+            NotificationType notificationType, Course course) {
         String title;
         String text;
         String[] placeholderValues;
@@ -253,8 +255,8 @@ public class GroupNotificationFactory {
                 Exercise exercise = post.getExercise();
                 title = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
                 text = NEW_REPLY_FOR_EXERCISE_POST_TEXT;
-                placeholderValues = new String[] { exercise.getTitle(), course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(), post.getCreationDate().toString(),
-                    answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
+                placeholderValues = new String[] { exercise.getTitle(), course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(),
+                        post.getCreationDate().toString(), answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
                 notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
                 notification.setTransientAndStringTarget(createExercisePostTarget(post, course));
             }
@@ -262,8 +264,8 @@ public class GroupNotificationFactory {
                 Lecture lecture = post.getLecture();
                 title = NEW_REPLY_FOR_LECTURE_POST_TITLE;
                 text = NEW_REPLY_FOR_LECTURE_POST_TEXT;
-                placeholderValues = new String[] { lecture.getTitle(), course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(), post.getCreationDate().toString(),
-                    answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
+                placeholderValues = new String[] { lecture.getTitle(), course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(),
+                        post.getCreationDate().toString(), answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
                 notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
                 notification.setTransientAndStringTarget(createLecturePostTarget(post, course));
             }
@@ -271,7 +273,7 @@ public class GroupNotificationFactory {
                 title = NEW_REPLY_FOR_COURSE_POST_TITLE;
                 text = NEW_REPLY_FOR_COURSE_POST_TEXT;
                 placeholderValues = new String[] { course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(), post.getCreationDate().toString(),
-                    answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
+                        answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
                 notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
                 notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
             }

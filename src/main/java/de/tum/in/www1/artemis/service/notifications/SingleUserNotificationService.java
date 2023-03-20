@@ -10,14 +10,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.domain.metis.Posting;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.Posting;
 import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -65,8 +65,7 @@ public class SingleUserNotificationService {
         var singleUserNotification = switch (notificationType) {
             // Post Types
             case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) ((List<Posting>) notificationSubject).get(0),
-                (AnswerPost) ((List<Posting>) notificationSubject).get(1), notificationType,
-                    (Course) typeSpecificInformation);
+                    (AnswerPost) ((List<Posting>) notificationSubject).get(1), notificationType, (Course) typeSpecificInformation);
             // Exercise related
             case EXERCISE_SUBMISSION_ASSESSED, FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, (User) typeSpecificInformation);
             // Plagiarism related

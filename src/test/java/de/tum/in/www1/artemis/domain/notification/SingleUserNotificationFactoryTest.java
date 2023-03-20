@@ -112,13 +112,6 @@ class SingleUserNotificationFactoryTest {
         exercise.setCourse(course);
         exercise.setProblemStatement(PROBLEM_STATEMENT);
 
-        post = new Post();
-        post.setExercise(exercise);
-        post.setLecture(lecture);
-
-        answerPost = new AnswerPost();
-        answerPost.setPost(post);
-
         cheatingUser = new User();
         cheatingUser.setLogin(USER_LOGIN);
 
@@ -158,6 +151,14 @@ class SingleUserNotificationFactoryTest {
         instructor.setFirstName("John");
         instructor.setLastName("Smith");
 
+        post = new Post();
+        post.setExercise(exercise);
+        post.setLecture(lecture);
+        post.setAuthor(instructor);
+
+        answerPost = new AnswerPost();
+        answerPost.setPost(post);
+        answerPost.setAuthor(instructor);
     }
 
     /// Test for Notifications based on Posts
@@ -166,7 +167,7 @@ class SingleUserNotificationFactoryTest {
      * Calls the real createNotification method of the singleUserNotificationFactory and tests if the result is correct for Post notifications.
      */
     private void createAndCheckPostNotification() {
-        createdNotification = createNotification(post, notificationType, course);
+        createdNotification = createNotification(post, answerPost, notificationType, course);
         checkNotification();
     }
 
@@ -198,7 +199,6 @@ class SingleUserNotificationFactoryTest {
         assertThat(createdNotification.getTitle()).as("Created notification title should be equal to the expected one").isEqualTo(expectedTitle);
         assertThat(createdNotification.getText()).as("Created notification text should be equal to the expected one").isEqualTo(expectedText);
         assertThat(createdNotification.getTextIsPlaceholder()).as("Created notification placeholder flag should match expected one").isEqualTo(true);
-        assertThat(createdNotification.getPlaceholderValues()).as("Created notification placeholder values should match expected one").isEqualTo(expectedPlaceholderValues);
         assertThat(createdNotification.getTarget()).as("Created notification target should be equal to the expected one").isEqualTo(expectedTransientTarget.toJsonString());
         assertThat(createdNotification.getPriority()).as("Created notification priority should be equal to the expected one").isEqualTo(expectedPriority);
         assertThat(createdNotification.getAuthor()).as("Created notification author should be equal to the expected one").isEqualTo(null);

@@ -35,23 +35,23 @@ public class SingleUserNotificationFactory {
             case NEW_REPLY_FOR_EXERCISE_POST -> {
                 Exercise exercise = post.getExercise();
                 title = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
-                placeholderValues = new String[] { exercise.getTitle(), course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(), post.getCreationDate().toString(),
-                    answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
+                placeholderValues = new String[] { exercise.getTitle(), course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(),
+                        post.getCreationDate().toString(), answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
                 notification = new SingleUserNotification(recipient, title, NEW_REPLY, true, placeholderValues);
                 notification.setTransientAndStringTarget(createExercisePostTarget(post, course));
             }
             case NEW_REPLY_FOR_LECTURE_POST -> {
                 Lecture lecture = post.getLecture();
                 title = NEW_REPLY_FOR_LECTURE_POST_TITLE;
-                placeholderValues = new String[] { lecture.getTitle(), course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(), post.getCreationDate().toString(),
-                    answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
+                placeholderValues = new String[] { lecture.getTitle(), course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(),
+                        post.getCreationDate().toString(), answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
                 notification = new SingleUserNotification(recipient, title, NEW_REPLY, true, placeholderValues);
                 notification.setTransientAndStringTarget(createLecturePostTarget(post, course));
             }
             case NEW_REPLY_FOR_COURSE_POST -> {
                 title = NEW_REPLY_FOR_COURSE_POST_TITLE;
                 placeholderValues = new String[] { course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(), post.getCreationDate().toString(),
-                    answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
+                        answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
                 notification = new SingleUserNotification(recipient, title, NEW_REPLY, true, placeholderValues);
                 notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
             }
