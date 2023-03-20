@@ -8,8 +8,10 @@ import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
@@ -24,24 +26,33 @@ public class SingleUserNotificationFactory {
      * @param course           that the post belongs to
      * @return an instance of SingleUserNotification
      */
-    public static SingleUserNotification createNotification(Post post, NotificationType notificationType, Course course) {
+    public static SingleUserNotification createNotification(Post post, AnswerPost answerPost, NotificationType notificationType, Course course) {
         User recipient = post.getAuthor();
         String title;
+        String[] placeholderValues;
         SingleUserNotification notification;
         switch (notificationType) {
             case NEW_REPLY_FOR_EXERCISE_POST -> {
+                Exercise exercise = post.getExercise();
                 title = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
-                notification = new SingleUserNotification(recipient, title, NEW_REPLY, true, null);
+                placeholderValues = new String[] { exercise.getTitle(), course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(), post.getCreationDate().toString(),
+                    answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
+                notification = new SingleUserNotification(recipient, title, NEW_REPLY, true, placeholderValues);
                 notification.setTransientAndStringTarget(createExercisePostTarget(post, course));
             }
             case NEW_REPLY_FOR_LECTURE_POST -> {
+                Lecture lecture = post.getLecture();
                 title = NEW_REPLY_FOR_LECTURE_POST_TITLE;
-                notification = new SingleUserNotification(recipient, title, NEW_REPLY, true, null);
+                placeholderValues = new String[] { lecture.getTitle(), course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(), post.getCreationDate().toString(),
+                    answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
+                notification = new SingleUserNotification(recipient, title, NEW_REPLY, true, placeholderValues);
                 notification.setTransientAndStringTarget(createLecturePostTarget(post, course));
             }
             case NEW_REPLY_FOR_COURSE_POST -> {
                 title = NEW_REPLY_FOR_COURSE_POST_TITLE;
-                notification = new SingleUserNotification(recipient, title, NEW_REPLY, true, null);
+                placeholderValues = new String[] { course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(), post.getCreationDate().toString(),
+                    answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
+                notification = new SingleUserNotification(recipient, title, NEW_REPLY, true, placeholderValues);
                 notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);

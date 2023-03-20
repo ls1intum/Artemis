@@ -5,9 +5,13 @@ import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationF
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.Posting;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -60,7 +64,8 @@ public class SingleUserNotificationService {
     private void notifyRecipientWithNotificationType(Object notificationSubject, NotificationType notificationType, Object typeSpecificInformation, User author) {
         var singleUserNotification = switch (notificationType) {
             // Post Types
-            case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) notificationSubject, notificationType,
+            case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) ((List<Posting>) notificationSubject).get(0),
+                (AnswerPost) ((List<Posting>) notificationSubject).get(1), notificationType,
                     (Course) typeSpecificInformation);
             // Exercise related
             case EXERCISE_SUBMISSION_ASSESSED, FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, (User) typeSpecificInformation);
@@ -106,8 +111,8 @@ public class SingleUserNotificationService {
      * @param post   that is replied
      * @param course that the post belongs to
      */
-    public void notifyUserAboutNewReplyForExercise(Post post, Course course) {
-        notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_EXERCISE_POST, course, post.getAuthor());
+    public void notifyUserAboutNewReplyForExercise(Post post, AnswerPost answerPost, Course course) {
+        notifyRecipientWithNotificationType(Arrays.asList(post, answerPost), NEW_REPLY_FOR_EXERCISE_POST, course, post.getAuthor());
     }
 
     /**
@@ -116,8 +121,8 @@ public class SingleUserNotificationService {
      * @param post   that is replied
      * @param course that the post belongs to
      */
-    public void notifyUserAboutNewReplyForLecture(Post post, Course course) {
-        notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_LECTURE_POST, course, post.getAuthor());
+    public void notifyUserAboutNewReplyForLecture(Post post, AnswerPost answerPost, Course course) {
+        notifyRecipientWithNotificationType(Arrays.asList(post, answerPost), NEW_REPLY_FOR_LECTURE_POST, course, post.getAuthor());
     }
 
     /**
@@ -127,8 +132,8 @@ public class SingleUserNotificationService {
      * @param post   that is replied
      * @param course that the post belongs to
      */
-    public void notifyUserAboutNewReplyForCoursePost(Post post, Course course) {
-        notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_COURSE_POST, course, post.getAuthor());
+    public void notifyUserAboutNewReplyForCoursePost(Post post, AnswerPost answerPost, Course course) {
+        notifyRecipientWithNotificationType(Arrays.asList(post, answerPost), NEW_REPLY_FOR_COURSE_POST, course, post.getAuthor());
     }
 
     /**
