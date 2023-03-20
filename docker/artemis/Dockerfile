@@ -1,3 +1,21 @@
+#-----------------------------------------------------------------------------------------------------------------------
+# Artemis Dockerfile
+#-----------------------------------------------------------------------------------------------------------------------
+# Possible ways to build the Docker Image (assuming you are located in the project root direcotry):
+#
+# using Docker Compose (no cache and pulling latest base images):
+# cd docker && docker compose build --no-cache --pull artemis-app
+#
+# using Docker Compose with an external .war file (no cache and pulling latest base images):
+# cd docker && docker compose build --build-arg WAR_FILE_STAGE=external_builder --no-cache --pull artemis-app
+#
+# using Docker (no cache):
+# docker build . -f ./docker/artemis/Dockerfile -t ghcr.io/ls1intum/artemis:latest --no-cache
+#
+# using Docker with an external .war file (no cache):
+# docker build --build-arg WAR_FILE_STAGE=external_builder . -f ./docker/artemis/Dockerfile -t ghcr.io/ls1intum/artemis:latest  --no-cache
+#-----------------------------------------------------------------------------------------------------------------------
+
 # defines the default .war file build stage (options: builder, external_builder)
 ARG WAR_FILE_STAGE="builder"
 
