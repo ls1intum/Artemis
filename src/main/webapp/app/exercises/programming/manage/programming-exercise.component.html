@@ -63,6 +63,9 @@
                     <th class="d-md-table-cell" jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
                     </th>
+                    <th class="d-md-table-cell">
+                        <span jhiTranslate="artemisApp.exercise.categories">Categories</span>
+                    </th>
                     <th></th>
                 </tr>
             </thead>
@@ -155,6 +158,11 @@
                         </div>
                     </td>
                     <td class="d-md-table-cell" *ngIf="course.presentationScore !== 0">{{ programmingExercise.presentationScoreEnabled }}</td>
+                    <td class="d-md-table-cell">
+                        <h5 class="fw-medium mb-1" *ngFor="let category of programmingExercise.categories">
+                            <span class="badge text-white" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
+                        </h5>
+                    </td>
                     <td *jhiExtensionPoint="overrideButtons; context: { exercise: programmingExercise }" class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical me-1 mb-1">
