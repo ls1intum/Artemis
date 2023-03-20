@@ -9,6 +9,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
 import { OrionProgrammingExerciseComponent } from 'app/orion/management/orion-programming-exercise.component';
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
+import { ExerciseCategoriesModule } from 'app/exercises/shared/exercise-categories/exercise-categories.module';
 
 @NgModule({
     imports: [
@@ -20,6 +21,7 @@ import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/as
         ArtemisProgrammingExerciseGradingModule,
         ArtemisExerciseScoresModule,
         ArtemisProgrammingAssessmentModule,
+        ExerciseCategoriesModule,
     ],
     declarations: [ProgrammingExerciseComponent, OrionProgrammingExerciseComponent],
     exports: [ProgrammingExerciseComponent, OrionProgrammingExerciseComponent],
