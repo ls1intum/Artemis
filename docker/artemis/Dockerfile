@@ -17,14 +17,12 @@ RUN ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar
 #-----------------------------------------------------------------------------------------------------------------------
 FROM docker.io/library/alpine:3 as external_builder
 
-#default import path of the externally built .war file (./build/libs for IDE builds, . for bamboo)
-ARG WAR_FILE_IMPORT_PATH=.
 #default path of the built .war files
 ARG WAR_FILE_PATH="/opt/artemis/build/libs"
 
 # transfer the .war file from the current directory to the default WAR_FILE_PATH
 WORKDIR ${WAR_FILE_PATH}
-COPY ${WAR_FILE_IMPORT_PATH}/*.war Artemis.war
+COPY ./build/libs/*.war Artemis.war
 
 #-----------------------------------------------------------------------------------------------------------------------
 # war file stage (decides whether an external .war file will be used or the Docker built .war file)
