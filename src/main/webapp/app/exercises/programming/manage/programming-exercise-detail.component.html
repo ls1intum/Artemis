@@ -50,10 +50,6 @@
                     <jhi-external-submission *ngIf="programmingExercise.isAtLeastInstructor" [exercise]="programmingExercise" class="me-1"> </jhi-external-submission>
                 </div>
                 <div>
-                    <a *ngIf="programmingExercise.isAtLeastEditor" [routerLink]="baseResource + 'submissions'" class="btn btn-success btn-sm me-1" style="margin-bottom: 10px">
-                        <fa-icon [icon]="faBook"></fa-icon>
-                        <span jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
-                    </a>
                     <a *ngIf="programmingExercise.isAtLeastTutor" [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
                         <fa-icon [icon]="faListAlt"></fa-icon>
                         <span jhiTranslate="artemisApp.exercise.participations">Participations</span>

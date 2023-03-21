@@ -96,14 +96,6 @@
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                             </a>
                             <a
-                                *ngIf="fileUploadExercise.isAtLeastInstructor"
-                                [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'submissions']"
-                                class="btn btn-success btn-sm me-1"
-                            >
-                                <fa-icon [icon]="faBook"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
-                            </a>
-                            <a
                                 *ngIf="fileUploadExercise.teamMode && fileUploadExercise.isAtLeastTutor"
                                 [routerLink]="['/course-management', courseId, 'exercises', fileUploadExercise.id, 'teams']"
                                 class="btn btn-primary btn-sm me-1"

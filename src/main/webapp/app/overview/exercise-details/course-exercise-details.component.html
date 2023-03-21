@@ -70,15 +70,6 @@
                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
                     </a>
                     <ng-container *ngIf="exercise.isAtLeastEditor">
-                        <!-- Actions for Editors and Instructors -->
-                        <a
-                            *ngIf="exercise.type !== QUIZ && (exercise.isAtLeastInstructor || exercise.type === PROGRAMMING)"
-                            [routerLink]="baseResource + 'submissions'"
-                            class="btn btn-success btn-sm"
-                        >
-                            <fa-icon [icon]="faBook"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
-                        </a>
                         <a *ngIf="exercise.type === QUIZ" [routerLink]="baseResource + 'quiz-point-statistic'" class="btn btn-info btn-sm">
                             <fa-icon [icon]="faSignal"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics">Statistics</span>
