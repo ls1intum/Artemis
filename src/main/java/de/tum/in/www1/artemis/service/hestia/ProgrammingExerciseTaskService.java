@@ -120,6 +120,13 @@ public class ProgrammingExerciseTaskService {
                 .filter(Objects::nonNull).toList();
     }
 
+    /**
+     * Gets all tasks of an exercise including the test cases assigned to those tasks.
+     * Additionally, adds a new task for all test cases with no manually assigned task and adds all tests to that task
+     *
+     * @param exerciseId of the programming exercise
+     * @return Set of all tasks including one for not manually assigned tests
+     */
     public Set<ProgrammingExerciseTask> getTasksWithUnassignedTestCases(long exerciseId) {
         Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
 
