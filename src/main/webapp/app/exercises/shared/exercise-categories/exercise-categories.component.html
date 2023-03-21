@@ -1,3 +1,19 @@
-<h5 class="fw-medium mb-1" *ngFor="let category of exercise.categories">
-    <span class="badge text-white" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
-</h5>
+<h4 class="fw-medium me-1 mb-1" *ngIf="exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs()) && shouldShowNotReleasedTag">
+    <a [routerLink]="['/courses', exercise.course?.id, 'exercises', exercise.id!]">
+        <span class="badge bg-warning badge-tooltip" [ngbTooltip]="translatedNotReleasedTooltip + (exercise.releaseDate | artemisDate)">{{ translatedNotReleased }}</span>
+    </a>
+</h4>
+<h4 class="fw-medium me-1 mb-1" *ngIf="asQuizExercise(exercise).isActiveQuiz && shouldShowQuizLiveTag">
+    <span class="badge bg-success">{{ 'artemisApp.courseOverview.exerciseList.live' | artemisTranslate }}</span>
+</h4>
+<h4 class="fw-medium me-1 mb-1" *ngFor="let category of exercise.categories">
+    <span class="badge" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
+</h4>
+<h4 class="fw-medium me-1 mb-1" *ngIf="exercise.difficulty && shouldShowDifficultyTag">
+    <span class="badge" [ngClass]="difficultyBadgeClass">{{ translatedDifficulty }}</span>
+</h4>
+<h4 class="fw-medium me-1 mb-1" *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY && shouldShowIncludedInScoreBadge">
+    <a [routerLink]="['/courses', exercise.course?.id, 'exercises', exercise.id!]">
+        <span class="badge badge-tooltip" [ngClass]="includedAsBonusClass" [ngbTooltip]="translatedIncludedAsBonusTooltip">{{ translatedIncludedAsBonus }}</span>
+    </a>
+</h4>
