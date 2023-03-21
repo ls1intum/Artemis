@@ -5,7 +5,6 @@
             <div class="col-auto">
                 <label class="form-label" for="period">{{ 'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate }}</label>
                 <div class="input-group">
-                    <input formControlName="period" [owlDateTime]="period" class="d-none" [selectMode]="'range'" />
                     <input
                         name="period"
                         id="period"
@@ -17,6 +16,7 @@
                         readonly
                         class="form-control"
                     />
+                    <input formControlName="period" [owlDateTime]="period" class="date-time-picker-anchor" [selectMode]="'range'" />
                     <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="period">
                         <fa-icon [icon]="faCalendarAlt"></fa-icon>
                     </button>

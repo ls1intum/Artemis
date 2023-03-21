@@ -12,6 +12,7 @@ export interface TutorialGroupsConfigurationFormData {
 @Component({
     selector: 'jhi-tutorial-groups-configuration-form',
     templateUrl: './tutorial-groups-configuration-form.component.html',
+    styleUrls: ['./tutorial-groups-configuration-form.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChanges {
