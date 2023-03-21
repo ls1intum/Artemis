@@ -30,16 +30,16 @@ export class ProgrammingExerciseTaskService {
     constructor(private http: HttpClient, private alertService: AlertService, private gradingService: ProgrammingExerciseGradingService) {}
 
     public getTasks(): ProgrammingExerciseTask[] {
+        const tasks = this.tasks.map((task) => ({ ...task }));
+
         if (this.ignoreInactive) {
-            return this.tasks
-                .map((task) => ({ ...task }))
-                .filter((task) => {
-                    task.testCases = task.testCases.filter((test) => test.active);
-                    return task.testCases.length;
-                });
+            return tasks.filter((task) => {
+                task.testCases = task.testCases.filter((test) => test.active);
+                return task.testCases.length;
+            });
         }
 
-        return this.tasks;
+        return tasks;
     }
 
     get testCases(): ProgrammingExerciseTestCase[] {
