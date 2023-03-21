@@ -56,13 +56,13 @@ export class CourseUpdateComponent implements OnInit {
     customizeGroupNames = false; // default value
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
+    isAdmin = false;
     // Icons
     faSave = faSave;
     faBan = faBan;
     faTimes = faTimes;
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
-    isAllowedToChangeOrganizations = false;
 
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
     // This is the maximum value allowed in our database. These values must be the same as in Constants.java
@@ -212,7 +212,7 @@ export class CourseUpdateComponent implements OnInit {
                 }
             });
 
-        this.isAllowedToChangeOrganizations = this.accountService.isAdmin();
+        this.isAdmin = this.accountService.isAdmin();
     }
     tzResultFormatter = (timeZone: string) => timeZone;
     tzInputFormatter = (timeZone: string) => timeZone;

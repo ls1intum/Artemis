@@ -497,13 +497,13 @@ describe('Course Management Update Component', () => {
         it('should allow adding / removing organizations if admin', () => {
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
             fixture.detectChanges();
-            expect(comp.isAllowedToChangeOrganizations).toBeTrue();
+            expect(comp.isAdmin).toBeTrue();
         });
 
         it('should not allow adding / removing organizations if not admin', () => {
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
             fixture.detectChanges();
-            expect(comp.isAllowedToChangeOrganizations).toBeFalse();
+            expect(comp.isAdmin).toBeFalse();
         });
     });
 });
