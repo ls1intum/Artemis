@@ -244,8 +244,8 @@ public class ProgrammingExerciseTestCase extends DomainObject {
      */
     public boolean isSuccessful(Result result) {
         return result.getFeedbacks().stream().anyMatch(feedback -> {
-            boolean testNameAreSame = feedback.getText() != null && feedback.getText().equalsIgnoreCase(this.getTestName());
-            return testNameAreSame && Boolean.TRUE.equals(feedback.isPositive());
+            boolean testsAreSame = this.equals(feedback.getTestCase());
+            return testsAreSame && Boolean.TRUE.equals(feedback.isPositive());
         });
     }
 
@@ -257,7 +257,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
      */
     public boolean wasNotExecuted(Result result) {
         return result.getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC)
-                .noneMatch(feedback -> feedback.getText() != null && feedback.getText().equalsIgnoreCase(this.getTestName()));
+                .noneMatch(feedback -> feedback.getTestCase() != null && feedback.getTestCase().equals(this));
     }
 
 }
