@@ -506,6 +506,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.connected,
                 this.examMonitoringGloballyEnabled,
             );
+
+            // Reset the visited pages array
+            this.pageComponentVisited = new Array(this.studentExam.exercises.length).fill(false);
+            this.pageComponentVisited[this.exerciseIndex] = true;
         }
     }
 
