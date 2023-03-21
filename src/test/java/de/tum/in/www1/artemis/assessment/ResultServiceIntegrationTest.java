@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.assessment;
 
+import static de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService.DEFAULT_FILEPATH;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
@@ -151,7 +152,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 issue.setFilePath(pathWithoutWorkingDir);
             }
         }
-        var staticCodeAnalysisFeedback1 = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(resultNotification1.getBuild().jobs().get(0).staticCodeAnalysisReports());
+        var staticCodeAnalysisFeedback1 = continuousIntegrationService
+                .createFeedbackFromStaticCodeAnalysisReports(resultNotification1.getBuild().jobs().get(0).staticCodeAnalysisReports());
 
         for (var feedback : staticCodeAnalysisFeedback1) {
             JSONObject issueJSON = new JSONObject(feedback.getDetailText());
@@ -176,12 +178,12 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 }
             }
         }
-        final var staticCodeAnalysisFeedback2 = feedbackRepository
+        final var staticCodeAnalysisFeedback2 = continuousIntegrationService
                 .createFeedbackFromStaticCodeAnalysisReports(resultNotification2.getBuild().jobs().get(0).staticCodeAnalysisReports());
 
         for (var feedback : staticCodeAnalysisFeedback2) {
             JSONObject issueJSON = new JSONObject(feedback.getDetailText());
-            assertThat(FeedbackRepository.DEFAULT_FILEPATH).isEqualTo(issueJSON.get("filePath"));
+            assertThat(issueJSON.get("filePath")).isEqualTo(DEFAULT_FILEPATH);
         }
     }
 

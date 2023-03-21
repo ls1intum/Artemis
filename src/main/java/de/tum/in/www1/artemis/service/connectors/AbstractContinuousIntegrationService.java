@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS;
+
 import java.net.URL;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -13,14 +16,15 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
@@ -30,9 +34,12 @@ import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 public abstract class AbstractContinuousIntegrationService implements ContinuousIntegrationService {
+
+    public static final String DEFAULT_FILEPATH = "notAvailable";
 
     private static final Pattern JVM_RESULT_MESSAGE_MATCHER = prepareJVMResultMessageMatcher(
             List.of("java.lang.AssertionError", "org.opentest4j.AssertionFailedError", "de.tum.in.test.api.util.UnexpectedExceptionError"));
@@ -226,10 +233,76 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
     private void addStaticCodeAnalysisFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise programmingExercise) {
         final var staticCodeAnalysisReports = buildResult.getStaticCodeAnalysisReports();
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
-            var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
+            List<Feedback> scaFeedbackList = createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
             result.addFeedbacks(scaFeedbackList);
             result.setCodeIssueCount(scaFeedbackList.size());
         }
+    }
+
+    /**
+     * Transforms static code analysis reports to feedback objects.
+     * As we reuse the Feedback entity to store static code analysis findings, a mapping to those attributes
+     * has to be defined, violating the first normal form.
+     *
+     * Mapping:
+     * - text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER
+     * - reference: Tool
+     * - detailText: Issue object as JSON
+     *
+     * @param reports Static code analysis reports to be transformed
+     * @return Feedback objects representing the static code analysis findings
+     */
+    public List<Feedback> createFeedbackFromStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> reports) {
+        ObjectMapper mapper = new ObjectMapper();
+        List<Feedback> feedbackList = new ArrayList<>();
+        for (final var report : reports) {
+            StaticCodeAnalysisTool tool = report.getTool();
+
+            for (final var issue : report.getIssues()) {
+                // Remove CI specific path segments
+                issue.setFilePath(removeCIDirectoriesFromPath(issue.getFilePath()));
+
+                if (issue.getMessage() != null) {
+                    // Note: the feedback detail text is limited to 5.000 characters, so we limit the issue message to 4.500 characters to avoid issues
+                    // the remaining 500 characters are used for the json structure of the issue
+                    int maxLength = Math.min(issue.getMessage().length(), FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS - 500);
+                    issue.setMessage(issue.getMessage().substring(0, maxLength));
+                }
+
+                Feedback feedback = new Feedback();
+                feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER);
+                feedback.setReference(tool.name());
+                feedback.setType(FeedbackType.AUTOMATIC);
+                feedback.setPositive(false);
+
+                // Store static code analysis in JSON format
+                try {
+                    feedback.setDetailText(mapper.writeValueAsString(issue));
+                }
+                catch (JsonProcessingException e) {
+                    continue;
+                }
+                feedbackList.add(feedback);
+            }
+        }
+        return feedbackList;
+    }
+
+    /**
+     * Removes CI specific path segments. Uses the assignment directory to decide where to cut the path.
+     *
+     * @param sourcePath Path to be shortened
+     * @return Shortened path if it contains an assignment directory, otherwise the full path
+     */
+    private String removeCIDirectoriesFromPath(String sourcePath) {
+        if (sourcePath == null || sourcePath.isEmpty()) {
+            return DEFAULT_FILEPATH;
+        }
+        int workingDirectoryStart = sourcePath.indexOf(Constants.ASSIGNMENT_DIRECTORY);
+        if (workingDirectoryStart == -1) {
+            return sourcePath;
+        }
+        return sourcePath.substring(workingDirectoryStart + Constants.ASSIGNMENT_DIRECTORY.length());
     }
 
     private void addTestwiseCoverageReportToResult(Result result, AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise programmingExercise) {
