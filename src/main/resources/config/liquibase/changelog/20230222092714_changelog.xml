@@ -4,7 +4,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
     <changeSet author="danielbode" id="20230222092714">
         <addColumn tableName="notification">
-            <column name="text_is_placeholder" type="bit(1)" afterColumn="title" defaultValue="false">
+            <column name="text_is_placeholder" type="boolean" afterColumn="title" defaultValue="false">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
