@@ -23,7 +23,7 @@ public class TutorialGroupNotificationFactory {
 
             case TUTORIAL_GROUP_UPDATED -> text = TUTORIAL_GROUP_UPDATED_TEXT;
         }
-        var placeholderValues = new String[] { tutorialGroup.getTitle() };
+        var placeholderValues = new String[] { tutorialGroup.getCourse().getTitle(), tutorialGroup.getTitle() };
         var notification = new TutorialGroupNotification(tutorialGroup, title, text, true, placeholderValues, notificationType);
         setNotificationTarget(notification);
         return notification;
@@ -39,7 +39,7 @@ public class TutorialGroupNotificationFactory {
      */
     public static TutorialGroupNotification createTutorialGroupNotification(TutorialGroup tutorialGroup, NotificationType notificationType, String notificationText) {
         var title = findCorrespondingNotificationTitleOrThrow(notificationType);
-        var notification = new TutorialGroupNotification(tutorialGroup, title, notificationText, false, null, notificationType);
+        var notification = new TutorialGroupNotification(tutorialGroup, title, notificationText, false, new String[] { tutorialGroup.getCourse().getTitle() }, notificationType);
         setNotificationTarget(notification);
         return notification;
     }

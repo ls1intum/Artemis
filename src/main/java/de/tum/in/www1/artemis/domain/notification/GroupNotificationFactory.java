@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.EXERCISE_UPDATED_TEXT;
 
+import java.util.Arrays;
 import java.util.List;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import org.apache.commons.lang3.ArrayUtils;
 
 public class GroupNotificationFactory {
 
@@ -89,32 +91,32 @@ public class GroupNotificationFactory {
                 title = EXERCISE_RELEASED_TITLE;
                 text = NotificationConstants.EXERCISE_RELEASED_TEXT;
                 textIsPlaceholder = true;
-                placeholderValues = new String[] { exercise.getTitle() };
+                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
             }
             case EXERCISE_PRACTICE -> {
                 title = EXERCISE_PRACTICE_TITLE;
                 text = EXERCISE_PRACTICE_TEXT;
                 textIsPlaceholder = true;
-                placeholderValues = new String[] { exercise.getTitle() };
+                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
             }
             case QUIZ_EXERCISE_STARTED -> {
                 title = QUIZ_EXERCISE_STARTED_TITLE;
                 text = QUIZ_EXERCISE_STARTED_TEXT;
                 textIsPlaceholder = true;
-                placeholderValues = new String[] { exercise.getTitle() };
+                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
             }
             case EXERCISE_UPDATED -> {
                 if (exercise.isExamExercise()) {
                     title = LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
                     text = LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TEXT;
                     textIsPlaceholder = true;
-                    placeholderValues = new String[] { exercise.getTitle() };
+                    placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
                 }
                 else {
                     title = EXERCISE_UPDATED_TITLE;
                     text = NotificationConstants.EXERCISE_UPDATED_TEXT;
                     textIsPlaceholder = true;
-                    placeholderValues = new String[] { exercise.getTitle() };
+                    placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
                 }
             }
             case PROGRAMMING_TEST_CASES_CHANGED -> {
@@ -133,14 +135,14 @@ public class GroupNotificationFactory {
                 title = DUPLICATE_TEST_CASE_TITLE;
                 text = notificationText;
                 textIsPlaceholder = false;
-                placeholderValues = null;
+                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle() };
                 priority = HIGH;
             }
             case ILLEGAL_SUBMISSION -> {
                 title = ILLEGAL_SUBMISSION_TITLE;
                 text = ILLEGAL_SUBMISSION_TEXT;
                 textIsPlaceholder = true;
-                placeholderValues = new String[] { exercise.getTitle() };
+                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
                 priority = HIGH;
             }
 
@@ -152,7 +154,7 @@ public class GroupNotificationFactory {
         if (notificationText != null || LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(title)) {
             text = notificationText;
             textIsPlaceholder = false;
-            placeholderValues = null;
+            placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle() };
         }
 
         GroupNotification notification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), title, text, textIsPlaceholder, placeholderValues, author,
@@ -201,8 +203,7 @@ public class GroupNotificationFactory {
                 Exercise exercise = post.getExercise();
                 title = NEW_EXERCISE_POST_TITLE;
                 text = NEW_EXERCISE_POST_TEXT;
-                placeholderValues = new String[] { exercise.getTitle(), course.getTitle(), author.getName(), post.getTitle(), post.getContent(),
-                        post.getCreationDate().toString() };
+                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), exercise.getTitle());
                 notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
                 notification.setTransientAndStringTarget(createExercisePostTarget(post, course));
             }
@@ -210,21 +211,21 @@ public class GroupNotificationFactory {
                 Lecture lecture = post.getLecture();
                 title = NEW_LECTURE_POST_TITLE;
                 text = NEW_LECTURE_POST_TEXT;
-                placeholderValues = new String[] { lecture.getTitle(), course.getTitle(), author.getName(), post.getTitle(), post.getContent(), post.getCreationDate().toString() };
+                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), lecture.getTitle());
                 notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
                 notification.setTransientAndStringTarget(createLecturePostTarget(post, course));
             }
             case NEW_COURSE_POST -> {
                 title = NEW_COURSE_POST_TITLE;
                 text = NEW_COURSE_POST_TEXT;
-                placeholderValues = new String[] { course.getTitle(), author.getName(), post.getTitle(), post.getContent(), post.getCreationDate().toString() };
+                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post));
                 notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
                 notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
             }
             case NEW_ANNOUNCEMENT_POST -> {
                 title = NEW_ANNOUNCEMENT_POST_TITLE;
                 text = NEW_ANNOUNCEMENT_POST_TEXT;
-                placeholderValues = new String[] { course.getTitle(), course.getTitle(), author.getName(), post.getTitle(), post.getContent(), post.getCreationDate().toString() };
+                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post));
                 notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
                 notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
             }
@@ -250,13 +251,13 @@ public class GroupNotificationFactory {
         String text;
         String[] placeholderValues;
         GroupNotification notification;
+
         switch (notificationType) {
             case NEW_REPLY_FOR_EXERCISE_POST -> {
                 Exercise exercise = post.getExercise();
                 title = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
                 text = NEW_REPLY_FOR_EXERCISE_POST_TEXT;
-                placeholderValues = new String[] { exercise.getTitle(), course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(),
-                        post.getCreationDate().toString(), answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
+                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotificationsWithAnswers(course, post, answerPost), exercise.getTitle());
                 notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
                 notification.setTransientAndStringTarget(createExercisePostTarget(post, course));
             }
@@ -264,22 +265,28 @@ public class GroupNotificationFactory {
                 Lecture lecture = post.getLecture();
                 title = NEW_REPLY_FOR_LECTURE_POST_TITLE;
                 text = NEW_REPLY_FOR_LECTURE_POST_TEXT;
-                placeholderValues = new String[] { lecture.getTitle(), course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(),
-                        post.getCreationDate().toString(), answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
+                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotificationsWithAnswers(course, post, answerPost), lecture.getTitle());
                 notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
                 notification.setTransientAndStringTarget(createLecturePostTarget(post, course));
             }
             case NEW_REPLY_FOR_COURSE_POST -> {
                 title = NEW_REPLY_FOR_COURSE_POST_TITLE;
                 text = NEW_REPLY_FOR_COURSE_POST_TEXT;
-                placeholderValues = new String[] { course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(), post.getCreationDate().toString(),
-                        answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
+                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotificationsWithAnswers(course, post, answerPost));
                 notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
                 notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
         return notification;
+    }
+
+    private static String[] generatePlaceholderValuesForMessageNotifications(Course course, Post post) {
+        return new String[] { course.getTitle(), post.getTitle(), post.getContent(), post.getCreationDate().toString(), post.getAuthor().getName() };
+    }
+
+    private static String[] generatePlaceholderValuesForMessageNotificationsWithAnswers(Course course, Post post, AnswerPost answerPost) {
+        return ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), answerPost.getContent(), answerPost.getCreationDate().toString(), answerPost.getAuthor().getName());
     }
 
     /**
@@ -311,13 +318,13 @@ public class GroupNotificationFactory {
                 }
                 else {
                     text = COURSE_ARCHIVE_FINISHED_WITH_ERRORS_TEXT;
-                    placeholderValues = new String[] { course.getTitle(), String.join("<br/><br/>", archiveErrors) };
+                    placeholderValues = new String[] { course.getTitle(), String.join(", ", archiveErrors) };
                 }
             }
             case COURSE_ARCHIVE_FAILED -> {
                 title = COURSE_ARCHIVE_FAILED_TITLE;
                 text = COURSE_ARCHIVE_FAILED_TEXT;
-                placeholderValues = new String[] { course.getTitle(), String.join("<br/><br/>", archiveErrors) };
+                placeholderValues = new String[] { course.getTitle(), String.join(", ", archiveErrors) };
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
@@ -346,23 +353,23 @@ public class GroupNotificationFactory {
             case EXAM_ARCHIVE_STARTED -> {
                 title = EXAM_ARCHIVE_STARTED_TITLE;
                 text = EXAM_ARCHIVE_STARTED_TEXT;
-                placeholderValues = new String[] { exam.getTitle() };
+                placeholderValues = new String[] { exam.getCourse().getTitle(), exam.getTitle() };
             }
             case EXAM_ARCHIVE_FINISHED -> {
                 title = EXAM_ARCHIVE_FINISHED_TITLE;
                 if (archiveErrors.isEmpty()) {
                     text = EXAM_ARCHIVE_FINISHED_WITHOUT_ERRORS_TEXT;
-                    placeholderValues = new String[] { exam.getTitle() };
+                    placeholderValues = new String[] { exam.getCourse().getTitle(), exam.getTitle() };
                 }
                 else {
                     text = EXAM_ARCHIVE_FINISHED_WITH_ERRORS_TEXT;
-                    placeholderValues = new String[] { exam.getTitle(), String.join("<br/><br/>", archiveErrors) };
+                    placeholderValues = new String[] { exam.getCourse().getTitle(), exam.getTitle(), String.join(", ", archiveErrors) };
                 }
             }
             case EXAM_ARCHIVE_FAILED -> {
                 title = EXAM_ARCHIVE_FAILED_TITLE;
                 text = EXAM_ARCHIVE_FAILED_TEXT;
-                placeholderValues = new String[] { exam.getTitle(), String.join("<br/><br/>", archiveErrors) };
+                placeholderValues = new String[] { exam.getCourse().getTitle(), exam.getTitle(), String.join(", ", archiveErrors) };
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }

@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
+import org.apache.commons.lang3.ArrayUtils;
 
 public class SingleUserNotificationFactory {
 
@@ -36,23 +37,20 @@ public class SingleUserNotificationFactory {
             case NEW_REPLY_FOR_EXERCISE_POST -> {
                 Exercise exercise = post.getExercise();
                 title = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
-                placeholderValues = new String[] { exercise.getTitle(), course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(),
-                        post.getCreationDate().toString(), answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
+                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotificationsWithAnswers(course, post, answerPost), exercise.getTitle());
                 notification = new SingleUserNotification(recipient, title, NEW_REPLY, true, placeholderValues);
                 notification.setTransientAndStringTarget(createExercisePostTarget(post, course));
             }
             case NEW_REPLY_FOR_LECTURE_POST -> {
                 Lecture lecture = post.getLecture();
                 title = NEW_REPLY_FOR_LECTURE_POST_TITLE;
-                placeholderValues = new String[] { lecture.getTitle(), course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(),
-                        post.getCreationDate().toString(), answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
+                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotificationsWithAnswers(course, post, answerPost), lecture.getTitle());
                 notification = new SingleUserNotification(recipient, title, NEW_REPLY, true, placeholderValues);
                 notification.setTransientAndStringTarget(createLecturePostTarget(post, course));
             }
             case NEW_REPLY_FOR_COURSE_POST -> {
                 title = NEW_REPLY_FOR_COURSE_POST_TITLE;
-                placeholderValues = new String[] { course.getTitle(), post.getAuthor().getName(), post.getTitle(), post.getContent(), post.getCreationDate().toString(),
-                        answerPost.getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString() };
+                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotificationsWithAnswers(course, post, answerPost));
                 notification = new SingleUserNotification(recipient, title, NEW_REPLY, true, placeholderValues);
                 notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
             }
@@ -60,6 +58,15 @@ public class SingleUserNotificationFactory {
         }
         return notification;
     }
+
+    private static String[] generatePlaceholderValuesForMessageNotifications(Course course, Post post) {
+        return new String[] { course.getTitle(), post.getTitle(), post.getContent(), post.getCreationDate().toString(), post.getAuthor().getName() };
+    }
+
+    private static String[] generatePlaceholderValuesForMessageNotificationsWithAnswers(Course course, Post post, AnswerPost answerPost) {
+        return ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), answerPost.getContent(), answerPost.getCreationDate().toString(), answerPost.getAuthor().getName());
+    }
+
 
     /**
      * Creates an instance of SingleUserNotification.
@@ -78,12 +85,12 @@ public class SingleUserNotificationFactory {
             case EXERCISE_SUBMISSION_ASSESSED -> {
                 title = EXERCISE_SUBMISSION_ASSESSED_TITLE;
                 notificationText = EXERCISE_SUBMISSION_ASSESSED_TEXT;
-                placeholderValues = new String[] { exercise.getExerciseType().getExerciseTypeAsReadableString(), exercise.getTitle() };
+                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getExerciseType().getExerciseTypeAsReadableString(), exercise.getTitle() };
             }
             case FILE_SUBMISSION_SUCCESSFUL -> {
                 title = FILE_SUBMISSION_SUCCESSFUL_TITLE;
                 notificationText = FILE_SUBMISSION_SUCCESSFUL_TEXT;
-                placeholderValues = new String[] { exercise.getTitle() };
+                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
@@ -113,12 +120,12 @@ public class SingleUserNotificationFactory {
             case NEW_PLAGIARISM_CASE_STUDENT -> {
                 title = NEW_PLAGIARISM_CASE_STUDENT_TITLE;
                 notificationText = NEW_PLAGIARISM_CASE_STUDENT_TEXT;
-                placeholderValues = new String[] { affectedExercise.getExerciseType().toString().toLowerCase(), affectedExercise.getTitle() };
+                placeholderValues = new String[] { affectedExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), affectedExercise.getExerciseType().toString().toLowerCase(), affectedExercise.getTitle() };
             }
             case PLAGIARISM_CASE_VERDICT_STUDENT -> {
                 title = PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;
                 notificationText = PLAGIARISM_CASE_VERDICT_STUDENT_TEXT;
-                placeholderValues = new String[] { affectedExercise.getExerciseType().toString().toLowerCase(), affectedExercise.getTitle() };
+                placeholderValues = new String[] { affectedExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), affectedExercise.getExerciseType().toString().toLowerCase(), affectedExercise.getTitle() };
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
@@ -151,13 +158,13 @@ public class SingleUserNotificationFactory {
             case TUTORIAL_GROUP_REGISTRATION_STUDENT -> {
                 var student = users.stream().findAny().orElseThrow();
                 notification = new SingleUserNotification(student, title, TUTORIAL_GROUP_REGISTRATION_STUDENT_TEXT, true,
-                        new String[] { tutorialGroup.getTitle(), responsibleForAction.getName() });
+                        new String[] { tutorialGroup.getCourse().getTitle(), tutorialGroup.getTitle(), responsibleForAction.getName() });
                 notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), false, true));
             }
             case TUTORIAL_GROUP_DEREGISTRATION_STUDENT -> {
                 var student = users.stream().findAny().orElseThrow();
                 notification = new SingleUserNotification(student, title, TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TEXT, true,
-                        new String[] { tutorialGroup.getTitle(), responsibleForAction.getName() });
+                        new String[] { tutorialGroup.getCourse().getTitle(), tutorialGroup.getTitle(), responsibleForAction.getName() });
                 notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), false, true));
             }
             case TUTORIAL_GROUP_REGISTRATION_TUTOR -> {
@@ -168,7 +175,7 @@ public class SingleUserNotificationFactory {
                 var studentName = student.isPresent() ? student.get().getName() : "";
 
                 notification = new SingleUserNotification(tutorialGroup.getTeachingAssistant(), title, TUTORIAL_GROUP_REGISTRATION_TUTOR_TEXT, true,
-                        new String[] { studentName, tutorialGroup.getTitle(), responsibleForAction.getName() });
+                        new String[] { tutorialGroup.getCourse().getTitle(), studentName, tutorialGroup.getTitle(), responsibleForAction.getName() });
                 notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true, true));
             }
             case TUTORIAL_GROUP_DEREGISTRATION_TUTOR -> {
@@ -180,7 +187,7 @@ public class SingleUserNotificationFactory {
                 var studentName = student.isPresent() ? student.get().getName() : "";
 
                 notification = new SingleUserNotification(tutorialGroup.getTeachingAssistant(), title, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TEXT, true,
-                        new String[] { studentName, tutorialGroup.getTitle(), responsibleForAction.getName() });
+                        new String[] { tutorialGroup.getCourse().getTitle(), studentName, tutorialGroup.getTitle(), responsibleForAction.getName() });
                 notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true, true));
             }
             case TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR -> {
@@ -188,20 +195,20 @@ public class SingleUserNotificationFactory {
                     throw new IllegalArgumentException("The tutorial group " + tutorialGroup.getTitle() + " does not have a tutor to which a notification could be sent.");
                 }
                 notification = new SingleUserNotification(tutorialGroup.getTeachingAssistant(), title, TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TEXT, true,
-                        new String[] { Integer.toString(users.size()), tutorialGroup.getTitle(), responsibleForAction.getName() });
+                        new String[] { tutorialGroup.getCourse().getTitle(), Integer.toString(users.size()), tutorialGroup.getTitle(), responsibleForAction.getName() });
 
                 notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true, true));
             }
             case TUTORIAL_GROUP_ASSIGNED -> {
                 var tutorToContact = users.stream().findAny().get();
                 notification = new SingleUserNotification(tutorToContact, title, TUTORIAL_GROUP_ASSIGNED_TEXT, true,
-                        new String[] { tutorialGroup.getTitle(), responsibleForAction.getName() });
+                        new String[] { tutorialGroup.getCourse().getTitle(), tutorialGroup.getTitle(), responsibleForAction.getName() });
                 notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true, true));
             }
             case TUTORIAL_GROUP_UNASSIGNED -> {
                 var tutorToContact = users.stream().findAny().get();
                 notification = new SingleUserNotification(tutorToContact, title, TUTORIAL_GROUP_UNASSIGNED_TEXT, true,
-                        new String[] { tutorialGroup.getTitle(), responsibleForAction.getName() });
+                        new String[] { tutorialGroup.getCourse().getTitle(), tutorialGroup.getTitle(), responsibleForAction.getName() });
                 notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true, true));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
