@@ -77,13 +77,13 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
                     this.alertService.error('artemisApp.apollonDiagram.detail.error.loading');
                 },
             });
-        });
 
-        this.languageHelper.language.subscribe(async (languageKey: string) => {
-            if (this.apollonEditor) {
-                await addDelay(2500);
-                this.apollonEditor.locale = languageKey as Locale;
-            }
+            this.languageHelper.language.subscribe(async (languageKey: string) => {
+                if (this.apollonEditor) {
+                    await addDelay(0);
+                    this.apollonEditor.locale = languageKey as Locale;
+                }
+            });
         });
     }
 
