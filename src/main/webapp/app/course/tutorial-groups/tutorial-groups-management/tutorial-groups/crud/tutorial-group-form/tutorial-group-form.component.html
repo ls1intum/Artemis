@@ -101,15 +101,28 @@
                     </div>
                 </div>
             </div>
-            <!--Language -->
+            <!-- Language -->
             <div class="form-group">
-                <label class="d-block">{{ 'artemisApp.forms.tutorialGroupForm.languageInput.label' | artemisTranslate }}</label>
-                <div class="btn-group" role="group">
-                    <input formControlName="language" type="radio" class="btn-check" id="german" autocomplete="off" checked [value]="GERMAN" />
-                    <label class="btn btn-secondary" for="german">{{ 'artemisApp.generic.german' | artemisTranslate }}</label>
-
-                    <input formControlName="language" type="radio" class="btn-check" id="english" autocomplete="off" [value]="ENGLISH" />
-                    <label class="btn btn-secondary" for="english">{{ 'artemisApp.generic.english' | artemisTranslate }}</label>
+                <label for="language">{{ 'artemisApp.forms.tutorialGroupForm.languageInput.label' | artemisTranslate }}</label>
+                <input
+                    id="language"
+                    type="text"
+                    class="form-control"
+                    formControlName="language"
+                    [placeholder]="'artemisApp.forms.tutorialGroupForm.languageInput.placeholder' | artemisTranslate"
+                    [inputFormatter]="languageFormatter"
+                    [resultFormatter]="languageFormatter"
+                    [ngbTypeahead]="languageSearch"
+                    [editable]="true"
+                    #languageInput="ngbTypeahead"
+                    (focus)="languageFocus$.next($any($event).target.value)"
+                    (click)="languageClick$.next($any($event).target.value)"
+                />
+                <small id="languageHelp" class="form-text text-muted">{{ 'artemisApp.forms.tutorialGroupForm.languageInput.languageHelp' | artemisTranslate }}</small>
+                <div *ngIf="languageControl?.invalid && (languageControl?.dirty || languageControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="languageControl?.errors?.max">
+                        {{ 'artemisApp.forms.tutorialGroupForm.languageInput.maxLengthValidationError' | artemisTranslate : { max: '255' } }}
+                    </div>
                 </div>
             </div>
             <!-- Validation Errors for the smaller input from above-->

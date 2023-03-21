@@ -117,9 +117,12 @@
             <span>{{ 'artemisApp.entities.tutorialGroup.language' | artemisTranslate }}</span>
         </dt>
         <dd>
-            <span *ngIf="tutorialGroup.language">
-                {{ (tutorialGroup.language === GERMAN ? 'artemisApp.generic.german' : 'artemisApp.generic.english') | artemisTranslate }}
-            </span>
+            <ng-container *ngIf="tutorialGroup.language; else noLanguage">
+                <span>{{ tutorialGroup.language }}</span>
+            </ng-container>
+            <ng-template #noLanguage>
+                <span>{{ '' }}</span>
+            </ng-template>
         </dd>
         <!-- Campus -->
         <dt>

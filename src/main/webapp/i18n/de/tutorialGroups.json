@@ -112,7 +112,11 @@
                 },
                 "languageInput": {
                     "label": "Sprache",
-                    "placeholder": "Wähle eine Sprache"
+                    "placeholder": "Wähle eine Sprache",
+                    "loadingText": "Sprachen laden ...",
+                    "notFoundText": "Keine Sprachen gefunden.",
+                    "languageHelp": "In das Feld tippen um nach einer Sprache zu suchen.",
+                    "maxLengthValidationError": "Die Sprache ist auf {{ max }} Zeichen beschränkt!"
                 },
                 "isOnlineInput": {
                     "label": "Trifft sich sich diese Übungsgruppe online oder offline?"
