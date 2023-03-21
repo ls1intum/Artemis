@@ -507,9 +507,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.examMonitoringGloballyEnabled,
             );
 
-            // Reset the visited pages array
-            this.pageComponentVisited = new Array(this.studentExam.exercises.length).fill(false);
-            this.pageComponentVisited[this.exerciseIndex] = true;
+            // Reset the visited pages array so ngOnInit will be called for only the active page
+            this.resetPageComponentVisited(this.exerciseIndex);
         }
     }
 
@@ -672,6 +671,19 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onActivate();
+        }
+    }
+
+    /**
+     * Resets the pageComponentVisited array by setting all elements to false, and then sets the element
+     * at the specified activePageIndex to true, if provided and within the array bounds.
+     *
+     * @param {number} activePageIndex - The index of the currently active exercise page in the pageComponentVisited array.
+     */
+    private resetPageComponentVisited(activePageIndex: number) {
+        this.pageComponentVisited = this.pageComponentVisited.fill(false);
+        if (activePageIndex >= 0) {
+            this.pageComponentVisited[activePageIndex] = true;
         }
     }
 
