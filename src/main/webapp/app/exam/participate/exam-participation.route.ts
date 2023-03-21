@@ -13,7 +13,6 @@ export const examParticipationRoute: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.exam.title',
-            reuse: true,
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],
