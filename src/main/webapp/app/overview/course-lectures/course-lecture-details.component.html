@@ -19,7 +19,7 @@
                     </span>
                 </h4>
             </div>
-            <div class="col-auto d-flex align-items-center" *ngIf="!!this.lecture?.course?.isAtLeastTutor">
+            <div class="col-auto d-flex align-items-center" *ngIf="!!lecture?.course?.isAtLeastTutor">
                 <button id="manageLectureButton" class="btn btn-secondary" (click)="redirectToLectureManagement()">
                     {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
                 </button>
