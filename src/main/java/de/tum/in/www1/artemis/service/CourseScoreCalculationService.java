@@ -256,11 +256,10 @@ public class CourseScoreCalculationService {
             List<StudentParticipation> studentParticipationsOfExerciseType = studentParticipations.stream()
                     .filter(participation -> participation.getExercise().getExerciseType() == exerciseType).toList();
 
-            List<PlagiarismCase> plagiarismCasesOfExerciseType = plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getExercise().getExerciseType() == exerciseType)
-                    .toList();
-
+            // Hand over all plagiarism cases (not just the ones for the current exercise type) because a student will receive a 0 score for all exercises if there is any
+            // PLAGIARISM verdict.
             StudentScoresDTO studentScoresOfExerciseType = calculateCourseScoreForStudent(course, userId, studentParticipationsOfExerciseType, maxAndReachablePointsOfExerciseType,
-                    plagiarismCasesOfExerciseType);
+                    plagiarismCases);
             CourseScoresDTO scoresOfExerciseType = new CourseScoresDTO(maxAndReachablePointsOfExerciseType.maxPoints, maxAndReachablePointsOfExerciseType.reachablePoints,
                     studentScoresOfExerciseType);
             scoresPerExerciseType.put(exerciseType.getExerciseTypeAsString(), scoresOfExerciseType);
