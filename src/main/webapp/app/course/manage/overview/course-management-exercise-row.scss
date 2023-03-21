@@ -25,25 +25,23 @@
         display: block;
     }
 
-    ::ng-deep {
-        .item-category {
-            color: gray;
-            margin-left: 15px;
-            display: flex;
-            align-items: flex-start;
-            flex-direction: column;
-            justify-content: space-around;
+    ::ng-deep .item-category {
+        color: gray;
+        margin-left: 15px;
+        display: flex;
+        align-items: flex-start;
+        flex-direction: column;
+        justify-content: space-around;
 
-            h4 {
-                margin-bottom: -5px !important;
-                font-size: 1rem;
+        h4 {
+            margin-bottom: -5px !important;
+            font-size: 1rem;
 
-                .badge {
-                    max-width: 130px;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }
+            .badge {
+                max-width: 130px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
         }
     }

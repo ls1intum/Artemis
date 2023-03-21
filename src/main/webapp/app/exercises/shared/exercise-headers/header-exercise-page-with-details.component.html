@@ -6,15 +6,13 @@
                 &nbsp;
                 <ng-content select="[pagetitle]"></ng-content>
             </div>
-            <div class="badge-row" *ngIf="(exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs())) || exercise.difficulty || exerciseCategories?.length">
-                <jhi-not-released-tag [exercise]="exercise" [noMargin]="true"></jhi-not-released-tag>
-                <jhi-difficulty-badge *ngIf="exercise.difficulty" class="me-3" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
-                <div class="exercise-categories" *ngIf="exerciseCategories?.length">
-                    <span *ngFor="let category of exerciseCategories">
-                        <span class="badge text-white" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
-                    </span>
-                </div>
-            </div>
+            <jhi-exercise-categories
+                [exercise]="exercise"
+                [shouldShowDifficultyTag]="true"
+                [shouldShowNotReleasedTag]="true"
+                [ngClass]="'badge-row'"
+                *ngIf="(exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs())) || exercise.difficulty || exerciseCategories?.length"
+            ></jhi-exercise-categories>
         </div>
         <div class="points-assessment-row" *ngIf="exercise.maxPoints || (exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING)">
             <span *ngIf="exercise.maxPoints" [style.margin-right]="exercise.maxPoints ? '30px' : null">

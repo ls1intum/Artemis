@@ -6,9 +6,10 @@ import { DifficultyBadgeComponent } from './difficulty-badge.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { ExerciseCategoriesModule } from 'app/exercises/shared/exercise-categories/exercise-categories.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, SubmissionResultStatusModule],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, SubmissionResultStatusModule, ExerciseCategoriesModule],
     declarations: [HeaderExercisePageWithDetailsComponent, HeaderParticipationPageComponent, DifficultyBadgeComponent, IncludedInScoreBadgeComponent],
     exports: [HeaderExercisePageWithDetailsComponent, HeaderParticipationPageComponent, DifficultyBadgeComponent, IncludedInScoreBadgeComponent],
 })
