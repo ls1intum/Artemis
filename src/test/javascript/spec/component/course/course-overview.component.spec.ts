@@ -202,20 +202,19 @@ describe('CourseOverviewComponent', () => {
         sessionStorage.clear();
     });
 
-    it('should call all methods on init', fakeAsync(() => {
+    it('should call all methods on init', async () => {
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
-        fixture.detectChanges();
-        tick();
+        await component.ngOnInit();
 
         expect(getCourseStub).toHaveBeenCalled();
         expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
-    }));
+    });
 
     it('should redirect to the registration page if the API endpoint returned a 403, but the user can register', fakeAsync(() => {
         // mock error response
