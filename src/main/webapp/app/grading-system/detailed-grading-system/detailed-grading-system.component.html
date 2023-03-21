@@ -118,6 +118,10 @@
             <fa-icon [icon]="faPlus"></fa-icon> <span jhiTranslate="artemisApp.gradingSystem.add">Add Grade Step</span>
         </button>
     </div>
+    <div *ngIf="shouldShowGradingStepsAboveMaxPointsWarning()">
+        <fa-icon [icon]="faWarning"></fa-icon>
+        <span jhiTranslate="artemisApp.gradingSystem.gradingStepsAboveMaxPointsWarning"></span>
+    </div>
     <div>
         <button (click)="save()" [disabled]="isLoading || !validGradeSteps()" class="btn btn-primary mr-1 mb-1" type="button">
             <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.gradingSystem.save">Save</span>
