@@ -24,10 +24,10 @@
                             LEFT JOIN result r ON f.result_id = r.id
                             LEFT JOIN participation p ON r.participation_id = p.id
                            , exercise e
-                        WHERE f.type = 3 # AUTOMATIC
+                        WHERE f.type = 3
                             AND f.text IS NOT NULL
-                            AND f.reference IS NULL # no SCA
-                            AND f.text NOT LIKE 'SubPolFeedbackIdentifier%' # no submission policy
+                            AND f.reference IS NULL
+                            AND f.text NOT LIKE 'SubPolFeedbackIdentifier%'
                             AND (p.exercise_id = e.id
                                 OR p.id = (SELECT tp.template_participation_id FROM tp WHERE tp.id = e.id)
                                 OR p.id = (SELECT sp.solution_participation_id FROM sp WHERE sp.id = e.id)))

@@ -256,8 +256,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
      * @return true if there is no feedback for a given test.
      */
     public boolean wasNotExecuted(Result result) {
-        return result.getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC)
-                .noneMatch(feedback -> feedback.getTestCase() != null && feedback.getTestCase().equals(this));
+        return result.getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC).noneMatch(feedback -> this.equals(feedback.getTestCase()));
     }
 
 }
