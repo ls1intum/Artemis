@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
  * The configuration is also available in the client as the {@link ProgrammingLanguageFeatureContributor} exposes them.
  */
 public record ProgrammingLanguageFeature(ProgrammingLanguage programmingLanguage, boolean sequentialTestRuns, boolean staticCodeAnalysis, boolean plagiarismCheckSupported,
-        boolean packageNameRequired, boolean checkoutSolutionRepositoryAllowed, List<ProjectType> projectTypes, boolean auxiliaryRepositoriesSupported,
-        boolean publishBuildPlanUrlAllowed, boolean testwiseCoverageReportSupported) {
+        boolean packageNameRequired, boolean checkoutSolutionRepositoryAllowed, List<ProjectType> projectTypes, boolean testwiseCoverageAnalysisSupported,
+        boolean publishBuildPlanUrlAllowed, boolean auxiliaryRepositoriesSupported) {
 
 }
