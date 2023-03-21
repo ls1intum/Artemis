@@ -1,18 +1,18 @@
 <form>
     <div class="modal-header">
-        <h4 class="modal-title" jhi-translate="artemisApp.programmingExercise.importFromFile">Import an Exercise from File</h4>
+        <h4 class="modal-title" jhiTranslate="{{ titleKey }}">Import an Exercise</h4>
         <jhi-help-icon text="artemisApp.programmingExercise.importFromFile.description"></jhi-help-icon>
-        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
+        <button type="button" id="cancel-btn" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
-        <input type="file" (change)="setFileForExerciseImport($event)" />
+        <input type="file" accept="application/zip" (change)="setFileForExerciseImport($event)" />
 
         <jhi-button
-            id=" upload-exercise"
+            id="upload-exercise-btn"
             [disabled]="fileForImport === undefined"
             [icon]="faUpload"
             [title]="'artemisApp.programmingExercise.importFromFile.uploadForImport'"
-            (onClick)="uploadExercise(exerciseType)"
+            (onClick)="uploadExercise()"
         ></jhi-button>
     </div>
 </form>

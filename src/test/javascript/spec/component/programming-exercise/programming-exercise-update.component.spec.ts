@@ -160,7 +160,16 @@ describe('ProgrammingExercise Management Update Component', () => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
-            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 2 } })));
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            ...entity,
+                            id: 2,
+                        },
+                    }),
+                ),
+            );
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
@@ -178,7 +187,16 @@ describe('ProgrammingExercise Management Update Component', () => {
             const entity = new ProgrammingExercise(undefined, undefined);
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             entity.title = 'My Exercise   ';
-            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 1 } })));
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            ...entity,
+                            id: 1,
+                        },
+                    }),
+                ),
+            );
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
@@ -439,6 +457,76 @@ describe('ProgrammingExercise Management Update Component', () => {
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
             }),
         );
+    });
+    describe('import from file', () => {
+        let route: ActivatedRoute;
+
+        beforeEach(() => {
+            route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+
+            route.url = of([{ path: 'import-from-file' } as UrlSegment]);
+        });
+        it('should reset dates, id, project key and store zipFile', fakeAsync(() => {
+            const programmingExercise = new ProgrammingExercise(undefined, undefined);
+            programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
+            programmingExercise.dueDate = dayjs();
+            programmingExercise.releaseDate = dayjs();
+            programmingExercise.startDate = dayjs();
+            programmingExercise.projectKey = 'projectKey';
+            programmingExercise.assessmentDueDate = dayjs();
+            programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            programmingExercise.zipFileForImport = new File([''], 'test.zip');
+            history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');
+
+            route.data = of({ programmingExercise });
+            const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
+            expect(comp.isImportFromFile).toBeTrue();
+            expect(comp.programmingExercise.projectKey).toBeUndefined();
+            expect(comp.programmingExercise.id).toBeUndefined();
+            expect(comp.programmingExercise.dueDate).toBeUndefined();
+            expect(comp.programmingExercise.releaseDate).toBeUndefined();
+            expect(comp.programmingExercise.startDate).toBeUndefined();
+            expect(comp.programmingExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.programmingExercise.zipFileForImport).toEqual(programmingExercise.zipFileForImport);
+            expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
+            expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
+            expect(comp.programmingExercise.allowOfflineIde).toBe(programmingExercise.allowOfflineIde);
+            expect(comp.programmingExercise.allowOnlineEditor).toBe(programmingExercise.allowOnlineEditor);
+            expect(comp.programmingExercise.publishBuildPlanUrl).toBe(programmingExercise.publishBuildPlanUrl);
+        }));
+        it('should call import-from-file from service on import for entity from file', fakeAsync(() => {
+            // GIVEN
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.zipFileForImport = new File([''], 'test.zip');
+            comp.isImportFromFile = true;
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
+            jest.spyOn(programmingExerciseService, 'importFromFile').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            ...entity,
+                            id: 2,
+                        },
+                    }),
+                ),
+            );
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+            // WHEN
+            comp.save();
+            tick(); // simulate async
+
+            // THEN
+            expect(programmingExerciseService.importFromFile).toHaveBeenCalledWith(entity);
+            expect(comp.isSaving).toBeFalse();
+        }));
     });
 
     describe('input error validation', () => {

@@ -209,7 +209,7 @@ public class ProgrammingExerciseExportImportResource {
     @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> importProgrammingExerciseFromFile(@RequestPart("programmingExercise") ProgrammingExercise programmingExercise,
-            @RequestPart("file") MultipartFile zipFile) throws GitAPIException, IOException, URISyntaxException {
+            @RequestPart("file") MultipartFile zipFile) throws GitAPIException {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var course = courseService.findByIdElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);

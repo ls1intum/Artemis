@@ -169,13 +169,11 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     openImportModal() {
         const modalRef = this.modalService.open(ExerciseImportTabsComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
-        modalRef.componentInstance.courseId = this.courseId;
         modalRef.result.then((result: ProgrammingExercise) => {
-            //when the file is uploaded we set the id to null.
+            //when the file is uploaded we set the id to undefined.
             if (result.id === undefined) {
                 this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import-from-file'], {
                     state: {
-                        zipFileOfProgrammingExerciseForImport: result.zipFileForImport,
                         programmingExerciseForImportFromFile: result,
                     },
                 });

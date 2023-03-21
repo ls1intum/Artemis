@@ -76,8 +76,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue: ProjectType;
-    private zipFileForImport: File;
-
     maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
     // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -354,12 +352,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.isSaving = false;
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
-            if (history.state.programmingExerciseForImportFromFile !== undefined) {
-                this.programmingExercise = history.state.programmingExerciseForImportFromFile;
-                this.isImportFromFile = true;
-            } else {
-                this.programmingExercise = programmingExercise;
-            }
+            // if (history.state.programmingExerciseForImportFromFile !== undefined) {
+            //     this.programmingExercise = history.state.programmingExerciseForImportFromFile;
+            //     this.isImportFromFile = true;
+            // } else {
+            this.programmingExercise = programmingExercise;
+            //  }
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             if (this.programmingExercise.projectType === ProjectType.MAVEN_MAVEN) {
@@ -586,7 +584,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             });
         }
         if (this.isImportFromFile) {
-            this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.zipFileForImport));
+            this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise));
         } else if (this.isImport) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans, this.updateTemplate));
         } else if (this.programmingExercise.id !== undefined) {
@@ -955,7 +953,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     private createProgrammingExerciseForImportFromFile() {
-        this.zipFileForImport = history.state.zipFileOfProgrammingExerciseForImport;
         this.programmingExercise = history.state.programmingExerciseForImportFromFile;
         this.programmingExercise.id = undefined;
         this.programmingExercise.projectKey = undefined;
@@ -964,6 +961,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.programmingExercise.assessmentDueDate = undefined;
         this.programmingExercise.releaseDate = undefined;
         this.programmingExercise.startDate = undefined;
+        //without dates set, they can only be false
+        this.programmingExercise.allowComplaintsForAutomaticAssessments = false;
+        this.programmingExercise.allowManualFeedbackRequests = false;
     }
 
     getInfoStepInputs() {
