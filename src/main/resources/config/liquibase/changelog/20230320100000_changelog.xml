@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+                   xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.6.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="welscher" id="20230320100000">
+        <addColumn tableName="feedback">
+            <column name="test_case_id" type="bigint"/>
+        </addColumn>
+        <addPrimaryKey columnNames="test_case_id, task_id" constraintName="programming_exercise_task_test_casePK"
+                       tableName="programming_exercise_task_test_case"/>
+        <addForeignKeyConstraint baseColumnNames="test_case_id" baseTableName="feedback"
+                                 constraintName="FKgopt80c1qcc1hv3ph903fjulm" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id"
+                                 referencedTableName="programming_exercise_test_case" validate="true"/>
+        <sql>
+            WITH tp AS (SELECT e.id, e.template_participation_id FROM exercise e
+                        WHERE e.discriminator = 'P' AND e.template_participation_id IS NOT NULL)
+               , sp AS (SELECT e.id, e.solution_participation_id FROM exercise e
+                        WHERE e.discriminator = 'P' AND e.solution_participation_id IS NOT NULL)
+
+               , fe AS (SELECT f.id, f.text, e.id AS exercise_id
+                        FROM Feedback f
+                                 LEFT JOIN result r ON f.result_id = r.id
+                                 LEFT JOIN participation p ON r.participation_id = p.id
+                           , exercise e
+                        WHERE f.type = 3 # AUTOMATIC
+                AND f.text IS NOT NULL
+                AND f.reference IS NULL # no SCA
+                AND f.text NOT LIKE 'SubPolFeedbackIdentifier%' # no submission policy
+                AND (p.exercise_id = e.id
+                OR p.id = (SELECT tp.template_participation_id FROM tp WHERE tp.id = e.id)
+                OR p.id = (SELECT sp.solution_participation_id FROM sp WHERE sp.id = e.id)))
+
+            UPDATE feedback f
+            SET test_case_id = (
+                SELECT tc.id FROM programming_exercise_test_case tc
+                                      LEFT JOIN fe ON fe.id = f.id
+                WHERE tc.test_name = fe.text
+                  AND tc.exercise_id = fe.exercise_id
+            )
+        </sql>
+
+        <sql>
+            UPDATE feedback
+            SET text = NULL
+            WHERE test_case_id IS NOT NULL
+        </sql>
+    </changeSet>
+</databaseChangeLog>
+
