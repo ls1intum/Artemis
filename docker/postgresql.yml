@@ -16,7 +16,7 @@ services:
             POSTGRES_USER: postgres
             POSTGRES_DB: Artemis
         ports:
-            - 5432:5432
+            - "5432:5432"
         healthcheck:
             test: pg_isready -U postgres -d Artemis
             interval: 5s
