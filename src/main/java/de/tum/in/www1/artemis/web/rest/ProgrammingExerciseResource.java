@@ -226,7 +226,7 @@ public class ProgrammingExerciseResource {
                 .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
         // Check if auxiliary repositories are supported
-        if (programmingExercise.getAuxiliaryRepositories().size() > 0 && !programmingLanguageFeature.isAuxiliaryRepositoriesSupported()) {
+        if (programmingExercise.getAuxiliaryRepositories().size() > 0 && !programmingLanguageFeature.auxiliaryRepositoriesSupported()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "Auxiliary repositories are not supported for this programming language", "auxiliaryRepositoryInvalid"))
                     .body(null);
@@ -237,7 +237,7 @@ public class ProgrammingExerciseResource {
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
         // Check if package name is set
-        if (programmingLanguageFeature.isPackageNameRequired()) {
+        if (programmingLanguageFeature.packageNameRequired()) {
             if (programmingExercise.getPackageName() == null) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The package name is invalid", "packagenameInvalid")).body(null);
             }
@@ -256,11 +256,11 @@ public class ProgrammingExerciseResource {
         }
 
         // Check if project type is selected
-        if (!programmingLanguageFeature.getProjectTypes().isEmpty()) {
+        if (!programmingLanguageFeature.projectTypes().isEmpty()) {
             if (programmingExercise.getProjectType() == null) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The project type is not set", "projectTypeNotSet")).body(null);
             }
-            if (!programmingLanguageFeature.getProjectTypes().contains(programmingExercise.getProjectType())) {
+            if (!programmingLanguageFeature.projectTypes().contains(programmingExercise.getProjectType())) {
                 return ResponseEntity.badRequest()
                         .headers(HeaderUtil.createAlert(applicationName, "The project type is not supported for this programming language", "projectTypeNotSupported")).body(null);
             }
@@ -272,21 +272,21 @@ public class ProgrammingExerciseResource {
         }
 
         // Check if checkout solution repository is enabled
-        if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.isCheckoutSolutionRepositoryAllowed()) {
+        if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "Checking out the solution repository is not supported for this language", "checkoutSolutionNotSupported"))
                     .body(null);
         }
 
         // Check if publish build plan URL is enabled
-        if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl()) && !programmingLanguageFeature.isPublishBuildPlanUrlAllowed()) {
+        if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl()) && !programmingLanguageFeature.publishBuildPlanUrlAllowed()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "Publishing the build plan URL is not supported for this language", "publishBuildPlanUrlNotSupported"))
                     .body(null);
         }
 
         // Check if testwise coverage report is enabled
-        if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && !programmingLanguageFeature.isTestwiseCoverageReportSupported()) {
+        if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && !programmingLanguageFeature.testwiseCoverageReportSupported()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "Testwise coverage report is not supported for this language", "testwiseCoverageReportNotSupported"))
                     .body(null);
