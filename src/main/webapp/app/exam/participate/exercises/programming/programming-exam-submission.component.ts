@@ -42,8 +42,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     exercise: ProgrammingExercise;
     @Input()
     courseId: number;
-    @Input()
-    activeExerciseId: number | undefined;
 
     repositoryIsLocked = false;
     showEditorInstructions = true;
@@ -91,10 +89,8 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      * Updates the domain to set the active student participation
      */
     updateDomain() {
-        if (this.activeExerciseId === undefined || this.activeExerciseId === this.exercise.id) {
-            const participation = { ...this.studentParticipation, exercise: this.exercise } as StudentParticipation;
-            this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
-        }
+        const participation = { ...this.studentParticipation, exercise: this.exercise } as StudentParticipation;
+        this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
     }
 
     /**
