@@ -350,18 +350,18 @@ public class ResultResource {
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         Participation participation = result.getParticipation();
         if (!participation.getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + " !",
+            throw new BadRequestAlertException("participationId of the path does not match the participationId of the participation corresponding to the result " + resultId + " !",
                     "participationId", "400");
         }
 
         // The permission check depends on the participation type (normal participations vs. programming exercise participations).
-        if (participation instanceof StudentParticipation) {
-            if (!authCheckService.canAccessParticipation((StudentParticipation) participation)) {
+        if (participation instanceof StudentParticipation studentParticipation) {
+            if (!authCheckService.canAccessParticipation(studentParticipation)) {
                 throw new AccessForbiddenException("participation", participationId);
             }
         }
-        else if (participation instanceof ProgrammingExerciseParticipation) {
-            if (!programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
+        else if (participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation) {
+            if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
                 throw new AccessForbiddenException("participation", participationId);
             }
         }

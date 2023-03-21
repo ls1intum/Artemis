@@ -157,14 +157,7 @@
                                 >
                                     {{ result.submission.submissionDate | artemisDate : 'long-date' }}
                                 </h4>
-                                <jhi-result
-                                    [result]="result"
-                                    [showUngradedResults]="true"
-                                    [showBadge]="true"
-                                    [showTestDetails]="exampleSolutionInfo?.programmingExercise?.showTestNamesToStudents ?? false"
-                                    [exercise]="exercise"
-                                >
-                                </jhi-result>
+                                <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise"> </jhi-result>
                             </div>
                             <div class="no-results" *ngIf="!sortedHistoryResults">
                                 {{ 'artemisApp.courseOverview.exerciseDetails.noResults' | artemisTranslate }}
