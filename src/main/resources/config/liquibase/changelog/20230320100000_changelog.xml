@@ -21,23 +21,24 @@
 
                , fe AS (SELECT f.id, f.text, e.id AS exercise_id
                         FROM Feedback f
-                                 LEFT JOIN result r ON f.result_id = r.id
-                                 LEFT JOIN participation p ON r.participation_id = p.id
+                            LEFT JOIN result r ON f.result_id = r.id
+                            LEFT JOIN participation p ON r.participation_id = p.id
                            , exercise e
                         WHERE f.type = 3 # AUTOMATIC
-                AND f.text IS NOT NULL
-                AND f.reference IS NULL # no SCA
-                AND f.text NOT LIKE 'SubPolFeedbackIdentifier%' # no submission policy
-                AND (p.exercise_id = e.id
-                OR p.id = (SELECT tp.template_participation_id FROM tp WHERE tp.id = e.id)
-                OR p.id = (SELECT sp.solution_participation_id FROM sp WHERE sp.id = e.id)))
+                            AND f.text IS NOT NULL
+                            AND f.reference IS NULL # no SCA
+                            AND f.text NOT LIKE 'SubPolFeedbackIdentifier%' # no submission policy
+                            AND (p.exercise_id = e.id
+                                OR p.id = (SELECT tp.template_participation_id FROM tp WHERE tp.id = e.id)
+                                OR p.id = (SELECT sp.solution_participation_id FROM sp WHERE sp.id = e.id)))
 
             UPDATE feedback f
             SET test_case_id = (
-                SELECT tc.id FROM programming_exercise_test_case tc
-                                      LEFT JOIN fe ON fe.id = f.id
+                SELECT tc.id
+                FROM programming_exercise_test_case tc
+                    LEFT JOIN fe ON fe.id = f.id
                 WHERE tc.test_name = fe.text
-                  AND tc.exercise_id = fe.exercise_id
+                    AND tc.exercise_id = fe.exercise_id
             )
         </sql>
 
