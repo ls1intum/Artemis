@@ -31,7 +31,7 @@ services:
         extends:
             file: ./nginx.yml
             service: nginx
-        # TODO: for now the artemis-app service needs to be started, otherwise there are problems with name resolution in docker
+        # the artemis-app service needs to be started, otherwise there are problems with name resolution in docker
         depends_on:
             artemis-app:
                 condition: service_started
