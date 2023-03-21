@@ -136,6 +136,8 @@ public class NotificationSettingsService {
             TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED, NEW_EXERCISE_POST,
             NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, QUIZ_EXERCISE_STARTED);
 
+    private static final Set<NotificationType> INSTANT_NOTIFICATION_TYPES_WITHOUT_EMAIL_SUPPORT = Set.of(QUIZ_EXERCISE_STARTED);
+
     public NotificationSettingsService(NotificationSettingRepository notificationSettingRepository) {
         this.notificationSettingRepository = notificationSettingRepository;
     }
@@ -171,10 +173,21 @@ public class NotificationSettingsService {
      * For some types there is no need for instant notification support so they will be filtered out here.
      *
      * @param type of the notification
-     * @return true if the type has email support else false
+     * @return true if the type has instant notification support else false
      */
     public boolean checkNotificationTypeForInstantNotificationSupport(NotificationType type) {
         return NOTIFICATION_TYPES_WITH_INSTANT_NOTIFICATION_SUPPORT.contains(type);
+    }
+
+    /**
+     * Checks if the notification type has email notification support (per default not for an individual user!)
+     * For some types there is no need for email notification support so they will be filtered out here.
+     *
+     * @param type of the notification
+     * @return true if the type has email support else false
+     */
+    public boolean checkNotificationTypeForEmailSupport(NotificationType type) {
+        return !INSTANT_NOTIFICATION_TYPES_WITHOUT_EMAIL_SUPPORT.contains(type);
     }
 
     /**
