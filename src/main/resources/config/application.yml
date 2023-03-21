@@ -35,6 +35,8 @@ artemis:
         batch-size: 50  # wait the time below after 50 requests
         batch-waiting-time: 30000   # in ms = 30s
     iosAppId: "6444123161.de.tum.cit.artemis"
+    androidAppPackage: "de.tum.informatics.www1.artemis.native_app.android"
+    androidSha256CertFingerprints: "D4:5C:58:77:B2:4E:2F:15:60:59:BB:C0:9C:1C:B0:A9:FD:3D:D8:F3:88:A8:B3:EA:DB:05:06:3B:7E:AF:0C:4F"
 
     continuous-integration:
         # Defines the used docker images for certain programming languages.
