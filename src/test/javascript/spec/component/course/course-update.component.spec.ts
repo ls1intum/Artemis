@@ -31,6 +31,8 @@ import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.modul
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -47,6 +49,7 @@ describe('Course Management Update Component', () => {
     let profileService: ProfileService;
     let organizationService: OrganizationManagementService;
     let loadImageService: LoadImageService;
+    let accountService: AccountService;
     let course: Course;
     const validTimeZone = 'Europe/Berlin';
     let loadImageSpy: jest.SpyInstance;
@@ -92,6 +95,7 @@ describe('Course Management Update Component', () => {
                 },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: AccountService, useClass: MockAccountService },
                 MockProvider(TranslateService),
                 MockProvider(LoadImageService),
             ],
@@ -118,6 +122,7 @@ describe('Course Management Update Component', () => {
                 organizationService = TestBed.inject(OrganizationManagementService);
                 loadImageService = TestBed.inject(LoadImageService);
                 loadImageSpy = jest.spyOn(loadImageService, 'loadImageFile');
+                accountService = TestBed.inject(AccountService);
             });
     });
 
@@ -486,5 +491,19 @@ describe('Course Management Update Component', () => {
         function getDeleteIconButton() {
             return fixture.debugElement.nativeElement.querySelector('#delete-course-icon');
         }
+    });
+
+    describe('changeOrganizations', () => {
+        it('should allow adding / removing organizations if admin', () => {
+            jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+            fixture.detectChanges();
+            expect(comp.isAllowedToChangeOrganizations).toBeTrue();
+        });
+
+        it('should not allow adding / removing organizations if not admin', () => {
+            jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
+            fixture.detectChanges();
+            expect(comp.isAllowedToChangeOrganizations).toBeFalse();
+        });
     });
 });

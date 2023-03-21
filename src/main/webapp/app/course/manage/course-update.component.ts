@@ -25,6 +25,7 @@ import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cro
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-course-update',
@@ -61,6 +62,7 @@ export class CourseUpdateComponent implements OnInit {
     faTimes = faTimes;
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
+    isAllowedToChangeOrganizations = false;
 
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
     // This is the maximum value allowed in our database. These values must be the same as in Constants.java
@@ -81,6 +83,7 @@ export class CourseUpdateComponent implements OnInit {
         private navigationUtilService: ArtemisNavigationUtilService,
         private router: Router,
         private featureToggleService: FeatureToggleService,
+        private accountService: AccountService,
     ) {}
 
     ngOnInit() {
@@ -208,6 +211,8 @@ export class CourseUpdateComponent implements OnInit {
                     this.courseForm.addControl('timeZone', new FormControl(this.course?.timeZone));
                 }
             });
+
+        this.isAllowedToChangeOrganizations = this.accountService.isAdmin();
     }
     tzResultFormatter = (timeZone: string) => timeZone;
     tzInputFormatter = (timeZone: string) => timeZone;

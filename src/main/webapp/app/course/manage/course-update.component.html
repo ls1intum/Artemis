@@ -90,15 +90,16 @@
                     <div class="btn-group d-flex flex-wrap">
                         <div *ngFor="let organization of courseOrganizations">
                             <h5>
-                                <span class="badge bg-primary font-weight-normal m-1 ps-3"
-                                    >{{ organization.name
-                                    }}<button type="button" class="btn text-light" (click)="removeOrganizationFromCourse(organization)">
-                                        <fa-icon [icon]="faTimes"></fa-icon></button
-                                ></span>
+                                <span class="badge bg-primary font-weight-normal m-1 ps-3">
+                                    {{ organization.name }}
+                                    <button *ngIf="isAllowedToChangeOrganizations" type="button" class="btn text-light" (click)="removeOrganizationFromCourse(organization)">
+                                        <fa-icon [icon]="faTimes"></fa-icon>
+                                    </button>
+                                </span>
                             </h5>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-outline-primary" (click)="openOrganizationsModal()">Add</button>
+                    <button *ngIf="isAllowedToChangeOrganizations" type="button" class="btn btn-outline-primary" (click)="openOrganizationsModal()">Add</button>
                 </div>
                 <div class="d-flex">
                     <div class="form-group flex-grow-1">
