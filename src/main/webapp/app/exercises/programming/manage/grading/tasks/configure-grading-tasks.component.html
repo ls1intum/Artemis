@@ -3,7 +3,7 @@
         <h2 class="mb-1 fw-medium">Tasks</h2>
 
         <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="grading-task-inactive-toggle" [(ngModel)]="showInactiveTestCases" (click)="toggleShowInactiveTestsShown()" />
+            <input class="form-check-input" type="checkbox" id="grading-task-inactive-toggle" [value]="ignoreInactive" (click)="toggleShowInactiveTestsShown()" />
             <label class="form-check-label" for="grading-task-inactive-toggle" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.showInactive"
                 >Show inactive
             </label>

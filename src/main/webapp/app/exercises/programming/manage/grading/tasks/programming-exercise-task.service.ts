@@ -23,12 +23,39 @@ export class ProgrammingExerciseTaskService {
     totalWeights: number;
     maxPoints: number;
 
+    ignoreInactive = true;
+
     public resourceUrl = `${SERVER_API_URL}api/programming-exercises`;
 
     constructor(private http: HttpClient, private alertService: AlertService, private gradingService: ProgrammingExerciseGradingService) {}
 
+    public getTasks(): ProgrammingExerciseTask[] {
+        if (this.ignoreInactive) {
+            return this.tasks
+                .map((task) => ({ ...task }))
+                .filter((task) => {
+                    task.testCases = task.testCases.filter((test) => test.active);
+                    return task.testCases.length;
+                });
+        }
+
+        return this.tasks;
+    }
+
     get testCases(): ProgrammingExerciseTestCase[] {
-        return this.tasks.flatMap((task) => task.testCases);
+        const testCases = this.tasks.flatMap((task) => task.testCases);
+        if (this.ignoreInactive) {
+            return testCases.filter(({ active }) => active);
+        }
+        return testCases;
+    }
+
+    public toggleIgnoreInactive() {
+        this.ignoreInactive = !this.ignoreInactive;
+
+        // Update resulting points
+        this.updateTotalWeights();
+        this.tasks.forEach(this.updateTaskPoints);
     }
 
     public configure(exercise: ProgrammingExercise, course: Course, gradingStatistics: ProgrammingExerciseGradingStatistics): Observable<ProgrammingExerciseTask[]> {
@@ -108,6 +135,10 @@ export class ProgrammingExerciseTaskService {
         );
     }
 
+    private updateTotalWeights = () => {
+        this.totalWeights = sum(this.testCases.map(({ weight }) => weight ?? 0));
+    };
+
     private initializeTasks = (): Observable<ProgrammingExerciseTask[]> => {
         return this.getTasksByExercise(this.exercise).pipe(
             map((serverSideTasks) => {
@@ -115,7 +146,8 @@ export class ProgrammingExerciseTaskService {
 
                 // configureTestCases needs tasks to be set be to be able to use the testCases getter
                 this.tasks = this.tasks.map(this.configureTestCases).map(this.updateTask);
-                this.totalWeights = sum(this.tasks.map((task) => task.weight ?? 0));
+
+                this.updateTotalWeights();
 
                 // Task points need to be updated again here since weight is not available before
                 this.tasks = this.tasks.map(this.updateTaskPoints).map(this.addGradingStats);
@@ -149,10 +181,11 @@ export class ProgrammingExerciseTaskService {
     };
 
     private configureTestCases = (task: ProgrammingExerciseTask): ProgrammingExerciseTask => {
-        task.testCases = task.testCases ?? [];
+        const allTestCases = this.tasks.flatMap(({ testCases }) => testCases);
 
-        // Set same testcases in tasks to same reference
-        task.testCases = task.testCases.map((testCase) => this.testCases.find((firstTestCase) => firstTestCase.id === testCase.id)) as ProgrammingExerciseTestCase[];
+        task.testCases = task.testCases ?? [];
+        task.testCases = task.testCases // Set same testcases in tasks to same reference
+            .map((testCase) => allTestCases.find(({ id }) => id === testCase.id)) as ProgrammingExerciseTestCase[];
         return task;
     };
 

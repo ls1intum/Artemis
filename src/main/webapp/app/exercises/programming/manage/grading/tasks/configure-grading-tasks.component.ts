@@ -21,41 +21,35 @@ export class ConfigureGradingTasksComponent implements OnInit {
     faQuestionCircle = faQuestionCircle;
     isSaving = false;
     tasks: ProgrammingExerciseTask[];
-    showInactiveTestCases = false;
+
+    get ignoreInactive() {
+        return this.taskService.ignoreInactive;
+    }
 
     constructor(private taskService: ProgrammingExerciseTaskService) {}
 
     ngOnInit(): void {
         this.gradingStatisticsObservable.subscribe((gradingStatistics) => {
-            this.taskService.configure(this.exercise, this.course, gradingStatistics).subscribe((tasks) => {
-                this.tasks = tasks;
-            });
+            this.taskService.configure(this.exercise, this.course, gradingStatistics).subscribe(this.updateTasks);
         });
     }
 
-    updateTasks() {
-        this.tasks = this.taskService.tasks;
+    updateTasks = () => {
+        this.tasks = this.taskService.getTasks();
+    };
 
-        if (!this.showInactiveTestCases) {
-            this.tasks = this.tasks.filter((task) => {
-                task.testCases = task.testCases.filter((test) => test.active);
-                return task.testCases.length;
-            });
-        }
-    }
-
-    toggleShowInactiveTestsShown() {
-        this.showInactiveTestCases = !this.showInactiveTestCases;
+    toggleShowInactiveTestsShown = () => {
+        this.taskService.toggleIgnoreInactive();
         this.updateTasks();
-    }
+    };
 
-    saveTestCases() {
+    saveTestCases = () => {
         this.isSaving = true;
         this.taskService.saveTestCases().subscribe(() => (this.isSaving = false));
-    }
+    };
 
-    resetTestCases() {
+    resetTestCases = () => {
         this.isSaving = true;
         this.taskService.resetTestCases().subscribe(() => (this.isSaving = false));
-    }
+    };
 }
