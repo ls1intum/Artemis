@@ -26,8 +26,8 @@ export class ProgrammingExerciseTestCase implements BaseEntity {
     exercise?: ProgrammingExercise;
     type?: ProgrammingExerciseTestCaseType;
     solutionEntries?: ProgrammingExerciseSolutionEntry[];
-    resultingPoints: number | undefined;
-    resultingPointsPercent: number | undefined;
-    testCaseStats: TestCaseStats | undefined;
-    changed: boolean | undefined;
+    resultingPoints?: number;
+    resultingPointsPercent?: number;
+    testCaseStats?: TestCaseStats;
+    changed?: boolean;
 }
