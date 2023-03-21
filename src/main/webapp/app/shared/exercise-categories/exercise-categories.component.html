@@ -1,6 +1,6 @@
 <h4 class="fw-medium me-1 mb-1" *ngIf="exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs()) && shouldShowNotReleasedTag">
     <a [routerLink]="['/courses', exercise.course?.id, 'exercises', exercise.id!]">
-        <span class="badge bg-warning badge-tooltip" [ngbTooltip]="translatedNotReleasedTooltip + (exercise.releaseDate | artemisDate)">{{ translatedNotReleased }}</span>
+        <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
     </a>
 </h4>
 <h4 class="fw-medium me-1 mb-1" *ngIf="asQuizExercise(exercise).isActiveQuiz && shouldShowQuizLiveTag">
@@ -10,10 +10,10 @@
     <span class="badge" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
 </h4>
 <h4 class="fw-medium me-1 mb-1" *ngIf="exercise.difficulty && shouldShowDifficultyTag">
-    <span class="badge" [ngClass]="difficultyBadgeClass">{{ translatedDifficulty }}</span>
+    <jhi-difficulty-badge [exercise]="exercise" [showNoLevel]="shouldShowDifficultyTagIfNoLevel"></jhi-difficulty-badge>
 </h4>
 <h4 class="fw-medium me-1 mb-1" *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY && shouldShowIncludedInScoreBadge">
     <a [routerLink]="['/courses', exercise.course?.id, 'exercises', exercise.id!]">
-        <span class="badge badge-tooltip" [ngClass]="includedAsBonusClass" [ngbTooltip]="translatedIncludedAsBonusTooltip">{{ translatedIncludedAsBonus }}</span>
+        <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
     </a>
 </h4>

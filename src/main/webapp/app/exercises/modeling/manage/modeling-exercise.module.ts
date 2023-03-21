@@ -21,7 +21,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.module';
 import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ExerciseCategoriesModule } from 'app/exercises/shared/exercise-categories/exercise-categories.module';
+import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 
 @NgModule({
     imports: [

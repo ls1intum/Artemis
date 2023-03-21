@@ -30,7 +30,7 @@ import { MatchPercentageInfoModalComponent } from 'app/exercises/quiz/manage/mat
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { FitTextModule } from 'app/exercises/quiz/shared/fit-text/fit-text.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ExerciseCategoriesModule } from 'app/exercises/shared/exercise-categories/exercise-categories.module';
+import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 
 const ENTITY_STATES = [...quizManagementRoute];
 

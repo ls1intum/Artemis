@@ -12,7 +12,7 @@ import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/program
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
-import { ExerciseCategoriesModule } from 'app/exercises/shared/exercise-categories/exercise-categories.module';
+import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 
 @NgModule({
     imports: [
