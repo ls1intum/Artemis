@@ -1,20 +1,22 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
+import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_TOPIC;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 import java.util.*;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -399,6 +401,22 @@ public class ProgrammingExerciseResultTestService {
 
         final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
         assertThat(result).isPresent();
+    }
+
+    // Test
+    public void shouldRemoveTestCaseNamesFromWebsocketNotification(AbstractBuildResultNotificationDTO resultNotification, SimpMessageSendingOperations messagingTemplate)
+            throws Exception {
+        var programmingSubmission = database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
+        programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
+        programmingExerciseStudentParticipation = participationRepository.save(programmingExerciseStudentParticipation);
+
+        postResult(resultNotification);
+
+        ArgumentCaptor<Result> resultArgumentCaptor = ArgumentCaptor.forClass(Result.class);
+        verify(messagingTemplate).convertAndSendToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC), resultArgumentCaptor.capture());
+
+        Result result = resultArgumentCaptor.getValue();
+        assertThat(result.getFeedbacks()).hasSize(4).allMatch(feedback -> feedback.getText() == null);
     }
 
     private int getNumberOfBuildLogs(Object resultNotification) {
