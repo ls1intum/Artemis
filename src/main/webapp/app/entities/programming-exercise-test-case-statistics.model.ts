@@ -9,11 +9,6 @@ export type IssuesMap = { [issues: string]: number };
 export type CategoryIssuesMap = { [category: string]: IssuesMap };
 
 export class TestCaseStats {
-    constructor() {
-        this.numPassed = 0;
-        this.numFailed = 0;
-    }
-
-    numPassed: number;
-    numFailed: number;
+    numPassed = 0;
+    numFailed = 0;
 }
