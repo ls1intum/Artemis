@@ -50,6 +50,9 @@ export class ConfigureGradingTasksComponent implements OnInit {
 
     resetTestCases = () => {
         this.isSaving = true;
-        this.taskService.resetTestCases().subscribe(() => (this.isSaving = false));
+        this.taskService.resetTestCases().subscribe(() => {
+            this.isSaving = false;
+            this.updateTasks();
+        });
     };
 }
