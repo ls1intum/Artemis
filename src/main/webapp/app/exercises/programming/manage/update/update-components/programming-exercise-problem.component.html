@@ -135,7 +135,7 @@
         </label>
     </div>
 </div>
-<div class="form-group mb-0">
+<div class="form-group mb-0" *ngIf="publishBuildPlanUrlAllowed">
     <div class="form-check">
         <label class="form-check-label" for="field_publishBuildPlanUrl">
             <input
@@ -150,7 +150,7 @@
         </label>
     </div>
 </div>
-<div class="form-group mb-0" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA || programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN">
+<div class="form-group mb-0" *ngIf="testwiseCoverageReportSupported">
     <div class="form-check">
         <label class="form-check-label" for="field_testwiseCoverageEnabled">
             <input

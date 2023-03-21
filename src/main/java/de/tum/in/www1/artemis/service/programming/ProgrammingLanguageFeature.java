@@ -25,8 +25,15 @@ public class ProgrammingLanguageFeature {
 
     private List<ProjectType> projectTypes;
 
+    private final boolean auxiliaryRepositoriesSupported;
+
+    private final boolean publishBuildPlanUrlAllowed;
+
+    private final boolean testwiseCoverageReportSupported;
+
     public ProgrammingLanguageFeature(ProgrammingLanguage programmingLanguage, boolean sequentialTestRuns, boolean staticCodeAnalysis, boolean plagiarismCheckSupported,
-            boolean packageNameRequired, boolean checkoutSolutionRepositoryAllowed, List<ProjectType> projectTypes) {
+            boolean packageNameRequired, boolean checkoutSolutionRepositoryAllowed, List<ProjectType> projectTypes, boolean auxiliaryRepositoriesSupported,
+            boolean publishBuildPlanUrlAllowed, boolean testwiseCoverageReportSupported) {
         this.programmingLanguage = programmingLanguage;
         this.sequentialTestRuns = sequentialTestRuns;
         this.staticCodeAnalysis = staticCodeAnalysis;
@@ -34,6 +41,9 @@ public class ProgrammingLanguageFeature {
         this.packageNameRequired = packageNameRequired;
         this.checkoutSolutionRepositoryAllowed = checkoutSolutionRepositoryAllowed;
         this.projectTypes = projectTypes;
+        this.auxiliaryRepositoriesSupported = auxiliaryRepositoriesSupported;
+        this.publishBuildPlanUrlAllowed = publishBuildPlanUrlAllowed;
+        this.testwiseCoverageReportSupported = testwiseCoverageReportSupported;
     }
 
     public ProgrammingLanguage getProgrammingLanguage() {
@@ -90,5 +100,17 @@ public class ProgrammingLanguageFeature {
 
     public void setProjectTypes(List<ProjectType> projectTypes) {
         this.projectTypes = projectTypes;
+    }
+
+    public boolean isAuxiliaryRepositoriesSupported() {
+        return auxiliaryRepositoriesSupported;
+    }
+
+    public boolean isPublishBuildPlanUrlAllowed() {
+        return publishBuildPlanUrlAllowed;
+    }
+
+    public boolean isTestwiseCoverageReportSupported() {
+        return testwiseCoverageReportSupported;
     }
 }

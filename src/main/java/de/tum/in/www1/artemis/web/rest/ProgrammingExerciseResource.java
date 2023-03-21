@@ -221,11 +221,20 @@ public class ProgrammingExerciseResource {
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
         programmingExercise.validateManualFeedbackSettings();
-        auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
-        submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
                 .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+
+        // Check if auxiliary repositories are supported
+        if (programmingExercise.getAuxiliaryRepositories().size() > 0 && !programmingLanguageFeature.isAuxiliaryRepositoriesSupported()) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "Auxiliary repositories are not supported for this programming language", "auxiliaryRepositoryInvalid"))
+                    .body(null);
+        }
+
+        // Check if auxiliary repositories are valid
+        auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
+        submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
         // Check if package name is set
         if (programmingLanguageFeature.isPackageNameRequired()) {
@@ -266,6 +275,20 @@ public class ProgrammingExerciseResource {
         if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.isCheckoutSolutionRepositoryAllowed()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "Checking out the solution repository is not supported for this language", "checkoutSolutionNotSupported"))
+                    .body(null);
+        }
+
+        // Check if publish build plan URL is enabled
+        if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl()) && !programmingLanguageFeature.isPublishBuildPlanUrlAllowed()) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "Publishing the build plan URL is not supported for this language", "publishBuildPlanUrlNotSupported"))
+                    .body(null);
+        }
+
+        // Check if testwise coverage report is enabled
+        if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && !programmingLanguageFeature.isTestwiseCoverageReportSupported()) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "Testwise coverage report is not supported for this language", "testwiseCoverageReportNotSupported"))
                     .body(null);
         }
 
