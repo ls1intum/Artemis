@@ -9,6 +9,8 @@ import { PageRibbonComponent } from 'app/shared/layouts/profiles/page-ribbon.com
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
 import { ArtemisAppRoutingModule } from 'app/app-routing.module';
+import { RouteReuseStrategy } from '@angular/router';
+import { CustomRouteReuseStrategy } from 'app/shared/custom-route-reuse-strategy';
 import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
@@ -60,6 +62,12 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         NotificationSidebarComponent,
         SystemNotificationComponent,
         LoadingNotificationComponent,
+    ],
+    providers: [
+        {
+            provide: RouteReuseStrategy,
+            useClass: CustomRouteReuseStrategy,
+        },
     ],
     bootstrap: [JhiMainComponent],
 })
