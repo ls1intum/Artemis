@@ -1,13 +1,13 @@
 <div>
-    <h4 class="d-flex mb-3 flex-wrap justify-content-end">
-        <span class="mb-1 me-auto">
+    <div class="d-flex mb-3 flex-wrap justify-content-end">
+        <h4 class="mb-1 me-auto">
             <span *ngIf="course && !showHeading">{{ course.title }} - </span>
             <span *ngIf="modelingExercises && showHeading && !filter.isEmpty() && modelingExercises.length">{{ getAmountOfExercisesString(filteredModelingExercises) }} / </span>
             <span *ngIf="modelingExercises && showHeading">{{ getAmountOfExercisesString(modelingExercises) }} </span>
             <span jhiTranslate="artemisApp.modelingExercise.home.title">Modeling Exercises</span>
-        </span>
+        </h4>
 
-        <a
+        <button
             id="modeling-exercise-create-button"
             *ngIf="course && course.isAtLeastEditor"
             class="btn btn-primary jh-create-entity create-modeling-exercise text-truncate mb-1 me-1"
@@ -16,7 +16,7 @@
         >
             <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.modelingExercise.home.createLabel">Create new Modeling Exercise</span>
-        </a>
+        </button>
         <button
             id="modeling-exercise-import-button"
             *ngIf="course && course.isAtLeastEditor"
@@ -26,7 +26,7 @@
             <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.modelingExercise.home.importLabel"> Import Modeling Exercise </span>
         </button>
-    </h4>
+    </div>
     <div class="row"></div>
     <br />
     <div class="table-responsive" *ngIf="modelingExercises && filteredModelingExercises.length > 0">
@@ -99,15 +99,6 @@
                             >
                                 <fa-icon [icon]="farListAlt"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-                            </a>
-                            <!-- Submissions -->
-                            <a
-                                *ngIf="modelingExercise.isAtLeastInstructor"
-                                [routerLink]="['/course-management', courseId, 'modeling-exercises', modelingExercise.id, 'submissions']"
-                                class="btn btn-success btn-sm me-1"
-                            >
-                                <fa-icon [icon]="faBook"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
                             </a>
                             <!-- Example Submission -->
                             <a
