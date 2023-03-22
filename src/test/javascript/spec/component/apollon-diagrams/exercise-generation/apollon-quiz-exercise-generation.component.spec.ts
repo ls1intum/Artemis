@@ -103,7 +103,7 @@ describe('ApollonQuizExerciseGeneration Component', () => {
         jest.spyOn(module, 'generateDragAndDropQuizExercise').mockReturnValue(quizExercise);
         const ngbModalSpy = jest.spyOn(ngbModal, 'close');
 
-        await addDelay(0);
+        await addDelay(500);
         // test
         await fixture.componentInstance.save();
         expect(ngbModalSpy).toHaveBeenCalledOnce();
