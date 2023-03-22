@@ -468,7 +468,7 @@ public class UserTestService {
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
 
-        mockDelegate.mockFailToCreateUserInExernalUserManagement(student, false, true, false);
+        mockDelegate.mockFailToCreateUserInExternalUserManagement(student, false, true, false);
 
         final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response).isNull();
@@ -481,7 +481,7 @@ public class UserTestService {
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
 
-        mockDelegate.mockFailToCreateUserInExernalUserManagement(student, false, false, true);
+        mockDelegate.mockFailToCreateUserInExternalUserManagement(student, false, false, true);
 
         final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response).isNull();
@@ -496,7 +496,7 @@ public class UserTestService {
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
 
-        mockDelegate.mockFailToCreateUserInExernalUserManagement(student, true, false, false);
+        mockDelegate.mockFailToCreateUserInExternalUserManagement(student, true, false, false);
 
         final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response).isNull();

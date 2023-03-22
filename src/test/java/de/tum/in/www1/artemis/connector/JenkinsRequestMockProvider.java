@@ -267,10 +267,10 @@ public class JenkinsRequestMockProvider {
         mockCopyBuildPlan(projectKey, projectKey);
     }
 
-    public void mockGetJob(String projectKey, String jobName, JobWithDetails jobToReturn, boolean getJobFails) throws IOException {
+    public void mockGetJob(String projectKey, String jobName, JobWithDetails jobToReturn, boolean shouldFail) throws IOException {
         final var folder = new FolderJob();
         mockGetFolderJob(projectKey, folder);
-        if (!getJobFails) {
+        if (!shouldFail) {
             doReturn(jobToReturn).when(jenkinsServer).getJob(folder, jobName);
         }
         else {
@@ -494,9 +494,9 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    public void mockCheckIfBuildPlanExists(String projectKey, String buildPlanId, boolean buildPlanExists, boolean shouldfail) throws IOException {
+    public void mockCheckIfBuildPlanExists(String projectKey, String buildPlanId, boolean buildPlanExists, boolean shouldFail) throws IOException {
         var toReturn = buildPlanExists ? new JobWithDetails() : null;
-        mockGetJob(projectKey, buildPlanId, toReturn, shouldfail);
+        mockGetJob(projectKey, buildPlanId, toReturn, shouldFail);
     }
 
     public void mockTriggerBuild(String projectKey, String buildPlanId, boolean triggerBuildFails) throws IOException {

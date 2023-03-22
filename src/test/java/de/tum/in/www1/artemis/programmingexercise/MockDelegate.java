@@ -82,7 +82,7 @@ public interface MockDelegate {
 
     void mockCreateUserInUserManagement(User user, boolean userExistsInCi) throws Exception;
 
-    void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception;
+    void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception;
 
     void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) throws Exception;
 
@@ -94,7 +94,7 @@ public interface MockDelegate {
 
     void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws Exception;
 
-    void mockDeleteRepository(String projectKey, String repostoryName, boolean shouldFail) throws Exception;
+    void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) throws Exception;
 
     void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) throws Exception;
 
