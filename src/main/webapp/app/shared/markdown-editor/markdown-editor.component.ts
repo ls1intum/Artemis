@@ -132,6 +132,10 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * 2. false -> the preview of the parent component is used, parent has to set this value to false with an input */
     @Input() showPreviewButton = true;
 
+    /**
+     * true -> the markdown content will be rendered and shown, used when there are no special additions (e.g. text exercises)
+     * false -> the parent component adds its own preview content with id=preview. Used e.g. for programming exercises
+     */
     @Input() showDefaultPreview = true;
 
     @Input() showEditButton = true;
