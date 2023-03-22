@@ -7,11 +7,14 @@ import java.util.List;
 
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AssessmentService;
@@ -110,5 +113,42 @@ class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         result.filterSensitiveFeedbacks(true);
         assertThat(result.getFeedbacks()).isEqualTo(List.of(feedback1));
+    }
+
+    @Test
+    @Disabled // TODO we should implement this in the future
+    void testRemoveTestCaseNames() {
+        Feedback tst1 = new Feedback().positive(true).type(FeedbackType.AUTOMATIC).text("test()");
+        Feedback tst2 = new Feedback().positive(false).type(FeedbackType.AUTOMATIC).text("test2()").detailText("This is wrong.");
+
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
+        participation.setExercise(exercise);
+        result.setParticipation(participation);
+
+        result.setFeedbacks(new ArrayList<>(List.of(tst1, tst2)));
+
+        result.filterSensitiveFeedbacks(true);
+
+        assertThat(result.getFeedbacks()).allMatch(feedback -> feedback.getText() == null);
+    }
+
+    @Test
+    @Disabled // TODO we should implement this in the future
+    void keepTestNamesWhenExerciseSettingActive() {
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setShowTestNamesToStudents(true);
+        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
+        participation.setExercise(programmingExercise);
+        result.setParticipation(participation);
+
+        Feedback tst1 = new Feedback().positive(true).type(FeedbackType.AUTOMATIC).text("test()");
+        Feedback tst2 = new Feedback().positive(false).type(FeedbackType.AUTOMATIC).text("test2()").detailText("This is wrong.");
+
+        result.setFeedbacks(new ArrayList<>(List.of(tst1, tst2)));
+
+        result.filterSensitiveFeedbacks(true);
+
+        assertThat(result.getFeedbacks()).usingRecursiveFieldByFieldElementComparator().containsExactlyInAnyOrder(tst1, tst2);
     }
 }
