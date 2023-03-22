@@ -68,7 +68,8 @@ export class ProgrammingExerciseTaskService {
         this.gradingStatistics = gradingStatistics;
 
         this.maxPoints = this.exercise.maxPoints ?? 0;
-        return this.initializeTasks();
+
+        return this.getTasksByExercise(this.exercise).pipe(map(this.initializeTasks));
     }
 
     /**
@@ -130,7 +131,7 @@ export class ProgrammingExerciseTaskService {
                 this.gradingService.notifyTestCases(this.exercise.id!, testCases);
 
                 // Update tasks
-                this.initializeTasks();
+                this.getTasksByExercise(this.exercise).pipe(map(this.initializeTasks));
             }),
             catchError(() => {
                 this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.resetFailed`);
@@ -139,26 +140,22 @@ export class ProgrammingExerciseTaskService {
         );
     }
 
-    private initializeTasks = (): Observable<ProgrammingExerciseTask[]> => {
-        return this.getTasksByExercise(this.exercise).pipe(
-            map((serverSideTasks) => {
-                this.tasks = serverSideTasks.map((task) => task as ProgrammingExerciseTask);
+    private initializeTasks = (serverSideTasks: ProgrammingExerciseServerSideTask[]): ProgrammingExerciseTask[] => {
+        this.tasks = serverSideTasks.map((task) => task as ProgrammingExerciseTask);
 
-                this.tasks = this.tasks // configureTestCases needs tasks to be set be to be able to use the testCases getter
-                    .map(this.configureTestCases)
-                    .map(this.initializeTask)
-                    .map(this.addGradingStats);
+        this.tasks = this.tasks // configureTestCases needs tasks to be set be to be able to use the testCases getter
+            .map(this.configureTestCases)
+            .map(this.initializeTask)
+            .map(this.addGradingStats);
 
-                this.setCurrentTasks();
-                this.updateAllTaskPoints();
+        this.setCurrentTasks();
+        this.updateAllTaskPoints();
 
-                return this.currentTasks;
-            }),
-        );
+        return this.currentTasks;
     };
 
     private setCurrentTasks = () => {
-        const tasksCopy = this.tasks.map((task) => ({ ...task }));
+        const tasksCopy: ProgrammingExerciseTask[] = JSON.parse(JSON.stringify(this.tasks));
         if (this.ignoreInactive) {
             this.currentTasks = tasksCopy.filter((task) => {
                 task.testCases = task.testCases.filter((test) => test.active);
@@ -216,7 +213,7 @@ export class ProgrammingExerciseTaskService {
     };
 
     private updateAllTaskPoints = () => {
-        this.tasks.forEach(this.updateTaskPoints);
+        this.currentTasks.forEach(this.updateTaskPoints);
     };
 
     private updateTaskPoints = (task: ProgrammingExerciseTask) => {

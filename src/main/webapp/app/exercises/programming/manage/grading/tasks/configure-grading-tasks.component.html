@@ -16,9 +16,13 @@
     </div>
 
     <div>
-        <button (click)="saveTestCases()" class="btn btn-primary" [disabled]="isSaving" jhiTranslate="artemisApp.programmingExercise.configureGrading.save">save</button>
+        <button type="button" (click)="saveTestCases()" class="btn btn-primary" [disabled]="isSaving" jhiTranslate="artemisApp.programmingExercise.configureGrading.save">
+            save
+        </button>
 
-        <button (click)="resetTestCases()" class="btn btn-secondary" [disabled]="isSaving" jhiTranslate="artemisApp.programmingExercise.configureGrading.reset">reset</button>
+        <button type="button" (click)="resetTestCases()" class="btn btn-secondary" [disabled]="isSaving" jhiTranslate="artemisApp.programmingExercise.configureGrading.reset">
+            reset
+        </button>
 
         <!-- TODO: Look up what programming-exercise-table-actions.component: 1-3 import configuration does-->
     </div>

@@ -31,8 +31,8 @@ export class ProgrammingExerciseTaskComponent {
 
     testUpdateHandler(test: ProgrammingExerciseTestCase) {
         this.programmingExerciseTaskService.initializeTask(this.task);
-        this.updateTasksEvent.emit();
         test.changed = true;
+        this.updateTasksEvent.emit();
     }
 
     taskUpdateHandler() {
