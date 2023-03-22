@@ -356,7 +356,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     void testConversationNotificationsOneToOneChatCreation() {
-        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(oneToOneChat, user, userTwo, CONVERSATION_CREATE_ONE_TO_ONE_CHAT);
+        singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(oneToOneChat, user, userTwo, CONVERSATION_CREATE_ONE_TO_ONE_CHAT);
         List<Notification> capturedNotifications = notificationRepository.findAll();
         assertThat(capturedNotifications).as("Notification should not have been saved").hasSize(0);
         // notification should be sent
@@ -365,10 +365,10 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     void testConversationNotificationsGroupChatCreation() {
-        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChat, user, userTwo, CONVERSATION_CREATE_GROUP_CHAT);
+        singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, user, userTwo, CONVERSATION_CREATE_GROUP_CHAT);
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
-        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChat, userThree, userTwo, CONVERSATION_CREATE_GROUP_CHAT);
+        singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, userThree, userTwo, CONVERSATION_CREATE_GROUP_CHAT);
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + userThree.getId() + "/notifications"), (Object) any());
 
         List<Notification> capturedNotifications = notificationRepository.findAll();
@@ -382,7 +382,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     @ParameterizedTest
     @MethodSource("getNotificationTypesAndTitlesParametersForGroupChat")
     void testConversationNotificationsGroupChatAddAndRemoveUsers(NotificationType notificationType, String expectedTitle) {
-        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChat, user, userTwo, notificationType);
+        singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, user, userTwo, notificationType);
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
         verifyRepositoryCallWithCorrectNotification(expectedTitle);
@@ -391,7 +391,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     @ParameterizedTest
     @MethodSource("getNotificationTypesAndTitlesParametersForChannel")
     void testConversationNotificationsChannel(NotificationType notificationType, String expectedTitle) {
-        singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(channel, user, userTwo, notificationType);
+        singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channel, user, userTwo, notificationType);
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
         verifyRepositoryCallWithCorrectNotification(expectedTitle);

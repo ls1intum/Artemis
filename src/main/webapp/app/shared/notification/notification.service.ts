@@ -123,9 +123,7 @@ export class NotificationService {
         // determine if component recreation is required when notification is clicked
         // by comparing the id of the course the user is currently in, the course the post associated with the notification belongs to and if the user is already in the messages tab
         if (currentCourseId === undefined || currentCourseId !== targetCourseId || this.isUnderMessagesTabOfSpecificCourse(targetCourseId.toString())) {
-            this.router.navigate(['/courses'], { skipLocationChange: true }).then(() => {
-                this.router.navigate(routeComponents, { queryParams });
-            });
+            this.forceComponentReload(routeComponents, queryParams);
         } else {
             this.router.navigate(routeComponents, { queryParams });
         }
@@ -133,6 +131,17 @@ export class NotificationService {
 
     private getCurrentCourseId(): number | undefined {
         return this.activatedRoute.snapshot.firstChild?.params['courseId'];
+    }
+
+    /**
+     * Force component reload. This is used when the user clicks on a notification and the component needs to be recreated.
+     * @param routeComponents
+     * @param queryParams
+     */
+    forceComponentReload(routeComponents: RouteComponents, queryParams: Params): void {
+        this.router.navigate(['/courses'], { skipLocationChange: true }).then(() => {
+            this.router.navigate(routeComponents, { queryParams });
+        });
     }
 
     /**

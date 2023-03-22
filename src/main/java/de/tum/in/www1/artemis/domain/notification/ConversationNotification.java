@@ -3,19 +3,15 @@ package de.tum.in.www1.artemis.domain.notification;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 
 import java.time.ZonedDateTime;
-import java.util.Set;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.Transient;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 
@@ -26,10 +22,6 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 @DiscriminatorValue("C")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ConversationNotification extends Notification {
-
-    @Transient
-    @JsonIgnore
-    private final Set<NotificationType> CONVERSATION_NOTIFICATION_TYPES = Set.of(CONVERSATION_NEW_MESSAGE);
 
     @ManyToOne
     @JoinColumn(name = "message_id")
@@ -43,8 +35,7 @@ public class ConversationNotification extends Notification {
         // Empty constructor needed for Jackson.
     }
 
-    public ConversationNotification(User author, Post message, Conversation conversation, String title, String text, NotificationType notificationType) {
-        verifySupportedNotificationType(notificationType);
+    public ConversationNotification(User author, Post message, Conversation conversation, String title, String text) {
         this.setMessage(message);
         this.setConversation(conversation);
         this.setNotificationDate(ZonedDateTime.now());
@@ -70,22 +61,11 @@ public class ConversationNotification extends Notification {
     }
 
     /**
-     * Websocket notification channel for conversation notifications of a specific conversation
+     * Websocket notification channel, for conversation notifications of a specific conversation
      *
      * @return the channel
      */
     public String getTopic() {
         return "/topic/conversation/" + message.getConversation().getId() + "/notifications";
-    }
-
-    /**
-     * Verifies that the given notification type is supported as a conversation notification type
-     *
-     * @param notificationType the notification type to verify
-     */
-    public void verifySupportedNotificationType(NotificationType notificationType) {
-        if (!CONVERSATION_NOTIFICATION_TYPES.contains(notificationType)) {
-            throw new UnsupportedOperationException("Unsupported NotificationType for conversation: " + notificationType);
-        }
     }
 }

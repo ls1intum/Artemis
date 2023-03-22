@@ -89,7 +89,7 @@ public class GroupChatResource {
         }
 
         var groupChat = groupChatService.startGroupChat(course, chatMembers);
-        chatMembers.forEach(user -> singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChat, user, requestingUser,
+        chatMembers.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, user, requestingUser,
                 NotificationType.CONVERSATION_CREATE_GROUP_CHAT));
 
         conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, groupChat, chatMembers);
@@ -142,7 +142,7 @@ public class GroupChatResource {
         groupChatAuthorizationService.isAllowedToAddUsersToGroupChat(groupChatFromDatabase, requestingUser);
         var usersToRegister = conversationService.findUsersInDatabase(userLogins);
         conversationService.registerUsersToConversation(course, usersToRegister, groupChatFromDatabase, Optional.of(MAX_GROUP_CHAT_PARTICIPANTS));
-        usersToRegister.forEach(user -> singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChatFromDatabase, user, requestingUser,
+        usersToRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChatFromDatabase, user, requestingUser,
                 NotificationType.CONVERSATION_ADD_USER_GROUP_CHAT));
         return ResponseEntity.ok().build();
     }
@@ -173,7 +173,7 @@ public class GroupChatResource {
         conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, groupChatFromDatabase);
         // ToDo: Discuss if we should delete the group chat if it has no participants left, but maybe we want to keep it for data analysis purposes
 
-        usersToDeRegister.forEach(user -> singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(groupChatFromDatabase, user, requestingUser,
+        usersToDeRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChatFromDatabase, user, requestingUser,
                 NotificationType.CONVERSATION_REMOVE_USER_GROUP_CHAT));
         return ResponseEntity.ok().build();
     }

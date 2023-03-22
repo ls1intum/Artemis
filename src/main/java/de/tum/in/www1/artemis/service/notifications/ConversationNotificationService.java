@@ -10,6 +10,9 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.ConversationNotification;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationNotificationRepository;
 
+/**
+ * Service for sending notifications about new messages in conversations.
+ */
 @Service
 public class ConversationNotificationService {
 

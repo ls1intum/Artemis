@@ -185,7 +185,7 @@ public class ChannelResource {
                 .collect(Collectors.toSet());
         conversationService.deleteConversation(channel);
         usersToNotify.forEach(
-                user -> singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(channel, user, requestingUser, NotificationType.CONVERSATION_DELETE_CHANNEL));
+                user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channel, user, requestingUser, NotificationType.CONVERSATION_DELETE_CHANNEL));
         return ResponseEntity.ok().build();
     }
 
@@ -311,7 +311,7 @@ public class ChannelResource {
         usersToRegister.addAll(conversationService.findUsersInDatabase(course, addAllStudents, addAllTutors, addAllInstructors));
         usersToRegister.addAll(conversationService.findUsersInDatabase(usersLoginsToRegister.stream().toList()));
         conversationService.registerUsersToConversation(course, usersToRegister, channelFromDatabase, Optional.empty());
-        usersToRegister.forEach(user -> singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(channelFromDatabase, user, requestingUser,
+        usersToRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channelFromDatabase, user, requestingUser,
                 NotificationType.CONVERSATION_ADD_USER_CHANNEL));
         return ResponseEntity.ok().build();
     }
@@ -348,7 +348,7 @@ public class ChannelResource {
         }
 
         conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, channelFromDatabase);
-        usersToDeRegister.forEach(user -> singleUserNotificationService.notifyUserAboutConversationCreationOrDeletion(channelFromDatabase, user, requestingUser,
+        usersToDeRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channelFromDatabase, user, requestingUser,
                 NotificationType.CONVERSATION_REMOVE_USER_CHANNEL));
         return ResponseEntity.ok().build();
     }

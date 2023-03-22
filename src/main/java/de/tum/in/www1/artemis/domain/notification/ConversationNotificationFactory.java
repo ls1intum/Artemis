@@ -18,7 +18,7 @@ public class ConversationNotificationFactory {
      */
     public static ConversationNotification createConversationMessageNotification(Post message, NotificationType notificationType, String notificationText) {
         String title = findCorrespondingNotificationTitleOrThrow(notificationType);
-        var notification = new ConversationNotification(message.getAuthor(), message, message.getConversation(), title, notificationText, notificationType);
+        var notification = new ConversationNotification(message.getAuthor(), message, message.getConversation(), title, notificationText);
         setNotificationTarget(notification);
         return notification;
     }

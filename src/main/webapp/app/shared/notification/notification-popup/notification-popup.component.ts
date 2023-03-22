@@ -75,10 +75,9 @@ export class NotificationPopupComponent implements OnInit {
         } else if (notification.title === NEW_REPLY_MESSAGE_TITLE || notification.title === NEW_MESSAGE_TITLE) {
             const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
             const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
+            // check if component reload is needed
             if (currentCourseId === undefined || currentCourseId !== targetCourseId || this.isUnderMessagesTabOfSpecificCourse(targetCourseId)) {
-                this.router.navigate(['/courses'], { skipLocationChange: true }).then(() => {
-                    this.router.navigate(routeComponents, { queryParams });
-                });
+                this.notificationService.forceComponentReload(routeComponents, queryParams);
             } else {
                 this.router.navigate(routeComponents, { queryParams });
             }

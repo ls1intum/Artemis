@@ -323,7 +323,7 @@ public class SingleUserNotificationService {
      * @param responsibleUser  the responsibleUser that has registered/removed the user for the conversation
      * @param notificationType the type of notification to be sent
      */
-    public void notifyUserAboutConversationCreationOrDeletion(Conversation conversation, User user, User responsibleUser, NotificationType notificationType) {
+    public void notifyClientAboutConversationCreationOrDeletion(Conversation conversation, User user, User responsibleUser, NotificationType notificationType) {
         notifyRecipientWithNotificationType(new ConversationNotificationSubject(conversation, user, responsibleUser), notificationType, null, null);
     }
 
@@ -365,15 +365,12 @@ public class SingleUserNotificationService {
         else if (Objects.equals(notification.getTitle(), CONVERSATION_CREATE_GROUP_CHAT_TITLE) || Objects.equals(notification.getTitle(), CONVERSATION_DELETE_CHANNEL_TITLE)
                 || Objects.equals(notification.getTitle(), CONVERSATION_ADD_USER_CHANNEL_TITLE) || Objects.equals(notification.getTitle(), CONVERSATION_ADD_USER_GROUP_CHAT_TITLE)
                 || Objects.equals(notification.getTitle(), CONVERSATION_REMOVE_USER_CHANNEL_TITLE)
-                || Objects.equals(notification.getTitle(), CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE)) {
+                || Objects.equals(notification.getTitle(), CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE)
+                || Objects.equals(notification.getTitle(), MESSAGE_REPLY_IN_CONVERSATION_TITLE)) {
             return (!Objects.equals(notification.getAuthor().getLogin(), notification.getRecipient().getLogin()));
         }
-        else if (Objects.equals(notification.getTitle(), MESSAGE_REPLY_IN_CONVERSATION_TITLE)) {
-            return (!Objects.equals(notification.getAuthor().getLogin(), notification.getRecipient().getLogin()));
-        }
-        else {
+        else
             return true;
-        }
     }
 
     /**
