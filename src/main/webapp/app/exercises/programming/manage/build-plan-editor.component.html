@@ -1,9 +1,9 @@
 <div class="d-flex align-content-between flex-wrap mb-2">
-    <div class="f-flex flex-column">
+    <div *ngIf="!loadingResults" class="f-flex flex-column">
         <div>
             <span class="me-1" jhiTranslate="artemisApp.participation.templateParticipation">Template</span>
             <jhi-updating-result
-                *ngIf="!loadingTemplateParticipationResults"
+                *ngIf="programmingExercise.templateParticipation"
                 [exercise]="programmingExercise"
                 [participation]="programmingExercise.templateParticipation!"
                 [showUngradedResults]="true"
@@ -13,7 +13,7 @@
         <div>
             <span class="me-1" jhiTranslate="artemisApp.participation.solutionParticipation">Solution</span>
             <jhi-updating-result
-                *ngIf="!loadingSolutionParticipationResults && programmingExercise.solutionParticipation"
+                *ngIf="programmingExercise.solutionParticipation"
                 [exercise]="programmingExercise"
                 [participation]="programmingExercise.solutionParticipation!"
                 [showUngradedResults]="true"
@@ -25,6 +25,7 @@
         id="submit_button"
         type="button"
         class="guided-tour-submit-button btn btn-success navbar-btn ms-auto"
+        [disabled]="!this.buildPlan"
         (click)="submit()"
         [ngbTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"
     >

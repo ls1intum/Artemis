@@ -21,7 +21,6 @@ import { StatisticsService } from 'app/shared/statistics-graph/statistics.servic
 import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { Submission } from 'app/entities/submission.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
@@ -151,26 +150,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/exercises/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
             }
 
-            this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!, true).subscribe((updatedProgrammingExercise) => {
+            this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!).subscribe((updatedProgrammingExercise) => {
                 this.programmingExercise = updatedProgrammingExercise.body!;
 
-                // get the latest results for further processing
-                if (this.programmingExercise.templateParticipation) {
-                    const latestTemplateResult = this.getLatestResult(this.programmingExercise.templateParticipation.submissions);
-                    if (latestTemplateResult) {
-                        this.programmingExercise.templateParticipation.results = [latestTemplateResult];
-                    }
-                    // This is needed to access the exercise in the result details
-                    this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
-                }
-                if (this.programmingExercise.solutionParticipation) {
-                    const latestSolutionResult = this.getLatestResult(this.programmingExercise.solutionParticipation.submissions);
-                    if (latestSolutionResult) {
-                        this.programmingExercise.solutionParticipation.results = [latestSolutionResult];
-                    }
-                    // This is needed to access the exercise in the result details
-                    this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
-                }
                 this.setLatestCoveredLineRatio();
                 this.loadingTemplateParticipationResults = false;
                 this.loadingSolutionParticipationResults = false;
@@ -231,22 +213,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     onParticipationChange(): void {
         this.loadGitDiffReport();
         this.setLatestCoveredLineRatio();
-    }
-
-    /**
-     * returns the latest result within the submissions array or undefined, sorting is based on the submission date and the result order retrieved from the server
-     *
-     * @param submissions
-     */
-    getLatestResult(submissions?: Submission[]) {
-        if (submissions && submissions.length > 0) {
-            // important: sort to get the latest submission (the order of the server can be random)
-            this.sortService.sortByProperty(submissions, 'submissionDate', true);
-            const results = submissions.sort().last()?.results;
-            if (results && results.length > 0) {
-                return results.last();
-            }
-        }
     }
 
     combineTemplateCommits() {
@@ -485,7 +451,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * Returns undefined if the last solution submission was not successful or no report exists yet
      */
     private setLatestCoveredLineRatio() {
-        const latestSolutionSubmissionSuccessful = this.getLatestResult(this.programmingExercise?.solutionParticipation?.submissions)?.successful;
+        if (!this.programmingExercise?.solutionParticipation) {
+            return;
+        }
+
+        const latestSolutionSubmissionSuccessful = this.programmingExerciseService.getLatestResult(this.programmingExercise?.solutionParticipation)?.successful;
         if (this.programmingExercise.testwiseCoverageEnabled && !!latestSolutionSubmissionSuccessful) {
             this.programmingExerciseService.getLatestTestwiseCoverageReport(this.programmingExercise.id!).subscribe((coverageReport) => {
                 this.programmingExercise.coveredLinesRatio = coverageReport.coveredLineRatio;
