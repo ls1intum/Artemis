@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller for the android assetlink.json
+ */
 @RestController
 @RequestMapping("/.well-known")
 public class AndroidAppSiteAssociationResource {
@@ -18,6 +21,12 @@ public class AndroidAppSiteAssociationResource {
     @Value("${artemis.androidSha256CertFingerprints}")
     private String sha256CertFingerprints;
 
+    /**
+     * Provides the assetlinks json content for the Android client deeplink link feature.
+     * More information on the json content can be found <a href="URL#https://developer.android.com/training/app-links/verify-android-applinks">here</a>
+     *
+     * @return assetslinks as json
+     */
     @GetMapping("/assetlinks.json")
     public ResponseEntity<List<AndroidAssetLinksEntry>> getAndroidAssetLinks() {
         final AndroidAssetLinksEntry.AndroidTarget appTarget = new AndroidAssetLinksEntry.AndroidTarget("android_app", androidAppPackage, List.of(sha256CertFingerprints));

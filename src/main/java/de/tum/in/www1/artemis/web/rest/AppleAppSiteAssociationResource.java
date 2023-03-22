@@ -6,6 +6,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller for the apple-app-site-association json
+ */
 @RestController
 @RequestMapping("/.well-known")
 public class AppleAppSiteAssociationResource {
@@ -22,21 +25,22 @@ public class AppleAppSiteAssociationResource {
     @GetMapping("/apple-app-site-association")
     public ResponseEntity<AppleAppSiteAssociation> getAppleAppSiteAssociation() {
         String[] paths = { "/courses/*" };
-        Detail detail = new Detail(appId, paths);
-        Detail[] details = { detail };
+        AppleAppSiteAssociation.Applinks.Detail detail = new AppleAppSiteAssociation.Applinks.Detail(appId, paths);
+        AppleAppSiteAssociation.Applinks.Detail[] details = { detail };
         String[] apps = {};
-        Applinks applinks = new Applinks(apps, details);
+        AppleAppSiteAssociation.Applinks applinks = new AppleAppSiteAssociation.Applinks(apps, details);
         AppleAppSiteAssociation appleAppSiteAssociation = new AppleAppSiteAssociation(applinks);
 
         return ResponseEntity.ok(appleAppSiteAssociation);
     }
-}
 
-record AppleAppSiteAssociation(Applinks applinks) {
-}
+    record AppleAppSiteAssociation(Applinks applinks) {
 
-record Applinks(String[] apps, Detail[] details) {
-}
+        record Applinks(String[] apps, Detail[] details) {
 
-record Detail(String appID, String[] paths) {
+            record Detail(String appID, String[] paths) {
+            }
+        }
+    }
+
 }
