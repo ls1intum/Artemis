@@ -28,6 +28,9 @@ node_modules
 build/*
 !build/libs/*.war
 
+# exclude the docker files and the /docker/.docker-data folders
+docker/
+
 # files inside of the root directory not needed
 CITATION.cff
 CODE_OF_CONDUCT.md
