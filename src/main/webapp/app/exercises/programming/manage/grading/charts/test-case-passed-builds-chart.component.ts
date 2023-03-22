@@ -18,14 +18,19 @@ import { round } from 'app/shared/util/utils';
 })
 export class TestCasePassedBuildsChartComponent implements OnChanges {
     @Input() testCaseStats?: TestCaseStats;
-    @Input() totalParticipations: number | undefined;
+    @Input() totalParticipations: number;
 
     passedPercent = 0;
     failedPercent = 0;
     tooltip = '';
 
     ngOnChanges(): void {
-        if (this.totalParticipations && this.totalParticipations > 0) {
+        const totalPassedAndFailed = (this.testCaseStats?.numPassed ?? 0) + (this.testCaseStats?.numFailed ?? 0);
+        if (totalPassedAndFailed > this.totalParticipations) {
+            this.totalParticipations = totalPassedAndFailed;
+        }
+
+        if (this.totalParticipations > 0) {
             const passedPercent = ((this.testCaseStats?.numPassed || 0) / this.totalParticipations) * 100;
             const failedPercent = ((this.testCaseStats?.numFailed || 0) / this.totalParticipations) * 100;
 
