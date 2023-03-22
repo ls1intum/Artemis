@@ -178,6 +178,10 @@ repos-download/
 # Docker
 ######################
 /docker/.env
+/docker/.docker-data/artemis-data/*
+!/docker/.docker-data/artemis-data/.gitkeep
+/docker/.docker-data/artemis-mysql-data/*
+!/docker/.docker-data/artemis-mysql-data/.gitkeep
 
 ######################
 # Cypress

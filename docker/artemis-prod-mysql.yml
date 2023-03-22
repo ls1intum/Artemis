@@ -19,11 +19,15 @@ services:
             start_period: 300s
             interval: 1s
         restart: on-failure:3
+        volumes:
+            - ./.docker-data/artemis-data:/opt/artemis/data
     mysql:
         extends:
             file: ./mysql.yml
             service: mysql
         restart: on-failure:3
+        volumes:
+            - ./.docker-data/artemis-mysql-data:/var/lib/mysql
     nginx:
         extends:
             file: ./nginx.yml
@@ -38,8 +42,3 @@ networks:
     artemis:
         driver: "bridge"
         name: artemis
-volumes:
-    artemis-mysql-data:
-        name: artemis-mysql-data
-    artemis-data:
-        name: artemis-data
