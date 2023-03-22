@@ -1330,11 +1330,11 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     /**
-     * test students can't get all quiz exercises
+     * test non-tutors can't get all quiz exercises
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetAllQuizExercisesAsStudentForbidden() throws Exception {
+    void testGetAllQuizExercisesAsNonTutorForbidden() throws Exception {
         quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusDays(1), null, QuizMode.SYNCHRONIZED);
 
         request.getList("/api/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quiz-exercises", HttpStatus.FORBIDDEN, QuizExercise.class);
@@ -1353,11 +1353,11 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     /**
-     * test students can't see the exercise if it is not set to visible
+     * test non-tutors can't see the exercise if it is not set to visible
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testViewQuizExerciseAsStudentNotVisibleForbidden() throws Exception {
+    void testViewQuizExerciseAsNonTutorNotVisibleForbidden() throws Exception {
         quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
 
         request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.FORBIDDEN, QuizExercise.class);
@@ -1375,22 +1375,22 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     /**
-     * test students can't recalculate quiz exercise statistics
+     * test non-tutors can't recalculate quiz exercise statistics
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRecalculateStatisticsAsStudentForbidden() throws Exception {
+    void testRecalculateStatisticsAsNonTutorForbidden() throws Exception {
         quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
 
         request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.FORBIDDEN, QuizExercise.class);
     }
 
     /**
-     * test students not in course can't access a quiz exercise
+     * test non-tutors not in course can't access a quiz exercise
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetQuizExerciseForStudentNotInCourseForbidden() throws Exception {
+    void testGetQuizExerciseForNonTutorNotInCourseForbidden() throws Exception {
         QuizExercise quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusHours(4), null, QuizMode.SYNCHRONIZED);
         database.removeUserFromAllCourses(TEST_PREFIX + "student1");
 
