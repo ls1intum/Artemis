@@ -44,15 +44,14 @@ export class ProgrammingExerciseTaskService {
             return false;
         }
 
-        return !this.tasks
-            .flatMap((task) => task.testCases)
+        return !this.testCases
             .map((task) => ({
-                old: task,
-                updated: this.testCases.find(({ id }) => task.id === id),
+                old: this.tasks.flatMap((task) => task.testCases).find(({ id }) => task.id === id),
+                updated: task,
             }))
             .every(({ old, updated }) => {
                 return (
-                    updated &&
+                    old &&
                     updated.weight === old.weight &&
                     updated.bonusMultiplier === old.bonusMultiplier &&
                     updated.bonusPoints === old.bonusPoints &&
