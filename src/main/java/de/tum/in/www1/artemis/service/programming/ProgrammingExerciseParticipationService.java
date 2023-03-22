@@ -144,6 +144,7 @@ public class ProgrammingExerciseParticipationService {
      * - Template/SolutionParticipations should only be accessible for users with at least the role TA in the courses.
      *
      * @param participation to check permissions for.
+     * @param user          the current user.
      * @return true if the user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
      */
     public boolean canAccessParticipation(@NotNull ProgrammingExerciseParticipation participation, User user) {
