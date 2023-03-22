@@ -130,12 +130,13 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         lecture = new Lecture();
         lecture.setCourse(course);
 
-        attachment = new Attachment();
-
         exercise = ModelFactory.generateTextExercise(null, null, null, course);
         exerciseRepository.save(exercise);
         updatedExercise = ModelFactory.generateTextExercise(null, null, null, course);
         exerciseRepository.save(updatedExercise);
+
+        attachment = new Attachment();
+        attachment.setExercise(exercise);
 
         ExerciseGroup exerciseGroup = new ExerciseGroup();
         exerciseGroup.setExam(exam);
