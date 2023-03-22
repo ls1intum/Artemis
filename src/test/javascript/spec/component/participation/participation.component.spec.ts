@@ -97,7 +97,6 @@ describe('ParticipationComponent', () => {
         expect(component.isLoading).toBeFalse();
         expect(component.participations).toHaveLength(1);
         expect(component.participations[0].id).toBe(participation.id);
-        expect(component.newManualResultAllowed).toBeFalse();
         expect(component.presentationScoreEnabled).toBeFalse();
 
         expect(exerciseFindStub).toHaveBeenCalledOnce();
@@ -123,7 +122,6 @@ describe('ParticipationComponent', () => {
         expect(component.isLoading).toBeFalse();
         expect(component.participations).toHaveLength(1);
         expect(component.participations[0].id).toBe(participation.id);
-        expect(component.newManualResultAllowed).toBeFalse();
         expect(component.presentationScoreEnabled).toBeFalse();
         expect(component.exerciseSubmissionState).toEqual(submissionState);
 
