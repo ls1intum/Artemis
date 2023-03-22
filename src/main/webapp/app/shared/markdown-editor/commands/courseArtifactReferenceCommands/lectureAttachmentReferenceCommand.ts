@@ -20,6 +20,7 @@ export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
                 elements: lecture.attachments?.map((attachment) => ({ id: attachment.id!.toString(), value: attachment.name!, courseArtifactType: ReferenceType.ATTACHMENT })),
             }))!,
         );
+        console.log(this.values);
     }
 
     /**
@@ -27,11 +28,12 @@ export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
      * @param {string} selectedLectureId   ID of the lecture to be referenced
      * @param type
      * @param selectedElementId
+     * @param selectedUnitElementId
      * @desc                                Add a lecture reference link in markdown language
      *                                      1. Add '[{lecture-title}](/courses/{courseId}/lectures/{lectureId}})' at the cursor in the editor
      *                                      2. Link in markdown language appears which when clicked navigates to the lecture page
      */
-    execute(selectedLectureId: string, type?: ReferenceType, selectedElementId?: string): void {
+    execute(selectedLectureId: string, type?: ReferenceType, selectedElementId?: string, selectedUnitElementId?: string): void {
         const selectedLecture = this.metisService.getCourse().lectures!.find((value) => value.id!.toString() === selectedLectureId)!;
         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const selectedAttachment = selectedLecture.attachments?.find((value) => value.id!.toString() === selectedElementId)!;

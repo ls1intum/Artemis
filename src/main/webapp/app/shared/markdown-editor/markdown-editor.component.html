@@ -87,9 +87,27 @@
                                     No items available
                                 </button>
                                 <li *ngFor="let item of command.getValues()">
-                                    <button class="btn-sm" type="button" (click)="command.execute(item.id, item.type)" ngbDropdownItem>
+                                    <button class="btn-sm d-inline" type="button" (click)="command.execute(item.id, item.type)" ngbDropdownItem>
                                         {{ item.value }}
                                     </button>
+
+                                    <div ngbDropdown container="body" class="d-inline" *ngIf="item.type === 'LECTURE'">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button border-0" type="button" ngbDropdownToggle>
+                                            <!--                                            <fa-icon [icon]="faAngleRight" size="sm"></fa-icon>-->
+                                        </button>
+                                        <div ngbDropdownMenu>
+                                            <ng-container *ngFor="let nestedElement of item.attachmentUnits">
+                                                <button
+                                                    class="btn-sm nested"
+                                                    type="button"
+                                                    (click)="command.execute(item.id, nestedElement.type, nestedElement.id)"
+                                                    ngbDropdownItem
+                                                >
+                                                    {{ nestedElement.value }}
+                                                </button>
+                                            </ng-container>
+                                        </div>
+                                    </div>
                                     <ng-container *ngFor="let nestedElement of item.elements">
                                         <button class="btn-sm nested" type="button" (click)="command.execute(item.id, nestedElement.type, nestedElement.id)" ngbDropdownItem>
                                             {{ nestedElement.value }}

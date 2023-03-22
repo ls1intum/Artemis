@@ -12,6 +12,8 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
 import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
+import { LectureAttachmentUnitReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentUnitReferenceCommand';
+import { LectureService } from 'app/lecture/lecture.service';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -34,7 +36,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     content?: string;
     previewMode = false;
 
-    constructor(private cdref: ChangeDetectorRef, private metisService: MetisService) {}
+    constructor(private cdref: ChangeDetectorRef, private metisService: MetisService, private lectureService: LectureService) {}
 
     /**
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings
@@ -50,6 +52,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new LinkCommand(),
             new ExerciseReferenceCommand(this.metisService),
             new LectureAttachmentReferenceCommand(this.metisService),
+            new LectureAttachmentUnitReferenceCommand(this.metisService, this.lectureService),
         ];
     }
 

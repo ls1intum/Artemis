@@ -39,7 +39,8 @@
             "editor": {
                 "reference": "Reference",
                 "exercise": "Exercise",
-                "lecture": "Lecture"
+                "lecture": "Lecture",
+                "attachmentUnit": "Attachment Unit"
             },
             "communication": {
                 "label": "Communication",
