@@ -8,9 +8,13 @@ import { TutorialGroupSessionRowComponent } from 'app/course/tutorial-groups/sha
 import { TutorialGroupFreeDaysOverviewComponent } from './tutorial-group-free-days-overview/tutorial-group-free-days-overview.component';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { TutorialGroupRowComponent } from './tutorial-groups-table/tutorial-group-row/tutorial-group-row.component';
+import { VerticalProgressBarModule } from 'app/shared/vertical-progress-bar/vertical-progress-bar.module';
+import { TutorialGroupUtilizationIndicatorComponent } from './tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
+import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
+import { MeetingPatternPipe } from 'app/course/tutorial-groups/shared/meeting-pattern.pipe';
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule, ArtemisSidePanelModule],
+    imports: [ArtemisSharedModule, RouterModule, ArtemisSidePanelModule, VerticalProgressBarModule],
     declarations: [
         TutorialGroupsTableComponent,
         TutorialGroupDetailComponent,
@@ -18,7 +22,17 @@ import { TutorialGroupRowComponent } from './tutorial-groups-table/tutorial-grou
         TutorialGroupSessionRowComponent,
         TutorialGroupFreeDaysOverviewComponent,
         TutorialGroupRowComponent,
+        TutorialGroupUtilizationIndicatorComponent,
+        RemoveSecondsPipe,
+        MeetingPatternPipe,
     ],
-    exports: [TutorialGroupsTableComponent, TutorialGroupSessionsTableComponent, TutorialGroupDetailComponent, TutorialGroupFreeDaysOverviewComponent],
+    exports: [
+        TutorialGroupsTableComponent,
+        TutorialGroupSessionsTableComponent,
+        TutorialGroupDetailComponent,
+        TutorialGroupFreeDaysOverviewComponent,
+        RemoveSecondsPipe,
+        MeetingPatternPipe,
+    ],
 })
 export class ArtemisTutorialGroupsSharedModule {}

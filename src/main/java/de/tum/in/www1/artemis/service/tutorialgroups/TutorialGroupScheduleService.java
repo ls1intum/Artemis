@@ -141,17 +141,28 @@ public class TutorialGroupScheduleService {
     }
 
     /**
-     * Update the schedule of the given tutorial group
+     * Update the schedule of the given tutorial group if it is changed
      *
      * @param tutorialGroupsConfiguration the course wide tutorial groups configuration
      * @param tutorialGroup               the tutorial group for which the schedule should be updated
      * @param oldSchedule                 the old schedule of the tutorial group
      * @param newSchedule                 the new schedule of the tutorial group
      */
-    public void updateSchedule(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroup tutorialGroup, Optional<TutorialGroupSchedule> oldSchedule,
+    public void updateScheduleIfChanged(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroup tutorialGroup, Optional<TutorialGroupSchedule> oldSchedule,
             Optional<TutorialGroupSchedule> newSchedule) {
-        if (oldSchedule.isPresent() && newSchedule.isPresent()) { // update existing schedule -> delete all scheduled sessions and recreate using the new schedule
-            updateAllSessionsToNewSchedule(tutorialGroupsConfiguration, tutorialGroup, oldSchedule.get(), newSchedule.get());
+        if (oldSchedule.isPresent() && newSchedule.isPresent()) {
+            var oldS = oldSchedule.get();
+            var newS = newSchedule.get();
+            if (!oldS.sameSchedule(newS)) { // update existing schedule -> delete all scheduled sessions and recreate using the new schedule
+                if (oldS.onlyLocationChanged(newS)) {
+                    updateAllSessionsToNewLocation(oldS, newS.getLocation());
+                    oldS.setLocation(newS.getLocation());
+                    tutorialGroupScheduleRepository.save(oldS);
+                }
+                else {
+                    updateAllSessionsToNewSchedule(tutorialGroupsConfiguration, tutorialGroup, oldS, newS);
+                }
+            }
         }
         else if (oldSchedule.isPresent()) { // old schedule present but not new schedule -> delete old schedule
             tutorialGroupScheduleRepository.delete(oldSchedule.get());
@@ -159,6 +170,12 @@ public class TutorialGroupScheduleService {
         else if (newSchedule.isPresent()) { // new schedule present but not old schedule -> create new schedule
             saveScheduleAndGenerateScheduledSessions(tutorialGroupsConfiguration, tutorialGroup, newSchedule.get());
         }
+    }
+
+    private void updateAllSessionsToNewLocation(TutorialGroupSchedule oldSchedule, String newLocation) {
+        var sessions = tutorialGroupSessionRepository.findAllByScheduleId(oldSchedule.getId());
+        sessions.forEach(session -> session.setLocation(newLocation));
+        tutorialGroupSessionRepository.saveAll(sessions);
     }
 
     private void updateAllSessionsToNewSchedule(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroup tutorialGroup, TutorialGroupSchedule oldSchedule,

@@ -90,6 +90,11 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             }
         });
         this.registerAuthenticationSuccess();
+
+        const prefilledUsername = this.accountService.getAndClearPrefilledUsername();
+        if (prefilledUsername) {
+            this.username = prefilledUsername;
+        }
     }
 
     /**

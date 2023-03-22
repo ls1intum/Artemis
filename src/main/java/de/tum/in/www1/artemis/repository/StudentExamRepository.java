@@ -5,7 +5,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -415,7 +413,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
         deleteAll(existingStudentExams);
 
-        Set<User> users = exam.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toCollection(HashSet::new));
+        Set<User> users = exam.getRegisteredUsers();
 
         // StudentExams are saved in the called method
         return createRandomStudentExams(exam, users);
@@ -436,7 +434,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         Set<User> usersWithStudentExam = findUsersWithStudentExamsForExam(exam.getId());
 
         // Get all students who don't have an exam yet
-        Set<User> missingUsers = exam.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
+        Set<User> missingUsers = exam.getRegisteredUsers();
         missingUsers.removeAll(usersWithStudentExam);
 
         // StudentExams are saved in the called method

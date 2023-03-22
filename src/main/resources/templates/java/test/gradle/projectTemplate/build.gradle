@@ -5,7 +5,7 @@ plugins {
     id 'com.github.spotbugs' version '5.0.13'
     // %static-code-analysis-stop%
     // %record-testwise-coverage-start%
-    id 'com.teamscale' version '27.0.1'
+    id 'com.teamscale' version '29.1.2'
     // %record-testwise-coverage-stop%
 }
 

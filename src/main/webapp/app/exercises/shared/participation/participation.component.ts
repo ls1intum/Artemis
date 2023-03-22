@@ -8,7 +8,6 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.utils';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
@@ -40,7 +39,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly ActionType = ActionType;
     readonly FeatureToggle = FeatureToggle;
-    readonly dayjs = dayjs;
 
     participations: StudentParticipation[] = [];
     participationsChangedDueDate: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
@@ -48,7 +46,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     eventSubscriber: Subscription;
     paramSub: Subscription;
     exercise: Exercise;
-    newManualResultAllowed: boolean;
     hasLoadedPendingSubmissions = false;
     presentationScoreEnabled = false;
     // Used to show the "Clone Repository URL" button instead of a link to Bitbucket/GitLab when the "localvc" profile is active.
@@ -68,6 +65,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     isLoading: boolean;
 
     isSaving: boolean;
+
+    afterDueDate = false;
 
     // Icons
     faTimes = faTimes;
@@ -116,11 +115,11 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.hasLoadedPendingSubmissions = false;
         this.exerciseService.find(exerciseId).subscribe((exerciseResponse) => {
             this.exercise = exerciseResponse.body!;
+            this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
             this.loadParticipations(exerciseId);
             if (this.exercise.type === ExerciseType.PROGRAMMING) {
                 this.loadSubmissions(exerciseId);
             }
-            this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
             this.presentationScoreEnabled = this.checkPresentationScoreConfig();
         });
     }

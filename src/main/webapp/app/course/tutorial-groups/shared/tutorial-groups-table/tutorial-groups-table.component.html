@@ -15,43 +15,31 @@
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.title' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
+                <th>
+                    <span>{{ 'artemisApp.entities.tutorialGroup.utilization' | artemisTranslate }}</span>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.utilizationHelp' | artemisTranslate }}"></fa-icon>
+                </th>
+                <th jhiSortBy="capacityAndRegistrations">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.capacityWithRegistrations' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
                 <th jhiSortBy="teachingAssistantName">
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.teachingAssistant' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
-                <th jhiSortBy="capacity">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.capacity' | artemisTranslate }}</a>
+                <th jhiSortBy="dayAndTime">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.locationTime' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
-                <th jhiSortBy="tutorialGroupSchedule.dayOfWeek">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.dayOfWeek' | artemisTranslate }}</a>
-                    <fa-icon [icon]="faSort"></fa-icon>
-                </th>
-                <th jhiSortBy="tutorialGroupSchedule.repetitionFrequency">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.repetitionFrequency' | artemisTranslate }}</a>
-                    <fa-icon [icon]="faSort"></fa-icon>
-                </th>
-                <th jhiSortBy="tutorialGroupSchedule.location">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSession.location' | artemisTranslate }}</a>
-                    <fa-icon [icon]="faSort"></fa-icon>
-                </th>
-                <th jhiSortBy="tutorialGroupSchedule.startTime">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.time' | artemisTranslate }}</a>
-                    <fa-icon [icon]="faSort"></fa-icon>
-                </th>
-                <th jhiSortBy="numberOfRegisteredUsers">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.registrations' | artemisTranslate }}</a>
-                    <fa-icon [icon]="faSort"></fa-icon>
-                </th>
-                <th jhiSortBy="isOnline">
+                <th jhiSortBy="isOnline" *ngIf="mixOfOfflineAndOfflineTutorialGroups" id="online-column">
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.isOnline' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
-                <th jhiSortBy="language">
+                <th jhiSortBy="language" *ngIf="mifOfDifferentLanguages" id="language-column">
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.language' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
-                <th jhiSortBy="campus">
+                <th jhiSortBy="campus" *ngIf="tutorialGroupsSplitAcrossMultipleCampuses" id="campus-column">
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.campus' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
@@ -78,6 +66,9 @@
                 [showChannelColumn]="showChannelColumn"
                 [tutorialGroupClickHandler]="tutorialGroupClickHandler"
                 [timeZone]="timeZone"
+                [mifOfDifferentLanguages]="mifOfDifferentLanguages"
+                [mixOfOfflineAndOfflineTutorialGroups]="mixOfOfflineAndOfflineTutorialGroups"
+                [tutorialGroupsSplitAcrossMultipleCampuses]="tutorialGroupsSplitAcrossMultipleCampuses"
             ></tr>
         </tbody>
     </table>

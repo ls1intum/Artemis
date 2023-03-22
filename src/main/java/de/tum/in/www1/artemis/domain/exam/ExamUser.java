@@ -48,16 +48,16 @@ public class ExamUser extends AbstractAuditingEntity {
     private String plannedSeat;
 
     @Column(name = "did_check_image")
-    private Boolean didCheckImage = false;
+    private boolean didCheckImage = false;
 
     @Column(name = "did_check_name")
-    private Boolean didCheckName = false;
+    private boolean didCheckName = false;
 
     @Column(name = "did_check_login")
-    private Boolean didCheckLogin = false;
+    private boolean didCheckLogin = false;
 
     @Column(name = "did_check_registration_number")
-    private Boolean didCheckRegistrationNumber = false;
+    private boolean didCheckRegistrationNumber = false;
 
     @Size(max = 100)
     @Column(name = "signing_image_path", length = 100)
@@ -107,35 +107,35 @@ public class ExamUser extends AbstractAuditingEntity {
         this.plannedSeat = plannedSeat;
     }
 
-    public Boolean getDidCheckRegistrationNumber() {
+    public boolean getDidCheckRegistrationNumber() {
         return didCheckRegistrationNumber;
     }
 
-    public void setDidCheckRegistrationNumber(Boolean didCheckRegistrationNumber) {
+    public void setDidCheckRegistrationNumber(boolean didCheckRegistrationNumber) {
         this.didCheckRegistrationNumber = didCheckRegistrationNumber;
     }
 
-    public Boolean getDidCheckImage() {
+    public boolean getDidCheckImage() {
         return didCheckImage;
     }
 
-    public void setDidCheckImage(Boolean didCheckImage) {
+    public void setDidCheckImage(boolean didCheckImage) {
         this.didCheckImage = didCheckImage;
     }
 
-    public Boolean getDidCheckName() {
+    public boolean getDidCheckName() {
         return didCheckName;
     }
 
-    public void setDidCheckName(Boolean didCheckName) {
+    public void setDidCheckName(boolean didCheckName) {
         this.didCheckName = didCheckName;
     }
 
-    public Boolean getDidCheckLogin() {
+    public boolean getDidCheckLogin() {
         return didCheckLogin;
     }
 
-    public void setDidCheckLogin(Boolean didCheckLogin) {
+    public void setDidCheckLogin(boolean didCheckLogin) {
         this.didCheckLogin = didCheckLogin;
     }
 

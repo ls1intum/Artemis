@@ -38,20 +38,27 @@
                 </div>
             </div>
             <div class="form-group" *ngIf="!isInConnectMode">
-                <label for="taxonomy">{{ 'artemisApp.learningGoal.taxonomy' | artemisTranslate }}</label>
+                <label for="taxonomy">
+                    {{ 'artemisApp.learningGoal.taxonomy' | artemisTranslate }}
+                    <small *ngIf="suggestedTaxonomies?.length">
+                        ({{ 'artemisApp.learningGoal.createLearningGoal.suggestedTaxonomy' | artemisTranslate }}: {{ suggestedTaxonomies.join(', ') }})
+                    </small>
+                </label>
                 <select class="form-select mb-2" id="taxonomy" formControlName="taxonomy">
                     <option [ngValue]="undefined" selected></option>
-                    <option *ngFor="let taxonomy of learningGoalTaxonomy | keyvalue" [ngValue]="taxonomy.key">
+                    <option *ngFor="let taxonomy of learningGoalTaxonomy | keyvalue : keepOrder; let i = index" [ngValue]="taxonomy.key">
+                        {{ '&ThinSpace;'.repeat(i) }}&boxur;
                         {{ 'artemisApp.learningGoal.taxonomies.' + taxonomy.value.toLowerCase() | artemisTranslate }}
+                        ({{ 'artemisApp.learningGoal.keywords.' + taxonomy.value.toLowerCase() | artemisTranslate }})
                     </option>
                 </select>
             </div>
             <div class="form-group" *ngIf="!isInConnectMode">
                 <label for="masteryThreshold">
                     {{ 'artemisApp.learningGoal.masteryThreshold' | artemisTranslate }}: {{ masteryThresholdControl!.value ?? 50 }}%
-                    <small *ngIf="averageStudentScore"
-                        >({{ 'artemisApp.learningGoal.createLearningGoal.averageStudentScore' | artemisTranslate }}: {{ averageStudentScore }}%)</small
-                    >
+                    <small *ngIf="averageStudentScore">
+                        ({{ 'artemisApp.learningGoal.createLearningGoal.averageStudentScore' | artemisTranslate }}: {{ averageStudentScore }}%)
+                    </small>
                 </label>
                 <input type="range" min="0" max="100" class="form-range" id="masteryThreshold" formControlName="masteryThreshold" />
             </div>

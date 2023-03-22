@@ -15,14 +15,14 @@
                 </tr>
             </thead>
             <tbody *ngIf="health">
-                <tr *ngFor="let componentHealth of health.components | keyvalue">
+                <tr *ngFor="let componentHealth of health.components | keyvalue" [id]="componentHealth.key">
                     <td>
                         {{ 'health.indicator.' + componentHealth.key | artemisTranslate }}
                         <a *ngIf="componentHealth.value?.details?.url" class="badge bg-info" [href]="componentHealth.value!.details!.url">
                             {{ componentHealth.value!.details!.url }}
                         </a>
                     </td>
-                    <td class="text-center">
+                    <td class="status text-center">
                         <span class="badge" [ngClass]="getBadgeClass(componentHealth.value!.status)" jhiTranslate="{{ 'health.status.' + componentHealth.value!.status }}">
                             {{ componentHealth.value!.status }}
                         </span>
@@ -33,9 +33,9 @@
                         </a>
                     </td>
                 </tr>
-                <tr>
+                <tr id="websocketConnection">
                     <td>Websocket Connection (Client -> Server)</td>
-                    <td class="text-center">
+                    <td class="status text-center">
                         <jhi-connection-status></jhi-connection-status>
                     </td>
                     <td class="text-center">-</td>

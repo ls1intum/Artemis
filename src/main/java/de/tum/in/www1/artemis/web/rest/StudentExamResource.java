@@ -601,7 +601,7 @@ public class StudentExamResource {
     private void prepareStudentExamForConduction(HttpServletRequest request, User currentUser, StudentExam studentExam) {
 
         // In case the studentExam is not yet started, a new participation with a specific initialization date should be created - isStarted uses Boolean
-        if (studentExam.getExam().isTestExam()) {
+        if (studentExam.isTestExam()) {
             boolean setupTestExamNeeded = studentExam.isStarted() == null || !studentExam.isStarted();
             if (setupTestExamNeeded) {
                 // Fix startedDate. As the studentExam.startedDate is used to link the participation.initializationDate, we need to drop the ms

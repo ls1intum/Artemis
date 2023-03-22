@@ -15,7 +15,6 @@ import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.m
 import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
 import { TextFeedbackConflictsComponent } from 'app/exercises/text/assess/conflicts/text-feedback-conflicts.component';
 import { TextFeedbackConflictsHeaderComponent } from 'app/exercises/text/assess/conflicts/conflicts-header/text-feedback-conflicts-header.component';
-import { TextAssessmentDashboardComponent } from 'app/exercises/text/assess/text-assessment-dashboard/text-assessment-dashboard.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -50,7 +49,6 @@ const ENTITY_STATES = [...textSubmissionAssessmentRoutes];
         ManualTextblockSelectionComponent,
         TextFeedbackConflictsComponent,
         TextFeedbackConflictsHeaderComponent,
-        TextAssessmentDashboardComponent,
         TextblockFeedbackDropdownComponent,
     ],
     exports: [TextAssessmentAreaComponent],

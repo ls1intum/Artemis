@@ -38,14 +38,13 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { ArtemisNavigationUtilService, getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { LegendPosition } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faExclamationTriangle, faFolderOpen, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { GraphColors } from 'app/entities/statistics.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
@@ -157,7 +156,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     isAutomaticAssessedProgrammingExercise = false;
 
     // links
-    submissionsLink: any[];
     complaintsLink: any[];
     moreFeedbackRequestsLink: any[];
 
@@ -267,7 +265,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     setupLinks() {
-        this.submissionsLink = ['/course-management', this.courseId, this.exercise.type! + '-exercises', this.exercise.id!, 'submissions'];
         this.complaintsLink = ['/course-management', this.courseId, this.exercise.type! + '-exercises', this.exercise.id!, 'complaints'];
         this.moreFeedbackRequestsLink = ['/course-management', this.courseId, this.exercise.type! + '-exercises', this.exercise.id!, 'more-feedback-requests'];
     }
@@ -748,10 +745,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         });
     }
 
-    getSubmissionsLinkForExercise(exercise: Exercise): string[] {
-        return getExerciseSubmissionsLink(exercise.type!, this.courseId, exercise.id!, this.examId, this.exerciseGroupId);
-    }
-
     /**
      * To correctly display why a tutor cannot assess any further submissions we need to calculate those values.
      */
@@ -769,36 +762,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 this.firstRoundAssessments = this.notYetAssessed[i] - this.lockedSubmissionsByOtherTutor[i];
             }
         }
-    }
-
-    /**
-     * Handles the click event of a user on a part of the chart.
-     * Given the user has the right permissions, navigates to the submissions page of the exercise
-     * @param event event that is delegated by ngx-charts. Used here to trigger the delegation only if the user clicks on the pie chart
-     * not the legend
-     */
-    navigateToExerciseSubmissionOverview(event: any): void {
-        if (!this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
-            return;
-        }
-        // If the user selects a part in the pie, the corresponding event contains the name of the selected part as attribute
-        // If the user selects the legend entry, the event consists only of the legend label as string
-        const identifier = event.name ?? event;
-        let index = 0;
-        const route = ['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions'];
-        if (this.isAutomaticAssessedProgrammingExercise) {
-            // the filter option for complaints are an element of {3,4}.
-            // We give an offset of 3 in advance to determine the correct filter option via the chart part names
-            index = 3;
-            route[4] = 'complaints';
-        }
-        this.assessments.forEach((data, i) => {
-            if (data.name === identifier) {
-                index += i;
-            }
-        });
-
-        this.navigationUtilService.routeInNewTab(route, { queryParams: { filterOption: index } });
     }
 
     sortSubmissionRows(correctionRound: number) {

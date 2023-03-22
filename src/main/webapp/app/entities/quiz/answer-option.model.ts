@@ -14,5 +14,6 @@ export class AnswerOption implements BaseEntity, CanBecomeInvalid, ExerciseHintE
 
     constructor() {
         this.isCorrect = false; // default value
+        this.text = ''; // default value
     }
 }
