@@ -58,7 +58,7 @@ export class ArtemisPageobjects {
         list: new CoursesPage(),
         overview: new CourseOverviewPage(),
         exercise: new CourseExercisePage(),
-        communication: new CourseCommunicationPage()
+        communication: new CourseCommunicationPage(),
     };
     exam = {
         details: new ExamDetailsPage(),
