@@ -8,8 +8,7 @@
             </div>
             <jhi-exercise-categories
                 [exercise]="exercise"
-                [shouldShowDifficultyTag]="true"
-                [shouldShowNotReleasedTag]="true"
+                [showTags]="{ difficulty: true, notReleased: true }"
                 [ngClass]="'badge-row'"
                 *ngIf="(exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs())) || exercise.difficulty || exerciseCategories?.length"
             ></jhi-exercise-categories>
