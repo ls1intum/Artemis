@@ -1172,6 +1172,7 @@ class ProgrammingExerciseIntegrationTestService {
 
     void createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
         programmingExercise.setId(null);
+        programmingExercise.setProjectType(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setProgrammingLanguage(programmingLanguage);
