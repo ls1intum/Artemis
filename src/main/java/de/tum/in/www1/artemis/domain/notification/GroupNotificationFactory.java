@@ -40,7 +40,7 @@ public class GroupNotificationFactory {
             title = ATTACHMENT_CHANGE_TITLE;
             text = ATTACHMENT_CHANGE_TEXT;
             textIsPlaceholder = true;
-            placeholderValues = new String[] { attachment.getName() };
+            placeholderValues = new String[] { attachment.getExercise().getCourseViaExerciseGroupOrCourseMember().getTitle(), attachment.getName(), (attachment.getExercise() != null ? attachment.getExercise().getTitle() : attachment.getLecture().getTitle()) };
         }
         else {
             throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
@@ -123,13 +123,13 @@ public class GroupNotificationFactory {
                 title = PROGRAMMING_TEST_CASES_CHANGED_TITLE;
                 text = PROGRAMMING_TEST_CASES_CHANGED_TEXT;
                 textIsPlaceholder = true;
-                placeholderValues = new String[] { exercise.getTitle(), exercise.getCourseViaExerciseGroupOrCourseMember().getTitle() };
+                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
             }
             case NEW_MANUAL_FEEDBACK_REQUEST -> {
                 title = NEW_MANUAL_FEEDBACK_REQUEST_TITLE;
                 text = NEW_MANUAL_FEEDBACK_REQUEST_TEXT;
                 textIsPlaceholder = true;
-                placeholderValues = new String[] { exercise.getTitle(), exercise.getCourseViaExerciseGroupOrCourseMember().getTitle() };
+                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
             }
             case DUPLICATE_TEST_CASE -> {
                 title = DUPLICATE_TEST_CASE_TITLE;
