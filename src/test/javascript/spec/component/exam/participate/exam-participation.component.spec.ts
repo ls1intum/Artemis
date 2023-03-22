@@ -695,7 +695,7 @@ describe('ExamParticipationComponent', () => {
         expect(createParticipationForExerciseSpy).toHaveBeenCalledWith(exercise2);
     });
 
-    it('toggleHandInEarly should call resetPageComponentVisited when handInEarly toggled from true to false', () => {
+    it('should reset pageComponentVisited after the hand-in-early window is closed', () => {
         // Create exercises
         const exercise1 = new ProgrammingExercise(new Course(), undefined);
         exercise1.id = 15;
