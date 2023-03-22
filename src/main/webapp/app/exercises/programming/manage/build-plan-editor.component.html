@@ -36,12 +36,16 @@
     </button>
 </div>
 <div class="card build-plan-editor">
-    <jhi-code-editor-header [filename]="selectedFile" [isLoading]="isLoading" (tabSizeChanged)="updateTabSize($event)"></jhi-code-editor-header>
+    <jhi-code-editor-header
+        [filename]="'artemisApp.programmingExercise.buildplan' | artemisTranslate"
+        [isLoading]="isLoading"
+        (tabSizeChanged)="updateTabSize($event)"
+    ></jhi-code-editor-header>
     <div class="card-body build-plan-editor__content">
         <jhi-ace-editor
             #editor
             id="build-plan-editor"
-            [mode]="'groovy'"
+            [mode]="'ace/mode/text'"
             [readOnly]="isLoading"
             [hidden]="false"
             [autoUpdateContent]="true"

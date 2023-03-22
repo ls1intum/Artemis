@@ -84,6 +84,7 @@
             "solutionBuildPlanId": "Lösungs-Build-Plan-Id",
             "repositories": "Repositories",
             "buildplans": "Build-Pläne",
+            "buildplan": "Build-Plan",
             "buildPlanEditor": "Build-Plan-Editor",
             "publishBuildPlanUrl": "Build-Plan veröffentlichen",
             "allowOnlineEditor": {

@@ -29,7 +29,6 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     exerciseId: number;
     programmingExercise: ProgrammingExercise;
     loadingResults = true;
-    selectedFile = 'pipeline.groovy';
     buildPlan: BuildPlan;
 
     constructor(private buildPlanService: BuildPlanService, private programmingExerciseService: ProgrammingExerciseService, private activatedRoute: ActivatedRoute) {}
@@ -50,6 +49,7 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
             animatedScroll: true,
             enableBasicAutocompletion: true,
             enableLiveAutocompletion: true,
+            maxLines: 80,
         });
         this.loadBuildPlan(this.activatedRoute.snapshot.params.exerciseId);
     }

@@ -12,7 +12,6 @@ export class BuildPlanService {
     constructor(private http: HttpClient) {}
 
     getBuildPlan(programmingExerciseId: number): Observable<EntityResponseType> {
-        console.log(`${this.resourceUrl}/${programmingExerciseId}/build-plan`);
         return this.http.get<BuildPlan>(`${this.resourceUrl}/${programmingExerciseId}/build-plan/for-editor`, { observe: 'response' });
     }
 
