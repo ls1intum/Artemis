@@ -695,43 +695,43 @@ describe('ExamParticipationComponent', () => {
         expect(createParticipationForExerciseSpy).toHaveBeenCalledWith(exercise2);
     });
 
-    it('should reset pageComponentVisited after the hand-in-early window is closed', () => {
-        // Create exercises
-        const exercise1 = new ProgrammingExercise(new Course(), undefined);
-        exercise1.id = 15;
-        exercise1.allowOnlineEditor = true;
-        exercise1.allowOfflineIde = false;
-        const exercise2 = new ProgrammingExercise(new Course(), undefined);
-        exercise2.id = 42;
-        exercise2.allowOnlineEditor = false;
-        exercise2.allowOfflineIde = true;
-        const exercise3 = new ProgrammingExercise(new Course(), undefined);
-        exercise3.id = 16;
-        const exercise4 = new ProgrammingExercise(new Course(), undefined);
-        exercise4.id = 87;
+    describe('toggleHandInEarly', () => {
+        it('should reset pageComponentVisited after the hand-in-early window is closed', () => {
+            // Create exercises
+            const exercise1 = new ProgrammingExercise(new Course(), undefined);
+            exercise1.id = 15;
+            const exercise2 = new ProgrammingExercise(new Course(), undefined);
+            exercise2.id = 42;
+            exercise2.allowOnlineEditor = true;
+            exercise2.allowOfflineIde = false;
+            const exercise3 = new ProgrammingExercise(new Course(), undefined);
+            exercise3.id = 16;
+            exercise3.allowOnlineEditor = false;
+            exercise3.allowOfflineIde = true;
 
-        // Set initial component state
-        comp.handInEarly = true;
-        comp.studentExam = new StudentExam();
-        comp.studentExam.exercises = [exercise1, exercise2, exercise3, exercise4];
-        comp.activeExamPage = {
-            isOverviewPage: false,
-            exercise: exercise4,
-        };
-        comp.exerciseIndex = 3;
-        comp.pageComponentVisited = [true, true, false, true];
+            // Set initial component state
+            comp.handInEarly = true;
+            comp.studentExam = new StudentExam();
+            comp.studentExam.exercises = [exercise1, exercise2, exercise3];
+            comp.activeExamPage = {
+                isOverviewPage: false,
+                exercise: exercise2,
+            };
+            comp.exerciseIndex = 1;
+            comp.pageComponentVisited = [true, true, true];
 
-        // Spy on the private method resetPageComponentVisited
-        const resetPageComponentVisitedSpy = jest.spyOn<any, any>(comp, 'resetPageComponentVisited');
+            // Spy on the private method resetPageComponentVisited
+            const resetPageComponentVisitedSpy = jest.spyOn<any, any>(comp, 'resetPageComponentVisited');
 
-        // Call toggleHandInEarly to change the handInEarly state
-        comp.toggleHandInEarly();
+            // Call toggleHandInEarly to change the handInEarly state
+            comp.toggleHandInEarly();
 
-        // Verify that resetPageComponentVisited has been called with the correct index
-        expect(resetPageComponentVisitedSpy).toHaveBeenCalledOnceWith(3);
+            // Verify that resetPageComponentVisited has been called with the correct index
+            expect(resetPageComponentVisitedSpy).toHaveBeenCalledOnceWith(1);
 
-        // Verify that the pageComponentVisited array and exerciseIndex are updated correctly
-        expect(comp.pageComponentVisited).toEqual([false, false, false, true]);
-        expect(comp.exerciseIndex).toBe(3);
+            // Verify that the pageComponentVisited array and exerciseIndex are updated correctly
+            expect(comp.pageComponentVisited).toEqual([false, true, false]);
+            expect(comp.exerciseIndex).toBe(1);
+        });
     });
 });
