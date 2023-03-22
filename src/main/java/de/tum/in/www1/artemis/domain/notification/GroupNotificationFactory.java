@@ -6,8 +6,9 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.EXERCISE_UPDATED_TEXT;
 
-import java.util.Arrays;
 import java.util.List;
+
+import org.apache.commons.lang3.ArrayUtils;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
@@ -16,7 +17,6 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import org.apache.commons.lang3.ArrayUtils;
 
 public class GroupNotificationFactory {
 
@@ -40,7 +40,8 @@ public class GroupNotificationFactory {
             title = ATTACHMENT_CHANGE_TITLE;
             text = ATTACHMENT_CHANGE_TEXT;
             textIsPlaceholder = true;
-            placeholderValues = new String[] { attachment.getExercise().getCourseViaExerciseGroupOrCourseMember().getTitle(), attachment.getName(), (attachment.getExercise() != null ? attachment.getExercise().getTitle() : attachment.getLecture().getTitle()) };
+            placeholderValues = new String[] { attachment.getExercise().getCourseViaExerciseGroupOrCourseMember().getTitle(), attachment.getName(),
+                    (attachment.getExercise() != null ? attachment.getExercise().getTitle() : attachment.getLecture().getTitle()) };
         }
         else {
             throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
@@ -286,7 +287,8 @@ public class GroupNotificationFactory {
     }
 
     private static String[] generatePlaceholderValuesForMessageNotificationsWithAnswers(Course course, Post post, AnswerPost answerPost) {
-        return ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), answerPost.getContent(), answerPost.getCreationDate().toString(), answerPost.getAuthor().getName());
+        return ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), answerPost.getContent(), answerPost.getCreationDate().toString(),
+                answerPost.getAuthor().getName());
     }
 
     /**

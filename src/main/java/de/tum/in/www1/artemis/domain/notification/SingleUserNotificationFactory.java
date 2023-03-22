@@ -6,6 +6,8 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFacto
 
 import java.util.Set;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
@@ -15,7 +17,6 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
-import org.apache.commons.lang3.ArrayUtils;
 
 public class SingleUserNotificationFactory {
 
@@ -64,9 +65,9 @@ public class SingleUserNotificationFactory {
     }
 
     private static String[] generatePlaceholderValuesForMessageNotificationsWithAnswers(Course course, Post post, AnswerPost answerPost) {
-        return ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), answerPost.getContent(), answerPost.getCreationDate().toString(), answerPost.getAuthor().getName());
+        return ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), answerPost.getContent(), answerPost.getCreationDate().toString(),
+                answerPost.getAuthor().getName());
     }
-
 
     /**
      * Creates an instance of SingleUserNotification.
@@ -85,7 +86,8 @@ public class SingleUserNotificationFactory {
             case EXERCISE_SUBMISSION_ASSESSED -> {
                 title = EXERCISE_SUBMISSION_ASSESSED_TITLE;
                 notificationText = EXERCISE_SUBMISSION_ASSESSED_TEXT;
-                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getExerciseType().getExerciseTypeAsReadableString(), exercise.getTitle() };
+                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getExerciseType().getExerciseTypeAsReadableString(),
+                        exercise.getTitle() };
             }
             case FILE_SUBMISSION_SUCCESSFUL -> {
                 title = FILE_SUBMISSION_SUCCESSFUL_TITLE;
@@ -120,12 +122,14 @@ public class SingleUserNotificationFactory {
             case NEW_PLAGIARISM_CASE_STUDENT -> {
                 title = NEW_PLAGIARISM_CASE_STUDENT_TITLE;
                 notificationText = NEW_PLAGIARISM_CASE_STUDENT_TEXT;
-                placeholderValues = new String[] { affectedExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), affectedExercise.getExerciseType().toString().toLowerCase(), affectedExercise.getTitle() };
+                placeholderValues = new String[] { affectedExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(),
+                        affectedExercise.getExerciseType().toString().toLowerCase(), affectedExercise.getTitle() };
             }
             case PLAGIARISM_CASE_VERDICT_STUDENT -> {
                 title = PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;
                 notificationText = PLAGIARISM_CASE_VERDICT_STUDENT_TEXT;
-                placeholderValues = new String[] { affectedExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), affectedExercise.getExerciseType().toString().toLowerCase(), affectedExercise.getTitle() };
+                placeholderValues = new String[] { affectedExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(),
+                        affectedExercise.getExerciseType().toString().toLowerCase(), affectedExercise.getTitle() };
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
