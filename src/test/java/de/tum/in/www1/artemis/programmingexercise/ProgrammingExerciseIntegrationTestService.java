@@ -1170,6 +1170,15 @@ class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
+    void createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setProgrammingLanguage(programmingLanguage);
+        programmingExercise.setTestwiseCoverageEnabled(true);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
     void importProgrammingExercise_sourceExerciseIdNegative_badRequest() throws Exception {
         programmingExercise.setId(-1L);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), programmingExercise, HttpStatus.BAD_REQUEST);
