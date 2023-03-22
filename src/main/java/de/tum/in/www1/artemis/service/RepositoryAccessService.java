@@ -53,7 +53,7 @@ public class RepositoryAccessService {
             RepositoryActionType repositoryActionType) {
 
         // Error case 1: The user does not have permissions to push into the repository and the user is not notified for a related plagiarism case.
-        boolean hasPermissions = programmingExerciseParticipationService.canAccessParticipation(programmingParticipation);
+        boolean hasPermissions = programmingExerciseParticipationService.canAccessParticipation(programmingParticipation, user);
         boolean userWasNotifiedAboutPlagiarismCase = plagiarismService.wasUserNotifiedByInstructor(programmingParticipation.getId(), user.getLogin());
         if (!hasPermissions && !userWasNotifiedAboutPlagiarismCase) {
             throw new AccessUnauthorizedException();

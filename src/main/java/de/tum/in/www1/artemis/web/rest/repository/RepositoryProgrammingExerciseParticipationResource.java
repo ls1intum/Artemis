@@ -128,7 +128,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
         }
-        return participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
+        return participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation, userRepository.getUserWithGroupsAndAuthorities());
     }
 
     @Override
@@ -276,7 +276,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         // User must have the necessary permissions to update a file.
         // When the buildAndTestAfterDueDate is set, the student can't change the repository content anymore after the due date.
         boolean repositoryIsLocked = programmingExerciseParticipation.isLocked();
-        if (repositoryIsLocked || !participationService.canAccessParticipation(programmingExerciseParticipation)) {
+        if (repositoryIsLocked || !participationService.canAccessParticipation(programmingExerciseParticipation, userRepository.getUserWithGroupsAndAuthorities())) {
             FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
@@ -360,7 +360,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
         ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
 
-        if (!participationService.canAccessParticipation(participation)) {
+        if (!participationService.canAccessParticipation(participation, userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException("Participation", participationId);
         }
 
