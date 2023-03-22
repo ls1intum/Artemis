@@ -12,12 +12,6 @@ services:
         depends_on:
             mysql:
                 condition: service_healthy
-        # healthcheck can't be unified in artemis.yml as they aren't overridden as stated in the docker compose docs
-        # https://docs.docker.com/compose/compose-file/#finding-referenced-service
-        healthcheck:
-            test: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1
-            start_period: 300s
-            interval: 1s
         restart: on-failure:3
         volumes:
             - ./.docker-data/artemis-data:/opt/artemis/data

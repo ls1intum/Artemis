@@ -22,6 +22,14 @@ services:
         # the following environments are necessary for docker images orchestrated by docker compose
         environment:
             SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,prod,docker
+        # if you need to use another port than 8080 or one fixed port for all artemis-app containers in the future
+        # you will probably not be able to override this setting outside the artemis.yml
+        # as stated in the docker compose docs (at least not when this was committed)
+        # https://docs.docker.com/compose/compose-file/#finding-referenced-service
+        healthcheck:
+            test: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1
+            start_period: 600s
+            interval: 1s
         # expose the port to make it reachable docker internally even if the external port mapping changes
         expose:
             - "8080"

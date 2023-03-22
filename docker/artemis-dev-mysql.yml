@@ -22,12 +22,6 @@ services:
             # https://docs.artemis.cit.tum.de/dev/setup.html#debugging-with-docker
             _JAVA_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
             SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,dev,docker
-        # healthcheck can't be unified in artemis.yml as they aren't overridden as stated in the docker compose docs
-        # https://docs.docker.com/compose/compose-file/#finding-referenced-service
-        healthcheck:
-            test: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1
-            start_period: 300s
-            interval: 1s
         depends_on:
             mysql:
                 condition: service_healthy

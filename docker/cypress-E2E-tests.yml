@@ -19,13 +19,6 @@ services:
             - ./artemis/config/cypress-application-local.env
         environment:
             SPRING_PROFILES_ACTIVE: "artemis,bamboo,bitbucket,jira,prod,docker"
-        healthcheck:
-            test: wget -nv -t1 --spider http://localhost:54321/actuator/health || exit 1
-            start_period: 300s
-            interval: 1s
-        # expose the port to make it reachable docker internally even if the external port mapping changes
-        expose:
-            - "54321"
 
     nginx:
         extends:
@@ -37,7 +30,6 @@ services:
                 condition: service_started
         volumes:
             - ./nginx/artemis-nginx-cypress.conf:/etc/nginx/conf.d/artemis-nginx-cypress.conf:ro
-            - ./nginx/artemis-upstream-cypress.conf:/etc/nginx/includes/artemis-upstream.conf:ro
         ports:
             - "80:80"
             - "443:443"
