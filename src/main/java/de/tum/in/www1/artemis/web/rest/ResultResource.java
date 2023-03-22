@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import javax.annotation.Nullable;
 
@@ -216,30 +214,6 @@ public class ResultResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/results : get the successful results for an exercise, ordered ascending by build completion date.
-     *
-     * @param exerciseId      the id of the exercise for which to retrieve the results
-     * @param withSubmissions defines if submissions are loaded from the database for the results
-     * @return the ResponseEntity with status 200 (OK) and the list of results in body
-     */
-    @GetMapping("exercises/{exerciseId}/results")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "true") boolean withSubmissions) {
-        long start = System.currentTimeMillis();
-        log.debug("REST request to get Results for Exercise : {}", exerciseId);
-
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-
-        final List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(exerciseId, false);
-
-        List<Result> results = resultsForExercise(exercise, participations, withSubmissions);
-        log.info("getResultsForExercise took {}ms for {} results.", System.currentTimeMillis() - start, results.size());
-
-        return ResponseEntity.ok().body(results);
-    }
-
-    /**
      * GET /exercises/:exerciseId/results-with-points-per-criterion : get the successful results for an exercise, ordered ascending by build completion date.
      * Also contains for each result the points the student achieved with manual feedback. Those points are grouped as sum for each grading criterion.
      *
@@ -350,18 +324,18 @@ public class ResultResource {
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         Participation participation = result.getParticipation();
         if (!participation.getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + " !",
+            throw new BadRequestAlertException("participationId of the path does not match the participationId of the participation corresponding to the result " + resultId + " !",
                     "participationId", "400");
         }
 
         // The permission check depends on the participation type (normal participations vs. programming exercise participations).
-        if (participation instanceof StudentParticipation) {
-            if (!authCheckService.canAccessParticipation((StudentParticipation) participation)) {
+        if (participation instanceof StudentParticipation studentParticipation) {
+            if (!authCheckService.canAccessParticipation(studentParticipation)) {
                 throw new AccessForbiddenException("participation", participationId);
             }
         }
-        else if (participation instanceof ProgrammingExerciseParticipation) {
-            if (!programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
+        else if (participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation) {
+            if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
                 throw new AccessForbiddenException("participation", participationId);
             }
         }

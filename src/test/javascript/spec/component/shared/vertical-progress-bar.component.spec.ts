@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { VerticalProgressBarComponent } from 'app/shared/vertical-progress-bar/vertical-progress-bar.component';
 import { runOnPushChangeDetection } from '../../helpers/on-push-change-detection.helper';
+import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 
 describe('VerticalProgressBarComponent', () => {
     let component: VerticalProgressBarComponent;
@@ -9,6 +10,7 @@ describe('VerticalProgressBarComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
+            imports: [NgbTooltipMocksModule],
             declarations: [VerticalProgressBarComponent],
         }).compileComponents();
 
