@@ -3952,6 +3952,7 @@ public class DatabaseUtilService {
     public Course createAndSaveCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
         Course course = ModelFactory.generateCourse(id, startDate, endDate, exercises, "tumuser", "tutor", "editor", "instructor");
         courseRepo.save(course);
+
         return course;
     }
 
