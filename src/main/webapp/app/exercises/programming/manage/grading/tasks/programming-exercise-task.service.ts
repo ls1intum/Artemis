@@ -11,7 +11,7 @@ import { ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entitie
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService, ProgrammingExerciseTestCaseUpdate } from '../../services/programming-exercise-grading.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { map } from 'rxjs/operators';
+import { flatMap, map } from 'rxjs/operators';
 
 @Injectable()
 export class ProgrammingExerciseTaskService {
@@ -124,18 +124,18 @@ export class ProgrammingExerciseTaskService {
     /**
      * Reset all test cases.
      */
-    public resetTestCases(): Observable<ProgrammingExerciseTestCase[] | undefined> {
+    public resetTestCases(): Observable<ProgrammingExerciseTestCase[]> {
         return this.gradingService.resetTestCases(this.exercise.id!).pipe(
             tap((testCases: ProgrammingExerciseTestCase[]) => {
                 this.alertService.success(`artemisApp.programmingExercise.configureGrading.testCases.resetSuccessful`);
                 this.gradingService.notifyTestCases(this.exercise.id!, testCases);
-
-                // Update tasks
-                this.getTasksByExercise(this.exercise).pipe(map(this.initializeTasks));
             }),
             catchError(() => {
                 this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.resetFailed`);
                 return of(undefined);
+            }),
+            flatMap(() => {
+                return this.getTasksByExercise(this.exercise).pipe(map(this.initializeTasks));
             }),
         );
     }
