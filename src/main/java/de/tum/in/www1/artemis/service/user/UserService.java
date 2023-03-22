@@ -32,6 +32,9 @@ import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
@@ -108,13 +111,20 @@ public class UserService {
 
     private final NotificationRepository notificationRepository;
 
+    private final PostRepository postRepository;
+
+    private final ConversationRepository conversationRepository;
+
+    private final ConversationParticipantRepository conversationParticipantRepository;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository,
             LearningGoalProgressRepository learningGoalProgressRepository, InstanceMessageSendService instanceMessageSendService,
             ExerciseHintActivationRepository exerciseHintActivationRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            TutorialGroupRepository tutorialGroupRepository, SingleUserNotificationRepository singleUserNotificationRepository, NotificationRepository notificationRepository) {
+            TutorialGroupRepository tutorialGroupRepository, SingleUserNotificationRepository singleUserNotificationRepository, NotificationRepository notificationRepository,
+            PostRepository postRepository, ConversationRepository conversationRepository, ConversationParticipantRepository conversationParticipantRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -134,6 +144,9 @@ public class UserService {
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.notificationRepository = notificationRepository;
+        this.postRepository = postRepository;
+        this.conversationRepository = conversationRepository;
+        this.conversationParticipantRepository = conversationParticipantRepository;
     }
 
     /**
@@ -473,6 +486,9 @@ public class UserService {
         studentScoreRepository.deleteAllByUserId(user.getId());
         learningGoalProgressRepository.deleteAllByUserId(user.getId());
         exerciseHintActivationRepository.deleteAllByUser(user);
+        postRepository.deleteAllByAuthor(user);
+        conversationRepository.deleteAllByCreator(user);
+        conversationParticipantRepository.deleteAllByUser(user);
 
         tutorialGroupRegistrationRepository.deleteAllByStudent(user);
         var taughtTutorialGroups = tutorialGroupRepository.findAllByTeachingAssistant(user);

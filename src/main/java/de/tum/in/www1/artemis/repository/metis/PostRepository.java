@@ -17,6 +17,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -61,6 +62,10 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     @Modifying
     // ok because of delete
     void deleteAllByConversationId(Long conversationId);
+
+    @Transactional
+    @Modifying
+    void deleteAllByAuthor(User author);
 
     @Query("""
             SELECT DISTINCT tag FROM Post post
