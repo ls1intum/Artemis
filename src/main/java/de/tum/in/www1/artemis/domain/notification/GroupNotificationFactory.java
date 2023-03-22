@@ -40,8 +40,10 @@ public class GroupNotificationFactory {
             title = ATTACHMENT_CHANGE_TITLE;
             text = ATTACHMENT_CHANGE_TEXT;
             textIsPlaceholder = true;
-            placeholderValues = new String[] { attachment.getExercise().getCourseViaExerciseGroupOrCourseMember().getTitle(), attachment.getName(),
-                    (attachment.getExercise() != null ? attachment.getExercise().getTitle() : attachment.getLecture().getTitle()) };
+            placeholderValues = new String[] {
+                    attachment.getExercise() != null ? attachment.getExercise().getCourseViaExerciseGroupOrCourseMember().getTitle()
+                            : attachment.getLecture().getCourse().getTitle(),
+                    attachment.getName(), (attachment.getExercise() != null ? attachment.getExercise().getTitle() : attachment.getLecture().getTitle()) };
         }
         else {
             throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
