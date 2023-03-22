@@ -681,7 +681,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param {number} activePageIndex - The index of the currently active exercise page in the pageComponentVisited array.
      */
     private resetPageComponentVisited(activePageIndex: number) {
-        this.pageComponentVisited = this.pageComponentVisited.fill(false);
+        this.pageComponentVisited.fill(false);
         if (activePageIndex >= 0) {
             this.pageComponentVisited[activePageIndex] = true;
         }
