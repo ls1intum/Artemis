@@ -11,7 +11,7 @@ import { ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entitie
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService, ProgrammingExerciseTestCaseUpdate } from '../../services/programming-exercise-grading.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { flatMap, map } from 'rxjs/operators';
+import { map, mergeMap } from 'rxjs/operators';
 
 @Injectable()
 export class ProgrammingExerciseTaskService {
@@ -36,6 +36,29 @@ export class ProgrammingExerciseTaskService {
 
     get testCases(): ProgrammingExerciseTestCase[] {
         return this.currentTasks.flatMap((task) => task.testCases);
+    }
+
+    public hasUnsavedChanges(): boolean {
+        // service has not been configured yet
+        if (!this.tasks || !this.currentTasks) {
+            return false;
+        }
+
+        return !this.tasks
+            .flatMap((task) => task.testCases)
+            .map((task) => ({
+                old: task,
+                updated: this.testCases.find(({ id }) => task.id === id),
+            }))
+            .every(({ old, updated }) => {
+                return (
+                    updated &&
+                    updated.weight === old.weight &&
+                    updated.bonusMultiplier === old.bonusMultiplier &&
+                    updated.bonusPoints === old.bonusPoints &&
+                    updated.visibility === old.visibility
+                );
+            });
     }
 
     /**
@@ -134,7 +157,7 @@ export class ProgrammingExerciseTaskService {
                 this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.resetFailed`);
                 return of(undefined);
             }),
-            flatMap(() => {
+            mergeMap(() => {
                 return this.getTasksByExercise(this.exercise).pipe(map(this.initializeTasks));
             }),
         );

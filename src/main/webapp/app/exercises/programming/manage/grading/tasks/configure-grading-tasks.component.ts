@@ -11,7 +11,6 @@ import { Observable } from 'rxjs';
     selector: 'jhi-configure-grading-task',
     templateUrl: './configure-grading-tasks.component.html',
     styleUrls: ['./configure-grading-tasks.scss'],
-    providers: [ProgrammingExerciseTaskService],
 })
 export class ConfigureGradingTasksComponent implements OnInit {
     @Input() exercise: ProgrammingExercise;

@@ -25,7 +25,7 @@
                 <jhi-programming-exercise-configure-grading-status
                     *ngIf="activeTab != 'submission-policy'"
                     [exerciseIsReleasedAndHasResults]="isReleasedAndHasResults"
-                    [hasUnsavedTestCaseChanges]="!!changedTestCaseIds.length"
+                    [hasUnsavedTestCaseChanges]="hasUnsavedChanges"
                     [hasUnsavedCategoryChanges]="!!changedCategoryIds.length"
                     [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
                 ></jhi-programming-exercise-configure-grading-status>

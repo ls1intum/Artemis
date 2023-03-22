@@ -22,6 +22,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash-es';
 import { Observable, Subscription, of, zip } from 'rxjs';
 import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
+import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
 
 /**
  * Describes the editableField
@@ -64,6 +65,7 @@ export type Table = 'testCases' | 'codeAnalysis';
     templateUrl: './programming-exercise-configure-grading.component.html',
     styleUrls: ['./programming-exercise-configure-grading.scss'],
     encapsulation: ViewEncapsulation.None,
+    providers: [ProgrammingExerciseTaskService],
 })
 export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly EditableField = EditableField;
@@ -136,6 +138,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         return this.testCases.filter(({ active }) => active);
     }
 
+    get hasUnsavedChanges() {
+        return this.programmingExerciseTaskService.hasUnsavedChanges();
+    }
+
     /**
      * Sets value of the testcases
      * @param testCases the test cases which should be set
@@ -162,6 +168,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         private programmingExerciseService: ProgrammingExerciseService,
         private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
         private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService,
+        private programmingExerciseTaskService: ProgrammingExerciseTaskService,
         private route: ActivatedRoute,
         private alertService: AlertService,
         private translateService: TranslateService,
