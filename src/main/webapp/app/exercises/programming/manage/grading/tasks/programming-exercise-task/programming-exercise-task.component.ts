@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
@@ -12,6 +12,8 @@ import { ProgrammingExerciseTaskService } from '../programming-exercise-task.ser
 export class ProgrammingExerciseTaskComponent {
     @Input() task: ProgrammingExerciseTask;
     @Input() open: boolean;
+
+    @Output() updateTasksEvent = new EventEmitter<void>();
 
     // Icons
     faAngleDown = faAngleDown;
@@ -28,7 +30,8 @@ export class ProgrammingExerciseTaskComponent {
     constructor(private programmingExerciseTaskService: ProgrammingExerciseTaskService) {}
 
     testUpdateHandler(test: ProgrammingExerciseTestCase) {
-        this.task = this.programmingExerciseTaskService.updateTask(this.task);
+        this.programmingExerciseTaskService.initializeTask(this.task);
+        this.updateTasksEvent.emit();
         test.changed = true;
     }
 
@@ -52,6 +55,6 @@ export class ProgrammingExerciseTaskComponent {
             }
         });
 
-        this.programmingExerciseTaskService.updateTaskPoints(this.task);
+        this.updateTasksEvent.emit();
     }
 }

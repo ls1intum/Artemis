@@ -95,5 +95,5 @@
         </div>
     </div>
 
-    <jhi-programming-exercise-task *ngFor="let task of tasks" [task]="task"></jhi-programming-exercise-task>
+    <jhi-programming-exercise-task *ngFor="let task of tasks" [task]="task" (updateTasksEvent)="updateTasks()"></jhi-programming-exercise-task>
 </form>

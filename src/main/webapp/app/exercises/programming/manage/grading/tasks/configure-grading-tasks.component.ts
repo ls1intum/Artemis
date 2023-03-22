@@ -35,7 +35,7 @@ export class ConfigureGradingTasksComponent implements OnInit {
     }
 
     updateTasks = () => {
-        this.tasks = this.taskService.getTasks();
+        this.tasks = this.taskService.updateTasks();
     };
 
     toggleShowInactiveTestsShown = () => {

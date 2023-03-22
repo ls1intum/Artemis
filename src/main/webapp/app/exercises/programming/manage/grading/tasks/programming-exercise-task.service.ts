@@ -19,9 +19,10 @@ export class ProgrammingExerciseTaskService {
     course: Course;
     gradingStatistics: ProgrammingExerciseGradingStatistics;
 
-    tasks: ProgrammingExerciseTask[];
-    totalWeights: number;
     maxPoints: number;
+
+    currentTasks: ProgrammingExerciseTask[];
+    tasks: ProgrammingExerciseTask[];
 
     ignoreInactive = true;
 
@@ -29,35 +30,38 @@ export class ProgrammingExerciseTaskService {
 
     constructor(private http: HttpClient, private alertService: AlertService, private gradingService: ProgrammingExerciseGradingService) {}
 
-    public getTasks(): ProgrammingExerciseTask[] {
-        const tasks = this.tasks.map((task) => ({ ...task }));
-
-        if (this.ignoreInactive) {
-            return tasks.filter((task) => {
-                task.testCases = task.testCases.filter((test) => test.active);
-                return task.testCases.length;
-            });
-        }
-
-        return tasks;
+    get totalWeights() {
+        return sum(this.testCases.map(({ weight }) => weight ?? 0));
     }
 
     get testCases(): ProgrammingExerciseTestCase[] {
-        const testCases = this.tasks.flatMap((task) => task.testCases);
-        if (this.ignoreInactive) {
-            return testCases.filter(({ active }) => active);
-        }
-        return testCases;
+        return this.currentTasks.flatMap((task) => task.testCases);
     }
 
+    /**
+     * Updates all resulting task points
+     */
+    public updateTasks(): ProgrammingExerciseTask[] {
+        this.updateAllTaskPoints();
+        return this.currentTasks;
+    }
+
+    /**
+     * Toggles whether inactive test cases are shown and handled
+     */
     public toggleIgnoreInactive() {
         this.ignoreInactive = !this.ignoreInactive;
 
-        // Update resulting points
-        this.updateTotalWeights();
-        this.tasks.forEach(this.updateTaskPoints);
+        this.setCurrentTasks();
+        this.updateAllTaskPoints();
     }
 
+    /**
+     * Configures the task service with the required models and returns the initial list of tasks
+     * @param exercise for point calculation
+     * @param course for correct rounding
+     * @param gradingStatistics corresponding to the test cases
+     */
     public configure(exercise: ProgrammingExercise, course: Course, gradingStatistics: ProgrammingExerciseGradingStatistics): Observable<ProgrammingExerciseTask[]> {
         this.exercise = exercise;
         this.course = course;
@@ -71,7 +75,7 @@ export class ProgrammingExerciseTaskService {
      * Save the test case configuration contained in each task
      */
     public saveTestCases(): Observable<ProgrammingExerciseTestCase[] | undefined | null> {
-        const testCasesToUpdate = this.tasks
+        const testCasesToUpdate = this.currentTasks
             .map((task) => task.testCases)
             .flatMap((testcase) => testcase)
             .filter((test) => test.changed);
@@ -135,26 +139,34 @@ export class ProgrammingExerciseTaskService {
         );
     }
 
-    private updateTotalWeights = () => {
-        this.totalWeights = sum(this.testCases.map(({ weight }) => weight ?? 0));
-    };
-
     private initializeTasks = (): Observable<ProgrammingExerciseTask[]> => {
         return this.getTasksByExercise(this.exercise).pipe(
             map((serverSideTasks) => {
                 this.tasks = serverSideTasks.map((task) => task as ProgrammingExerciseTask);
 
-                // configureTestCases needs tasks to be set be to be able to use the testCases getter
-                this.tasks = this.tasks.map(this.configureTestCases).map(this.updateTask);
+                this.tasks = this.tasks // configureTestCases needs tasks to be set be to be able to use the testCases getter
+                    .map(this.configureTestCases)
+                    .map(this.initializeTask)
+                    .map(this.addGradingStats);
 
-                this.updateTotalWeights();
+                this.setCurrentTasks();
+                this.updateAllTaskPoints();
 
-                // Task points need to be updated again here since weight is not available before
-                this.tasks = this.tasks.map(this.updateTaskPoints).map(this.addGradingStats);
-
-                return this.tasks;
+                return this.currentTasks;
             }),
         );
+    };
+
+    private setCurrentTasks = () => {
+        const tasksCopy = this.tasks.map((task) => ({ ...task }));
+        if (this.ignoreInactive) {
+            this.currentTasks = tasksCopy.filter((task) => {
+                task.testCases = task.testCases.filter((test) => test.active);
+                return task.testCases.length;
+            });
+        } else {
+            this.currentTasks = tasksCopy;
+        }
     };
 
     private getTasksByExercise = (exercise: Exercise): Observable<ProgrammingExerciseServerSideTask[]> => {
@@ -189,17 +201,25 @@ export class ProgrammingExerciseTaskService {
         return task;
     };
 
-    public updateTask = (task: ProgrammingExerciseTask): ProgrammingExerciseTask => {
+    /**
+     * Initialized task values according to the values of its test cases
+     * @param task
+     */
+    public initializeTask = (task: ProgrammingExerciseTask): ProgrammingExerciseTask => {
         task.weight = sum(task.testCases.map((testCase) => testCase.weight ?? 0));
         task.bonusMultiplier = getSingleValue(task.testCases.map((testCase) => testCase.bonusMultiplier));
         task.bonusPoints = sum(task.testCases.map((testCase) => testCase.bonusPoints ?? 0));
         task.visibility = getSingleValue(task.testCases.map((testCase) => testCase.visibility));
         task.type = getSingleValue(task.testCases.map((testCase) => testCase.type));
 
-        return this.updateTaskPoints(task);
+        return task;
     };
 
-    public updateTaskPoints = (task: ProgrammingExerciseTask): ProgrammingExerciseTask => {
+    private updateAllTaskPoints = () => {
+        this.tasks.forEach(this.updateTaskPoints);
+    };
+
+    private updateTaskPoints = (task: ProgrammingExerciseTask) => {
         const [resultingPoints, resultingPointsPercent] = this.calculatePoints(task);
 
         task.resultingPoints = resultingPoints;
