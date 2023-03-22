@@ -125,6 +125,7 @@ class GroupNotificationFactoryTest {
 
         attachment = new Attachment();
         attachment.setLecture(lecture);
+        attachment.setExercise(exercise);
 
         user = new User();
         user.setFirstName("John");
