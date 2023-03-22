@@ -30,7 +30,6 @@ export class VerticalProgressBarComponent implements OnInit {
     @HostBinding('style.--border-radius')
     borderRadiusCSS = '16px';
     // CSS VARIABLES END
-
     constructor(private cdr: ChangeDetectorRef) {}
 
     ngOnInit(): void {
@@ -60,6 +59,8 @@ export class VerticalProgressBarComponent implements OnInit {
     intermediateColor = 'var(--warning)';
     @Input()
     upperColor = 'var(--danger)';
+    @Input()
+    tooltip = '';
 
     @Input()
     set animateFilling(showAnimation: boolean) {
