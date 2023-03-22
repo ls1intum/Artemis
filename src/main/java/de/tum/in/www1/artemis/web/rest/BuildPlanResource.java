@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -31,11 +32,14 @@ public class BuildPlanResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final ProgrammingTriggerService programmingTriggerService;
+
     public BuildPlanResource(BuildPlanRepository buildPlanRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authorizationCheckService) {
+            AuthorizationCheckService authorizationCheckService, ProgrammingTriggerService programmingTriggerService) {
         this.buildPlanRepository = buildPlanRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.programmingTriggerService = programmingTriggerService;
     }
 
     /**
@@ -93,6 +97,8 @@ public class BuildPlanResource {
 
         final BuildPlan createdBuildPlan = buildPlanRepository.setBuildPlanForExercise(buildPlan.getBuildPlan(), programmingExercise);
         programmingExerciseRepository.save(programmingExercise);
+
+        programmingTriggerService.triggerTemplateAndSolutionBuild(programmingExercise.getId());
 
         return ResponseEntity.ok(createdBuildPlan);
     }

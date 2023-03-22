@@ -137,12 +137,8 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
             .getBuildPlan(exerciseId)
             .pipe(
                 tap((buildPlanObj) => {
-                    if (buildPlanObj.body && buildPlanObj.body.buildPlan && buildPlanObj.body.id) {
-                        this.buildPlan = buildPlanObj.body;
-                        this.initEditor();
-                    } else {
-                        throw new Error('No build plan found.');
-                    }
+                    this.buildPlan = buildPlanObj.body!;
+                    this.initEditor();
                 }),
                 catchError(() => {
                     return of(null);
@@ -170,7 +166,6 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
         this.buildPlanService.putBuildPlan(this.exerciseId, this.buildPlan).subscribe((buildPlan) => {
             this.buildPlan = buildPlan.body!;
             this.onBuildPlanUpdate();
-            console.log(this.buildPlan.buildPlan);
         });
     }
 
