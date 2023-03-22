@@ -97,7 +97,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             // All methods calling this getRepository method only expect the AccessForbiddenException to determine whether a user has access to the repository.
             // The local version control system, that also uses checkAccessRepositoryElseThrow, needs a more fine-grained check to return the correct HTTP status and thus expects
             // both the AccessUnauthorizedException and the AccessForbiddenException.
-            throw new AccessForbiddenException();
+            throw new AccessForbiddenException(e);
         }
 
         var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();

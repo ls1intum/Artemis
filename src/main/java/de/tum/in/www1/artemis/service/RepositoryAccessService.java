@@ -16,6 +16,9 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.AccessUnauthorizedException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
+/**
+ * Service for checking if a user has access to a repository.
+ */
 @Service
 public class RepositoryAccessService {
 

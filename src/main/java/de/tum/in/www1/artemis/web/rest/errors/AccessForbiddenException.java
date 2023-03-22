@@ -21,6 +21,10 @@ public class AccessForbiddenException extends RuntimeException {
         super(message);
     }
 
+    public AccessForbiddenException(Throwable cause) {
+        super(cause);
+    }
+
     public AccessForbiddenException(String entityType, long entityId) {
         super("You are not allowed to access the " + entityType + " with id " + entityId);
     }
