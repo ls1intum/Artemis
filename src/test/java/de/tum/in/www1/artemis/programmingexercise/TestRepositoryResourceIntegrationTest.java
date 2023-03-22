@@ -1,14 +1,12 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -30,7 +28,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -44,9 +41,6 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    private RepositoryService repositoryService;
 
     private final String testRepoBaseUrl = "/api/test-repository/";
 
@@ -474,16 +468,5 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         doReturn(true).when(gitService).isRepositoryCached(any());
         var status = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, Map.class);
         assertThat(status).isNotEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCheckoutRepositoryByNameAsStudent() {
-        ProgrammingExercise exercise = programmingExerciseRepository.save(programmingExercise);
-        assertThrows(IllegalAccessException.class, () -> repositoryService.checkoutRepositoryByName(exercise, exercise.getVcsTemplateRepositoryUrl(), false));
-
-        Principal mockPrincipal = mock(Principal.class);
-        doReturn(TEST_PREFIX + "student1").when(mockPrincipal).getName();
-        assertThrows(IllegalAccessException.class, () -> repositoryService.checkoutRepositoryByName(mockPrincipal, exercise, exercise.getVcsTemplateRepositoryUrl()));
     }
 }
