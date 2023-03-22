@@ -39,6 +39,20 @@ export class TutorialGroupsTableComponent implements OnChanges {
     faSort = faSort;
     faQuestionCircle = faQuestionCircle;
 
+    /**
+     * If true we show the campus column
+     */
+    tutorialGroupsSplitAcrossMultipleCampuses = false;
+    /**
+     * If true we show the online / offline column
+     */
+    mixOfOfflineAndOfflineTutorialGroups = false;
+
+    /**
+     * If true we show the language column
+     */
+    mifOfDifferentLanguages = false;
+
     constructor(private sortService: SortService, private cdr: ChangeDetectorRef) {}
 
     trackId(index: number, item: TutorialGroup) {
@@ -46,8 +60,13 @@ export class TutorialGroupsTableComponent implements OnChanges {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.tutorialGroups, this.sortingPredicate, this.ascending);
-        this.cdr.detectChanges();
+        if (this.sortingPredicate === 'dayAndTime') {
+            this.sortService.sortByMultipleProperties(this.tutorialGroups, ['tutorialGroupSchedule.dayOfWeek', 'tutorialGroupSchedule.startTime'], this.ascending);
+        } else if (this.sortingPredicate === 'capacityAndRegistrations') {
+            this.sortService.sortByMultipleProperties(this.tutorialGroups, ['capacity', 'numberOfRegisteredUsers'], this.ascending);
+        } else {
+            this.sortService.sortByProperty(this.tutorialGroups, this.sortingPredicate, this.ascending);
+        }
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -63,6 +82,18 @@ export class TutorialGroupsTableComponent implements OnChanges {
                         }
                         break;
                     }
+                    case 'tutorialGroups':
+                        {
+                            if (change.currentValue && change.currentValue.length > 0) {
+                                this.tutorialGroupsSplitAcrossMultipleCampuses = this.tutorialGroups.some(
+                                    (tutorialGroup) => tutorialGroup.campus !== this.tutorialGroups[0].campus,
+                                );
+                                this.mixOfOfflineAndOfflineTutorialGroups = this.tutorialGroups.some((tutorialGroup) => tutorialGroup.isOnline !== this.tutorialGroups[0].isOnline);
+                                this.mifOfDifferentLanguages = this.tutorialGroups.some((tutorialGroup) => tutorialGroup.language !== this.tutorialGroups[0].language);
+                                this.cdr.detectChanges();
+                            }
+                        }
+                        break;
                 }
             }
         }
