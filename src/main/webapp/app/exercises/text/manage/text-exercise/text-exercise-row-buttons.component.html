@@ -13,15 +13,6 @@
         <fa-icon [icon]="farListAlt"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
     </a>
-    <!-- Submissions -->
-    <a
-        *ngIf="exercise.isAtLeastInstructor"
-        [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'submissions']"
-        class="btn btn-success btn-sm me-1"
-    >
-        <fa-icon [icon]="faBook"></fa-icon>
-        <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
-    </a>
     <!-- Example Submission -->
     <a
         *ngIf="exercise.isAtLeastEditor"
