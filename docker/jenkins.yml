@@ -7,7 +7,7 @@ services:
         container_name: artemis-jenkins
         extra_hosts:
             - "host.docker.internal:host-gateway"
-        build: .
+        build: ./jenkins
         user: root
         volumes:
             - artemis-jenkins-data:/var/jenkins_home
