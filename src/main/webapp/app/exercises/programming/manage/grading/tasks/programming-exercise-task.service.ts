@@ -252,9 +252,9 @@ export class ProgrammingExerciseTaskService {
     };
 
     private calculatePoints = (item: Pick<ProgrammingExerciseTask, 'weight' | 'bonusMultiplier' | 'bonusPoints'>): [number, number] => {
-        const weight = item.weight ?? 0;
-        const multiplier = item.bonusMultiplier ?? 1;
-        const bonusPoints = item.bonusPoints ?? 0;
+        const weight = Number(item.weight) ?? 0;
+        const multiplier = Number(item.bonusMultiplier) ?? 1;
+        const bonusPoints = Number(item.bonusPoints) ?? 0;
 
         const points = ((weight * multiplier) / this.totalWeights) * this.maxPoints + bonusPoints;
         const resultingPoints = roundValueSpecifiedByCourseSettings(points, this.course);
