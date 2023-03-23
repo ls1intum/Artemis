@@ -9,9 +9,9 @@ import { SortService } from 'app/shared/service/sort.service';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { Component, Input, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { Component, Input, QueryList, SimpleChange, ViewChild, ViewChildren } from '@angular/core';
 import { TutorialGroupRowStubComponent } from '../stubs/tutorial-groups-table-stub.component';
-import { Course } from 'app/entities/course.model';
+import { Course, Language } from 'app/entities/course.model';
 import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
@@ -156,6 +156,57 @@ describe('TutorialGroupsTableComponent', () => {
         expect(component).not.toBeNull();
     });
 
+    it('should show the language column if multiple languages are present', () => {
+        tutorialGroupOne.language = Language.ENGLISH;
+        tutorialGroupTwo.language = Language.GERMAN;
+
+        component.ngOnChanges({ tutorialGroups: new SimpleChange([], [tutorialGroupOne, tutorialGroupTwo], true) });
+        runOnPushChangeDetection(fixture);
+
+        expect(fixture.nativeElement.querySelector('#language-column')).not.toBeNull();
+
+        tutorialGroupOne.language = Language.ENGLISH;
+        tutorialGroupTwo.language = Language.ENGLISH;
+
+        component.ngOnChanges({ tutorialGroups: new SimpleChange([], [tutorialGroupOne, tutorialGroupTwo], true) });
+        runOnPushChangeDetection(fixture);
+        expect(fixture.nativeElement.querySelector('#language-column')).toBeNull();
+    });
+
+    it('should show the language column if multiple formats are present', () => {
+        tutorialGroupOne.isOnline = true;
+        tutorialGroupTwo.isOnline = false;
+
+        component.ngOnChanges({ tutorialGroups: new SimpleChange([], [tutorialGroupOne, tutorialGroupTwo], true) });
+        runOnPushChangeDetection(fixture);
+
+        expect(fixture.nativeElement.querySelector('#online-column')).not.toBeNull();
+
+        tutorialGroupOne.isOnline = true;
+        tutorialGroupTwo.isOnline = true;
+
+        component.ngOnChanges({ tutorialGroups: new SimpleChange([], [tutorialGroupOne, tutorialGroupTwo], true) });
+        runOnPushChangeDetection(fixture);
+        expect(fixture.nativeElement.querySelector('#online-column')).toBeNull();
+    });
+
+    it('should show the language column if multiple campuses are present', () => {
+        tutorialGroupOne.campus = 'Garching';
+        tutorialGroupTwo.campus = 'Munich';
+
+        component.ngOnChanges({ tutorialGroups: new SimpleChange([], [tutorialGroupOne, tutorialGroupTwo], true) });
+        runOnPushChangeDetection(fixture);
+
+        expect(fixture.nativeElement.querySelector('#campus-column')).not.toBeNull();
+
+        tutorialGroupOne.campus = 'Garching';
+        tutorialGroupTwo.campus = 'Garching';
+
+        component.ngOnChanges({ tutorialGroups: new SimpleChange([], [tutorialGroupOne, tutorialGroupTwo], true) });
+        runOnPushChangeDetection(fixture);
+        expect(fixture.nativeElement.querySelector('#campus-column')).toBeNull();
+    });
+
     it('should call sort service', () => {
         component.sortingPredicate = 'id';
         component.ascending = false;
@@ -165,6 +216,30 @@ describe('TutorialGroupsTableComponent', () => {
 
         component.sortRows();
         expect(sortServiceSpy).toHaveBeenCalledWith([tutorialGroupOne, tutorialGroupTwo], 'id', false);
+        expect(sortServiceSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should call sort service with day and time', () => {
+        component.sortingPredicate = 'dayAndTime';
+        component.ascending = false;
+
+        const sortService = TestBed.inject(SortService);
+        const sortServiceSpy = jest.spyOn(sortService, 'sortByMultipleProperties');
+
+        component.sortRows();
+        expect(sortServiceSpy).toHaveBeenCalledWith([tutorialGroupOne, tutorialGroupTwo], ['tutorialGroupSchedule.dayOfWeek', 'tutorialGroupSchedule.startTime'], false);
+        expect(sortServiceSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should call sort service with capacity and number of registered users', () => {
+        component.sortingPredicate = 'capacityAndRegistrations';
+        component.ascending = false;
+
+        const sortService = TestBed.inject(SortService);
+        const sortServiceSpy = jest.spyOn(sortService, 'sortByMultipleProperties');
+
+        component.sortRows();
+        expect(sortServiceSpy).toHaveBeenCalledWith([tutorialGroupOne, tutorialGroupTwo], ['capacity', 'numberOfRegisteredUsers'], false);
         expect(sortServiceSpy).toHaveBeenCalledOnce();
     });
 
