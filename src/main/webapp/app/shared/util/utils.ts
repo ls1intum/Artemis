@@ -148,6 +148,7 @@ export const isDate = (input: any) => {
     return input instanceof Date || Object.prototype.toString.call(input) === '[object Date]';
 };
 
+// delay is used to ensure apollon editor and redux store is not null (because of React 18 behaviour)
 export const addDelay = async (t: number) => {
     return new Promise((res) => setTimeout(res, t));
 };

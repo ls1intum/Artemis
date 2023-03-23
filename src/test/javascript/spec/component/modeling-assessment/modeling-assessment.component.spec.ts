@@ -245,7 +245,6 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     it('should highlight elements', async () => {
-        // change
         const highlightedElements = new Map();
         highlightedElements.set('elementId1', 'red');
         highlightedElements.set('relationshipId', 'blue');

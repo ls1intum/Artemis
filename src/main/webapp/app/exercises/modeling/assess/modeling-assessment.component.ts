@@ -209,7 +209,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
         if (this.apollonEditor != undefined) {
             await addDelay(0);
-            const model = this.apollonEditor!.model;
+            const model: UMLModel = this.apollonEditor!.model;
             for (const element of model!.elements) {
                 element.highlight = newElements.get(element.id);
             }

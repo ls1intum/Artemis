@@ -38,6 +38,7 @@ export const triggerChanges = (comp: OnChanges, ...changes: Array<{ property: st
     comp.ngOnChanges(simpleChanges);
 };
 
+// delay is used to ensure apollon editor and redux store is not null (because of React 18 behaviour)
 export const addDelay = async (t: number) => {
     return new Promise((res) => setTimeout(res, t));
 };
