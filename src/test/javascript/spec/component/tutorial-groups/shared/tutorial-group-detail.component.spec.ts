@@ -11,6 +11,7 @@ import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detect
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
+import { RemoveSecondsPipe } from '../../../../../../main/webapp/app/course/tutorial-groups/shared/remove-seconds.pipe';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
 class MockHeaderComponent {
@@ -53,6 +54,7 @@ describe('TutorialGroupDetailWrapperTest', () => {
                 MockWrapperComponent,
                 MockHeaderComponent,
                 MockPipe(ArtemisTranslatePipe),
+                MockPipe(RemoveSecondsPipe),
                 MockComponent(FaIconComponent),
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
             ],
@@ -89,7 +91,13 @@ describe('TutorialGroupDetailComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [NgbTooltipMocksModule],
-            declarations: [TutorialGroupDetailComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(TutorialGroupUtilizationIndicatorComponent)],
+            declarations: [
+                TutorialGroupDetailComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FaIconComponent),
+                MockComponent(TutorialGroupUtilizationIndicatorComponent),
+                MockPipe(RemoveSecondsPipe),
+            ],
             providers: [MockProvider(ArtemisMarkdownService), MockProvider(SortService)],
         })
             .compileComponents()
