@@ -40,7 +40,13 @@ describe('ProgrammingExerciseTask Service', () => {
 
     it('should create correct task settings from test cases', () => {});
     it('should assign tests correct grading statistics', () => {});
+    it('should handle inactive test cases correctly if they are ignored', () => {});
+    it('should handle inactive test cases correctly if they are not ignored', () => {});
     it('should update task correctly', () => {});
     it('should save test case configuration', () => {});
+    it('should NOT show an error alert when test case weights zero for exercises with automatic feedback', () => {});
+    it('should NOT show an error alert when test case weights are zero for exercises with semiautomatic feedback', () => {});
+    it('should NOT show an error alert when test case weights are zero for exercises with manual feedback', () => {});
     it('should reset test case configuration', () => {});
+    it('should correctly detect unsaved changes', () => {});
 });
