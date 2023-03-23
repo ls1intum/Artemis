@@ -16,7 +16,7 @@ import { TestCaseDistributionChartComponent } from 'app/exercises/programming/ma
 import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
 import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-submission-policy-configuration-actions.component';
 import { SubmissionPolicyUpdateModule } from 'app/exercises/shared/submission-policy/submission-policy-update.module';
-import { ConfigureGradingTasksComponent } from 'app/exercises/programming/manage/grading/tasks/configure-grading-tasks.component';
+import { ProgrammingExerciseGradingTaskComponent } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-grading-task.component';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { ProgrammingExerciseTaskComponent } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task/programming-exercise-task.component';
 
@@ -41,7 +41,7 @@ import { ProgrammingExerciseTaskComponent } from 'app/exercises/programming/mana
         ProgrammingExerciseGradingDirtyWarningComponent,
         ProgrammingExerciseGradingTableActionsComponent,
         ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent,
-        ConfigureGradingTasksComponent,
+        ProgrammingExerciseGradingTaskComponent,
         TestCasePassedBuildsChartComponent,
         CategoryIssuesChartComponent,
         TestCaseDistributionChartComponent,

@@ -8,11 +8,11 @@ import { ProgrammingExerciseTask } from './programming-exercise-task';
 import { Observable } from 'rxjs';
 
 @Component({
-    selector: 'jhi-configure-grading-task',
-    templateUrl: './configure-grading-tasks.component.html',
-    styleUrls: ['./configure-grading-tasks.scss'],
+    selector: 'jhi-programming-exercise-grading-task',
+    templateUrl: './programming-exercise-grading-task.component.html',
+    styleUrls: ['./programming-exercise-grading-task.scss'],
 })
-export class ConfigureGradingTasksComponent implements OnInit {
+export class ProgrammingExerciseGradingTaskComponent implements OnInit {
     @Input() exercise: ProgrammingExercise;
     @Input() course: Course;
     @Input() gradingStatisticsObservable: Observable<ProgrammingExerciseGradingStatistics>;
