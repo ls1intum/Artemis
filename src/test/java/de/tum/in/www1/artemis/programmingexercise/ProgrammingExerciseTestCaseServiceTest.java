@@ -16,16 +16,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
-import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackCreationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
@@ -39,6 +37,9 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
 
     @Autowired
     private ProgrammingExerciseTestCaseService testCaseService;
+
+    @Autowired
+    private ProgrammingExerciseFeedbackCreationService feedbackCreationService;
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -59,83 +60,6 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
     @AfterEach
     void tearDown() {
         bambooRequestMockProvider.reset();
-    }
-
-    @Test
-    void shouldSetAllTestCasesToInactiveIfFeedbackListIsEmpty() {
-        List<Feedback> feedbacks = new ArrayList<>();
-        testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
-
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).hasSize(3);
-
-        assertThat(testCases.stream().noneMatch(ProgrammingExerciseTestCase::isActive)).isTrue();
-    }
-
-    @Test
-    void shouldUpdateActiveFlagsOfTestCases() {
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1"));
-        feedbacks.add(new Feedback().text("test2"));
-        feedbacks.add(new Feedback().text("test4"));
-        feedbacks.add(new Feedback().text("test5"));
-        testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
-
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).hasSize(5);
-
-        assertThat(testCases.stream().allMatch(testCase -> {
-            if (testCase.getTestName().equals("test3")) {
-                return !testCase.isActive();
-            }
-            else {
-                return testCase.isActive();
-            }
-        })).isTrue();
-    }
-
-    @Test
-    void shouldGenerateNewTestCases() {
-        // We do not want to use the test cases generated in the setup
-        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
-
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1"));
-        feedbacks.add(new Feedback().text("test2"));
-        testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
-
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).hasSize(2);
-
-        assertThat(testCases.stream().allMatch(ProgrammingExerciseTestCase::isActive)).isTrue();
-    }
-
-    @Test
-    void shouldNotGenerateNewTestCasesForStaticCodeAnalysisFeedback() {
-        // We do not want to use the test cases generated in the setup
-        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
-
-        List<Feedback> feedbackList = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
-        testCaseService.generateTestCasesFromFeedbacks(feedbackList, programmingExercise);
-
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).isEmpty();
-    }
-
-    @Test
-    void shouldFilterOutDuplicateTestCases() {
-        // We do not want to use the test cases generated in the setup
-        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
-
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1"));
-        feedbacks.add(new Feedback().text("generateTestsForAllClasses"));
-        feedbacks.add(new Feedback().text("generateTestsForAllClasses"));
-        feedbacks.add(new Feedback().text("generateTestsForAllClasses"));
-        testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
-
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).hasSize(2);
     }
 
     @Test
@@ -208,11 +132,8 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
         programmingExercise.setAssessmentType(assessmentType);
         programmingExerciseRepository.save(programmingExercise);
 
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1"));
-        feedbacks.add(new Feedback().text("test2"));
-        feedbacks.add(new Feedback().text("test3"));
-        testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
+        var result = ModelFactory.generateBambooBuildResult("SOLUTION", null, null, null, List.of("test1", "test2", "test3"), Collections.emptyList(), null);
+        feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         Set<ProgrammingExerciseTestCaseDTO> testCaseDTOs = testCases.stream().map(testCase -> {
@@ -227,44 +148,5 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
 
         Set<ProgrammingExerciseTestCase> updated = testCaseService.update(programmingExercise.getId(), testCaseDTOs);
         assertThat(updated).hasSize(3).allMatch(testCase -> testCase.getWeight() == 0.0);
-    }
-
-    @Test
-    void shouldMapStructuralTestCaseTypesCorrectly() {
-        Set<ProgrammingExerciseTestCase> structuralTestCases = Set.of(new ProgrammingExerciseTestCase().testName("testClass[Policy]").exercise(programmingExercise),
-                new ProgrammingExerciseTestCase().testName("testConstructors[BubbleSort]").exercise(programmingExercise),
-                new ProgrammingExerciseTestCase().testName("testMethods[Context]").exercise(programmingExercise),
-                new ProgrammingExerciseTestCase().testName("testAttributes[Starter]").exercise(programmingExercise));
-
-        testCaseService.setTestCaseType(structuralTestCases, ProgrammingLanguage.JAVA);
-        assertThat(structuralTestCases).allMatch(testCase -> testCase.getType() == ProgrammingExerciseTestCaseType.STRUCTURAL);
-    }
-
-    @Test
-    void shouldMapBehavioralTestCaseTypesCorrectly() {
-        Set<ProgrammingExerciseTestCase> behavioralTestCases = Set.of(new ProgrammingExerciseTestCase().testName("testBubbleSort").exercise(programmingExercise),
-                new ProgrammingExerciseTestCase().testName("testMergeSort").exercise(programmingExercise),
-                new ProgrammingExerciseTestCase().testName("test13412").exercise(programmingExercise),
-                new ProgrammingExerciseTestCase().testName("HiddenRandomTest").exercise(programmingExercise));
-
-        testCaseService.setTestCaseType(behavioralTestCases, ProgrammingLanguage.JAVA);
-        assertThat(behavioralTestCases).allMatch(testCase -> testCase.getType() == ProgrammingExerciseTestCaseType.BEHAVIORAL);
-    }
-
-    @Test
-    void shouldMapNonJavaTestsToDefaultTestCaseType() {
-        Set<ProgrammingExerciseTestCase> testCases;
-
-        for (ProgrammingLanguage language : ProgrammingLanguage.values()) {
-            if (language == ProgrammingLanguage.JAVA) {
-                continue;
-            }
-            testCases = Set.of(new ProgrammingExerciseTestCase().testName("testBubbleSort").exercise(programmingExercise),
-                    new ProgrammingExerciseTestCase().testName("testMergeSort").exercise(programmingExercise),
-                    new ProgrammingExerciseTestCase().testName("test13412").exercise(programmingExercise),
-                    new ProgrammingExerciseTestCase().testName("HiddenRandomTest").exercise(programmingExercise));
-            testCaseService.setTestCaseType(testCases, language);
-            assertThat(testCases).allMatch(testCase -> testCase.getType() == ProgrammingExerciseTestCaseType.DEFAULT);
-        }
     }
 }

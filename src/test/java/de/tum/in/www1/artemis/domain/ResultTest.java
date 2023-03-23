@@ -25,6 +25,8 @@ class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     List<Feedback> feedbackList;
 
+    private Course course;
+
     Double offsetByTenThousandth = 0.0001;
 
     @Autowired
@@ -34,7 +36,7 @@ class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     ResultRepository resultRepository;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         Feedback feedback1 = new Feedback();
         feedback1.setCredits(2.5);
         Feedback feedback2 = new Feedback();
@@ -47,7 +49,7 @@ class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         feedback5.setCredits(3.0);
         feedbackList = List.of(feedback1, feedback2, feedback3, feedback4, feedback5);
 
-        Course course = new Course();
+        course = database.addEmptyCourse();
         course.setAccuracyOfScores(1);
         result.setParticipation(new StudentParticipation().exercise(new TextExercise().course(course)));
     }
@@ -116,16 +118,16 @@ class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     @Test
-    @Disabled // TODO we should implement this in the future
+    @Disabled // TODO implement this
     void testRemoveTestCaseNames() {
-        Feedback tst1 = new Feedback().positive(true).type(FeedbackType.AUTOMATIC).text("test()");
-        Feedback tst2 = new Feedback().positive(false).type(FeedbackType.AUTOMATIC).text("test2()").detailText("This is wrong.");
+        ProgrammingExercise exercise = database.addProgrammingExerciseToCourse(course, false);
+        var tests = database.addTestCasesToProgrammingExercise(exercise);
+        Feedback tst1 = new Feedback().positive(true).type(FeedbackType.AUTOMATIC).testCase(tests.get(0));
+        Feedback tst2 = new Feedback().positive(false).type(FeedbackType.AUTOMATIC).testCase(tests.get(2)).detailText("This is wrong.");
 
-        ProgrammingExercise exercise = new ProgrammingExercise();
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
         participation.setExercise(exercise);
         result.setParticipation(participation);
-
         result.setFeedbacks(new ArrayList<>(List.of(tst1, tst2)));
 
         result.filterSensitiveFeedbacks(true);
