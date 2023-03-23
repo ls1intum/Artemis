@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.*;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -522,7 +523,8 @@ public class FileService implements DisposableBean {
             filePath = resource.getFile().toPath();
         }
         else {
-            filePath = Path.of(resource.getURL().getPath());
+            final String url = URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8);
+            filePath = Path.of(url);
         }
 
         final Path targetPath = getTargetPath(filePath, prefix, targetDirectoryPath, keepParentDirectory);
