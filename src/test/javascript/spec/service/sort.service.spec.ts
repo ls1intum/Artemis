@@ -8,6 +8,9 @@ type TestObject = {
     c: dayjs.Dayjs;
     d: number | null | undefined;
     e: Map<string, number>;
+    f: number;
+
+    g: number;
 };
 
 describe('Sort Service', () => {
@@ -24,6 +27,8 @@ describe('Sort Service', () => {
             c: dayjs().subtract(1, 'days'),
             d: 2,
             e: new Map().set('f', 4),
+            f: 1,
+            g: 3,
         };
         e2 = {
             a: 18,
@@ -31,6 +36,8 @@ describe('Sort Service', () => {
             c: dayjs().subtract(20, 'hours'),
             d: 5,
             e: new Map().set('f', 8),
+            f: 1,
+            g: 2,
         };
         e3 = {
             a: 4,
@@ -38,6 +45,8 @@ describe('Sort Service', () => {
             c: dayjs().add(3, 'minutes'),
             d: null,
             e: new Map().set('f', 29),
+            f: 1,
+            g: 1,
         };
         e4 = {
             a: 28,
@@ -45,6 +54,8 @@ describe('Sort Service', () => {
             c: dayjs().subtract(4, 'years'),
             d: 1,
             e: new Map().set('f', 43),
+            f: 4,
+            g: 4,
         };
         e5 = {
             a: 15,
@@ -52,6 +63,8 @@ describe('Sort Service', () => {
             c: dayjs().add(2, 'hours'),
             d: 4,
             e: new Map().set('f', 6),
+            f: 5,
+            g: 5,
         };
         e6 = {
             a: 7,
@@ -59,6 +72,8 @@ describe('Sort Service', () => {
             c: dayjs().subtract(5, 'minutes'),
             d: undefined,
             e: new Map().set('f', 16),
+            f: 6,
+            g: 6,
         };
     });
 
@@ -68,6 +83,22 @@ describe('Sort Service', () => {
             repeatWithRandomArray(10, (arr) => {
                 service.sortByProperty(arr, 'a', true);
                 expect(arr).toEqual([e3, e6, e1, e5, e2, e4]);
+            }),
+        );
+
+        it(
+            'should sort basic array ascending by multiple properties',
+            repeatWithRandomArray(10, (arr) => {
+                service.sortByMultipleProperties(arr, ['f', 'g'], true);
+                expect(arr).toEqual([e3, e2, e1, e4, e5, e6]);
+            }),
+        );
+
+        it(
+            'should sort basic array descending by multiple properties',
+            repeatWithRandomArray(10, (arr) => {
+                service.sortByMultipleProperties(arr, ['f', 'g'], false);
+                expect(arr).toEqual([e6, e5, e4, e1, e2, e3]);
             }),
         );
 

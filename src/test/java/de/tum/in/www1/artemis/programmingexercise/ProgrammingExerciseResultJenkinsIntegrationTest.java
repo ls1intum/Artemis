@@ -12,6 +12,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -149,5 +150,16 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
         var notification = ModelFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(),
                 List.of(commit), null);
         programmingExerciseResultTestService.shouldCreateResultOnCustomDefaultBranch(customDefaultBranch, notification);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @Disabled // TODO we should implement this in the future
+    void shouldRemoveTestCaseNamesFromWebsocketNotification() throws Exception {
+        var exercise = programmingExerciseResultTestService.getProgrammingExercise();
+        var repoName = (exercise.getProjectKey() + "-" + TEST_PREFIX + "student1").toUpperCase();
+        var notification = ModelFactory.generateTestResultDTO(exercise.getProjectKey() + " » " + repoName + " #3", repoName, null, exercise.getProgrammingLanguage(), false,
+                List.of("test1", "test2"), List.of("test3", "test4"), List.of(), List.of(), null);
+        programmingExerciseResultTestService.shouldRemoveTestCaseNamesFromWebsocketNotification(notification, messagingTemplate);
     }
 }
