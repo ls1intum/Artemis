@@ -225,8 +225,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 403) {
                     this.redirectToCourseRegistrationPageIfCanRegisterOrElseThrow(error);
+                    return of();
+                } else {
+                    return throwError(() => error);
                 }
-                return throwError(() => error);
             }),
             // handle other errors
             catchError((error: HttpErrorResponse) => {
