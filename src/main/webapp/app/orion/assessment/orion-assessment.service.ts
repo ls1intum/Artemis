@@ -69,6 +69,7 @@ export class OrionAssessmentService {
         const exportOptions: RepositoryExportOptions = {
             exportAllParticipants: false,
             filterLateSubmissions: false,
+            excludePracticeSubmissions: false,
             addParticipantName: false,
             combineStudentCommits: true,
             anonymizeStudentCommits: true,
