@@ -87,13 +87,5 @@
     <div class="mb-1">
         <!-- import external submissions -->
         <jhi-external-submission *ngIf="exercise.isAtLeastInstructor" class="d-inline-block me-1 mb-1" [exercise]="exercise"></jhi-external-submission>
-
-        <!-- Export submissions -->
-        <jhi-exercise-submission-export
-            *ngIf="exercise.isAtLeastInstructor"
-            class="d-inline-block mb-1"
-            [exerciseId]="exercise.id!"
-            [exerciseType]="exercise.type!"
-        ></jhi-exercise-submission-export>
     </div>
 </ng-container>
