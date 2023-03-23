@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -53,6 +54,8 @@ public class ProgrammingExerciseImportService {
 
     private final FileService fileService;
 
+    private final ZipFileService zipFileService;
+
     private final UserRepository userRepository;
 
     private final RepositoryService repositoryService;
@@ -66,7 +69,7 @@ public class ProgrammingExerciseImportService {
     private final ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
 
     public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService, UserRepository userRepository,
+            ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService, ZipFileService zipFileService, UserRepository userRepository,
             RepositoryService repositoryService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UrlService urlService, TemplateUpgradePolicy templateUpgradePolicy,
             ProgrammingExerciseImportBasicService programmingExerciseImportBasicService) {
         this.versionControlService = versionControlService;
@@ -74,6 +77,7 @@ public class ProgrammingExerciseImportService {
         this.programmingExerciseService = programmingExerciseService;
         this.gitService = gitService;
         this.fileService = fileService;
+        this.zipFileService = zipFileService;
         this.userRepository = userRepository;
         this.repositoryService = repositoryService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
@@ -508,7 +512,7 @@ public class ProgrammingExerciseImportService {
         Path path = Files.createTempDirectory("imported-exercise-dir");
         Path exerciseFilePath = Files.createTempFile(path, "exercise-for-import", ".zip");
         zipFile.transferTo(exerciseFilePath);
-        fileService.extractZipFileRecursively(exerciseFilePath);
+        zipFileService.extractZipFileRecursively(exerciseFilePath);
         var exerciseDetailsFileName = findJsonFileAndReturnFileName(path);
         String oldPackageName = retrieveOldPackageName(Path.of(exerciseFilePath.toString().substring(0, exerciseFilePath.toString().length() - 4)), exerciseDetailsFileName);
         ProgrammingExercise importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport);

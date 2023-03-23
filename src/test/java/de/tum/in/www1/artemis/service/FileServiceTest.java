@@ -8,14 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -300,71 +295,5 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     void testDeleteFiles_shouldNotThrowException() {
         Path path = Path.of("some-random-path-which-does-not-exist");
         assertDoesNotThrow(() -> fileService.deleteFiles(List.of(path)));
-    }
-
-    @Test
-    void testExtractZipFileRecursively_shouldNotThrowException() throws IOException {
-        Path rootDir = Files.createTempDirectory("root-dir");
-        Path subDir = Files.createTempDirectory(rootDir, "sub-dir");
-        Path subDir2 = Files.createTempDirectory(subDir, "sub-dir2");
-        Path file1 = Files.createTempFile(rootDir, "file1", ".json");
-        Path file2 = Files.createTempFile(subDir2, "file2", ".json");
-        zipFolder(rootDir);
-
-        fileService.extractZipFileRecursively(rootDir);
-
-    }
-
-    @Test
-    void testExtractZipFileRecursively_shouldCorrectlyUnzipFile() {
-
-    }
-
-    private void zipFolder(Path source) throws IOException {
-
-        // get folder name as zip file name
-        String zipFileName = source.getFileName().toString() + ".zip";
-
-        try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFileName))) {
-
-            Files.walkFileTree(source, new SimpleFileVisitor<>() {
-
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
-
-                    // only copy files, no symbolic links
-                    if (attributes.isSymbolicLink()) {
-                        return FileVisitResult.CONTINUE;
-                    }
-
-                    try (FileInputStream fis = new FileInputStream(file.toFile())) {
-
-                        Path targetFile = source.relativize(file);
-                        zos.putNextEntry(new ZipEntry(targetFile.toString()));
-
-                        byte[] buffer = new byte[1024];
-                        int len;
-                        while ((len = fis.read(buffer)) > 0) {
-                            zos.write(buffer, 0, len);
-                        }
-
-                        zos.closeEntry();
-
-                        System.out.printf("Zip file : %s%n", file);
-
-                    }
-                    catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        }
-
     }
 }

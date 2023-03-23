@@ -31,6 +31,7 @@ export class ExerciseImportFromFileComponent implements OnInit {
         this.activeModal.dismiss('cancel');
     }
 
+    /** uploads the zip file and extracts the minimal information required to fill the exercise-update component, it's async, so one can conveniently use await **/
     async uploadExercise() {
         const jsonRegex = new RegExp('.*.json');
         const zip = await JSZip.loadAsync(this.fileForImport as File);
@@ -73,6 +74,7 @@ export class ExerciseImportFromFileComponent implements OnInit {
         }
     }
 
+    /** sets the zip file that is selected in the file input dialgo **/
     setFileForExerciseImport(event: any): void {
         if (event.target.files.length) {
             const fileList: FileList = event.target.files;

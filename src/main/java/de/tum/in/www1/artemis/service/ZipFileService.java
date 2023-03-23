@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import javax.annotation.Nullable;
@@ -63,6 +65,59 @@ public class ZipFileService {
         try (var files = Files.walk(contentRootPath)) {
             createZipFileFromPathStream(zipFilePath, files, contentRootPath, contentFilter);
             return zipFilePath;
+        }
+    }
+
+    /**
+     * Extracts a zip file to a folder with the same name as the zip file
+     *
+     * @param zipPath path to the zip file
+     * @throws IOException if an error occurred while extracting
+     */
+    public void extractZipFileRecursively(Path zipPath) throws IOException {
+        int BUFFER = 2048;
+
+        File zipFile = zipPath.toFile();
+        ZipFile zip = new ZipFile(zipPath.toFile());
+        String newPath = zipFile.getAbsolutePath().substring(0, zipFile.getAbsolutePath().length() - 4);
+
+        new File(newPath).mkdir();
+        Enumeration<? extends ZipEntry> zipFileEntries = zip.entries();
+
+        // Process each entry
+        while (zipFileEntries.hasMoreElements()) {
+            // grab a zip file entry
+            ZipEntry entry = zipFileEntries.nextElement();
+            String currentEntry = entry.getName();
+            java.io.File destFile = new java.io.File(newPath, currentEntry);
+            File destinationParent = destFile.getParentFile();
+
+            // create the parent directory structure if needed
+            destinationParent.mkdirs();
+
+            if (!entry.isDirectory()) {
+                BufferedInputStream is = new BufferedInputStream(zip.getInputStream(entry));
+                int currentByte;
+                // establish buffer for writing file
+                byte[] data = new byte[BUFFER];
+
+                // write the current file to disk
+                FileOutputStream fos = new FileOutputStream(destFile);
+                BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER);
+
+                // read and write until last byte is encountered
+                while ((currentByte = is.read(data, 0, BUFFER)) != -1) {
+                    dest.write(data, 0, currentByte);
+                }
+                dest.flush();
+                dest.close();
+                is.close();
+            }
+
+            if (currentEntry.endsWith(".zip")) {
+                // found a zip file, try to open
+                extractZipFileRecursively(destFile.toPath());
+            }
         }
     }
 

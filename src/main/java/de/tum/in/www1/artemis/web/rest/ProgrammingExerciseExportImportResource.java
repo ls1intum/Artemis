@@ -205,18 +205,29 @@ public class ProgrammingExerciseExportImportResource {
         }
     }
 
+    /**
+     * POST /programming-exercises/import-from-file: Imports an existing programming exercise from an uploaded zip file into an existing course
+     * <p>
+     * This will create the whole exercise, including all base build plans (template, solution) and repositories (template, solution, test) and copy
+     * the content from the repositories of the zip file into the newly created repositories.
+     *
+     * @param programmingExercise The exercise that should be imported
+     * @param zipFile             The zip file containing the template, solution and test repositories plus a json file with the exercise configuration
+     * @return The imported exercise (200)
+     *         (403) if the user is not at least an editor in the target course.
+     */
     @PostMapping(IMPORT_FROM_FILE)
     @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> importProgrammingExerciseFromFile(@RequestPart("programmingExercise") ProgrammingExercise programmingExercise,
-            @RequestPart("file") MultipartFile zipFile) throws GitAPIException {
+            @RequestPart("file") MultipartFile zipFile) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var course = courseService.findByIdElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
         try {
             return ResponseEntity.ok(programmingExerciseImportService.importProgrammingExerciseFromFile(programmingExercise, zipFile));
         }
-        catch (IOException | URISyntaxException e) {
+        catch (IOException | URISyntaxException | GitAPIException e) {
             throw new InternalServerErrorException("Error while importing programming exercise from file: " + e.getMessage());
         }
 
