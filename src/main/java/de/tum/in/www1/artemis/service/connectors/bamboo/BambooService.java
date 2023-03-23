@@ -48,7 +48,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.UrlService;
@@ -56,6 +55,7 @@ import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackCreationService;
 
 @Service
 @Profile("bamboo")
@@ -80,9 +80,9 @@ public class BambooService extends AbstractContinuousIntegrationService {
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
             UrlService urlService, BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ProgrammingExerciseTestCaseRepository testCaseRepository) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate,
-                testwiseCoverageService, testCaseRepository);
+                testwiseCoverageService, feedbackCreationService);
         this.gitService = gitService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;

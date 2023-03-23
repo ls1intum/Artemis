@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.assessment;
 
-import static de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService.DEFAULT_FILEPATH;
+import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackCreationService.DEFAULT_FILEPATH;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackCreationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -87,6 +88,9 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
+
+    @Autowired
+    private ProgrammingExerciseFeedbackCreationService feedbackCreationService;
 
     private Course course;
 
@@ -150,7 +154,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 issue.setFilePath(pathWithoutWorkingDir);
             }
         }
-        var staticCodeAnalysisFeedback1 = continuousIntegrationService
+        var staticCodeAnalysisFeedback1 = feedbackCreationService
                 .createFeedbackFromStaticCodeAnalysisReports(resultNotification1.getBuild().jobs().get(0).staticCodeAnalysisReports());
 
         for (var feedback : staticCodeAnalysisFeedback1) {
@@ -176,7 +180,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 }
             }
         }
-        final var staticCodeAnalysisFeedback2 = continuousIntegrationService
+        final var staticCodeAnalysisFeedback2 = feedbackCreationService
                 .createFeedbackFromStaticCodeAnalysisReports(resultNotification2.getBuild().jobs().get(0).staticCodeAnalysisReports());
 
         for (var feedback : staticCodeAnalysisFeedback2) {
