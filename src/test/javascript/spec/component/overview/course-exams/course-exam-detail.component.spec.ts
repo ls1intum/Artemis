@@ -12,15 +12,15 @@ import { Router } from '@angular/router';
 import { CourseExamAttemptReviewDetailComponent } from 'app/overview/course-exams/course-exam-attempt-review-detail/course-exam-attempt-review-detail.component';
 import { of } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { HttpResponse } from '@angular/common/http';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { MockExamParticipationService } from '../../../helpers/mocks/service/mock-exam-participation.service';
 
 describe('CourseExamDetailComponent', () => {
     let component: CourseExamDetailComponent;
     let componentFixture: ComponentFixture<CourseExamDetailComponent>;
 
-    let studentExamService: StudentExamService;
-    let studentExamServiceSpy: jest.SpyInstance;
+    let examParticipationService: ExamParticipationService;
+    let examParticipationServiceSpy: jest.SpyInstance;
 
     const currentDate = dayjs();
     const currentDateMinus60 = currentDate.subtract(60, 'minutes');
@@ -45,14 +45,17 @@ describe('CourseExamDetailComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisDurationFromSecondsPipe),
             ],
-            providers: [{ provide: Router, useClass: MockRouter }],
+            providers: [
+                { provide: ExamParticipationService, useClass: MockExamParticipationService },
+                { provide: Router, useClass: MockRouter },
+            ],
         })
             .compileComponents()
             .then(() => {
                 componentFixture = TestBed.createComponent(CourseExamDetailComponent);
                 component = componentFixture.componentInstance;
-                studentExamService = TestBed.inject(StudentExamService);
-                studentExamServiceSpy = jest.spyOn(studentExamService, 'retrieveOwnStudentExam').mockReturnValue(of(new HttpResponse({ body: studentExam })));
+                examParticipationService = TestBed.inject(ExamParticipationService);
+                examParticipationServiceSpy = jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
             });
     });
 
@@ -124,7 +127,7 @@ describe('CourseExamDetailComponent', () => {
         component.exam.endDate = currentDateMinus35;
         component.exam.workingTime = 25 * 60;
         const studentExam: StudentExam = { numberOfExamSessions: 1, workingTime: 65 * 60 };
-        studentExamServiceSpy.mockReturnValue(of(new HttpResponse({ body: studentExam })));
+        examParticipationServiceSpy.mockReturnValue(of(studentExam));
 
         component.ngOnInit();
         component.updateExamState();
@@ -227,7 +230,7 @@ describe('CourseExamDetailComponent', () => {
         }
         component.exam.testExam = testExam;
 
-        studentExamServiceSpy.mockReturnValue(of(new HttpResponse({ body: studentExam })));
+        examParticipationServiceSpy.mockReturnValue(of(studentExam));
 
         component.ngOnInit();
         component.updateExamState();

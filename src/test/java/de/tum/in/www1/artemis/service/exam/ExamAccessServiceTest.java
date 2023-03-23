@@ -376,7 +376,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExamInCourseElseThrow_realExam() {
         assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).asInstanceOf(type(BadRequestAlertException.class))
-                .satisfies(error -> assertThat(error.getParameters().get("skipAlert")).isNull());
+                .satisfies(error -> assertThat(error.getParameters().get("skipAlert")).isEqualTo(Boolean.TRUE));
 
     }
 

@@ -730,27 +730,4 @@ public class StudentExamResource {
 
         return ResponseEntity.ok(studentExamRepository.save(studentExam));
     }
-
-    /**
-     * GET /courses/{courseId}/exams/{examId}/own-student-exam : Return the student exam of the current user for the specified exam or null if there is none
-     *
-     * @param courseId the course to which the student exams belong to
-     * @param examId   the exam to which the student exams belong to
-     * @return the student exam of the current user or null if not present
-     */
-    @GetMapping("/courses/{courseId}/exams/{examId}/own-student-exam")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<StudentExam> retrieveOwnStudentExam(@PathVariable Long courseId, @PathVariable Long examId) {
-        examAccessService.checkIsAtLeastStudentInExamElseThrow(courseId, examId);
-        Exam exam = examRepository.findByIdElseThrow(examId);
-        if (exam.isTestExam()) {
-            throw new BadRequestException("You cannot retrieve the student exam of a test exam");
-        }
-        else if (exam.getVisibleDate() == null || ZonedDateTime.now().isBefore(exam.getVisibleDate())) {
-            throw new AccessForbiddenException("You cannot retrieve the student exam before the visibility date");
-        }
-
-        User student = userRepository.getUser();
-        return ResponseEntity.ok(studentExamRepository.findByExamIdAndUserId(examId, student.getId()).orElse(null));
-    }
 }

@@ -60,11 +60,6 @@ export class StudentExamService {
         }
     }
 
-    retrieveOwnStudentExam(courseId: number, examId: number): Observable<EntityResponseType> {
-        const url = `${this.resourceUrl}/${courseId}/exams/${examId}/own-student-exam`;
-        return this.http.get<StudentExam>(url, { observe: 'response' }).pipe(tap((res: EntityResponseType) => this.processStudentExam(res?.body ?? undefined)));
-    }
-
     private processStudentExam(studentExam?: StudentExam) {
         if (studentExam?.exam?.course) {
             this.accountService.setAccessRightsForCourse(studentExam.exam.course);

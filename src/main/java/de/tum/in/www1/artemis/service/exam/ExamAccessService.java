@@ -80,9 +80,9 @@ public class ExamAccessService {
             Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
 
             if (!examWithExerciseGroupsAndExercises.isTestExam()) {
-                // We skip the alert in case it's at least a tutor, since this user should be redirected to the exam overview instead
+                // We skip the alert since this can happen when a tutor sees the exam card or the user did not participate yet is registered for the exam
                 throw new BadRequestAlertException("The requested Exam is no test exam and thus no student exam can be created", ENTITY_NAME,
-                        "StudentExamGenerationOnlyForTestExams", authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, currentUser));
+                        "StudentExamGenerationOnlyForTestExams", true);
             }
             studentExam = studentExamService.generateTestExam(examWithExerciseGroupsAndExercises, currentUser);
             // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
@@ -271,19 +271,6 @@ public class ExamAccessService {
         else if (!studentExamRepository.existsByExam_CourseIdAndExamIdAndUserId(courseId, examId, currentUser.getId())) {
             throw new AccessForbiddenException("You are not allowed to access this exam!");
         }
-    }
-
-    /**
-     * Checks if the current user is a student in the exam and course.
-     *
-     * @param courseId The id of the course
-     * @param examId   The id of the exam
-     */
-    public void checkIsAtLeastStudentInExamElseThrow(Long courseId, Long examId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
-        checkExamBelongsToCourseElseThrow(courseId, examId);
     }
 
     /**

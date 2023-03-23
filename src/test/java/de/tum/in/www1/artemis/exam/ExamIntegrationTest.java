@@ -181,6 +181,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private Exam testExam1;
 
+    private StudentExam studentExam1;
+
     private static final int numberOfStudents = 10;
 
     private final List<LocalRepository> studentRepos = new ArrayList<>();
@@ -216,6 +218,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exam2 = database.addExamWithExerciseGroup(course1, true);
         testExam1 = database.addTestExam(course1);
         database.addStudentExamForTestExam(testExam1, student1);
+
+        studentExam1 = database.addStudentExam(exam1);
+        studentExam1.setWorkingTime(7200);
+        studentExam1.setUser(student1);
+        studentExamRepository.save(studentExam1);
 
         instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
 
@@ -1550,7 +1557,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testGetStudentExamForStart() throws Exception {
         Exam exam = database.addActiveExamWithRegisteredUser(course1, database.getUserByLogin(TEST_PREFIX + "student5"));
         exam.setVisibleDate(ZonedDateTime.now().minusHours(1).minusMinutes(5));
-        StudentExam response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/start", HttpStatus.OK, StudentExam.class);
+        StudentExam response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
         assertThat(response.getExam()).isEqualTo(exam);
         verify(examAccessService, times(1)).getExamInCourseElseThrow(course1.getId(), exam.getId());
     }
@@ -2432,7 +2439,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         studentExamRepository.save(studentExam3);
 
         final var individualWorkingTimes = examDateService.getAllIndividualExamEndDates(exam.getId());
-        assertThat(individualWorkingTimes).hasSize(2);
+        assertThat(individualWorkingTimes).hasSize(3);
     }
 
     @Test
@@ -3014,11 +3021,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertTrue(testExamReloaded.getExamUsers().contains(examUser));
     }
 
-    // ExamResource - getStudentExamForTestExamForStart
     @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void testGetStudentExamForTestExamForStart_notRegisteredInCourse() throws Exception {
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start", HttpStatus.FORBIDDEN, String.class);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
@@ -3027,7 +3033,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         testExam1.setVisibleDate(now().plusMinutes(60));
         testExam1 = examRepository.save(testExam1);
 
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
     @Test
@@ -3035,7 +3041,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testGetStudentExamForTestExamForStart_ExamDoesNotBelongToCourse() throws Exception {
         Exam testExam = database.addTestExam(course2);
 
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/start", HttpStatus.CONFLICT, StudentExam.class);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.CONFLICT, StudentExam.class);
     }
 
     @Test
@@ -3051,8 +3057,48 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         testExam5.addExamUser(examUser5);
         examRepository.save(testExam5);
         var studentExam5 = database.addStudentExamForTestExam(testExam5, student5);
-        StudentExam studentExamReceived = request.get("/api/courses/" + course2.getId() + "/exams/" + testExam5.getId() + "/start", HttpStatus.OK, StudentExam.class);
+        StudentExam studentExamReceived = request.get("/api/courses/" + course2.getId() + "/exams/" + testExam5.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamReceived).isEqualTo(studentExam5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRetrieveOwnStudentExam_noInformationLeaked() throws Exception {
+        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        Exam exam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
+        ExamUser examUser = new ExamUser();
+        examUser.setUser(student1);
+        exam.addExamUser(examUser);
+        examUserRepository.save(examUser);
+        StudentExam studentExam = database.addStudentExam(exam);
+        studentExam.setUser(student1);
+        studentExamRepository.save(studentExam);
+
+        StudentExam receivedStudentExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
+        assertThat(receivedStudentExam.getExercises()).isEmpty();
+        assertThat(receivedStudentExam.getExam().getStudentExams()).isEmpty();
+        assertThat(receivedStudentExam.getExam().getExamUsers()).isEmpty();
+        assertThat(receivedStudentExam.getExam().getExerciseGroups()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRetrieveOwnStudentExam_noStudentExam() throws Exception {
+        Exam exam = database.addExam(course1);
+        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        var examUser1 = new ExamUser();
+        examUser1.setExam(exam);
+        examUser1.setUser(student1);
+        examUser1 = examUserRepository.save(examUser1);
+        exam.addExamUser(examUser1);
+        examRepository.save(exam);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRetrieveOwnStudentExam_instructor() throws Exception {
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/own-student-exam", HttpStatus.BAD_REQUEST, StudentExam.class);
     }
 
     @Test

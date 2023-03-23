@@ -36,4 +36,8 @@ export class MockExamParticipationService {
     };
 
     saveStudentExamToLocalStorage(courseId: number, examId: number, studentExam: StudentExam): void {}
+
+    public getOwnStudentExam(courseId: number, examId: number): Observable<StudentExam> {
+        return of({} as StudentExam);
+    }
 }
