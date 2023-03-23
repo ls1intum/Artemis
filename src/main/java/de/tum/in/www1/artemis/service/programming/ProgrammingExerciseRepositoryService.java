@@ -239,10 +239,10 @@ public class ProgrammingExerciseRepositoryService {
 
         final Path repoLocalPath = getRepoAbsoluteLocalPath(repositoryResources.repository);
 
-        fileService.copyResources(repositoryResources.resources, repositoryResources.prefix.toString(), repoLocalPath.toString(), true);
+        fileService.copyResources(repositoryResources.resources, repositoryResources.prefix, repoLocalPath, true);
         // Also copy project type specific files AFTERWARDS (so that they might overwrite the default files)
         if (repositoryResources.projectTypeResources != null) {
-            fileService.copyResources(repositoryResources.projectTypeResources, repositoryResources.projectTypePrefix.toString(), repoLocalPath.toString(), true);
+            fileService.copyResources(repositoryResources.projectTypeResources, repositoryResources.projectTypePrefix, repoLocalPath, true);
         }
 
         replacePlaceholders(programmingExercise, repositoryResources.repository);
@@ -303,7 +303,7 @@ public class ProgrammingExerciseRepositoryService {
 
         final Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
         // keep the folder structure
-        fileService.copyResources(projectTemplate, "projectTemplate", repoLocalPath.toString(), true);
+        fileService.copyResources(projectTemplate, Path.of("projectTemplate"), repoLocalPath, true);
 
         // These resources might override the programming language dependent resources as they are project type dependent.
         if (projectType != null) {
@@ -344,7 +344,7 @@ public class ProgrammingExerciseRepositoryService {
 
         try {
             final Resource[] projectTypeProjectTemplate = resourceLoaderService.getResources(projectTypeProjectTemplatePath);
-            fileService.copyResources(projectTypeProjectTemplate, resources.projectTypePrefix.toString(), repoLocalPath.toString(), false);
+            fileService.copyResources(projectTypeProjectTemplate, resources.projectTypePrefix, repoLocalPath, false);
         }
         catch (FileNotFoundException fileNotFoundException) {
             log.debug("Could not copy resource to template", fileNotFoundException);
@@ -366,14 +366,14 @@ public class ProgrammingExerciseRepositoryService {
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
         final Path testFilePath = templatePath.resolve(TEST_FILES_PATH);
         final Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
-        final String packagePath = repoLocalPath.resolve(TEST_DIR).resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath().toString();
+        final Path packagePath = repoLocalPath.resolve(TEST_DIR).resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath();
 
         sectionsMap.put("non-sequential", true);
         sectionsMap.put("sequential", false);
 
         setupBuildToolProjectFile(repoLocalPath, projectType, sectionsMap);
 
-        fileService.copyResources(testFileResources, resources.prefix.toString(), packagePath, false);
+        fileService.copyResources(testFileResources, resources.prefix, packagePath, false);
 
         if (projectType != null) {
             overwriteProjectTypeSpecificFiles(resources, programmingExercise, packagePath);
@@ -407,11 +407,10 @@ public class ProgrammingExerciseRepositoryService {
     private void setupStaticCodeAnalysisConfigFiles(final RepositoryResources resources, final Path templatePath, final Path repoLocalPath) throws IOException {
         final Path staticCodeAnalysisConfigPath = templatePath.resolve("staticCodeAnalysisConfig");
         final Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
-        fileService.copyResources(staticCodeAnalysisResources, resources.prefix.toString(), repoLocalPath.toString(), true);
+        fileService.copyResources(staticCodeAnalysisResources, resources.prefix, repoLocalPath, true);
     }
 
-    private void overwriteProjectTypeSpecificFiles(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final String packagePath)
-            throws IOException {
+    private void overwriteProjectTypeSpecificFiles(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final Path packagePath) throws IOException {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path projectTypeTemplatePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType)
                 .resolve(TEST_DIR);
@@ -427,7 +426,7 @@ public class ProgrammingExerciseRepositoryService {
             }
 
             if (!existingProjectTypeTestFileResources.isEmpty()) {
-                fileService.copyResources(existingProjectTypeTestFileResources.toArray(new Resource[] {}), resources.projectTypePrefix.toString(), packagePath, false);
+                fileService.copyResources(existingProjectTypeTestFileResources.toArray(new Resource[] {}), resources.projectTypePrefix, packagePath, false);
             }
         }
         catch (FileNotFoundException fileNotFoundException) {
@@ -520,7 +519,7 @@ public class ProgrammingExerciseRepositoryService {
         Files.createDirectory(buildStagePath.toAbsolutePath().resolve(TEST_DIR));
         Files.createDirectory(buildStagePath.toAbsolutePath().resolve(TEST_DIR).resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER));
 
-        final String packagePath = buildStagePath.toAbsolutePath().resolve(TEST_DIR).resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath().toString();
+        final Path packagePath = buildStagePath.toAbsolutePath().resolve(TEST_DIR).resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath();
 
         // staging project files are only required for maven
         final boolean isMaven = ProjectType.isMavenProject(projectType);
@@ -530,19 +529,19 @@ public class ProgrammingExerciseRepositoryService {
 
         final Path buildStageResourcesPath = templatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory);
         final Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
-        fileService.copyResources(buildStageResources, resourcePrefix.toString(), packagePath, false);
+        fileService.copyResources(buildStageResources, resourcePrefix, packagePath, false);
 
         if (projectType != null) {
             overwriteStageFilesForProjectType(resourcePrefix, projectTemplatePath, buildStageTemplateSubDirectory, packagePath);
         }
     }
 
-    private void overwriteStageFilesForProjectType(final Path resourcePrefix, final Path projectTemplatePath, final Path buildStageTemplateSubDirectory, final String packagePath)
+    private void overwriteStageFilesForProjectType(final Path resourcePrefix, final Path projectTemplatePath, final Path buildStageTemplateSubDirectory, final Path packagePath)
             throws IOException {
         final Path buildStageResourcesPath = projectTemplatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory);
         try {
             final Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
-            fileService.copyResources(buildStageResources, resourcePrefix.toString(), packagePath, false);
+            fileService.copyResources(buildStageResources, resourcePrefix, packagePath, false);
         }
         catch (FileNotFoundException fileNotFoundException) {
             log.debug("Could not copy resource to template", fileNotFoundException);

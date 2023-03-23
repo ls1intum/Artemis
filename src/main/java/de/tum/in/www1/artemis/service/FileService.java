@@ -14,6 +14,7 @@ import java.util.concurrent.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -95,7 +96,7 @@ public class FileService implements DisposableBean {
     /**
      * These directories get falsely marked as files and should be ignored during copying.
      */
-    private static final List<String> IGNORED_DIRECTORIES = List.of(".xcassets/", ".colorset/", ".appiconset/", ".xcworkspace/", ".xcodeproj/", ".swiftpm/");
+    private static final List<Path> IGNORED_DIRECTORIES = Stream.of(".xcassets", ".colorset", ".appiconset", ".xcworkspace", ".xcodeproj", ".swiftpm").map(Path::of).toList();
 
     @Override
     public void destroy() {
@@ -494,57 +495,84 @@ public class FileService implements DisposableBean {
      * @param resources           the resources that should be copied
      * @param prefix              cut everything until the end of the prefix (e.g. exercise-abc -> abc when prefix = exercise)
      * @param targetDirectoryPath the path of the folder where the copy should be located
-     * @param keepParentFolder    if true also creates the resources with the folder they are currently in (e.g. current/parent/* -> new/parent/*)
+     * @param keepParentDirectory if true also creates the resources with the folder they are currently in (e.g. current/parent/* -> new/parent/*)
      * @throws IOException if the copying operation fails.
      */
-    public void copyResources(Resource[] resources, String prefix, String targetDirectoryPath, Boolean keepParentFolder) throws IOException {
-        for (Resource resource : resources) {
-            // Replace windows separator with "/"
-            String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8).replaceAll("\\\\", "/");
-            // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
-            int index = fileUrl.indexOf(prefix);
+    public void copyResources(final Resource[] resources, final Path prefix, final Path targetDirectoryPath, final boolean keepParentDirectory) throws IOException {
+        for (final Resource resource : resources) {
+            final Path targetPath = getTargetPath(resource, prefix, targetDirectoryPath, keepParentDirectory);
+            log.debug("Resource: {}, prefix: {}, base target: {}, keepDir: {}, final target: {}", resource, prefix, targetDirectoryPath, keepParentDirectory, targetPath);
 
-            String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length()) : "/" + resource.getFilename();
-            targetFilePath = applySpecialFilenameReplacements(targetFilePath);
-
-            if (isIgnoredDirectory(targetFilePath)) {
+            if (isIgnoredDirectory(targetPath)) {
                 continue;
             }
 
-            Path copyPath = Path.of(targetDirectoryPath + targetFilePath);
-            File parentFolder = copyPath.toFile().getParentFile();
-            if (!parentFolder.exists()) {
-                Files.createDirectories(parentFolder.toPath());
-            }
+            Files.createDirectories(targetPath.getParent());
+            Files.copy(resource.getInputStream(), targetPath, REPLACE_EXISTING);
 
-            Files.copy(resource.getInputStream(), copyPath, REPLACE_EXISTING);
-            // make gradlew executable
-            if (targetFilePath.endsWith("gradlew")) {
-                copyPath.toFile().setExecutable(true);
+            if (targetPath.endsWith("gradlew")) {
+                targetPath.toFile().setExecutable(true);
             }
         }
+    }
+
+    private Path getTargetPath(final Resource resource, final Path prefix, final Path targetDirectoryPath, final boolean keepParentDirectory) throws IOException {
+        final Path filePath;
+        if (resource.isFile()) {
+            filePath = resource.getFile().toPath();
+        }
+        else {
+            filePath = Path.of(resource.getURL().getPath());
+        }
+
+        final Path targetPath = getTargetPath(filePath, prefix, targetDirectoryPath, keepParentDirectory);
+        return applyFilenameReplacements(targetPath);
+    }
+
+    private Path getTargetPath(final Path sourcePath, final Path prefix, final Path targetDirectoryPath, final boolean keepParentDirectory) {
+        log.debug("Getting target path; source path: {}", sourcePath);
+
+        if (!keepParentDirectory) {
+            return targetDirectoryPath.resolve(sourcePath.getFileName());
+        }
+
+        final List<Path> sourcePathElements = getPathElements(sourcePath);
+        final List<Path> prefixPathElements = getPathElements(prefix);
+
+        final int prefixStartIdx = Collections.indexOfSubList(sourcePathElements, prefixPathElements);
+
+        if (prefixStartIdx >= 0) {
+            final int startIdx = prefixStartIdx + prefixPathElements.size();
+            final Path relativeSource = sourcePath.subpath(startIdx, sourcePathElements.size());
+            log.debug("relativizing source: prefix start: {}, trimmed start: {}, relative: {}", prefixStartIdx, startIdx, relativeSource);
+            return targetDirectoryPath.resolve(relativeSource);
+        }
+        else {
+            return targetDirectoryPath.resolve(sourcePath);
+        }
+    }
+
+    private List<Path> getPathElements(final Path path) {
+        final List<Path> elements = new ArrayList<>();
+
+        for (final Path value : path) {
+            elements.add(value);
+        }
+
+        return elements;
     }
 
     /**
      * Replaces filenames where the template name differs from the name the file should have in the repository.
      *
-     * @param filePath The path to a file.
+     * @param originalTargetPath The path to a file.
      * @return The path with replacements applied where necessary.
      */
-    private String applySpecialFilenameReplacements(final String filePath) {
-        String resultFilePath = filePath;
+    private Path applyFilenameReplacements(final Path originalTargetPath) {
+        final Path filename = originalTargetPath.getFileName();
 
-        for (final Map.Entry<String, String> replacementDirective : FILENAME_REPLACEMENTS.entrySet()) {
-            String oldName = replacementDirective.getKey();
-            String newName = replacementDirective.getValue();
-
-            if (resultFilePath.endsWith(oldName)) {
-                resultFilePath = resultFilePath.replace(oldName, newName);
-                break;
-            }
-        }
-
-        return resultFilePath;
+        final String newFilename = FILENAME_REPLACEMENTS.getOrDefault(filename.toString(), filename.toString());
+        return originalTargetPath.getParent().resolve(newFilename);
     }
 
     /**
@@ -553,7 +581,7 @@ public class FileService implements DisposableBean {
      * @param filePath The path to a file/directory.
      * @return True, if the path is assumed to be a file but actually points to a directory.
      */
-    private boolean isIgnoredDirectory(final String filePath) {
+    private boolean isIgnoredDirectory(final Path filePath) {
         return IGNORED_DIRECTORIES.stream().anyMatch(filePath::endsWith);
     }
 
