@@ -254,7 +254,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
         expect(comp.apollonEditor).not.toBeNull();
 
-        await addDelay(100);
+        await addDelay(300);
         const apollonModel = comp.apollonEditor!.model;
         const elements = apollonModel.elements;
         const highlightedElement = elements!.find((el) => el.id === 'elementId1');
@@ -288,7 +288,7 @@ describe('ModelingAssessmentComponent', () => {
         comp.highlightedElements = highlightedElements;
         comp.ngOnChanges(changes);
         expect(comp.apollonEditor).not.toBeNull();
-        await addDelay(100);
+        await addDelay(300);
         const apollonModel = comp.apollonEditor!.model;
         const elements = apollonModel!.elements;
         const highlightedElement = elements!.find((el) => el.id === 'elementId2');
@@ -314,7 +314,7 @@ describe('ModelingAssessmentComponent', () => {
         jest.spyOn(translatePipe, 'transform').mockReturnValue('Second correction round');
         comp.ngOnChanges(changes);
         expect(comp.apollonEditor).not.toBeNull();
-        await addDelay(100);
+        await addDelay(300);
         const apollonModel = comp.apollonEditor!.model;
         const assessments: any = apollonModel.assessments;
         expect(assessments[0].labelColor).toEqual(comp.secondCorrectionRoundColor);
@@ -335,7 +335,7 @@ describe('ModelingAssessmentComponent', () => {
         comp.ngOnChanges(changes);
         expect(comp.apollonEditor).not.toBeNull();
 
-        await addDelay(100);
+        await addDelay(300);
         const apollonModel = comp.apollonEditor!.model;
         const assessments: any = apollonModel.assessments;
         expect(assessments[0].labelColor).toEqual(comp.firstCorrectionRoundColor);
