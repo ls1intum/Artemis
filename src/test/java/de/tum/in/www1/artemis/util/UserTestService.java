@@ -19,9 +19,15 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
@@ -70,6 +76,15 @@ public class UserTestService {
     @Autowired
     private SingleUserNotificationRepository singleUserNotificationRepository;
 
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private ConversationRepository conversationRepository;
+
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
+
     private String TEST_PREFIX;
 
     private MockDelegate mockDelegate;
@@ -112,11 +127,30 @@ public class UserTestService {
         mockDelegate.mockDeleteUserInUserManagement(student, true, false, false);
         var notification = singleUserNotificationRepository.save(new SingleUserNotification(student, "title", "text"));
 
+        // Creating conversation-related objects
+        var postEntity = new Post();
+        var conversationParticipant = new ConversationParticipant();
+        var conversationEntity = new GroupChat();
+
+        conversationParticipant.setUser(student);
+        conversationEntity.setConversationParticipants(Collections.singleton(conversationParticipant));
+        postEntity.setAuthor(student);
+        postEntity.setConversation(conversationEntity);
+
+        conversationRepository.save(conversationEntity);
+        postRepository.save(postEntity);
+        conversationParticipantRepository.save(conversationParticipant);
+
+        // Sending delete request
         request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.OK);
 
+        // Assertions
         var deletedUser = userRepository.findById(student.getId());
         assertThat(deletedUser).isEmpty();
         assertThat(singleUserNotificationRepository.findById(notification.getId())).isEmpty();
+        assertThat(postRepository.findById(postEntity.getId())).isEmpty();
+        assertThat(conversationParticipantRepository.findById(conversationParticipant.getId())).isEmpty();
+        assertThat(postRepository.findById(postEntity.getId())).isEmpty();
     }
 
     // Test
