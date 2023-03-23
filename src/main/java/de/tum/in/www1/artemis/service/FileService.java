@@ -491,33 +491,49 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * This copies the directory at the old directory path to the new path, including all files and sub folders
+     * Copies the given resources to the target directory.
      *
-     * @param resources           the resources that should be copied
-     * @param prefix              cut everything until the end of the prefix (e.g. exercise-abc -> abc when prefix = exercise)
-     * @param targetDirectoryPath the path of the folder where the copy should be located
-     * @param keepParentDirectory if true also creates the resources with the folder they are currently in (e.g. current/parent/* -> new/parent/*)
-     * @throws IOException if the copying operation fails.
+     * @param resources             The resources that should be copied.
+     * @param prefix                Cut everything until the end of the prefix.
+     *                                  E.g. source {@code …/templates/java/gradle/wrapper.jar}, prefix {@code templates/java/} results in
+     *                                  {@code <targetDirectory>/gradle/wrapper.jar}).
+     * @param targetDirectory       The directory where the copy should be located.
+     * @param keepParentDirectories Create the resources with the directory they are currently in (e.g. current/parent/* -> new/parent/*)
+     * @throws IOException If the copying operation fails.
      */
-    public void copyResources(final Resource[] resources, final Path prefix, final Path targetDirectoryPath, final boolean keepParentDirectory) throws IOException {
+    public void copyResources(final Resource[] resources, final Path prefix, final Path targetDirectory, final boolean keepParentDirectories) throws IOException {
         for (final Resource resource : resources) {
-            final Path targetPath = getTargetPath(resource, prefix, targetDirectoryPath, keepParentDirectory);
-            log.debug("Resource: {}, prefix: {}, base target: {}, keepDir: {}, final target: {}", resource, prefix, targetDirectoryPath, keepParentDirectory, targetPath);
-
-            if (isIgnoredDirectory(targetPath)) {
-                continue;
-            }
-
-            Files.createDirectories(targetPath.getParent());
-            Files.copy(resource.getInputStream(), targetPath, REPLACE_EXISTING);
-
-            if (targetPath.endsWith("gradlew")) {
-                targetPath.toFile().setExecutable(true);
-            }
+            copyResource(resource, prefix, targetDirectory, keepParentDirectories);
         }
     }
 
-    private Path getTargetPath(final Resource resource, final Path prefix, final Path targetDirectoryPath, final boolean keepParentDirectory) throws IOException {
+    /**
+     * Copies the given resource to the target directory.
+     *
+     * @param resource              The resource that should be copied.
+     * @param prefix                Cut everything until the end of the prefix.
+     *                                  E.g. source {@code …/templates/java/gradle/wrapper.jar}, prefix {@code templates/java/} results in
+     *                                  {@code <targetDirectory>/gradle/wrapper.jar}).
+     * @param targetDirectory       The directory where the copy should be located.
+     * @param keepParentDirectories Create the resources with the directory they are currently in (e.g. current/parent/* -> new/parent/*)
+     * @throws IOException If the copying operation fails.
+     */
+    public void copyResource(final Resource resource, final Path prefix, final Path targetDirectory, final boolean keepParentDirectories) throws IOException {
+        final Path targetPath = getTargetPath(resource, prefix, targetDirectory, keepParentDirectories);
+
+        if (isIgnoredDirectory(targetPath)) {
+            return;
+        }
+
+        Files.createDirectories(targetPath.getParent());
+        Files.copy(resource.getInputStream(), targetPath, REPLACE_EXISTING);
+
+        if (targetPath.endsWith("gradlew")) {
+            targetPath.toFile().setExecutable(true);
+        }
+    }
+
+    private Path getTargetPath(final Resource resource, final Path prefix, final Path targetDirectory, final boolean keepParentDirectory) throws IOException {
         final Path filePath;
         if (resource.isFile()) {
             filePath = resource.getFile().toPath();
@@ -527,30 +543,39 @@ public class FileService implements DisposableBean {
             filePath = Path.of(url);
         }
 
-        final Path targetPath = getTargetPath(filePath, prefix, targetDirectoryPath, keepParentDirectory);
+        final Path targetPath = getTargetPath(filePath, prefix, targetDirectory, keepParentDirectory);
         return applyFilenameReplacements(targetPath);
     }
 
-    private Path getTargetPath(final Path sourcePath, final Path prefix, final Path targetDirectoryPath, final boolean keepParentDirectory) {
-        log.debug("Getting target path; source path: {}", sourcePath);
-
+    /**
+     * Determines the target file path which a resource should be copied to.
+     * <p>
+     * Searches for {@code prefix} in the {@code source} and removes all path elements including and up to the prefix.
+     * The target file path is then determined by resolving this trimmed path against the target directory.
+     *
+     * @param source              The path where the resource is copied from.
+     * @param prefix              The prefix that should be trimmed from the source path.
+     * @param targetDirectory     The base target directory.
+     * @param keepParentDirectory Keep directories in the path between prefix and filename.
+     * @return The target path where the resource should be copied to.
+     */
+    private Path getTargetPath(final Path source, final Path prefix, final Path targetDirectory, final boolean keepParentDirectory) {
         if (!keepParentDirectory) {
-            return targetDirectoryPath.resolve(sourcePath.getFileName());
+            return targetDirectory.resolve(source.getFileName());
         }
 
-        final List<Path> sourcePathElements = getPathElements(sourcePath);
+        final List<Path> sourcePathElements = getPathElements(source);
         final List<Path> prefixPathElements = getPathElements(prefix);
 
         final int prefixStartIdx = Collections.indexOfSubList(sourcePathElements, prefixPathElements);
 
         if (prefixStartIdx >= 0) {
             final int startIdx = prefixStartIdx + prefixPathElements.size();
-            final Path relativeSource = sourcePath.subpath(startIdx, sourcePathElements.size());
-            log.debug("relativizing source: prefix start: {}, trimmed start: {}, relative: {}", prefixStartIdx, startIdx, relativeSource);
-            return targetDirectoryPath.resolve(relativeSource);
+            final Path relativeSource = source.subpath(startIdx, sourcePathElements.size());
+            return targetDirectory.resolve(relativeSource);
         }
         else {
-            return targetDirectoryPath.resolve(sourcePath);
+            return targetDirectory.resolve(source);
         }
     }
 
@@ -578,7 +603,7 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * Checks if the given path has been identified as a file but it actually points to a directory.
+     * Checks if the given path has been identified as a file, but it actually points to a directory.
      *
      * @param filePath The path to a file/directory.
      * @return True, if the path is assumed to be a file but actually points to a directory.
