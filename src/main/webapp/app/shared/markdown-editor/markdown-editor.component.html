@@ -92,18 +92,11 @@
                                     </button>
 
                                     <div ngbDropdown container="body" class="d-inline" *ngIf="item.type === 'LECTURE'">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button border-0" type="button" ngbDropdownToggle>
-                                            <!--                                            <fa-icon [icon]="faAngleRight" size="sm"></fa-icon>-->
-                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button border-0" type="button" ngbDropdownToggle></button>
                                         <div ngbDropdownMenu>
-                                            <ng-container *ngFor="let nestedElement of item.attachmentUnits">
-                                                <button
-                                                    class="btn-sm nested"
-                                                    type="button"
-                                                    (click)="command.execute(item.id, nestedElement.type, nestedElement.id)"
-                                                    ngbDropdownItem
-                                                >
-                                                    {{ nestedElement.value }}
+                                            <ng-container *ngFor="let unit of item.attachmentUnits">
+                                                <button class="btn-sm nested" type="button" (click)="command.execute(item.id, unit.type, undefined, unit.id)" ngbDropdownItem>
+                                                    {{ unit.value }}
                                                 </button>
                                             </ng-container>
                                         </div>

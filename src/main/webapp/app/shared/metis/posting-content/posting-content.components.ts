@@ -99,13 +99,15 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
                     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     linkToReference = [this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex))];
-                } else if (ReferenceType.ATTACHMENT === referenceType) {
+                } else if (ReferenceType.ATTACHMENT === referenceType || ReferenceType.ATTACHMENT_UNITS === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     // attachmentToReference: location of attachment to be opened on reference click
                     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
                     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     attachmentToReference = this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex));
+                    console.log(attachmentToReference);
+                    console.log(referenceStr);
                 }
 
                 // determining the endIndex of the content after the reference
@@ -158,15 +160,17 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
         // Group 5: reference pattern for File Upload Exercises
         // Group 6: reference pattern for Lectures
         // Group 7: reference pattern for Lecture Attachments
+        // Group 8: reference pattern for Lecture Units
         // globally searched for, i.e. no return after first match
         const pattern =
-            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])/g;
+            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNIT>\[lecture-unit].*?\[\/lecture-unit])/g;
 
         // array with PatternMatch objects per reference found in the posting content
         const patternMatches: PatternMatch[] = [];
 
         // find start and end index of referenced posts in content, for each reference save [startIndexOfReference, endIndexOfReference] in the referenceIndicesArray
         let match = pattern.exec(this.content!);
+        console.log(match);
         while (match) {
             let group: ReferenceType | undefined = undefined;
 
@@ -175,7 +179,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     group = ReferenceType[groupsKey as keyof typeof ReferenceType];
                 }
             }
-
+            console.log(group);
             if (group) {
                 patternMatches.push({
                     startIndex: match.index,

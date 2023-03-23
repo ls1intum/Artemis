@@ -51,8 +51,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new CodeBlockCommand(),
             new LinkCommand(),
             new ExerciseReferenceCommand(this.metisService),
-            new LectureAttachmentReferenceCommand(this.metisService),
-            new LectureAttachmentUnitReferenceCommand(this.metisService, this.lectureService),
+            new LectureAttachmentReferenceCommand(this.metisService, this.lectureService),
+            // new LectureAttachmentUnitReferenceCommand(this.metisService, this.lectureService),
         ];
     }
 

@@ -105,7 +105,7 @@ export enum ReferenceType {
     POST = 'POST',
     LECTURE = 'LECTURE',
     ATTACHMENT = 'ATTACHMENT',
-    ATTACHMENT_UNITS = 'ATTACHMENT_UNITS',
+    ATTACHMENT_UNITS = 'lecture-unit',
     PROGRAMMING = 'programming',
     MODELING = 'modeling',
     QUIZ = 'quiz',
