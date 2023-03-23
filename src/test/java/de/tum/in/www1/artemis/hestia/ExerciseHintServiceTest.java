@@ -255,8 +255,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(exerciseHintService.activateHint(hints.get(1), student)).isFalse();
         assertThat(exerciseHintService.activateHint(hints.get(2), student)).isFalse();
         Set<ExerciseHintActivation> exerciseHintActivations = exerciseHintActivationRepository.findByExerciseAndUserWithExerciseHintRelations(exercise.getId(), student.getId());
-        assertThat(exerciseHintActivations.size()).isEqualTo(1);
-        assertThat(exerciseHintActivations.stream().findFirst().get().getExerciseHint().getId()).isEqualTo(exerciseHint.getId());
+        assertThat(exerciseHintActivations).hasSize(1).allMatch(hint -> hint.getId().equals(exerciseHint.getId()));
     }
 
     @Test
@@ -269,8 +268,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(exerciseHintService.activateHint(hints.get(1), student)).isTrue();
         assertThat(exerciseHintService.activateHint(hints.get(2), student)).isFalse();
         Set<ExerciseHintActivation> exerciseHintActivations = exerciseHintActivationRepository.findByExerciseAndUserWithExerciseHintRelations(exercise.getId(), student.getId());
-        assertThat(exerciseHintActivations.size()).isEqualTo(1);
-        assertThat(exerciseHintActivations.stream().findFirst().get().getExerciseHint().getId()).isEqualTo(hints.get(1).getId());
+        assertThat(exerciseHintActivations).hasSize(1).allMatch(hint -> hint.getId().equals(hints.get(1).getId()));
     }
 
     @Test
@@ -283,8 +281,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(exerciseHintService.activateHint(hints.get(1), student)).isFalse();
         assertThat(exerciseHintService.activateHint(hints.get(2), student)).isTrue();
         Set<ExerciseHintActivation> exerciseHintActivations = exerciseHintActivationRepository.findByExerciseAndUserWithExerciseHintRelations(exercise.getId(), student.getId());
-        assertThat(exerciseHintActivations.size()).isEqualTo(1);
-        assertThat(exerciseHintActivations.stream().findFirst().get().getExerciseHint().getId()).isEqualTo(hints.get(2).getId());
+        assertThat(exerciseHintActivations).hasSize(1).allMatch(hint -> hint.getId().equals(hints.get(2).getId()));
     }
 
     @Test
@@ -297,7 +294,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(exerciseHintService.activateHint(hints.get(1), student)).isFalse();
         assertThat(exerciseHintService.activateHint(hints.get(2), student)).isFalse();
         Set<ExerciseHintActivation> exerciseHintActivations = exerciseHintActivationRepository.findByExerciseAndUserWithExerciseHintRelations(exercise.getId(), student.getId());
-        assertThat(exerciseHintActivations.size()).isEqualTo(0);
+        assertThat(exerciseHintActivations).isEmpty();
     }
 
     @Test
@@ -309,8 +306,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(exerciseHintService.activateHint(exerciseHint, student)).isTrue();
         assertThat(exerciseHintService.activateHint(exerciseHint, student)).isFalse();
         Set<ExerciseHintActivation> exerciseHintActivations = exerciseHintActivationRepository.findByExerciseAndUserWithExerciseHintRelations(exercise.getId(), student.getId());
-        assertThat(exerciseHintActivations.size()).isEqualTo(1);
-        assertThat(exerciseHintActivations.stream().findFirst().get().getExerciseHint().getId()).isEqualTo(exerciseHint.getId());
+        assertThat(exerciseHintActivations).hasSize(1).allMatch(hint -> hint.getId().equals(exerciseHint.getId()));
     }
 
     private void addResultWithFailedTestCases(Collection<ProgrammingExerciseTestCase> failedTestCases) {

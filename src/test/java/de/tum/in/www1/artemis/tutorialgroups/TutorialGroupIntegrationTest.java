@@ -619,7 +619,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // when
         var importResult = sendImportRequest(tutorialGroupRegistrations);
         // then
-        assertThat(importResult.size()).isEqualTo(4);
+        assertThat(importResult).hasSize(4);
         assertThat(importResult.stream().map(TutorialGroupRegistrationImportDTO::importSuccessful)).allMatch(status -> status.equals(true));
         assertThat(importResult.stream().map(TutorialGroupRegistrationImportDTO::error)).allMatch(Objects::isNull);
         var regBlankExpected = new TutorialGroupRegistrationImportDTO(freshTitleTwo, new StudentDTO(null, null, null, null));
@@ -717,7 +717,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // when
         var importResult = sendImportRequest(tutorialGroupRegistrations);
         // then
-        assertThat(importResult.size()).isEqualTo(1);
+        assertThat(importResult).hasSize(1);
         assertTutorialWithTitleDoesNotExistInDb(emptyTitle);
         var importResultDTO = importResult.get(0);
         assertThat(importResultDTO.importSuccessful()).isFalse();
@@ -741,7 +741,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // then
         var instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").get();
         assertImportedTutorialGroupWithTitleInDB(freshTitle, new HashSet<>(), instructor1);
-        assertThat(importResult.size()).isEqualTo(1);
+        assertThat(importResult).hasSize(1);
         var importResultDTO = importResult.get(0);
         assertThat(importResultDTO.importSuccessful()).isFalse();
         assertThat(importResultDTO.error()).isEqualTo(TutorialGroupResource.TutorialGroupImportErrors.NO_USER_FOUND);
@@ -790,7 +790,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // then
         var instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").get();
         assertImportedTutorialGroupWithTitleInDB(freshTitle, new HashSet<>(), instructor1);
-        assertThat(importResult.size()).isEqualTo(4);
+        assertThat(importResult).hasSize(4);
         assertThat(importResult.stream().map(TutorialGroupRegistrationImportDTO::importSuccessful)).allMatch(status -> status.equals(false));
         assertThat(importResult.stream().map(TutorialGroupRegistrationImportDTO::error)).allMatch(TutorialGroupResource.TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS::equals);
         assertThat(importResult.stream()).containsExactlyInAnyOrder(reg1, reg2, reg3, reg4);
@@ -847,8 +847,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     private void verifyPrivateInformationIsHidden(TutorialGroup tutorialGroup) {
         assertThat(tutorialGroup.getRegistrations()).isNullOrEmpty();
-        assertThat(tutorialGroup.getTeachingAssistant()).isEqualTo(null);
-        assertThat(tutorialGroup.getCourse()).isEqualTo(null);
+        assertThat(tutorialGroup.getTeachingAssistant()).isNull();
+        assertThat(tutorialGroup.getCourse()).isNull();
     }
 
     private void verifyPrivateInformationIsShown(TutorialGroup tutorialGroup) {
