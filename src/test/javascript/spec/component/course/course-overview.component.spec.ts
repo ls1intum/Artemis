@@ -244,19 +244,18 @@ describe('CourseOverviewComponent', () => {
         expect(router.navigate).toHaveBeenCalledWith(['courses', course1.id, 'register']);
     }));
 
-    it('should call load Course methods on init', fakeAsync(() => {
+    it('should call load Course methods on init', async () => {
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
 
-        fixture.detectChanges();
-        tick();
+        await component.ngOnInit();
 
         expect(getCourseStub).toHaveBeenCalledTimes(2);
         expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
-    }));
+    });
 
     it('should have visible exams', () => {
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');

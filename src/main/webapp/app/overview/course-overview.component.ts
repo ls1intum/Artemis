@@ -92,9 +92,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             }
             await this.initAfterCourseLoad();
         } else {
-            this.loadCourse().subscribe(() => {
-                this.initAfterCourseLoad();
-            });
+            await this.loadCourse().toPromise();
+            await this.initAfterCourseLoad();
         }
     }
 
