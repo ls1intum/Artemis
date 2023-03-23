@@ -91,13 +91,14 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     @BeforeEach
     void setUp() {
         database.addUsers(TEST_PREFIX, 5, 1, 0, 1);
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         programmingExercise = generateDefaultProgrammingExercise();
-        database.addTestCasesToProgrammingExercise(programmingExercise);
+        var tests = database.addTestCasesToProgrammingExercise(programmingExercise);
+        // testCaseRepository.save(tests.get(1).active(true));
 
         programmingExerciseSCAEnabled = generateScaProgrammingExercise();
-        database.addTestCasesToProgrammingExercise(programmingExerciseSCAEnabled);
+        tests = database.addTestCasesToProgrammingExercise(programmingExerciseSCAEnabled);
+        // testCaseRepository.save(tests.get(1).active(true));
 
         ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         result = new Result();
@@ -216,6 +217,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS);
         testCases.get("test3").active(true).visibility(Visibility.ALWAYS);
         testCaseRepository.saveAll(testCases.values());
+        testCases = getTestCases(programmingExercise);
 
         // Create feedback with duplicate content for test1 and test3
         // This mimics that two new testcases are going to be found as testcases but those are duplicate
@@ -236,7 +238,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         assertThat(duplicateFeedbackEntries).hasSize(2);
         int countOfNewFeedbacks = originalFeedbackSize + duplicateFeedbackEntries.size();
         assertThat(result.getFeedbacks()).hasSize(countOfNewFeedbacks);
-        String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + "test3, test1";
+        String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + "test1, test3";
         verify(groupNotificationService).notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
     }
 
@@ -253,15 +255,16 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         result.setFeedbacks(feedbacks);
         result.setSuccessful(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
-        Double scoreBeforeUpdate = result.getScore();
 
         gradingService.calculateScoreForResult(result, programmingExercise, true);
 
-        Double expectedScore = 25D;
+        // Only test one of 3 active tests (weight sum = 5) passed -> 8.4P / 20%
+        Double expectedScore = 20D;
 
-        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        assertThat(result.getScore()).isEqualTo(expectedScore);
+        assertThat(result.getScore()).isNotNull().isEqualTo(expectedScore);
         assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getTestCaseCount()).isEqualTo(2); // filtered out inactive test case 2 and test case 3 which is visible after the due date
+        assertThat(result.getPassedTestCaseCount()).isEqualTo(1);
     }
 
     @Test
@@ -284,7 +287,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         gradingService.calculateScoreForResult(result, programmingExercise, true);
 
-        Double expectedScore = 25D;
+        Double expectedScore = 20D;
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
         assertThat(result.getScore()).isEqualTo(expectedScore);
@@ -304,8 +307,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         testCaseRepository.saveAll(testCases.values());
 
         Result result = new Result();
-        result.addFeedback(new Feedback().result(result).text("test1").positive(false).type(FeedbackType.AUTOMATIC));
-        result.addFeedback(new Feedback().result(result).text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        result.addFeedback(new Feedback().result(result).testCase(testCases.get("test1")).positive(false).type(FeedbackType.AUTOMATIC));
+        result.addFeedback(new Feedback().result(result).testCase(testCases.get("test2")).positive(true).type(FeedbackType.AUTOMATIC));
 
         result = gradingService.calculateScoreForResult(result, programmingExercise, false);
         assertThat(result.getScore()).isZero();
@@ -362,7 +365,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         // Missing feedback
         var resultMF = new Result();
         resultMF.setParticipation(participation);
-        var feedbackMF = new Feedback().result(result).text("test3").positive(true).type(FeedbackType.AUTOMATIC).result(resultMF);
+        var feedbackMF = new Feedback().result(result).testCase(testCases.get("test3")).positive(true).type(FeedbackType.AUTOMATIC).result(resultMF);
         resultMF.feedbacks(new ArrayList<>(List.of(feedbackMF))) // List must be mutable
                 .rated(true).score(0D).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
         gradingService.calculateScoreForResult(resultMF, programmingExercise, true);
@@ -526,10 +529,11 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().minusHours(10));
         result.getParticipation().setExercise(programmingExercise);
 
+        var tests = getTestCases(programmingExercise);
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().testCase(tests.get("test1")).positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().testCase(tests.get("test2")).positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().testCase(tests.get("test3")).positive(false).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
         result.successful(false);
         result.assessmentType(AssessmentType.AUTOMATIC);
@@ -544,7 +548,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.isSuccessful()).isFalse();
         // The feedback of the after due date test case must be kept.
-        assertThat(result.getFeedbacks().stream().noneMatch(feedback -> "test3".equals(feedback.getText()))).isFalse();
+        assertThat(result.getFeedbacks()).anyMatch(feedback -> feedback.getTestCase().getTestName().equals("test3"));
     }
 
     @Test
@@ -733,7 +737,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         for (final var result : updatedStudentResults) {
             result.getFeedbacks().stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType()))
                     .forEach(feedback -> {
-                        double bonusPoints = testCases.get(feedback.getText()).getBonusPoints();
+                        double bonusPoints = feedback.getTestCase().getBonusPoints();
                         assertThat(feedback.getCredits()).isEqualTo(bonusPoints);
                     });
         }
@@ -864,11 +868,12 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
             result2a = updateAndSaveAutomaticResult(result2a, true, false, true);
 
             // score 61 %
+            var tests = getTestCases(programmingExercise);
             var result2b = new Result().participation(participation2).score(61D).successful(false).rated(true).completionDate(ZonedDateTime.now())
                     .assessmentType(AssessmentType.SEMI_AUTOMATIC);
-            result2b.addFeedback(new Feedback().result(result2b).text("test1").positive(false).type(FeedbackType.AUTOMATIC).credits(0.00));
-            result2b.addFeedback(new Feedback().result(result2b).text("test2").positive(false).type(FeedbackType.AUTOMATIC).credits(0.00));
-            result2b.addFeedback(new Feedback().result(result2b).text("test3").positive(true).type(FeedbackType.AUTOMATIC).credits(50.00));
+            result2b.addFeedback(new Feedback().result(result2b).testCase(tests.get("test1")).positive(false).type(FeedbackType.AUTOMATIC).credits(0.00));
+            result2b.addFeedback(new Feedback().result(result2b).testCase(tests.get("test2")).positive(false).type(FeedbackType.AUTOMATIC).credits(0.00));
+            result2b.addFeedback(new Feedback().result(result2b).testCase(tests.get("test3")).positive(true).type(FeedbackType.AUTOMATIC).credits(50.00));
             result2b.addFeedback(new Feedback().result(result2b).detailText("Well done referenced!").credits(1.00).type(FeedbackType.MANUAL));
             result2b.addFeedback(new Feedback().result(result2b).detailText("Well done unreferenced!").credits(10.00).type(FeedbackType.MANUAL_UNREFERENCED));
             result2b.addFeedback(new Feedback().result(result2b).detailText("Well done general!").credits(0.00));
@@ -1295,9 +1300,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
     private void updateAndSaveAutomaticResult(Result result, boolean test1Passes, boolean test2Passes, boolean test3Passes, int issuesCategory1, int issuesCategory2,
             ZonedDateTime completionDate) {
-        var test1 = testCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "test1").orElseThrow();
-        var test2 = testCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "test2").orElseThrow();
-        var test3 = testCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "test3").orElseThrow();
+        var test1 = testCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test1").orElseThrow();
+        var test2 = testCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test2").orElseThrow();
+        var test3 = testCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test3").orElseThrow();
 
         result.addFeedback(new Feedback().result(result).testCase(test1).positive(test1Passes).positive(test1Passes).type(FeedbackType.AUTOMATIC));
         result.addFeedback(new Feedback().result(result).testCase(test2).positive(test2Passes).positive(test2Passes).type(FeedbackType.AUTOMATIC));

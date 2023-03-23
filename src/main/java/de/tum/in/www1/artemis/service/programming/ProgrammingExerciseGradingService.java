@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import com.google.common.base.Strings;
@@ -54,8 +53,6 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
-
     private final ResultRepository resultRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -86,7 +83,7 @@ public class ProgrammingExerciseGradingService {
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, StudentParticipationRepository studentParticipationRepository,
             ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ProgrammingTriggerService programmingTriggerService, SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService,
+            ProgrammingTriggerService programmingTriggerService, StaticCodeAnalysisService staticCodeAnalysisService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
@@ -98,7 +95,6 @@ public class ProgrammingExerciseGradingService {
         this.resultRepository = resultRepository;
         this.versionControlService = versionControlService;
         this.programmingTriggerService = programmingTriggerService;
-        this.messagingTemplate = messagingTemplate;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -250,13 +246,6 @@ public class ProgrammingExerciseGradingService {
         boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
         boolean isStudentParticipation = !isSolutionParticipation && !isTemplateParticipation;
 
-        // Find out which test cases were executed and calculate the score according to their status and weight.
-        // This needs to be done as some test cases might not have been executed.
-        // When the result is from a solution participation, extract the feedback items (= test cases) and store them in our database.
-        if (isSolutionParticipation) {
-            extractTestCasesFromResult(programmingExercise, newResult);
-        }
-
         Result processedResult = calculateScoreForResult(newResult, programmingExercise, isStudentParticipation);
 
         // Note: This programming submission might already have multiple results, however they do not contain the assessor or the feedback
@@ -363,22 +352,6 @@ public class ProgrammingExerciseGradingService {
             log.error(
                     "Could not trigger the build of the template repository for the programming exercise id {} because no template participation could be found for the given exercise",
                     programmingExerciseId);
-        }
-    }
-
-    /**
-     * Generates test cases from the given result's feedbacks & notifies the subscribing users about the test cases if they have changed. Has the side effect of sending a message
-     * through the websocket!
-     *
-     * @param exercise the programming exercise for which the test cases should be extracted from the new result
-     * @param result   from which to extract the test cases.
-     */
-    private void extractTestCasesFromResult(ProgrammingExercise exercise, Result result) {
-        boolean haveTestCasesChanged = testCaseService.generateTestCasesFromFeedbacks(result.getFeedbacks(), exercise);
-        if (haveTestCasesChanged) {
-            // Notify the client about the updated testCases
-            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(exercise.getId());
-            messagingTemplate.convertAndSend("/topic/programming-exercises/" + exercise.getId() + "/test-cases", testCases);
         }
     }
 

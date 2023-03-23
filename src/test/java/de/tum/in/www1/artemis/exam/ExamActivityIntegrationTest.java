@@ -130,7 +130,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
         assertThat(examActivity).isNotNull();
-        assertThat(examActivity.getExamActions().size()).isEqualTo(1);
+        assertThat(examActivity.getExamActions()).hasSize(1);
         assertThat(new ArrayList<>(examActivity.getExamActions()).get(0).getType()).isEqualTo(examActionType);
     }
 
