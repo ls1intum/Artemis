@@ -102,11 +102,6 @@
                         [exerciseId]="programmingExercise.id!"
                         class="me-1"
                     ></jhi-programming-exercise-instructor-exercise-download>
-                    <jhi-programming-assessment-repo-export
-                        *ngIf="programmingExercise.isAtLeastInstructor"
-                        [programmingExercises]="[programmingExercise]"
-                        class="me-1"
-                    ></jhi-programming-assessment-repo-export>
                     <a
                         *ngIf="programmingExercise.isAtLeastTutor && programmingExercise.course && !isExamExercise"
                         [routerLink]="['/course-management', programmingExercise.course!.id!, 'programming-exercises', programmingExercise.id!, 'exercise-statistics']"
