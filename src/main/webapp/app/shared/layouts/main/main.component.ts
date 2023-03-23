@@ -49,9 +49,15 @@ export class JhiMainComponent implements OnInit {
             }
 
             // Do now show skeleton when the url links to a problem statement which is displayed on the native clients
-            this.showSkeleton = !this.router.url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/problem-statement(\\/\\d*)?');
+            this.showSkeleton = this.shouldShowSkeleton(this.router.url);
         });
 
         this.themeService.initialize();
+    }
+
+    private shouldShowSkeleton(url: string): boolean {
+        const isStandaloneProblemStatement = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/problem-statement(\\/\\d*)?(\\/)?');
+        const isStandaloneFeedback = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/feedback\\/\\d+\\/\\d+\\/(true|false)(\\/)?');
+        return !isStandaloneProblemStatement && !isStandaloneFeedback;
     }
 }

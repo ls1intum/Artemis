@@ -1,12 +1,10 @@
 import { Component, OnInit, Optional, ViewChild } from '@angular/core';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ActivatedRoute } from '@angular/router';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { HttpResponse } from '@angular/common/http';
-import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 
 @Component({
@@ -18,52 +16,58 @@ export class StandaloneFeedbackComponent implements OnInit {
     public exercise?: Exercise;
     public result?: Result;
 
-    private latestDueDate?: dayjs.Dayjs;
+    public isTemplateStatusMissing = false;
+    public showMissingAutomaticFeedbackInformation = false;
+    public messageKey?: string = undefined;
+    public exerciseType?: ExerciseType = undefined;
 
-    @ViewChild('feedbackComponent')
-    private feedbackComponent: FeedbackComponent;
+    public latestDueDate?: dayjs.Dayjs;
 
-    constructor(
-        public route: ActivatedRoute,
-        private exerciseService: ExerciseService,
-        private resultService: ResultService,
-        @Optional() private exerciseCacheService: ExerciseCacheService,
-    ) {}
+    constructor(public route: ActivatedRoute, private exerciseService: ExerciseService, @Optional() private exerciseCacheService: ExerciseCacheService) {}
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
             const exerciseId = parseInt(params['exerciseId'], 10);
+            const participationId = parseInt(params['participationId'], 10);
             const resultId = parseInt(params['resultId'], 10);
 
-            const isTemplateStatusMissing = params['isTemplateStatusMissing'] == 'true';
+            this.isTemplateStatusMissing = params['isTemplateStatusMissing'] == 'true';
 
             this.exerciseService.getExerciseDetails(exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.exercise = exerciseResponse.body!;
-                this.setup(isTemplateStatusMissing);
-            });
+                const participation = this.exercise?.studentParticipations?.find((participation) => participation.id == participationId);
+                if (participation != null) {
+                    participation.exercise = this.exercise;
+                }
 
-            this.resultService.find(resultId).subscribe((resultResponse) => {
-                this.result = resultResponse.body!;
-                this.setup(isTemplateStatusMissing);
+                const relevantResult = participation?.results?.find((result) => result.id == resultId);
+                if (relevantResult != null) {
+                    relevantResult.participation = participation;
+                }
+
+                this.result = relevantResult;
+
+                this.setup();
             });
 
             (this.exerciseCacheService ?? this.exerciseService).getLatestDueDate(exerciseId).subscribe((latestDueDate) => {
-                if (latestDueDate) {
-                    this.feedbackComponent.showMissingAutomaticFeedbackInformation = dayjs().isBefore(latestDueDate);
-                    this.feedbackComponent.latestDueDate = this.latestDueDate;
-                }
+                this.latestDueDate = latestDueDate;
+                this.setup();
             });
         });
     }
 
-    private setup(isTemplateStatusMissing: boolean) {
+    private setup() {
         if (this.exercise != null && this.result != null) {
-            this.feedbackComponent.exerciseType = this.exercise.type!;
-            this.feedbackComponent.showScoreChart = true;
-        }
+            this.exerciseType = this.exercise.type!;
 
-        if (isTemplateStatusMissing) {
-            this.feedbackComponent.messageKey = 'artemisApp.result.notLatestSubmission';
+            if (this.latestDueDate) {
+                this.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestDueDate);
+            }
+
+            if (this.isTemplateStatusMissing) {
+                this.messageKey = 'artemisApp.result.notLatestSubmission';
+            }
         }
     }
 }

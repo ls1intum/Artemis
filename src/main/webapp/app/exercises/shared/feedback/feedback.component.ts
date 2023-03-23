@@ -1,4 +1,4 @@
-import { Component, Injector, Input, OnInit } from '@angular/core';
+import { Component, Injector, Input, OnInit, Optional } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
@@ -103,7 +103,6 @@ export class FeedbackComponent implements OnInit {
     feedbackItemNodes: FeedbackNode[];
 
     constructor(
-        public activeModal: NgbActiveModal,
         private resultService: ResultService,
         private buildLogService: BuildLogService,
         private translateService: TranslateService,
@@ -111,6 +110,8 @@ export class FeedbackComponent implements OnInit {
         private feedbackService: FeedbackService,
         private feedbackChartService: FeedbackChartService,
         private injector: Injector,
+        @Optional()
+        public activeModal?: NgbActiveModal,
     ) {
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
         const deductionsLabel = translateService.instant('artemisApp.result.chart.deductions');
@@ -255,9 +256,5 @@ export class FeedbackComponent implements OnInit {
         const projectKey = (this.exercise as ProgrammingExercise)?.projectKey;
         const programmingSubmission = this.result.submission as ProgrammingSubmission;
         return createCommitUrl(this.commitHashURLTemplate, projectKey, this.result.participation, programmingSubmission);
-    }
-
-    setupWithTemplateStatusMissing() {
-        this.messageKey = 'artemisApp.result.notLatestSubmission';
     }
 }

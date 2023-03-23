@@ -39,7 +39,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./overview/course-learning-goals/course-learning-goals-details.module').then((m) => m.ArtemisCourseLearningGoalsDetailsModule),
                 },
                 {
-                    path: 'courses/:courseId/exercises/:exerciseId/feedback/:resultId/:isTemplateStatusMissing',
+                    path: 'courses/:courseId/exercises/:exerciseId/feedback/:participationId/:resultId/:isTemplateStatusMissing',
                     component: StandaloneFeedbackComponent,
                 },
                 {

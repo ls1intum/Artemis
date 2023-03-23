@@ -1,1 +1,10 @@
-<jhi-result-detail *ngIf="exercise != null && result != null" #feedbackComponent [exercise]="exercise" [result]="result"></jhi-result-detail>
+<jhi-result-detail
+    *ngIf="exercise != null && result != null && exerciseType != null"
+    [exercise]="exercise"
+    [result]="result"
+    [showScoreChart]="true"
+    [exerciseType]="exerciseType"
+    [latestDueDate]="latestDueDate"
+    [messageKey]="messageKey"
+    [showMissingAutomaticFeedbackInformation]="showMissingAutomaticFeedbackInformation"
+></jhi-result-detail>

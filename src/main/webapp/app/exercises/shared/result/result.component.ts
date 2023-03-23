@@ -224,7 +224,7 @@ export class ResultComponent implements OnInit, OnChanges {
             componentInstance.showScoreChart = true;
         }
         if (this.templateStatus === ResultTemplateStatus.MISSING) {
-            componentInstance.setupWithTemplateStatusMissing();
+            componentInstance.messageKey = 'artemisApp.result.notLatestSubmission';
         }
 
         if (
