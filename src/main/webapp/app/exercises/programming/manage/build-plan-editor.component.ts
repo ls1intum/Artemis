@@ -14,22 +14,19 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
     encapsulation: ViewEncapsulation.None,
 })
 export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
-    @ViewChild('editor', { static: true })
-    editor: AceEditorComponent;
-
-    /** Ace Editor Options **/
-    isLoading = false;
-
-    tabSize = 4;
-
     // Icons
     readonly faCircleNotch = faCircleNotch;
     readonly farPlayCircle = faPlayCircle;
 
+    @ViewChild('editor', { static: true })
+    editor: AceEditorComponent;
+    isLoading = false;
+    tabSize = 4;
+
+    loadingResults = true;
     exerciseId: number;
     programmingExercise: ProgrammingExercise;
-    loadingResults = true;
-    buildPlan: BuildPlan;
+    buildPlan: BuildPlan | undefined;
 
     constructor(private buildPlanService: BuildPlanService, private programmingExerciseService: ProgrammingExerciseService, private activatedRoute: ActivatedRoute) {}
 
@@ -83,10 +80,15 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     }
 
     private onBuildPlanUpdate() {
-        this.editor.getEditor().getSession().setValue(this.buildPlan.buildPlan);
+        const text = this.buildPlan?.buildPlan ?? '';
+        this.editor.getEditor().getSession().setValue(text);
     }
 
     submit() {
+        if (!this.buildPlan) {
+            return;
+        }
+
         this.buildPlanService.putBuildPlan(this.exerciseId, this.buildPlan).subscribe((buildPlan) => {
             this.buildPlan = buildPlan.body!;
             this.onBuildPlanUpdate();
@@ -94,7 +96,7 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     }
 
     onTextChanged(event: any) {
-        this.buildPlan.buildPlan = event as string;
+        this.buildPlan!.buildPlan = event as string;
     }
 
     updateTabSize(tabSize: number) {

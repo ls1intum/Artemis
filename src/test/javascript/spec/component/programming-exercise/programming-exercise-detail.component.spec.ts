@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -29,6 +29,11 @@ import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-lo
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { HttpResponse } from '@angular/common/http';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import {
+    ProgrammingLanguageFeature,
+    ProgrammingLanguageFeatureService,
+} from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 
 describe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -37,6 +42,8 @@ describe('ProgrammingExercise Management Detail Component', () => {
     let exerciseService: ProgrammingExerciseService;
     let modalService: NgbModal;
     let alertService: AlertService;
+    let profileService: ProfileService;
+    let programmingLanguageFeatureService: ProgrammingLanguageFeatureService;
     let statisticsServiceStub: jest.SpyInstance;
     let gitDiffReportStub: jest.SpyInstance;
     let buildLogStatisticsStub: jest.SpyInstance;
@@ -90,12 +97,17 @@ describe('ProgrammingExercise Management Detail Component', () => {
         dependenciesDownloadedCount: 6,
     } as BuildLogStatisticsDTO;
 
+    const profileInfo = {
+        activeProfiles: [],
+    } as unknown as ProfileInfo;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot()],
             declarations: [ProgrammingExerciseDetailComponent],
             providers: [
                 MockProvider(AlertService),
+                MockProvider(ProgrammingLanguageFeatureService),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
@@ -107,16 +119,24 @@ describe('ProgrammingExercise Management Detail Component', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
         comp = fixture.componentInstance;
+
         statisticsService = fixture.debugElement.injector.get(StatisticsService);
         statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(exerciseStatistics));
         alertService = fixture.debugElement.injector.get(AlertService);
         exerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+        profileService = fixture.debugElement.injector.get(ProfileService);
+        programmingLanguageFeatureService = fixture.debugElement.injector.get(ProgrammingLanguageFeatureService);
+
         findWithTemplateAndSolutionParticipationStub = jest
-            .spyOn(exerciseService, 'findWithTemplateAndSolutionParticipation')
+            .spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults')
             .mockReturnValue(of(new HttpResponse<ProgrammingExercise>({ body: mockProgrammingExercise })));
         gitDiffReportStub = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
         buildLogStatisticsStub = jest.spyOn(exerciseService, 'getBuildLogStatistics').mockReturnValue(of(buildLogStatistics));
         modalService = fixture.debugElement.injector.get(NgbModal);
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
+        jest.spyOn(programmingLanguageFeatureService, 'getProgrammingLanguageFeature').mockReturnValue({
+            plagiarismCheckSupported: true,
+        } as ProgrammingLanguageFeature);
     });
 
     afterEach(() => {
@@ -145,9 +165,11 @@ describe('ProgrammingExercise Management Detail Component', () => {
             route.data = of({ programmingExercise });
         });
 
-        it('should not be in exam mode', () => {
+        it('should not be in exam mode', fakeAsync(() => {
             // WHEN
             comp.ngOnInit();
+
+            tick();
 
             // THEN
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
@@ -161,7 +183,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
             expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
             expect(comp.programmingExercise.gitDiffReport).toBeDefined();
             expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
-        });
+        }));
     });
 
     describe('onInit for exam exercise', () => {
@@ -176,9 +198,11 @@ describe('ProgrammingExercise Management Detail Component', () => {
             route.data = of({ programmingExercise });
         });
 
-        it('should be in exam mode', () => {
+        it('should be in exam mode', fakeAsync(() => {
             // WHEN
             comp.ngOnInit();
+
+            tick();
 
             // THEN
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
@@ -189,7 +213,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
             expect(comp.isExamExercise).toBeTrue();
             expect(comp.programmingExercise.gitDiffReport).toBeDefined();
             expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
-        });
+        }));
     });
 
     it('should create structural solution entries', () => {
@@ -226,5 +250,21 @@ describe('ProgrammingExercise Management Detail Component', () => {
             type: AlertType.SUCCESS,
             message: 'artemisApp.programmingExercise.createBehavioralSolutionEntriesSuccess',
         });
+    });
+
+    it.each([
+        ['jenkins', true],
+        ['gitlabci', true],
+        ['bamboo', false],
+        ['bitbucket', false],
+        ['gitlab', false],
+    ])('should show the build plan edit button for profile %s: %s', (profile, editable) => {
+        profileInfo.activeProfiles = [profile];
+        const profileInfoStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
+
+        comp.ngOnInit();
+
+        expect(profileInfoStub).toHaveBeenCalledOnce();
+        expect(comp.isBuildPlanEditable).toBe(editable);
     });
 });

@@ -1,4 +1,4 @@
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileInfo, hasEditableBuildPlan } from 'app/shared/layouts/profiles/profile-info.model';
 
 describe('Profile Info', () => {
     describe('has editable build plan', () => {
@@ -12,7 +12,7 @@ describe('Profile Info', () => {
             ['gitlab', false],
         ])('should have editable build plan editor for profile "%s": %s', (profile, editable) => {
             profileInfo.activeProfiles = ['artemis', 'prod', profile];
-            expect(profileInfo.hasEditableBuildPlan()).toBe(editable);
+            expect(hasEditableBuildPlan(profileInfo)).toBe(editable);
         });
     });
 });

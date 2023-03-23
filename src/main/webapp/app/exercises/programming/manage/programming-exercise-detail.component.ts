@@ -48,6 +48,7 @@ import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/cod
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { hasEditableBuildPlan } from 'app/shared/layouts/profiles/profile-info.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -207,7 +208,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     private checkBuildPlanEditable() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => (this.isBuildPlanEditable = profileInfo.hasEditableBuildPlan()));
+        this.profileService.getProfileInfo().subscribe((profileInfo) => (this.isBuildPlanEditable = hasEditableBuildPlan(profileInfo)));
     }
 
     onParticipationChange(): void {
