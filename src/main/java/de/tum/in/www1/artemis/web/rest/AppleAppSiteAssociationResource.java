@@ -29,12 +29,19 @@ public class AppleAppSiteAssociationResource {
         AppleAppSiteAssociation.Applinks.Detail[] details = { detail };
         String[] apps = {};
         AppleAppSiteAssociation.Applinks applinks = new AppleAppSiteAssociation.Applinks(apps, details);
-        AppleAppSiteAssociation appleAppSiteAssociation = new AppleAppSiteAssociation(applinks);
+
+        String[] webcredentialApps = { appId };
+        AppleAppSiteAssociation.Webcredentials webcredentials = new AppleAppSiteAssociation.Webcredentials(webcredentialApps);
+
+        AppleAppSiteAssociation appleAppSiteAssociation = new AppleAppSiteAssociation(applinks, webcredentials);
 
         return ResponseEntity.ok(appleAppSiteAssociation);
     }
 
-    record AppleAppSiteAssociation(Applinks applinks) {
+    record AppleAppSiteAssociation(Applinks applinks, Webcredentials webcredentials) {
+
+        record Webcredentials(String[] apps) {
+        }
 
         record Applinks(String[] apps, Detail[] details) {
 
