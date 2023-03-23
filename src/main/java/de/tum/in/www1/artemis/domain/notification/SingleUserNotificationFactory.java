@@ -263,9 +263,8 @@ public class SingleUserNotificationFactory {
                 yield new SingleUserNotification(user, title, text).transientAndStringTarget(createConversationDeletionTarget(channel, channel.getCourse().getId()));
             }
             case CONVERSATION_REMOVE_USER_GROUP_CHAT -> {
-                var groupChat = (GroupChat) conversation;
-                String text = "You have been removed from group chat by " + responsibleForAction.getName() + " in course (" + groupChat.getCourse().getTitle() + ").";
-                yield new SingleUserNotification(user, title, text).transientAndStringTarget(createConversationDeletionTarget(groupChat, groupChat.getCourse().getId()));
+                String text = "You have been removed from group chat by " + responsibleForAction.getName() + " in course (" + conversation.getCourse().getTitle() + ").";
+                yield new SingleUserNotification(user, title, text).transientAndStringTarget(createConversationDeletionTarget(conversation, conversation.getCourse().getId()));
             }
             case CONVERSATION_DELETE_CHANNEL -> {
                 var channel = (Channel) conversation;
