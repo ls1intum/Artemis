@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.domain.lecture;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -21,6 +24,10 @@ public class AttachmentUnit extends LectureUnit {
     @OneToOne(mappedBy = "attachmentUnit", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "attachmentUnit", allowSetters = true)
     private Attachment attachment;
+
+    @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnore // important, so that the completion status of other users do not leak to anyone
+    private Set<LectureUnitCompletion> completedUsers = new HashSet<>();
 
     @Override
     public boolean isVisibleToStudents() {
