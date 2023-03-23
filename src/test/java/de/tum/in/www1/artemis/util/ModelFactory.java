@@ -694,6 +694,7 @@ public class ModelFactory {
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
+        exam.setWorkingTime(3000);
         exam.setStartText("Start Text");
         exam.setEndText("End Text");
         exam.setConfirmationStartText("Confirmation Start Text");
