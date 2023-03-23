@@ -256,4 +256,8 @@ export class FeedbackComponent implements OnInit {
         const programmingSubmission = this.result.submission as ProgrammingSubmission;
         return createCommitUrl(this.commitHashURLTemplate, projectKey, this.result.participation, programmingSubmission);
     }
+
+    setupWithTemplateStatusMissing() {
+        this.messageKey = 'artemisApp.result.notLatestSubmission';
+    }
 }
