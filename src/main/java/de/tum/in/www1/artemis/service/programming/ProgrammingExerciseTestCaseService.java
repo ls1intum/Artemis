@@ -201,6 +201,7 @@ public class ProgrammingExerciseTestCaseService {
         return false;
     }
 
+    // TODO find out what the purpose of this method is and how this should be changed after the migration
     private Set<ProgrammingExerciseTestCase> getTestCasesFromFeedbacks(List<Feedback> feedbacks, ProgrammingExercise exercise) {
         // Filter out sca feedback and create test cases out of the feedbacks
         return feedbacks.stream().filter(feedback -> !feedback.isStaticCodeAnalysisFeedback())
