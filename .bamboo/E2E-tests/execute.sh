@@ -7,20 +7,13 @@ mv ./*.war build/libs/
 # pass current host's hostname to the docker container for server.url (see docker compose config file)
 export HOST_HOSTNAME=$(hostname)
 
-# docker compose pull cmds: just pull everything else than artemis-app as we build it later either way
-# for backwards compatibility we check for old docker compose files
-CypressDockerComposeFilePath=""
-if [ -f docker/cypress-E2E-tests.yml ]; then
-    CypressDockerComposeFilePath="docker/cypress-E2E-tests.yml"
-    docker compose -f $CypressDockerComposeFilePath pull artemis-cypress mysql nginx
-    docker compose -f $CypressDockerComposeFilePath build --build-arg WAR_FILE_STAGE=external_builder --no-cache --pull artemis-app
-elif [ -f src/main/docker/cypress/cypress-E2E-tests.yml ]; then
-    CypressDockerComposeFilePath="src/main/docker/cypress/cypress-E2E-tests.yml"
-    docker compose -f $CypressDockerComposeFilePath pull artemis-cypress mysql artemis-nginx
-    docker compose -f $CypressDockerComposeFilePath build --no-cache --pull artemis-app
-fi
-docker compose -f $CypressDockerComposeFilePath up --exit-code-from artemis-cypress
+cd docker
+#just pull everything else than artemis-app as we build it later either way
+docker compose -f cypress-E2E-tests.yml pull artemis-cypress mysql nginx
+docker compose -f cypress-E2E-tests.yml build --build-arg WAR_FILE_STAGE=external_builder --no-cache --pull artemis-app
+docker compose -f cypress-E2E-tests.yml up --exit-code-from artemis-cypress
 exitCode=$?
+cd ..
 echo "Cypress container exit code: $exitCode"
 if [ $exitCode -eq 0 ]
 then

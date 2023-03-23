@@ -13,17 +13,7 @@ docker container rm $(docker ps -a -q) || true
 docker volume rm $(docker volume ls -q) || true
 
 # then kill remaining project volumes and networks which should be easy removable as not bound to containers anymore
-# for backwards compatibility we check for old docker compose files
-if [ -f docker/cypress-E2E-tests.yml ]; then
-    cd docker
-    docker compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml down -v
-elif [ -f src/main/docker/cypress/cypress-E2E-tests.yml ]; then
-    cd src/main/docker/cypress
-    docker compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml down -v
-elif [ -f src/main/docker/cypress/docker-compose.yml ]; then
-    cd src/main/docker/cypress
-    docker compose -f docker-compose.yml -f docker-compose.coverage.yml down -v
-fi
+docker compose -f ./docker/cypress-E2E-tests.yml -f ./docker/cypress-E2E-tests-coverage-override.yml down -v
 
 
 # show all running docker containers and volumes after the cleanup to detect issues
