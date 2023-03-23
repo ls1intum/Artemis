@@ -20,6 +20,7 @@ import { TutorialGroupSessionRowStubComponent, TutorialGroupSessionsTableStubCom
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
+import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
 
 @Component({ selector: 'jhi-tutorial-group-session-row-buttons', template: '' })
 class TutorialGroupSessionRowButtonsStubComponent {
@@ -59,6 +60,7 @@ describe('TutorialGroupSessionsManagement', () => {
                 TutorialGroupSessionRowButtonsStubComponent,
                 LoadingIndicatorContainerStubComponent,
                 MockPipe(ArtemisTranslatePipe),
+                MockPipe(RemoveSecondsPipe),
                 MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
             ],
