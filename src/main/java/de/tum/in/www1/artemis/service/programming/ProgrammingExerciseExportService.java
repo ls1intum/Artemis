@@ -566,6 +566,11 @@ public class ProgrammingExerciseExportService {
             return null;
         }
 
+        if (repositoryExportOptions.isExcludePracticeSubmissions() && participation.isTestRun()) {
+            log.debug("Ignoring practice participation {}", participation);
+            return null;
+        }
+
         try {
             // Checkout the repository
             Repository repository = gitService.getOrCheckoutRepository(participation, outputDir.toString());
