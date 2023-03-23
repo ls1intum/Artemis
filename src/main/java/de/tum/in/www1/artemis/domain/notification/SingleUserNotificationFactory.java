@@ -246,9 +246,8 @@ public class SingleUserNotificationFactory {
                 yield new SingleUserNotification(user, title, null).transientAndStringTarget(createConversationCreationTarget(conversation, conversation.getCourse().getId()));
             }
             case CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT -> {
-                var groupChat = (GroupChat) conversation;
-                String text = "You have been added to a new group chat by " + responsibleForAction.getName() + " in course (" + groupChat.getCourse().getTitle() + ").";
-                yield new SingleUserNotification(user, title, text).transientAndStringTarget(createConversationCreationTarget(groupChat, groupChat.getCourse().getId()));
+                String text = "You have been added to a new group chat by " + responsibleForAction.getName() + " in course (" + conversation.getCourse().getTitle() + ").";
+                yield new SingleUserNotification(user, title, text).transientAndStringTarget(createConversationCreationTarget(conversation, conversation.getCourse().getId()));
             }
             case CONVERSATION_ADD_USER_CHANNEL -> {
                 var channel = (Channel) conversation;
