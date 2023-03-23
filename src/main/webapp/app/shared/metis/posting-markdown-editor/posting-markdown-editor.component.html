@@ -12,9 +12,10 @@
         [defaultCommands]="defaultCommands"
         [enableFileUpload]="false"
         [colorCommands]="[]"
+        [showDefaultPreview]="false"
     >
         <!-- Preview -->
-        <ng-container #preview>
+        <ng-container id="preview">
             <jhi-posting-content *ngIf="previewMode" [content]="content"></jhi-posting-content>
             <hr />
         </ng-container>
