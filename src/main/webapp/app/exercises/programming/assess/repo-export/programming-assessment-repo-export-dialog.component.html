@@ -66,6 +66,12 @@
         </ng-container>
         <div *ngIf="!singleParticipantMode" class="checkbox">
             <label class="control-label">
+                <input class="form-check-input" type="checkbox" name="excludePracticeSubmissions" [(ngModel)]="this.repositoryExportOptions.excludePracticeSubmissions" />
+                <strong jhiTranslate="artemisApp.programmingExercise.export.excludePracticeSubmissions">Exclude practice submissions</strong>
+            </label>
+        </div>
+        <div *ngIf="!singleParticipantMode" class="checkbox">
+            <label class="control-label">
                 <input class="form-check-input" type="checkbox" name="addParticipantName" [(ngModel)]="this.repositoryExportOptions.addParticipantName" />
                 <strong
                     *ngIf="!isRepoExportForMultipleExercises"
