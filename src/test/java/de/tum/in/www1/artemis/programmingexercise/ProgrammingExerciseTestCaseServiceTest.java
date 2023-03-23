@@ -69,7 +69,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(3);
 
-        assertThat(testCases.stream().noneMatch(ProgrammingExerciseTestCase::isActive)).isTrue();
+        assertThat(testCases).noneMatch(ProgrammingExerciseTestCase::isActive);
     }
 
     @Test
@@ -107,7 +107,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(2);
 
-        assertThat(testCases.stream().allMatch(ProgrammingExerciseTestCase::isActive)).isTrue();
+        assertThat(testCases).allMatch(ProgrammingExerciseTestCase::isActive);
     }
 
     @Test

@@ -757,13 +757,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         // when exercise due date is null
         QuizExercise quizExerciseForStudent = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
-        assertThat(quizExerciseForStudent.getQuizBatches().stream().allMatch(quizBatch -> quizBatch.getStartTime() != null)).isTrue();
+        assertThat(quizExerciseForStudent.getQuizBatches()).allMatch(quizBatch -> quizBatch.getStartTime() != null);
 
         // when exercise due date is later than now
         quizExercise.setDueDate(ZonedDateTime.now().plusHours(1));
         quizExerciseService.save(quizExercise);
         quizExerciseForStudent = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
-        assertThat(quizExerciseForStudent.getQuizBatches().stream().allMatch(quizBatch -> quizBatch.getStartTime() != null)).isTrue();
+        assertThat(quizExerciseForStudent.getQuizBatches()).allMatch(quizBatch -> quizBatch.getStartTime() != null);
     }
 
     @Test
