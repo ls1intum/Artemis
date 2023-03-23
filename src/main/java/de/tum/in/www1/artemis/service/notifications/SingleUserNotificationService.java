@@ -369,8 +369,7 @@ public class SingleUserNotificationService {
                 || Objects.equals(notification.getTitle(), MESSAGE_REPLY_IN_CONVERSATION_TITLE)) {
             return (!Objects.equals(notification.getAuthor().getLogin(), notification.getRecipient().getLogin()));
         }
-        else
-            return true;
+        return true;
     }
 
     /**
