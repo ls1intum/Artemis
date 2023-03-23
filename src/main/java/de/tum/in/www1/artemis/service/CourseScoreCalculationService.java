@@ -345,6 +345,7 @@ public class CourseScoreCalculationService {
      * @param dueDate       the due date of the exercise.
      * @return the result that should be used for the score calculation.
      */
+    // TODO: This connection between participations and results will not be used in the future. This should be refactored to take the latest rated result from the submissions.
     public Result getResultForParticipation(Participation participation, ZonedDateTime dueDate) {
         if (participation == null) {
             return null;
@@ -374,15 +375,12 @@ public class CourseScoreCalculationService {
         resultsList.sort(Comparator.comparing(Result::getCompletionDate).reversed());
 
         if (dueDate == null) {
-            // If the due date is null, you can always submit something and it will always ge graded. Just take the latest graded result.
+            // If the due date is null, you can always submit something, and it will always ge graded. Just take the latest graded result.
             return resultsList.get(0);
         }
 
         // The due date is set and we need to find the latest result that was completed before the due date.
-        long gracePeriodInSeconds = 10L;
-
-        Optional<Result> latestResultBeforeDueDate = resultsList.stream().filter(result -> result.getCompletionDate().isBefore(dueDate.plusSeconds(gracePeriodInSeconds)))
-                .findFirst();
+        Optional<Result> latestResultBeforeDueDate = resultsList.stream().filter(result -> result.getCompletionDate().isBefore(dueDate)).findFirst();
 
         return latestResultBeforeDueDate.orElse(emptyResult);
     }
