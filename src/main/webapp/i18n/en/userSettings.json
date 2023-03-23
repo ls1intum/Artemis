@@ -69,7 +69,7 @@
                 "programmingTestCasesChangedDescription": "Get notified if test cases for a programming exercises have been changed",
                 "registrationTutorialGroupTutorDescription": "Get notified when a student was registered or deregistered from your tutorial group",
                 "registrationTutorialGroupStudentDescription": "Get notified when you were registered or deregistered from a tutorial group",
-                "conversationMessageDescription": "Get notified when you receive a new message in a conversation",
+                "newConversationMessageDescription": "Get notified when you receive a new message in a conversation",
                 "conversationNewReplyMessageDescription": "Get notified when you receive a new reply in a conversation",
                 "tutorialGroupUpdateDeleteDescription": "Get notified when a tutorial group for which you are registered or a tutor was updated or deleted",
                 "assignUnassignTutorialGroupDescription": "Get notified when you were assigned or unassigned to lead a tutorial group"

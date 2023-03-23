@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, IsActiveMatchOptions, Params, Router, UrlTree } from '@angular/router';
+import { HttpResponse } from '@angular/common/http';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -11,6 +12,13 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { faCheckDouble, faExclamationTriangle, faMessage, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { RouteComponents } from 'app/shared/metis/metis.util';
+import { Subscription } from 'rxjs';
+import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { Setting } from 'app/shared/user-settings/user-settings.model';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
+import { reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
+import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
+import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 
 @Component({
     selector: 'jhi-notification-popup',
@@ -25,6 +33,10 @@ export class NotificationPopupComponent implements OnInit {
 
     private studentExamExerciseIds: number[];
 
+    notificationSettings: NotificationSetting[] = [];
+    notificationTitleActivationMap: Map<string, boolean> = new Map<string, boolean>();
+    subscriptionToNotificationSettingsChanges: Subscription;
+
     // Icons
     faTimes = faTimes;
     faMessage = faMessage;
@@ -36,6 +48,8 @@ export class NotificationPopupComponent implements OnInit {
         private notificationService: NotificationService,
         private router: Router,
         private activatedRoute: ActivatedRoute,
+        private userSettingsService: UserSettingsService,
+        private notificationSettingsService: NotificationSettingsService,
         private examExerciseUpdateService: ExamExerciseUpdateService,
         private alertService: AlertService,
         private examParticipationService: ExamParticipationService,
@@ -47,6 +61,8 @@ export class NotificationPopupComponent implements OnInit {
     ngOnInit(): void {
         this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
             if (user) {
+                this.loadNotificationSettings();
+                this.listenForNotificationSettingsChanges();
                 this.subscribeToNotificationUpdates();
             }
         });
@@ -117,8 +133,10 @@ export class NotificationPopupComponent implements OnInit {
                 this.checkIfNotificationAffectsCurrentStudentExamExercises(notification);
             }
             if (notification.title === NEW_MESSAGE_TITLE || notification.title === NEW_REPLY_MESSAGE_TITLE) {
-                this.addMessageNotification(notification);
-                this.setRemovalTimeout(notification);
+                if (this.notificationSettingsService.isNotificationAllowedBySettings(notification, this.notificationTitleActivationMap)) {
+                    this.addMessageNotification(notification);
+                    this.setRemovalTimeout(notification);
+                }
             }
         }
     }
@@ -219,5 +237,38 @@ export class NotificationPopupComponent implements OnInit {
         setTimeout(() => {
             this.notifications = this.notifications.filter(({ id }) => id !== notification.id);
         }, 30000);
+    }
+
+    /**
+     * Loads the notifications settings
+     */
+    private loadNotificationSettings(): void {
+        this.userSettingsService.loadSettings(UserSettingsCategory.NOTIFICATION_SETTINGS).subscribe({
+            next: (res: HttpResponse<Setting[]>) => {
+                this.notificationSettings = this.userSettingsService.loadSettingsSuccessAsIndividualSettings(
+                    res.body!,
+                    UserSettingsCategory.NOTIFICATION_SETTINGS,
+                ) as NotificationSetting[];
+                this.notificationTitleActivationMap = this.notificationSettingsService.createUpdatedNotificationTitleActivationMap(this.notificationSettings);
+                // update the notification settings in the service to make them reusable for others (to avoid unnecessary server calls)
+                this.notificationSettingsService.setNotificationSettings(this.notificationSettings);
+            },
+        });
+    }
+
+    /**
+     * Subscribes and listens for changes related to notifications
+     * When a fitting event arrives resets close all popups and reloads the notification settings
+     */
+    private listenForNotificationSettingsChanges(): void {
+        this.subscriptionToNotificationSettingsChanges = this.userSettingsService.userSettingsChangeEvent.subscribe((changeMessage) => {
+            if (changeMessage === reloadNotificationSideBarMessage) {
+                // reset notification settings
+                this.notificationSettings = [];
+                this.notifications = [];
+                this.notificationTitleActivationMap = new Map<string, boolean>();
+                this.loadNotificationSettings();
+            }
+        });
     }
 }
