@@ -130,15 +130,13 @@ describe('Notification Popup Component', () => {
             notificationPopupComponentFixture.detectChanges();
 
             jest.spyOn(notificationPopupComponent, 'navigateToTarget');
+            jest.spyOn(notificationService, 'forceComponentReload');
             jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
 
             const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
             button.nativeElement.click();
             expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledOnce();
-            // called two times because the first call is to navigate to the course overview and the second to the conversation
-            expect(router.navigate).toHaveBeenCalledTimes(2);
-            expect(router.navigate).toHaveBeenCalledWith(['/courses'], { skipLocationChange: true });
-            expect(router.navigate).toHaveBeenCalledWith(['/courses', 1, 'messages'], { queryParams: { conversationId: 1 } });
+            expect(notificationService.forceComponentReload).toHaveBeenCalledOnce();
         });
 
         it('should navigate to exam exercise target when ExamExerciseUpdate notification is clicked', () => {
