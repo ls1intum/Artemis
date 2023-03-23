@@ -5,6 +5,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { CourseWideContext } from '../../metis.util';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-post-header',
@@ -12,6 +13,9 @@ import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['../../metis.component.scss'],
 })
 export class PostHeaderComponent extends PostingHeaderDirective<Post> implements OnInit, OnDestroy {
+    @Input()
+    readOnlyMode = false;
+    @Input() lastReadDate?: dayjs.Dayjs;
     @Input() previewMode: boolean;
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     isAtLeastInstructorInCourse: boolean;

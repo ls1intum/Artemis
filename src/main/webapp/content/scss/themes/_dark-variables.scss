@@ -37,7 +37,7 @@ $min-contrast-ratio: 1.9;
 
 $body-color: $gray-100;
 $text-muted: $gray-600;
-$body-bg: $gray-900;
+$body-bg: $gray-800;
 
 $input-color: $gray-800;
 $input-border-color: $body-bg;
@@ -237,6 +237,10 @@ $md-file-input-border-color: $border-color;
 $md-resize-icon-color: $gray-400;
 
 // Metis
+$metis-conversation-sidebar: $gray-500;
+$metis-conversation-sidebar-active: $gray-100;
+$metis-conversation-sidebar-button-background-hover: $gray-700;
+
 $metis-light-gray: #979797;
 $metis-gray: #6a737d;
 $metis-blue: $link-color;
@@ -333,6 +337,13 @@ $quiz-scoring-info-student-modal-question-wrong: $warning;
 $quiz-question-background: $neutral-dark;
 $quiz-question-border-color: $neutral-dark-l-20;
 
+$quiz-visual-question-border-color: $quiz-question-border-color;
+$quiz-visual-answer-correct-container-color: $success;
+$quiz-visual-answer-correct-container-hover-color: lighten($success, 40%);
+$quiz-visual-answer-wrong-container-hover-color: lighten($danger, 40%);
+$quiz-visual-answer-add-container-color: $primary;
+$quiz-visual-answer-add-container-hover-color: lighten($primary, 20%);
+
 $dnd-question-drop-location-background: white;
 $dnd-question-drop-location-border-color: black;
 $dnd-question-drop-location-results-border-color: $success;
@@ -355,8 +366,9 @@ $sa-question-input-wrong-background: $danger;
 $sa-question-input-correct-background: $warning;
 $sa-question-input-completely-correct-background: $success;
 
-$mc-question-answer-option-border: transparentize(#fff, 0.8);
-$mc-question-answer-option-hover-background: transparentize(#fff, 0.97);
+$mc-question-answer-option-border: $neutral-dark-l-10;
+$mc-question-answer-option-hover-background: $neutral-dark-l-5;
+$mc-question-answer-option-selected-background: transparentize($primary, 0.7);
 
 // Programming Exercises
 $programming-exercise-instruction-step-wizard-card-header-background: $neutral-dark-l-5;
@@ -576,3 +588,11 @@ $graph-black: rgb(229, 229, 229);
 // User-Management
 $user-management-background-color: rgba($white, 0.02);
 $user-management-border-color: rgba($white, 0.15);
+
+// Learning Goal Rings
+$learning-goal-rings-red: $red;
+$learning-goal-rings-red-bg: transparentize($learning-goal-rings-red, 0.8);
+$learning-goal-rings-green: $green;
+$learning-goal-rings-green-bg: transparentize($learning-goal-rings-green, 0.8);
+$learning-goal-rings-blue: $blue;
+$learning-goal-rings-blue-bg: transparentize($learning-goal-rings-blue, 0.8);

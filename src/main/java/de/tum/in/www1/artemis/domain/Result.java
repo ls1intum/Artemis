@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.service.listeners.ResultListener;
 @EntityListeners({ AuditingEntityListener.class, ResultListener.class })
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Result extends DomainObject {
+public class Result extends DomainObject implements Comparable<Result> {
 
     @Column(name = "completion_date")
     @JsonView(QuizView.Before.class)
@@ -177,7 +177,7 @@ public class Result extends DomainObject {
      * 1. set score and round it to the specified accuracy in the course
      * 2. set successful = true, if score >= 100 or false if not
      *
-     * @param score new score
+     * @param score  new score
      * @param course the course that specifies the accuracy
      */
     public void setScore(Double score, Course course) {
@@ -191,7 +191,7 @@ public class Result extends DomainObject {
      *
      * @param totalPoints total amount of points between 0 and maxPoints
      * @param maxPoints   maximum points reachable at corresponding exercise
-     * @param course the course that specifies the accuracy
+     * @param course      the course that specifies the accuracy
      */
     public void setScore(double totalPoints, double maxPoints, Course course) {
         setScore(totalPoints / maxPoints * 100, course);
@@ -219,9 +219,10 @@ public class Result extends DomainObject {
      * - the submission date is before the due date OR
      * - no due date is set OR
      * - the submission type is INSTRUCTOR / TEST
+     *
      * @param exerciseDueDate date after which no normal submission is considered rated.
-     * @param submission to which the result belongs.
-     * @param participation to wich the submission belongs
+     * @param submission      to which the result belongs.
+     * @param participation   to wich the submission belongs
      */
     public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, Submission submission, Participation participation) {
         if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
@@ -280,7 +281,7 @@ public class Result extends DomainObject {
      * Assigns the given feedback list to the result. It first sets the positive flag and the feedback type of every feedback element, clears the existing list of feedback and
      * assigns the new feedback afterwards. IMPORTANT: This method should not be used for Quiz and Programming exercises with completely automatic assessments!
      *
-     * @param feedbacks the new feedback list
+     * @param feedbacks            the new feedback list
      * @param skipAutomaticResults if true automatic results won't be updated
      */
     public void updateAllFeedbackItems(List<Feedback> feedbacks, boolean skipAutomaticResults) {
@@ -386,6 +387,7 @@ public class Result extends DomainObject {
 
     /**
      * `hasComplaint` could be null in the database
+     *
      * @return hasComplaint property value
      */
     public Optional<Boolean> getHasComplaint() {
@@ -460,7 +462,7 @@ public class Result extends DomainObject {
     /**
      * Removes the assessor from the result, can be invoked to make sure that sensitive information is not sent to the client. E.g. students should not see information about
      * their assessor.
-     *
+     * <p>
      * Does not filter feedbacks.
      */
     public void filterSensitiveInformation() {
@@ -468,7 +470,8 @@ public class Result extends DomainObject {
     }
 
     /**
-     * Remove all feedbacks marked with visibility never.
+     * Removes all feedback details that should not be passed to the student.
+     *
      * @param isBeforeDueDate if feedbacks marked with visibility 'after due date' should also be removed.
      */
     public void filterSensitiveFeedbacks(boolean isBeforeDueDate) {
@@ -477,8 +480,11 @@ public class Result extends DomainObject {
         if (isBeforeDueDate) {
             feedbacks.removeIf(Feedback::isAfterDueDate);
         }
-        setTestCaseCount((int) feedbacks.stream().filter(Feedback::isTestFeedback).count());
-        setPassedTestCaseCount((int) feedbacks.stream().filter(Feedback::isTestFeedback).filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).count());
+
+        // TODO: this is not good code!
+        var testCaseFeedback = feedbacks.stream().filter(Feedback::isTestFeedback).toList();
+        setTestCaseCount(testCaseFeedback.size());
+        setPassedTestCaseCount((int) testCaseFeedback.stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).count());
     }
 
     /**
@@ -510,6 +516,7 @@ public class Result extends DomainObject {
 
     /**
      * Calculates the total score for programming exercises. Do not use it for other exercise types
+     *
      * @return calculated totalScore
      */
     public Double calculateTotalPointsForProgrammingExercises() {
@@ -524,10 +531,8 @@ public class Result extends DomainObject {
                 totalPoints = feedback.computeTotalScore(totalPoints, gradingInstructions);
             }
             else {
-                /*
-                 * In case no structured grading instruction was applied on the assessment model we just sum the feedback credit. We differentiate between automatic test and
-                 * automatic SCA feedback (automatic test feedback has to be capped)
-                 */
+                // In case no structured grading instruction was applied on the assessment model we just sum the feedback credit. We differentiate between automatic test and
+                // automatic SCA feedback (automatic test feedback has to be capped)
                 if (feedback.getType() == FeedbackType.AUTOMATIC && !feedback.isStaticCodeAnalysisFeedback()) {
                     scoreAutomaticTests += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
                 }
@@ -557,6 +562,7 @@ public class Result extends DomainObject {
 
     /**
      * calculates the score for programming exercises
+     *
      * @param exercise the exercise
      */
     public void calculateScoreForProgrammingExercise(ProgrammingExercise exercise) {
@@ -566,11 +572,22 @@ public class Result extends DomainObject {
 
     /**
      * Copies the relevant counters for programming exercises i.e. amount of (passed) test cases and code issues into this result
+     *
      * @param originalResult the source for the values
      */
     public void copyProgrammingExerciseCounters(Result originalResult) {
         setTestCaseCount(originalResult.getTestCaseCount());
         setPassedTestCaseCount(originalResult.getPassedTestCaseCount());
         setCodeIssueCount(originalResult.getCodeIssueCount());
+    }
+
+    @Override
+    public int compareTo(Result other) {
+        if (getCompletionDate() == null || other.getCompletionDate() == null || Objects.equals(getCompletionDate(), other.getCompletionDate())) {
+            // this case should not happen, but in the rare case we can compare the ids (in tests, the submission dates might be identical as ms are not stored in the database)
+            // newer ids are typically later
+            return getId().compareTo(other.getId());
+        }
+        return getCompletionDate().compareTo(other.getCompletionDate());
     }
 }

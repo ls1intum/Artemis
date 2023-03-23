@@ -42,24 +42,19 @@ export class CreateAttachmentUnitComponent implements OnInit {
         if (!attachmentUnitFormData?.formProperties?.name || !attachmentUnitFormData?.fileProperties?.file || !attachmentUnitFormData?.fileProperties?.fileName) {
             return;
         }
-        const { description, name, releaseDate } = attachmentUnitFormData.formProperties;
+        const { description, name, releaseDate, learningGoals } = attachmentUnitFormData.formProperties;
         const { file, fileName } = attachmentUnitFormData.fileProperties;
 
         // === Setting attachment ===
-        if (name) {
-            this.attachmentToCreate.name = name;
-        }
-        if (releaseDate) {
-            this.attachmentToCreate.releaseDate = releaseDate;
-        }
+        this.attachmentToCreate.name = name;
+        this.attachmentToCreate.releaseDate = releaseDate;
         this.attachmentToCreate.attachmentType = AttachmentType.FILE;
         this.attachmentToCreate.version = 1;
         this.attachmentToCreate.uploadDate = dayjs();
 
         // === Setting attachmentUnit ===
-        if (description) {
-            this.attachmentUnitToCreate.description = description;
-        }
+        this.attachmentUnitToCreate.description = description;
+        this.attachmentUnitToCreate.learningGoals = learningGoals || [];
 
         this.isLoading = true;
 

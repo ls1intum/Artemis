@@ -2,23 +2,24 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exam } from 'app/entities/exam.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { Exercise as CypressExercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { BASE_API, DELETE, GET, POST, PUT } from '../constants';
-import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
+import { BASE_API, DELETE, EXERCISE_TYPE, GET, POST, PUT } from '../constants';
+import programmingExerciseTemplate from '../../fixtures/exercise/programming/template.json';
 import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject } from '../utils';
-import examTemplate from '../../fixtures/requests/exam_template.json';
+import examTemplate from '../../fixtures/exam/template.json';
 import day from 'dayjs/esm';
 import { CypressCredentials } from '../users';
-import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
-import modelingExerciseTemplate from '../../fixtures/requests/modelingExercise_template.json';
-import assessment_submission from '../../fixtures/programming_exercise_submissions/assessment/submission.json';
-import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
-import multipleChoiceSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceSubmission_template.json';
-import shortAnswerSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerSubmission_template.json';
-import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling_exercise/modelingSubmission_template.json';
-import lectureTemplate from '../../fixtures/lecture/lecture_template.json';
+import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
+import modelingExerciseTemplate from '../../fixtures/exercise/modeling/template.json';
+import assessment_submission from '../../fixtures/exercise/programming/assessment/submission.json';
+import quizTemplate from '../../fixtures/exercise/quiz/template.json';
+import multipleChoiceSubmissionTemplate from '../../fixtures/exercise/quiz/multiple_choice/submission.json';
+import shortAnswerSubmissionTemplate from '../../fixtures/exercise/quiz/short_answer/submission.json';
+import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling/submission.json';
+import lectureTemplate from '../../fixtures/lecture/template.json';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 export const COURSE_BASE = BASE_API + 'courses/';
@@ -124,6 +125,7 @@ export class CourseManagementRequests {
             assessmentType: CypressAssessmentType[assessmentType],
         };
         const exercise: ProgrammingExercise = Object.assign({}, template, body) as ProgrammingExercise;
+        // eslint-disable-next-line no-prototype-builtins
         const isExamExercise = body.hasOwnProperty('exerciseGroup');
         if (!isExamExercise) {
             exercise.releaseDate = releaseDate;
@@ -161,22 +163,22 @@ export class CourseManagementRequests {
 
     updateModelingExerciseDueDate(exercise: ModelingExercise, due = day()) {
         exercise.dueDate = due;
-        return this.updateExercise(exercise, CypressExerciseType.MODELING);
+        return this.updateExercise(exercise, EXERCISE_TYPE.Modeling);
     }
 
-    private updateExercise(exercise: Exercise, type: CypressExerciseType) {
+    private updateExercise(exercise: Exercise, type: EXERCISE_TYPE) {
         let url: string;
         switch (type) {
-            case CypressExerciseType.PROGRAMMING:
+            case EXERCISE_TYPE.Programming:
                 url = PROGRAMMING_EXERCISE_BASE;
                 break;
-            case CypressExerciseType.TEXT:
+            case EXERCISE_TYPE.Text:
                 url = TEXT_EXERCISE_BASE;
                 break;
-            case CypressExerciseType.MODELING:
+            case EXERCISE_TYPE.Modeling:
                 url = MODELING_EXERCISE_BASE;
                 break;
-            case CypressExerciseType.QUIZ:
+            case EXERCISE_TYPE.Quiz:
             default:
                 throw new Error(`Exercise type '${type}' is not supported yet!`);
         }
@@ -190,7 +192,7 @@ export class CourseManagementRequests {
     /**
      * Adds the specified student to the course.
      * @param course the course
-     * @param student the student
+     * @param user the user
      * @returns <Chainable> request response
      */
     addStudentToCourse(course: Course, user: CypressCredentials) {
@@ -238,6 +240,24 @@ export class CourseManagementRequests {
      */
     registerStudentForExam(exam: Exam, student: CypressCredentials) {
         return cy.request({ method: POST, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id + '/students/' + student.username });
+    }
+
+    /**
+     * Creates an exam with the provided settings.
+     * @param exam the exam object created by a {@link CypressExamBuilder}
+     * @param exerciseArray an array of exercises
+     * @param workingTime the working time in seconds
+     * @returns <Chainable> request response
+     */
+    createExamTestRun(exam: Exam, exerciseArray: Array<CypressExercise>, workingTime = 1080) {
+        const courseId = exam.course!.id;
+        const examId = exam.id!;
+        const body = {
+            exam,
+            exerciseArray,
+            workingTime,
+        };
+        return cy.request({ url: COURSE_BASE + courseId + '/exams/' + examId + '/test-run', method: POST, body });
     }
 
     /**
@@ -295,6 +315,7 @@ export class CourseManagementRequests {
             assessmentDueDate: dayjsToString(assessmentDueDate),
         };
         let newModelingExercise;
+        // eslint-disable-next-line no-prototype-builtins
         if (body.hasOwnProperty('course')) {
             newModelingExercise = Object.assign({}, templateCopy, dates, body);
         } else {
@@ -309,7 +330,7 @@ export class CourseManagementRequests {
 
     updateModelingExerciseAssessmentDueDate(exercise: ModelingExercise, due = day()) {
         exercise.assessmentDueDate = due;
-        return this.updateExercise(exercise, CypressExerciseType.MODELING);
+        return this.updateExercise(exercise, EXERCISE_TYPE.Modeling);
     }
 
     deleteModelingExercise(exerciseID: number) {
@@ -364,6 +385,7 @@ export class CourseManagementRequests {
         const dates = {
             releaseDate: dayjsToString(releaseDate),
         };
+        // eslint-disable-next-line no-prototype-builtins
         if (body.hasOwnProperty('course')) {
             newQuizExercise = Object.assign({}, quizExercise, dates, body);
         } else {
@@ -480,12 +502,12 @@ export class CourseManagementRequests {
 
     updateTextExerciseDueDate(exercise: TextExercise, due = day()) {
         exercise.dueDate = due;
-        return this.updateExercise(exercise, CypressExerciseType.TEXT);
+        return this.updateExercise(exercise, EXERCISE_TYPE.Text);
     }
 
     updateTextExerciseAssessmentDueDate(exercise: TextExercise, due = day()) {
         exercise.assessmentDueDate = due;
-        return this.updateExercise(exercise, CypressExerciseType.TEXT);
+        return this.updateExercise(exercise, EXERCISE_TYPE.Text);
     }
 
     deleteLecture(lectureId: number) {
@@ -538,6 +560,17 @@ export class CypressExamBuilder {
         return this;
     }
 
+    testExam() {
+        this.template.testExam = true;
+        this.template.numberOfCorrectionRoundsInExam = 0;
+        return this;
+    }
+
+    workingTime(workingTime: number) {
+        this.template.workingTime = workingTime;
+        return this;
+    }
+
     /**
      * @param randomize if the exercise order should be randomized
      */
@@ -557,8 +590,8 @@ export class CypressExamBuilder {
     /**
      * @param points the maximum amount of points achieved in the exam (default is 10)
      */
-    maxPoints(points: number) {
-        this.template.maxPoints = points;
+    examMaxPoints(points: number) {
+        this.template.examMaxPoints = points;
         return this;
     }
 
@@ -631,13 +664,6 @@ export enum CypressAssessmentType {
     AUTOMATIC,
     SEMI_AUTOMATIC,
     MANUAL,
-}
-
-export enum CypressExerciseType {
-    PROGRAMMING,
-    MODELING,
-    TEXT,
-    QUIZ,
 }
 
 export function convertCourseAfterMultiPart(response: Cypress.Response<Course>): Course {

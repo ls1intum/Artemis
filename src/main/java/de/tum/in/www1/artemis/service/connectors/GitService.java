@@ -28,10 +28,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.*;
-import org.eclipse.jgit.api.errors.CanceledException;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRefNameException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -276,7 +273,7 @@ public class GitService {
      *
      * @param participation Participation the remote repository belongs to.
      * @return the repository if it could be checked out
-     * @throws GitAPIException      if the repository could not be checked out.
+     * @throws GitAPIException if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation) throws GitAPIException {
         return getOrCheckoutRepository(participation, repoClonePath);
@@ -289,8 +286,8 @@ public class GitService {
      * @param participation Participation the remote repository belongs to.
      * @param targetPath    path where the repo is located on disk
      * @return the repository if it could be checked out
-     * @throws GitAPIException      if the repository could not be checked out.
-     * @throws GitException         if the same repository is attempted to be cloned multiple times.
+     * @throws GitAPIException if the repository could not be checked out.
+     * @throws GitException    if the same repository is attempted to be cloned multiple times.
      */
     public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, String targetPath) throws GitAPIException, GitException {
         var repoUrl = participation.getVcsRepositoryUrl();
@@ -334,7 +331,7 @@ public class GitService {
      * @param repoUrl   The remote repository.
      * @param pullOnGet Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @return the repository if it could be checked out.
-     * @throws GitAPIException      if the repository could not be checked out.
+     * @throws GitAPIException if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, boolean pullOnGet) throws GitAPIException {
         return getOrCheckoutRepository(repoUrl, repoClonePath, pullOnGet);
@@ -347,8 +344,8 @@ public class GitService {
      * @param targetPath path where the repo is located on disk
      * @param pullOnGet  Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @return the repository if it could be checked out.
-     * @throws GitAPIException      if the repository could not be checked out.
-     * @throws GitException         if the same repository is attempted to be cloned multiple times.
+     * @throws GitAPIException if the repository could not be checked out.
+     * @throws GitException    if the same repository is attempted to be cloned multiple times.
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, String targetPath, boolean pullOnGet) throws GitAPIException, GitException {
         Path localPath = getLocalPathOfRepo(targetPath, repoUrl);
@@ -362,8 +359,8 @@ public class GitService {
      * @param pullOnGet     Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @param defaultBranch The default branch of the target repository.
      * @return the repository if it could be checked out.
-     * @throws GitAPIException      if the repository could not be checked out.
-     * @throws GitException         if the same repository is attempted to be cloned multiple times.
+     * @throws GitAPIException if the repository could not be checked out.
+     * @throws GitException    if the same repository is attempted to be cloned multiple times.
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, boolean pullOnGet, String defaultBranch) throws GitAPIException, GitException {
         Path localPath = getLocalPathOfRepo(repoClonePath, repoUrl);
@@ -420,7 +417,18 @@ public class GitService {
         // the exception will then delete the folder, so that the next attempt would be successful.
         if (repository != null) {
             if (pullOnGet) {
-                pull(repository);
+                try {
+                    pull(repository);
+                }
+                catch (JGitInternalException | NoHeadException | TransportException e) {
+                    // E.g., LockFailedException
+                    // cleanup the folder to avoid problems in the future.
+                    // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid another try-catch block.
+                    if (!FileUtils.deleteQuietly(localPath.toFile())) {
+                        log.error("Could not delete directory after failed pull: {}", localPath.toAbsolutePath());
+                    }
+                    throw new GitException(e);
+                }
             }
             return repository;
         }
@@ -441,7 +449,9 @@ public class GitService {
             catch (IOException | URISyntaxException | GitAPIException | InvalidPathException e) {
                 // cleanup the folder to avoid problems in the future.
                 // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid another try-catch block.
-                FileUtils.deleteQuietly(localPath.toFile());
+                if (!FileUtils.deleteQuietly(localPath.toFile())) {
+                    log.error("Could not delete directory after failed clone: {}", localPath.toAbsolutePath());
+                }
                 throw new GitException(e);
             }
             finally {
@@ -454,12 +464,12 @@ public class GitService {
 
     /**
      * Waits until no clone operation is running for the given path.
-     *
+     * <p>
      * Retries once a second for up to {@link #JGIT_TIMEOUT_IN_SECONDS} seconds before giving up.
      *
      * @param localPath The path in which a clone operation should be made.
      * @throws CanceledException If the waiting has been interrupted.
-     * @throws GitException If the path is still busy after the maximum number of retries.
+     * @throws GitException      If the path is still busy after the maximum number of retries.
      */
     private void waitUntilPathNotBusy(final Path localPath) throws CanceledException, GitException {
         int remainingSeconds = JGIT_TIMEOUT_IN_SECONDS;
@@ -491,6 +501,9 @@ public class GitService {
      */
     public boolean isRepositoryCached(VcsRepositoryUrl repositoryUrl) {
         Path localPath = getLocalPathOfRepo(repoClonePath, repositoryUrl);
+        if (localPath == null) {
+            return false;
+        }
         // Check if the repository is already cached in the server's session.
         return cachedRepositories.containsKey(localPath);
     }
@@ -499,7 +512,7 @@ public class GitService {
      * Combine all commits of the given repository into one.
      *
      * @param repoUrl of the repository to combine.
-     * @throws GitAPIException      If the checkout fails
+     * @throws GitAPIException If the checkout fails
      */
     public void combineAllCommitsOfRepositoryIntoOne(VcsRepositoryUrl repoUrl) throws GitAPIException {
         Repository exerciseRepository = getOrCheckoutRepository(repoUrl, true);
@@ -518,6 +531,9 @@ public class GitService {
      * @return path of the local file system
      */
     public Path getLocalPathOfRepo(String targetPath, VcsRepositoryUrl targetUrl) {
+        if (targetUrl == null) {
+            return null;
+        }
         return Path.of(targetPath.replaceAll("^\\." + Pattern.quote(java.io.File.separator), ""), targetUrl.folderNameForRepositoryUrl());
     }
 

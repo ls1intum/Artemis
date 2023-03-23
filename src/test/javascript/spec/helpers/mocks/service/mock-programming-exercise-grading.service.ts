@@ -58,4 +58,8 @@ export class MockProgrammingExerciseGradingService implements IProgrammingExerci
     getGradingStatistics(exerciseId: number): Observable<ProgrammingExerciseGradingStatistics> {
         return of();
     }
+
+    importCategoriesFromExercise(targetExerciseId: number, sourceExerciseId: number): Observable<StaticCodeAnalysisCategory[]> {
+        return of();
+    }
 }

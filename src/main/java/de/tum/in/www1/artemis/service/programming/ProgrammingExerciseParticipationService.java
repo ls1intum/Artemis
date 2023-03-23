@@ -71,7 +71,8 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param programmingExerciseId ProgrammingExercise id
      * @return the SolutionProgrammingExerciseParticipation of programming exercise.
-     * @throws EntityNotFoundException if the SolutionParticipation can't be found (could be that the programming exercise does not exist or it does not have a SolutionParticipation).
+     * @throws EntityNotFoundException if the SolutionParticipation can't be found (could be that the programming exercise does not exist or it does not have a
+     *                                     SolutionParticipation).
      */
     // TODO: move into solutionParticipationRepository
     public SolutionProgrammingExerciseParticipation findSolutionParticipationByProgrammingExerciseId(Long programmingExerciseId) throws EntityNotFoundException {
@@ -87,7 +88,8 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param programmingExerciseId ProgrammingExercise id
      * @return the TemplateProgrammingExerciseParticipation of programming exercise.
-     * @throws EntityNotFoundException if the TemplateParticipation can't be found (could be that the programming exercise does not exist or it does not have a TemplateParticipation).
+     * @throws EntityNotFoundException if the TemplateParticipation can't be found (could be that the programming exercise does not exist or it does not have a
+     *                                     TemplateParticipation).
      */
     // TODO: move into templateParticipationRepository
     public TemplateProgrammingExerciseParticipation findTemplateParticipationByProgrammingExerciseId(Long programmingExerciseId) throws EntityNotFoundException {
@@ -173,7 +175,6 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param newExercise The new exercise for which a participation should be generated
      */
-    @NotNull
     public void setupInitialSolutionParticipation(ProgrammingExercise newExercise) {
         final String solutionRepoName = newExercise.generateRepositoryName(RepositoryType.SOLUTION);
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
@@ -190,7 +191,6 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param newExercise The new exercise for which a participation should be generated
      */
-    @NotNull
     public void setupInitialTemplateParticipation(ProgrammingExercise newExercise) {
         final String exerciseRepoName = newExercise.generateRepositoryName(RepositoryType.TEMPLATE);
         TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
@@ -205,7 +205,7 @@ public class ProgrammingExerciseParticipationService {
      * Lock the repository associated with a programming participation
      *
      * @param programmingExercise the programming exercise
-     * @param participation the programming exercise student participation whose repository should be locked
+     * @param participation       the programming exercise student participation whose repository should be locked
      * @throws VersionControlException if locking was not successful, e.g. if the repository was already locked
      */
     public void lockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
@@ -221,7 +221,7 @@ public class ProgrammingExerciseParticipationService {
      * Unlock the repository associated with a programming participation
      *
      * @param programmingExercise the programming exercise
-     * @param participation the programming exercise student participation whose repository should be unlocked
+     * @param participation       the programming exercise student participation whose repository should be unlocked
      * @throws VersionControlException if unlocking was not successful, e.g. if the repository was already unlocked
      */
     public void unlockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
@@ -238,7 +238,7 @@ public class ProgrammingExerciseParticipationService {
      * Stashes all changes, which were not submitted/committed before the due date, of a programming participation
      *
      * @param programmingExercise exercise with information about the due date
-     * @param participation student participation whose not submitted changes will be stashed
+     * @param participation       student participation whose not submitted changes will be stashed
      */
     public void stashChangesInStudentRepositoryAfterDueDateHasPassed(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {

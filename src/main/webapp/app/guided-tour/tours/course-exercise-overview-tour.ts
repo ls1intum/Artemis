@@ -6,15 +6,10 @@ export const courseExerciseOverviewTour: GuidedTour = {
     settingsKey: 'course_exercise_overview_tour',
     resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
     steps: [
-        new TextTourStep({
+        new VideoTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.content',
-            hintTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.hint',
-        }),
-        new VideoTourStep({
-            headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTreeSetup.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTreeSetup.content',
-            videoUrl: 'tour.courseExerciseOverview.installPrerequisites.sourceTreeSetup.videoUrl',
+            videoUrl: 'tour.courseExerciseOverview.installPrerequisites.videoUrl',
         }),
         new TextTourStep({
             highlightSelector: '.tab-item.exercises',
@@ -38,21 +33,21 @@ export const courseExerciseOverviewTour: GuidedTour = {
             orientation: Orientation.TOP,
         }),
         new TextTourStep({
-            highlightSelector: '.row.guided-tour',
+            highlightSelector: '.course-exercise-row.guided-tour',
             headlineTranslateKey: 'tour.courseExerciseOverview.currentExercise.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.currentExercise.content',
             highlightPadding: 10,
             orientation: Orientation.TOP,
         }),
         new TextTourStep({
-            highlightSelector: '.row.guided-tour .exercise-row-icon',
+            highlightSelector: '.course-exercise-row.guided-tour .exercise-row-icon',
             headlineTranslateKey: 'tour.courseExerciseOverview.exerciseType.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.exerciseType.content',
             highlightPadding: 10,
             orientation: Orientation.TOPLEFT,
         }),
         new TextTourStep({
-            highlightSelector: '.row.guided-tour .exercise-tags',
+            highlightSelector: '.course-exercise-row.guided-tour .exercise-tags',
             headlineTranslateKey: 'tour.courseExerciseOverview.exerciseTags.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.exerciseTags.content',
             highlightPadding: 10,
@@ -73,7 +68,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
             orientation: Orientation.LEFT,
         }),
         new UserInterActionTourStep({
-            highlightSelector: '.row.guided-tour .start-exercise',
+            highlightSelector: '.course-exercise-row.guided-tour .start-exercise',
             headlineTranslateKey: 'tour.courseExerciseOverview.startExercise.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.startExercise.content',
             highlightPadding: 5,
@@ -82,7 +77,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
             triggerNextStep: true,
         }),
         new UserInterActionTourStep({
-            highlightSelector: '.row.guided-tour .start-exercise',
+            highlightSelector: '.course-exercise-row.guided-tour .start-exercise',
             headlineTranslateKey: 'tour.courseExerciseOverview.startExerciseWait.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.startExerciseWait.content',
             highlightPadding: 5,
@@ -91,7 +86,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
             triggerNextStep: true,
         }),
         new TextTourStep({
-            highlightSelector: '.row.guided-tour .clone-repository',
+            highlightSelector: '.course-exercise-row.guided-tour .clone-repository',
             headlineTranslateKey: 'tour.courseExerciseOverview.repositoryCreated.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.repositoryCreated.content',
             highlightPadding: 5,
@@ -100,30 +95,16 @@ export const courseExerciseOverviewTour: GuidedTour = {
         new VideoTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.cloneRepository.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.cloneRepository.content',
+            hintTranslateKey: 'tour.courseExerciseOverview.cloneRepository.hint',
             videoUrl: 'tour.courseExerciseOverview.cloneRepository.videoUrl',
         }),
         new VideoTourStep({
-            headlineTranslateKey: 'tour.courseExerciseOverview.inspectSourceTree.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.inspectSourceTree.content',
-            videoUrl: 'tour.courseExerciseOverview.inspectSourceTree.videoUrl',
-        }),
-        new VideoTourStep({
-            headlineTranslateKey: 'tour.courseExerciseOverview.importEclipse.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.importEclipse.content',
-            videoUrl: 'tour.courseExerciseOverview.importEclipse.videoUrl',
-        }),
-        new VideoTourStep({
-            headlineTranslateKey: 'tour.courseExerciseOverview.inspectProject.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.inspectProject.content',
-            videoUrl: 'tour.courseExerciseOverview.inspectProject.videoUrl',
-        }),
-        new VideoTourStep({
-            headlineTranslateKey: 'tour.courseExerciseOverview.commitAndPush.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.commitAndPush.content',
-            videoUrl: 'tour.courseExerciseOverview.commitAndPush.videoUrl',
+            headlineTranslateKey: 'tour.courseExerciseOverview.solveExercise.headline',
+            contentTranslateKey: 'tour.courseExerciseOverview.solveExercise.content',
+            videoUrl: 'tour.courseExerciseOverview.solveExercise.videoUrl',
         }),
         new TextTourStep({
-            highlightSelector: '.row.guided-tour',
+            highlightSelector: '.course-exercise-row.guided-tour',
             headlineTranslateKey: 'tour.courseExerciseOverview.reviewResult.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.reviewResult.content',
             highlightPadding: 10,

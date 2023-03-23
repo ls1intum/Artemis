@@ -11,8 +11,8 @@ public class JenkinsBuildPlanUtils {
      * Replaces the base repository url written within the Jenkins pipeline script with the value specified by repoUrl
      *
      * @param jobXmlDocument the Jenkins pipeline
-     * @param repoUrl the new repository url
-     * @param baseRepoUrl the base repository url that will be replaced
+     * @param repoUrl        the new repository url
+     * @param baseRepoUrl    the base repository url that will be replaced
      * @throws IllegalArgumentException if the xml document isn't a Jenkins pipeline script
      */
     public static void replaceScriptParameters(Document jobXmlDocument, String repoUrl, String baseRepoUrl) throws IllegalArgumentException {

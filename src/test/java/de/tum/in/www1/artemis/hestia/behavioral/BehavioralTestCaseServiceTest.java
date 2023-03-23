@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashSet;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -12,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -26,6 +26,8 @@ import de.tum.in.www1.artemis.util.HestiaUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "behavioraltestcastservice";
 
     private final LocalRepository solutionRepo = new LocalRepository("main");
 
@@ -60,15 +62,10 @@ class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(0, 0, 0, 1);
-        database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
-        exercise = programmingExerciseRepository.findAll().get(0);
+        database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        final Course course = database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
+        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise.setTestwiseCoverageEnabled(true);
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     private ProgrammingExerciseTestCase addTestCaseToExercise(String name) {
@@ -99,8 +96,7 @@ class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbu
         gitDiffEntry.setLineCount(lineCount);
         gitDiffEntry.setGitDiffReport(gitDiffReport);
         gitDiffReport.getEntries().add(gitDiffEntry);
-        var savedGitDiffReport = programmingExerciseGitDiffReportRepository.save(gitDiffReport);
-        return savedGitDiffReport;
+        return programmingExerciseGitDiffReportRepository.save(gitDiffReport);
     }
 
     private CoverageReport newCoverageReport() {
@@ -137,7 +133,7 @@ class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     @Timeout(1000)
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerationForSimpleExample() throws Exception {
         exercise = hestiaUtilTestService.setupSolution("Test.java", "A\nB\nC\nD\nE\nF\nG\nH", exercise, solutionRepo);
         var testCase = addTestCaseToExercise("testCase");

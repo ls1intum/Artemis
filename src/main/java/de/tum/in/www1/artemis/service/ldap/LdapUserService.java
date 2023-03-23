@@ -74,6 +74,7 @@ public class LdapUserService {
      * 1) the allowedUsernamePattern is not specified (means all users should be loaded) or
      * 2) the allowedUsernamePattern is specified and the username matches
      * Example for TUM: ab12cde
+     *
      * @param user the user for which the additional details (in particular the registration number should be loaded)
      */
     public void loadUserDetailsFromLdap(User user) {

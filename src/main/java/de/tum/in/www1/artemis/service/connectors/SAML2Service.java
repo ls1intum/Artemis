@@ -64,8 +64,8 @@ public class SAML2Service {
     /**
      * Constructs a new instance.
      *
-     * @param userRepository The user repository
-     * @param properties The properties
+     * @param userRepository      The user repository
+     * @param properties          The properties
      * @param userCreationService The user creation service
      */
     public SAML2Service(final UserRepository userRepository, final SAML2Properties properties, final UserCreationService userCreationService, MailService mailService,
@@ -161,7 +161,7 @@ public class SAML2Service {
      * Gets the value associated with the given key from the principal.
      *
      * @param principal containing the user information.
-     * @param key of the attribute that should be extracted.
+     * @param key       of the attribute that should be extracted.
      * @return the value associated with the given key.
      */
     private String getAttributeValue(final Saml2AuthenticatedPrincipal principal, final String key) {

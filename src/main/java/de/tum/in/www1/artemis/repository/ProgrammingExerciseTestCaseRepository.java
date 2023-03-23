@@ -26,6 +26,7 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
 
     /**
      * Returns the test case with the programming exercise
+     *
      * @param testCaseId of the test case
      * @return the test case with the programming exercise
      */
@@ -38,6 +39,7 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
 
     /**
      * Returns all test cases with the associated solution entries for a programming exercise
+     *
      * @param exerciseId of the exercise
      * @return all test cases with the associated solution entries
      */
@@ -50,8 +52,9 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
 
     /**
      * Returns all test cases with the associated solution entries for a programming exercise
+     *
      * @param exerciseId of the exercise
-     * @param active status of the test case
+     * @param active     status of the test case
      * @return all test cases with the associated solution entries
      */
     @Query("""
@@ -66,6 +69,7 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
 
     /**
      * Returns the number of test cases marked as {@link de.tum.in.www1.artemis.domain.enumeration.Visibility#AFTER_DUE_DATE} for the given exercise.
+     *
      * @param exerciseId the exercise which test cases should be considered.
      * @return the number of test cases marked as {@link de.tum.in.www1.artemis.domain.enumeration.Visibility#AFTER_DUE_DATE}.
      */

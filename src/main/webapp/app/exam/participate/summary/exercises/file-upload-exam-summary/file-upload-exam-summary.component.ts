@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileService } from 'app/shared/http/file.service';
 
@@ -6,13 +6,11 @@ import { FileService } from 'app/shared/http/file.service';
     selector: 'jhi-file-upload-exam-summary',
     templateUrl: './file-upload-exam-summary.component.html',
 })
-export class FileUploadExamSummaryComponent implements OnInit {
+export class FileUploadExamSummaryComponent {
     @Input()
     submission: FileUploadSubmission;
 
     constructor(private fileService: FileService) {}
-
-    ngOnInit(): void {}
 
     /**
      *

@@ -363,7 +363,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * Won't allow a commit if the repository is locked!
      *
      * @param participationId identifier for the repository.
-     * @return ok (200) if the push was successful, notFound (404) if the participation does not exist and forbidden (403) if the user does not have permissions to access the participation OR the buildAndTestAfterDueDate is set and the repository is now locked.
+     * @return ok (200) if the push was successful, notFound (404) if the participation does not exist and forbidden (403) if the user does not have permissions to access the
+     *         participation OR the buildAndTestAfterDueDate is set and the repository is now locked.
      */
     @Override
     @PostMapping(value = "/repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -389,7 +390,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * GET /repository/:participationId/buildlogs : get the build log from Bamboo for the "participationId" repository.
      *
      * @param participationId to identify the repository with.
-     * @param resultId an optional result ID to get the build logs for the submission that the result belongs to. If the result ID is not specified, the latest submission is used.
+     * @param resultId        an optional result ID to get the build logs for the submission that the result belongs to. If the result ID is not specified, the latest submission is
+     *                            used.
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
     @GetMapping(value = "/repository/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)

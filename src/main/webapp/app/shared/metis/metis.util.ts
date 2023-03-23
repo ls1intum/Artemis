@@ -22,7 +22,8 @@ export enum DisplayPriority {
 export enum PageType {
     OVERVIEW = 'OVERVIEW',
     PAGE_SECTION = 'PAGE_SECTION',
-    PLAGIARISM_CASE = 'PLAGIARISM_CASE',
+    PLAGIARISM_CASE_INSTRUCTOR = 'PLAGIARISM_CASE_INSTRUCTOR',
+    PLAGIARISM_CASE_STUDENT = 'PLAGIARISM_CASE_STUDENT',
 }
 
 export const VOTE_EMOJI_ID = 'heavy_plus_sign';
@@ -42,7 +43,8 @@ export enum MetisPostAction {
     CREATE = 'CREATE',
     UPDATE = 'UPDATE',
     DELETE = 'DELETE',
-    READ_CONVERSATION = 'READ_CONVERSATION',
+
+    NEW_MESSAGE = 'NEW_MESSAGE',
 }
 
 export interface PostContextFilter {

@@ -1,7 +1,10 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div *ngIf="fileUploadExercise">
-            <h2><span jhiTranslate="artemisApp.fileUploadExercise.detail.title">File Upload Exercise</span> {{ fileUploadExercise.id }}</h2>
+            <div class="d-flex align-items-center">
+                <h2><span jhiTranslate="artemisApp.fileUploadExercise.detail.title">File Upload Exercise</span> {{ fileUploadExercise.id }}</h2>
+                <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+            </div>
             <hr />
             <div class="text-start">
                 <jhi-non-programming-exercise-detail-common-actions

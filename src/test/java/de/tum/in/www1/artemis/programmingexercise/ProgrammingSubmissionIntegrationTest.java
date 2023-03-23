@@ -7,9 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -53,6 +51,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "programmingsubmission";
+
     @Value("${artemis.git.name}")
     private String artemisGitName;
 
@@ -77,17 +77,17 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @BeforeEach
     void init() {
-        database.addUsers(10, 2, 1, 2);
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
-
-        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
+        database.addUsers(TEST_PREFIX, 10, 2, 1, 2);
+        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).get();
         database.addSolutionParticipationForProgrammingExercise(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addProgrammingParticipationWithResultForExercise(exercise, "student1");
+        database.addProgrammingParticipationWithResultForExercise(exercise, TEST_PREFIX + "student1");
         exercise.setTestCasesChanged(true);
         programmingExerciseRepository.save(exercise);
 
-        programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(exercise, "student2");
+        programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
 
         var newObjectId = new ObjectId(4, 5, 2, 5, 3);
         doReturn(newObjectId).when(gitService).getLastCommitHash(null);
@@ -99,25 +99,24 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerBuildStudent() throws Exception {
         bambooRequestMockProvider.enableMockingOfRequests();
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
 
-        String login = "student1";
+        String login = TEST_PREFIX + "student1";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
         bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
 
         String url = "/api/programming-submissions/" + participation.getId() + "/trigger-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
 
-        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
+        List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
         assertThat(submissions).hasSize(1);
 
         ProgrammingSubmission submission = submissions.get(0);
@@ -129,9 +128,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerBuildStudentSubmissionNotFound() throws Exception {
-        String login = "student1";
+        String login = TEST_PREFIX + "student1";
         Course course = database.addCourseWithDifferentModelingExercises();
         ModelingExercise classExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         ModelingSubmission modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"),
@@ -143,17 +142,17 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildInstructor() throws Exception {
         bambooRequestMockProvider.enableMockingOfRequests();
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
-        String login = "student1";
+        String login = TEST_PREFIX + "student1";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
         bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
         bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
 
-        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
+        List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
         assertThat(submissions).hasSize(1);
 
         ProgrammingSubmission submission = submissions.get(0);
@@ -165,17 +164,17 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         // Trigger the call again and make sure that the submission shouldn't be recreated
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
-        var updatedSubmissions = submissionRepository.findAll();
+        var updatedSubmissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
         assertThat(updatedSubmissions).hasSize(1);
         assertThat(updatedSubmissions.get(0).getId()).isEqualTo(submission.getId());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildInstructor_cannotGetLastCommitHash() throws Exception {
         bambooRequestMockProvider.enableMockingOfRequests();
         doThrow(EntityNotFoundException.class).when(gitService).getLastCommitHash(any());
-        String login = "student1";
+        String login = TEST_PREFIX + "student1";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
         bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
         bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
@@ -184,9 +183,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void triggerBuildInstructorTutorForbidden() throws Exception {
-        String login = "student1";
+        String login = TEST_PREFIX + "student1";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
 
         String url = "/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR";
@@ -194,9 +193,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerBuildInstructorStudentForbidden() throws Exception {
-        String login = "student1";
+        String login = TEST_PREFIX + "student1";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
 
         String url = "/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR";
@@ -205,14 +204,14 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @Timeout(5)
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForExerciseAsInstructor() throws Exception {
         bambooRequestMockProvider.enableMockingOfRequests();
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
 
-        String login1 = "student1";
-        String login2 = "student2";
-        String login3 = "student3";
+        String login1 = TEST_PREFIX + "student1";
+        String login2 = TEST_PREFIX + "student2";
+        String login3 = TEST_PREFIX + "student3";
         final var firstParticipation = database.addStudentParticipationForProgrammingExercise(exercise, login1);
         final var secondParticipation = database.addStudentParticipationForProgrammingExercise(exercise, login2);
         final var thirdParticipation = database.addStudentParticipationForProgrammingExercise(exercise, login3);
@@ -248,33 +247,33 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void triggerBuildForExerciseEditorForbidden() throws Exception {
         String url = "/api/programming-exercises/" + 1L + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void triggerBuildForExerciseTutorForbidden() throws Exception {
         String url = "/api/programming-exercises/" + 1L + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerBuildForExerciseStudentForbidden() throws Exception {
         String url = "/api/programming-exercises/" + 1L + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForParticipationsInstructorEmpty() throws Exception {
         bambooRequestMockProvider.enableMockingOfRequests();
-        String login1 = "student1";
-        String login2 = "student2";
-        String login3 = "student3";
+        String login1 = TEST_PREFIX + "student1";
+        String login2 = TEST_PREFIX + "student2";
+        String login3 = TEST_PREFIX + "student3";
         ProgrammingExerciseStudentParticipation participation1 = database.addStudentParticipationForProgrammingExercise(exercise, login1);
         database.addStudentParticipationForProgrammingExercise(exercise, login2);
         ProgrammingExerciseStudentParticipation participation3 = database.addStudentParticipationForProgrammingExercise(exercise, login3);
@@ -297,49 +296,49 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         request.postWithoutLocation(url, participationsToTrigger, HttpStatus.OK, new HttpHeaders());
         request.postWithoutLocation(url, participationsToTrigger, HttpStatus.OK, new HttpHeaders());
 
-        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
         // Note: the participations above have no submissions, so the builds will not be triggered
-        assertThat(submissions).isEmpty();
+        assertThat(submissionRepository.findAllByParticipationIdWithResults(participation1.getId())).isEmpty();
+        assertThat(submissionRepository.findAllByParticipationIdWithResults(participation3.getId())).isEmpty();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForParticipationsInstructorParticipationsEmpty() throws Exception {
         String url = "/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build";
         request.postWithoutLocation(url, List.of(), HttpStatus.BAD_REQUEST, new HttpHeaders());
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void triggerBuildForParticipationsEditorForbidden() throws Exception {
         String url = "/api/programming-exercises/" + 1L + "/trigger-instructor-build";
         request.postWithoutLocation(url, new ArrayList<>(), HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void triggerBuildForParticipationsTutorForbidden() throws Exception {
         String url = "/api/programming-exercises/" + 1L + "/trigger-instructor-build";
         request.postWithoutLocation(url, new ArrayList<>(), HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerBuildForParticipationsStudentForbidden() throws Exception {
         String url = "/api/programming-exercises/" + 1L + "/trigger-instructor-build";
         request.postWithoutLocation(url, new ArrayList<>(), HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerFailedBuildResultPresentInCIOk() throws Exception {
-        var user = database.getUserByLogin("student1");
+        var user = database.getUserByLogin(TEST_PREFIX + "student1");
         var submission = new ProgrammingSubmission();
         submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
         submission.setSubmitted(true);
         submission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
         submission.setType(SubmissionType.MANUAL);
-        submission = database.addProgrammingSubmission(exercise, submission, "student1");
+        submission = database.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
         var optionalParticipation = programmingExerciseStudentParticipationRepository.findById(submission.getParticipation().getId());
         assertThat(optionalParticipation).isPresent();
         final var participation = optionalParticipation.get();
@@ -356,13 +355,13 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         // Perform the request again and make sure no new submission was created
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
-        var updatedSubmissions = submissionRepository.findAll();
+        var updatedSubmissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
         assertThat(updatedSubmissions).hasSize(1);
         assertThat(updatedSubmissions.get(0).getId()).isEqualTo(submission.getId());
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerFailedBuildSubmissionNotLatestButLastGradedNotFound() throws Exception {
         var participation = createExerciseWithSubmissionAndParticipation();
 
@@ -371,7 +370,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerFailedBuild_CIException() throws Exception {
         var participation = createExerciseWithSubmissionAndParticipation();
         bambooRequestMockProvider.enableMockingOfRequests(true);
@@ -384,7 +383,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     private ProgrammingExerciseStudentParticipation createExerciseWithSubmissionAndParticipation() {
-        var user = database.getUserByLogin("student1");
+        var user = database.getUserByLogin(TEST_PREFIX + "student1");
         exercise.setDueDate(ZonedDateTime.now().minusDays(1));
         exercise = programmingExerciseRepository.save(exercise);
         var submission = new ProgrammingSubmission();
@@ -399,9 +398,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerFailedBuildForbiddenParticipationAccess() throws Exception {
-        String login = "student2";
+        String login = TEST_PREFIX + "student2";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
 
         String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
@@ -409,12 +408,12 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerFailedBuildEmptyLatestPendingSubmission() throws Exception {
         bambooRequestMockProvider.enableMockingOfRequests();
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
 
-        String login = "student1";
+        String login = TEST_PREFIX + "student1";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
         bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
 
@@ -423,9 +422,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerFailedBuildSubmissionNotFound() throws Exception {
-        String login = "student1";
+        String login = TEST_PREFIX + "student1";
         Course course = database.addCourseWithDifferentModelingExercises();
         ModelingExercise classExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         ModelingSubmission modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"),
@@ -437,13 +436,13 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getAllProgrammingSubmissionsAsUserForbidden() throws Exception {
         request.get("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNotifyPush_invalidParticipation() throws Exception {
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation = studentParticipationRepository.save(studentParticipation);
@@ -453,18 +452,18 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNotifyPush_cannotGetLastCommitDetails() throws Exception {
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         doThrow(ContinuousIntegrationException.class).when(versionControlService).getLastCommitDetails(any());
         String url = "/api/programming-submissions/" + participation.getId();
         request.post(url, "test", HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNotifyPush_commitIsDifferentBranch() throws Exception {
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
 
         Commit mockCommit = mock(Commit.class);
         doReturn(mockCommit).when(versionControlService).getLastCommitDetails(any());
@@ -476,9 +475,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNotifyPush_isSetupCommit() throws Exception {
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
 
         Commit mockCommit = mock(Commit.class);
         doReturn(mockCommit).when(versionControlService).getLastCommitDetails(any());
@@ -495,13 +494,13 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAllProgrammingSubmissionsAsInstructorAllSubmissionsReturned() throws Exception {
         final var submissions = new ArrayList<ProgrammingSubmission>();
         for (int i = 1; i < 4; i++) {
             final var submission = ModelFactory.generateProgrammingSubmission(true);
             submissions.add(submission);
-            database.addProgrammingSubmission(exercise, submission, "student" + i);
+            database.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student" + i);
         }
 
         String url = "/api/exercises/" + exercise.getId() + "/programming-submissions";
@@ -511,12 +510,12 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAllProgrammingSubmissionsAssessedByTutorAllSubmissionsReturned() throws Exception {
-        database.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), "student1");
+        database.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student1");
         var assessedSubmission = ModelFactory.generateProgrammingSubmission(true);
-        assessedSubmission = database.addProgrammingSubmission(exercise, assessedSubmission, "student2");
-        final var tutor = database.getUserByLogin("tutor1");
+        assessedSubmission = database.addProgrammingSubmission(exercise, assessedSubmission, TEST_PREFIX + "student2");
+        final var tutor = database.getUserByLogin(TEST_PREFIX + "tutor1");
         database.addResultToSubmission(assessedSubmission, AssessmentType.SEMI_AUTOMATIC, null);
         database.addResultToSubmission(assessedSubmission, AssessmentType.AUTOMATIC, null);
         database.addResultToSubmission(assessedSubmission, AssessmentType.SEMI_AUTOMATIC, tutor);
@@ -532,9 +531,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getProgrammingSubmissionWithoutAssessmentAsTutorWithOneAvailableReturnsSubmission() throws Exception {
-        String login = "student1";
+        String login = TEST_PREFIX + "student1";
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         exercise.setDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
@@ -548,9 +547,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionWithManualResult() throws Exception {
-        String login = "student1";
+        String login = TEST_PREFIX + "student1";
         database.addGradingInstructionsToExercise(exercise);
         programmingExerciseRepository.save(exercise);
 
@@ -582,11 +581,11 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionLessManualResultsThanCorrectionRoundWithoutAutomaticResult() throws Exception {
 
         ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
-        submission = database.addProgrammingSubmission(exercise, submission, "student1");
+        submission = database.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
         exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exercise = programmingExerciseRepository.save(exercise);
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -603,15 +602,15 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // Make sure that the stored submission has a semi-automatic assessment by tutor 1
         assertThat(storedSubmission.getLatestResult()).isNotNull();
         assertThat(storedSubmission.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-        assertThat(storedSubmission.getLatestResult().getAssessor().getLogin()).isEqualTo("tutor1");
+        assertThat(storedSubmission.getLatestResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionLessManualResultsThanCorrectionRoundWithAutomaticResult() throws Exception {
 
         ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
-        submission = database.addProgrammingSubmission(exercise, submission, "student1");
+        submission = database.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
         exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exercise = programmingExerciseRepository.save(exercise);
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -636,11 +635,11 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // Make sure that the stored submission has a latest manual assessment by tutor 1
         assertThat(storedSubmission.getLatestResult()).isNotNull();
         assertThat(storedSubmission.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-        assertThat(storedSubmission.getLatestResult().getAssessor().getLogin()).isEqualTo("tutor1");
+        assertThat(storedSubmission.getLatestResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionWithoutManualResult() throws Exception {
         var result = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), programmingExerciseStudentParticipation);
         var submission = database.addProgrammingSubmissionToResultAndParticipation(result, programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
@@ -658,9 +657,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetProgrammingSubmissionWithoutAssessment() throws Exception {
-        String login = "student1";
+        String login = TEST_PREFIX + "student1";
         ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
         submission = database.addProgrammingSubmission(exercise, submission, login);
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -668,19 +667,17 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
         ProgrammingSubmission storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
 
-        // set dates to UTC and round to milliseconds for comparison
-        submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "results", "submissionDate");
+        assertThat(storedSubmission.getSubmissionDate()).as("submission date is correct").isEqualToIgnoringNanos(submission.getSubmissionDate());
         assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetProgrammingSubmissionWithoutAssessmentLockSubmission() throws Exception {
         database.addGradingInstructionsToExercise(exercise);
         programmingExerciseRepository.save(exercise);
-        User user = database.getUserByLogin("tutor1");
+        User user = database.getUserByLogin(TEST_PREFIX + "tutor1");
         var newResult = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), programmingExerciseStudentParticipation);
         programmingExerciseStudentParticipation.addResult(newResult);
         var submission = database.addProgrammingSubmissionToResultAndParticipation(newResult, programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
@@ -698,7 +695,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(submission.getLatestResult()).isNotNull();
 
         // Make sure no new submissions are created
-        var latestSubmissions = submissionRepository.findAll();
+        var latestSubmissions = submissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId());
         assertThat(latestSubmissions).hasSize(1);
         assertThat(latestSubmissions.get(0).getId()).isEqualTo(submission.getId());
 
@@ -709,9 +706,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetModelSubmissionWithoutAssessmentTestLockLimit() throws Exception {
-        createTenLockedSubmissionsForExercise("tutor1");
+        createTenLockedSubmissionsForExercise(TEST_PREFIX + "tutor1");
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
 
         String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
@@ -719,11 +716,11 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getProgrammingSubmissionWithoutAssessmentDueDateNotPassedYet() throws Exception {
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
-        final var submission = database.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), "student1");
+        final var submission = database.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student1");
         database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
 
         String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
@@ -732,18 +729,19 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     /**
      * Checks that submissions for a participation with an individual due date are not shown to tutors before this due date has passed.
+     *
      * @param isIndividualDueDateInFuture if the due date is in the future, the submission should not be shown. Otherwise, it should be shown.
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetProgrammingSubmissionWithoutAssessmentWithIndividualDueDate(boolean isIndividualDueDateInFuture) throws Exception {
         // exercise due date in the past
         exercise.setDueDate(ZonedDateTime.now().minusDays(1));
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
 
-        final var submission = database.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), "student1");
+        final var submission = database.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student1");
         if (isIndividualDueDateInFuture) {
             submission.getParticipation().setIndividualDueDate(ZonedDateTime.now().plusDays(1));
         }
@@ -767,14 +765,14 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetProgrammingSubmissionWithoutAssessmentNothingAvailable(boolean lock) throws Exception {
         exercise.setDueDate(ZonedDateTime.now().minusDays(2));
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
         var submission = ModelFactory.generateProgrammingSubmission(true);
-        submission = database.addProgrammingSubmission(exercise, submission, "student1");
-        final var tutor = database.getUserByLogin("tutor1");
+        submission = database.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        final var tutor = database.getUserByLogin(TEST_PREFIX + "tutor1");
         database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, tutor);
 
         String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment?lock=" + lock;
@@ -787,7 +785,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         ProgrammingSubmission submission;
         for (int i = 1; i < 11; i++) {
             submission = ModelFactory.generateProgrammingSubmission(true);
-            database.addProgrammingSubmissionWithResultAndAssessor(exercise, submission, "student" + i, assessor, AssessmentType.SEMI_AUTOMATIC, false);
+            database.addProgrammingSubmissionWithResultAndAssessor(exercise, submission, TEST_PREFIX + "student" + i, assessor, AssessmentType.SEMI_AUTOMATIC, false);
         }
     }
 }

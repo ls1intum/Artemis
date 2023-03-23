@@ -143,14 +143,14 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.userManagement.groups">Groups</label>
                     <mat-form-field class="group-tag-list" appearance="outline">
                         <mat-chip-grid #groupList aria-label="Group selection">
-                            <mat-chip *ngFor="let group of user.groups" (removed)="onGroupRemove(user, group)" class="group-tag">
+                            <mat-chip-row *ngFor="let group of user.groups" (removed)="onGroupRemove(user, group)" class="group-tag">
                                 <div class="custom-tag">
                                     {{ group }}
                                     <button matChipRemove>
                                         <fa-icon [icon]="faTimes" class="group-tag-remove"></fa-icon>
                                     </button>
                                 </div>
-                            </mat-chip>
+                            </mat-chip-row>
                             <input
                                 class="group-tag-input"
                                 [placeholder]="'artemisApp.userManagement.addGroup' | artemisTranslate"

@@ -493,11 +493,15 @@ You can specify the moment when Artemis publishes the results of the exam, see `
     Unsubmitted exams are not eligible for the assessment process.
 
 - Review student performance using various metrics such as average, median and standard deviation.
-- Unsubmitted exams are not eligible for assessment and thereby appear as having no score. It can happen that an exercise is not part of any :ref:`student exam <student_exams>`. This is the case when Artemis selects a different exercise of the same exercise group for every :ref:`student exam <student_exams>`. Similarly to the unsubmitted exams, they can warp the results and statistics of the exam. By eliminating unsubmitted exams and exercises which were not part of the :ref:`exam conduction <exam_conduction>`, you can gain a more realistic overview of the performance of the students.
+- Unsubmitted exams are not eligible for assessment and thereby appear as having no score. The corresponding students are assigned with a :ref:`no-participation special grade <grading>` if a grading key exists. It can happen that an exercise is not part of any :ref:`student exam <student_exams>`. This is the case when Artemis selects a different exercise of the same exercise group for every :ref:`student exam <student_exams>`. Similarly to the unsubmitted exams, they can warp the results and statistics of the exam. By eliminating unsubmitted exams and exercises which were not part of the :ref:`exam conduction <exam_conduction>`, you can gain a more realistic overview of the performance of the students.
 - Review the students perceived difficulty of every exercise to improve exams in the future.
 - The exam scores can also be exported via |export|. This is useful to upload the results into university systems like `TUM Online <https://campus.tum.de>`_ as a ``CSV`` file.
 
-- The exported ``CSV`` file includes the ``students name``, ``username``, ``email``, ``registration number``, their assigned ``exercises``, and their ``score`` for every exercise.
+- The exported ``CSV`` file includes the students' ``name``, ``username``, ``email``, ``registration number``, their assigned ``exercises``, their ``score`` for every exercise, ``overall exam points``, ``overall exam score``, ``grades`` (before bonus if bonus is configured), ``presentation score``, ``submitted`` (yes/no) and ``passed`` (yes/no) values.
+
+  - If bonus is configured, the file also contains ``bonus grades`` and ``final grade``.
+  - If there is at least one plagiarism verdict in the exam, the file also contains ``plagiarism verdicts``.
+  - If there is at least one plagiarism verdict in the bonus source, the file also contains ``plagiarism verdicts in bonus course/exam``.
 - The exported ``CSV`` file also contains the aggregated statistics of the :ref:`exam conduction <exam_conduction>` such as the ``number of participations`` and the ``average score`` per exercise.
 
 .. figure:: instructor/exam_statistics.png
@@ -505,6 +509,20 @@ You can specify the moment when Artemis publishes the results of the exam, see `
    :align: center
 
    Exam Scores Page
+
+4.2. Exam Solutions
+^^^^^^^^^^^^^^^^^^^
+Optionally, you can publish the example solutions of text, modeling, file upload and programming exercises to students with submissions after a desired date by setting ``Example Solution Publication Date`` of the exam to a non-empty date.
+All example solutions of these exercises are published according to this date set in the exam, as opposed to the course exercises which have their own individual example solution publication dates.
+
+- Example solution publication date can be empty, in this case solutions are never published. This is the default value.
+- If set, example solution publication date must be the same or after the ``visible from`` and ``end of working time`` if they are set.
+
+.. figure:: instructor/exam_example_solution_publication_date.png
+    :alt: Example Solution Publication Date
+    :align: center
+
+    Example Solution Publication Date
 
     .. _student_review:
 

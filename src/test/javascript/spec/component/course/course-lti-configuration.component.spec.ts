@@ -1,10 +1,12 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { SortService } from 'app/shared/service/sort.service';
@@ -18,8 +20,9 @@ import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-a
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisTestModule } from '../../test.module';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Course LTI Configuration Component', () => {
     let comp: CourseLtiConfigurationComponent;
@@ -53,14 +56,16 @@ describe('Course LTI Configuration Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbNavModule],
+            imports: [ArtemisTestModule, NgbNavModule, MockModule(NgbTooltipModule)],
             declarations: [
                 CourseLtiConfigurationComponent,
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(SortDirective),
                 MockDirective(SortByDirective),
-                MockComponent(FaIconComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(CopyIconButtonComponent),
+                MockRouterLinkDirective,
             ],
             providers: [
                 MockProvider(CourseManagementService),
@@ -111,9 +116,12 @@ describe('Course LTI Configuration Component', () => {
             expect(comp.exercises).toEqual(courseWithExercises.exercises);
             expect(findWithExercisesStub).toHaveBeenCalledOnce();
 
-            expect(comp.getKeysetUrl()).toBe(`${location.origin}/.well-known/jwks.json`);
-            expect(comp.getDeepLinkingUrl()).toBe(`${location.origin}/api/lti13/deep-linking/${course.id}`);
             expect(comp.getDynamicRegistrationUrl()).toBe(`${location.origin}/lti/dynamic-registration/${course.id}`);
+            expect(comp.getDeepLinkingUrl()).toBe(`${location.origin}/api/lti13/deep-linking/${course.id}`);
+            expect(comp.getToolUrl()).toBe(`${location.origin}/courses/${course.id}`);
+            expect(comp.getKeysetUrl()).toBe(`${location.origin}/.well-known/jwks.json`);
+            expect(comp.getInitiateLoginUrl()).toBe(`${location.origin}/api/lti13/initiate-login/${course.onlineCourseConfiguration?.registrationId}`);
+            expect(comp.getRedirectUri()).toBe(`${location.origin}/api/lti13/auth-callback`);
         });
     });
 

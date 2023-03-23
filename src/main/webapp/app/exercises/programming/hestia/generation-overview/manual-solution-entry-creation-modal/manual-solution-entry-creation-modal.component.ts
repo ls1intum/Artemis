@@ -63,6 +63,7 @@ export class ManualSolutionEntryCreationModalComponent implements OnInit, OnDest
     }
 
     onCreateEntry() {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         this.solutionEntryService.createSolutionEntry(this.exerciseId, this.solutionEntry?.testCase?.id!, this.solutionEntry).subscribe({
             next: (createdEntry) => {
                 this.dialogErrorSource.next('');

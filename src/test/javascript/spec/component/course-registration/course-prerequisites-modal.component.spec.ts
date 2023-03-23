@@ -4,21 +4,12 @@ import { MockPipe, MockProvider } from 'ng-mocks';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { of } from 'rxjs';
 import { LearningGoal } from 'app/entities/learningGoal.model';
-import { Component, Input } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-prerequisites-modal.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
-
-@Component({ selector: 'jhi-learning-goal-card', template: '<div><ng-content></ng-content></div>' })
-class LearningGoalCardStubComponent {
-    @Input() learningGoal: LearningGoal;
-    @Input() learningGoalProgress: IndividualLearningGoalProgress;
-    @Input() isPrerequisite: Boolean;
-    @Input() displayOnly: Boolean;
-}
+import { LearningGoalCardStubComponent } from '../learning-goals/learning-goal-card-stub.component';
 
 describe('CoursePrerequisitesModal', () => {
     let coursePrerequisitesModalComponentFixture: ComponentFixture<CoursePrerequisitesModalComponent>;

@@ -1,12 +1,13 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import dayjs from 'dayjs/esm';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Subscription } from 'rxjs';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { CommitState, DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { map } from 'rxjs/operators';
@@ -35,7 +36,6 @@ export class ExamNavigationBarComponent implements OnInit {
     criticalTime = dayjs.duration(5, 'minutes');
 
     icon: IconProp;
-    getExerciseButtonTooltip = this.examParticipationService.getExerciseButtonTooltip;
 
     subscriptionToLiveExamExerciseUpdates: Subscription;
 
@@ -93,6 +93,10 @@ export class ExamNavigationBarComponent implements OnInit {
                         }
                     });
             });
+    }
+
+    getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
+        return this.examParticipationService.getExerciseButtonTooltip(exercise);
     }
 
     triggerExamAboutToEnd() {
@@ -183,12 +187,13 @@ export class ExamNavigationBarComponent implements OnInit {
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         if (!submission) {
             // in case no participation/submission yet exists -> display synced
+            // this should only occur for programming exercises
             return 'synced';
         }
         if (submission.submitted) {
             this.icon = faCheck;
         }
-        if (submission.isSynced) {
+        if (submission.isSynced || this.isOnlyOfflineIDE(exercise)) {
             // make button blue (except for the current page)
             if (exerciseIndex === this.exerciseIndex && !this.overviewPageOpen) {
                 return 'synced active';
@@ -196,10 +201,18 @@ export class ExamNavigationBarComponent implements OnInit {
                 return 'synced';
             }
         } else {
-            // make button yellow
+            // make button yellow except for programming exercises with only offline IDE
             this.icon = faEdit;
             return 'notSynced';
         }
+    }
+
+    isOnlyOfflineIDE(exercise: Exercise): boolean {
+        if (exercise instanceof ProgrammingExercise) {
+            const programmingExercise = exercise as ProgrammingExercise;
+            return programmingExercise.allowOfflineIde === true && programmingExercise.allowOnlineEditor === false;
+        }
+        return false;
     }
 
     /**

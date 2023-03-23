@@ -112,7 +112,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
     @Input() totalParticipations?: number;
     @Input() exercise: ProgrammingExercise;
 
-    @Output() testCaseColorsChange = new EventEmitter<{}>();
+    @Output() testCaseColorsChange = new EventEmitter<any>();
     @Output() testCaseRowFilter = new EventEmitter<number>();
 
     readonly testCaseBarTitle = TestCaseBarTitle;

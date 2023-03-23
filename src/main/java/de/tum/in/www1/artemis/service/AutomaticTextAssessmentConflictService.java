@@ -43,12 +43,12 @@ public class AutomaticTextAssessmentConflictService {
     }
 
     /**
-     *  This function asynchronously calls remote Athene service to check feedback consistency for the assessed submission.
-     *  The call is made if the automatic assessments are enabled and the passed text blocks belong to any cluster.
+     * This function asynchronously calls remote Athene service to check feedback consistency for the assessed submission.
+     * The call is made if the automatic assessments are enabled and the passed text blocks belong to any cluster.
      *
-     * @param textBlocks - all text blocks in the text assessment
+     * @param textBlocks   - all text blocks in the text assessment
      * @param feedbackList - all feedback in the text assessment
-     * @param exerciseId - exercise id of the assessed text exercise
+     * @param exerciseId   - exercise id of the assessed text exercise
      */
     @Async
     public void asyncCheckFeedbackConsistency(Set<TextBlock> textBlocks, List<Feedback> feedbackList, long exerciseId) {
@@ -96,7 +96,7 @@ public class AutomaticTextAssessmentConflictService {
         feedbackConflictResponseDTOS.forEach(conflict -> {
             Optional<Feedback> firstFeedback = feedbackRepository.findById(conflict.getFirstFeedbackId());
             Optional<Feedback> secondFeedback = feedbackRepository.findById(conflict.getSecondFeedbackId());
-            List<FeedbackConflict> storedConflicts = this.feedbackConflictRepository.findConflictsOrDiscardedOnesByFirstAndSecondFeedback(conflict.getFirstFeedbackId(),
+            List<FeedbackConflict> storedConflicts = feedbackConflictRepository.findConflictsOrDiscardedOnesByFirstAndSecondFeedback(conflict.getFirstFeedbackId(),
                     conflict.getSecondFeedbackId());
             // if the found conflict is present but its type has changed, update it
             if (!storedConflicts.isEmpty() && !storedConflicts.get(0).getType().equals(conflict.getType())) {
@@ -132,16 +132,16 @@ public class AutomaticTextAssessmentConflictService {
     public Set<TextSubmission> getConflictingSubmissions(long feedbackId) {
         List<FeedbackConflict> feedbackConflicts = this.feedbackConflictRepository.findAllWithEagerFeedbackResultAndSubmissionByFeedbackId(feedbackId);
         Set<TextSubmission> textSubmissionSet = feedbackConflicts.stream().map(conflict -> {
+            TextSubmission textSubmission;
             if (conflict.getFirstFeedback().getId() == feedbackId) {
-                TextSubmission textSubmission = (TextSubmission) conflict.getSecondFeedback().getResult().getSubmission();
+                textSubmission = (TextSubmission) conflict.getSecondFeedback().getResult().getSubmission();
                 textSubmission.setResults(List.of(conflict.getSecondFeedback().getResult()));
-                return textSubmission;
             }
             else {
-                TextSubmission textSubmission = (TextSubmission) conflict.getFirstFeedback().getResult().getSubmission();
+                textSubmission = (TextSubmission) conflict.getFirstFeedback().getResult().getSubmission();
                 textSubmission.setResults(List.of(conflict.getFirstFeedback().getResult()));
-                return textSubmission;
             }
+            return textSubmission;
         }).collect(Collectors.toSet());
         final var allTextBlocks = textBlockRepository.findAllBySubmissionIdIn(textSubmissionSet.stream().map(TextSubmission::getId).collect(Collectors.toSet()));
         final var textBlockGroupedBySubmissionId = allTextBlocks.stream().collect(Collectors.groupingBy(block -> block.getSubmission().getId(), Collectors.toSet()));
@@ -166,7 +166,7 @@ public class AutomaticTextAssessmentConflictService {
      * If the stored conflicts are not returned from Athene after the consistency check, it means that they are solved and set as solved.
      *
      * @param textFeedbackConflictRequestDTOS the list sent to Athene for check
-     * @param feedbackConflictResponseDTOS returned list with found conflicts.
+     * @param feedbackConflictResponseDTOS    returned list with found conflicts.
      * @return solved conflicts
      */
     private List<FeedbackConflict> findSolvedConflictsInResponse(List<TextFeedbackConflictRequestDTO> textFeedbackConflictRequestDTOS,

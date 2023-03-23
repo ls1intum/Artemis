@@ -16,7 +16,7 @@ import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/co
 import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 
-// tslint:disable-next-line:directive-selector
+// eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: 'jhi-markdown-editor' })
 class MockMarkdownEditorDirective {
     @Input() markdown?: string;

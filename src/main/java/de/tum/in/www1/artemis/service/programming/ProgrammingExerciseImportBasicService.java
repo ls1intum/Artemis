@@ -77,12 +77,12 @@ public class ProgrammingExerciseImportBasicService {
      * continuous integration server. <br>
      * There are however, a couple of things that will never get copied:
      * <ul>
-     *     <li>The ID</li>
-     *     <li>The template and solution participation</li>
-     *     <li>The number of complaints, assessments and more feedback requests</li>
-     *     <li>The tutor/student participations</li>
-     *     <li>The questions asked by students</li>
-     *     <li>The example submissions</li>
+     * <li>The ID</li>
+     * <li>The template and solution participation</li>
+     * <li>The number of complaints, assessments and more feedback requests</li>
+     * <li>The tutor/student participations</li>
+     * <li>The questions asked by students</li>
+     * <li>The example submissions</li>
      * </ul>
      *
      * @param templateExercise The template exercise which should get imported

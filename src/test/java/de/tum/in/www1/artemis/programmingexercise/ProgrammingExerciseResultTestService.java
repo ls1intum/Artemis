@@ -1,20 +1,22 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
+import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_TOPIC;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 import java.util.*;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -96,35 +98,38 @@ public class ProgrammingExerciseResultTestService {
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipationStaticCodeAnalysis;
 
-    public void setup() {
-        database.addUsers(10, 2, 0, 2);
+    private String userPrefix;
+
+    public void setup(String userPrefix) {
+        this.userPrefix = userPrefix;
+        database.addUsers(userPrefix, 2, 2, 0, 2);
         setupForProgrammingLanguage(ProgrammingLanguage.JAVA);
     }
 
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
         Course course = database.addCourseWithOneProgrammingExercise(false, false, programmingLanguage);
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true, false, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
-        programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-        programmingExerciseStudentParticipationStaticCodeAnalysis = database.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, "student2");
+        programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
+        programmingExerciseStudentParticipationStaticCodeAnalysis = database.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis,
+                userPrefix + "student2");
     }
 
     public void tearDown() {
-        database.resetDatabase();
     }
 
     // Test
     public void shouldUpdateFeedbackInSemiAutomaticResult(AbstractBuildResultNotificationDTO buildResultNotification, String loginName) throws Exception {
         // Make sure we only have one participation
-        participationRepository.deleteAll();
+        participationRepository.deleteAll(participationRepository.findByExerciseId(programmingExercise.getId()));
         programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, loginName);
 
         // Add a student submission with two manual results and a semi automatic result
         var submission = database.createProgrammingSubmission(programmingExerciseStudentParticipation, false, TestConstants.COMMIT_HASH_STRING);
-        var accessor = database.getUserByLogin("instructor1");
+        var accessor = database.getUserByLogin(userPrefix + "instructor1");
         database.addResultToSubmission(submission, AssessmentType.MANUAL, accessor);
         database.addResultToSubmission(submission, AssessmentType.MANUAL, accessor);
         database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, accessor);
@@ -147,20 +152,15 @@ public class ProgrammingExerciseResultTestService {
         assertThat(resultsWithFeedback.get(2).getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
 
         // Re-trigger the build. We create a notification with feedback of a successful test
-        database.changeUser("instructor1");
+        database.changeUser(userPrefix + "instructor1");
         postResult(buildResultNotification);
 
         // Retrieve updated results
         var updatedResults = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
-        assertThat(updatedResults).hasSize(3);
+        assertThat(updatedResults).containsExactlyInAnyOrderElementsOf(resultsWithFeedback);
 
-        // Assert that the result order stays the same
-        assertThat(updatedResults.get(0).getId()).isEqualTo(resultsWithFeedback.get(0).getId());
-        assertThat(updatedResults.get(1).getId()).isEqualTo(resultsWithFeedback.get(1).getId());
-        assertThat(updatedResults.get(2).getId()).isEqualTo(resultsWithFeedback.get(2).getId());
-
-        // Assert that the last result is the SEMI_AUTOMATIC result
-        semiAutoResult = updatedResults.get(2);
+        var semiAutoResultId = semiAutoResult.getId();
+        semiAutoResult = updatedResults.stream().filter(result -> result.getId().equals(semiAutoResultId)).findFirst().get();
         assertThat(semiAutoResult.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         // Assert that the SEMI_AUTOMATIC result has two feedbacks whereas the last one is the automatic one
         assertThat(semiAutoResult.getFeedbacks()).hasSize(2);
@@ -200,7 +200,7 @@ public class ProgrammingExerciseResultTestService {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).usingElementComparatorIgnoringFields("exercise", "id", "tasks", "solutionEntries", "coverageEntries")
+        assertThat(testCases).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "id", "tasks", "solutionEntries", "coverageEntries")
                 .containsExactlyInAnyOrderElementsOf(expectedTestCases);
         assertThat(optionalResult).isPresent();
         if (withFailedTest) {
@@ -212,18 +212,21 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and shouldn't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
-        var latestSubmissions = programmingSubmissionRepository.findAll();
         // One submission from the student participation and the other from solution participation
-        assertThat(latestSubmissions).hasSize(2);
+        var latestSubmissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId());
+        assertThat(latestSubmissions).hasSize(1);
+        var latestSolutionSubmissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(solutionParticipation.getId());
+        assertThat(latestSolutionSubmissions).hasSize(1);
     }
 
     // Test
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification, ProgrammingLanguage programmingLanguage) {
+        final long participationId = programmingExerciseStudentParticipationStaticCodeAnalysis.getId();
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
         final var savedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(optionalResult.get().getId());
 
         // Should be one because programmingExerciseStudentParticipationStaticCodeAnalysis doesn't have a submission
-        var submissions = programmingSubmissionRepository.findAll();
+        var submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
         assertThat(submissions).hasSize(1);
 
         // Create comparator to explicitly compare feedback attributes (equals only compares id)
@@ -245,7 +248,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and shouldn't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll()).hasSameSizeAs(submissions);
+        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId)).hasSameSizeAs(submissions);
     }
 
     // Test
@@ -260,7 +263,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
     // Test
@@ -275,7 +278,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
     public void shouldSaveBuildLogsInBuildLogRepository(Object resultNotification) {
@@ -289,7 +292,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
     public void shouldNotSaveBuildLogsInBuildLogRepository(Object resultNotification) {
@@ -303,13 +306,13 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
     // Test
     public void shouldGenerateNewManualResultIfManualAssessmentExists(Object resultNotification) {
         var programmingSubmission = database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
-        programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1",
+        programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, userPrefix + "student1", userPrefix + "tutor1",
                 AssessmentType.SEMI_AUTOMATIC, true);
 
         List<Feedback> feedback = ModelFactory.generateManualFeedback();
@@ -326,10 +329,12 @@ public class ProgrammingExerciseResultTestService {
         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         assertThat(result.getFeedbacks()).hasSize(6);
         assertThat(result.getFeedbacks().stream().filter((fb) -> fb.getType() == FeedbackType.AUTOMATIC).count()).isEqualTo(3);
+        assertThat(result.getTestCaseCount()).isEqualTo(3);
+        assertThat(result.getPassedTestCaseCount()).isEqualTo(3);
 
         // Call again and shouldn't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
     // Test
@@ -396,6 +401,22 @@ public class ProgrammingExerciseResultTestService {
 
         final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
         assertThat(result).isPresent();
+    }
+
+    // Test
+    public void shouldRemoveTestCaseNamesFromWebsocketNotification(AbstractBuildResultNotificationDTO resultNotification, SimpMessageSendingOperations messagingTemplate)
+            throws Exception {
+        var programmingSubmission = database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
+        programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
+        programmingExerciseStudentParticipation = participationRepository.save(programmingExerciseStudentParticipation);
+
+        postResult(resultNotification);
+
+        ArgumentCaptor<Result> resultArgumentCaptor = ArgumentCaptor.forClass(Result.class);
+        verify(messagingTemplate).convertAndSendToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC), resultArgumentCaptor.capture());
+
+        Result result = resultArgumentCaptor.getValue();
+        assertThat(result.getFeedbacks()).hasSize(4).allMatch(feedback -> feedback.getText() == null);
     }
 
     private int getNumberOfBuildLogs(Object resultNotification) {

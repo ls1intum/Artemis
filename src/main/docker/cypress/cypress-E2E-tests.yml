@@ -1,0 +1,127 @@
+#TODO: ask for newer docker-compose version on bamboo agents
+version: '2.4'
+
+services:
+    artemis-mysql:
+        extends:
+            file: ../mysql.yml
+            service: artemis-mysql
+        healthcheck:
+            test: mysqladmin ping -h localhost
+            interval: 5s
+            timeout: 3s
+            retries: 30
+            start_period: 30s
+
+    artemis-app:
+        build:
+            # This is required to copy the Artemis war file properly into the container
+            context: ../../../..
+            dockerfile: src/main/docker/Dockerfile
+        restart: "unless-stopped"
+        volumes:
+            - ../../resources/config/application-prod.yml:/opt/artemis/config/application-prod.yml:ro
+            - ./application.yml:/opt/artemis/config/application.yml:ro
+        environment:
+            _JAVA_OPTIONS: "-Xmx5120m -Xms2560m"
+            JHIPSTER_SLEEP: "30" # gives time for other services to boot before the application
+            spring.profiles.active: "prod,bamboo,bitbucket,jira,artemis"
+            spring.datasource.url: "jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"
+            spring.datasource.username: "root"
+            spring.datasource.password: ""
+            artemis.user-management.internal-admin.username: "${bamboo_artemis_admin_username}"
+            artemis.user-management.internal-admin.password: "${bamboo_artemis_admin_password}"
+            artemis.user-management.external.url: "https://jira-prelive.ase.in.tum.de"
+            artemis.user-management.external.user: "${bamboo_jira_prelive_admin_user}"
+            artemis.user-management.external.password: "${bamboo_jira_prelive_admin_password}"
+            artemis.version-control.url: "https://bitbucket-prelive.ase.in.tum.de"
+            artemis.version-control.user: "${bamboo_jira_prelive_admin_user}"
+            artemis.version-control.password: "${bamboo_jira_prelive_admin_password}"
+            artemis.continuous-integration.url: "https://bamboo-prelive.ase.in.tum.de"
+            artemis.continuous-integration.user: "${bamboo_jira_prelive_admin_user}"
+            artemis.continuous-integration.password: "${bamboo_jira_prelive_admin_password}"
+            artemis.continuous-integration.token: "${bamboo_ARTEMIS_CONTINUOUS_INTEGRATION_TOKEN_SECRET}"
+            artemis.continuous-integration.artemis-authentication-token-value: "${bamboo_ARTEMIS_CONTINUOUS_INTEGRATION_ARTEMIS_AUTHENTICATION_TOKEN_VALUE_SECRET}"
+            # for bamboo and bitbucket notifications on /api/programming-exercises/new-result it seems like port
+            # 54321 is internally open for the bamboo agents
+            # also can't use SSL for this as the hostnames are not integrated in the self-signed certificate
+            server.url: "http://${HOST_HOSTNAME}:54321"
+        ports:
+            - 8080:8080
+        networks:
+            - artemis
+        healthcheck:
+            test: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1
+            start_period: 300s
+            interval: 1s
+        depends_on:
+            artemis-mysql:
+                condition: service_healthy
+
+    artemis-nginx:
+        # nginx setup based on artemis prod ansible repository
+        # TODO: merge KIT settings for the proxy
+        # TODO: Adjust worker_rlimit_nofile in nginx.conf (from ansible task)
+        # TODO: Adjust worker_connections in nginx.conf (from ansible task)
+        # TODO: Adjust worker_connections in nginx.conf (from ansible task)
+        # TODO: Ensure file-max limit in sysctl.conf (from ansible task)
+        # TODO: Copy security-limits nginx.conf (from ansible task)
+        # TODO: Copy systemd-limits nginx.conf (from ansible task)
+        image: nginx:latest
+        restart: "unless-stopped"
+        volumes:
+            - ./nginx-files/timeouts.conf:/etc/nginx/conf.d/timeouts.conf:ro
+            - ./nginx-files/artemis-nginx.conf:/etc/nginx/conf.d/artemis-nginx.conf:ro
+            - ./nginx-files/artemis-server.conf:/etc/nginx/includes/artemis-server.conf:ro
+            - ./nginx-files/dhparam.pem:/etc/nginx/dhparam.pem:ro
+            - ./nginx-files/nginx_502.html:/usr/share/nginx/html/502.html:ro
+            - ./nginx-files/70-artemis-setup.sh:/docker-entrypoint.d/70-artemis-setup.sh
+            - ../../../test/cypress/certs/artemis-nginx+4.pem:/certs/fullchain.pem:ro
+            - ../../../test/cypress/certs/artemis-nginx+4-key.pem:/certs/priv_key.pem:ro
+            #- ./pki:/etc/pki/nginx:ro
+            #- ./defaults/templates:/etc/nginx/templates:ro
+            #- ./defaults/nginx.conf:/etc/nginx/nginx.conf:ro
+            #- ./defaults/proxy.conf:/etc/nginx/proxy.conf:ro
+            #- ./defaults/ssl.conf:/etc/nginx/ssl.conf:ro
+            #- ./defaults/dhparam.pem:/etc/nginx/dhparam.pem:ro
+        ports:
+            - 80:80
+            - 443:443
+            # see comments above in artemis-app why this port is needed
+            - 54321:54321
+        depends_on:
+            artemis-app:
+                condition: service_started
+        healthcheck:
+            test: service nginx status || exit 1
+            start_period: 30s
+        networks:
+            - artemis
+
+    artemis-cypress:
+        # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
+        image: cypress/browsers:node18.12.0-chrome107
+        depends_on:
+            artemis-app:
+                condition: service_healthy
+        environment:
+            CYPRESS_baseUrl: "https://artemis-nginx"
+            CYPRESS_video: "${bamboo_cypress_video_enabled}"
+            CYPRESS_adminUsername: "${bamboo_artemis_admin_username}"
+            CYPRESS_adminPassword: "${bamboo_artemis_admin_password}"
+            CYPRESS_username: "${bamboo_cypress_username_template}"
+            CYPRESS_password: "${bamboo_cypress_password_template}"
+            CYPRESS_allowGroupCustomization: "true"
+            CYPRESS_studentGroupName: "artemis-e2etest-students"
+            CYPRESS_tutorGroupName: "artemis-e2etest-tutors"
+            CYPRESS_editorGroupName: "artemis-e2etest-editors"
+            CYPRESS_instructorGroupName: "artemis-e2etest-instructors"
+        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:run -- --config retries=2"
+        volumes:
+            - ../../../../:/app/artemis
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"

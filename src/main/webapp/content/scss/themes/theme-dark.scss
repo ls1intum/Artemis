@@ -173,7 +173,12 @@ html {
 }
 
 .form-select option {
-    background-color: $neutral-dark !important;
+    color: $white;
+    background-color: $gray-800;
+
+    &:checked {
+        background-color: mix($neutral-dark, $white, 70%) !important;
+    }
 }
 
 .cdk-overlay-container .tag-option {

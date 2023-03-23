@@ -36,7 +36,8 @@ import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.BuildLogParseUtils;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
@@ -172,10 +173,10 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
         ZonedDateTime jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry;
         ZonedDateTime agentSetupCompleted = null;
-        ZonedDateTime testsStarted = null;
-        ZonedDateTime testsFinished = null;
-        ZonedDateTime scaStarted = null;
-        ZonedDateTime scaFinished = null;
+        ZonedDateTime testsStarted;
+        ZonedDateTime testsFinished;
+        ZonedDateTime scaStarted;
+        ZonedDateTime scaFinished;
         ZonedDateTime jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
         Integer dependenciesDownloadedCount = null;
 
@@ -243,12 +244,12 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             // Attempt to parse pipeline logs
             final String pipelineLogs = build.details().getConsoleOutputText();
             if (pipelineLogs != null && pipelineLogs.contains("[Pipeline] Start of Pipeline")) {
-                buildLogEntries = JenkinsBuildLogParseUtils.parseBuildLogsFromJenkinsLogs(List.of(pipelineLogs.split("\n")));
+                buildLogEntries = BuildLogParseUtils.parseBuildLogsFromLogs(List.of(pipelineLogs.split("\n")));
             }
             else {
                 // Fallback to legacy logs
                 final var logHtml = Jsoup.parse(build.details().getConsoleOutputHtml()).body();
-                buildLogEntries = JenkinsBuildLogParseUtils.parseLogsLegacy(logHtml);
+                buildLogEntries = BuildLogParseUtils.parseLogsLegacy(logHtml);
             }
 
             // Filter and save build logs
@@ -267,7 +268,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     /**
      * Removes the build logs that are not relevant to the student.
      *
-     * @param buildLogEntries unfiltered build logs
+     * @param buildLogEntries     unfiltered build logs
      * @param programmingLanguage the programming language of the build
      * @return filtered build logs
      */

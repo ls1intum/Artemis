@@ -45,7 +45,7 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
      * - or related to an exercise without a due date
      *
      * @param participationId to which the submissions belong.
-     * @param pageable Pageable
+     * @param pageable        Pageable
      * @return ProgrammingSubmission list (can be empty!)
      */
     @EntityGraph(type = LOAD, attributePaths = "results")
@@ -76,8 +76,8 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     List<ProgrammingSubmission> findAllByParticipationIdWithResults(@Param("participationId") Long participationId);
 
     /**
-     * Get the programming submission with the given id from the database. The submission is loaded together with exercise it belongs to, its result, the feedback of the result and the assessor of the
-     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
+     * Get the programming submission with the given id from the database. The submission is loaded together with exercise it belongs to, its result, the feedback of the result and
+     * the assessor of the result. Throws an EntityNotFoundException if no submission could be found for the given id.
      *
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the programming submission with the given id

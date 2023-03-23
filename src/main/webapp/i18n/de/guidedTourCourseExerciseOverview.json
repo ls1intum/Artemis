@@ -3,13 +3,8 @@
         "courseExerciseOverview": {
             "installPrerequisites": {
                 "headline": "Installiere die notwendigen Tools",
-                "content": "Bevor wir uns den Kurs und die darin enthaltene Beispielaufgabe anschauen, müssen wir zuerst die notwendigen Tools herunterladen und installieren.<ul><li>Installiere das neueste <a href='https://www.oracle.com/java/technologies/javase-downloads.html' target='_blank' rel='noopener noreferrer'>Java JDK</a> (mind. Java JDK 17). Stelle dabei sicher, dass du das JDK und <span class='red bold'>nicht</span> JRE auswählst.</li><li>Installiere die <a href='https://www.eclipse.org/downloads/packages/' target='_blank' rel='noopener noreferrer'>Eclipse IDE for Java Developers</a> (2022-06 oder neuer)</li><li>Installiere die neueste Version von <a href='https://www.sourcetreeapp.com' target='_blank' rel='noopener noreferrer'>SourceTree</a> mit git (4.1.5 oder neuer für macOS bzw. 3.4.6 oder neuer für Windows)</li></ul>",
-                "hint": "Bitte stelle sicher, dass du auch die git Kommandozeilen Tools installierst, während du SourceTree aufsetzt. Solltest du Linux nutzen, kannst du z.B. <a href='https://www.gitkraken.com/download' target='_blank' rel='noopener noreferrer'>Git Kraken</a> oder die <a href='https://git-scm.com' target='_blank' rel='noopener noreferrer'>Kommandozeile</a> verwenden.",
-                "sourceTreeSetup": {
-                    "headline": "Konfiguriere SourceTree",
-                    "content": "Schau dir bitte das Video an und folge den Schritten, um SourceTree richtig aufzusetzen. Mit diesem Schritt haben wir das Setup abgeschlossen und können uns die Kursseite und dessen Elemente genauer unter die Lupe nehmen.",
-                    "videoUrl": "https://www.youtube.com/embed/8SQH98Y2MRk?rel=0"
-                }
+                "content": "Bevor wir uns den Kurs und die darin enthaltene Beispielaufgabe anschauen, müssen wir zuerst die notwendigen Tools herunterladen und installieren. Installiere wie im Video gezeigt die neueste Version von <a href='https://www.jetbrains.com/idea/download/' target='_blank' rel='noopener noreferrer'>IntelliJ</a>.",
+                "videoUrl": "https://live.rbg.tum.de/w/artemisintro/25976?video_only=1"
             },
             "exercises": {
                 "headline": "Aufgaben",
@@ -57,32 +52,18 @@
             },
             "repositoryCreated": {
                 "headline": "Dein Repository wurde erstellt",
-                "content": "Dein Repository ist bereit und kann ab jetzt geklont werden. Fahre mit dem nächsten Schritt fort, um mehr zu erfahren."
+                "content": "Dein Repository ist bereit und kann ab jetzt geklont werden. Fahre mit dem nächsten Schritt fort, um mehr über das Klonen und Bearbeiten von Programmieraufgaben auf Artemis zu erfahren."
             },
             "cloneRepository": {
-                "headline": "Klone das Repository in SourceTree",
-                "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in SourceTree klont. Danach solltest du auf das <tt>X</tt> oben rechts klicken, um das Tutorial zu stoppen und die im Video angezeigten Schritte durchzuführen. Danach kannst du das Tutorial wieder von deinem Konto-Menü aus fortsetzen.",
-                "videoUrl": "https://www.youtube.com/embed/0YYxgs14S6A?rel=0"
+                "headline": "Klone das Repository in IntelliJ",
+                "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in IntelliJ klont. Danach solltest du auf das <tt>X</tt> oben rechts klicken, um das Tutorial zu stoppen und die im Video angezeigten Schritte durchzuführen. Danach kannst du das Tutorial wieder von deinem Benutzerkonto-Menü (Login-Name oben rechts) aus fortsetzen.",
+                "hint": "Falls du noch nicht Java JDK 17 installiert hast, wird auch im Video gezeigt, wie du diese erhältst.",
+                "videoUrl": "https://live.rbg.tum.de/w/artemisintro/25977?video_only=1"
             },
-            "inspectSourceTree": {
-                "headline": "Lerne SourceTree kennen",
-                "content": "Schau dir das folgende Video, um die grundlegenden Funktionen von SourceTree kennenzulernen.",
-                "videoUrl": "https://www.youtube.com/embed/Piu_UBK6d7c?rel=0"
-            },
-            "importEclipse": {
-                "headline": "Importiere das Java Projekt in Eclipse",
-                "content": "Schau dir das folgende Video an, um zu sehen, wie man ein Projekt in Eclipse importiert.",
-                "videoUrl": "https://www.youtube.com/embed/5VrNNlEuCBo?rel=0"
-            },
-            "inspectProject": {
-                "headline": "Untersuche das Projekt",
-                "content": "In diesem Video schauen wir uns das Projekt an und lösen die darin gegebene Aufgabe.",
-                "videoUrl": "https://www.youtube.com/embed/K-mX03gmNSk?rel=0"
-            },
-            "commitAndPush": {
-                "headline": "Reiche deine Änderungen ein",
-                "content": "Schau dir das folgende Video an, um zu verstehen, wie man Änderungen committed und pushed.",
-                "videoUrl": "https://www.youtube.com/embed/sjT-S6AhQvM?rel=0"
+            "solveExercise": {
+                "headline": "Löse die Aufgabe",
+                "content": "In diesem Video schauen wir uns das Projekt an, lösen die darin gegebene Aufgabe und pushen das Repository zurück zu Artemis.",
+                "videoUrl": "https://live.rbg.tum.de/w/artemisintro/25978?video_only=1"
             },
             "reviewResult": {
                 "headline": "Überprüfe dein Ergebnis",

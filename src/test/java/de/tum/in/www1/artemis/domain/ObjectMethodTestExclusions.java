@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.metis.conversation.ConversationSettings;
 
 /**
  * Exclusions of domain classes for specific tests.
@@ -46,7 +47,8 @@ enum ObjectMethodTestExclusions {
     ID_EQUALS;
 
     private static final Map<Class<?>, EnumSet<ObjectMethodTestExclusions>> EXCLUSIONS = Map.ofEntries( //
-            exclusionEntry(RepositoryType.class, ENUM_TOSTRING_NAME_EQUALITY) // Reason: toString() returns the repository names
+            exclusionEntry(RepositoryType.class, ENUM_TOSTRING_NAME_EQUALITY), // Reason: toString() returns the repository names
+            exclusionEntry(ConversationSettings.class, ALL_TESTS) // Reason: This class only contains constants
     );
 
     /**

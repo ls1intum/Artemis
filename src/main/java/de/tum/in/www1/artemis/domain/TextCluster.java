@@ -22,11 +22,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextCluster extends DomainObject {
 
-    @Lob
     @Column(name = "probabilities")
     private byte[] probabilities;
 
-    @Lob
     @Column(name = "distance_matrix")
     private byte[] distanceMatrix;
 
@@ -80,6 +78,7 @@ public class TextCluster extends DomainObject {
 
     /**
      * Adds a TextBlock to the Cluster
+     *
      * @param textBlock the TextBlock which should be added
      */
     public void addBlocks(TextBlock textBlock) {
@@ -120,7 +119,8 @@ public class TextCluster extends DomainObject {
 
     /**
      * Calculates the distance between two textblocks if they are in the same cluster
-     * @param first the first TextBlock
+     *
+     * @param first  the first TextBlock
      * @param second the second Textblock
      * @return the distance between the two parameters
      */

@@ -69,7 +69,7 @@ describe('ShortAnswerQuestionComponent', () => {
         const spot = new ShortAnswerSpot();
         spot.spotNr = 1;
         alternativeQuestion.spots = [spot];
-        component.fnOnSubmittedTextUpdate = function () {
+        component.fnOnSubmittedTextUpdate = () => {
             return true;
         };
         const returnValue = { value: text } as unknown as HTMLElement;

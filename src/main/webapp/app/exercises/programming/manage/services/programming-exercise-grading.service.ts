@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -31,6 +31,7 @@ export interface IProgrammingExerciseGradingService {
     updateCodeAnalysisCategories(exerciseId: number, updates: StaticCodeAnalysisCategoryUpdate[]): Observable<StaticCodeAnalysisCategoryUpdate[]>;
     resetCategories(exerciseId: number): Observable<StaticCodeAnalysisCategory[]>;
     getGradingStatistics(exerciseId: number): Observable<ProgrammingExerciseGradingStatistics>;
+    importCategoriesFromExercise(targetExerciseId: number, sourceExerciseId: number): Observable<StaticCodeAnalysisCategory[]>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -177,5 +178,17 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      */
     public resetCategories(exerciseId: number): Observable<StaticCodeAnalysisCategory[]> {
         return this.http.patch<StaticCodeAnalysisCategory[]>(`${this.resourceUrl}/${exerciseId}/static-code-analysis-categories/reset`, {});
+    }
+
+    /**
+     * Imports an existing SCA configuration (defined in the sourceExercise) into the targetExercise
+     * by comping all categories.
+     * @param targetExerciseId The exercise to copy the categories in
+     * @param sourceExerciseId The exercise from where to copy the categories
+     * @return The new categories
+     */
+    public importCategoriesFromExercise(targetExerciseId: number, sourceExerciseId: number): Observable<StaticCodeAnalysisCategory[]> {
+        const params = new HttpParams().set('sourceExerciseId', sourceExerciseId);
+        return this.http.patch<StaticCodeAnalysisCategory[]>(`${this.resourceUrl}/${targetExerciseId}/static-code-analysis-categories/import`, {}, { params });
     }
 }

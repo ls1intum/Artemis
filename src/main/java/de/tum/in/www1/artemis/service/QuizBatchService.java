@@ -44,7 +44,7 @@ public class QuizBatchService {
     /**
      * Save the given quizBatch to the database
      *
-     * @param quizBatch the quiz batch  to save
+     * @param quizBatch the quiz batch to save
      * @return the saved quiz batch
      */
     public QuizBatch save(QuizBatch quizBatch) {
@@ -83,9 +83,10 @@ public class QuizBatchService {
      * join a student to a batch
      * does not check of the user is already part of a batch
      * does not apply to quizzes in SYNCHRONIZED mode
+     *
      * @param quizExercise the quiz of the batch to join
-     * @param user the user to join
-     * @param password the password of the batch to join; unused for INDIVIDUAL mode
+     * @param user         the user to join
+     * @param password     the password of the batch to join; unused for INDIVIDUAL mode
      * @return the batch that was joined, or empty if the batch could not be found
      */
     public QuizBatch joinBatch(QuizExercise quizExercise, User user, @Nullable String password) throws QuizJoinException {
@@ -106,6 +107,7 @@ public class QuizBatchService {
 
     /**
      * create a password for a new batch that was not yet used by another batch
+     *
      * @param quizExercise the quiz where the password should not already be in use
      * @return a new unused password
      */
@@ -123,8 +125,9 @@ public class QuizBatchService {
 
     /**
      * create and save a batch a batched run with a new random password
+     *
      * @param quizExercise the quiz where a new batch should be created
-     * @param user the user that created the batch
+     * @param user         the user that created the batch
      * @return the newly created batch
      */
     public QuizBatch createBatch(QuizExercise quizExercise, User user) {
@@ -137,8 +140,9 @@ public class QuizBatchService {
 
     /**
      * create and save a batch an individual run
+     *
      * @param quizExercise the quiz where a new batch should be created
-     * @param user the user that created the batch
+     * @param user         the user that created the batch
      * @return the newly created batch
      */
     public QuizBatch createIndividualBatch(QuizExercise quizExercise, User user) {
@@ -151,8 +155,9 @@ public class QuizBatchService {
 
     /**
      * Returns the start time for a batch, given some target start date, that ensures that the batch does not overrun the quiz due date.
+     *
      * @param quizExercise the quiz exercise to which the batch belongs
-     * @param targetTime the time when the batch should start if possible
+     * @param targetTime   the time when the batch should start if possible
      * @return the minimum of targetTime and the last moment a batch can be started to not overrun the quiz due date; null iff targetTime is null
      */
     public ZonedDateTime quizBatchStartDate(QuizExercise quizExercise, ZonedDateTime targetTime) {
@@ -167,9 +172,11 @@ public class QuizBatchService {
     }
 
     /**
-     * Return the batch that a user the currently participating in for a given exercise
+     * Return the batch that a user the currently participating in for a given quiz exercise
+     * Note: This method will definitely include a database read query
+     *
      * @param quizExercise the quiz for that the batch should be look up for
-     * @param login the login of the user that the batch should be looked up for
+     * @param login        the login of the user that the batch should be looked up for
      * @return the batch that the user currently takes part in or empty
      */
     public Optional<QuizBatch> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
@@ -178,11 +185,11 @@ public class QuizBatchService {
             if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
                 return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
             }
-            else if (quizExercise.getQuizMode() == QuizMode.BATCHED) {
+            else {
                 return quizBatchRepository.findAllByQuizExerciseAndStudentLogin(quizExercise, login).stream().findFirst();
             }
         }
-        if (quizExercise.getQuizBatches() != null && batchIdOptional.isPresent()) {
+        if (quizExercise.getQuizBatches() != null) {
             final Long batchId = batchIdOptional.get();
             return quizExercise.getQuizBatches().stream().filter(quizBatch -> Objects.equals(quizBatch.getId(), batchId)).findAny().or(() -> quizBatchRepository.findById(batchId));
         }

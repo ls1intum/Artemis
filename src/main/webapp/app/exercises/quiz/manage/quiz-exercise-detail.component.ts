@@ -29,6 +29,7 @@ import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/q
 import { cloneDeep } from 'lodash-es';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 // False-positives:
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -43,6 +44,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
 import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -104,6 +106,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     /** Route params **/
     examId?: number;
     courseId?: number;
+
+    documentationType = DocumentationType.Quiz;
 
     // Icons
     faPlus = faPlus;
@@ -199,6 +203,9 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
                 this.init();
+                if (!this.quizExercise.isEditable) {
+                    this.alertService.error('error.http.403');
+                }
                 if (this.testRunExistsAndShouldNotBeIgnored()) {
                     this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
                 }
@@ -222,6 +229,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         newQuiz.quizQuestions = [];
         newQuiz.quizMode = QuizMode.SYNCHRONIZED;
         newQuiz.allowedNumberOfAttempts = 1;
+        newQuiz.isEditable = true;
         this.prepareEntity(newQuiz);
         return newQuiz;
     }
@@ -232,10 +240,13 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     init(): void {
         if (!this.quizExercise) {
             this.quizExercise = this.initializeNewQuizExercise();
+        } else {
+            this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         }
 
         if (this.isImport || this.isExamMode) {
             this.quizExercise.quizBatches = [];
+            this.quizExercise.isEditable = true;
             resetDates(this.quizExercise);
         }
 
@@ -891,6 +902,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.pendingChangesCache = false;
         this.prepareEntity(quizExercise);
         this.quizExercise = quizExercise;
+        this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         this.exerciseService.validateDate(this.quizExercise);
         this.savedEntity = cloneDeep(quizExercise);
         this.changeDetector.detectChanges();
@@ -1031,6 +1043,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             return [];
         }
         // Release Date valid but lies in the past
+        // eslint-disable-next-line no-constant-condition
         if (false /*this.quizExercise.isPlannedToStart*/) {
             // TODO: quiz cleanup: properly validate dates and deduplicate the checks (see isValidQuiz)
             if (!this.quizExercise.releaseDate || !dayjs(this.quizExercise.releaseDate).isValid()) {
@@ -1053,7 +1066,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     isSaveDisabled(): boolean {
-        // tslint:disable-next-line:max-line-length
+        // eslint-disable-next-line max-len
         return this.isSaving || !this.pendingChangesCache || !this.quizIsValid || this.hasSavedQuizStarted || this.quizExercise.dueDateError || this.hasErrorInQuizBatches();
     }
 

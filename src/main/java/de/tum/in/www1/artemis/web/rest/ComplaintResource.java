@@ -111,7 +111,7 @@ public class ComplaintResource {
      *
      * @param complaint the complaint to create
      * @param principal that wants to complain
-     * @param examId the examId of the exam which contains the exercise
+     * @param examId    the examId of the exam which contains the exercise
      * @return the ResponseEntity with status 201 (Created) and with body the new complaints
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -173,21 +173,23 @@ public class ComplaintResource {
             return ResponseEntity.ok().build();
         }
         Complaint complaint = optionalComplaint.get();
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         StudentParticipation participation = (StudentParticipation) complaint.getResult().getParticipation();
-        var exercise = participation.getExercise();
-        var isOwner = authCheckService.isOwnerOfParticipation(participation, user);
-        var isAtLeastTA = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
-        if (!isOwner && !isAtLeastTA) {
+        Exercise exercise = participation.getExercise();
+        boolean isOwner = authCheckService.isOwnerOfParticipation(participation, user);
+        boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
+        if (!isOwner && !isAtLeastTutor) {
             throw new AccessForbiddenException();
         }
-        var isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
-        var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        var isTeamParticipation = participation.getParticipant() instanceof Team;
-        var isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner().getLogin()).orElse(null));
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        boolean isTeamParticipation = participation.getParticipant() instanceof Team;
+        boolean isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner().getLogin()).orElse(null));
 
         if (!isAtLeastTutor) {
             complaint.getResult().setAssessor(null);
+            if (complaint.getComplaintResponse() != null) {
+                complaint.getComplaintResponse().setReviewer(null);
+            }
         }
         if (!isAtLeastInstructor && (!isTeamParticipation || !isTutorOfTeam)) {
             complaint.filterSensitiveInformation();
@@ -228,10 +230,11 @@ public class ComplaintResource {
     /**
      * Get exercises/{exerciseId}/complaints-for-test-run-dashboard
      * <p>
-     * Get all the complaints associated to a test run exercise, but filter out the ones that are not about the tutor who is doing the request, since this indicates test run exercises
+     * Get all the complaints associated to a test run exercise, but filter out the ones that are not about the tutor who is doing the request, since this indicates test run
+     * exercises
      *
      * @param exerciseId the id of the exercise we are interested in
-     * @param principal that wants to get complaints
+     * @param principal  that wants to get complaints
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
     @GetMapping("exercises/{exerciseId}/complaints-for-test-run-dashboard")
@@ -248,8 +251,9 @@ public class ComplaintResource {
      * Get exercises/:exerciseId/more-feedback-for-assessment-dashboard
      * <p>
      * Get all the more feedback requests associated to an exercise, that are about the tutor who is doing the request.
+     *
      * @param exerciseId the id of the exercise we are interested in
-     * @param principal that wants to get more feedback requests
+     * @param principal  that wants to get more feedback requests
      * @return the ResponseEntity with status 200 (OK) and a list of more feedback requests. The list can be empty
      */
     @GetMapping("exercises/{exerciseId}/more-feedback-for-assessment-dashboard")
@@ -266,6 +270,7 @@ public class ComplaintResource {
      * Get complaints
      * <p>
      * Get all the complaints for tutor.
+     *
      * @param complaintType the type of complaints we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
@@ -286,9 +291,10 @@ public class ComplaintResource {
      * Get courses/:courseId/complaints/:complaintType
      * <p>
      * Get all the complaints filtered by courseId, complaintType and optionally tutorId.
-     * @param tutorId the id of the tutor by which we want to filter
-     * @param courseId the id of the course we are interested in
-     * @param complaintType the type of complaints we are interested in
+     *
+     * @param tutorId               the id of the tutor by which we want to filter
+     * @param courseId              the id of the course we are interested in
+     * @param complaintType         the type of complaints we are interested in
      * @param allComplaintsForTutor flag if all complaints should be send for a tutor
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
@@ -330,8 +336,9 @@ public class ComplaintResource {
      * Get exercises/:exerciseId/complaints
      * <p>
      * Get all the complaints filtered by exerciseId, complaintType and optionally tutorId.
-     * @param tutorId the id of the tutor by which we want to filter
-     * @param exerciseId the id of the exercise we are interested in
+     *
+     * @param tutorId       the id of the tutor by which we want to filter
+     * @param exerciseId    the id of the exercise we are interested in
      * @param complaintType the type of complaints we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
@@ -369,7 +376,8 @@ public class ComplaintResource {
      * Get courses/:courseId/exams/:examId/complaints
      * <p>
      * Get all the complaints filtered by courseId, complaintType and optionally tutorId.
-     * @param examId the id of the tutor by which we want to filter
+     *
+     * @param examId   the id of the tutor by which we want to filter
      * @param courseId the id of the course we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
@@ -423,7 +431,6 @@ public class ComplaintResource {
             else if (exerciseWithOnlyTitle instanceof FileUploadExercise) {
                 exerciseWithOnlyTitle = new FileUploadExercise();
             }
-
             else if (exerciseWithOnlyTitle instanceof ProgrammingExercise) {
                 exerciseWithOnlyTitle = new ProgrammingExercise();
             }

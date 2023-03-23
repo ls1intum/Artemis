@@ -1,8 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { finalize, tap } from 'rxjs/operators';
+import { finalize, takeUntil, tap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { Course, CourseGroup } from 'app/entities/course.model';
@@ -10,12 +10,14 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-registered-students',
     templateUrl: './registered-students.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RegisteredStudentsComponent {
+export class RegisteredStudentsComponent implements OnDestroy {
     @Input()
     course: Course;
 
@@ -33,6 +35,7 @@ export class RegisteredStudentsComponent {
     registrationsChanged = false;
 
     isInitialized = false;
+    ngUnsubscribe = new Subject<void>();
 
     get capacityReached(): boolean {
         if (!this.tutorialGroup) {
@@ -51,7 +54,13 @@ export class RegisteredStudentsComponent {
         private alertService: AlertService,
         private accountService: AccountService,
         private courseService: CourseManagementService,
+        private cdr: ChangeDetectorRef,
     ) {}
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
 
     initialize() {
         if (!this.tutorialGroupId || !this.course) {
@@ -97,7 +106,10 @@ export class RegisteredStudentsComponent {
     loadAll = () => {
         this.tutorialGroupService
             .getOneOfCourse(this.course.id!, this.tutorialGroupId)
-            .pipe(finalize(() => (this.isLoading = false)))
+            .pipe(
+                finalize(() => (this.isLoading = false)),
+                takeUntil(this.ngUnsubscribe),
+            )
             .subscribe({
                 next: (tutorialGroupResult) => {
                     if (tutorialGroupResult.body) {
@@ -111,7 +123,8 @@ export class RegisteredStudentsComponent {
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+            })
+            .add(() => this.cdr.detectChanges());
     };
 
     clear() {

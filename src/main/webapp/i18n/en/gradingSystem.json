@@ -32,6 +32,9 @@
             "add": "Add Grade Step",
             "save": "Save",
             "stickyGradeStep": "The last grade step is always open ended to handle scores exceeding the maximum. It is stuck to the bottom.",
+            "plagiarismGradeHelp": "This special failing grade is assigned when a student has a confirmed \"Plagiarism\" verdict in any exercise.",
+            "noParticipationGradeHelp": "This special failing grade is assigned when a student did not participate. For courses, this means the student did not start any exercise. For exams, this means the student did not start or did not submit.",
+            "defaultGradeName": "Default: {{default}}",
             "info": {
                 "title": "Grading Key Help",
                 "general": {
@@ -94,7 +97,9 @@
         "gradingScale": {
             "created": "Grading key has been created",
             "updated": "Grading key has been updated",
-            "deleted": "Grading key has been deleted"
+            "deleted": "Grading key has been deleted",
+            "plagiarismGrade": "Plagiarism Grade",
+            "noParticipationGrade": "No-participation Grade"
         }
     }
 }

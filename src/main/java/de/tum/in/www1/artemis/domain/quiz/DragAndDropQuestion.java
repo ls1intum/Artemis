@@ -149,7 +149,7 @@ public class DragAndDropQuestion extends QuizQuestion {
      */
 
     /**
-     *Initialisation of the DragAndDropQuestion on Server start
+     * Initialisation of the DragAndDropQuestion on Server start
      */
     @PostLoad
     public void onLoad() {

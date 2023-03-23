@@ -34,6 +34,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
                 },
                 {
+                    path: 'courses/:courseId/learning-goals/:learningGoalId',
+                    loadChildren: () => import('./overview/course-learning-goals/course-learning-goals-details.module').then((m) => m.ArtemisCourseLearningGoalsDetailsModule),
+                },
+                {
                     path: 'courses/:courseId/exercises/:exerciseId/problem-statement',
                     component: ProblemStatementComponent,
                 },

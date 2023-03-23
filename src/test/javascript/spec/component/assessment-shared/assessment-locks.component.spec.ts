@@ -1,9 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { ArtemisTestModule } from '../../test.module';
 import { AssessmentLocksComponent } from 'app/assessment/assessment-locks/assessment-locks.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -18,6 +17,10 @@ import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/fi
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 describe('AssessmentLocksComponent', () => {
     let component: AssessmentLocksComponent;
@@ -36,13 +39,19 @@ describe('AssessmentLocksComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule],
+            imports: [TranslateModule.forRoot(), HttpClientTestingModule],
             declarations: [AssessmentLocksComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockHasAnyAuthorityDirective, MockPipe(ArtemisDatePipe)],
             providers: [
-                { provide: textAssessmentService, useClass: TextAssessmentService },
-                { provide: programmingAssessmentService, useClass: ProgrammingAssessmentManualResultService },
-                { provide: fileUploadAssessmentService, useClass: FileUploadAssessmentService },
-                { provide: modelingAssessmentService, useClass: ModelingAssessmentService },
+                MockProvider(TextAssessmentService),
+                MockProvider(CourseManagementService),
+                MockProvider(ModelingAssessmentService),
+                MockProvider(ProgrammingAssessmentManualResultService),
+                MockProvider(FileUploadAssessmentService),
+                MockProvider(ExamManagementService),
+                {
+                    provide: ActivatedRoute,
+                    useValue: new MockActivatedRoute({ id: 123 }),
+                },
             ],
         })
             .compileComponents()

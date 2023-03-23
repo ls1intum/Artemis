@@ -23,6 +23,7 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
+import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTooltipMocks.module';
 
 describe('QuizExamSubmissionComponent', () => {
     let fixture: ComponentFixture<QuizExamSubmissionComponent>;
@@ -47,7 +48,7 @@ describe('QuizExamSubmissionComponent', () => {
         shortAnswerQuestion.id = 3;
 
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([])],
+            imports: [RouterTestingModule.withRoutes([]), NgbTooltipMocksModule],
             declarations: [
                 QuizExamSubmissionComponent,
                 MockPipe(ArtemisTranslatePipe),

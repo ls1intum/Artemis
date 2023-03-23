@@ -1,41 +1,44 @@
-<div class="container" *ngIf="isLoading || (learningGoals && learningGoals.length > 0) || (prerequisites && prerequisites.length > 0); else noData">
-    <div *ngIf="isLoading" class="d-flex justify-content-center">
-        <div class="spinner-border" role="status">
-            <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+<div class="row">
+    <div class="col-12 col-lg-8">
+        <div *ngIf="countLearningGoals > 0" class="mt-3 position-relative">
+            <div class="exercise-row-container mb-3">
+                <jhi-learning-goal-card
+                    *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
+                    [learningGoal]="learningGoal"
+                    [courseId]="courseId"
+                ></jhi-learning-goal-card>
+            </div>
+        </div>
+        <div *ngIf="countPrerequisites > 0" class="mt-3 position-relative">
+            <div class="exercise-row-container mb-3">
+                <div class="control-label" (click)="isCollapsed = !isCollapsed">
+                    <fa-icon class="pe-3" [icon]="isCollapsed ? faAngleDown : faAngleUp"></fa-icon>
+                    <span>{{ 'artemisApp.learningGoal.prerequisite.title' | artemisTranslate }}: {{ countPrerequisites }}</span>
+                </div>
+                <div *ngIf="!isCollapsed">
+                    <jhi-learning-goal-card
+                        *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify"
+                        [learningGoal]="prerequisite"
+                        [courseId]="courseId"
+                        [isPrerequisite]="true"
+                    ></jhi-learning-goal-card>
+                </div>
+                <div class="collapsed"></div>
+            </div>
         </div>
     </div>
+    <div class="col-12 col-lg-3 offset-lg-1">
+        <h3 class="mt-3">{{ 'artemisApp.learningGoal.table.panelHeader' | artemisTranslate }}</h3>
+        <span class="badge bg-dark">{{ countMasteredLearningGoals }} / {{ countLearningGoals }}</span> {{ 'artemisApp.learningGoal.mastered' | artemisTranslate }}
+        <dl class="mt-3">
+            <dt>{{ 'artemisApp.learningGoal.progress' | artemisTranslate }}</dt>
+            <dd>{{ 'artemisApp.learningGoal.progressDescription' | artemisTranslate }}</dd>
 
-    <div *ngIf="!isLoading">
-        <h2 *ngIf="prerequisites && prerequisites.length > 0" class="text-center my-4">{{ 'artemisApp.learningGoal.prerequisite.title' | artemisTranslate }}</h2>
+            <dt>{{ 'artemisApp.learningGoal.confidence' | artemisTranslate }}</dt>
+            <dd>{{ 'artemisApp.learningGoal.confidenceDescription' | artemisTranslate }}</dd>
 
-        <div class="d-flex flex-wrap gap-3 justify-content-evenly">
-            <jhi-learning-goal-card
-                *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify"
-                [learningGoal]="prerequisite"
-                [isPrerequisite]="true"
-                [displayOnly]="true"
-            ></jhi-learning-goal-card>
-        </div>
-    </div>
-
-    <div *ngIf="!isLoading">
-        <h2 *ngIf="learningGoals && learningGoals.length > 0" class="text-center my-4">{{ 'artemisApp.learningGoal.title' | artemisTranslate }}</h2>
-
-        <div class="p-3 d-flex flex-wrap gap-3 justify-content-evenly">
-            <jhi-learning-goal-card
-                *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
-                [learningGoal]="learningGoal"
-                [learningGoalProgress]="getLearningGoalProgress(learningGoal)"
-                [displayOnly]="true"
-            ></jhi-learning-goal-card>
-        </div>
+            <dt>{{ 'artemisApp.learningGoal.mastery' | artemisTranslate }}</dt>
+            <dd>{{ 'artemisApp.learningGoal.masteryDescription' | artemisTranslate }}</dd>
+        </dl>
     </div>
 </div>
-
-<ng-template #noData>
-    <div class="row">
-        <div class="col mt-3">
-            {{ 'artemisApp.courseOverview.learningGoals.noData' | artemisTranslate }}
-        </div>
-    </div>
-</ng-template>

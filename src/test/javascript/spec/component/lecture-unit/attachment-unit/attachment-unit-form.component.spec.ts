@@ -6,7 +6,9 @@ import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockPipe, MockProviders } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProviders } from 'ng-mocks';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
 
 describe('AttachmentUnitFormComponent', () => {
     let attachmentUnitFormComponentFixture: ComponentFixture<AttachmentUnitFormComponent>;
@@ -14,8 +16,14 @@ describe('AttachmentUnitFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule],
-            declarations: [AttachmentUnitFormComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FormDateTimePickerComponent), MockComponent(FaIconComponent)],
+            imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip)],
+            declarations: [
+                AttachmentUnitFormComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(FaIconComponent),
+                MockComponent(LearningGoalSelectionComponent),
+            ],
             providers: [MockProviders(TranslateService)],
             schemas: [],
         })
@@ -97,6 +105,7 @@ describe('AttachmentUnitFormComponent', () => {
                 name: exampleName,
                 description: exampleDescription,
                 releaseDate: exampleReleaseDate,
+                learningGoals: null,
                 version: exampleVersion,
                 updateNotificationText: exampleUpdateNotificationText,
             },

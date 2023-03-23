@@ -160,7 +160,7 @@ public class Attachment extends DomainObject implements Serializable {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = name != null ? name.strip() : null;
     }
 
     public String getLink() {

@@ -11,7 +11,6 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { filter, finalize } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileService } from 'app/shared/http/file.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
@@ -31,6 +30,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 @Component({
     providers: [FileUploadAssessmentService],
@@ -210,6 +210,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.course = getCourseFromExercise(this.exercise);
         this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && dayjs(this.exercise.assessmentDueDate).isBefore(dayjs());
         if (this.resultId > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId)!;
             this.result = getSubmissionResultById(this.submission, this.resultId);
         } else {
@@ -464,26 +465,29 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
      * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
      * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
      *
-     * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
+     * @param assessmentAfterComplaint the response to the complaint that is sent to the server along with the assessment update along with onSuccess and onError callbacks
      */
-    onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
+    onUpdateAssessmentAfterComplaint(assessmentAfterComplaint: AssessmentAfterComplaint): void {
         this.validateAssessment();
         if (!this.assessmentsAreValid) {
             this.alertService.error('artemisApp.fileUploadAssessment.error.invalidAssessments');
+            assessmentAfterComplaint.onError();
             return;
         }
         this.isLoading = true;
         this.fileUploadAssessmentService
-            .updateAssessmentAfterComplaint(this.assessments, complaintResponse, this.submission.id!)
+            .updateAssessmentAfterComplaint(this.assessments, assessmentAfterComplaint.complaintResponse, this.submission.id!)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: (response) => {
+                    assessmentAfterComplaint.onSuccess();
                     this.result = response.body!;
                     this.updateParticipationWithResult();
                     this.alertService.closeAll();
                     this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
                 },
                 error: (httpErrorResponse: HttpErrorResponse) => {
+                    assessmentAfterComplaint.onError();
                     this.alertService.closeAll();
                     const error = httpErrorResponse.error;
                     if (error && error.errorKey && error.errorKey === 'complaintLock') {

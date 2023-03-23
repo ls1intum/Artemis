@@ -1,4 +1,4 @@
-import { Component, ContentChild, Input, TemplateRef } from '@angular/core';
+import { Component, ContentChild, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
@@ -11,7 +11,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
     `,
 })
 export class TutorialGroupSessionsTableStubComponent {
-    @ContentChild(TemplateRef) extraColumn: TemplateRef<any>;
+    @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;
 
     @Input()
     sessions: TutorialGroupSession[] = [];
@@ -24,8 +24,14 @@ export class TutorialGroupSessionsTableStubComponent {
 
     @Input()
     tutorialGroup: TutorialGroup;
+
+    @Input()
+    isReadOnly = false;
+
+    @Output() attendanceUpdated = new EventEmitter<void>();
 }
 @Component({
+    // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-session-row]',
     template: `
         <div>
@@ -47,4 +53,8 @@ export class TutorialGroupSessionRowStubComponent {
     @Input() session: TutorialGroupSession;
     @Input() timeZone?: string = undefined;
     @Input() tutorialGroup: TutorialGroup;
+
+    @Input()
+    isReadOnly = false;
+    @Output() attendanceChanged = new EventEmitter<TutorialGroupSession>();
 }

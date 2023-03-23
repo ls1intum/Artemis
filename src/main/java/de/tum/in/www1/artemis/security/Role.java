@@ -31,6 +31,7 @@ public enum Role {
 
     /**
      * creates a role from a string
+     *
      * @param courseGroup the group of the course
      * @return the corresponding role
      */

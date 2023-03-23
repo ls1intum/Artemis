@@ -18,7 +18,7 @@ export abstract class CourseDiscussionDirective {
     readonly ButtonType = ButtonType;
     course?: Course;
     createdPost: Post;
-    posts: Post[];
+    posts: Post[] = [];
     isLoading = true;
 
     currentSortCriterion = PostSortCriterion.CREATION_DATE;

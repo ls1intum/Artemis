@@ -61,6 +61,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
                 courseManagementService = TestBed.inject(CourseManagementService);
 
                 findConfigurationSpy = jest.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: exampleConfiguration })));
+                fixture.detectChanges();
             });
     });
 
@@ -69,15 +70,12 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
         expect(findConfigurationSpy).toHaveBeenCalledOnce();
         expect(findConfigurationSpy).toHaveBeenCalledWith(course.id);
     });
 
     it('should set form data correctly', () => {
-        fixture.detectChanges();
-
         const formStub: TutorialGroupsConfigurationFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupsConfigurationFormStubComponent)).componentInstance;
 
         expect(component.tutorialGroupsConfiguration).toEqual(exampleConfiguration);
@@ -89,8 +87,6 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
     });
 
     it('should send PUT request upon form submission and navigate', () => {
-        fixture.detectChanges();
-
         const changedConfiguration: TutorialGroupsConfiguration = {
             ...exampleConfiguration,
         };

@@ -1,0 +1,23 @@
+name: "Validate Gradle Wrapper"
+on:
+    push:
+        branches:
+            - develop
+            - main
+            - release/*
+        paths:
+            - '**/gradle/**'
+    pull_request:
+        branches: [develop]
+        paths:
+            - '**/gradle/**'
+
+jobs:
+    validation:
+        name: "Gradle Wrapper Validation"
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - uses: gradle/wrapper-validation-action@v1
+              with:
+                  min-wrapper-count: 6 # 5 in the different gradle templates and 1 for the Artemis project itself

@@ -63,9 +63,7 @@ public class AssessmentService {
     }
 
     /**
-     * Handles an assessment update after a complaint. It first saves the corresponding complaint response and then updates the Result that was complaint about. Note, that it
-     * updates the score and the feedback of the original Result, but NOT the assessor. The user that is responsible for the update can be found in the 'reviewer' field of the
-     * complaint. The original Result gets stored in the 'resultBeforeComplaint' field of the ComplaintResponse for future lookup.
+     * Handles an assessment update after a complaint. It first saves the corresponding complaint response and then updates the Result that was complaint about.
      *
      * @param originalResult   the original assessment that was complained about
      * @param exercise         the exercise to which the result belongs
@@ -106,11 +104,11 @@ public class AssessmentService {
      * Overriding is only possible if the same tutor overrides before the assessment due date.
      * Instructors can always create and override results also after the assessment due date.
      *
-     * @param existingResult the existing result in case the result is updated (submitted or overridden)
-     * @param exercise the exercise to which the submission and result belong and which potentially includes an assessment due date
-     * @param user the user who initiates a request
+     * @param existingResult      the existing result in case the result is updated (submitted or overridden)
+     * @param exercise            the exercise to which the submission and result belong and which potentially includes an assessment due date
+     * @param user                the user who initiates a request
      * @param isAtLeastInstructor whether the given user is an instructor for the given exercise
-     * @param participation the participation to which the submission and result belong to
+     * @param participation       the participation to which the submission and result belong to
      * @return true if the given user can override a potentially existing result
      */
     public boolean isAllowedToCreateOrOverrideResult(Result existingResult, Exercise exercise, StudentParticipation participation, User user, boolean isAtLeastInstructor) {
@@ -172,9 +170,10 @@ public class AssessmentService {
 
     /**
      * Returns whether a user is allowed to be the assessor of an existing result
-     * @param result Result for which to check if the user can be the assessor
+     *
+     * @param result   Result for which to check if the user can be the assessor
      * @param exercise Exercise to which the result belongs to
-     * @param user User for whom to check if they can be the assessor of the given result
+     * @param user     User for whom to check if they can be the assessor of the given result
      * @return true if the user is allowed to be the assessor, false otherwise
      */
     private boolean isAllowedToBeAssessorOfResult(Result result, Exercise exercise, StudentParticipation participation, User user) {
@@ -210,8 +209,8 @@ public class AssessmentService {
      * <p>
      * For programming exercises we use a different approach see {@link ResultRepository#submitManualAssessment(long)})}
      *
-     * @param resultId the id of the result that should be submitted
-     * @param exercise the exercise the assessment belongs to
+     * @param resultId       the id of the result that should be submitted
+     * @param exercise       the exercise the assessment belongs to
      * @param submissionDate the date manual assessment was submitted
      * @return the ResponseEntity with result as body
      */
@@ -232,9 +231,9 @@ public class AssessmentService {
      * <p>
      * For programming exercises we use a different approach see {@link ProgrammingAssessmentService#saveManualAssessment(Result)}
      *
-     * @param submission the file upload submission to which the feedback belongs to
+     * @param submission   the file upload submission to which the feedback belongs to
      * @param feedbackList the assessment as a feedback list that should be added to the result of the corresponding submission
-     * @param resultId resultId of the submission we what to save the @feedbackList to, null if no result exists
+     * @param resultId     resultId of the submission we what to save the @feedbackList to, null if no result exists
      * @return result that was saved in the database
      */
     public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId) {

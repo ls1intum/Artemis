@@ -48,12 +48,11 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
                     window.sessionStorage.removeItem('state');
 
                     if (targetLinkUri) {
-                        window.location.href = targetLinkUri;
-                        return;
+                        window.location.replace(targetLinkUri);
+                    } else {
+                        this.isLaunching = false;
+                        console.error('No LTI targetLinkUri received for a successful launch');
                     }
-
-                    this.isLaunching = false;
-                    console.error('No LTI targetLinkUri received for a successful launch');
                 },
                 error: () => {
                     window.sessionStorage.removeItem('state');

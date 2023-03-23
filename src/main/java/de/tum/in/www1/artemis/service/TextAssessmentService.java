@@ -39,14 +39,14 @@ public class TextAssessmentService extends AssessmentService {
     /**
      * Load entities from database needed for text assessment, set potential feedback impact count & compute
      * Feedback suggestions (Athene):
-     *   1. Create or load the result
-     *   2. Set potential Feedback impact
-     *   3. Compute Feedback Suggestions
-     *   4. Load Text Blocks
-     *   5. Compute Fallback Text Blocks if needed
+     * 1. Create or load the result
+     * 2. Set potential Feedback impact
+     * 3. Compute Feedback Suggestions
+     * 4. Load Text Blocks
+     * 5. Compute Fallback Text Blocks if needed
      *
      * @param textSubmission Text Submission to be assessed
-     * @param result for which we prepare the submission
+     * @param result         for which we prepare the submission
      */
     public void prepareSubmissionForAssessment(TextSubmission textSubmission, @Nullable Result result) {
         final Participation participation = textSubmission.getParticipation();

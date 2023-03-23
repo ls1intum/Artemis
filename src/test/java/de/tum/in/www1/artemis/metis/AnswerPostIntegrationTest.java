@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Collection;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,11 +21,17 @@ import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 
 class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "answerpostintegration";
+
     @Autowired
     private AnswerPostRepository answerPostRepository;
+
+    @Autowired
+    private PostRepository postRepository;
 
     private List<Post> existingPostsWithAnswers;
 
@@ -42,17 +47,17 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     private User student1;
 
-    private static final int MAX_POSTS_PER_PAGE = 20;
+    static final int MAX_POSTS_PER_PAGE = 20;
 
     @BeforeEach
     void initTestCase() {
 
-        database.addUsers(5, 5, 4, 4);
-        student1 = database.getUserByLogin("student1");
+        database.addUsers(TEST_PREFIX, 5, 5, 4, 4);
+        student1 = database.getUserByLogin(TEST_PREFIX + "student1");
 
         // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author
         // student1)
-        List<Post> existingPostsAndConversationPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse().stream()
+        List<Post> existingPostsAndConversationPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse(TEST_PREFIX).stream()
                 .filter(coursePost -> coursePost.getAnswers() != null && coursePost.getPlagiarismCase() == null).toList();
 
         existingPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() == null).toList();
@@ -73,99 +78,98 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         courseId = existingPostsWithAnswersInExercise.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
     }
 
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
-
     // CREATE
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateAnswerPostInLecture() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
         testAnswerPostCreation(answerPostToSave);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateAnswerPostInExercise() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
         testAnswerPostCreation(answerPostToSave);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateAnswerPostCourseWide() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
         testAnswerPostCreation(answerPostToSave);
     }
 
     private void testAnswerPostCreation(AnswerPost answerPostToSave) throws Exception {
+        var countBefore = answerPostRepository.count();
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
         database.assertSensitiveInformationHidden(createdAnswerPost);
         // should not be automatically post resolving
         assertThat(createdAnswerPost.doesResolvePost()).isFalse();
         // should increment answer count
-        assertThat(database.postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
+        assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-        assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
+        assertThat(countBefore + 1).isEqualTo(answerPostRepository.count());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateAnswerPostInLecture_asInstructor() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
         database.assertSensitiveInformationHidden(createdAnswerPost);
         // should increment answer count
-        assertThat(database.postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
+        assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-        assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
+        assertThat(answerPostRepository.findById(createdAnswerPost.getId())).isPresent();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateAnswerPostInExercise_asInstructor() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
         database.assertSensitiveInformationHidden(createdAnswerPost);
         // should increment answer count
-        assertThat(database.postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
+        assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-        assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
+        assertThat(answerPostRepository.findById(createdAnswerPost.getId())).isPresent();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateAnswerPostCourseWide_asInstructor() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
         database.assertSensitiveInformationHidden(createdAnswerPost);
         // should increment answer count
-        assertThat(database.postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
+        assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-        assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
+        assertThat(answerPostRepository.findById(createdAnswerPost.getId())).isPresent();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateExistingAnswerPost_badRequest() throws Exception {
         AnswerPost existingAnswerPostToSave = existingAnswerPosts.get(0);
 
+        var answerPostCount = answerPostRepository.count();
+
         request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", existingAnswerPostToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
         // should not increment answer count
-        assertThat(database.postRepository.findPostByIdElseThrow(existingAnswerPostToSave.getPost().getId()).getAnswerCount())
+        var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
+        assertThat(postRepository.findPostByIdElseThrow(existingAnswerPostToSave.getPost().getId()).getAnswerCount())
                 .isEqualTo(existingAnswerPostToSave.getPost().getAnswerCount());
-        assertThat(existingAnswerPosts.size()).isEqualTo(answerPostRepository.count());
+        assertThat(newAnswerPostCount).isEqualTo(0);
     }
 
     // GET
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostsForCourse_WithUnresolvedPosts() throws Exception {
         // filterToUnresolved set true; will fetch all unresolved posts of current course
         var params = new LinkedMultiValueMap<String, String>();
@@ -183,7 +187,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostsForCourse_WithOwnAndUnresolvedPosts() throws Exception {
         // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
         var params = new LinkedMultiValueMap<String, String>();
@@ -200,7 +204,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostsForCourseWithCourseWideContent() throws Exception {
         // filterToUnresolved set true; will fetch all unresolved posts of current course
         var params = new LinkedMultiValueMap<String, String>();
@@ -214,7 +218,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostsForCourseWithUnresolvedPostsWithCourseWideContent() throws Exception {
         // filterToUnresolved set true; will fetch all unresolved posts of current course
         var params = new LinkedMultiValueMap<String, String>();
@@ -232,7 +236,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostsForCourseWithOwnWithCourseWideContent() throws Exception {
         // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
         var params = new LinkedMultiValueMap<String, String>();
@@ -251,7 +255,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostsForCourseWithOwnAndUnresolvedPostsWithCourseWideContent() throws Exception {
         // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
         var params = new LinkedMultiValueMap<String, String>();
@@ -272,7 +276,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostsForCourse_OrderByAnswerCountDESC() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
 
@@ -295,7 +299,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostsForCourse_OrderByAnswerCountASC() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
 
@@ -318,7 +322,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAnsweredOrReactedPostsByUserForCourse() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
@@ -335,7 +339,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetOwnAndAnsweredOrReactedPostsByUserForCourse() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
@@ -353,7 +357,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetUnresolvedAnsweredOrReactedPostsByUserForCourse() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
@@ -372,7 +376,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetUnresolvedOwnAnsweredOrReactedPostsByUserForCourse() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
@@ -392,7 +396,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
@@ -411,7 +415,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetOwnAndAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
@@ -431,7 +435,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetUnresolvedAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
@@ -452,7 +456,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetUnresolvedOwnAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
@@ -475,7 +479,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     // UPDATE
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testEditAnswerPost_asTutor() throws Exception {
         // update post of student1 (index 0)--> OK
         AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
@@ -487,7 +491,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPost_asStudent1() throws Exception {
         // update own post (index 0)--> OK
         AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
@@ -499,7 +503,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student2", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testEditAnswerPost_asStudent2_forbidden() throws Exception {
         // update post from another student (index 1)--> forbidden
         AnswerPost answerPostNotToUpdate = editExistingAnswerPost(existingAnswerPosts.get(1));
@@ -510,7 +514,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPostWithIdIsNull_badRequest() throws Exception {
         AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
 
@@ -520,7 +524,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPostWithWrongCourseId_badRequest() throws Exception {
         AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
         Course dummyCourse = database.createCourse();
@@ -531,7 +535,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testToggleResolvesPost() throws Exception {
         AnswerPost answerPost = existingAnswerPosts.get(1);
         AnswerPost answerPost2 = existingAnswerPosts.get(2);
@@ -542,7 +546,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
                 HttpStatus.OK);
         assertThat(resolvingAnswerPost).isEqualTo(answerPost);
         // confirm that the post is marked as resolved when it has a resolving answer
-        assertThat(database.postRepository.findPostByIdElseThrow(resolvingAnswerPost.getPost().getId()).isResolved()).isTrue();
+        assertThat(postRepository.findPostByIdElseThrow(resolvingAnswerPost.getPost().getId()).isResolved()).isTrue();
 
         answerPost2.setResolvesPost(true);
         request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPost2.getId(), answerPost2, AnswerPost.class, HttpStatus.OK);
@@ -554,18 +558,18 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(notResolvingAnswerPost).isEqualTo(answerPost);
 
         // confirm that the post is still marked as resolved since it still has a resolving answer
-        assertThat(database.postRepository.findPostByIdElseThrow(resolvingAnswerPost.getPost().getId()).isResolved()).isTrue();
+        assertThat(postRepository.findPostByIdElseThrow(resolvingAnswerPost.getPost().getId()).isResolved()).isTrue();
 
         // revoke that answer post2 resolves the original post
         answerPost2.setResolvesPost(false);
         request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPost2.getId(), answerPost2, AnswerPost.class, HttpStatus.OK);
 
         // confirm that the post is marked as unresolved when it no longer has a resolving answer
-        assertThat(database.postRepository.findPostByIdElseThrow(resolvingAnswerPost.getPost().getId()).isResolved()).isFalse();
+        assertThat(postRepository.findPostByIdElseThrow(resolvingAnswerPost.getPost().getId()).isResolved()).isFalse();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testToggleResolvesPost_asPostAuthor() throws Exception {
         // author of the associated original post is student1
         AnswerPost answerPost = existingAnswerPosts.get(0);
@@ -584,7 +588,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student2", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testToggleResolvesPost_notAuthor_forbidden() throws Exception {
         // author of the associated original post is student1, author of answer post is also student1
         AnswerPost answerPost = existingAnswerPosts.get(0);
@@ -605,60 +609,65 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     // DELETE
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteAnswerPosts_asStudent1() throws Exception {
+        var answerPostCount = answerPostRepository.count();
         // delete own post (index 0)--> OK
         AnswerPost answerPostToDelete = existingAnswerPosts.get(0);
 
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDelete.getId(), HttpStatus.OK);
-        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
+        var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
+        assertThat(newAnswerPostCount).isEqualTo(-1);
         // should decrement answerCount
-        assertThat(database.postRepository.findPostByIdElseThrow(answerPostToDelete.getPost().getId()).getAnswerCount())
-                .isEqualTo(answerPostToDelete.getPost().getAnswerCount() - 1);
+        assertThat(postRepository.findPostByIdElseThrow(answerPostToDelete.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToDelete.getPost().getAnswerCount() - 1);
     }
 
     @Test
-    @WithMockUser(username = "student2", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testDeleteAnswerPosts_asStudent2_forbidden() throws Exception {
+        var answerPostCount = answerPostRepository.count();
         // delete post from another student (index 0) --> forbidden
         AnswerPost answerPostToNotDelete = existingAnswerPosts.get(0);
 
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToNotDelete.getId(), HttpStatus.FORBIDDEN);
-        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
+        var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
+        assertThat(newAnswerPostCount).isEqualTo(0);
         // should not decrement answerCount
-        assertThat(database.postRepository.findPostByIdElseThrow(answerPostToNotDelete.getPost().getId()).getAnswerCount())
-                .isEqualTo(answerPostToNotDelete.getPost().getAnswerCount());
+        assertThat(postRepository.findPostByIdElseThrow(answerPostToNotDelete.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToNotDelete.getPost().getAnswerCount());
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeleteAnswerPost_asTutor() throws Exception {
+        var answerPostCount = answerPostRepository.count();
         // delete post from another student (index 0) --> ok
         AnswerPost answerPostToDelete = existingAnswerPosts.get(0);
 
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDelete.getId(), HttpStatus.OK);
-        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
+        var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
+        assertThat(newAnswerPostCount).isEqualTo(-1);
         // should decrement answerCount
-        assertThat(database.postRepository.findPostByIdElseThrow(answerPostToDelete.getPost().getId()).getAnswerCount())
-                .isEqualTo(answerPostToDelete.getPost().getAnswerCount() - 1);
+        assertThat(postRepository.findPostByIdElseThrow(answerPostToDelete.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToDelete.getPost().getAnswerCount() - 1);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeleteAnswerPost_asTutor_notFound() throws Exception {
+        var countBefore = answerPostRepository.count();
         request.delete("/api/courses/" + courseId + "/answer-posts/" + 9999L, HttpStatus.NOT_FOUND);
-        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
+        assertThat(answerPostRepository.count()).isEqualTo(countBefore);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeleteResolvingAnswerPost_asTutor() throws Exception {
         AnswerPost answerPostToDeleteWhichResolves = existingAnswerPosts.get(3);
 
+        var countBefore = answerPostRepository.count();
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDeleteWhichResolves.getId(), HttpStatus.OK);
-        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
+        assertThat(answerPostRepository.count()).isEqualTo(countBefore - 1);
 
-        Post persistedPost = database.postRepository.findPostByIdElseThrow(answerPostToDeleteWhichResolves.getPost().getId());
+        Post persistedPost = postRepository.findPostByIdElseThrow(answerPostToDeleteWhichResolves.getPost().getId());
 
         // should update post resolved status to false
         assertThat(persistedPost.isResolved()).isFalse();

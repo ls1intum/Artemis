@@ -6,16 +6,22 @@ export const generateExampleTutorialGroupsConfiguration = ({
     id = 1,
     tutorialPeriodStartInclusive = dayjs('2021-01-01'),
     tutorialPeriodEndInclusive = dayjs('2021-01-02'),
+    useTutorialGroupChannels = true,
+    usePublicTutorialGroupChannels = true,
 }: TutorialGroupsConfiguration) => {
     const exampleConfiguration = new TutorialGroupsConfiguration();
     exampleConfiguration.id = id;
     exampleConfiguration.tutorialPeriodStartInclusive = tutorialPeriodStartInclusive;
     exampleConfiguration.tutorialPeriodEndInclusive = tutorialPeriodEndInclusive;
+    exampleConfiguration.useTutorialGroupChannels = useTutorialGroupChannels;
+    exampleConfiguration.usePublicTutorialGroupChannels = usePublicTutorialGroupChannels;
     return exampleConfiguration;
 };
 
 export const tutorialsGroupsConfigurationToFormData = (entity: TutorialGroupsConfiguration): TutorialGroupsConfigurationFormData => {
     return {
         period: [entity.tutorialPeriodStartInclusive!.toDate(), entity.tutorialPeriodEndInclusive!.toDate()],
+        useTutorialGroupChannels: entity.useTutorialGroupChannels,
+        usePublicTutorialGroupChannels: entity.usePublicTutorialGroupChannels,
     };
 };

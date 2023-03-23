@@ -6,8 +6,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 import { ArtemisTestModule } from '../../test.module';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockComponent } from 'ng-mocks';
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
 import { metisExercise, metisLecture } from '../../helpers/sample/metis-sample-data';
 import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
@@ -25,7 +23,6 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, AceEditorModule, ArtemisMarkdownEditorModule],
             providers: [{ provide: MetisService, useClass: MockMetisService }],
-            declarations: [MockComponent(FaIconComponent)],
         })
             .compileComponents()
             .then(() => {

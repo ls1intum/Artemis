@@ -29,7 +29,8 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
- * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice, drag and drop or short answer. Artemis supports live quizzes with a start and end time which are
+ * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice, drag and drop or short answer. Artemis supports live quizzes with a start and end time
+ * which are
  * rated. Within this time, students can participate in the quiz and select their answers to the given quizQuestions. After the end time, the quiz is automatically evaluated
  * Instructors can choose to open the quiz for practice so that students can participate arbitrarily often with an unrated result
  */
@@ -56,9 +57,9 @@ public class QuizExercise extends Exercise {
     private Boolean isOpenForPractice;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "quiz_mode")
+    @Column(name = "quiz_mode", columnDefinition = "varchar(63) default 'SYNCHRONIZED'", nullable = false)
     @JsonView(QuizView.Before.class)
-    private QuizMode quizMode;
+    private QuizMode quizMode = QuizMode.SYNCHRONIZED; // default value
 
     /**
      * The duration of the quiz exercise in seconds
@@ -164,7 +165,7 @@ public class QuizExercise extends Exercise {
      * @return true if quiz has started, false otherwise
      */
     @JsonView(QuizView.Before.class)
-    public Boolean isQuizStarted() {
+    public boolean isQuizStarted() {
         return isVisibleToStudents();
     }
 
@@ -174,7 +175,7 @@ public class QuizExercise extends Exercise {
      * @return true if quiz has ended, false otherwise
      */
     @JsonView(QuizView.Before.class)
-    public Boolean isQuizEnded() {
+    public boolean isQuizEnded() {
         return getDueDate() != null && ZonedDateTime.now().isAfter(getDueDate());
     }
 
@@ -184,7 +185,7 @@ public class QuizExercise extends Exercise {
      * @return true if quiz should be filtered, false otherwise
      */
     @JsonIgnore
-    public Boolean shouldFilterForStudents() {
+    public boolean shouldFilterForStudents() {
         return !isQuizEnded();
     }
 
@@ -194,7 +195,7 @@ public class QuizExercise extends Exercise {
      * @return true if the quiz is valid, otherwise false
      */
     @JsonIgnore
-    public Boolean isValid() {
+    public boolean isValid() {
         // check title
         if (getTitle() == null || getTitle().isEmpty()) {
             return false;
@@ -353,7 +354,7 @@ public class QuizExercise extends Exercise {
 
     @Override
     @Nullable
-    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
+    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, boolean ignoreAssessmentDueDate) {
         // The shouldFilterForStudents() method uses the exercise release/due dates, not the ones of the exam, therefor we can only use them if this exercise is not part of an exam
         // In exams, all results should be seen as relevant as they will only be created once the exam is over
         if (shouldFilterForStudents() && !isExamExercise()) {
@@ -650,8 +651,8 @@ public class QuizExercise extends Exercise {
     /**
      * add Result to all Statistics of the given QuizExercise
      *
-     * @param result            the result which will be added
-     * @param quizSubmission    the quiz submission which corresponds to the result and includes the submitted answers (loaded eagerly)
+     * @param result         the result which will be added
+     * @param quizSubmission the quiz submission which corresponds to the result and includes the submitted answers (loaded eagerly)
      */
     public void addResultToAllStatistics(Result result, QuizSubmission quizSubmission) {
 
@@ -670,7 +671,7 @@ public class QuizExercise extends Exercise {
     /**
      * remove Result from all Statistics of the given QuizExercise
      *
-     * @param result       the result which will be removed (NOTE: add the submission to the result previously (this would improve the performance)
+     * @param result the result which will be removed (NOTE: add the submission to the result previously (this would improve the performance)
      */
     public void removeResultFromAllStatistics(Result result) {
         // update QuizPointStatistic with the result
@@ -699,7 +700,7 @@ public class QuizExercise extends Exercise {
         if (isQuizEnded()) {
             return QuizView.After.class;
         }
-        else if (batch != null && batch.isSubmissionAllowed()) {
+        else if (batch != null && batch.isStarted()) {
             return QuizView.During.class;
         }
         else {
@@ -712,7 +713,7 @@ public class QuizExercise extends Exercise {
     public void validateDates() {
         super.validateDates();
         quizBatches.forEach(quizBatch -> {
-            if (quizBatch.getStartTime().isBefore(getReleaseDate())) {
+            if (quizBatch.getStartTime() != null && quizBatch.getStartTime().isBefore(getReleaseDate())) {
                 throw new BadRequestAlertException("Start time must not be before release date!", getTitle(), "noValidDates");
             }
         });

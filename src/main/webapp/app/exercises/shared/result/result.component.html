@@ -12,11 +12,19 @@
     <ng-container *ngSwitchCase="ResultTemplateStatus.HAS_RESULT">
         <ng-container *ngIf="result">
             <fa-icon *ngIf="showIcon" class="result-score-icon" [ngClass]="textColorClass" [icon]="resultIconClass" size="lg"></fa-icon>
-            <span [ngClass]="textColorClass" class="guided-tour result" id="result-score" (click)="showDetails(result)">
-                <span class="guided-tour result" [ngbTooltip]="resultTooltip | artemisTranslate">
+            <span
+                [ngClass]="textColorClass"
+                class="guided-tour result"
+                [class.clickable-result]="exercise?.type !== ExerciseType.QUIZ"
+                id="result-score"
+                (click)="showDetails(result)"
+            >
+                <span class="guided-tour result" [class.clickable-result]="exercise?.type !== ExerciseType.QUIZ" [ngbTooltip]="resultTooltip | artemisTranslate">
                     {{ resultString }}
                 </span>
-                <span class="result" [ngbTooltip]="result.completionDate | artemisDate"> ({{ result.completionDate | artemisTimeAgo }}) </span>
+                <span class="result" [class.clickable-result]="exercise?.type !== ExerciseType.QUIZ" [ngbTooltip]="result.completionDate | artemisDate">
+                    ({{ result.completionDate | artemisTimeAgo }})
+                </span>
             </span>
             <span *ngIf="hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING">
                 <a (click)="downloadBuildResult(participation.id)">
@@ -24,8 +32,9 @@
                     <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
                 </a>
             </span>
-            <span *ngIf="showBadge" class="badge" [ngClass]="badgeClass" id="result-score-badge" ngbTooltip="{{ badgeTooltip | artemisTranslate }}">
-                {{ badgeText | artemisTranslate | uppercase }}
+
+            <span *ngIf="showBadge" class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
+                {{ badge.text | artemisTranslate | uppercase }}
             </span>
         </ng-container>
     </ng-container>
@@ -60,7 +69,9 @@
                     }}</span>
                 </ng-container>
             </ng-container>
-            <span *ngIf="result" class="result" (click)="showDetails(result)">{{ 'artemisApp.result.missing.viewPrevious' | artemisTranslate }}</span>
+            <span *ngIf="result && exercise?.type !== ExerciseType.QUIZ" class="result clickable-result" (click)="showDetails(result)">
+                {{ 'artemisApp.result.missing.viewPrevious' | artemisTranslate }}
+            </span>
         </span>
     </ng-container>
     <ng-container *ngSwitchDefault>

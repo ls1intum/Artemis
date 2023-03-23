@@ -21,8 +21,8 @@ public class ObjectDiagramParser {
      * Create a UML object diagram from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates an
      * object diagram containing these UML model elements.
      *
-     * @param modelElements the model elements as JSON array
-     * @param relationships the relationship elements as JSON array
+     * @param modelElements     the model elements as JSON array
+     * @param relationships     the relationship elements as JSON array
      * @param modelSubmissionId the ID of the corresponding modeling submission
      * @return a UML object diagram containing the parsed model elements and relationships
      * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
@@ -64,7 +64,7 @@ public class ObjectDiagramParser {
     /**
      * Parses the given JSON representation of a UML object to a UMLObject Java object.
      *
-     * @param objectJson the JSON object containing the UML object
+     * @param objectJson    the JSON object containing the UML object
      * @param modelElements a JSON array containing all the model elements of the corresponding UML object diagram as JSON objects
      * @return the UMLObject object parsed from the JSON object
      */
@@ -80,7 +80,7 @@ public class ObjectDiagramParser {
      * Parses the given JSON representation of a UML relationship to a UMLObjectLink Java object.
      *
      * @param relationshipJson the JSON object containing the relationship
-     * @param objectMap a map containing all objects of the corresponding object diagram, necessary for assigning source and target element of the relationships
+     * @param objectMap        a map containing all objects of the corresponding object diagram, necessary for assigning source and target element of the relationships
      * @return the UMLObjectLink object parsed from the JSON object
      * @throws IOException when no class could be found in the classMap for the source and target ID in the JSON object
      */
@@ -101,7 +101,7 @@ public class ObjectDiagramParser {
     /**
      * Parses the given JSON representation of a UML elements to a UMLObjectAttribute list Java object.
      *
-     * @param objectJson the JSON object containing the UML object
+     * @param objectJson     the JSON object containing the UML object
      * @param jsonElementMap a map containing all the model elements and their ids of the corresponding UML object diagram as JSON objects
      * @return the list of UMLObjectAttribute parsed from the JSON object map
      */
@@ -118,7 +118,7 @@ public class ObjectDiagramParser {
     /**
      * Parses the given JSON representation of a UML elements to a UMLObjectMethod list Java object.
      *
-     * @param objectJson the JSON object containing the UML object
+     * @param objectJson     the JSON object containing the UML object
      * @param jsonElementMap a map containing all the model elements and their ids of the corresponding UML object diagram as JSON objects
      * @return the list of UMLObjectMethod parsed from the JSON object map
      */

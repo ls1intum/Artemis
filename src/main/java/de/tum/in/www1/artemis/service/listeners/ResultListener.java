@@ -11,20 +11,20 @@ import org.springframework.stereotype.Component;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 
 /**
  * Listener for updates on {@link Result} entities to update the {@link de.tum.in.www1.artemis.domain.scores.ParticipantScore}.
- * @see de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService
+ *
+ * @see ParticipantScoreScheduleService
  */
 @Component
 public class ResultListener {
 
     private InstanceMessageSendService instanceMessageSendService;
 
-    /**
-     * Empty constructor for Spring.
-     */
     public ResultListener() {
+        // Empty constructor for Spring
     }
 
     @Autowired
@@ -35,6 +35,7 @@ public class ResultListener {
     /**
      * This callback method is called after a result is created or updated.
      * It will forward the event to the messaging service to process it for the participant scores.
+     *
      * @param result the result that was modified
      */
     @PostPersist
@@ -48,6 +49,7 @@ public class ResultListener {
     /**
      * This callback method is called before a result is deleted.
      * It will forward the event to the messaging service to process it for the participant scores.
+     *
      * @param result the result that is about to be deleted
      */
     @PreRemove

@@ -1,59 +1,63 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import dayjs from 'dayjs/esm';
 import { DebugElement } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { Subject, of } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
-import { expectElementToBeEnabled, getElement } from '../../helpers/utils/general.utils';
-import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
-import { MockProgrammingExerciseWebsocketService } from '../../helpers/mocks/service/mock-programming-exercise-websocket.service';
-import { ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-build-run.service';
-import { MockProgrammingBuildRunService } from '../../helpers/mocks/service/mock-programming-build-run.service';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
+import { CategoryIssuesChartComponent } from 'app/exercises/programming/manage/grading/charts/category-issues-chart.component';
+import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
+import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
+import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
+import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-actions.component';
+import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-status.component';
 import {
     ChartFilterType,
     EditableField,
     ProgrammingExerciseConfigureGradingComponent,
+    Table,
 } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
-import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-submission-policy-configuration-actions.component';
+import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-table-actions.component';
 import {
     ProgrammingExerciseGradingService,
     ProgrammingExerciseTestCaseUpdate,
     StaticCodeAnalysisCategoryUpdate,
 } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
-import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
-import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
-import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
-import { CategoryIssuesChartComponent } from 'app/exercises/programming/manage/grading/charts/category-issues-chart.component';
-import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-status.component';
-import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-actions.component';
-import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-table-actions.component';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
-import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgModel } from '@angular/forms';
-import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
-import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
+import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
+import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-build-run.service';
 import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-re-evaluate-button.component';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
-import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-submission-policy-configuration-actions.component';
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { Subject, of } from 'rxjs';
+import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockProgrammingBuildRunService } from '../../helpers/mocks/service/mock-programming-build-run.service';
+import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
+import { MockProgrammingExerciseWebsocketService } from '../../helpers/mocks/service/mock-programming-exercise-websocket.service';
+import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { expectElementToBeEnabled, getElement } from '../../helpers/utils/general.utils';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -63,6 +67,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let route: ActivatedRoute;
     let gradingService: ProgrammingExerciseGradingService;
     let programmingExerciseService: ProgrammingExerciseService;
+    let modalService: NgbModal;
 
     let updateTestCasesStub: jest.SpyInstance;
     let updateCategoriesStub: jest.SpyInstance;
@@ -72,6 +77,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let getExerciseTestCaseStateStub: jest.SpyInstance;
     let loadExerciseStub: jest.SpyInstance;
     let loadStatisticsStub: jest.SpyInstance;
+    let importCategoriesFromExerciseStub: jest.SpyInstance;
     let programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService;
 
     let routeSubject: Subject<Params>;
@@ -94,6 +100,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         id: exerciseId,
         staticCodeAnalysisEnabled: true,
         maxPoints: 42,
+        programmingLanguage: ProgrammingLanguage.JAVA,
     } as ProgrammingExercise;
     const testCases = [
         {
@@ -209,7 +216,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, MockModule(TranslateTestingModule)],
+            imports: [ArtemisTestModule, NgxDatatableModule, MockModule(TranslateTestingModule), MockModule(NgbTooltipModule)],
             declarations: [
                 ProgrammingExerciseConfigureGradingComponent,
                 ProgrammingExerciseConfigureGradingStatusComponent,
@@ -239,6 +246,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: Router, useClass: MockRouter },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(AlertService),
             ],
         })
@@ -253,12 +261,14 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 const router = debugElement.injector.get(Router);
                 programmingExerciseWebsocketService = debugElement.injector.get(ProgrammingExerciseWebsocketService);
                 programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
+                modalService = debugElement.injector.get(NgbModal);
 
                 updateTestCasesStub = jest.spyOn(gradingService, 'updateTestCase');
                 updateCategoriesStub = jest.spyOn(gradingService, 'updateCodeAnalysisCategories');
                 resetTestCasesStub = jest.spyOn(gradingService, 'resetTestCases');
                 resetCategoriesStub = jest.spyOn(gradingService, 'resetCategories');
                 loadStatisticsStub = jest.spyOn(gradingService, 'getGradingStatistics');
+                importCategoriesFromExerciseStub = jest.spyOn(gradingService, 'importCategoriesFromExercise');
 
                 // @ts-ignore
                 (router as MockRouter).setUrl('/');
@@ -489,15 +499,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expectElementToBeEnabled(saveButton);
         saveButton.click();
 
-        if (assessmentType === AssessmentType.AUTOMATIC) {
-            expect(alertServiceSpy).toHaveBeenCalledOnce();
-            expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.configureGrading.testCases.weightSumError');
-        } else {
-            expect(alertServiceSpy).not.toHaveBeenCalled();
-        }
+        expect(alertServiceSpy).not.toHaveBeenCalled();
     };
 
-    it('should show an error alert when test case weights are less or equal zero for exercises with automatic feedback', () => {
+    it('should NOT show an error alert when test case weights zero for exercises with automatic feedback', () => {
         checkBehaviourForZeroWeight(AssessmentType.AUTOMATIC);
     });
 
@@ -695,6 +700,27 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(comp.changedCategoryIds).toHaveLength(0);
     });
 
+    it('should import a configuration from a different exercise', () => {
+        const mockReturnValue = {
+            result: Promise.resolve({ id: 456 } as ProgrammingExercise),
+            componentInstance: {},
+        } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+
+        initGradingComponent({ tab: 'code-analysis' });
+        fixture.detectChanges();
+
+        const button = debugElement.query(By.css('#import-configuration-button'));
+
+        button.nativeElement.click();
+
+        expect(mockReturnValue.componentInstance.exerciseType).toEqual(ExerciseType.PROGRAMMING);
+        expect(mockReturnValue.componentInstance.programmingLanguage).toEqual(ProgrammingLanguage.JAVA);
+
+        expect(importCategoriesFromExerciseStub).toHaveBeenCalledOnce();
+        expect(importCategoriesFromExerciseStub).toHaveBeenCalledWith(exercise.id, 456);
+    });
+
     it('should update sca category when an input field is updated', () => {
         initGradingComponent({ tab: 'code-analysis' });
 
@@ -795,7 +821,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(passedBuildCharts[2].totalParticipations).toBe(5);
     });
 
-    const sortAndTestTable = (table: string) => (headerElement: DebugElement, prop: string, dir: string) => {
+    const sortAndTestTable = (table: Table) => (headerElement: DebugElement, prop: string, dir: string) => {
         headerElement.nativeElement.click();
         fixture.detectChanges();
 
@@ -816,7 +842,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         sortAndTest(weightHeader, 'weight', 'asc');
         sortAndTest(weightHeader, 'weight', 'desc');
 
-        const passedPercentHeader = headerColumns[6];
+        const passedPercentHeader = headerColumns[7];
         sortAndTest(passedPercentHeader, 'passedPercent', 'asc');
         sortAndTest(passedPercentHeader, 'passedPercent', 'desc');
     });

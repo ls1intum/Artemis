@@ -5,9 +5,9 @@ import javax.persistence.criteria.Predicate;
 
 import org.springframework.data.jpa.domain.Specification;
 
-import de.tum.in.www1.artemis.domain.metis.Conversation_;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Post_;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation_;
 
 public class MessageSpecs {
 

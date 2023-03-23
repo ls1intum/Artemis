@@ -18,7 +18,7 @@ import { ExerciseSubmissionChartComponent } from 'app/exam/monitoring/charts/exe
 import { ExerciseGroupChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-group-chart.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockHttpService } from '../../../../helpers/mocks/service/mock-http.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
@@ -29,6 +29,7 @@ import { ExerciseDetailNavigationChartComponent } from 'app/exam/monitoring/char
 import { ExerciseDetailCurrentChartComponent } from 'app/exam/monitoring/charts/exercise-detail/exercise-detail-current-chart.component';
 import { ExerciseDetailTemplateChartComponent } from 'app/exam/monitoring/charts/exercise-detail/exercise-detail-template-chart.component';
 import { PieChartModule } from '@swimlane/ngx-charts';
+import { ExerciseTemplateChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-template-chart.component';
 
 describe('Monitoring Exercise Component', () => {
     // Course
@@ -65,6 +66,7 @@ describe('Monitoring Exercise Component', () => {
                 ExerciseDetailTemplateChartComponent,
                 DataTableComponent,
                 MockPipe(ArtemisTranslatePipe),
+                MockComponent(ExerciseTemplateChartComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },

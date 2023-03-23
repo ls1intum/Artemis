@@ -83,7 +83,7 @@ describe('TextUnitFormComponent', () => {
         window.document.body.innerHTML = innerHtmlCopy;
     }));
 
-    it('should call completion callback when uncollapsed', () => {
+    it('should call completion callback when expanded', () => {
         return new Promise<void>((done) => {
             textUnitComponent.onCompletion.subscribe((event) => {
                 expect(event.lectureUnit).toEqual(textUnit);

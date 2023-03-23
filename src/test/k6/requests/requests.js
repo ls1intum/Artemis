@@ -136,7 +136,7 @@ export function Artemis(authToken) {
         return request('delete', endpoint, authToken, null, params);
     };
     this.websocket = function (doOnSocket) {
-        const websocketEndpoint = websocketProtocol + '://' + host + '/websocket/tracker/websocket';
+        const websocketEndpoint = websocketProtocol + '://' + host + '/websocket/websocket';
 
         const jar = new http.CookieJar();
         jar.set(baseUrl, 'jwt', authToken);

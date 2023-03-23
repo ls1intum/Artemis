@@ -42,6 +42,9 @@ public class Feedback extends DomainObject {
     @Column(name = "detail_text", length = FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS)
     private String detailText;
 
+    @Column(name = "has_long_feedback_text")
+    private boolean hasLongFeedbackText = false;
+
     /**
      * Reference to the assessed element (e.g. model element id or text element string)
      */
@@ -58,11 +61,11 @@ public class Feedback extends DomainObject {
     @Column(name = "positive")
     private Boolean positive;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.ORDINAL)
     @Column(name = "type")
     private FeedbackType type;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.ORDINAL)
     @Column(name = "visibility")
     private Visibility visibility;
 
@@ -125,6 +128,7 @@ public class Feedback extends DomainObject {
 
     /**
      * sets the detail text of the feedback. In case the detail text is longer than 5000 characters, the additional characters are cut off to avoid database issues
+     *
      * @param detailText the new detail text for the feedback, can be null
      */
     public void setDetailText(@Nullable String detailText) {
@@ -134,6 +138,14 @@ public class Feedback extends DomainObject {
         else {
             this.detailText = detailText.substring(0, FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS);
         }
+    }
+
+    public boolean hasLongFeedbackText() {
+        return hasLongFeedbackText;
+    }
+
+    public void setHasLongFeedbackText(boolean hasLongFeedbackText) {
+        this.hasLongFeedbackText = hasLongFeedbackText;
     }
 
     public String getReference() {
@@ -153,34 +165,6 @@ public class Feedback extends DomainObject {
         this.reference = reference;
     }
 
-    /**
-     * For modeling submissions the reference looks like "<umlElementType>:<jsonElementId>". This function tries to split the reference string at ':' and returns the second part
-     * (i.e. the jsonElementId).
-     *
-     * @return the jsonElementId for modeling submissions or null if the reference string does not contain ':'
-     */
-    @JsonIgnore
-    public String getReferenceElementId() {
-        if (reference == null || !reference.contains(":")) {
-            return null;
-        }
-        return reference.split(":")[1];
-    }
-
-    /**
-     * For modeling submissions the reference looks like "<umlElementType>:<jsonElementId>". This function tries to split the reference string at ':' and returns the first part
-     * (i.e. the umlElementType).
-     *
-     * @return the umlElementType for modeling submissions or null if the reference string does not contain ':'
-     */
-    @JsonIgnore
-    public String getReferenceElementType() {
-        if (!reference.contains(":")) {
-            return null;
-        }
-        return reference.split(":")[0];
-    }
-
     public Double getCredits() {
         return credits;
     }
@@ -196,7 +180,7 @@ public class Feedback extends DomainObject {
 
     /**
      * Returns if this is a positive feedback.
-     *
+     * <p>
      * This value can actually be {@code null} for feedbacks that are neither positive nor negative, e.g. when this is a
      * feedback for a programming exercise test case that has not been executed for the submission.
      *
@@ -267,6 +251,7 @@ public class Feedback extends DomainObject {
     /**
      * be careful when using this method as it might result in org.hibernate.HibernateException: null index column for collection: de.tum.in.www1.artemis.domain.Result.feedbacks
      * when saving the result. The result object is the container that owns the feedback and uses CascadeType.ALL and orphanRemoval
+     *
      * @param result the result container object that owns the feedback
      */
     public void setResult(Result result) {
@@ -286,32 +271,20 @@ public class Feedback extends DomainObject {
         return suggestedFeedbackReference;
     }
 
-    public void setSuggestedFeedbackOriginBlock(String suggestedFeedbackOriginBlockId) {
-        this.suggestedFeedbackReference = suggestedFeedbackOriginBlockId;
-    }
-
     public Long getSuggestedFeedbackOriginSubmissionReference() {
         return suggestedFeedbackOriginSubmissionReference;
-    }
-
-    public void setSuggestedFeedbackOriginSubmission(Long suggestedFeedbackOriginSubmission) {
-        this.suggestedFeedbackOriginSubmissionReference = suggestedFeedbackOriginSubmission;
     }
 
     public Long getSuggestedFeedbackParticipationReference() {
         return suggestedFeedbackParticipationReference;
     }
 
-    public void setSuggestedFeedbackParticipationReference(Long suggestedFeedbackParticipationReference) {
-        this.suggestedFeedbackParticipationReference = suggestedFeedbackParticipationReference;
-    }
-
     /**
-     *  This function sets the described parameters and then returns the current instance with the updated references.
+     * This function sets the described parameters and then returns the current instance with the updated references.
      *
      * @param suggestedFeedbackOriginBlockReference - Block reference of the suggested (automatic) feedback
-     * @param submissionId - Submission reference where the suggested feedback was generated from
-     * @param suggestedFeedbackParticipationId - respective participation reference
+     * @param submissionId                          - Submission reference where the suggested feedback was generated from
+     * @param suggestedFeedbackParticipationId      - respective participation reference
      * @return updated Feedback
      */
     public Feedback suggestedFeedbackOrigin(String suggestedFeedbackOriginBlockReference, Long submissionId, Long suggestedFeedbackParticipationId) {
@@ -339,6 +312,7 @@ public class Feedback extends DomainObject {
 
     /**
      * Checks whether the feedback was created by static code analysis
+     *
      * @return true if it is static code analysis feedback else false
      */
     @JsonIgnore
@@ -348,6 +322,7 @@ public class Feedback extends DomainObject {
 
     /**
      * Checks whether the feedback was created by a submission policy
+     *
      * @return true if it is submission policy feedback else false
      */
     @JsonIgnore
@@ -357,6 +332,7 @@ public class Feedback extends DomainObject {
 
     /**
      * Checks whether the feedback was created by an automatic test
+     *
      * @return true if it is a test feedback else false
      */
     @JsonIgnore
@@ -380,11 +356,13 @@ public class Feedback extends DomainObject {
 
     /**
      * Copies an automatic feedback to be used for the manual result of a programming exercise
+     *
      * @return Copy of the automatic feedback without its original ID
      */
     public Feedback copyFeedback() {
         var feedback = new Feedback();
         feedback.setDetailText(getDetailText());
+        feedback.setHasLongFeedbackText(hasLongFeedbackText());
         feedback.setType(getType());
         // For manual result each feedback needs to have a credit. If no credit is set, we set it to 0.0
         feedback.setCredits(Objects.requireNonNullElse(getCredits(), 0.0));
@@ -409,7 +387,8 @@ public class Feedback extends DomainObject {
 
     /**
      * Calculates the score over all feedback elements that were set using structured grading instructions (SGI)
-     * @param inputScore totalScore which is summed up.
+     *
+     * @param inputScore          totalScore which is summed up.
      * @param gradingInstructions empty grading instruction Map to collect the used gradingInstructions
      * @return calculated total score from feedback elements set by SGI
      */
@@ -443,13 +422,4 @@ public class Feedback extends DomainObject {
         return totalScore;
     }
 
-    /**
-     * Checks whether the feedback contains any additional feedback text
-     *
-     * @return true if the feedback contains additional feedback text, false otherwise
-     */
-    @JsonIgnore
-    public boolean hasDetails() {
-        return !Boolean.TRUE.equals(isPositive()) || detailText != null || gradingInstruction != null;
-    }
 }

@@ -112,9 +112,9 @@ describe('Exercise detail common actions Component', () => {
         const fileUploadExerciseService = fixture.debugElement.injector.get(FileUploadExerciseService);
         const modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
 
-        const deleteTextExerciseService = jest.spyOn(textExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<{}>));
-        const deleteFileUploadExerciseStub = jest.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<{}>));
-        const deleteModelingExerciseService = jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<{}>));
+        const deleteTextExerciseService = jest.spyOn(textExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
+        const deleteFileUploadExerciseStub = jest.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
+        const deleteModelingExerciseService = jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
 
         comp.course = course;
 

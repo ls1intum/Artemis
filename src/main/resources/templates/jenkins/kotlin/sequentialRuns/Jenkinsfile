@@ -8,6 +8,7 @@ pipeline {
             docker {
                 image '#dockerImage'
                 label 'docker'
+                args '#dockerArgs'
             }
         }
         stages {
@@ -37,10 +38,13 @@ pipeline {
         }
         post {
             cleanup {
-                sh 'rm -rf results'
-                sh 'mkdir results'
-                sh 'cp structural/target/surefire-reports/*.xml $WORKSPACE/results/ || true'
-                sh 'cp behavior/target/surefire-reports/*.xml $WORKSPACE/results/ || true'
+                sh '''
+                rm -rf results
+                mkdir results
+                cp structural/target/surefire-reports/*.xml $WORKSPACE/results/ || true
+                cp behavior/target/surefire-reports/*.xml $WORKSPACE/results/ || true
+                sed -i 's/[^[:print:]]/�/g' $WORKSPACE/results/*.xml || true
+                '''
                 sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
                 cleanWs()
             }

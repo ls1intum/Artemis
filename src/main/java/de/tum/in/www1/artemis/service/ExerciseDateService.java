@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.participation.ParticipationInterface;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 
@@ -25,6 +26,7 @@ public class ExerciseDateService {
     /**
      * Finds the latest individual due date for participants. If no individual due dates exist, then the exercise due date is returned.
      * Returns nothing if the exercise itself has no due date.
+     *
      * @param exercise the exercise for which the latest due date should be returned.
      * @return the latest individual due date, or if not existing the exercise due date.
      */
@@ -40,6 +42,7 @@ public class ExerciseDateService {
     /**
      * Finds the earliest individual due date for participants.
      * Returns null if the exercise itself has no due date.
+     *
      * @param exercise the exercise for which the earliest due date should be returned.
      * @return the earliest individual due date, or if none exists the exercise due date.
      */
@@ -57,13 +60,19 @@ public class ExerciseDateService {
      * <p>
      * Checks for exam or course exercise, and if an individual due date is set for the given
      * participation or only a course-wide due date applies.
+     *
      * @param participation in a course or exam exercise.
      * @return true, if the due date is in the past and submissions are no longer possible.
      */
     public boolean isAfterDueDate(ParticipationInterface participation) {
         final Exercise exercise = participation.getExercise();
         if (exercise.isExamExercise()) {
-            return examDateService.isExerciseWorkingPeriodOver(exercise);
+            if (participation instanceof StudentParticipation studentParticipation) {
+                return examDateService.isExerciseWorkingPeriodOver(exercise, studentParticipation);
+            }
+            else {
+                return examDateService.isExamWithGracePeriodOver(exercise.getExamViaExerciseGroupOrCourseMember());
+            }
         }
         else {
             final ZonedDateTime now = ZonedDateTime.now();
@@ -73,6 +82,7 @@ public class ExerciseDateService {
 
     /**
      * Checks if the due date for the given participation is in the future.
+     *
      * @param participation in a course or exam exercise.
      * @return true, if the due date has not yet passed.
      */
@@ -83,6 +93,7 @@ public class ExerciseDateService {
     /**
      * Checks if the current time is before the latest possible submission time.
      * If no due date is set, returns true (a due date infinitely far in the future is assumed).
+     *
      * @param exercise for which this should be checked.
      * @return true, if the current time is before the due date.
      */
@@ -94,6 +105,7 @@ public class ExerciseDateService {
     /**
      * Checks if the current time is after the latest possible submission time.
      * If no due date is set, returns false (a due date infinitely far in the future is assumed).
+     *
      * @param exercise for which this should be checked.
      * @return true, if the current time is after the due date.
      */
@@ -120,6 +132,7 @@ public class ExerciseDateService {
 
     /**
      * Gets either the individual due date for a participation if present or else the exercise due date if present.
+     *
      * @param participation of a student in an exercise.
      * @return the individual due date, or the exercise due date, or nothing.
      */

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { getElement } from '../../../../../helpers/utils/general.utils';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
@@ -15,6 +15,7 @@ import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdow
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { metisAnnouncement, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
 import { UserRole } from 'app/shared/metis/metis.util';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('PostHeaderComponent', () => {
     let component: PostHeaderComponent;
@@ -26,7 +27,7 @@ describe('PostHeaderComponent', () => {
     let metisServiceDeletePostMock: jest.SpyInstance;
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip)],
             providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 PostHeaderComponent,

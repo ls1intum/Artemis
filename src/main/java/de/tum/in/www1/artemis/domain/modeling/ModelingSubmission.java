@@ -28,12 +28,10 @@ public class ModelingSubmission extends Submission {
 
     @Column(name = "model")
     @Size(max = MAX_SUBMISSION_MODEL_LENGTH, message = "The modeling submission is too large.")
-    @Lob
     private String model;
 
     @Column(name = "explanation_text")
     @Size(max = MAX_SUBMISSION_TEXT_LENGTH, message = "The explanation of the modeling submission is too large.")
-    @Lob
     private String explanationText;
 
     @Transient
@@ -83,7 +81,6 @@ public class ModelingSubmission extends Submission {
      * A modeling submission is empty if the model is null, blank (no actual characters) or if the elements in the json description are empty.
      *
      * @param jacksonObjectMapper a predefined jackson object mapper
-     *
      * @return true if the submission is empty, false otherwise
      */
     public boolean isEmpty(ObjectMapper jacksonObjectMapper) {

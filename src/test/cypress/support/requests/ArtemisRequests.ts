@@ -6,3 +6,5 @@ import { CourseManagementRequests } from './CourseManagementRequests';
 export class ArtemisRequests {
     courseManagement = new CourseManagementRequests();
 }
+
+export const courseManagementRequest = new CourseManagementRequests();

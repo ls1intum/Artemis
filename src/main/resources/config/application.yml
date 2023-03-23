@@ -40,15 +40,26 @@ artemis:
         # This `default` option will be overridden by more specific project type
         # definitions.
         build:
+            default-docker-flags:
+                - flag: --cpus
+                  value: 2
+                # Set `memory-swap` and `memory` to the same value to turn off SWAP.
+                # See -> https://docs.docker.com/config/containers/resource_constraints/#--memory-swap-details
+                - flag: --memory
+                  value: 2g
+                - flag: --memory-swap
+                  value: 2g
+                - flag: --pids-limit
+                  value: 1000
             images:
                 java:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-11"
+                    default: "ls1tum/artemis-maven-template:java17-16"
                 kotlin:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-11"
+                    default: "ls1tum/artemis-maven-template:java17-16"
                 empty:
-                    default: "ls1tum/artemis-maven-template:java17-11"
+                    default: "ls1tum/artemis-maven-template:java17-16"
                 python:
                     default: "ls1tum/artemis-python-docker:latest"
                 c:
@@ -56,7 +67,7 @@ artemis:
                     default: "ls1tum/artemis-c-docker:latest"
                     fact: "sharingcodeability/fact:latest"
                 haskell:
-                    default: "ghcr.io/b-fein/artemis-haskell:v19.30.0"
+                    default: "ghcr.io/uni-passau-artemis/artemis-haskell:v19.33.0"
                 vhdl:
                     default: "tizianleonhardt/era-artemis-vhdl:latest"
                 assembler:
@@ -142,22 +153,23 @@ spring:
                 physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
                 implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
         properties:
-            hibernate.jdbc.time_zone: UTC
             hibernate.id.new_generator_mappings: true
             hibernate.connection.provider_disables_autocommit: true
-            hibernate.cache.use_second_level_cache: true
-            hibernate.cache.use_query_cache: false
             hibernate.generate_statistics: false
-            # modify batch size as necessary
-            hibernate.jdbc.batch_size: 25
             hibernate.order_inserts: true
             hibernate.order_updates: true
 #            hibernate.query.fail_on_pagination_over_collection_fetch: true  # not appropriate in our case: https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch/
             hibernate.query.in_clause_parameter_padding: true
+            hibernate.cache.use_second_level_cache: true
+            hibernate.cache.use_query_cache: false
             hibernate.cache.region.factory_class: com.hazelcast.hibernate.HazelcastLocalCacheRegionFactory
             hibernate.cache.use_minimal_puts: true
             hibernate.cache.hazelcast.instance_name: Artemis
             hibernate.cache.hazelcast.use_lite_member: true
+            # modify batch size as necessary
+            hibernate.jdbc.batch_size: 25
+            hibernate.jdbc.time_zone: UTC
+            hibernate.jdbc.lob.non_contextual_creation: true
     messages:
         basename: i18n/messages
     main:

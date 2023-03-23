@@ -21,6 +21,7 @@ export class OrionTutorAssessmentComponent {
      * Sends all current inline feedback to Orion
      */
     initializeFeedback() {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         this.orionConnectorService.initializeAssessment(this.container.submission?.id!, this.container.referencedFeedback);
     }
 

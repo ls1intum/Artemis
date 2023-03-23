@@ -30,6 +30,7 @@ public final class SecurityUtils {
 
     /**
      * check that the username and password are not null and have the correct length
+     *
      * @param username the username which should be validated
      * @param password the password which should be validated
      */
@@ -111,6 +112,7 @@ public final class SecurityUtils {
 
     /**
      * Create an Authentication object to impersonate the specified user
+     *
      * @param login The login of the user to impersonate
      * @return A new Authentication object
      */

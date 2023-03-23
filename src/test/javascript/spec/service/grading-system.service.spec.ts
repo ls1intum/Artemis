@@ -136,6 +136,8 @@ describe('Grading System Service', () => {
             gradeSteps,
             title: 'Course Title',
             gradeType: GradeType.BONUS,
+            plagiarismGrade: GradingScale.DEFAULT_PLAGIARISM_GRADE,
+            noParticipationGrade: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
         };
 
         service
@@ -152,6 +154,8 @@ describe('Grading System Service', () => {
             gradeSteps,
             title: 'Exam Title',
             gradeType: GradeType.GRADE,
+            plagiarismGrade: GradingScale.DEFAULT_PLAGIARISM_GRADE,
+            noParticipationGrade: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
         };
 
         service
@@ -168,6 +172,8 @@ describe('Grading System Service', () => {
             gradeSteps,
             title: 'Title',
             gradeType: GradeType.GRADE,
+            plagiarismGrade: GradingScale.DEFAULT_PLAGIARISM_GRADE,
+            noParticipationGrade: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
         };
 
         service

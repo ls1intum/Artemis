@@ -28,10 +28,10 @@ following dependencies/tools on your machine:
    Artemis uses Hibernate to store entities in a MySQL database.
    Download and install the MySQL Community Server (8.0.x) and configure it according to section
    `MySQL Setup <#mysql-setup>`__.
-3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=16.13.0 < 17) to compile
+3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=18.14.0 < 19) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
-4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=8.1.0) to
+4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=9.4.0) to
    manage client side dependencies. Npm is typically bundled with Node.js,
    but can also be installed separately.
 5. ( `Graphviz <https://www.graphviz.org/download/>`__: We use Graphviz to generate graphs within exercise task
@@ -42,7 +42,7 @@ following dependencies/tools on your machine:
    There are multiple stacks available for the integration with Artemis:
 
    * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
-   * GitLab and GitLab CI (under development, not yet production ready)
+   * `GitLab and GitLab CI <#gitlab-ci-and-gitlab-setup>`__ (experimental, not yet production ready)
    * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__)
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -124,7 +124,6 @@ You can override the following configuration options in this file.
    artemis:
        repo-clone-path: ./repos/
        repo-download-clone-path: ./repos-download/
-       encryption-password: <encrypt-password>      # LEGACY: arbitrary password for encrypting database values
        bcrypt-salt-rounds: 11   # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
                                 # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
        user-management:
@@ -508,17 +507,22 @@ instead of the TUM defaults:
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/programming-exercises.rst.txt
+.. include:: setup/programming-exercises.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/bamboo-bitbucket-jira.rst.txt
+.. include:: setup/bamboo-bitbucket-jira.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/jenkins-gitlab.rst.txt
+.. include:: setup/jenkins-gitlab.rst
 
 ------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/gitlabci-gitlab.rst
+
+------------------------------------------------------------------------------------------------------------------------
+
 
 Athene Service
 --------------
@@ -583,11 +587,11 @@ HTTP. We need to extend the configuration in the file
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/common-problems.rst.txt
+.. include:: setup/common-problems.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/distributed.rst.txt
+.. include:: setup/distributed.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -629,4 +633,4 @@ Other useful commands
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/kubernetes.rst.txt
+.. include:: setup/kubernetes.rst

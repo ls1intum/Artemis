@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
@@ -6,15 +6,10 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
     selector: 'jhi-quiz-scoring-info-modal',
     templateUrl: './quiz-scoring-info-modal.component.html',
 })
-export class QuizScoringInfoModalComponent implements OnInit {
+export class QuizScoringInfoModalComponent {
     // Icons
     farQuestionCircle = faQuestionCircle;
     constructor(private modalService: NgbModal) {}
-
-    /**
-     * Do nothing on init.
-     */
-    ngOnInit() {}
 
     /**
      * Open a large modal with the given content.

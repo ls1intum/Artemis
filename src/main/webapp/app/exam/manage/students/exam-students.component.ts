@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ExamUser } from 'app/entities/exam-user.model';
 import { Observable, Subject, Subscription, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { User } from 'app/core/user/user.model';
@@ -14,7 +15,8 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faInfoCircle, faPlus, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faInfoCircle, faPlus, faUpload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -33,11 +35,13 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
     readonly ActionType = ActionType;
+    readonly SERVER_API_URL = SERVER_API_URL;
+    readonly missingImage = '/content/images/missing_image.png';
 
     courseId: number;
     exam: Exam;
     isTestExam: boolean;
-    allRegisteredUsers: User[] = [];
+    allRegisteredUsers: ExamUser[] = [];
     filteredUsersSize = 0;
     paramSub: Subscription;
 
@@ -45,6 +49,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     isLoading = false;
+    hasExamStarted = false;
     isSearching = false;
     searchFailed = false;
     searchNoResults = false;
@@ -57,6 +62,8 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     faPlus = faPlus;
     faUserSlash = faUserSlash;
     faInfoCircle = faInfoCircle;
+    faUpload = faUpload;
+    faCheck = faCheck;
 
     constructor(
         private router: Router,
@@ -73,20 +80,29 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.isAdmin = this.accountService.isAdmin();
         this.route.data.subscribe(({ exam }: { exam: Exam }) => {
-            this.exam = exam;
-            this.allRegisteredUsers = exam.registeredUsers! || [];
-            this.isTestExam = this.exam.testExam!;
-            this.isLoading = false;
+            this.setUpExamInformation(exam);
         });
     }
 
     reloadExamWithRegisteredUsers() {
         this.isLoading = true;
         this.examManagementService.find(this.courseId, this.exam.id!, true).subscribe((examResponse: HttpResponse<Exam>) => {
-            this.exam = examResponse.body!;
-            this.allRegisteredUsers = this.exam.registeredUsers! || [];
-            this.isLoading = false;
+            this.setUpExamInformation(examResponse.body!);
         });
+    }
+
+    private setUpExamInformation(exam: Exam) {
+        this.exam = exam;
+        this.hasExamStarted = exam.startDate?.isBefore(dayjs()) || false;
+        this.allRegisteredUsers =
+            exam.examUsers?.map((examUser) => {
+                return {
+                    ...examUser.user!,
+                    ...examUser,
+                };
+            }) || [];
+        this.isTestExam = this.exam.testExam!;
+        this.isLoading = false;
     }
 
     ngOnDestroy() {
@@ -149,21 +165,12 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      */
     onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
         // If the user is not registered for this exam yet, perform the server call to add them
-        if (!this.allRegisteredUsers.map((u) => u.id).includes(user.id) && user.login) {
+        if (!this.allRegisteredUsers.map((eu) => eu.user!.id).includes(user.id) && user.login) {
             this.isTransitioning = true;
             this.examManagementService.addStudentToExam(this.courseId, this.exam.id!, user.login).subscribe({
-                next: (student) => {
+                next: () => {
                     this.isTransitioning = false;
-
-                    // make sure the registration number is set in the user object
-                    user.visibleRegistrationNumber = student.body!.registrationNumber;
-
-                    // Add newly registered user to the list of all registered users for the exam
-                    this.allRegisteredUsers.push(user);
-
-                    // Hand back over to the data table for updating
-                    callback(user);
-
+                    this.reloadExamWithRegisteredUsers();
                     // Flash green background color to signal to the user that this student was registered
                     this.flashRowClass(cssClasses.newlyRegistered);
                 },
@@ -183,13 +190,13 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     /**
      * Unregister student from exam
      *
-     * @param user User that should be removed from the exam
+     * @param examUser User that should be removed from the exam
      * @param event generated by the jhiDeleteButton. Has the property deleteParticipationsAndSubmission, reflecting the checkbox choice of the user
      */
-    removeFromExam(user: User, event: { [key: string]: boolean }) {
-        this.examManagementService.removeStudentFromExam(this.courseId, this.exam.id!, user.login!, event.deleteParticipationsAndSubmission).subscribe({
+    removeFromExam(examUser: ExamUser, event: { [key: string]: boolean }) {
+        this.examManagementService.removeStudentFromExam(this.courseId, this.exam.id!, examUser.user!.login!, event.deleteParticipationsAndSubmission).subscribe({
             next: () => {
-                this.allRegisteredUsers = this.allRegisteredUsers.filter((u) => u.login !== user.login);
+                this.allRegisteredUsers = this.allRegisteredUsers.filter((eu) => eu.user!.login !== examUser.user!.login);
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -252,7 +259,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      */
     flashRowClass = (className: string) => {
         this.rowClass = className;
-        setTimeout(() => (this.rowClass = undefined));
+        setTimeout(() => (this.rowClass = undefined), 500);
     };
 
     /**

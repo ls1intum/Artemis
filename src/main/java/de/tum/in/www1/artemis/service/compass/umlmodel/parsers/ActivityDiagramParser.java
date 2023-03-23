@@ -23,8 +23,8 @@ public class ActivityDiagramParser {
      * Create an activity diagram from the model and control flow elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates an activity
      * diagram containing these UML model elements.
      *
-     * @param modelElements the model elements (UML activities and activity nodes) as JSON array
-     * @param controlFlows the control flow elements as JSON array
+     * @param modelElements     the model elements (UML activities and activity nodes) as JSON array
+     * @param controlFlows      the control flow elements as JSON array
      * @param modelSubmissionId the ID of the corresponding modeling submission
      * @return a UML activity diagram containing the parsed model elements and control flows
      * @throws IOException when no corresponding model elements could be found for the source and target IDs in the control flow JSON objects
@@ -108,7 +108,7 @@ public class ActivityDiagramParser {
     /**
      * Parses the given JSON representation of a UML control flow to a UMLControlFlow Java object.
      *
-     * @param controlFlowJson the JSON object containing the control flow
+     * @param controlFlowJson    the JSON object containing the control flow
      * @param activityElementMap a map containing all activity elements of the corresponding activity diagram, necessary for assigning source and target element of the control flow
      * @return the UMLControlFlow object parsed from the JSON object
      * @throws IOException when no activity elements could be found in the activityElementMap for the source and target ID in the JSON object

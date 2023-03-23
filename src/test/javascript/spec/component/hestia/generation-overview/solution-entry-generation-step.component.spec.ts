@@ -9,10 +9,11 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseSolutionEntryService } from 'app/exercises/shared/exercise-hint/services/programming-exercise-solution-entry.service';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { EventEmitter } from '@angular/core';
 import { ProgrammingExerciseTestCase, ProgrammingExerciseTestCaseType } from 'app/entities/programming-exercise-test-case.model';
 import { SortingOrder } from 'app/shared/table/pageable-table';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 describe('SolutionEntryGenerationStep Component', () => {
     let comp: SolutionEntryGenerationStepComponent;
@@ -33,7 +34,7 @@ describe('SolutionEntryGenerationStep Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [SolutionEntryGenerationStepComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [SolutionEntryGenerationStepComponent, MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
             providers: [MockProvider(NgbModal), MockProvider(AlertService), MockProvider(ArtemisTranslatePipe)],
         }).compileComponents();
         fixture = TestBed.createComponent(SolutionEntryGenerationStepComponent);

@@ -1,24 +1,21 @@
-import {
-    GradingInstructionTableColumn,
-    GradingInstructionsDetailsComponent,
-} from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
-import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
-import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
+import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
-import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
+import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
-import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
 import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
+import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
+import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
+import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
+import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('Grading Instructions Management Component', () => {
     let component: GradingInstructionsDetailsComponent;
@@ -218,34 +215,34 @@ describe('Grading Instructions Management Component', () => {
         const instruction = gradingInstruction;
         const criterion = gradingCriterion;
 
-        const eventCredit = { target: { value: 5 } };
-        component.updateGradingInstructionProperty(eventCredit, instruction, criterion, GradingInstructionTableColumn.CREDITS);
+        instruction.credits = 5;
+        component.updateGradingInstruction(instruction, criterion);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].credits).toEqual(eventCredit.target.value);
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].credits).toBe(5);
 
-        const eventGradingScale = { target: { value: 'changed grading scale' } };
-        component.updateGradingInstructionProperty(eventGradingScale, instruction, criterion, GradingInstructionTableColumn.SCALE);
+        instruction.gradingScale = 'changed grading scale';
+        component.updateGradingInstruction(instruction, criterion);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].gradingScale).toEqual(eventGradingScale.target.value);
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].gradingScale).toBe('changed grading scale');
 
-        const eventDescription = { target: { value: 'changed instruction description' } };
-        component.updateGradingInstructionProperty(eventDescription, instruction, criterion, GradingInstructionTableColumn.DESCRIPTION);
+        instruction.instructionDescription = 'changed instruction description';
+        component.updateGradingInstruction(instruction, criterion);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription).toEqual(eventDescription.target.value);
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription).toBe('changed instruction description');
 
-        const eventFeedback = { target: { value: 'changed feedback' } };
-        component.updateGradingInstructionProperty(eventFeedback, instruction, criterion, GradingInstructionTableColumn.FEEDBACK);
+        instruction.feedback = 'changed feedback';
+        component.updateGradingInstruction(instruction, criterion);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].feedback).toEqual(eventFeedback.target.value);
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].feedback).toBe('changed feedback');
 
-        const eventUsageCount = { target: { value: 2 } };
-        component.updateGradingInstructionProperty(eventUsageCount, instruction, criterion, GradingInstructionTableColumn.LIMIT);
+        instruction.usageCount = 2;
+        component.updateGradingInstruction(instruction, criterion);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].usageCount).toEqual(eventUsageCount.target.value);
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].usageCount).toBe(2);
     });
 });

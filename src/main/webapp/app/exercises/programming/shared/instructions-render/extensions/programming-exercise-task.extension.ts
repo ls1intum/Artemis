@@ -1,15 +1,14 @@
 import { EmbeddedViewRef, Injectable, Injector, ViewContainerRef } from '@angular/core';
+import { Exercise } from 'app/entities/exercise.model';
+import { Result } from 'app/entities/result.model';
+import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
+// eslint-disable-next-line max-len
+import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
+import { TaskArray, TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/extensions/artemis-showdown-extension-wrapper';
+import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { Observable, Subject } from 'rxjs';
 import { ShowdownExtension } from 'showdown';
-// tslint:disable-next-line:max-line-length
-import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
-import { Result } from 'app/entities/result.model';
-import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
-import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
-import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/extensions/artemis-showdown-extension-wrapper';
-import { TaskArray, TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
@@ -75,8 +74,6 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                 componentRef.instance.taskName = taskName;
                 componentRef.instance.latestResult = this.latestResult;
                 componentRef.instance.tests = tests;
-                componentRef.instance.showTestDetails =
-                    (this.exercise.type === ExerciseType.PROGRAMMING && (this.exercise as ProgrammingExercise).showTestNamesToStudents) || false;
 
                 const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
                 const taskHtmlContainer = taskHtmlContainers[i];
@@ -113,7 +110,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                             completeString: testMatch[0],
                             taskName: testMatch[1],
                             // split the names by "," only when there is not a closing bracket without a previous opening bracket
-                            tests: testMatch[2].split(/,(?![^(]*?\))/).map((s) => s.trim()),
+                            tests: testMatch[2] ? testMatch[2].split(/,(?![^(]*?\))/).map((s) => s.trim()) : [],
                         };
                     });
                 const tasksWithParticipationId: TaskArrayWithExercise = {

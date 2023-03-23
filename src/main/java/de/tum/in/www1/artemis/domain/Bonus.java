@@ -55,8 +55,8 @@ public class Bonus extends DomainObject {
     }
 
     /**
-     * @see #setWeight
      * @return -1 or 1
+     * @see #setWeight
      */
     public double getWeight() {
         return weight;

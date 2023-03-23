@@ -27,7 +27,7 @@ public interface MockDelegate {
     void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
             boolean shouldPlanEnableFail) throws Exception;
 
-    void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists, HttpStatus status) throws Exception;
+    void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception;
 
     void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception;
 
@@ -73,7 +73,7 @@ public interface MockDelegate {
 
     void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) throws Exception;
 
-    void resetMockProvider();
+    void resetMockProvider() throws Exception;
 
     void verifyMocks();
 
@@ -129,4 +129,6 @@ public interface MockDelegate {
     void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) throws Exception;
 
     void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException, GitLabApiException;
+
+    void mockUserExists(String username) throws Exception;
 }

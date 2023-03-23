@@ -21,6 +21,19 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':courseId/file-upload-exercises/:exerciseId/import',
+        component: FileUploadExerciseUpdateComponent,
+        resolve: {
+            fileUploadExercise: FileUploadExerciseManagementResolve,
+        },
+        data: {
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.fileUploadExercise.home.importLabel',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+
+    {
         path: ':courseId/file-upload-exercises/:exerciseId/edit',
         component: FileUploadExerciseUpdateComponent,
         resolve: {

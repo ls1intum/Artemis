@@ -72,10 +72,10 @@ public class CourseExamExportService {
      * Exports the entire course into a single zip file that is saved in the directory specified
      * by outputDir.
      *
-     * @param course        The course to export
-     * @param outputDir     The directory where the exported course is saved
-     * @param exportErrors  List of failures that occurred during the export
-     * @return              Path to the zip file
+     * @param course       The course to export
+     * @param outputDir    The directory where the exported course is saved
+     * @param exportErrors List of failures that occurred during the export
+     * @return Path to the zip file
      */
     public Optional<Path> exportCourse(Course course, String outputDir, List<String> exportErrors) {
         // Used for sending export progress notifications to instructors
@@ -137,10 +137,10 @@ public class CourseExamExportService {
      * Exports an exam into a single zip file that is saved in the directory specified
      * by outputDir.
      *
-     * @param exam          The exam to export
-     * @param outputDir     The directory where the exported exam is saved
-     * @param exportErrors  List of failures that occurred during the export
-     * @return              Path to the zip file
+     * @param exam         The exam to export
+     * @param outputDir    The directory where the exported exam is saved
+     * @param exportErrors List of failures that occurred during the export
+     * @return Path to the zip file
      */
     public Optional<Path> exportExam(Exam exam, String outputDir, List<String> exportErrors) {
         // Used for sending export progress notifications to instructors
@@ -185,12 +185,12 @@ public class CourseExamExportService {
     /**
      * Exports the exercises of the course and of each exam belonging to the course.
      *
-     * @param notificationTopic     the topic used to notify the client
-     * @param course                The course to export
-     * @param outputDir             the directory that will be used to store the exported data
-     * @param exportErrors          any errors that occurred during the export
-     * @param reportData            list of all exercises and their statistics
-     * @return                      list of zip files
+     * @param notificationTopic the topic used to notify the client
+     * @param course            The course to export
+     * @param outputDir         the directory that will be used to store the exported data
+     * @param exportErrors      any errors that occurred during the export
+     * @param reportData        list of all exercises and their statistics
+     * @return list of zip files
      */
     private List<Path> exportCourseAndExamExercises(String notificationTopic, Course course, String outputDir, List<String> exportErrors, List<ArchivalReportEntry> reportData) {
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Preparing to export course exercises and exams..."));
@@ -227,14 +227,14 @@ public class CourseExamExportService {
      * Exports all exercises of the course and adds them into the directory
      * outputDir/exercises/
      *
-     * @param notificationTopic     the topic used to notify the client
-     * @param course                The course where the exercises are located
-     * @param outputDir             The directory that will be used to store the exercises subdirectory
-     * @param progress              The previous export progress that should be used as a base
-     * @param totalExerciseCount    The total amount of exercises that will be exported
-     * @param exportErrors          List of failures that occurred during the export
-     * @param reportData            List of all exercises and their statistics
-     * @return                      List of paths for the exported exercises
+     * @param notificationTopic  the topic used to notify the client
+     * @param course             The course where the exercises are located
+     * @param outputDir          The directory that will be used to store the exercises subdirectory
+     * @param progress           The previous export progress that should be used as a base
+     * @param totalExerciseCount The total amount of exercises that will be exported
+     * @param exportErrors       List of failures that occurred during the export
+     * @param reportData         List of all exercises and their statistics
+     * @return List of paths for the exported exercises
      */
     private List<Path> exportCourseExercises(String notificationTopic, Course course, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors,
             List<ArchivalReportEntry> reportData) {
@@ -255,14 +255,14 @@ public class CourseExamExportService {
      * Exports all exams of the course by zipping each one separately and add them into the directory
      * outputDir/exams/
      *
-     * @param notificationTopic     the topic used to notify the client
-     * @param exams                 The exams that will be exported
-     * @param outputDir             The directory that will be used to store the exams
-     * @param progress              The previous export progress that should be used as a base
-     * @param totalExerciseCount    The total amount of exercises that will be exported
-     * @param exportErrors          List of failures that occurred during the export
-     * @param reportData            list of all exercises and their statistics
-     * @return                      List of paths
+     * @param notificationTopic  the topic used to notify the client
+     * @param exams              The exams that will be exported
+     * @param outputDir          The directory that will be used to store the exams
+     * @param progress           The previous export progress that should be used as a base
+     * @param totalExerciseCount The total amount of exercises that will be exported
+     * @param exportErrors       List of failures that occurred during the export
+     * @param reportData         list of all exercises and their statistics
+     * @return List of paths
      */
     private List<Path> exportExams(String notificationTopic, List<Exam> exams, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors,
             List<ArchivalReportEntry> reportData) {
@@ -301,15 +301,15 @@ public class CourseExamExportService {
     /**
      * Exports an exam and adds the zip file into the directory specified by outputDir.
      *
-     * @param notificationTopic     the topic used to notify the client
-     * @param exam                  The exam to export
-     * @param examExercises         the exercises that belong to the exam
-     * @param outputDir             The directory that will be used to store the exam
-     * @param progress              The previous export progress that should be used as a base
-     * @param totalExerciseCount    The total amount of exercises that will be exported
-     * @param exportErrors          List of failures that occurred during the export
-     * @param reportData            List of all exercises and their statistics
-     * @return                      List of paths
+     * @param notificationTopic  the topic used to notify the client
+     * @param exam               The exam to export
+     * @param examExercises      the exercises that belong to the exam
+     * @param outputDir          The directory that will be used to store the exam
+     * @param progress           The previous export progress that should be used as a base
+     * @param totalExerciseCount The total amount of exercises that will be exported
+     * @param exportErrors       List of failures that occurred during the export
+     * @param reportData         List of all exercises and their statistics
+     * @return List of paths
      */
     private List<Path> exportExam(String notificationTopic, Exam exam, Set<Exercise> examExercises, String outputDir, int progress, int totalExerciseCount,
             List<String> exportErrors, List<ArchivalReportEntry> reportData) {
@@ -336,14 +336,14 @@ public class CourseExamExportService {
      * The zip files are created in the directory specified by outputDir. The function returns
      * a list of exercise ids that couldn't be exported.
      *
-     * @param notificationTopic     the topic used to notify the client
-     * @param exercises             The exercises to export
-     * @param outputDir             The path to a directory that will be used to store the zipped files.
-     * @param progress              The previous export progress that should be used as a base
-     * @param totalExerciseCount    The total amount of exercises that will be exported
-     * @param exportErrors          List of failures that occurred during the export
-     * @param reportData            List of all exercises and their statistics
-     * @return                      List of paths of the exported exercises
+     * @param notificationTopic  the topic used to notify the client
+     * @param exercises          The exercises to export
+     * @param outputDir          The path to a directory that will be used to store the zipped files.
+     * @param progress           The previous export progress that should be used as a base
+     * @param totalExerciseCount The total amount of exercises that will be exported
+     * @param exportErrors       List of failures that occurred during the export
+     * @param reportData         List of all exercises and their statistics
+     * @return List of paths of the exported exercises
      */
     private List<Path> exportExercises(String notificationTopic, Set<Exercise> exercises, Path outputDir, int progress, int totalExerciseCount, List<String> exportErrors,
             List<ArchivalReportEntry> reportData) {
@@ -429,10 +429,10 @@ public class CourseExamExportService {
      * Creates a zip file out of all the files and directories inside courseDirPath and saves it to
      * the directory specified by outputDirPath
      *
-     * @param outputZipFile     The path to the zip file that will be created
-     * @param filesToZip        the files to zip together
-     * @param relativeZipPath   the path of the zip files will be relative to this path
-     * @return                  The path to the zip file
+     * @param outputZipFile   The path to the zip file that will be created
+     * @param filesToZip      the files to zip together
+     * @param relativeZipPath the path of the zip files will be relative to this path
+     * @return The path to the zip file
      */
     private Optional<Path> createCourseZipFile(Path outputZipFile, List<Path> filesToZip, Path relativeZipPath, List<String> exportErrors) {
         try {
@@ -460,9 +460,9 @@ public class CourseExamExportService {
     /***
      * Sends a message notifying the user about the current state of the exercise export
      *
-     * @param topic         The topic to send the notification to
-     * @param exportState   The export state
-     * @param messages      optional messages to send
+     * @param topic       The topic to send the notification to
+     * @param exportState The export state
+     * @param messages    optional messages to send
      */
     private void notifyUserAboutExerciseExportState(String topic, CourseExamExportState exportState, List<String> messages) {
         Map<String, String> payload = new HashMap<>();
@@ -481,7 +481,7 @@ public class CourseExamExportService {
     /**
      * Writes the given report data in a file "report.csv" in the given output directory
      *
-     * @param data report data to write
+     * @param data      report data to write
      * @param outputDir path to the directory to write the file in
      * @return the output file's path
      * @throws IOException if any error occurs
@@ -494,9 +494,10 @@ public class CourseExamExportService {
 
     /**
      * Writes the given lines in a file with the given name in the given output directory
-     * @param data line to write
+     *
+     * @param data      line to write
      * @param outputDir directory to create the file in
-     * @param fileName name of the file to write to
+     * @param fileName  name of the file to write to
      * @return the created file
      * @throws IOException if any error occurs
      */

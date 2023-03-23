@@ -12,7 +12,8 @@
             "penaltyTooltip": "Penalty: {{ percentage }}% aller Penalties.",
             "issuesTooltip": "Issues: {{ percentage }}% aller gefundenen Issues.",
             "deductionsTooltip": "Punkte: {{ percentage }}% aller abgezogenen Punkte.",
-            "codeIssueNotApplied": "Dieses Issue zieht nicht die maximale Punktzahl ab, da bereits andere ähnliche Issues genug Punkte abziehen. Wenn dies das einzige Issue wäre, würde es {{points}} Punkte abziehen."
+            "codeIssueNotApplied": "Dieses Issue zieht nicht die maximale Punktzahl ab, da bereits andere ähnliche Issues genug Punkte abziehen. Wenn dies das einzige Issue wäre, würde es {{points}} Punkte abziehen.",
+            "invalidAssessments": "Deine Bewertung ist nicht gültig!"
         }
     }
 }

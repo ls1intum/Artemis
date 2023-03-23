@@ -173,9 +173,9 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * or only the one assessed by the tutor who is doing the call.
      * In case of exam exercise, it filters out all test run submissions.
      *
-     * @param exerciseId exerciseID  for which all submissions should be returned
+     * @param exerciseId      exerciseID for which all submissions should be returned
      * @param correctionRound get submission with results in the correction round
-     * @param submittedOnly mark if only submitted Submissions should be returned
+     * @param submittedOnly   mark if only submitted Submissions should be returned
      * @param assessedByTutor mark if only assessed Submissions should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
@@ -190,11 +190,11 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     /**
      * GET /text-submission-without-assessment : get one textSubmission without assessment.
      *
-     * @param exerciseId exerciseID  for which a submission should be returned
-     * @param correctionRound correctionRound for which submissions without a result should be returned
-     * TODO: Replace ?head=true with HTTP HEAD request
+     * @param exerciseId                      exerciseID for which a submission should be returned
+     * @param correctionRound                 correctionRound for which submissions without a result should be returned
+     *                                            TODO: Replace ?head=true with HTTP HEAD request
      * @param skipAssessmentOrderOptimization optional value to define if the assessment queue should be skipped. Use if only checking for needed assessments.
-     * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
+     * @param lockSubmission                  optional value to define if the submission should be locked and has the value of false if not set manually
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")

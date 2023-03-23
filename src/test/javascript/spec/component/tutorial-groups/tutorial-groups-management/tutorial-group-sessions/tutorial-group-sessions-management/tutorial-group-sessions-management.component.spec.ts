@@ -20,6 +20,7 @@ import { TutorialGroupSessionRowStubComponent, TutorialGroupSessionsTableStubCom
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
+import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
 
 @Component({ selector: 'jhi-tutorial-group-session-row-buttons', template: '' })
 class TutorialGroupSessionRowButtonsStubComponent {
@@ -59,6 +60,7 @@ describe('TutorialGroupSessionsManagement', () => {
                 TutorialGroupSessionRowButtonsStubComponent,
                 LoadingIndicatorContainerStubComponent,
                 MockPipe(ArtemisTranslatePipe),
+                MockPipe(RemoveSecondsPipe),
                 MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
             ],
@@ -91,6 +93,7 @@ describe('TutorialGroupSessionsManagement', () => {
                 component.course = course;
                 component.tutorialGroupId = tutorialGroupId;
                 component.initialize();
+                fixture.detectChanges();
             });
     });
 
@@ -99,7 +102,6 @@ describe('TutorialGroupSessionsManagement', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).toBeTruthy();
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
         expect(getOneOfCourseSpy).toHaveBeenCalledWith(course.id!, tutorialGroupId);
@@ -109,7 +111,6 @@ describe('TutorialGroupSessionsManagement', () => {
     });
 
     it('should open create session dialog', fakeAsync(() => {
-        fixture.detectChanges();
         const openSpy = jest
             .spyOn(modalService, 'open')
             .mockReturnValue({ componentInstance: { tutorialGroup: undefined, course: undefined, initialize: () => {} }, result: of() } as any);
@@ -119,7 +120,7 @@ describe('TutorialGroupSessionsManagement', () => {
 
         fixture.whenStable().then(() => {
             expect(openSpy).toHaveBeenCalledOnce();
-            expect(openSpy).toHaveBeenCalledWith(CreateTutorialGroupSessionComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+            expect(openSpy).toHaveBeenCalledWith(CreateTutorialGroupSessionComponent, { size: 'xl', scrollable: false, backdrop: 'static', animation: false });
         });
     }));
 });

@@ -75,23 +75,23 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let testRun of testRuns; trackBy: trackId">
-                    <td class="d-none d-md-table-cell">
+                <tr *ngFor="let testRun of testRuns; trackBy: trackId" [id]="'testrun-' + testRun.id">
+                    <td class="testrun-id d-none d-md-table-cell">
                         <a [routerLink]="[testRun.id]">{{ testRun.id }}</a>
                     </td>
                     <td>
                         <a> {{ testRun.user?.name || '--' }}</a>
                     </td>
-                    <td>{{ testRun.workingTime || 0 | artemisDurationFromSeconds }}</td>
-                    <td>{{ (testRun.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
-                    <td>{{ (testRun.submitted ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
+                    <td class="working-time">{{ testRun.workingTime || 0 | artemisDurationFromSeconds }}</td>
+                    <td class="started">{{ (testRun.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
+                    <td class="submitted">{{ (testRun.submitted ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                     <td>{{ testRun.submissionDate | artemisDate }}</td>
                     <td [width]="350">
                         <div class="w-100 text-end">
                             <div class="btn-group" *ngIf="course?.isAtLeastInstructor">
                                 <ng-container *ngIf="testRun.user?.id == instructor?.id; else notOwnerOfTestRun">
                                     <ng-container *ngIf="!testRun.submitted; else submitted">
-                                        <a class="btn btn-primary btn-sm me-1 mb-1" [routerLink]="['../test-runs/' + testRun.id + '/conduction']">
+                                        <a class="start-testrun btn btn-primary btn-sm me-1 mb-1" [routerLink]="['../test-runs/' + testRun.id + '/conduction']">
                                             <span *ngIf="!testRun.started" jhiTranslate="artemisApp.course.startDate">Start</span>
                                             <span *ngIf="testRun.started" jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarly">Continue</span>
                                         </a>
@@ -108,7 +108,7 @@
                                     </a>
                                 </ng-template>
                                 <a
-                                    class="btn btn-primary btn-sm me-1 mb-1"
+                                    class="manage-worktime btn btn-primary btn-sm me-1 mb-1"
                                     [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', this.testRun.id]"
                                     [class.disabled]="testRun.started"
                                 >
@@ -122,7 +122,7 @@
                                     deleteConfirmationText="artemisApp.examManagement.testRun.delete.typeNameToConfirm"
                                     (delete)="deleteTestRun(testRun.id)"
                                     [dialogError]="dialogError$"
-                                    class="btn btn-primary btn-sm me-1 mb-1"
+                                    class="delete-testrun btn btn-primary btn-sm me-1 mb-1"
                                 >
                                     <fa-icon [icon]="faTimes"></fa-icon>
                                 </button>

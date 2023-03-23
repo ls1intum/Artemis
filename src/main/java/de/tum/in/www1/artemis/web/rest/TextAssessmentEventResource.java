@@ -54,6 +54,7 @@ public class TextAssessmentEventResource {
     /**
      * The text assessment analytics are enabled when the configuration info.text-assessment-analytics-enabled is set to true.
      * A non-existing entry or false mean that the text assessment analytics is not enabled
+     *
      * @return whether the text assessment analytics are enabled or not
      */
     private boolean isTextAssessmentAnalyticsEnabled() {
@@ -62,6 +63,7 @@ public class TextAssessmentEventResource {
 
     /**
      * POST event-insights/text-assessment/events : Adds an assessment event into the text_assessment_event table.
+     *
      * @param event to be added
      * @return the status of the finished request
      */
@@ -76,12 +78,14 @@ public class TextAssessmentEventResource {
             textAssessmentEventRepository.save(event);
             return ResponseEntity.created(new URI("/api/admin/event-insights/text-assessment/events/" + event.getCourseId())).build();
         }
+        // TODO: this is not really nice, because the reason for the bad request is not given
         return ResponseEntity.badRequest().build();
     }
 
     /**
      * GET event-insights/text-assessment/courses/{courseId}/text-exercises/{exerciseId}/tutors-involved : get the number of the tutors involved in the list of events
-     * @param courseId the id of the course to query events for
+     *
+     * @param courseId   the id of the course to query events for
      * @param exerciseId the id of the exercise to query events for
      * @return an integer representing the number of tutors involved for the respective course and exercise
      */
@@ -102,6 +106,7 @@ public class TextAssessmentEventResource {
      * - The user should be at least tutor of the course
      * - The course id received should exist
      * - The exercise id received should be an exercise of the course.
+     *
      * @param event the event to be validated
      * @return whether the event is valid or not
      */
@@ -127,7 +132,8 @@ public class TextAssessmentEventResource {
 
     /**
      * Checks if the given user is at least a tutor in the course with the given id
-     * @param user the user to be checked
+     *
+     * @param user     the user to be checked
      * @param courseId the id of the course that the user should be at least tutor of
      * @return whether the user is or isn't in the course specified
      */

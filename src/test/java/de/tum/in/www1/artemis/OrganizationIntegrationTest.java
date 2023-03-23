@@ -25,6 +25,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "organizationtest";
+
     @Autowired
     private CourseRepository courseRepo;
 
@@ -34,29 +36,24 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     private OrganizationRepository organizationRepo;
 
-    private List<User> users;
-
     @BeforeEach
     void initTestCase() {
-        users = database.addUsers(1, 1, 0, 1);
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
-    void resetDatabase() {
+    void tearDown() {
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
-        database.resetDatabase();
     }
 
     /**
      * Test if getting courses a user can register to works with multi organization and
      * filters out basing on user's organizations
-     * @throws Exception exception
      */
     @Test
-    @WithMockUser(username = "ab12cde")
+    @WithMockUser(username = TEST_PREFIX + "login2")
     void testGetCoursesToRegisterWithOrganizationsEnabled() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
@@ -64,7 +61,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Set<Organization> organizations = new HashSet<>();
         organizations.add(organization);
 
-        User student = ModelFactory.generateActivatedUser("ab12cde");
+        User student = database.createAndSaveUser(TEST_PREFIX + "login2");
         student.setOrganizations(organizations);
         userRepo.save(student);
 
@@ -86,7 +83,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    @WithMockUser(username = "ab12cde")
+    @WithMockUser(username = TEST_PREFIX + "login1")
     void testRegisterForCourseWithOrganizationsEnabled() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
@@ -95,13 +92,10 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         organizations.add(organization);
 
         Organization otherOrganization = database.createOrganization();
-        otherOrganization.setName("other");
-        otherOrganization.setShortName("other");
-        otherOrganization.setEmailPattern("other");
         Set<Organization> otherOrganizations = new HashSet<>();
         otherOrganizations.add(otherOrganization);
 
-        User student = ModelFactory.generateActivatedUser("ab12cde");
+        User student = database.createAndSaveUser(TEST_PREFIX + "login1");
         student.setOrganizations(organizations);
         userRepo.save(student);
 
@@ -141,7 +135,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test adding a course to a given organization
-     * @throws Exception exception
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -162,7 +155,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test removing a course from a given organization
-     * @throws Exception exception
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -186,7 +178,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test adding user to a given organization
-     * @throws Exception exception
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -195,15 +186,15 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         Organization organization = database.createOrganization();
         organization = organizationRepo.save(organization);
+        User student = database.createAndSaveUser(UUID.randomUUID().toString().replace("-", ""));
 
-        request.postWithoutLocation("/api/admin/organizations/" + organization.getId() + "/users/" + users.get(0).getLogin(), null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/admin/organizations/" + organization.getId() + "/users/" + student.getLogin(), null, HttpStatus.OK, null);
         Organization updatedOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
-        assertThat(updatedOrganization.getUsers()).contains(users.get(0));
+        assertThat(updatedOrganization.getUsers()).contains(student);
     }
 
     /**
      * Test removing user from a given organization
-     * @throws Exception exception
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -211,20 +202,21 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         jiraRequestMockProvider.enableMockingOfRequests();
 
         Organization organization = database.createOrganization();
-        organization.getUsers().add(users.get(0));
+        User student = database.createAndSaveUser(UUID.randomUUID().toString().replace("-", ""));
+
+        organization.getUsers().add(student);
         organization = organizationRepo.save(organization);
 
-        assertThat(organization.getUsers()).contains(users.get(0));
+        assertThat(organization.getUsers()).contains(student);
 
-        request.delete("/api/admin/organizations/" + organization.getId() + "/users/" + users.get(0).getLogin(), HttpStatus.OK);
+        request.delete("/api/admin/organizations/" + organization.getId() + "/users/" + student.getLogin(), HttpStatus.OK);
         Organization updatedOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
 
-        assertThat(updatedOrganization.getUsers()).doesNotContain(users.get(0));
+        assertThat(updatedOrganization.getUsers()).doesNotContain(student);
     }
 
     /**
      * Test adding a new organization
-     * @throws Exception exception
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -244,7 +236,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test updating an existing organization
-     * @throws Exception exception
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -260,7 +251,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test updating an existing organization when the Id in the RequestBody is null
-     * @throws Exception exception
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -279,7 +269,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test updating an existing organization when the Id in the path doesn't match the one in the Body
-     * @throws Exception exception
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -299,7 +288,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test delete an organization
-     * @throws Exception exception
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -318,24 +306,21 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test get all organizations
-     * @throws Exception exception
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetAllOrganizations() throws Exception {
         Organization organization = database.createOrganization();
         Organization organization2 = database.createOrganization();
-        organization2.setName("Org2");
-        organizationRepo.save(organization);
-        organizationRepo.save(organization2);
+        organization = organizationRepo.save(organization);
+        organization2 = organizationRepo.save(organization2);
 
         List<Organization> result = request.getList("/api/admin/organizations", HttpStatus.OK, Organization.class);
-        assertThat(result).hasSize(2);
+        assertThat(result).contains(organization, organization2);
     }
 
     /**
      * Test get number of users and courses of all organizations
-     * @throws Exception exception
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -347,7 +332,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         organization = organizationRepo.save(organization);
 
         courseRepo.addOrganizationToCourse(course1.getId(), organization);
-        userRepo.addOrganizationToUser(users.get(0).getId(), organization);
+        User student = database.createAndSaveUser(UUID.randomUUID().toString().replace("-", ""));
+
+        userRepo.addOrganizationToUser(student.getId(), organization);
 
         List<OrganizationCountDTO> result = request.getList("/api/admin/organizations/count-all", HttpStatus.OK, OrganizationCountDTO.class);
 
@@ -359,7 +346,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test get number of users and courses of a given organization
-     * @throws Exception exception
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -371,7 +357,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         organization = organizationRepo.save(organization);
 
         courseRepo.addOrganizationToCourse(course1.getId(), organization);
-        userRepo.addOrganizationToUser(users.get(0).getId(), organization);
+        User student = database.createAndSaveUser(UUID.randomUUID().toString().replace("-", ""));
+
+        userRepo.addOrganizationToUser(student.getId(), organization);
 
         OrganizationCountDTO result = request.get("/api/admin/organizations/" + organization.getId() + "/count", HttpStatus.OK, OrganizationCountDTO.class);
 
@@ -381,7 +369,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test retrieving an organization by its id
-     * @throws Exception exception
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -395,10 +382,12 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         course1 = courseRepo.save(course1);
         courseRepo.addOrganizationToCourse(course1.getId(), organization);
 
-        userRepo.addOrganizationToUser(users.get(0).getId(), organization);
+        User student = database.createAndSaveUser(UUID.randomUUID().toString().replace("-", ""));
+
+        userRepo.addOrganizationToUser(student.getId(), organization);
         // invoked remove to make sure it works correctly
-        userRepo.removeOrganizationFromUser(users.get(0).getId(), organization);
-        userRepo.addOrganizationToUser(users.get(0).getId(), organization);
+        userRepo.removeOrganizationFromUser(student.getId(), organization);
+        userRepo.addOrganizationToUser(student.getId(), organization);
 
         Organization result = request.get("/api/admin/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
         Organization resultWithCoursesAndUsers = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
@@ -407,12 +396,12 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(result.getName()).isEqualTo(organization.getName());
 
         assertThat(resultWithCoursesAndUsers.getCourses()).contains(course1);
-        assertThat(resultWithCoursesAndUsers.getUsers()).contains(users.get(0));
+
+        assertThat(resultWithCoursesAndUsers.getUsers()).contains(student);
     }
 
     /**
      * Test retriving all organizations containing a given course
-     * @throws Exception exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -433,7 +422,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test retrieve all organization containing a given user
-     * @throws Exception exception
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -442,17 +430,17 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         Organization organization = database.createOrganization();
         organization = organizationRepo.save(organization);
+        User student = database.createAndSaveUser(UUID.randomUUID().toString().replace("-", ""));
 
-        userRepo.addOrganizationToUser(users.get(0).getId(), organization);
+        userRepo.addOrganizationToUser(student.getId(), organization);
 
-        List<Organization> result = request.getList("/api/admin/organizations/users/" + users.get(0).getId(), HttpStatus.OK, Organization.class);
+        List<Organization> result = request.getList("/api/admin/organizations/users/" + student.getId(), HttpStatus.OK, Organization.class);
 
         assertThat(result).contains(organization);
     }
 
     /**
      * Test indexing of organization over all users
-     * @throws Exception exception
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -460,18 +448,20 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         jiraRequestMockProvider.enableMockingOfRequests();
 
         Organization organization = database.createOrganization();
-        organization.getUsers().add(users.get(1));
+        User student = database.createAndSaveUser(UUID.randomUUID().toString().replace("-", ""));
+
+        organization.getUsers().add(student);
         organization = organizationRepo.save(organization);
 
-        organization.setEmailPattern("^" + users.get(0).getEmail() + "$");
+        organization.setEmailPattern("^" + student.getEmail() + "$");
 
         Organization updatedOrganization = request.putWithResponseBody("/api/admin/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
         updatedOrganization = request.get("/api/admin/organizations/" + updatedOrganization.getId() + "/full", HttpStatus.OK, Organization.class);
 
         assertThat(updatedOrganization.getUsers()).hasSize(1);
-        assertThat(updatedOrganization.getUsers()).contains(users.get(0));
+        assertThat(updatedOrganization.getUsers()).contains(student);
 
-        var organizations = organizationRepo.getAllMatchingOrganizationsByUserEmail(users.get(0).getEmail());
+        var organizations = organizationRepo.getAllMatchingOrganizationsByUserEmail(student.getEmail());
         assertThat(organizations).containsExactly(organization);
     }
 

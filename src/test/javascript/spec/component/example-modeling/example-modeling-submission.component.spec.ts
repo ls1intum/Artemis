@@ -80,7 +80,7 @@ describe('Example Modeling Submission Component', () => {
         } as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ArtemisExampleModelingSubmissionRoutingModule), TranslateTestingModule, FormsModule],
+            imports: [ArtemisTestModule, TranslateTestingModule, FormsModule, MockModule(ArtemisExampleModelingSubmissionRoutingModule)],
             declarations: [
                 ExampleModelingSubmissionComponent,
                 ModelingAssessmentComponent,

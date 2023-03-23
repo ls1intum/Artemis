@@ -11,11 +11,12 @@ export class ExerciseReferenceCommand extends MultiOptionCommand {
         this.metisService = metisService;
 
         this.setValues(
-            this.metisService.getCourse().exercises!?.map((exercise) => ({
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+            this.metisService.getCourse().exercises?.map((exercise) => ({
                 id: exercise.id!.toString(),
                 value: exercise.title!,
                 type: exercise.type,
-            })),
+            }))!,
         );
     }
 

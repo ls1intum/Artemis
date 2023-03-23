@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -101,10 +100,10 @@ public abstract class AssessmentResource {
     /**
      * Save or submit manual assessment depending on the submit flag.
      *
-     * @param submission the submission containing the assessment
+     * @param submission   the submission containing the assessment
      * @param feedbackList list of feedbacks
-     * @param submit if true the assessment is submitted, else only saved
-     * @param resultId resultId of the result we save the feedbackList to, null of no results exists yet
+     * @param submit       if true the assessment is submitted, else only saved
+     * @param resultId     resultId of the result we save the feedbackList to, null of no results exists yet
      * @return result after saving/submitting modeling assessment
      */
     ResponseEntity<Result> saveAssessment(Submission submission, boolean submit, List<Feedback> feedbackList, Long resultId) {
@@ -141,7 +140,7 @@ public abstract class AssessmentResource {
 
     /**
      * @param exampleSubmissionId id of the example submission
-     * @param feedbacks list of feedbacks
+     * @param feedbacks           list of feedbacks
      * @return result after saving example assessment
      */
     protected ResponseEntity<Result> saveExampleAssessment(long exampleSubmissionId, List<Feedback> feedbacks) {
@@ -183,7 +182,7 @@ public abstract class AssessmentResource {
         // Therefore we send a result with only the references included, which is needed to tell the tutor which elements he missed to assess
         Result result = assessmentService.getExampleAssessment(submissionId);
 
-        if (!Objects.isNull(result) && !(isAtLeastEditor || (isAtLeastTutor && !exampleSubmission.isUsedForTutorial()))) {
+        if (result != null && !(isAtLeastEditor || (isAtLeastTutor && !exampleSubmission.isUsedForTutorial()))) {
             Result freshResult = new Result();
             freshResult.setId(result.getId());
             if (result.getFeedbacks() != null) {

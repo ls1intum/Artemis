@@ -20,6 +20,7 @@ import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-data
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -50,6 +51,8 @@ enum ChartBarTitle {
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
+    documentationType = DocumentationType.Statistics;
+
     courseId: number;
     private courseExercises: Exercise[];
     private paramSubscription?: Subscription;
@@ -180,7 +183,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     // Provides the control configuration to be read and used by "CourseOverviewComponent"
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
-        useIndentation: false,
     };
 
     constructor(

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course, CourseGroup, Language } from 'app/entities/course.model';
@@ -7,7 +7,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, OperatorFunction, Subject, catchError, concat, finalize, forkJoin, map, merge, of } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
-import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, takeUntil } from 'rxjs/operators';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import {
     ScheduleFormComponent,
@@ -26,6 +26,7 @@ export interface TutorialGroupFormData {
     language?: Language;
     campus?: string;
     notificationText?: string; // Only in edit mode
+    updateTutorialGroupChannelName?: boolean; // Only in edit mode
     schedule?: ScheduleFormData;
 }
 
@@ -33,13 +34,14 @@ export class UserWithLabel extends User {
     label: string;
 }
 
-export const titleRegex: RegExp = new RegExp('^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$');
+export const titleRegex = new RegExp('^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$');
 
 @Component({
     selector: 'jhi-tutorial-group-form',
     templateUrl: './tutorial-group-form.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TutorialGroupFormComponent implements OnInit, OnChanges {
+export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy {
     @Input()
     formData: TutorialGroupFormData = {
         title: undefined,
@@ -77,8 +79,12 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     @ViewChild('scheduleForm') scheduleFormComponent: ScheduleFormComponent;
     existingScheduleFormDate: ScheduleFormData | undefined;
 
+    existingTitle: string | undefined;
+
     // icons
     faSave = faSave;
+
+    ngUnsubscribe = new Subject<void>();
 
     constructor(
         private fb: FormBuilder,
@@ -115,10 +121,16 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         return this.form.get('notificationText');
     }
 
+    get updateTutorialGroupChannelNameControl() {
+        return this.form.get('updateTutorialGroupChannelName');
+    }
+
     get isSubmitPossible() {
         if (this.configureSchedule) {
+            // check all controls
             return !this.form.invalid;
         } else {
+            // only check the parts of the form not covered by the schedule form
             return !(
                 this.titleControl!.invalid ||
                 this.teachingAssistantControl!.invalid ||
@@ -128,6 +140,19 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
                 this.campusControl!.invalid
             );
         }
+    }
+
+    get showUpdateChannelNameCheckbox() {
+        if (!this.isEditMode) {
+            return false;
+        }
+        if (!this.existingTitle) {
+            return false;
+        }
+        if (!this.titleControl?.value) {
+            return false;
+        }
+        return this.existingTitle !== this.titleControl!.value;
     }
 
     get showScheduledChangedWarning() {
@@ -147,7 +172,12 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         } else if (!originalHasSchedule && !updateHasSchedule) {
             return false;
         } else {
-            return !isEqual({ ...this.form.value.schedule }, this.existingScheduleFormDate);
+            const newScheduleValues = { ...this.form.value.schedule };
+            delete newScheduleValues.location;
+            const existingScheduleValues = { ...this.existingScheduleFormDate };
+            // we do not consider the location when comparing the schedules as change it has no irreversible effect
+            delete existingScheduleValues.location;
+            return !isEqual(newScheduleValues, existingScheduleValues);
         }
     }
 
@@ -155,6 +185,11 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         this.getTeachingAssistantsInCourse();
         this.getUniqueCampusValuesOfCourse();
         this.initializeForm();
+    }
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 
     ngOnChanges(): void {
@@ -215,6 +250,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
         if (this.isEditMode) {
             this.form.addControl('notificationText', new FormControl(undefined, [Validators.maxLength(1000)]));
+            this.form.addControl('updateTutorialGroupChannelName', new FormControl(true));
         }
     }
 
@@ -224,6 +260,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         }
         this.configureSchedule = !!formData.schedule;
         this.existingScheduleFormDate = formData.schedule;
+        this.existingTitle = formData.title;
         this.additionalInformation = formData.additionalInformation;
         this.form.patchValue(formData);
     }
@@ -276,6 +313,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
                 finalize(() => {
                     this.teachingAssistantsAreLoading = false;
                 }),
+                takeUntil(this.ngUnsubscribe),
             ),
         ).subscribe((users: User[]) => {
             this.teachingAssistants = users.map((user) => this.createUserWithLabel(user));
@@ -294,6 +332,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
                 finalize(() => {
                     this.campusAreLoading = false;
                 }),
+                takeUntil(this.ngUnsubscribe),
             ),
         ).subscribe((campus: string[]) => {
             this.campus = campus;

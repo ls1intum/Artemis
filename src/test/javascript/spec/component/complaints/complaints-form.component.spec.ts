@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
+import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
 import { ArtemisTestModule } from '../../test.module';
@@ -10,7 +11,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgModel } from '@angular/forms';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -32,7 +32,13 @@ describe('ComplaintsFormComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ComplaintsFormComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(NgModel), MockDirective(TranslateDirective)],
+            declarations: [
+                ComplaintsFormComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(NgModel),
+                MockDirective(TranslateDirective),
+                MockComponent(TextareaCounterComponent),
+            ],
             providers: [
                 MockProvider(AlertService),
                 {
@@ -45,7 +51,6 @@ describe('ComplaintsFormComponent', () => {
                 },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ComplaintsFormComponent);

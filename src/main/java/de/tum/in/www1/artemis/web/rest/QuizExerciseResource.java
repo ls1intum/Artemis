@@ -37,7 +37,9 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
-/** REST controller for managing QuizExercise. */
+/**
+ * REST controller for managing QuizExercise.
+ */
 @RestController
 @RequestMapping("/api")
 public class QuizExerciseResource {
@@ -152,7 +154,7 @@ public class QuizExerciseResource {
     /**
      * PUT /quiz-exercises : Updates an existing quizExercise.
      *
-     * @param quizExercise the quizExercise to update
+     * @param quizExercise     the quizExercise to update
      * @param notificationText about the quiz exercise update that should be displayed to the student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with status 500
      *         (Internal Server Error) if the quizExercise couldn't be updated
@@ -237,7 +239,7 @@ public class QuizExerciseResource {
      * @param examId id of the exam of which all exercises should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of quiz exercises in body
      */
-    @GetMapping("/{examId}/quiz-exercises")
+    @GetMapping("exams/{examId}/quiz-exercises")
     @PreAuthorize("hasRole('EDITOR')")
     public List<QuizExercise> getQuizExercisesForExam(@PathVariable Long examId) {
         log.info("REST request to get all quiz exercises for the exam with id : {}", examId);
@@ -267,7 +269,7 @@ public class QuizExerciseResource {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndLearningGoalsElseThrow(quizExerciseId);
         if (quizExercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
             studentParticipationRepository.checkTestRunsExist(quizExercise);
@@ -327,7 +329,7 @@ public class QuizExerciseResource {
      * POST /quiz-exercises/:quizExerciseId/join : add a student to a particular batch for participating in it and if in INDIVIDUAL mode create the batch to join
      *
      * @param quizExerciseId the id of the quizExercise to which the batch to join belongs
-     * @param joinRequest DTO with the password for the batch to join; unused for quizzes in INDIVIDUAL mode
+     * @param joinRequest    DTO with the password for the batch to join; unused for quizzes in INDIVIDUAL mode
      * @return the ResponseEntity with status 200 (OK) and with body the quizBatch that was joined
      */
     @PostMapping("/quiz-exercises/{quizExerciseId}/join")
@@ -413,8 +415,8 @@ public class QuizExerciseResource {
     /**
      * PUT /quiz-exercises/:quizExerciseId/:action : perform the specified action for the quiz now
      *
-     * @param quizExerciseId     the id of the quiz exercise to start
-     * @param action the action to perform on the quiz (allowed actions: "start-now", "set-visible", "open-for-practice")
+     * @param quizExerciseId the id of the quiz exercise to start
+     * @param action         the action to perform on the quiz (allowed actions: "start-now", "set-visible", "open-for-practice")
      * @return the response entity with status 200 if quiz was started, appropriate error code otherwise
      */
     @PutMapping("/quiz-exercises/{quizExerciseId}/{action}")
@@ -439,7 +441,7 @@ public class QuizExerciseResource {
                             .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyStarted", "Quiz has already started.")).build();
                 }
 
-                // set release date to now, truncated to seconds because the database only stores seconds
+                // set release date to now, truncated to seconds
                 var now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
                 quizBatchService.getOrCreateSynchronizedQuizBatch(quizExercise).setStartTime(now);
                 if (quizExercise.getReleaseDate() != null && quizExercise.getReleaseDate().isAfter(now)) {
@@ -536,7 +538,7 @@ public class QuizExerciseResource {
      * 3. if flag is set: -> change results if an answer or a question is set invalid -> recalculate statistics and results and save them.
      *
      * @param quizExerciseId the quiz id for the quiz that should be re-evaluated
-     * @param quizExercise the quizExercise to re-evaluate
+     * @param quizExercise   the quizExercise to re-evaluate
      * @return the ResponseEntity with status 200 (OK) and with body the re-evaluated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with
      *         status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
      */
@@ -579,8 +581,8 @@ public class QuizExerciseResource {
      */
     @GetMapping("/quiz-exercises")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<SearchResultPageDTO<QuizExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search, @RequestParam(defaultValue = "true") Boolean isCourseFilter,
-            @RequestParam(defaultValue = "true") Boolean isExamFilter) {
+    public ResponseEntity<SearchResultPageDTO<QuizExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search, @RequestParam(defaultValue = "true") boolean isCourseFilter,
+            @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(quizExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
@@ -593,9 +595,9 @@ public class QuizExerciseResource {
      *
      * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param importedExercise The new exercise containing values that should get overwritten in the
-     *                         imported exercise, s.a. the title or difficulty
+     *                             imported exercise, s.a. the title or difficulty
      * @return The imported exercise (200), a not found error (404) if the template does not exist,
-     * or a forbidden error (403) if the user is not at least an instructor in the target course.
+     *         or a forbidden error (403) if the user is not at least an instructor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping("/quiz-exercises/import/{sourceExerciseId}")

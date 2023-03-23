@@ -28,6 +28,8 @@ import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
+    private static final String TEST_PREFIX = "jenkinsjobservicetest";
+
     @Autowired
     private JenkinsJobService jenkinsJobService;
 
@@ -39,6 +41,7 @@ class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @BeforeEach
     void initTestCase() throws Exception {
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
         // create the document before the mock so that it still works correctly
@@ -52,14 +55,14 @@ class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() throws Exception {
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
         mockedXmlFileUtils.close();
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testCreateIfJobExists() throws IOException {
         jenkinsRequestMockProvider.mockCreateJobInFolder("JenkinsFolder", "JenkinsJob", true);
         // This call shall not fail, since the job already exists ..
@@ -69,7 +72,7 @@ class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testCreateIfJobDoesNotExist() throws IOException {
         jenkinsRequestMockProvider.mockCreateJobInFolder("JenkinsFolder", "JenkinsJob", false);
         // This call shall not fail, since the job will be created ..
@@ -79,20 +82,20 @@ class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testCreateJobInFolderJenkinsExceptionOnXmlError() throws IOException {
         jenkinsRequestMockProvider.mockGetFolderJob("JenkinsFolder", new FolderJob());
         assertThrows(JenkinsException.class, () -> jenkinsJobService.createJobInFolder(invalidDocument, "JenkinsFolder", "JenkinsJob"));
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testUpdateJobThrowIOExceptionOnXmlError() {
         assertThrows(IOException.class, () -> jenkinsJobService.updateJob("JenkinsFolder", "JenkinsJob", invalidDocument));
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testUpdateFolderJobThrowIOExceptionOnXmlError() {
         assertThrows(IOException.class, () -> jenkinsJobService.updateFolderJob("JenkinsFolder", invalidDocument));
     }

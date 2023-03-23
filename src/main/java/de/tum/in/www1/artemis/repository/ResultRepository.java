@@ -330,7 +330,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * Use this method only for exams!
      * Given an exerciseId and the number of correctionRounds, return the number of assessments that have been finished, for that exerciseId and each correctionRound
      *
-     * @param exercise  - the exercise we are interested in
+     * @param exercise                 - the exercise we are interested in
      * @param numberOfCorrectionRounds - the correction round we want finished assessments for
      * @return an array of the number of assessments for the exercise for a given correction round
      */
@@ -346,9 +346,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * Use this method only for exams!
      * Given an exerciseId and the number of correctionRounds, return the number of assessments that have been finished, for that exerciseId and each correctionRound
      *
-     * @param exercise  - the exercise we are interested in
+     * @param exercise                 - the exercise we are interested in
      * @param numberOfCorrectionRounds - the correction round we want finished assessments for
-     * @param tutor tutor for which we want to count the number of locked assessments
+     * @param tutor                    tutor for which we want to count the number of locked assessments
      * @return an array of the number of assessments for the exercise for a given correction round
      */
     default DueDateStat[] countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds, User tutor) {
@@ -376,7 +376,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * Use this method only for exams!
      * Given an exerciseId and the number of correctionRounds, return the number of assessments that have been finished, for that exerciseId and each correctionRound
      *
-     * @param examId   - the id of the exam we are interested in
+     * @param examId                   - the id of the exam we are interested in
      * @param numberOfCorrectionRounds - the correction round we want finished assessments for
      * @return an array of the number of assessments for the exercise for a given correction round
      */
@@ -391,8 +391,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     /**
      * Takes the Long List database response and converts it to the according DueDateStats
      *
-     * @param countList                 - the lists returned from the database
-     * @param numberOfCorrectionRounds  - number of the correction rounds which is set for the given exam
+     * @param countList                - the lists returned from the database
+     * @param numberOfCorrectionRounds - number of the correction rounds which is set for the given exam
      * @return an array of DueDateStats which contains a DueDateStat with the number of assessments for each correction round.
      */
     default DueDateStat[] convertDatabaseResponseToDueDateStats(List<Long> countList, int numberOfCorrectionRounds) {
@@ -473,7 +473,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             WHERE
                 r.completionDate is not null
                 and e.id IN :exerciseIds
-            GROUP BY a.id
+            GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByCourseId(@Param("exerciseIds") Set<Long> exerciseIds);
 
@@ -535,9 +535,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     /**
      * Submitting the result means it is saved with a calculated score and a completion date.
-     * @param result the result which should be set to submitted
+     *
+     * @param result   the result which should be set to submitted
      * @param exercise the exercises to which the result belongs, which is needed to get points and to determine if the result is rated or not
-     * @param dueDate before which the result is considered to be rated
+     * @param dueDate  before which the result is considered to be rated
      * @return the saved result
      */
     default Result submitResult(Result result, Exercise exercise, Optional<ZonedDateTime> dueDate) {
@@ -568,8 +569,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     /**
      * make sure the points are between 0 and maxPoints
+     *
      * @param calculatedPoints the points which have been calculated
-     * @param maxPoints the upper bound (potentially including bonus points)
+     * @param maxPoints        the upper bound (potentially including bonus points)
      * @return a value between [0, maxPoints]
      */
     default double constrainToRange(double calculatedPoints, double maxPoints) {
@@ -648,7 +650,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * Get the latest result from the database by participation id together with the list of feedback items.
      *
      * @param participationId the id of the participation to load from the database
-     * @param withSubmission determines whether the submission should also be fetched
+     * @param withSubmission  determines whether the submission should also be fetched
      * @return an optional result (might exist or not).
      */
     default Optional<Result> findLatestResultWithFeedbacksForParticipation(Long participationId, boolean withSubmission) {

@@ -36,6 +36,38 @@
                         {{ 'artemisApp.forms.configurationForm.periodInput.invalidRangeError' | artemisTranslate }}
                     </div>
                 </div>
+                <!-- Do not show options if the course has communication disabled -->
+                <div [hidden]="!course.postsEnabled">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" formControlName="useTutorialGroupChannels" id="useTutorialGroupChannels" />
+                        <label class="form-check-label" for="useTutorialGroupChannels">
+                            {{ 'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.label' | artemisTranslate }}
+                        </label>
+                        <small id="channelHelp" class="form-text text-muted d-block">{{
+                            'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.explanation' | artemisTranslate
+                        }}</small>
+                        <div class="alert alert-danger" role="alert" *ngIf="showChannelDeletionWarning" id="channelDeletionWarning">
+                            {{ 'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.channelDeletionWarning' | artemisTranslate }}
+                        </div>
+                    </div>
+                    <!--Public Channel / Private Channel -->
+                    <div class="form-group" [hidden]="!useTutorialGroupChannelsControl?.value">
+                        <label class="d-block">{{ 'artemisApp.dialogs.createChannel.channelForm.isPublicInput.label' | artemisTranslate }}</label>
+                        <div class="btn-group" role="group">
+                            <input formControlName="usePublicTutorialGroupChannels" type="radio" class="btn-check" id="public" autocomplete="off" checked [value]="true" />
+                            <label class="btn btn-outline-secondary" for="public">{{
+                                'artemisApp.dialogs.createChannel.channelForm.isPublicInput.public' | artemisTranslate
+                            }}</label>
+                            <input formControlName="usePublicTutorialGroupChannels" type="radio" class="btn-check" id="private" autocomplete="off" [value]="false" />
+                            <label class="btn btn-outline-secondary" for="private">{{
+                                'artemisApp.dialogs.createChannel.channelForm.isPublicInput.private' | artemisTranslate
+                            }}</label>
+                        </div>
+                        <small id="isPublicHelp" class="form-text text-muted d-block">{{
+                            'artemisApp.dialogs.createChannel.channelForm.isPublicInput.explanation' | artemisTranslate
+                        }}</small>
+                    </div>
+                </div>
             </div>
             <div class="row mt-2">
                 <div class="col-12">

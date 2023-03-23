@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
+import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601DateString;
+import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601TimeString;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -37,6 +40,7 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.notifications.TutorialGroupNotificationService;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupScheduleService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -72,10 +76,13 @@ public class TutorialGroupResource {
 
     private final TutorialGroupScheduleService tutorialGroupScheduleService;
 
+    private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+
     public TutorialGroupResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository,
             TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository, TutorialGroupNotificationService tutorialGroupNotificationService,
             TutorialGroupNotificationRepository tutorialGroupNotificationRepository, SingleUserNotificationService singleUserNotificationService,
-            TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository, TutorialGroupScheduleService tutorialGroupScheduleService) {
+            TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository, TutorialGroupScheduleService tutorialGroupScheduleService,
+            TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
         this.tutorialGroupService = tutorialGroupService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
@@ -86,6 +93,7 @@ public class TutorialGroupResource {
         this.singleUserNotificationService = singleUserNotificationService;
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
         this.tutorialGroupScheduleService = tutorialGroupScheduleService;
+        this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
     }
 
     /**
@@ -207,6 +215,10 @@ public class TutorialGroupResource {
 
         // persist first without schedule
         TutorialGroupSchedule tutorialGroupSchedule = tutorialGroup.getTutorialGroupSchedule();
+        if (tutorialGroupSchedule != null) {
+            checkScheduleDateAndTimeFormatAreValid(tutorialGroupSchedule);
+        }
+
         tutorialGroup.setTutorialGroupSchedule(null);
         TutorialGroup persistedTutorialGroup = tutorialGroupRepository.save(tutorialGroup);
 
@@ -220,6 +232,10 @@ public class TutorialGroupResource {
             // Note: We have to load the teaching assistants from database otherwise languageKey is not defined and email sending fails
             var taFromDatabase = userRepository.findOneByLogin(tutorialGroup.getTeachingAssistant().getLogin());
             taFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(persistedTutorialGroup, user, responsibleUser));
+        }
+
+        if (configuration.getUseTutorialGroupChannels()) {
+            tutorialGroupChannelManagementService.createChannelForTutorialGroup(persistedTutorialGroup);
         }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId()))
@@ -243,6 +259,7 @@ public class TutorialGroupResource {
         checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
         tutorialGroupNotificationService.notifyAboutTutorialGroupDeletion(tutorialGroupFromDatabase);
         tutorialGroupNotificationRepository.deleteAllByTutorialGroupId(tutorialGroupId);
+        tutorialGroupChannelManagementService.deleteTutorialGroupChannel(tutorialGroupFromDatabase);
         tutorialGroupRepository.deleteById(tutorialGroupFromDatabase.getId());
         return ResponseEntity.noContent().build();
     }
@@ -250,10 +267,12 @@ public class TutorialGroupResource {
     /**
      * A DTO representing an updated tutorial group with an optional notification text about the update
      *
-     * @param tutorialGroup    the updated tutorial group
-     * @param notificationText the optional notification text
+     * @param tutorialGroup                  the updated tutorial group
+     * @param notificationText               the optional notification text
+     * @param updateTutorialGroupChannelName whether the tutorial group channel name should be updated with the new tutorial group title or not
      */
-    public record TutorialGroupUpdateDTO(@Valid @NotNull TutorialGroup tutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText) {
+    public record TutorialGroupUpdateDTO(@Valid @NotNull TutorialGroup tutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText,
+            @Nullable Boolean updateTutorialGroupChannelName) {
     }
 
     /**
@@ -281,8 +300,9 @@ public class TutorialGroupResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, oldTutorialGroup.getCourse(), responsibleUser);
 
         trimStringFields(updatedTutorialGroup);
-        if (!oldTutorialGroup.getTitle().equals(updatedTutorialGroup.getTitle())) {
-            checkTitleIsValid(updatedTutorialGroup);
+
+        if (updatedTutorialGroup.getTutorialGroupSchedule() != null) {
+            checkScheduleDateAndTimeFormatAreValid(updatedTutorialGroup.getTutorialGroupSchedule());
         }
 
         Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
@@ -293,6 +313,12 @@ public class TutorialGroupResource {
         if (configuration.getCourse().getTimeZone() == null) {
             throw new BadRequestException("The course has no time zone");
         }
+        if (!oldTutorialGroup.getTitle().equals(updatedTutorialGroup.getTitle())) {
+            checkTitleIsValid(updatedTutorialGroup);
+            if (configuration.getUseTutorialGroupChannels() && tutorialGroupUpdateDTO.updateTutorialGroupChannelName()) {
+                tutorialGroupChannelManagementService.updateNameOfTutorialGroupChannel(updatedTutorialGroup);
+            }
+        }
 
         // Note: We have to load the teaching assistants from database otherwise languageKey is not defined and email sending fails
 
@@ -301,11 +327,22 @@ public class TutorialGroupResource {
 
         if (newTA != null && (oldTA == null || !oldTA.equals(newTA))) {
             var newTAFromDatabase = userRepository.findOneByLogin(newTA.getLogin());
-            newTAFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, user, responsibleUser));
+            newTAFromDatabase.ifPresent(user -> {
+                singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, user, responsibleUser);
+                if (configuration.getUseTutorialGroupChannels()) {
+                    tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(updatedTutorialGroup, Set.of(user));
+                    tutorialGroupChannelManagementService.grantUsersModeratorRoleToTutorialGroupChannel(updatedTutorialGroup, Set.of(user));
+                }
+            });
         }
         if (oldTA != null && (newTA == null || !newTA.equals(oldTA))) {
             var oldTAFromDatabase = userRepository.findOneByLogin(oldTA.getLogin());
-            oldTAFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(oldTutorialGroup, user, responsibleUser));
+            oldTAFromDatabase.ifPresent(user -> {
+                singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(oldTutorialGroup, user, responsibleUser);
+                if (configuration.getUseTutorialGroupChannels()) {
+                    tutorialGroupChannelManagementService.removeUsersFromTutorialGroupChannel(oldTutorialGroup, Set.of(user));
+                }
+            });
         }
 
         if (StringUtils.hasText(tutorialGroupUpdateDTO.notificationText())) {
@@ -315,12 +352,13 @@ public class TutorialGroupResource {
         }
 
         overrideValues(updatedTutorialGroup, oldTutorialGroup);
-        // persist without schedule at first
-        oldTutorialGroup.setTutorialGroupSchedule(null);
+        if (oldTutorialGroup.getTutorialGroupSchedule() != null) {
+            oldTutorialGroup.getTutorialGroupSchedule().setTutorialGroup(oldTutorialGroup);
+        }
         var persistedTutorialGroup = tutorialGroupRepository.save(oldTutorialGroup);
-
-        tutorialGroupScheduleService.updateSchedule(configuration, persistedTutorialGroup, Optional.ofNullable(persistedTutorialGroup.getTutorialGroupSchedule()),
+        tutorialGroupScheduleService.updateScheduleIfChanged(configuration, persistedTutorialGroup, Optional.ofNullable(persistedTutorialGroup.getTutorialGroupSchedule()),
                 Optional.ofNullable(updatedTutorialGroup.getTutorialGroupSchedule()));
+        persistedTutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroup.getId());
 
         return ResponseEntity.ok(TutorialGroup.preventCircularJsonConversion(persistedTutorialGroup));
     }
@@ -379,7 +417,8 @@ public class TutorialGroupResource {
      * @param courseId        the id of the course to which the tutorial group belongs to
      * @param tutorialGroupId the id of the tutorial group to which the users should be registered to
      * @param studentDtos     the list of students who should be registered to the tutorial group
-     * @return the list of students who could not be registered for the tutorial group, because they could NOT be found in the Artemis database as students of the tutorial group course
+     * @return the list of students who could not be registered for the tutorial group, because they could NOT be found in the Artemis database as students of the tutorial group
+     *         course
      */
     @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple")
     @PreAuthorize("hasRole('INSTRUCTOR')")
@@ -425,6 +464,15 @@ public class TutorialGroupResource {
         }
         if (tutorialGroup.getCampus() != null) {
             tutorialGroup.setCampus(tutorialGroup.getCampus().trim());
+        }
+    }
+
+    private void checkScheduleDateAndTimeFormatAreValid(TutorialGroupSchedule schedule) {
+        if (!isIso8601DateString(schedule.getValidToInclusive()) || !isIso8601DateString(schedule.getValidFromInclusive())) {
+            throw new BadRequestException("Schedule valid to and from must be valid ISO 8601 date strings");
+        }
+        if (!isIso8601TimeString(schedule.getStartTime()) || !isIso8601TimeString(schedule.getEndTime())) {
+            throw new BadRequestException("Schedule start and end time must be valid ISO 8601 time strings");
         }
     }
 

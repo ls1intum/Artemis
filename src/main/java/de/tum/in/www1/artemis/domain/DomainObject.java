@@ -37,6 +37,7 @@ public abstract class DomainObject implements Serializable {
 
     /**
      * this method checks for database equality based on the id
+     *
      * @param obj another object
      * @return whether this and the other object are equal based on the database id
      */

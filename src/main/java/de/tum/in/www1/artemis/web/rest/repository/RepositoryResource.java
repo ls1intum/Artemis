@@ -106,6 +106,7 @@ public abstract class RepositoryResource {
 
     /**
      * Gets or retrieves the default branch from the domain object
+     *
      * @param domainID the id of the domain object
      * @return the name of the default branch of that domain object
      */

@@ -33,7 +33,8 @@ public class AuxiliaryRepositoryService {
 
     /**
      * Validates and adds all new Auxiliary Repositories that are added to the given exercise
-     * @param programmingExercise The programming exercise where the auxiliary repositories are added
+     *
+     * @param programmingExercise      The programming exercise where the auxiliary repositories are added
      * @param newAuxiliaryRepositories The newly added auxiliary repositories
      */
     public void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> newAuxiliaryRepositories) {
@@ -49,8 +50,9 @@ public class AuxiliaryRepositoryService {
 
     /**
      * Handles an update of a programming exercises where some of the auxiliary repositories are added, changed or deleted
+     *
      * @param programmingExercise The programming exercise before the update
-     * @param updatedExercise The programming exercise after the update
+     * @param updatedExercise     The programming exercise after the update
      */
     public void handleAuxiliaryRepositoriesWhenUpdatingExercises(ProgrammingExercise programmingExercise, ProgrammingExercise updatedExercise) {
         // Get all new (ID is still null) and changed (some string value is changed) auxiliary repositories

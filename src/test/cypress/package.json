@@ -7,18 +7,21 @@
         "node_modules"
     ],
     "devDependencies": {
-        "@4tw/cypress-drag-drop": "2.1.0",
-        "@types/node": "18.7.16",
-        "cypress": "9.5.4",
+        "@4tw/cypress-drag-drop": "2.2.3",
+        "@heddendorp/coverage-git-compare": "1.9.8",
+        "@heddendorp/cypress-plugin-multilanguage-coverage": "1.7.6",
+        "@types/node": "18.15.3",
+        "cypress": "12.8.1",
         "cypress-file-upload": "5.0.8",
         "cypress-wait-until": "1.7.2",
-        "typescript": "4.8.3",
+        "typescript": "4.9.5",
         "uuid": "9.0.0",
-        "wait-on": "6.0.1"
+        "wait-on": "7.0.1"
     },
     "scripts": {
         "cypress:open": "cypress open",
         "cypress:run": "cypress run --browser=chrome",
+        "detect:flakies": "coverage-git-compare bamboo $BAMBOO_PLAN_KEY $BAMBOO_BUILD_NUMBER $BAMBOO_TOKEN",
         "update": "npm-upgrade"
     }
 }

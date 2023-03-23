@@ -10,7 +10,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import dayjs from 'dayjs/esm';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
@@ -138,7 +137,7 @@ export class CourseExerciseService {
     handleParticipation(participation: StudentParticipation): StudentParticipation {
         if (participation) {
             // convert date
-            participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
+            participation.initializationDate = convertDateFromServer(participation.initializationDate);
             if (participation.exercise) {
                 const exercise = participation.exercise;
                 this.convertExerciseDatesFromServer(exercise);

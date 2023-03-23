@@ -12,6 +12,7 @@ Introduction
 
 Artemis allows tutors and exercise instructors to check assignment submissions from students for plagiarism.
 With this feature, different types of assignments can be checked in Artemis, including programming assignments, modeling assignments, and text assignments.
+Plagiarism checks are available for both course and exam exercises.
 To perform the plagiarism check, the responsible tutors must initiate the checking process for a specific exercise.
 First, we give an overview of different available features of the plagiarism check.
 Next, we explain the plagiarism check workflows from the perspective of various Artemis users, using UML Activity Diagrams to visualize the process.
@@ -52,7 +53,7 @@ The user can use different actions to run a plagiarism check, inspect the result
 |plagiarism-actions1|
 
 .. note::
-        Plagiarism detection can take a long time for large courses.
+        Plagiarism detection can take a long time for large courses and exams.
 
 1. Detect plagiarism: The user can execute the plagiarism check using this action.
 
@@ -88,7 +89,11 @@ We visualized the process in the following diagram.
 
 |tutor-workflow|
 
-1. Open the Exercise via: Course Management → Course → Exercises → Your Exercise.
+1. Open the Exercise via:
+
+ a. For course exercises: Course Management → Course → Exercises → Your Exercise.
+ b. For exam exercises: Course Management → Course → Exams → Exam → Exercise Groups → Your Exercise.
+
 2. Access the plagiarism tool as seen in the picture
 
  |exercise-page|
@@ -104,6 +109,7 @@ We visualized the process in the following diagram.
  b. Depending on your decision, either deny or confirm the match as plagiarism.
  c. Continue until the matches start to get "too different".
 
+.. _plagiarism_instructors:
 
 Instructors
 ^^^^^^^^^^^
@@ -112,7 +118,10 @@ We visualized the process in the following diagram.
 
 |instructors-workflow|
 
-1. Open the plagiarism cases via: Course Management → Course → Plagiarism Cases.
+1. Open the plagiarism cases via:
+
+ a. For course exercises: Course Management → Course → Plagiarism Cases.
+ b. For exam exercises: Course Management → Course → Exams → Exam → Plagiarism Cases.
 
  |plagiarism-cases-navigation|
 
@@ -138,9 +147,10 @@ We visualized the process in the following diagram.
 
  |verdict-dialog|
 
- a. Point deduction in % (minimum value 0%, maximum 100). Deduct exercise points and confirm  the verdict in the dialog.
+ a. No plagiarism. The instructor can deem the accusation invalid and resolve the plagiarism case.
  b. Warning. The instructor can write a warning message to the student and confirm the verdict in the dialog.
- c. Plagiarism. Next steps must be made manually by contacting responsible persons in the university to mark the student grade as "Unterschleif".
+ c. Point deduction in % (minimum value 0, maximum 100). Deduct exercise points and confirm  the verdict in the dialog.
+ d. Plagiarism. If a grading key exists, the student receives the :doc:`plagiarism special grade <grading>` for the exam or course that the corresponding exercise belongs to. The next steps must be made manually by contacting responsible persons in the university to mark the student's grade as "Unterschleif".
 
 Students
 ^^^^^^^^
@@ -149,7 +159,10 @@ The process is visualized in the following diagram.
 
 |student-workflow|
 
-1. Open the notified plagiarism confirmed case via: Course Overview → Course → Exercise → Plagiarism Case.
+1. Open the notified plagiarism confirmed case via:
+
+ a. For course exercises: Course Overview → Course → Exercise → Plagiarism Case / Resolved Plagiarism Case.
+ b. For exam exercises: Course Overview → Course → Exams → Exam → Plagiarism Case / Resolved Plagiarism Case.
 
  |student-plagiarism-case-navigation|
 

@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 /**
  * Zip file service containing utility methods
  * used only for testing purposes.
- *
  */
 @Service
 public class ZipFileTestUtilService {

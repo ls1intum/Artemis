@@ -28,6 +28,7 @@ public class UrlService {
 
     /**
      * Gets the repository slug from the given repository URL string, see {@link #getRepositorySlugFromUrl}
+     *
      * @param repositoryUrl The repository url as string
      * @return The repository slug
      * @throws VersionControlException if the URL is invalid and no repository slug could be extracted
@@ -75,8 +76,8 @@ public class UrlService {
      * Gets the project key + repository slug from the given repository URL, ee {@link #getRepositoryPathFromUrl}
      *
      * @param repositoryUrl The repository url object
-     * @throws VersionControlException if the URL is invalid and no project key could be extracted
      * @return <project key>/<repositorySlug>
+     * @throws VersionControlException if the URL is invalid and no project key could be extracted
      */
     public String getRepositoryPathFromRepositoryUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
         return getRepositoryPathFromUrl(repositoryUrl.getURI());
@@ -88,8 +89,8 @@ public class UrlService {
      * Example: https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git --> TESTADAPTER/testadapter-exercise
      *
      * @param url The complete repository url (including protocol, host and the complete path)
-     * @throws VersionControlException if the URL is invalid and no project key could be extracted
      * @return <project key>/<repositorySlug>
+     * @throws VersionControlException if the URL is invalid and no project key could be extracted
      */
     private String getRepositoryPathFromUrl(URI url) throws VersionControlException {
         // split the URL path in components using the separator "/"

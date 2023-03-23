@@ -260,7 +260,7 @@ public abstract class Participation extends DomainObject implements Participatio
     /**
      * Like {@link Participation#findLatestSubmission()} but with the possibility to include illegal submissions,
      *
-     * @param <T> submission type
+     * @param <T>                       submission type
      * @param includeIllegalSubmissions should the function include illegal submission
      * @return the latest submission or null
      */
@@ -279,6 +279,7 @@ public abstract class Participation extends DomainObject implements Participatio
 
     /**
      * Adds the prefix "-practice" to the given name, if this is a test run that might be used for practice
+     *
      * @param string the string that might get "practice-" added its front
      * @return the same string with "practice-" added to the front if this is a test run participation
      */
@@ -296,6 +297,7 @@ public abstract class Participation extends DomainObject implements Participatio
      * NOTE: do not use this in a transactional context and do not save the returned object to the database
      * This method is useful when we want to cut off attributes while sending entities to the client and we are only interested in the id of the object
      * We use polymorphism here, so subclasses should implement / override this method to create the correct object type
+     *
      * @return an empty participation just including the id of the object
      */
     public abstract Participation copyParticipationId();

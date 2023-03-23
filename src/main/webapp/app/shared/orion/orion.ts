@@ -49,7 +49,6 @@ export interface OrionExerciseConnector {
      * Downloads a submission into the opened tutor project. See {@link OrionConnectorService} for details.
      * @param submissionId id of the submission, used to navigate to the corresponding URL
      * @param correctionRound correction round, also needed to navigate to the correct URL
-     * @param testRun test run flag, also needed for navigation
      * @param base64data the student's submission as base64
      */
     // Uncomment this line to also transfer the testRun flag.

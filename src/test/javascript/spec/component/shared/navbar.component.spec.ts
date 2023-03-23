@@ -15,12 +15,11 @@ import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../test.module';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
@@ -35,7 +34,11 @@ import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { NgbCollapseMocksModule } from '../../helpers/mocks/directive/ngbCollapseMocks.module';
+import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 class MockBreadcrumb {
     label: string;
@@ -88,7 +91,7 @@ describe('NavbarComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbModule)],
+            imports: [HttpClientTestingModule, NgbTooltipMocksModule, NgbCollapseMocksModule, NgbDropdownMocksModule],
             declarations: [
                 NavbarComponent,
                 MockDirective(HasAnyAuthorityDirective),
@@ -104,14 +107,22 @@ describe('NavbarComponent', () => {
                 MockComponent(JhiConnectionWarningComponent),
                 MockComponent(ThemeSwitchComponent),
                 MockComponent(SystemNotificationComponent),
+                MockComponent(FaIconComponent),
             ],
             providers: [
                 MockProvider(UrlSerializer),
-                MockProvider(MockAccountService),
+                {
+                    provide: AccountService,
+                    useClass: MockAccountService,
+                },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useValue: router },
+                {
+                    provide: ActivatedRoute,
+                    useValue: new MockActivatedRoute({ id: 123 }),
+                },
             ],
         })
             .compileComponents()

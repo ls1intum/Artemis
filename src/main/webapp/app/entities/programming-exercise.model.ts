@@ -42,11 +42,13 @@ export class ProgrammingExercise extends Exercise {
     public publishBuildPlanUrl?: boolean;
     public allowOnlineEditor?: boolean;
     public staticCodeAnalysisEnabled?: boolean;
+    /**
+     * Max penalty from SCA in percentage
+     */
     public maxStaticCodeAnalysisPenalty?: number;
     public allowOfflineIde?: boolean;
     public programmingLanguage?: ProgrammingLanguage;
     public packageName?: string;
-    public problemStatement?: string;
     public sequentialTestRuns?: boolean;
     public showTestNamesToStudents?: boolean;
     public checkoutSolutionRepository?: boolean;

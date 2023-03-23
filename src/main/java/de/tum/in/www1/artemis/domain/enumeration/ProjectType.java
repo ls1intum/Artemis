@@ -26,14 +26,14 @@ public enum ProjectType {
      * In addition to the representation of values as obtained by calling
      * {@link ProjectType#toString()}, a few shorthand aliases can be parsed:
      * <ul>
-     *     <li>{@code default} for {@link ProjectType#PLAIN}</li>
-     *     <li>{@code maven} for {@link ProjectType#MAVEN_MAVEN}</li>
-     *     <li>{@code gradle} for {@link ProjectType#GRADLE_GRADLE}</li>
+     * <li>{@code default} for {@link ProjectType#PLAIN}</li>
+     * <li>{@code maven} for {@link ProjectType#MAVEN_MAVEN}</li>
+     * <li>{@code gradle} for {@link ProjectType#GRADLE_GRADLE}</li>
      * </ul>
      *
      * @param projectType The project type string that should be parsed.
-     * @throws IllegalArgumentException Thrown if the input cannot be parsed as a project type.
      * @return The project type represented by the given input.
+     * @throws IllegalArgumentException Thrown if the input cannot be parsed as a project type.
      */
     public static ProjectType tryFromString(final String projectType) throws IllegalArgumentException {
         final String input = projectType.toUpperCase(Locale.ROOT);
@@ -53,6 +53,7 @@ public enum ProjectType {
 
     /**
      * Returns if a project type is for a Maven project: legacy projects have no project type, but are Maven projects.
+     *
      * @param projectType the project type that should be checked
      * @return whether the project is a Maven project
      */

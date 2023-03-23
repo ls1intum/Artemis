@@ -2,7 +2,8 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -14,6 +15,7 @@ import { By } from '@angular/platform-browser';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 // Mock getCourseFromExercise(exercise) to get a course even if there isn't a course.
 jest.mock('app/entities/exercise.model', () => ({
@@ -32,7 +34,7 @@ describe('ComplaintsForTutorComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), FormsModule],
-            declarations: [ComplaintsForTutorComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
+            declarations: [ComplaintsForTutorComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockComponent(TextareaCounterComponent)],
             providers: [MockProvider(ComplaintResponseService), MockProvider(ComplaintService), MockProvider(AlertService)],
         })
             .compileComponents()
@@ -315,4 +317,60 @@ describe('ComplaintsForTutorComponent', () => {
         const responseTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
         expect(responseTextArea.maxLength).toBe(26);
     }));
+
+    it.each(['success', 'failure'])(
+        'should handle %s after updating assessment after complaint',
+        fakeAsync((successOrFailure: string) => {
+            const isSuccess = successOrFailure === 'success';
+
+            const unhandledComplaint = new Complaint();
+            unhandledComplaint.id = 2;
+            unhandledComplaint.accepted = undefined;
+            unhandledComplaint.complaintText = 'please check again';
+            unhandledComplaint.complaintResponse = undefined;
+            unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
+
+            const newComplaintResponse = new ComplaintResponse();
+            newComplaintResponse.id = 3;
+            newComplaintResponse.isCurrentlyLocked = true;
+            newComplaintResponse.complaint = unhandledComplaint;
+            newComplaintResponse.responseText = 'accepted';
+
+            complaintsForTutorComponent.complaint = unhandledComplaint;
+            complaintsForTutorComponent.complaintResponse = newComplaintResponse;
+            complaintsForTutorComponent.exercise = { id: 11, isAtLeastInstructor: true } as Exercise;
+
+            complaintsForTutorComponent.isLoading = false;
+            complaintsForTutorComponent.handled = false;
+            complaintsForTutorComponent.showLockDuration = true;
+            complaintsForTutorComponent.lockedByCurrentUser = true;
+
+            complaintsForTutorComponent.updateAssessmentAfterComplaint.subscribe((assessmentAfterComplaint) =>
+                // setTimeout is used so that the code below does not execute until tick() is called.
+                setTimeout(() => {
+                    expect(assessmentAfterComplaint.complaintResponse).toEqual(newComplaintResponse);
+                    if (isSuccess) {
+                        assessmentAfterComplaint.onSuccess();
+                    } else {
+                        assessmentAfterComplaint.onError();
+                    }
+                }),
+            );
+
+            complaintsForTutorComponent.respondToComplaint(true);
+
+            expect(complaintsForTutorComponent.isLoading).toBeTrue();
+            expect(complaintsForTutorComponent.handled).toBeFalse();
+            expect(complaintsForTutorComponent.showLockDuration).toBeTrue();
+            expect(complaintsForTutorComponent.lockedByCurrentUser).toBeTrue();
+
+            tick();
+
+            expect(complaintsForTutorComponent.isLoading).toBeFalse();
+
+            expect(complaintsForTutorComponent.handled).toBe(isSuccess);
+            expect(complaintsForTutorComponent.showLockDuration).toBe(!isSuccess);
+            expect(complaintsForTutorComponent.lockedByCurrentUser).toBe(!isSuccess);
+        }),
+    );
 });

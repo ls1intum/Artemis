@@ -10,6 +10,6 @@ export class SourceTreeService {
      * @param cloneUrl - url of the target.
      */
     buildSourceTreeUrl(baseUrl: string, cloneUrl: string | undefined) {
-        return cloneUrl ? 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl) + '&baseWebUrl=' + baseUrl : undefined;
+        return cloneUrl ? `sourcetree://cloneRepo?type=stash&cloneUrl=${encodeURI(cloneUrl)}&baseWebUrl=${baseUrl}` : undefined;
     }
 }

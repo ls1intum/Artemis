@@ -28,7 +28,7 @@ import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { markdownForHtml } from 'app/shared/util/markdown.conversion.util';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
-import { MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.constants';
+import { MAX_QUIZ_QUESTION_POINTS, MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
@@ -41,6 +41,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     private questionEditor: AceEditorComponent;
     @ViewChild('clickLayer', { static: false })
     private clickLayer: ElementRef;
+    @ViewChild('question', { static: false })
+    questionElement: ElementRef;
 
     shortAnswerQuestion: ShortAnswerQuestion;
 
@@ -98,6 +100,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     faUnlink = faUnlink;
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
+
+    readonly maxPoints = MAX_QUIZ_QUESTION_POINTS;
 
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,
@@ -250,7 +254,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     /**
      * @function parseMarkdown
-     * @param text {string} the markdown text to parse
+     * @param text {string} the Markdown text to parse
      * @desc Parse the markdown and apply the result to the question's data
      * The markdown rules are as follows:
      *
@@ -329,6 +333,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const spotIds = spots.split(',').map(Number);
 
         for (const id of spotIds) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             const spotForMapping = this.shortAnswerQuestion.spots?.find((spot) => spot.spotNr === id)!;
             this.shortAnswerQuestion.correctMappings!.push(new ShortAnswerMapping(spotForMapping, solution));
         }
@@ -363,6 +368,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * add the markdown for a solution option below the last visible row, which is connected to a spot in the given editor
      *
      * @param editor {object} the editor into which the solution option markdown will be inserted
+     * @param numberOfSpot
+     * @param optionText
+     * @param firstPressed
      */
     addOptionToSpot(editor: any, numberOfSpot: number, optionText: string, firstPressed: number) {
         let addedText: string;
@@ -408,7 +416,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     addSpotAtCursorVisualMode(): void {
         // check if selection is on the correct div
-        const wrapperDiv = document.getElementById('test')!;
+        const wrapperDiv = this.questionElement.nativeElement;
         const selection = window.getSelection()!;
         const child = selection.anchorNode;
 
@@ -544,17 +552,16 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     getMappingIndex(mapping: ShortAnswerMapping): number {
         const visitedSpots: ShortAnswerSpot[] = [];
         // Save reference to this due to nested some calls
-        const that = this;
         if (
             this.shortAnswerQuestion.correctMappings?.some((correctMapping) => {
                 if (
                     !visitedSpots.some((spot: ShortAnswerSpot) => {
-                        return that.shortAnswerQuestionUtil.isSameSpot(spot, correctMapping.spot);
+                        return this.shortAnswerQuestionUtil.isSameSpot(spot, correctMapping.spot);
                     })
                 ) {
                     visitedSpots.push(correctMapping.spot!);
                 }
-                return that.shortAnswerQuestionUtil.isSameSpot(correctMapping.spot, mapping.spot);
+                return this.shortAnswerQuestionUtil.isSameSpot(correctMapping.spot, mapping.spot);
             })
         ) {
             return visitedSpots.length;

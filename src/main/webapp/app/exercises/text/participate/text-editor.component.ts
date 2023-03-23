@@ -17,7 +17,7 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
@@ -102,7 +102,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.textExercise = this.participation.exercise as TextExercise;
         this.examMode = !!this.textExercise.exerciseGroup;
         this.textExercise.studentParticipations = [this.participation];
-        this.textExercise.participationStatus = participationStatus(this.textExercise);
         this.checkIfSubmitAlwaysEnabled();
         this.isAfterAssessmentDueDate = !!this.textExercise.course && (!this.textExercise.assessmentDueDate || dayjs().isAfter(this.textExercise.assessmentDueDate));
         this.isAfterPublishDate = !!this.textExercise.exerciseGroup?.exam?.publishResultsDate && dayjs().isAfter(this.textExercise.exerciseGroup.exam.publishResultsDate);
@@ -232,7 +231,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.participation.exercise = this.textExercise;
                 this.participationWebsocketService.addParticipation(this.participation, this.textExercise);
                 this.textExercise.studentParticipations = [this.participation];
-                this.textExercise.participationStatus = participationStatus(this.textExercise);
                 this.result = getLatestSubmissionResult(this.submission)!;
                 if (this.result) {
                     this.result.participation = this.participation;

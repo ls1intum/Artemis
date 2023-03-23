@@ -8,7 +8,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.assertj.core.api.Condition;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +20,8 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.security.SecurityUtils;
 
 class ParticipationLifecycleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "partlcservice";
 
     @Autowired
     private ParticipationLifecycleService participationLifecycleService;
@@ -36,15 +37,10 @@ class ParticipationLifecycleServiceTest extends AbstractSpringIntegrationBambooB
     void reset() {
         SecurityUtils.setAuthorizationObject();
 
-        database.addUsers(1, 1, 1, 1);
+        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         Course course = database.addCourseWithOneProgrammingExercise();
-        programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).findAny().orElseThrow();
-        participation = database.addStudentParticipationForProgrammingExercise(this.programmingExercise, "student1");
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        participation = database.addStudentParticipationForProgrammingExercise(this.programmingExercise, TEST_PREFIX + "student1");
     }
 
     @Test

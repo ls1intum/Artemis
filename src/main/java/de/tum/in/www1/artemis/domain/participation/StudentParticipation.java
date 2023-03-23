@@ -58,6 +58,7 @@ public class StudentParticipation extends Participation {
 
     /**
      * allows to set the participant independent whether it is a team or user
+     *
      * @param participant either a team or user
      */
     public void setParticipant(Participant participant) {
@@ -132,7 +133,8 @@ public class StudentParticipation extends Participation {
     }
 
     /**
-     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.ExampleSubmissionService#getSubmissionsOnPageWithSize(PageableSearchDTO, Long)}}
+     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.ExampleSubmissionService#getSubmissionsOnPageWithSize(PageableSearchDTO,
+     * Long)}}
      * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
      */
     public enum StudentParticipationSearchColumn {

@@ -132,6 +132,7 @@
             "instructors": "Instructors",
             "student": "Student",
             "tutor": "Tutor",
+            "reviewer": "Reviewer",
             "editor": "Editor",
             "instructor": "Instructor",
             "form": {
@@ -144,7 +145,8 @@
                 },
                 "endDate": {
                     "invalid": "Must be after the start date of the course"
-                }
+                },
+                "invalidForm": "Please fill in all required fields."
             },
             "courseDashboard": "Course Dashboard",
             "instructorDashboard": "Instructor Course Dashboard",

@@ -82,6 +82,7 @@ export interface ITeamService {
      * Import the teams of an existing source exercise
      * @param {Exercise} exercise - Exercise the teams should be imported into
      * @param {Team[]} teams - Teams that should be imported into the exercise
+     * @param {TeamImportStrategyType} importStrategyType - How the teams should be imported
      */
     importTeams(exercise: Exercise, teams: Team[], importStrategyType: TeamImportStrategyType): Observable<HttpResponse<Team[]>>;
 

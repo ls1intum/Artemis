@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
@@ -8,7 +8,7 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './score-display.component.html',
     styleUrls: ['./score-display.component.scss'],
 })
-export class ScoreDisplayComponent implements OnInit, OnChanges {
+export class ScoreDisplayComponent implements OnChanges {
     @Input() maxBonusPoints = 0;
     @Input() maxPoints: number;
     @Input() score: number;
@@ -21,11 +21,6 @@ export class ScoreDisplayComponent implements OnInit, OnChanges {
     faQuestionCircle = faQuestionCircle;
 
     constructor() {}
-
-    /**
-     * Do nothing on initialization.
-     */
-    ngOnInit() {}
 
     /**
      * Calculate the bonus points just for display reasons

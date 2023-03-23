@@ -1,14 +1,15 @@
 <div>
-    <h4 class="d-flex mb-3 flex-wrap justify-content-end">
-        <span class="mb-1 me-auto">
+    <div class="d-flex mb-3 flex-wrap justify-content-end">
+        <h4 class="mb-1 me-auto">
             <span *ngIf="course && !showHeading">{{ course.title }} - </span>
             <span *ngIf="fileUploadExercises && showHeading && !filter.isEmpty() && fileUploadExercises.length">
                 {{ getAmountOfExercisesString(filteredFileUploadExercises) }} /
             </span>
             <span *ngIf="fileUploadExercises && showHeading">{{ getAmountOfExercisesString(fileUploadExercises) }} </span>
             <span jhiTranslate="artemisApp.fileUploadExercise.home.title">File Upload Exercises</span>
-        </span>
-        <a
+        </h4>
+
+        <button
             *ngIf="course && course.isAtLeastEditor"
             class="btn btn-primary jh-create-entity create-file-upload-exercise text-truncate mb-1 me-1"
             [routerLink]="['/course-management', course.id, 'file-upload-exercises', 'new']"
@@ -16,8 +17,17 @@
         >
             <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.fileUploadExercise.home.createLabel"> Create File Upload Exercise </span>
-        </a>
-    </h4>
+        </button>
+        <button
+            *ngIf="course?.isAtLeastEditor"
+            id="jh-import-entity"
+            class="btn btn-primary jh-create-entity create-file-upload-exercise text-truncate mb-1 me-1"
+            (click)="openImportModal()"
+        >
+            <fa-icon [icon]="faPlus"></fa-icon>
+            <span class="hidden-sm-down" jhiTranslate="artemisApp.fileUploadExercise.home.importLabel"> Import new file upload exercise </span>
+        </button>
+    </div>
     <div class="row"></div>
     <br />
     <div class="table-responsive" *ngIf="fileUploadExercises && filteredFileUploadExercises.length > 0">
@@ -85,14 +95,6 @@
                             >
                                 <fa-icon [icon]="farListAlt"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-                            </a>
-                            <a
-                                *ngIf="fileUploadExercise.isAtLeastInstructor"
-                                [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'submissions']"
-                                class="btn btn-success btn-sm me-1"
-                            >
-                                <fa-icon [icon]="faBook"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
                             </a>
                             <a
                                 *ngIf="fileUploadExercise.teamMode && fileUploadExercise.isAtLeastTutor"

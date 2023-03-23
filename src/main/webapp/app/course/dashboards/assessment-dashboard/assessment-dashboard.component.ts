@@ -16,12 +16,12 @@ import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
-import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard, faHeartBroken, faSort, faTable } from '@fortawesome/free-solid-svg-icons';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -31,6 +31,7 @@ import { faSort } from '@fortawesome/free-solid-svg-icons';
 })
 export class AssessmentDashboardComponent implements OnInit {
     readonly TeamFilterProp = TeamFilterProp;
+    documentationType = DocumentationType.Assessment;
 
     course: Course;
     exam: Exam;
@@ -74,6 +75,9 @@ export class AssessmentDashboardComponent implements OnInit {
 
     // Icons
     faSort = faSort;
+    faTable = faTable;
+    faClipboard = faClipboard;
+    faHeartBroken = faHeartBroken;
 
     constructor(
         private courseService: CourseManagementService,
@@ -387,7 +391,7 @@ export class AssessmentDashboardComponent implements OnInit {
         this.isTogglingSecondCorrection.set(currentExercise.id!, true);
         const index = this.currentlyShownExercises.indexOf(currentExercise);
         this.exerciseService.toggleSecondCorrection(exerciseId).subscribe({
-            next: (res: Boolean) => {
+            next: (res: boolean) => {
                 this.currentlyShownExercises[index].secondCorrectionEnabled = !this.currentlyShownExercises[index].secondCorrectionEnabled;
                 currentExercise!.secondCorrectionEnabled = res as boolean;
                 this.isTogglingSecondCorrection.set(currentExercise.id!, false);
@@ -411,10 +415,6 @@ export class AssessmentDashboardComponent implements OnInit {
             this.isTestRun ? 'test-assessment-dashboard' : 'assessment-dashboard',
             exercise.id!.toString(),
         ];
-    }
-
-    getSubmissionsLinkForExercise(exercise: Exercise): string[] {
-        return getExerciseSubmissionsLink(exercise.type!, this.courseId, exercise.id!, this.examId, this.exerciseGroupId);
     }
 
     asQuizExercise(exercise: Exercise): QuizExercise {

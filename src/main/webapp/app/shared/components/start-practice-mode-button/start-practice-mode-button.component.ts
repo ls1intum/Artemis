@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { finalize } from 'rxjs/operators';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
@@ -8,6 +8,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { InitializationState } from 'app/entities/participation/participation.model';
 
 @Component({
     selector: 'jhi-start-practice-mode-button',
@@ -21,6 +22,8 @@ export class StartPracticeModeButtonComponent implements OnInit {
     smallButtons: boolean;
     @Input()
     exercise: Exercise;
+    @Output()
+    practiceModeStarted = new EventEmitter();
 
     startingPracticeMode = false;
     gradedStudentParticipation?: StudentParticipation;
@@ -41,25 +44,23 @@ export class StartPracticeModeButtonComponent implements OnInit {
             .pipe(finalize(() => (this.startingPracticeMode = false)))
             .subscribe({
                 next: (participation) => {
-                    if (participation) {
-                        if (this.exercise.studentParticipations?.some((studentParticipation) => studentParticipation.id === participation.id)) {
-                            this.exercise.studentParticipations = this.exercise.studentParticipations?.map((studentParticipation) =>
-                                studentParticipation.id === participation.id ? participation : studentParticipation,
-                            );
-                        } else {
-                            this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
-                        }
-                    }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                        if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
-                            this.alertService.success('artemisApp.exercise.personalRepositoryClone');
+                        if (participation?.initializationState === InitializationState.INITIALIZED) {
+                            if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
+                                this.alertService.success('artemisApp.exercise.personalRepositoryClone');
+                            } else {
+                                this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
+                            }
                         } else {
-                            this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
+                            this.alertService.error('artemisApp.exercise.startError');
+                        }
+                        if (participation) {
+                            this.practiceModeStarted.emit(participation);
                         }
                     }
                 },
                 error: () => {
-                    this.alertService.warning('artemisApp.exercise.startError');
+                    this.alertService.error('artemisApp.exercise.startError');
                 },
             });
     }

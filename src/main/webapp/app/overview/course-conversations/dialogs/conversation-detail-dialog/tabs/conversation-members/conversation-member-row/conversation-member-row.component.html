@@ -1,0 +1,36 @@
+<div
+    *ngIf="activeConversation && course"
+    class="d-flex justify-content-between align-items-center conversation-member-row"
+    (mouseleave)="$event.stopPropagation(); userDropdown.close()"
+>
+    <span class="d-inline-block">
+        <fa-icon [icon]="userIcon" [ngbTooltip]="userTooltip"></fa-icon>
+        <fa-icon
+            *ngIf="isChannel(activeConversation) && conversationMember?.isChannelModerator"
+            [icon]="faUserGear"
+            [ngbTooltip]="'artemisApp.dialogs.conversationDetail.memberTab.memberRow.channelModeratorTooltip' | artemisTranslate"
+        ></fa-icon>
+        {{ userLabel }}
+    </span>
+    <div ngbDropdown class="d-inline-block" #userDropdown="ngbDropdown">
+        <button
+            class="btn btn-outline-secondary dropdown-toggle interaction"
+            type="button"
+            ngbDropdownToggle
+            *ngIf="canBeRemovedFromConversation || canBeGrantedChannelModeratorRole || canBeRevokedChannelModeratorRole"
+        >
+            <fa-icon [icon]="faEllipsis" size="xs"></fa-icon>
+        </button>
+        <div ngbDropdownMenu>
+            <button ngbDropdownItem *ngIf="canBeRemovedFromConversation" class="text-danger remove-member" (click)="openRemoveFromConversationDialog($event)">
+                {{ 'artemisApp.dialogs.conversationDetail.memberTab.memberRow.removeUser' | artemisTranslate }}
+            </button>
+            <button ngbDropdownItem *ngIf="canBeGrantedChannelModeratorRole" class="text-danger grant-moderator" (click)="openGrantChannelModeratorRoleDialog($event)">
+                {{ 'artemisApp.dialogs.conversationDetail.memberTab.memberRow.grantModeratorRole' | artemisTranslate }}
+            </button>
+            <button ngbDropdownItem *ngIf="canBeRevokedChannelModeratorRole" class="text-danger revoke-moderator" (click)="openRevokeChannelModeratorRoleDialog($event)">
+                {{ 'artemisApp.dialogs.conversationDetail.memberTab.memberRow.revokeModeratorRole' | artemisTranslate }}
+            </button>
+        </div>
+    </div>
+</div>

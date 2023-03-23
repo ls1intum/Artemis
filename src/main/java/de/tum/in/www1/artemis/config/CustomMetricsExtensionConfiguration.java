@@ -26,8 +26,9 @@ public class CustomMetricsExtensionConfiguration {
 
         /**
          * customMetricsExtension.
+         *
          * @param jHipsterMetricsEndpoint Default JHI Metrics
-         * @param simpUserRegistry Registry used to retrieve the number of active users.
+         * @param simpUserRegistry        Registry used to retrieve the number of active users.
          * @return CustomMetricsExtension object.
          */
         @Bean

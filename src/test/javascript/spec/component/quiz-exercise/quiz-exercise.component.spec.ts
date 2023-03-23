@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -14,7 +16,6 @@ import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { QuizExerciseImportComponent } from 'app/exercises/quiz/manage/quiz-exercise-import.component';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
@@ -102,13 +103,17 @@ describe('QuizExercise Management Component', () => {
         expect(exerciseService.reset).toHaveBeenCalledOnce();
     });
 
-    it('should open modal', () => {
-        const mockReturnValue = { result: Promise.resolve({ id: 456 } as QuizExercise) } as NgbModalRef;
+    it('should open import modal', () => {
+        const mockReturnValue = {
+            result: Promise.resolve({ id: 456 } as QuizExercise),
+            componentInstance: {},
+        } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
         comp.openImportModal();
-        expect(modalService.open).toHaveBeenCalledWith(QuizExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledWith(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
         expect(modalService.open).toHaveBeenCalledOnce();
+        expect(mockReturnValue.componentInstance.exerciseType).toEqual(ExerciseType.QUIZ);
     });
 
     it('should open quiz for practice', () => {
@@ -314,16 +319,6 @@ describe('QuizExercise Management Component', () => {
         expect(quizExerciseService.find).toHaveBeenCalledOnce();
         expect(quizExerciseService.exportQuiz).toHaveBeenCalledWith(undefined, true, 'Quiz Exercise');
         expect(quizExerciseService.exportQuiz).toHaveBeenCalledOnce();
-    });
-
-    it('should return quiz is over', () => {
-        quizExercise.quizEnded = true;
-        expect(comp.quizIsOver(quizExercise)).toBeTrue();
-    });
-
-    it('should return quiz is not over', () => {
-        quizExercise.quizEnded = false;
-        expect(comp.quizIsOver(quizExercise)).toBeFalse();
     });
 
     it('should return quiz id', () => {

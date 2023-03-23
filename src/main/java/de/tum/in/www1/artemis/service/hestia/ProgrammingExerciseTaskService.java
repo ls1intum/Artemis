@@ -155,6 +155,7 @@ public class ProgrammingExerciseTaskService {
      * the current test case. This respects the fact that parameterized tests may contain commas.
      * Example: "testInsert(InsertMock, 1),testClass[SortStrategy],testWithBraces()" results in the following list
      * ["testInsert(InsertMock, 1)", "testClass[SortStrategy]", "testWithBraces()"]
+     *
      * @param capturedTestCaseNames the captured test case names matched from the problem statement
      * @return test case names
      */

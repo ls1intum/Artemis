@@ -166,6 +166,25 @@ canvas#complete-chart {
     }
 }
 
-.course-exercises-search {
-    width: 100%;
+.fadeInIcon {
+    /* Start the shake animation and make the animation last for 0.3 seconds */
+    animation: fadeIn 0.3s;
+
+    /* Animation only once */
+    animation-iteration-count: initial;
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        visibility: visible;
+        opacity: 1;
+    }
 }

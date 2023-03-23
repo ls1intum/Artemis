@@ -16,10 +16,10 @@ public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
      * Gets the user object for the specified authentication or creates one in Artemis based on the passed information (possibly asking an external authentication source).
      * Note: This method does not create a new user in the external authentication source.
      *
-     * @param authentication the Spring authentication object which includes the username and password
-     * @param firstName The first name of the user that should get created if not present
-     * @param lastName The last name of the user that should get created if not present
-     * @param email The email of the user that should get created if not present
+     * @param authentication    the Spring authentication object which includes the username and password
+     * @param firstName         The first name of the user that should get created if not present
+     * @param lastName          The last name of the user that should get created if not present
+     * @param email             The email of the user that should get created if not present
      * @param skipPasswordCheck whether the password against the by the user management system provided user should be skipped
      * @return The Artemis user identified by the provided credentials
      */
@@ -28,7 +28,7 @@ public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
     /**
      * Adds a user to the specified group
      *
-     * @param user the user
+     * @param user  the user
      * @param group The group the user should get added to
      */
     void addUserToGroup(User user, String group);
@@ -43,7 +43,7 @@ public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
     /**
      * Removes a user from the specified group
      *
-     * @param user the user
+     * @param user  the user
      * @param group The groupname the user should get added to
      */
     void removeUserFromGroup(User user, String group);

@@ -31,7 +31,7 @@ public class ReactionResource {
      * @param courseId id of the course the posting that is reacted on belongs to
      * @param reaction reaction to create
      * @return ResponseEntity with status 201 (Created) containing the created reaction in the response body,
-     * or with status 400 (Bad Request) if the checks on user, course or posting validity fail
+     *         or with status 400 (Bad Request) if the checks on user, course or posting validity fail
      */
     @PostMapping("courses/{courseId}/postings/reactions")
     @PreAuthorize("hasRole('USER')")
@@ -46,7 +46,7 @@ public class ReactionResource {
      * @param courseId   id of the course the posting that is reacted on belongs to
      * @param reactionId id of the reaction to delete
      * @return ResponseEntity with status 200 (OK),
-     * or 400 (Bad Request) if the checks on user, course or posting validity fail
+     *         or 400 (Bad Request) if the checks on user, course or posting validity fail
      */
     @DeleteMapping("courses/{courseId}/postings/reactions/{reactionId}")
     @PreAuthorize("hasRole('USER')")

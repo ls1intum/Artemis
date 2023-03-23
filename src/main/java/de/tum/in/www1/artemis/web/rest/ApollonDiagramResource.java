@@ -52,7 +52,7 @@ public class ApollonDiagramResource {
      * POST /course/{courseId}/apollon-diagrams : Create a new apollonDiagram.
      *
      * @param apollonDiagram the apollonDiagram to create
-     * @param courseId the id of the current course
+     * @param courseId       the id of the current course
      * @return the ResponseEntity with status 201 (Created) and with body the new apollonDiagram, or with status 400 (Bad Request) if the apollonDiagram has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -80,9 +80,9 @@ public class ApollonDiagramResource {
      * PUT /course/{courseId}/apollon-diagrams : Updates an existing apollonDiagram.
      *
      * @param apollonDiagram the apollonDiagram to update
-     * @param courseId the id of the current course
-     * @return the ResponseEntity with status 200 (OK) and with body the updated apollonDiagram, or with status 201 (CREATED) if the apollonDiagram has not been created before, or with status
-     *         500 (Internal Server Error) if the apollonDiagram couldn't be updated
+     * @param courseId       the id of the current course
+     * @return the ResponseEntity with status 200 (OK) and with body the updated apollonDiagram, or with status 201 (CREATED) if the apollonDiagram has not been created before, or
+     *         with status 500 (Internal Server Error) if the apollonDiagram couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/course/{courseId}/apollon-diagrams")
@@ -138,7 +138,7 @@ public class ApollonDiagramResource {
      * GET /course/{courseId}/apollon-diagrams/:apollonDiagramId : get the apollonDiagram for the given id
      *
      * @param apollonDiagramId the id of the apollonDiagram to retrieve
-     * @param courseId the id of the current course
+     * @param courseId         the id of the current course
      * @return the ResponseEntity with status 200 (OK) and with body the apollonDiagram, or with status 404 (Not Found)
      */
     @GetMapping("/course/{courseId}/apollon-diagrams/{apollonDiagramId}")
@@ -157,7 +157,7 @@ public class ApollonDiagramResource {
      * DELETE /course/{courseId}/apollon-diagrams/:apollonDiagramId : delete the apollonDiagram for the given id
      *
      * @param apollonDiagramId the id of the apollonDiagram to delete
-     * @param courseId the id of the current course
+     * @param courseId         the id of the current course
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/course/{courseId}/apollon-diagrams/{apollonDiagramId}")

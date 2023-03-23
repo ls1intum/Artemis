@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 public class TutorialGroupNotification extends Notification {
 
     @JsonIgnore
-    public final static Set<NotificationType> TUTORIAL_GROUP_NOTIFICATION_TYPES = Set.of(TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED);
+    public static final Set<NotificationType> TUTORIAL_GROUP_NOTIFICATION_TYPES = Set.of(TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED);
 
     // ToDo: Idea: Reuse jhi_type_column to allow tutorial group notifications to be sent to only for example officially registered students and not self registered students
     @ManyToOne

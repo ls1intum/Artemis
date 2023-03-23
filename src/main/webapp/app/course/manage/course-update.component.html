@@ -103,6 +103,7 @@
                 <div class="d-flex">
                     <div class="form-group flex-grow-1">
                         <jhi-date-time-picker
+                            id="field_startDate"
                             labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}"
                             formControlName="startDate"
                             [(ngModel)]="course.startDate"
@@ -112,6 +113,7 @@
                     </div>
                     <div class="form-group flex-grow-1 ms-3">
                         <jhi-date-time-picker
+                            id="field_endDate"
                             labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}"
                             formControlName="endDate"
                             [(ngModel)]="course.endDate"
@@ -395,7 +397,7 @@
                 <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                     <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
-                <span *ngIf="courseForm.invalid; else saveButtonTpl" data-toggle="tooltip" title="Please fill in all required fields.">
+                <span *ngIf="courseForm.invalid; else saveButtonTpl" [ngbTooltip]="'artemisApp.course.form.invalidForm' | artemisTranslate">
                     <ng-container *ngTemplateOutlet="saveButtonTpl"></ng-container>
                 </span>
                 <ng-template #saveButtonTpl>

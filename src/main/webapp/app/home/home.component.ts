@@ -90,6 +90,11 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             }
         });
         this.registerAuthenticationSuccess();
+
+        const prefilledUsername = this.accountService.getAndClearPrefilledUsername();
+        if (prefilledUsername) {
+            this.username = prefilledUsername;
+        }
     }
 
     /**
@@ -119,6 +124,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         this.isRegistrationEnabled = !!profileInfo.registrationEnabled;
         this.needsToAcceptTerms = !!profileInfo.needsToAcceptTerms;
         this.activatedRoute.queryParams.subscribe((params) => {
+            // eslint-disable-next-line no-prototype-builtins
             const loginFormOverride = params.hasOwnProperty('showLoginForm');
             this.isPasswordLoginDisabled = !!this.profileInfo?.saml2 && this.profileInfo.saml2.passwordLoginDisabled && !loginFormOverride;
         });

@@ -9,7 +9,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { DomainChange, DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { FileWithHasMatch } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
-import { captureException } from '@sentry/angular';
+import { escape } from 'lodash-es';
 
 type FilesWithType = { [p: string]: FileType };
 
@@ -200,47 +200,67 @@ export class TextSubmissionViewerComponent implements OnChanges {
         return this.matches.has(file);
     }
 
-    insertToken(text: string, token: string, position: number) {
-        // prevent negative values because slice does not handle them as we would wish
-        if (position < 0) {
-            position = 0;
+    insertMatchTokens(fileContent: string): string {
+        const matches = this.getMatchesForCurrentFile()
+            .filter((match) => match.from && match.to)
+            .sort((m1, m2) => {
+                const lines = m1.from.line - m2.from.line;
+                if (lines === 0) {
+                    return m1.from.column - m2.from.column;
+                }
+                return lines;
+            });
+
+        if (!matches.length) {
+            return escape(fileContent);
         }
-        return [text.slice(0, position), token, text.slice(position)].join('');
-    }
 
-    insertMatchTokens(fileContent: string) {
         const rows = fileContent.split('\n');
-        const matches = this.getMatchesForCurrentFile();
-        const offsets = new Array(rows.length).fill(0);
+        let result = '';
 
-        matches.forEach((match) => {
-            if (!match.from) {
-                captureException(new Error('"from" is not defined in insertMatchTokens'));
-                return;
-            }
-            if (!match.to) {
-                captureException(new Error('"to" is not defined in insertMatchTokens'));
-                return;
-            }
+        for (let i = 0; i < matches[0].from.line - 1; i++) {
+            result += escape(rows[i]) + '\n';
+        }
+        result += escape(rows[matches[0].from.line - 1].slice(0, matches[0].from.column - 1));
+
+        for (let i = 0; i < matches.length; i++) {
+            const match = matches[i];
 
             const idxLineFrom = match.from.line - 1;
             const idxLineTo = match.to.line - 1;
 
-            const idxColumnFrom = match.from.column - 1 + offsets[idxLineFrom];
+            const idxColumnFrom = match.from.column - 1;
+            const idxColumnTo = match.to.column + match.to.length - 1;
 
-            if (rows[idxLineFrom]) {
-                rows[idxLineFrom] = this.insertToken(rows[idxLineFrom], this.tokenStart, idxColumnFrom);
-                offsets[idxLineFrom] += this.tokenStart.length;
+            result += this.tokenStart;
+
+            if (idxLineFrom === idxLineTo) {
+                result += escape(rows[idxLineFrom].slice(idxColumnFrom, idxColumnTo)) + this.tokenEnd;
+            } else {
+                result += escape(rows[idxLineFrom].slice(idxColumnFrom));
+                for (let j = idxLineFrom + 1; j < idxLineTo; j++) {
+                    result += '\n' + escape(rows[j]);
+                }
+                result += '\n' + escape(rows[idxLineTo].slice(0, idxColumnTo)) + this.tokenEnd;
             }
 
-            const idxColumnTo = match.to.column + match.to.length - 1 + offsets[idxLineTo];
-
-            if (rows[idxLineTo]) {
-                rows[idxLineTo] = this.insertToken(rows[idxLineTo], this.tokenEnd, idxColumnTo);
-                offsets[idxLineTo] += this.tokenEnd.length;
+            // escape everything up until the next match (or the end of the string if there is no more match)
+            if (i === matches.length - 1) {
+                result += escape(rows[idxLineTo].slice(idxColumnTo));
+                for (let j = idxLineTo + 1; j < rows.length; j++) {
+                    result += '\n' + escape(rows[j]);
+                }
+            } else if (matches[i + 1].from.line === match.to.line) {
+                result += escape(rows[idxLineTo].slice(idxColumnTo, matches[i + 1].from.column - 1));
+            } else {
+                result += escape(rows[idxLineTo].slice(idxColumnTo)) + '\n';
+                for (let j = idxLineTo + 1; j < matches[i + 1].from.line - 1; j++) {
+                    result += escape(rows[j]) + '\n';
+                }
+                result += escape(rows[matches[i + 1].from.line - 1].slice(0, matches[i + 1].from.column - 1));
             }
-        });
+        }
 
-        return rows.join('\n');
+        return result;
     }
 }

@@ -1,5 +1,10 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { faCopy } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { GradingTab } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
+import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 
 /**
  * The actions of the test case table:
@@ -8,28 +13,25 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
  */
 @Component({
     selector: 'jhi-programming-exercise-grading-table-actions',
-    template: `
-        <button
-            id="save-table-button"
-            class="btn btn-primary ms-3 my-1"
-            jhiTranslate="artemisApp.programmingExercise.configureGrading.save"
-            (click)="onSave.emit()"
-            [disabled]="isSaving || !hasUnsavedChanges"
-        ></button>
-        <button
-            id="reset-table-button"
-            class="btn btn-secondary ms-3 my-1"
-            (click)="onReset.emit()"
-            [disabled]="isSaving"
-            jhiTranslate="artemisApp.programmingExercise.configureGrading.reset"
-        ></button>
-    `,
+    templateUrl: './programming-exercise-grading-table-actions.component.html',
 })
 export class ProgrammingExerciseGradingTableActionsComponent {
+    readonly faCopy = faCopy;
     @Input() exercise: ProgrammingExercise;
     @Input() hasUnsavedChanges: boolean;
     @Input() isSaving: boolean;
+    @Input() activeTab: GradingTab;
 
     @Output() onSave = new EventEmitter();
     @Output() onReset = new EventEmitter();
+    @Output() onCategoryImport = new EventEmitter<number>();
+
+    constructor(private modalService: NgbModal) {}
+
+    openImportModal() {
+        const modalRef = this.modalService.open(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
+        modalRef.componentInstance.programmingLanguage = this.exercise.programmingLanguage;
+        modalRef.result.then((result: ProgrammingExercise) => this.onCategoryImport.emit(result.id));
+    }
 }

@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import javax.annotation.PostConstruct;
 
@@ -30,7 +27,7 @@ import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 @Component
 public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JenkinsBuildPlanCreator.class);
+    private static final Logger log = LoggerFactory.getLogger(JenkinsBuildPlanCreator.class);
 
     private static final String STATIC_CODE_ANALYSIS_REPORT_DIR = "staticCodeAnalysisReports";
 
@@ -59,6 +56,8 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     private static final String REPLACE_STATIC_CODE_ANALYSIS_SCRIPT = "#staticCodeAnalysisScript";
 
     private static final String REPLACE_DOCKER_IMAGE_NAME = "#dockerImage";
+
+    private static final String REPLACE_DOCKER_ARGS = "#dockerArgs";
 
     private static final String REPLACE_JENKINS_TIMEOUT = "#jenkinsTimeout";
 
@@ -124,6 +123,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         replacements.put(REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl);
         replacements.put(REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
         replacements.put(REPLACE_DOCKER_IMAGE_NAME, programmingLanguageConfiguration.getImage(programmingLanguage, projectType));
+        replacements.put(REPLACE_DOCKER_ARGS, String.join(" ", programmingLanguageConfiguration.getDefaultDockerFlags()));
         replacements.put(REPLACE_JENKINS_TIMEOUT, buildTimeout);
         replacements.put(REPLACE_DEFAULT_BRANCH, defaultBranch);
 
@@ -209,7 +209,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         }
         catch (IOException e) {
             final var errorMessage = "Error loading template Jenkins build XML: " + e.getMessage();
-            LOG.error(errorMessage, e);
+            log.error(errorMessage, e);
             throw new IllegalStateException(errorMessage, e);
         }
     }

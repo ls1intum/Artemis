@@ -1,5 +1,5 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <div class="row tutorial-group-session-management" *ngIf="isInitialized">
+    <div class="row tutorial-group-session-management" *ngIf="isInitialized && this.tutorialGroup">
         <div class="col-12 modal-header">
             <h4>{{ 'artemisApp.pages.tutorialGroupSessionManagement.title' | artemisTranslate }} - {{ tutorialGroup.title }}</h4>
             <button type="button" class="btn-close" (click)="clear()"></button>
@@ -14,9 +14,9 @@
                     <span>{{
                         (getDayTranslationKey(tutorialGroup.tutorialGroupSchedule?.dayOfWeek) | artemisTranslate) +
                             ' ' +
-                            tutorialGroup.tutorialGroupSchedule?.startTime +
+                            (tutorialGroup.tutorialGroupSchedule?.startTime | removeSeconds) +
                             '-' +
-                            tutorialGroup.tutorialGroupSchedule?.endTime
+                            (tutorialGroup.tutorialGroupSchedule?.endTime | removeSeconds)
                     }}</span>
                     <br />
                     <span *ngIf="tutorialGroup.isOnline">{{ 'artemisApp.forms.scheduleForm.locationInput.labelOnline' | artemisTranslate }}</span>
@@ -45,7 +45,13 @@
             </button>
         </div>
         <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3 modal-body">
-            <jhi-tutorial-group-sessions-table [sessions]="sessions" [timeZone]="course.timeZone" [showIdColumn]="true" [tutorialGroup]="tutorialGroup">
+            <jhi-tutorial-group-sessions-table
+                [sessions]="sessions"
+                [timeZone]="course.timeZone"
+                [showIdColumn]="true"
+                [tutorialGroup]="tutorialGroup"
+                (attendanceUpdated)="attendanceUpdated = true"
+            >
                 <ng-template let-session>
                     <jhi-tutorial-group-session-row-buttons
                         [tutorialGroupSession]="session"

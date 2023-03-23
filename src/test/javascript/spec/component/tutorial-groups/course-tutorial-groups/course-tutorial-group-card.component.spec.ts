@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { User } from 'app/core/user/user.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { Course } from 'app/entities/course.model';
 
 describe('CourseTutorialGroupCardComponent', () => {
     let component: CourseTutorialGroupCardComponent;
@@ -27,7 +28,7 @@ describe('CourseTutorialGroupCardComponent', () => {
         exampleTA = { id: 1, name: 'TA' } as User;
         exampleTutorialGroup = generateExampleTutorialGroup({ teachingAssistant: exampleTA });
         component.tutorialGroup = exampleTutorialGroup;
-        component.courseId = 1;
+        component.course = { id: 1 } as Course;
         fixture.detectChanges();
     });
 

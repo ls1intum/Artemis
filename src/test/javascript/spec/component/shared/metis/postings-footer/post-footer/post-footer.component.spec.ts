@@ -159,4 +159,13 @@ describe('PostFooterComponent', () => {
         const answerPostCreateEditModal = fixture.debugElement.nativeElement.querySelector('jhi-answer-post-create-edit-modal');
         expect(answerPostCreateEditModal).not.toBeNull();
     });
+
+    it('should open create answer post modal', () => {
+        component.posting = metisPostExerciseUser1;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const createAnswerPostModalOpen = jest.spyOn(component.createAnswerPostModalComponent, 'open');
+        component.openCreateAnswerPostModal();
+        expect(createAnswerPostModalOpen).toHaveBeenCalledOnce();
+    });
 });

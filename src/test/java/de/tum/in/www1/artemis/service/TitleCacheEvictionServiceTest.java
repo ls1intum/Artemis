@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
@@ -51,11 +50,6 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Autowired
     private ExerciseHintRepository exerciseHintRepository;
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
 
     @Test
     void testEvictsTitleOnUpdateTitleOrDeleteCourse() {

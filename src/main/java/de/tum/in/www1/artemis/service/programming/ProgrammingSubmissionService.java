@@ -245,7 +245,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *
      * @param programmingExerciseId for which to search pending submissions
      * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a
-     * pending submission exists or null if not.
+     *         pending submission exists or null if not.
      */
     public Map<Long, Optional<ProgrammingSubmission>> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
         List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseId(programmingExerciseId);
@@ -415,8 +415,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * If removeSubmissionSet = true, also the Set participation.submissions is removed. The number of submissions will be
      * stored in the attribute participation.submissionCount instead of being determined by the size of the set of all submissions.
      * This method is intended to reduce the amount of data transferred to the client.
+     *
      * @param programmingSubmissionList - a List with all ProgrammingSubmissions to be modified
-     * @param removeSubmissionSet - option to also remove the SubmissionSet from the ProgrammingSubmission
+     * @param removeSubmissionSet       - option to also remove the SubmissionSet from the ProgrammingSubmission
      * @return a List with ProgrammingSubmissions and removed attributes
      */
     private List<ProgrammingSubmission> removeExerciseAndSubmissionSet(List<ProgrammingSubmission> programmingSubmissionList, boolean removeSubmissionSet) {

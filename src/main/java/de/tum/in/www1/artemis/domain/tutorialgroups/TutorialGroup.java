@@ -10,12 +10,15 @@ import javax.validation.constraints.Size;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 
 @Entity
 @Table(name = "tutorial_group")
@@ -33,7 +36,6 @@ public class TutorialGroup extends DomainObject {
     private String title;
 
     @Column(name = "additional_information")
-    @Lob
     private String additionalInformation;
 
     @Column(name = "capacity")
@@ -65,43 +67,51 @@ public class TutorialGroup extends DomainObject {
      * This transient field is set to true if the user who requested the entity is registered for this tutorial group
      */
     @Transient
-    @JsonSerialize
     private Boolean isUserRegistered;
 
     /**
      * This transient field is set to true if the user who requested the entity is the teaching assistant of this tutorial group
      */
     @Transient
-    @JsonSerialize
     private Boolean isUserTutor;
 
     /**
      * This transient fields is set to the number of registered students for this tutorial group
      */
     @Transient
-    @JsonSerialize
     private Integer numberOfRegisteredUsers;
 
     /**
      * This transient fields is set to the name of the teaching assistant of this tutorial group
      */
     @Transient
-    @JsonSerialize
     private String teachingAssistantName;
 
     /**
      * This transient fields is set to the course title to which this tutorial group belongs
      */
     @Transient
-    @JsonSerialize
     private String courseTitle;
 
     /**
      * This transient field is set to the next session of this tutorial group
      */
     @Transient
-    @JsonSerialize
     private TutorialGroupSession nextSession;
+
+    /**
+     * This transient field is set to the dto of the channel of this tutorial group
+     */
+    @Transient
+    private ChannelDTO channel;
+
+    /**
+     * This field represents the average attendance of this tutorial group
+     * <p>
+     * For more information on how this is calculated check out {@link de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService#setAverageAttendance}
+     */
+    @Transient
+    private Integer averageAttendance;
 
     @OneToOne(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "tutorialGroup", allowSetters = true)
@@ -111,6 +121,11 @@ public class TutorialGroup extends DomainObject {
     @JsonIgnoreProperties(value = "tutorialGroup, tutorialGroupSchedule", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<TutorialGroupSession> tutorialGroupSessions = new HashSet<>();
+
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "tutorial_group_channel_id")
+    @JsonIgnore // we send the DTO as a transient field instead
+    private Channel tutorialGroupChannel;
 
     public TutorialGroupSchedule getTutorialGroupSchedule() {
         return tutorialGroupSchedule;
@@ -222,6 +237,8 @@ public class TutorialGroup extends DomainObject {
         this.campus = campus;
     }
 
+    @JsonIgnore(false)
+    @JsonProperty
     public Boolean getIsUserRegistered() {
         return isUserRegistered;
     }
@@ -230,6 +247,8 @@ public class TutorialGroup extends DomainObject {
         isUserRegistered = userRegistered;
     }
 
+    @JsonIgnore(false)
+    @JsonProperty
     public Boolean getIsUserTutor() {
         return isUserTutor;
     }
@@ -238,6 +257,8 @@ public class TutorialGroup extends DomainObject {
         isUserTutor = userTutor;
     }
 
+    @JsonIgnore(false)
+    @JsonProperty
     public Integer getNumberOfRegisteredUsers() {
         return numberOfRegisteredUsers;
     }
@@ -246,6 +267,8 @@ public class TutorialGroup extends DomainObject {
         this.numberOfRegisteredUsers = numberOfRegisteredUsers;
     }
 
+    @JsonIgnore(false)
+    @JsonProperty
     public String getTeachingAssistantName() {
         return teachingAssistantName;
     }
@@ -254,6 +277,8 @@ public class TutorialGroup extends DomainObject {
         this.teachingAssistantName = teachingAssistantName;
     }
 
+    @JsonIgnore(false)
+    @JsonProperty
     public String getCourseTitle() {
         return courseTitle;
     }
@@ -262,12 +287,43 @@ public class TutorialGroup extends DomainObject {
         this.courseTitle = courseTitle;
     }
 
+    @JsonIgnore(false)
+    @JsonProperty
     public TutorialGroupSession getNextSession() {
         return nextSession;
     }
 
     public void setNextSession(TutorialGroupSession nextSession) {
         this.nextSession = nextSession;
+    }
+
+    @JsonIgnore
+    public Channel getTutorialGroupChannel() {
+        return tutorialGroupChannel;
+    }
+
+    public void setTutorialGroupChannel(Channel tutorialGroupChannel) {
+        this.tutorialGroupChannel = tutorialGroupChannel;
+    }
+
+    @JsonIgnore(false)
+    @JsonProperty
+    public ChannelDTO getChannel() {
+        return channel;
+    }
+
+    public void setChannel(ChannelDTO channel) {
+        this.channel = channel;
+    }
+
+    @JsonIgnore(false)
+    @JsonProperty
+    public Integer getAverageAttendance() {
+        return averageAttendance;
+    }
+
+    public void setAverageAttendance(Integer averageAttendance) {
+        this.averageAttendance = averageAttendance;
     }
 
     /**

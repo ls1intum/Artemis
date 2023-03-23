@@ -44,4 +44,9 @@ public abstract class QuizStatistic extends DomainObject {
     public void setParticipantsUnrated(Integer participantsUnrated) {
         this.participantsUnrated = participantsUnrated;
     }
+
+    @Override
+    public String toString() {
+        return "QuizStatistic{" + "participantsRated=" + participantsRated + ", participantsUnrated=" + participantsUnrated + '}';
+    }
 }

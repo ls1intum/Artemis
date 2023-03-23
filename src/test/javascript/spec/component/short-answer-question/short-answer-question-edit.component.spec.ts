@@ -330,13 +330,15 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         const node = {} as Node;
 
-        const returnValue = {
+        const questionElement = {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             contains(other: Node | null): boolean {
                 return true;
             },
         } as unknown as HTMLElement;
-        jest.spyOn(document, 'getElementById').mockReturnValue(returnValue);
+        component.questionElement = {
+            nativeElement: questionElement,
+        };
 
         const range = {
             cloneRange(): Range {

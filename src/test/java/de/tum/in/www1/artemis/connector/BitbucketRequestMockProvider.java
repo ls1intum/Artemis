@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 
@@ -120,9 +121,10 @@ public class BitbucketRequestMockProvider {
 
     /**
      * Mocks the call to retrieve the push date of a certain commit
+     *
      * @param projectKey Key of the affected project
      * @param commitHash The expected commit hash
-     * @param pushDate The expected push date for the commit
+     * @param pushDate   The expected push date for the commit
      */
     public void mockGetPushDate(String projectKey, String commitHash, ZonedDateTime pushDate) throws JsonProcessingException {
         final var refChangeDTO = new BitbucketChangeActivitiesDTO.RefChangeDTO("7".repeat(40), commitHash, "refs/heads/main");
@@ -184,8 +186,12 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
+        mockCopyRepositoryForParticipation(exercise, username, false);
+    }
+
+    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username, boolean practiceMode) throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
-        final var clonedRepoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
+        final var clonedRepoName = projectKey.toLowerCase() + "-" + (practiceMode ? "practice-" : "") + username.toLowerCase();
         mockCreateRepository(exercise, clonedRepoName);
     }
 
@@ -198,12 +204,22 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<User> users, boolean userExists) throws URISyntaxException, IOException {
+        mockConfigureRepository(exercise, username, users, userExists, false);
+    }
+
+    public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<User> users, boolean userExists, boolean practiceMode)
+            throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
-        final var repoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
+        final var repoName = projectKey.toLowerCase() + "-" + (practiceMode ? "practice-" : "") + username.toLowerCase();
         for (User user : users) {
             if (userExists) {
                 mockUserExists(user.getLogin());
-                mockGiveWritePermission(exercise, repoName, user.getLogin(), HttpStatus.OK);
+                if (exercise.isAllowOfflineIde() == null || exercise.isAllowOfflineIde()) {
+                    mockGiveWritePermission(exercise, repoName, user.getLogin(), HttpStatus.OK);
+                }
+                else {
+                    mockGiveReadPermission(exercise, repoName, user.getLogin(), HttpStatus.OK);
+                }
             }
             else {
                 mockUserDoesNotExist(user.getLogin());
@@ -324,9 +340,22 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockGiveWritePermission(ProgrammingExercise exercise, String repositoryName, String username, HttpStatus status) throws URISyntaxException {
+        mockGiveRepoPermission(exercise, repositoryName, username, status, VersionControlService.RepositoryPermissions.READ_WRITE);
+    }
+
+    public void mockGiveReadPermission(ProgrammingExercise exercise, String repositoryName, String username, HttpStatus status) throws URISyntaxException {
+        mockGiveRepoPermission(exercise, repositoryName, username, status, VersionControlService.RepositoryPermissions.READ_ONLY);
+    }
+
+    private void mockGiveRepoPermission(ProgrammingExercise exercise, String repositoryName, String username, HttpStatus status,
+            VersionControlService.RepositoryPermissions permissions) throws URISyntaxException {
+        final String repoPermissions = switch (permissions) {
+            case READ_ONLY -> "REPO_READ";
+            case READ_WRITE -> "REPO_WRITE";
+        };
         final var projectKey = exercise.getProjectKey();
         final var permissionPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).path("/repos/")
-                .pathSegment(repositoryName).path("/permissions/users").queryParam("name", username).queryParam("permission", "REPO_WRITE").build().toUri();
+                .pathSegment(repositoryName).path("/permissions/users").queryParam("name", username).queryParam("permission", repoPermissions).build().toUri();
 
         mockServer.expect(requestTo(permissionPath)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(status));
     }

@@ -1,12 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { MockModule, MockPipe } from 'ng-mocks';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
     let comp: ProgrammingExerciseInstructionStepWizardComponent;
@@ -17,8 +20,8 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ProgrammingExerciseInstructionStepWizardComponent],
+            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
+            declarations: [ProgrammingExerciseInstructionStepWizardComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [ProgrammingExerciseInstructionService],
         })
             .compileComponents()

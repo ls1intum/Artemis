@@ -158,7 +158,8 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     }
 
     /**
-     * @param duration  We don't even know what unit this. It doesn't align at all with the value displayed in Bamboo. E.g. we got a value of 246 for an 8 second run? */
+     * @param duration We don't even know what unit this. It doesn't align at all with the value displayed in Bamboo. E.g. we got a value of 246 for an 8 second run?
+     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record BambooTestSummaryDTO(int duration, int ignoreCount, int failedCount, int existingFailedCount, int quarantineCount, int successfulCount, String description,

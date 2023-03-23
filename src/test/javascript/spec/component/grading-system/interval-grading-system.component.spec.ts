@@ -17,6 +17,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 const generateCsv = jest.fn();
 
@@ -68,7 +69,7 @@ describe('Interval Grading System Component', () => {
     const gradeSteps = [gradeStep1, gradeStep2, gradeStep3, gradeStep4];
 
     const exam = new Exam();
-    exam.maxPoints = 100;
+    exam.examMaxPoints = 100;
     const course = new Course();
     course.maxPoints = 100;
 
@@ -89,6 +90,7 @@ describe('Interval Grading System Component', () => {
                 MockDirective(NgSelectOption),
                 IntervalGradingSystemComponent,
                 MockComponent(GradingSystemInfoModalComponent),
+                MockComponent(HelpIconComponent),
                 MockComponent(ModePickerComponent),
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),

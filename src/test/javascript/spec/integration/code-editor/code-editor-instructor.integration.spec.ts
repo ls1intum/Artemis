@@ -42,7 +42,7 @@ import { MockParticipationService } from '../../helpers/mocks/service/mock-parti
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-exercise-status.component';
@@ -64,6 +64,7 @@ import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/p
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CodeEditorInstructorIntegration', () => {
     // needed to make sure ace is defined
@@ -90,7 +91,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, MockModule(NgbTooltipModule)],
             declarations: [
                 CodeEditorInstructorAndEditorContainerComponent,
                 CodeEditorContainerComponent,

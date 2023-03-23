@@ -28,7 +28,6 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticati
  * Processes an LTI 1.3 Authorization Request response.
  * Step 3. of OpenID Connect Third Party Initiated Login is handled solely by spring-security-lti13
  * OAuth2LoginAuthenticationFilter.
- *
  */
 public class Lti13LaunchFilter extends OncePerRequestFilter {
 

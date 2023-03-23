@@ -17,7 +17,7 @@ class TextBlockServiceTest {
     private TextBlockService textBlockService;
 
     @BeforeEach
-    public void prepareFreshService() {
+    void prepareFreshService() {
         textBlockService = new TextBlockService(null);
     }
 

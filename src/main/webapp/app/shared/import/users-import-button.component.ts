@@ -24,6 +24,7 @@ export class UsersImportButtonComponent {
     ButtonSize = ButtonSize;
 
     @Input() tutorialGroup: TutorialGroup | undefined = undefined;
+    @Input() examUserMode: boolean;
     @Input() courseGroup: CourseGroup;
     @Input() courseId: number;
     @Input() buttonSize: ButtonSize = ButtonSize.MEDIUM;
@@ -47,6 +48,7 @@ export class UsersImportButtonComponent {
         modalRef.componentInstance.courseGroup = this.courseGroup;
         modalRef.componentInstance.exam = this.exam;
         modalRef.componentInstance.tutorialGroup = this.tutorialGroup;
+        modalRef.componentInstance.examUserMode = this.examUserMode;
         modalRef.result.then(
             () => this.finish.emit(),
             () => {},

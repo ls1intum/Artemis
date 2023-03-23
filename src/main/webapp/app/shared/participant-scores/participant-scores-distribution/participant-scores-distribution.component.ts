@@ -190,6 +190,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
      * @param gradeName the grade name corresponding to one of the grade names in the gradingScale.
      */
     findGradeStepIndexByGradeName(gradeName: string): number {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const index = this.gradingScale?.gradeSteps.findIndex((gradeStep) => gradeStep.gradeName === gradeName)!;
         return index >= 0 ? index : 0;
     }

@@ -118,17 +118,11 @@ Students complete this unit when they watch the video for at least five minutes.
 
 |create-video-unit|
 
-Learning Goals
+Competencies
 --------------
 
-Instructors can define learning goals to group course content and associate units from different lectures with the same learning goal.
-
-|learning-goals-management|
-
-To create a learning goal, as an instructor click on the plus button and enter a name and description.
-Then select a lecture from the dropdown and mark some of its units to associate them with this learning goal.
-
-|create-learning-goal|
+Instructors can create competencies, which are desired learning objectives, and link lecture units to them.
+See :ref:`Learning Analytics <learning-analytics>` for more information.
 
 
 .. |lectures-overview| image:: lectures/lectures-overview.png
@@ -162,8 +156,4 @@ Then select a lecture from the dropdown and mark some of its units to associate 
 .. |create-attachment-unit| image:: lectures/create-attachment-unit.png
     :width: 800
 .. |create-exercise-unit| image:: lectures/create-exercise-unit.png
-    :width: 800
-.. |learning-goals-management| image:: lectures/learning-goals-management.png
-    :width: 800
-.. |create-learning-goal| image:: lectures/create-learning-goal.png
     :width: 800

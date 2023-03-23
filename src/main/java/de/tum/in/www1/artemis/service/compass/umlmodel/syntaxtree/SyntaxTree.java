@@ -54,7 +54,7 @@ public class SyntaxTree extends UMLDiagram {
     }
 
     @Override
-    protected List<UMLElement> getModelElements() {
+    public List<UMLElement> getModelElements() {
         List<UMLElement> modelElements = new ArrayList<>();
         modelElements.addAll(nonTerminals);
         modelElements.addAll(terminals);

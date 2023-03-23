@@ -47,6 +47,7 @@ import {
     post7WithCreationDate,
     postsWithCreationDate,
 } from '../../../helpers/sample/metis-sample-data';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('PageDiscussionSectionComponent', () => {
     let component: DiscussionSectionComponent;
@@ -57,7 +58,7 @@ describe('PageDiscussionSectionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule)],
             providers: [
                 FormBuilder,
                 MockProvider(SessionStorageService),

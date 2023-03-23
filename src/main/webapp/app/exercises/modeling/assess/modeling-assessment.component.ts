@@ -228,7 +228,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             return;
         }
 
-        const elementCountMap = new Map<string, Number>();
+        const elementCountMap = new Map<string, number>();
 
         newElementCounts.forEach((elementCount) => elementCountMap.set(elementCount.elementId, elementCount.numberOfOtherElements));
 
@@ -284,7 +284,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         return '';
     }
 
-    private calculateNote(count: Number | undefined) {
+    private calculateNote(count: number | undefined) {
         if (count) {
             return this.artemisTranslatePipe.transform('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: count });
         }

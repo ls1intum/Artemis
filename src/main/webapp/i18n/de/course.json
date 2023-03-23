@@ -132,6 +132,7 @@
             "instructors": "Lehrende",
             "student": "Studierende:r",
             "tutor": "Tutor:in",
+            "reviewer": "Prüfer:in",
             "editor": "Editor:in",
             "instructor": "Lehrkraft",
             "form": {
@@ -144,7 +145,8 @@
                 },
                 "endDate": {
                     "invalid": "Muss nach dem Startdatum des Kurses liegen"
-                }
+                },
+                "invalidForm": "Bitte alle verpflichtenden Felder ausfüllen."
             },
             "courseDashboard": "Kurs-Dashboard",
             "instructorDashboard": "Dashboard für Lehrende",

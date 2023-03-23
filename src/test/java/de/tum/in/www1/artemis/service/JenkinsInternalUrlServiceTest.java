@@ -10,7 +10,6 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
@@ -41,14 +40,12 @@ class JenkinsInternalUrlServiceTest extends AbstractSpringIntegrationJenkinsGitl
     }
 
     @Test
-    @WithMockUser(username = "student1")
     void testGetVcsUrlOnInternalVcsUrlEmpty() {
         var newVcsUrl = jenkinsInternalUrlService.toInternalVcsUrl(vcsRepositoryUrl);
         assertThat(newVcsUrl).hasToString(vcsRepositoryUrl.toString());
     }
 
     @Test
-    @WithMockUser(username = "student1")
     void testGetVcsUrlOnInternalVcsUrl() {
         ReflectionTestUtils.setField(jenkinsInternalUrlService, "internalVcsUrl", Optional.of(internalVcsUrl));
 
@@ -64,7 +61,6 @@ class JenkinsInternalUrlServiceTest extends AbstractSpringIntegrationJenkinsGitl
     }
 
     @Test
-    @WithMockUser(username = "student1")
     void testGetVcsUrlOnInternalVcsUrlMalformed() {
         var jenkinsInternalUrlServiceSpy = spy(jenkinsInternalUrlService);
         ReflectionTestUtils.setField(jenkinsInternalUrlServiceSpy, "internalVcsUrl", Optional.of(internalVcsUrl));
@@ -76,14 +72,12 @@ class JenkinsInternalUrlServiceTest extends AbstractSpringIntegrationJenkinsGitl
     }
 
     @Test
-    @WithMockUser(username = "student1")
     void testGetCiUrlOnInternalCiUrlEmpty() {
         var newCiUrl = jenkinsInternalUrlService.toInternalCiUrl(ciUrl);
         assertThat(newCiUrl).hasToString(ciUrl);
     }
 
     @Test
-    @WithMockUser(username = "student1")
     void testGetCiUrlOnInternalCiUrl() {
         ReflectionTestUtils.setField(jenkinsInternalUrlService, "internalCiUrl", Optional.of(internalCiUrl));
 
@@ -94,7 +88,6 @@ class JenkinsInternalUrlServiceTest extends AbstractSpringIntegrationJenkinsGitl
     }
 
     @Test
-    @WithMockUser(username = "student1")
     void testGetUrlOnInternalUrlWithoutPort() throws Exception {
         ReflectionTestUtils.setField(jenkinsInternalUrlService, "internalCiUrl", Optional.of(new URL("http://www.host.name.com/")));
         ReflectionTestUtils.setField(jenkinsInternalUrlService, "internalVcsUrl", Optional.of(new URL("http://www.hostname.com/")));

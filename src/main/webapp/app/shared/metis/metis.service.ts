@@ -36,15 +36,15 @@ import { Conversation } from 'app/entities/metis/conversation/conversation.model
 export class MetisService implements OnDestroy {
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
-    private totalItems$: ReplaySubject<number> = new ReplaySubject<number>(1);
+    private totalNumberOfPosts$: ReplaySubject<number> = new ReplaySubject<number>(1);
 
     private currentPostContextFilter: PostContextFilter = {};
     private user: User;
     private pageType: PageType;
     private course: Course;
     private courseId: number;
-    private cachedPosts: Post[];
-    private cachedTotalItems: number;
+    private cachedPosts: Post[] = [];
+    private cachedTotalNumberOfPots: number;
     private subscriptionChannel?: string;
 
     private forceUpdate: boolean;
@@ -71,8 +71,8 @@ export class MetisService implements OnDestroy {
         return this.tags$.asObservable();
     }
 
-    get totalItems(): Observable<number> {
-        return this.totalItems$.asObservable();
+    get totalNumberOfPosts(): Observable<number> {
+        return this.totalNumberOfPosts$.asObservable();
     }
 
     static getLinkForLecturePost(courseId: number, lectureId: number): RouteComponents {
@@ -182,21 +182,21 @@ export class MetisService implements OnDestroy {
             this.postService.getPosts(this.courseId, postContextFilter).subscribe((res) => {
                 if (!forceUpdate && PageType.OVERVIEW === this.pageType) {
                     // if infinite scroll enabled, add fetched posts to the end of cachedPosts
-                    this.cachedPosts.push.apply(this.cachedPosts, res.body!);
+                    this.cachedPosts.push(...res.body!);
                 } else {
                     // if the context changed, we need to fetch posts and dismiss cached posts
                     this.cachedPosts = res.body!;
                 }
-                this.cachedTotalItems = Number(res.headers.get('X-Total-Count'));
+                this.cachedTotalNumberOfPots = Number(res.headers.get('X-Total-Count'));
                 this.posts$.next(this.cachedPosts);
-                this.totalItems$.next(this.cachedTotalItems);
+                this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
                 this.createSubscriptionFromPostContextFilter();
             });
         } else {
             // if we do not require force update, e.g. because only the post title, tag or content changed,
             // we can emit the previously cached posts
             this.posts$.next(this.cachedPosts);
-            this.totalItems$.next(this.cachedTotalItems);
+            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
         }
     }
 
@@ -301,14 +301,19 @@ export class MetisService implements OnDestroy {
      * @return {boolean} author flag
      */
     metisUserIsAuthorOfPosting(posting: Posting): boolean {
-        return this.getUser() ? posting?.author!.id === this.getUser().id : false;
+        if (posting?.author?.id && this.getUser()?.id) {
+            return posting.author.id === this.getUser().id;
+        } else {
+            return false;
+        }
     }
-
     /**
      * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
      * @param {CourseWideContext | undefined} courseWideContext optional course-wide context as default context
      * @param {Exercise | undefined} exercise optional exercise as default context
      * @param {Lecture | undefined} lecture optional lecture as default context
+     * @param plagiarismCase
+     * @param conversation
      * @return {Post} created default object
      */
     createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lecture?: Lecture, plagiarismCase?: PlagiarismCase, conversation?: Conversation): Post {

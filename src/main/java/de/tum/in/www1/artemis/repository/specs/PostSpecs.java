@@ -192,10 +192,10 @@ public class PostSpecs {
 
     /**
      * Specification which sorts Posts (only for Course Discussion page)
-     * 1. criterion: displayPriority is PINNED && Announcement  -> 1. precedence ASC
-     * 2. criterion: displayPriority is PINNED                  -> 2. precedence ASC
-     * 3. criterion: order by CREATION_DATE, #VOTES, #ANSWERS   -> 3 precedence  ASC/DESC
-     * 4. criterion: displayPriority is ARCHIVED                -> last precedence DESC
+     * 1. criterion: displayPriority is PINNED && Announcement -> 1. precedence ASC
+     * 2. criterion: displayPriority is PINNED -> 2. precedence ASC
+     * 3. criterion: order by CREATION_DATE, #VOTES, #ANSWERS -> 3 precedence ASC/DESC
+     * 4. criterion: displayPriority is ARCHIVED -> last precedence DESC
      *
      * @param pagingEnabled     whether to sort the fetched Posts or not
      * @param postSortCriterion criterion to sort posts (CREATION_DATE, #VOTES, #ANSWERS)
@@ -243,9 +243,9 @@ public class PostSpecs {
     /**
      * Creates the specification to get distinct Posts
      *
-     * @return  specification that adds the keyword GROUP BY to the query since DISTINCT and ORDER BY keywords are
-     *          incompatible with each other at server tests
-     *          https://github.com/h2database/h2database/issues/408
+     * @return specification that adds the keyword GROUP BY to the query since DISTINCT and ORDER BY keywords are
+     *         incompatible with each other at server tests
+     *         https://github.com/h2database/h2database/issues/408
      */
     public static Specification<Post> distinct() {
         return (root, query, criteriaBuilder) -> {

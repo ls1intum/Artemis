@@ -9,4 +9,6 @@ export class TutorialGroupsConfiguration implements BaseEntity {
     public tutorialPeriodStartInclusive?: dayjs.Dayjs;
     public tutorialPeriodEndInclusive?: dayjs.Dayjs;
     public tutorialGroupFreePeriods?: TutorialGroupFreePeriod[];
+    public useTutorialGroupChannels?: boolean;
+    public usePublicTutorialGroupChannels?: boolean;
 }

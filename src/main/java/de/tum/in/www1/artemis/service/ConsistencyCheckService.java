@@ -76,6 +76,7 @@ public class ConsistencyCheckService {
     /**
      * Checks if a project and its repositories (TEMPLATE, TEST, SOLUTION) exists in the VCS
      * for a given programming exercise.
+     *
      * @param programmingExercise to check
      * @return List containing the resulting errors, if any.
      */
@@ -102,6 +103,7 @@ public class ConsistencyCheckService {
     /**
      * Checks if build plans (TEMPLATE, SOLUTION) exist in the CI for a given
      * programming exercise.
+     *
      * @param programmingExercise to check
      * @return List containing the resulting errors, if any.
      */

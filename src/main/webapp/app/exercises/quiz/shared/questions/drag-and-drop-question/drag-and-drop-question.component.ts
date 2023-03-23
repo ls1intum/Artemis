@@ -215,9 +215,8 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
      * @return {object | undefined} the mapped drag item, or undefined, if no drag item has been mapped to this location
      */
     dragItemForDropLocation(dropLocation: DropLocation) {
-        const that = this;
         if (this.mappings) {
-            const mapping = this.mappings.find((localMapping) => that.dragAndDropQuestionUtil.isSameEntityWithTempId(localMapping.dropLocation, dropLocation));
+            const mapping = this.mappings.find((localMapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(localMapping.dropLocation, dropLocation));
             if (mapping) {
                 return mapping.dragItem;
             } else {

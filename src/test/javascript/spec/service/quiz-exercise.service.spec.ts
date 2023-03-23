@@ -127,6 +127,7 @@ describe('QuizExercise Service', () => {
         ['recalculate', [123], quizEx, 'GET', '/recalculate-statistics'],
         ['find', [123], quizEx, 'GET', ''],
     ])('should perform a http request for %p', async (method, args, response, httpMethod, urlSuffix) => {
+        // eslint-disable-next-line prefer-spread
         const result = firstValueFrom(service[method].apply(service, args)) as Promise<HttpResponse<unknown>>;
         const req = httpMock.expectOne({ method: httpMethod });
         expect(req.request.url).toEndWith(urlSuffix);

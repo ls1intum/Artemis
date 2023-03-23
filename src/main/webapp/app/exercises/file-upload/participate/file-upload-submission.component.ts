@@ -17,7 +17,7 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { FileService } from 'app/shared/http/file.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -103,7 +103,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
                 this.examMode = !!this.fileUploadExercise.exerciseGroup;
                 this.fileUploadExercise.studentParticipations = [this.participation];
-                this.fileUploadExercise.participationStatus = participationStatus(this.fileUploadExercise);
                 this.course = getCourseFromExercise(this.fileUploadExercise);
 
                 // checks if the student started the exercise after the due date
@@ -155,7 +154,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.submission.participation!.submissions = [this.submission];
                 this.participationWebsocketService.addParticipation(this.participation, this.fileUploadExercise);
                 this.fileUploadExercise.studentParticipations = [this.participation];
-                this.fileUploadExercise.participationStatus = participationStatus(this.fileUploadExercise);
                 this.result = getLatestSubmissionResult(this.submission)!;
                 this.setSubmittedFile();
                 if (this.isActive) {

@@ -61,7 +61,7 @@ public class NotificationSettingsResource {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all NotificationSettings for current user {}", currentUser);
         Set<NotificationSetting> notificationSettingSet = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
-        notificationSettingSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(notificationSettingSet);
+        notificationSettingSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(notificationSettingSet, currentUser);
         return new ResponseEntity<>(notificationSettingSet, HttpStatus.OK);
     }
 
@@ -69,10 +69,10 @@ public class NotificationSettingsResource {
      * PUT notification-settings : Save NotificationSettings for current user
      *
      * Saves the provided NotificationSettings to the server.
-     * @param notificationSettings which should be saved to the notificationSetting database.
      *
+     * @param notificationSettings which should be saved to the notificationSetting database.
      * @return the NotificationSettings that just got saved for the current user as array
-     * 200 for a successful execution, 400 if the user provided empty settings to save, 500 if the save call returns empty settings
+     *         200 for a successful execution, 400 if the user provided empty settings to save, 500 if the save call returns empty settings
      */
     @PutMapping("notification-settings")
     @PreAuthorize("hasRole('USER')")

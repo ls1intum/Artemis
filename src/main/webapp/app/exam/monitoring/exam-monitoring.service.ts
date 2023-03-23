@@ -104,6 +104,7 @@ export class ExamMonitoringService {
      * Updates the current state of the exam monitoring.
      */
     updateMonitoring(exam: Exam, monitoring: boolean): Observable<HttpResponse<boolean>> {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         return this.http.put<boolean>(EXAM_MONITORING_UPDATE_URL(exam.course?.id!, exam.id!), monitoring, { observe: 'response' });
     }
 }

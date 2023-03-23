@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-
 import { ArtemisExamScoresModule } from 'app/exam/exam-scores/exam-scores.module';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
 import { examManagementState } from 'app/exam/manage/exam-management.route';
@@ -11,6 +10,8 @@ import { ExerciseGroupUpdateComponent } from 'app/exam/manage/exercise-groups/ex
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
+import { StudentsUploadImagesModule } from 'app/exam/manage/students/upload-images/students-upload-images.module';
+import { ExamStudentsAttendanceCheckComponent } from 'app/exam/manage/students/verify-attendance-check/exam-students-attendance-check.component';
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
 import { ArtemisFileUploadExerciseManagementModule } from 'app/exercises/file-upload/manage/file-upload-exercise-management.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
@@ -34,7 +35,6 @@ import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-com
 import { ExamChecklistCheckComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-check/exam-checklist-check.component';
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
 import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
-import { ArtemisExamParticipantScoresModule } from 'app/exam/manage/exam-participant-scores/exam-participant-scores.module';
 import { ProgrammingExerciseGroupCellComponent } from './exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
 import { FileUploadExerciseGroupCellComponent } from './exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
 import { ModelingExerciseGroupCellComponent } from './exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
@@ -76,7 +76,6 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisProgrammingExerciseStatusModule,
         ArtemisMarkdownModule,
         ArtemisTutorParticipationGraphModule,
-        ArtemisExamParticipantScoresModule,
         ArtemisTextSubmissionAssessmentModule,
         ExampleSubmissionsModule,
         UserImportModule,
@@ -86,6 +85,7 @@ const ENTITY_STATES = [...examManagementState];
         BarChartModule,
         FeatureToggleModule,
         ArtemisModePickerModule,
+        StudentsUploadImagesModule,
     ],
     declarations: [
         ExamManagementComponent,
@@ -95,6 +95,7 @@ const ENTITY_STATES = [...examManagementState];
         ExerciseGroupUpdateComponent,
         ExamExerciseRowButtonsComponent,
         ExamStudentsComponent,
+        ExamStudentsAttendanceCheckComponent,
         StudentExamStatusComponent,
         StudentExamsComponent,
         TestRunManagementComponent,

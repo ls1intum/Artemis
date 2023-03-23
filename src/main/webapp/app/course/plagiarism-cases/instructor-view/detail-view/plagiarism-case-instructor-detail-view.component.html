@@ -40,19 +40,6 @@
                                 >
                                     <span jhiTranslate="artemisApp.plagiarism.plagiarismDetection">Plagiarism Detection</span>
                                 </a>
-
-                                <a
-                                    ngbDropdownItem
-                                    [routerLink]="[
-                                        '/course-management',
-                                        courseId,
-                                        getExerciseUrlSegment(plagiarismCase.exercise!.type),
-                                        plagiarismCase.exercise!.id,
-                                        'submissions'
-                                    ]"
-                                >
-                                    <span jhiTranslate="artemisApp.plagiarism.submissions">Student Submissions</span>
-                                </a>
                             </div>
                         </div>
                     </div>
@@ -167,12 +154,12 @@
                     <div class="mt-4" [ngbNavOutlet]="nav"></div>
 
                     <div *ngIf="!isStudentNotified()" class="disabled-overlay">
-                        <fa-icon [icon]="faInfo" class="fa-fw"></fa-icon>
+                        <fa-icon [icon]="faInfo" [fixedWidth]="true"></fa-icon>
                         <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.studentNotNotified"> You must notify the student before determining the verdict. </span>
                     </div>
 
                     <div *ngIf="isStudentNotified() && plagiarismCase.verdict" class="disabled-overlay">
-                        <fa-icon [icon]="faCheck" class="fa-fw"></fa-icon>
+                        <fa-icon [icon]="faCheck" [fixedWidth]="true"></fa-icon>
                         <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.alreadyDecided">
                             An instructor already determined a verdict for this plagiarism case.
                         </span>

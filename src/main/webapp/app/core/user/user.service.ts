@@ -15,7 +15,7 @@ export class UserService {
      * @return Observable<User> with the updated user as body.
      */
     syncLdap(userId: number): Observable<User> {
-        return this.http.put<User>(`${this.resourceUrl}/${userId}/ldap-sync`, { observe: 'response' });
+        return this.http.put<User>(`${this.resourceUrl}/${userId}/sync-ldap`, { observe: 'response' });
     }
 
     /**

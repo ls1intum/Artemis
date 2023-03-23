@@ -17,6 +17,7 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MAX_TAB_SIZE } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
+import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
 
 describe('CodeEditorAceComponent', () => {
     let comp: CodeEditorAceComponent;
@@ -27,7 +28,7 @@ describe('CodeEditorAceComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, AceEditorModule],
+            imports: [ArtemisTestModule, AceEditorModule, NgbDropdownMocksModule],
             declarations: [CodeEditorAceComponent, TranslatePipeMock, MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent), MockDirective(NgModel)],
             providers: [
                 CodeEditorFileService,
@@ -71,6 +72,15 @@ describe('CodeEditorAceComponent', () => {
         fixture.detectChanges();
         expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeFalse();
         expect(comp.editor.getEditor().getReadOnly()).toBeFalse();
+    });
+
+    it('if actions are disabled, it should show the editor in a readonly state', () => {
+        comp.selectedFile = 'dummy';
+        comp.disableActions = true;
+        fixture.detectChanges();
+        const aceEditor = debugElement.query(By.css('#ace-code-editor'));
+        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeFalse();
+        expect(comp.editor.getEditor().getReadOnly()).toBeTrue();
     });
 
     it('if a file is selected and the component is not loading a file from server, the editor should be usable', () => {

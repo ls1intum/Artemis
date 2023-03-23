@@ -208,7 +208,7 @@ public class ProgrammingExerciseImportService {
      * @param templateExercise the exercise from which the values that should be replaced are extracted
      * @param newExercise      the exercise from which the values that should be inserted are extracted
      * @throws GitAPIException If the checkout/push of one repository fails
-     * @throws IOException If the values in the files could not be replaced
+     * @throws IOException     If the values in the files could not be replaced
      */
     private void adjustProjectNames(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) throws GitAPIException, IOException {
         final var projectKey = newExercise.getProjectKey();
@@ -243,7 +243,7 @@ public class ProgrammingExerciseImportService {
      * @param repositoryName the name of the repository that should be adjusted
      * @param user           the user which performed the action (used as Git author)
      * @throws GitAPIException If the checkout/push of one repository fails
-     * @throws IOException If the values in the files could not be replaced
+     * @throws IOException     If the values in the files could not be replaced
      */
     private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException, IOException {
         final var repositoryUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, repositoryName);
@@ -259,9 +259,9 @@ public class ProgrammingExerciseImportService {
      * Referenced entities, s.a. the test cases or the hints will get cloned and assigned a new id.
      *
      * @param originalProgrammingExercise the Programming Exercise which should be used as a blueprint
-     * @param newExercise The new exercise already containing values which should not get copied, i.e. overwritten
-     * @param updateTemplate if the template files should be updated
-     * @param recreateBuildPlans if the build plans should be recreated
+     * @param newExercise                 The new exercise already containing values which should not get copied, i.e. overwritten
+     * @param updateTemplate              if the template files should be updated
+     * @param recreateBuildPlans          if the build plans should be recreated
      * @return the imported programming exercise
      */
     public ProgrammingExercise importProgrammingExercise(ProgrammingExercise originalProgrammingExercise, ProgrammingExercise newExercise, boolean updateTemplate,

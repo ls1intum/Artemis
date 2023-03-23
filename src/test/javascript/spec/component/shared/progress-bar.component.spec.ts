@@ -3,6 +3,8 @@ import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { ArtemisTestModule } from '../../test.module';
 import { SimpleChange } from '@angular/core';
+import { MockDirective } from 'ng-mocks';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgressBarComponent', () => {
     let fixture: ComponentFixture<ProgressBarComponent>;
@@ -10,7 +12,7 @@ describe('ProgressBarComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
             declarations: [ProgressBarComponent],
         })
             .compileComponents()

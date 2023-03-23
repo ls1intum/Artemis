@@ -2,14 +2,13 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { BonusComponent, BonusStrategyDiscreteness, BonusStrategyOption } from 'app/grading-system/bonus/bonus.component';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { BonusService, EntityResponseType } from 'app/grading-system/bonus/bonus.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { TableColumn } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { of, throwError } from 'rxjs';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -17,7 +16,9 @@ import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { HttpResponse } from '@angular/common/http';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
-import { NgModel } from '@angular/forms';
+import { FormsModule, NgModel, ReactiveFormsModule } from '@angular/forms';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 describe('BonusComponent', () => {
     let component: BonusComponent;
@@ -113,6 +114,8 @@ describe('BonusComponent', () => {
         title: 'Title',
         gradeType: GradeType.GRADE,
         maxPoints: 100,
+        plagiarismGrade: GradingScale.DEFAULT_PLAGIARISM_GRADE,
+        noParticipationGrade: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
         gradeSteps: [
             {
                 id: 577,
@@ -238,12 +241,12 @@ describe('BonusComponent', () => {
         [BonusStrategy.GRADES_DISCRETE, BonusStrategyOption.GRADES, BonusStrategyDiscreteness.DISCRETE],
         [BonusStrategy.POINTS, BonusStrategyOption.POINTS, undefined],
         [undefined, undefined, undefined],
-        [undefined, BonusStrategyOption.GRADES, undefined],
+        [BonusStrategy.GRADES_CONTINUOUS, BonusStrategyOption.GRADES, undefined],
     ];
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FormsModule, ReactiveFormsModule, MockModule(NgbTooltipModule)],
             declarations: [
                 BonusComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -252,6 +255,7 @@ describe('BonusComponent', () => {
                 MockPipe(GradeStepBoundsPipe),
                 MockComponent(DeleteDialogComponent),
                 MockDirective(NgModel),
+                MockDirective(DeleteButtonDirective),
             ],
             providers: [
                 {
@@ -295,7 +299,7 @@ describe('BonusComponent', () => {
             pageSize: 100,
             searchTerm: '',
             sortingOrder: SortingOrder.DESCENDING,
-            sortedColumn: TableColumn.ID,
+            sortedColumn: 'ID',
         };
 
         fixture.detectChanges();

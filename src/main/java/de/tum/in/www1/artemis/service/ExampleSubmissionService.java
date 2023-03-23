@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -33,9 +32,11 @@ public class ExampleSubmissionService {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
+    private final TutorParticipationRepository tutorParticipationRepository;
+
     public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository,
             TextExerciseImportService textExerciseImportService, ModelingExerciseImportService modelingExerciseImportService, TextSubmissionRepository textSubmissionRepository,
-            GradingCriterionRepository gradingCriterionRepository) {
+            GradingCriterionRepository gradingCriterionRepository, TutorParticipationRepository tutorParticipationRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -43,6 +44,7 @@ public class ExampleSubmissionService {
         this.textExerciseImportService = textExerciseImportService;
         this.textSubmissionRepository = textSubmissionRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
+        this.tutorParticipationRepository = tutorParticipationRepository;
     }
 
     /**
@@ -66,6 +68,7 @@ public class ExampleSubmissionService {
 
     /**
      * Deletes a ExampleSubmission with the given ID, cleans up the tutor participations, removes the result and the submission
+     *
      * @param exampleSubmissionId the ID of the ExampleSubmission which should be deleted
      */
     public void deleteById(long exampleSubmissionId) {
@@ -74,9 +77,8 @@ public class ExampleSubmissionService {
         if (optionalExampleSubmission.isPresent()) {
             ExampleSubmission exampleSubmission = optionalExampleSubmission.get();
 
-            for (TutorParticipation tutorParticipation : exampleSubmission.getTutorParticipations()) {
-                tutorParticipation.getTrainedExampleSubmissions().remove(exampleSubmission);
-            }
+            tutorParticipationRepository.deleteAll(exampleSubmission.getTutorParticipations());
+            exampleSubmission.setTutorParticipations(null);
 
             Long exerciseId = exampleSubmission.getExercise().getId();
             Optional<Exercise> optionalExercise = exerciseRepository.findByIdWithEagerExampleSubmissions(exerciseId);
@@ -97,7 +99,7 @@ public class ExampleSubmissionService {
      * calls copySubmission of required service depending on type of exercise
      *
      * @param submissionId The original student submission id to be copied
-     * @param exercise   The exercise to which the example submission belongs
+     * @param exercise     The exercise to which the example submission belongs
      * @return the exampleSubmission entity
      */
     public ExampleSubmission importStudentSubmissionAsExampleSubmission(Long submissionId, Exercise exercise) {
@@ -131,8 +133,8 @@ public class ExampleSubmissionService {
     /**
      * Checks the original exercise id is matched with the exercise id in the submission participation
      *
-     * @param originalExerciseId        given exercise id in the request
-     * @param exerciseIdInSubmission    exercise id in submission participation
+     * @param originalExerciseId     given exercise id in the request
+     * @param exerciseIdInSubmission exercise id in submission participation
      */
     public void checkGivenExerciseIdSameForSubmissionParticipation(long originalExerciseId, long exerciseIdInSubmission) {
         if (!Objects.equals(originalExerciseId, exerciseIdInSubmission)) {

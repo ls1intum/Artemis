@@ -8,7 +8,7 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { Submission } from 'app/entities/submission.model';
 import { Result } from 'app/entities/result.model';
 
-export const enum InitializationState {
+export enum InitializationState {
     /**
      * The InitializationState enumeration.
      * INITIALIZED: The participation is set up for submissions from the student

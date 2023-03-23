@@ -40,6 +40,30 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") long courseId);
 
+    /**
+     * Find all exams for multiple courses that are already visible to the user (either registered, at least tutor or the exam is a test exam)
+     *
+     * @param courseIds  set of courseIds that the exams should be retreived
+     * @param userId     the id of the user requesting the exams
+     * @param groupNames the groups of the user requesting the exams
+     * @param now        the current date, typically ZonedDateTime.now()
+     * @return a set of all visible exams for the user in the provided courses
+     */
+    @Query("""
+            SELECT e
+            FROM Exam e
+                LEFT JOIN e.examUsers registeredUsers
+            WHERE e.course.id IN :courseIds
+                AND e.visibleDate <= :now
+                AND (registeredUsers.user.id = :userId
+                    OR e.course.teachingAssistantGroupName IN :groupNames
+                    OR e.course.editorGroupName IN :groupNames
+                    OR e.course.instructorGroupName IN :groupNames
+                    OR e.testExam = true)
+            """)
+    Set<Exam> findByCourseIdsForUser(@Param("courseIds") Set<Long> courseIds, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames,
+            @Param("now") ZonedDateTime now);
+
     @Query("""
             SELECT exam
             FROM Exam exam
@@ -49,17 +73,35 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     List<Exam> findAllByEndDateGreaterThanEqual(@Param("date") ZonedDateTime date);
 
+    /**
+     * Query which fetches all the active exams for which the user is instructor.
+     *
+     * @param groups   user groups
+     * @param pageable Pageable
+     * @param fromDate date to start from
+     * @param toDate   date to end at
+     * @return Page with exams
+     */
+    @Query("""
+            SELECT e FROM Exam e
+            WHERE e.course.instructorGroupName IN :groups
+                AND e.visibleDate >= :fromDate
+                AND e.visibleDate <= :toDate
+            """)
+    Page<Exam> findAllActiveExamsInCoursesWhereInstructor(@Param("groups") Set<String> groups, Pageable pageable, @Param("fromDate") ZonedDateTime fromDate,
+            @Param("toDate") ZonedDateTime toDate);
+
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups" })
     Optional<Exam> findWithExerciseGroupsById(long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises" })
     Optional<Exam> findWithExerciseGroupsAndExercisesById(long examId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "registeredUsers" })
-    Optional<Exam> findWithRegisteredUsersById(long examId);
+    @EntityGraph(type = LOAD, attributePaths = { "examUsers" })
+    Optional<Exam> findWithExamUsersById(long examId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "registeredUsers", "exerciseGroups", "exerciseGroups.exercises" })
-    Optional<Exam> findWithRegisteredUsersAndExerciseGroupsAndExercisesById(long examId);
+    @EntityGraph(type = LOAD, attributePaths = { "examUsers", "exerciseGroups", "exerciseGroups.exercises" })
+    Optional<Exam> findWithExamUsersAndExerciseGroupsAndExercisesById(long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises" })
     Optional<Exam> findWithStudentExamsExercisesById(long id);
@@ -148,12 +190,12 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     // @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises", "studentExams.exercises.participations" })
 
     @Query("""
-            SELECT DISTINCT exam
+            SELECT exam
             FROM Exam exam
                 LEFT JOIN FETCH exam.studentExams studentExams
                 LEFT JOIN FETCH exam.exerciseGroups exerciseGroups
                 LEFT JOIN FETCH exerciseGroups.exercises
-            WHERE (exam.id = :#{#examId})
+            WHERE exam.id = :examId
             """)
     Exam findOneWithEagerExercisesGroupsAndStudentExams(@Param("examId") long examId);
 
@@ -167,26 +209,26 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("""
             SELECT CASE WHEN COUNT(exam) > 0 THEN true ELSE false END
             FROM Exam exam
-                LEFT JOIN exam.registeredUsers registeredUsers
-            WHERE exam.id = :#{#examId}
-                AND registeredUsers.id = :#{#userId}
+                LEFT JOIN exam.examUsers examUsers
+            WHERE exam.id = :examId
+                AND examUsers.user.id = :userId
             """)
     boolean isUserRegisteredForExam(@Param("examId") long examId, @Param("userId") long userId);
 
     @Query("""
             SELECT exam.id, count(registeredUsers)
             FROM Exam exam
-                LEFT JOIN exam.registeredUsers registeredUsers
-            WHERE exam.id in :#{#examIds}
+                LEFT JOIN exam.examUsers registeredUsers
+            WHERE exam.id in :examIds
             GROUP BY exam.id
             """)
-    List<long[]> countRegisteredUsersByExamIds(@Param("examIds") List<Long> examIds);
+    List<long[]> countExamUsersByExamIds(@Param("examIds") List<Long> examIds);
 
     @Query("""
             SELECT count(studentExam)
             FROM StudentExam studentExam
             WHERE studentExam.testRun = FALSE
-                AND studentExam.exam.id = :#{#examId}
+                AND studentExam.exam.id = :examId
             """)
     long countGeneratedStudentExamsByExamWithoutTestRuns(@Param("examId") long examId);
 
@@ -242,8 +284,8 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return the exam with registered users
      */
     @NotNull
-    default Exam findByIdWithRegisteredUsersElseThrow(long examId) {
-        return findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+    default Exam findByIdWithExamUsersElseThrow(long examId) {
+        return findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 
     /**
@@ -253,8 +295,8 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return the exam with registered users and exercise groups
      */
     @NotNull
-    default Exam findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(long examId) {
-        return findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+    default Exam findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(long examId) {
+        return findWithExamUsersAndExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 
     /**
@@ -286,11 +328,11 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      *
      * @param exams Exams for which to compute and set the number of registered users
      */
-    default void setNumberOfRegisteredUsersForExams(List<Exam> exams) {
+    default void setNumberOfExamUsersForExams(List<Exam> exams) {
         List<Long> examIds = exams.stream().map(Exam::getId).toList();
-        List<long[]> examIdAndRegisteredUsersCountPairs = countRegisteredUsersByExamIds(examIds);
+        List<long[]> examIdAndRegisteredUsersCountPairs = countExamUsersByExamIds(examIds);
         Map<Long, Integer> registeredUsersCountMap = convertListOfCountsIntoMap(examIdAndRegisteredUsersCountPairs);
-        exams.forEach(exam -> exam.setNumberOfRegisteredUsers(registeredUsersCountMap.get(exam.getId()).longValue()));
+        exams.forEach(exam -> exam.setNumberOfExamUsers(registeredUsersCountMap.get(exam.getId()).longValue()));
     }
 
     /**

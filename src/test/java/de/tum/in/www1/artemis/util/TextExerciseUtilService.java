@@ -36,6 +36,7 @@ public class TextExerciseUtilService {
 
     /**
      * Generate a set of specified size containing TextBlocks with dummy Text
+     *
      * @param count expected size of TextBlock set
      * @return Set of dummy TextBlocks
      */
@@ -52,6 +53,7 @@ public class TextExerciseUtilService {
 
     /**
      * Generate a set of specified size containing TextBlocks with the same text
+     *
      * @param count expected size of TextBlock set
      * @return Set of TextBlocks with identical texts
      */
@@ -73,35 +75,39 @@ public class TextExerciseUtilService {
 
     /**
      * Create n TextClusters and randomly assign TextBlocks to new clusters.
-     * @param textBlocks TextBlocks to fake cluster
+     *
+     * @param textBlocks   TextBlocks to fake cluster
      * @param clusterSizes Number of new clusters
      * @param textExercise TextExercise
      * @return List of TextClusters with assigned TextBlocks
      */
     public List<TextCluster> addTextBlocksToCluster(Set<TextBlock> textBlocks, int[] clusterSizes, TextExercise textExercise) {
-
         if (Arrays.stream(clusterSizes).sum() != textBlocks.size()) {
             throw new IllegalArgumentException("The clusterSizes sum has to be equal to the number of textBlocks");
         }
 
-        // Create clusters
+        List<TextCluster> clusters = createClustersForExercise(clusterSizes, textExercise);
+
+        // Add all textblocks to a random cluster
+        textBlocks.forEach(textBlock -> {
+            int clusterIndex;
+            // as long as cluster is full select another cluster
+            do {
+                clusterIndex = random.nextInt(clusterSizes.length);
+            }
+            while (clusterSizes[clusterIndex] == 0);
+
+            clusterSizes[clusterIndex]--;
+            clusters.get(clusterIndex).addBlocks(textBlock);
+        });
+        return clusters;
+    }
+
+    private List<TextCluster> createClustersForExercise(int[] clusterSizes, TextExercise textExercise) {
         List<TextCluster> clusters = new ArrayList<>();
         for (int i = 0; i < clusterSizes.length; i++) {
             clusters.add(new TextCluster().exercise(textExercise));
         }
-        // Add all textblocks to a random cluster
-
-        textBlocks.forEach(textBlock -> {
-            int clusterIndex = random.nextInt(clusterSizes.length);
-            // as long as cluster is full select another cluster
-            while (clusterSizes[clusterIndex] == 0) {
-                clusterIndex = random.nextInt(clusterSizes.length);
-            }
-            clusterSizes[clusterIndex]--;
-            clusters.get(clusterIndex).addBlocks(textBlock);
-            clusters.get(clusterIndex).removeBlocks(textBlock);
-            clusters.get(clusterIndex).addBlocks(textBlock);
-        });
         return clusters;
     }
 

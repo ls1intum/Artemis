@@ -71,7 +71,6 @@ public class CompassService {
         modelElementRepository.saveAll(modelClusters.stream().flatMap(modelCluster -> modelCluster.getModelElements().stream()).toList());
         log.info("ModelClusterTimeLog: building and saving clusters of {} submissions for exercise {} done in {}", submissions.size(), modelingExercise.getId(),
                 TimeLogUtil.formatDurationFrom(start));
-
     }
 
     /**
@@ -79,7 +78,7 @@ public class CompassService {
      * Returns null if no feedback can be selected or the submission has already a manual feedback
      *
      * @param modelingSubmission the submission to select feedbacks for
-     * @param modelingExercise the modeling exercise to which the submission belongs
+     * @param modelingExercise   the modeling exercise to which the submission belongs
      * @return the semi-automatic result that has the feedbacks inside
      */
     public Result getSuggestionResult(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
@@ -95,6 +94,7 @@ public class CompassService {
                 return null;
             }
 
+            // Note: this code assumes that the model element id is globally unique
             List<ModelElement> modelElements = modelElementRepository.findByModelElementIdIn(elements.stream().map(UMLElement::getJSONElementID).toList());
             List<Long> clusterIds = modelElements.stream().map(ModelElement::getCluster).map(ModelCluster::getId).toList();
             List<ModelCluster> modelClusters = modelClusterRepository.findAllByIdInWithEagerElements(clusterIds);

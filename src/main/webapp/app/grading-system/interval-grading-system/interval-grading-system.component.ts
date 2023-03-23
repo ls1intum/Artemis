@@ -171,7 +171,7 @@ export class IntervalGradingSystemComponent extends BaseGradingSystemComponent {
      * @override
      */
     parseCSVFile(csvFile: File): Promise<CsvGradeStep[]> {
-        return new Promise(async (resolve, reject) => {
+        return new Promise((resolve, reject) => {
             parse(csvFile, {
                 header: true,
                 skipEmptyLines: true,

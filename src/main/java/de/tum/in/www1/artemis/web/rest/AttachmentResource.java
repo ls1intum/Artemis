@@ -137,16 +137,16 @@ public class AttachmentResource {
     }
 
     /**
-     * DELETE /attachments/:id : delete the "id" attachment.
+     * DELETE /attachments/:attachmentId : delete the "id" attachment.
      *
-     * @param id the id of the attachment to delete
+     * @param attachmentId the id of the attachment to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/attachments/{id}")
+    @DeleteMapping("/attachments/{attachmentId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> deleteAttachment(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteAttachment(@PathVariable Long attachmentId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<Attachment> optionalAttachment = attachmentRepository.findById(id);
+        Optional<Attachment> optionalAttachment = attachmentRepository.findById(attachmentId);
         if (optionalAttachment.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -172,8 +172,8 @@ public class AttachmentResource {
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
-        log.info("{} deleted attachment with id {} for {}", user.getLogin(), id, relatedEntity);
-        attachmentRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        log.info("{} deleted attachment with id {} for {}", user.getLogin(), attachmentId, relatedEntity);
+        attachmentRepository.deleteById(attachmentId);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, attachmentId.toString())).build();
     }
 }

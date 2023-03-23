@@ -22,6 +22,7 @@ export class StudentExam implements BaseEntity {
 
     // helper attribute
     public ended?: boolean;
+    public numberOfExamSessions = 0; // default value
 
     constructor() {
         // helper attribute (calculated by the server at the time of the last request)

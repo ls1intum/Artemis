@@ -1,4 +1,4 @@
-// tslint:disable:max-line-length
+/* eslint-disable max-len */
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CourseManagementComponent } from './course-management.component';
@@ -10,7 +10,6 @@ import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rat
 import { LearningGoalManagementComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-management.component';
 import { CreateLearningGoalComponent } from 'app/course/learning-goals/create-learning-goal/create-learning-goal.component';
 import { EditLearningGoalComponent } from 'app/course/learning-goals/edit-learning-goal/edit-learning-goal.component';
-import { CourseParticipantScoresComponent } from 'app/course/course-participant-scores/course-participant-scores.component';
 import { CourseManagementStatisticsComponent } from './course-management-statistics.component';
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
 import { isOrion } from 'app/shared/orion/orion';
@@ -51,15 +50,6 @@ export const courseManagementState: Routes = [
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.course.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/participant-scores',
-        component: CourseParticipantScoresComponent,
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.participantScores.pageTitle',
         },
         canActivate: [UserRouteAccessService],
     },

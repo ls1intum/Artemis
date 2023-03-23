@@ -1,12 +1,11 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { StudentDTO } from 'app/entities/student-dto.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -20,6 +19,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Router } from '@angular/router';
 import * as fs from 'fs';
 import * as path from 'path';
+import { ExamUserDTO } from 'app/entities/exam-user-dto.model';
 
 describe('UsersImportButtonComponent', () => {
     let fixture: ComponentFixture<UsersImportDialogComponent>;
@@ -67,52 +67,59 @@ describe('UsersImportButtonComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should reset dialog when selecting csv file', async () => {
-        component.usersToImport = [{ registrationNumber: '1', lastName: 'lastName', firstName: 'firstName', login: 'login1' }];
-        component.notFoundUsers = [{ registrationNumber: '2', lastName: 'lastName2', firstName: 'firstName2', login: 'login2' }];
+    it('should reset dialog when selecting csv file', fakeAsync(() => {
+        component.usersToImport = [{ registrationNumber: '1', lastName: 'lastName', firstName: 'firstName', login: 'login1', email: 'test@mail' }];
+        component.notFoundUsers = [{ registrationNumber: '2', lastName: 'lastName2', firstName: 'firstName2', login: 'login2', email: 'test@mail' }];
         component.hasImported = true;
 
         const event = { target: { files: [studentCsvColumns] } };
-        await component.onCSVFileSelect(event);
+        component.onCSVFileSelect(event);
+        tick();
 
         expect(component.usersToImport).toHaveLength(0);
         expect(component.notFoundUsers).toHaveLength(0);
-    });
+    }));
 
-    it('should read no students from csv file', async () => {
+    it('should read no students from csv file', fakeAsync(() => {
         const event = { target: { files: [studentCsvColumns] } };
-        await component.onCSVFileSelect(event);
+        component.onCSVFileSelect(event);
+        tick();
 
         expect(component.usersToImport).toHaveLength(0);
         expect(component.notFoundUsers).toHaveLength(0);
-    });
-    it('should read students from csv file', async () => {
+        expect(component.noUsersFoundError).toBeTrue();
+    }));
+
+    it('should read students from csv file', fakeAsync(() => {
         const csv = `${studentCsvColumns}\n"1","Max","Mustermann"\n"2","John","Wick"`;
         const event = { target: { files: [csv] } };
-        await component.onCSVFileSelect(event);
+        component.onCSVFileSelect(event);
+        tick();
 
         expect(component.usersToImport).toHaveLength(2);
         expect(component.notFoundUsers).toHaveLength(0);
-    });
+        expect(component.noUsersFoundError).toBeUndefined();
+    }));
 
-    it('should have validation error for invalid csv', async () => {
+    it('should have validation error for invalid csv', fakeAsync(() => {
         // Csv without header
         const invalidCsv = `"1","Max","Mustermann"\n"2","John","Wick"`;
 
         const event = { target: { files: [invalidCsv] } };
-        await component.onCSVFileSelect(event);
+        component.onCSVFileSelect(event);
+        tick();
 
         expect(component.validationError).toHaveLength(1);
-    });
+    }));
 
     it('should import students', () => {
-        const studentsToImport: StudentDTO[] = [
-            { registrationNumber: '1', firstName: 'Max', lastName: 'Musetermann', login: 'login1' },
-            { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2' },
+        const studentsToImport: ExamUserDTO[] = [
+            { registrationNumber: '1', firstName: 'Max', lastName: 'Musetermann', login: 'login1', email: 'test@mail' },
+            { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2', email: 'test@mail' },
         ];
-        const studentsNotFound: StudentDTO[] = [{ registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2' }];
+        const studentsNotFound: ExamUserDTO[] = [{ registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2', email: 'test@mail' }];
 
-        const fakeResponse = { body: studentsNotFound } as HttpResponse<StudentDTO[]>;
+        const fakeResponse = { body: studentsNotFound } as HttpResponse<ExamUserDTO[]>;
         jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.usersToImport = studentsToImport;
@@ -126,26 +133,118 @@ describe('UsersImportButtonComponent', () => {
 
     describe('should read students from csv files', () => {
         const testDir = path.join(__dirname, '../../../../util/user-import');
-        const testFiles = fs.readdirSync(testDir);
+        const testFiles = fs.readdirSync(testDir).filter((testFile) => testFile.localeCompare('UserImportEmailOnlySampleFile.csv') !== 0);
 
-        test.each(testFiles)('reading from %s', async (testFileName) => {
-            const pathToTestFile = path.join(testDir, testFileName);
-            const csv = fs.readFileSync(pathToTestFile, 'utf-8');
-            const event = { target: { files: [csv] } };
-            await component.onCSVFileSelect(event);
+        test.each(testFiles)(
+            'reading from %s',
+            fakeAsync((testFileName: string) => {
+                const pathToTestFile = path.join(testDir, testFileName);
+                const csv = fs.readFileSync(pathToTestFile, 'utf-8');
+                const event = { target: { files: [csv] } };
+                component.onCSVFileSelect(event);
+                tick();
 
-            expect(component.usersToImport).toHaveLength(5);
+                expect(component.usersToImport).toHaveLength(5);
 
-            const expectedStudentDTOs: StudentDTO[] = [
-                { registrationNumber: '01234567', firstName: 'Max Moritz', lastName: 'Mustermann', login: '' },
-                { registrationNumber: '01234568', firstName: 'John-James', lastName: 'Doe', login: '' },
-                { registrationNumber: '01234569', firstName: 'Jane', lastName: 'Doe', login: '' },
-                { registrationNumber: '01234570', firstName: 'Alice', lastName: '-', login: '' },
-                { registrationNumber: '01234571', firstName: 'Bob', lastName: 'Ross', login: '' },
-            ];
+                let expectedStudentDTOs: ExamUserDTO[];
+                if (testFileName.localeCompare('TUMonlineCourseExport.csv') === 0) {
+                    expectedStudentDTOs = [
+                        { registrationNumber: '01234567', firstName: 'Max Moritz', lastName: 'Mustermann', login: '', email: 'max-moritz.mustermann@example.com' },
+                        { registrationNumber: '01234568', firstName: 'John-James', lastName: 'Doe', login: '', email: 'john-james.doe@example.com' },
+                        { registrationNumber: '01234569', firstName: 'Jane', lastName: 'Doe', login: '', email: 'jane.doe@example.com' },
+                        { registrationNumber: '01234570', firstName: 'Alice', lastName: '-', login: '', email: 'alice@example.com' },
+                        { registrationNumber: '01234571', firstName: 'Bob', lastName: 'Ross', login: '', email: 'bob.ross@example.com' },
+                    ];
+                } else {
+                    expectedStudentDTOs = [
+                        { registrationNumber: '01234567', firstName: 'Max Moritz', lastName: 'Mustermann', login: '', email: '' },
+                        { registrationNumber: '01234568', firstName: 'John-James', lastName: 'Doe', login: '', email: '' },
+                        { registrationNumber: '01234569', firstName: 'Jane', lastName: 'Doe', login: '', email: '' },
+                        { registrationNumber: '01234570', firstName: 'Alice', lastName: '-', login: '', email: '' },
+                        { registrationNumber: '01234571', firstName: 'Bob', lastName: 'Ross', login: '', email: '' },
+                    ];
+                }
 
-            expect(component.usersToImport).toEqual(expectedStudentDTOs);
-        });
+                expect(component.usersToImport).toEqual(expectedStudentDTOs);
+            }),
+        );
+    });
+
+    it('should read students from csv with email only', fakeAsync(() => {
+        const testDir = path.join(__dirname, '../../../../util/user-import');
+
+        const pathToTestFile = path.join(testDir, 'UserImportEmailOnlySampleFile.csv');
+        const csv = fs.readFileSync(pathToTestFile, 'utf-8');
+        const event = { target: { files: [csv] } };
+
+        component.onCSVFileSelect(event);
+        tick();
+
+        expect(component.usersToImport).toHaveLength(5);
+
+        const expectedStudentDTOs: ExamUserDTO[] = [
+            { registrationNumber: '', firstName: '', lastName: '', login: '', email: 'testuser1@mail.com' },
+            { registrationNumber: '', firstName: '', lastName: '', login: '', email: 'testuser2@mail.com' },
+            { registrationNumber: '', firstName: '', lastName: '', login: '', email: 'testuser3@mail.com' },
+            { registrationNumber: '', firstName: '', lastName: '', login: '', email: 'testuser4@mail.com' },
+            { registrationNumber: '', firstName: '', lastName: '', login: '', email: 'testuser5@mail.com' },
+        ];
+
+        expect(component.usersToImport).toEqual(expectedStudentDTOs);
+    }));
+
+    it('should read students from csv with room/seat information', async () => {
+        const testDir = path.join(__dirname, '../../../../util/exam-user-import');
+        component.examUserMode = true;
+
+        const pathToTestFile = path.join(testDir, 'UserImportWithRoomAndSeatInfo.csv');
+        const csv = fs.readFileSync(pathToTestFile, 'utf-8');
+        const event = { target: { files: [csv] } };
+
+        await component.onCSVFileSelect(event);
+
+        expect(component.examUsersToImport).toHaveLength(4);
+
+        const expectedStudentDTOs: ExamUserDTO[] = [
+            {
+                room: '101.2',
+                seat: '22F',
+                registrationNumber: '03756882',
+                firstName: 'ArTEMiS',
+                lastName: 'Test User 2',
+                login: 'artemis_test_user_2',
+                email: 'krusche+testuser_2@in.tum.de',
+            },
+            {
+                room: '101.2',
+                seat: '28F',
+                registrationNumber: '03756883',
+                firstName: 'ArTEMiS',
+                lastName: 'Test User 3',
+                login: 'artemis_test_user_3',
+                email: 'krusche+testuser_3@in.tum.de',
+            },
+            {
+                room: '101.2',
+                seat: '35F',
+                registrationNumber: '03756884',
+                firstName: 'ArTEMiS',
+                lastName: 'Test User 4',
+                login: 'artemis_test_user_4',
+                email: 'krusche+testuser_4@in.tum.de',
+            },
+            {
+                room: '101.2',
+                seat: '26F',
+                registrationNumber: '03756885',
+                firstName: 'ArTEMiS',
+                lastName: 'Test User 5',
+                login: 'artemis_test_user_5',
+                email: 'krusche+testuser_5@in.tum.de',
+            },
+        ];
+
+        expect(component.examUsersToImport).toEqual(expectedStudentDTOs);
     });
 
     it('should compute invalid student entries', () => {
@@ -169,13 +268,13 @@ describe('UsersImportButtonComponent', () => {
     });
 
     it('should import correctly', () => {
-        const importedStudents: StudentDTO[] = [
-            { registrationNumber: '1', firstName: 'Max', lastName: 'Musetermann', login: 'login1' },
-            { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2' },
+        const importedStudents: ExamUserDTO[] = [
+            { registrationNumber: '1', firstName: 'Max', lastName: 'Musetermann', login: 'login1', email: '' },
+            { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2', email: '' },
         ];
-        const notImportedStudents: StudentDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3' }];
+        const notImportedStudents: ExamUserDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3', email: '' }];
 
-        const fakeResponse = { body: notImportedStudents } as HttpResponse<StudentDTO[]>;
+        const fakeResponse = { body: notImportedStudents } as HttpResponse<ExamUserDTO[]>;
         jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.usersToImport = importedStudents.concat(notImportedStudents);
@@ -188,13 +287,13 @@ describe('UsersImportButtonComponent', () => {
     });
 
     it('should invoke REST call on "Import" but not on "Finish"', () => {
-        const studentsToImport: StudentDTO[] = [
-            { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1' },
-            { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2' },
+        const studentsToImport: ExamUserDTO[] = [
+            { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: '' },
+            { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2', email: '' },
         ];
-        const studentsNotFound: StudentDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3' }];
+        const studentsNotFound: ExamUserDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3', email: '' }];
 
-        const fakeResponse = { body: studentsNotFound } as HttpResponse<StudentDTO[]>;
+        const fakeResponse = { body: studentsNotFound } as HttpResponse<ExamUserDTO[]>;
         jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.usersToImport = studentsToImport;

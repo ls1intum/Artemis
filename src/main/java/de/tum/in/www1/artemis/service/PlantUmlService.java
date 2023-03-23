@@ -65,7 +65,7 @@ public class PlantUmlService {
     /**
      * Generate PNG diagram for given PlantUML commands
      *
-     * @param plantUml PlantUML command(s)
+     * @param plantUml     PlantUML command(s)
      * @param useDarkTheme whether the dark theme should be used
      * @return The generated PNG as a byte array
      * @throws IOException if generateImage can't create the PNG
@@ -83,7 +83,7 @@ public class PlantUmlService {
     /**
      * Generate SVG diagram for given PlantUML commands
      *
-     * @param plantUml PlantUML command(s)
+     * @param plantUml     PlantUML command(s)
      * @param useDarkTheme whether the dark theme should be used
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the SVG

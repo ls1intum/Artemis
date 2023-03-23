@@ -185,8 +185,12 @@ public class BambooRequestMockProvider {
     }
 
     public void mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, JsonProcessingException {
+        mockCopyBuildPlanForParticipation(exercise, username, false);
+    }
+
+    public void mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username, boolean practiceMode) throws URISyntaxException, JsonProcessingException {
         final var projectKey = exercise.getProjectKey();
-        final var targetPlanName = username.toUpperCase();
+        final var targetPlanName = (practiceMode ? "practice" : "") + username.toUpperCase();
         mockCopyBuildPlan(projectKey, BuildPlanType.TEMPLATE.getName(), projectKey, targetPlanName, true);
     }
 
@@ -493,9 +497,10 @@ public class BambooRequestMockProvider {
 
     /**
      * Mocks the Rest calls for granting read access to the build plan
+     *
      * @param buildPlanId the Bamboo build plan ID
-     * @param projectKey the Bamboo project key
-     * @param user the user that should get read access
+     * @param projectKey  the Bamboo project key
+     * @param user        the user that should get read access
      * @throws URISyntaxException exception for wrong URLs
      */
     public void mockGrantReadAccess(String buildPlanId, String projectKey, User user) throws URISyntaxException {

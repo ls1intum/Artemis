@@ -137,6 +137,14 @@
                 "questionIsInvalid": "Question is invalid",
                 "setAnswerInvalid": "Set answer invalid",
                 "answerIsInvalid": "Answer is invalid",
+                "resetQuizTitle": "Reset Quiz Title",
+                "resetQuestion": "Reset Question",
+                "resetQuestionTitle": "Reset Question Title",
+                "resetQuestionText": "Reset Question Text",
+                "resetAnswer": "Reset Answer",
+                "deleteAnswer": "Delete Answer",
+                "moveUp": "Move Question up",
+                "moveDown": "Move Question down",
                 "warning": {
                     "warning": "Warning!",
                     "confirm": "Confirm changes",
@@ -177,6 +185,7 @@
                 "startTimeInPast": "Quiz: The Start Time has already passed.",
                 "questionTitle": "Question {{index}}: The title is missing.",
                 "questionScore": "Question {{index}}: At least one point is required per question.",
+                "questionScoreInvalid": "Question {{index}}: Points are invalid.",
                 "questionCorrectAnswerOption": "Question {{index}}: No answer option is correct.",
                 "questionSingleChoiceCorrectAnswerOptions": "Question {{index}}: Multiple answer options are correct for a single choice question.",
                 "questionCorrectMapping": "Question {{index}}: No correct mapping.",
@@ -195,7 +204,8 @@
                 "questionExplanationLength": "Question {{index}}: The provided explanation is too long. Please shorten it to {{threshold}} characters.",
                 "questionHintLength": "Question {{index}}: The provided hint is too long. Please shorten it to {{threshold}} characters.",
                 "answerExplanationLength": "Question {{index}}: The explanation of at least one answer option is too long. Please shorten it to {{threshold}} characters.",
-                "answerHintLength": "Question {{index}}: The hint of at least one answer option is too long. Please shorten it to {{threshold}} characters."
+                "answerHintLength": "Question {{index}}: The hint of at least one answer option is too long. Please shorten it to {{threshold}} characters.",
+                "multipleChoiceQuestionAnswerOptionInvalid": "Question {{index}}: At least one answer option is invalid."
             },
             "scoringType": {
                 "all_or_nothing": "All or Nothing",

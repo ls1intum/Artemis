@@ -155,9 +155,8 @@ export class DragAndDropQuestionUtil {
      * @return {object | null} the found mapping, or null if it doesn't exist
      */
     getMapping(mappings: DragAndDropMapping[], dragItem: DragItem, dropLocation: DropLocation) {
-        const that = this;
-        return mappings.find(function (mapping: DragAndDropMapping) {
-            return that.isSameEntityWithTempId(dropLocation, mapping.dropLocation) && that.isSameEntityWithTempId(dragItem, mapping.dragItem);
+        return mappings.find((mapping: DragAndDropMapping) => {
+            return this.isSameEntityWithTempId(dropLocation, mapping.dropLocation) && this.isSameEntityWithTempId(dragItem, mapping.dragItem);
         }, this);
     }
 
@@ -180,21 +179,20 @@ export class DragAndDropQuestionUtil {
      * @return {boolean} true if the sets contain the same items, otherwise false
      */
     isSameSetOfDropLocations(set1: DropLocation[], set2: DropLocation[]): boolean {
-        const service = this;
         if (set1.length !== set2.length) {
             // different number of elements => impossible to contain the same elements
             return false;
         }
         return (
             // for every element in set1 there has to be an identical element in set2 and vice versa
-            set1.every(function (element1: DropLocation) {
-                return set2.some(function (element2: DropLocation) {
-                    return service.isSameEntityWithTempId(element1, element2);
+            set1.every((element1: DropLocation) => {
+                return set2.some((element2: DropLocation) => {
+                    return this.isSameEntityWithTempId(element1, element2);
                 });
             }) &&
-            set2.every(function (element2: DropLocation) {
-                return set1.some(function (element1: DropLocation) {
-                    return service.isSameEntityWithTempId(element1, element2);
+            set2.every((element2: DropLocation) => {
+                return set1.some((element1: DropLocation) => {
+                    return this.isSameEntityWithTempId(element1, element2);
                 });
             })
         );

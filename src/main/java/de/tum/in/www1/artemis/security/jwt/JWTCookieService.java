@@ -28,6 +28,7 @@ public class JWTCookieService {
 
     /**
      * Builds the cookie containing the jwt for a login
+     *
      * @param rememberMe boolean used to determine the duration of the jwt.
      * @return the login ResponseCookie contaning the JWT
      */
@@ -39,6 +40,7 @@ public class JWTCookieService {
 
     /**
      * Builds the cookie containing the jwt for a logout and sets it in the response
+     *
      * @return the logout ResponseCookie
      */
     public ResponseCookie buildLogoutCookie() {
@@ -47,9 +49,10 @@ public class JWTCookieService {
 
     /**
      * Builds the cookie containing the jwt
+     *
      * @param jwt      the token that will be used as the cookie's value
      * @param duration the validity of the cookie
-     * @return         the response cookie that should be set containing the jwt
+     * @return the response cookie that should be set containing the jwt
      */
     private ResponseCookie buildJWTCookie(String jwt, Duration duration) {
 

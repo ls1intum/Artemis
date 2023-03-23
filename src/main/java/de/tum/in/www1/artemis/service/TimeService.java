@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class TimeService {
 
-    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy - hh:mm");
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy - hh:mm");
 
     public ZonedDateTime now() {
         return ZonedDateTime.now();
@@ -16,6 +16,7 @@ public class TimeService {
 
     /**
      * Converts the dateTime object to a human-readable date in the form of a string
+     *
      * @param dateTime that should be converted to a human-readable string
      * @return the converted date string
      */

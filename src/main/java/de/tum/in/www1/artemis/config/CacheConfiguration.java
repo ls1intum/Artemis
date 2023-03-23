@@ -86,6 +86,7 @@ public class CacheConfiguration {
 
     /**
      * Setup the hazelcast instance based on the given jHipster properties and the enabled spring profiles.
+     *
      * @param jHipsterProperties the jhipster properties
      * @return the created HazelcastInstance
      */

@@ -39,9 +39,9 @@ public class PlagiarismService {
      * Checks whether the student with the given user login is involved in a plagiarism case which contains the given submissionId and the student is notified by the instructor.
      *
      * @param submissionId the id of a submissions that will be checked in plagiarism cases
-     * @param userLogin the user login of the student
+     * @param userLogin    the user login of the student
      * @return true if the student with user login owns one of the submissions in a PlagiarismComparison which contains the given submissionId and is notified by the instructor,
-     * otherwise false
+     *         otherwise false
      */
     public boolean wasUserNotifiedByInstructor(Long submissionId, String userLogin) {
         var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submissionId, submissionId);
@@ -63,8 +63,8 @@ public class PlagiarismService {
     /**
      * Update the status of the plagiarism comparison.
      *
-     * @param plagiarismComparisonId    the ID of the plagiarism comparison
-     * @param plagiarismStatus          the status to be set
+     * @param plagiarismComparisonId the ID of the plagiarism comparison
+     * @param plagiarismStatus       the status to be set
      */
     public void updatePlagiarismComparisonStatus(long plagiarismComparisonId, PlagiarismStatus plagiarismStatus) {
         plagiarismComparisonRepository.updatePlagiarismComparisonStatus(plagiarismComparisonId, plagiarismStatus);

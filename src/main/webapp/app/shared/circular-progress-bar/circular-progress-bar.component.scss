@@ -9,7 +9,7 @@
 $borderWidth: 7px;
 $animationTime: 0.5s;
 $border-color-default: #eee;
-$size: 150px;
+$size: 80px;
 
 //Create how many steps
 $howManySteps: 100; //this needs to be even.
@@ -92,7 +92,7 @@ $howManySteps: 100; //this needs to be even.
         justify-content: center;
         height: 100%;
         //font-family: $work-sans;
-        font-weight: 300;
+        font-weight: 400;
 
         div {
             margin-top: 10px;

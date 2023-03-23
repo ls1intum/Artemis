@@ -1,6 +1,5 @@
 import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
-// @ts-ignore
-import Split from 'split.js';
+import * as Split from 'split.js';
 import { Subject } from 'rxjs';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { FromToElement, TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
@@ -47,7 +46,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     ngAfterViewInit(): void {
         const paneElements = this.panes.map((pane: SplitPaneDirective) => pane.elementRef.nativeElement);
 
-        this.split = Split(paneElements, {
+        this.split = Split.default(paneElements, {
             minSize: 100,
             sizes: [50, 50],
             gutterSize: 8,

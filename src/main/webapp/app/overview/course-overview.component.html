@@ -2,7 +2,7 @@
     <div *ngIf="course">
         <jhi-header-course [course]="course"></jhi-header-course>
         <div class="tab-bar tab-bar-overview" id="tab-bar">
-            <div class="col-12" [ngClass]="{ 'no-indent': !controlConfiguration?.useIndentation, 'col-lg-8': controlConfiguration?.useIndentation }">
+            <div class="col-12 no-indent">
                 <div>
                     <div
                         id="exam-tab"
@@ -13,13 +13,13 @@
                         routerLink="exams"
                         routerLinkActive="active"
                     >
-                        <b jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</b>
+                        <div jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</div>
                     </div>
                     <div class="tab-item exercises" routerLink="exercises" routerLinkActive="active">
-                        <b jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</b>
+                        <div jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</div>
                     </div>
                     <div *ngIf="course.lectures" jhiOrionFilter [showInOrionWindow]="false" class="tab-item lectures" routerLink="lectures" routerLinkActive="active">
-                        <b jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</b>
+                        <div jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</div>
                     </div>
                     <div
                         *ngIf="hasLearningGoals()"
@@ -29,16 +29,22 @@
                         routerLink="learning-goals"
                         routerLinkActive="active"
                     >
-                        <b jhiTranslate="artemisApp.courseOverview.menu.learningGoals">Learning Goals</b>
+                        <div jhiTranslate="artemisApp.courseOverview.menu.learningGoals">Learning Goals</div>
                     </div>
                     <div jhiOrionFilter [showInOrionWindow]="false" class="guided-tour tab-item statistics" routerLink="statistics" routerLinkActive="active">
-                        <b jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</b>
+                        <div jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</div>
                     </div>
                     <div *ngIf="course.postsEnabled" jhiOrionFilter [showInOrionWindow]="false" class="tab-item discussion" routerLink="discussion" routerLinkActive="active">
-                        <b jhiTranslate="artemisApp.courseOverview.menu.communication">Communication</b>
+                        <div jhiTranslate="artemisApp.courseOverview.menu.communication">Communication</div>
                     </div>
                     <div *ngIf="course.postsEnabled" jhiOrionFilter [showInOrionWindow]="false" class="tab-item discussion" routerLink="messages" routerLinkActive="active">
-                        <b jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</b>
+                        <div class="d-flex align-items-center position-relative">
+                            <div jhiTranslate="artemisApp.courseOverview.menu.messages" class="d-inline-block me-1">Messages</div>
+                            <span
+                                [hidden]="messagesRouteLoaded || !hasUnreadMessages"
+                                class="fadeInIcon position-absolute top-0 start-100 translate-middle p-2 bg-danger border border-light rounded-circle"
+                            ></span>
+                        </div>
                     </div>
                     <div
                         *ngIf="hasTutorialGroups()"
@@ -49,7 +55,7 @@
                         routerLink="tutorial-groups"
                         routerLinkActive="active"
                     >
-                        <b jhiTranslate="artemisApp.courseOverview.menu.tutorialGroups">Tutorial Groups</b>
+                        <div jhiTranslate="artemisApp.courseOverview.menu.tutorialGroups">Tutorial Groups</div>
                     </div>
                 </div>
                 <div class="controls">

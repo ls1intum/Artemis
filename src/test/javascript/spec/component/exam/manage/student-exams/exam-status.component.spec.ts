@@ -37,14 +37,14 @@ describe('ExamStatusComponent', () => {
     const prepareForExamConductionStateTest = (startDate: dayjs.Dayjs, endDateOffset: number, offsetType: DateOffsetType) => {
         exam.startDate = startDate;
         exam.endDate = dayjs().add(endDateOffset, offsetType);
-        testExam.maxPoints = 0;
+        testExam.examMaxPoints = 0;
         component.exam = exam;
     };
 
     const prepareForTestExamConductionStateTest = (startDate: dayjs.Dayjs, endDateOffset: number, offsetType: DateOffsetType) => {
         testExam.startDate = startDate;
         testExam.endDate = dayjs().add(endDateOffset, offsetType);
-        testExam.maxPoints = 10;
+        testExam.examMaxPoints = 10;
         testExam.testExam = true;
         component.exam = testExam;
     };

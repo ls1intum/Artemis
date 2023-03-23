@@ -11,6 +11,7 @@ public class TimeResource {
 
     /**
      * {@code GET /time}:
+     *
      * @return the current server time as Instant
      */
     @GetMapping("/time")

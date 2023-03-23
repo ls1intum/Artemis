@@ -6,12 +6,16 @@ import static org.mockito.Mockito.*;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -28,6 +32,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -39,6 +44,8 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.QuizUtilService;
 
 class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "participationintegration";
 
     @Autowired
     private CourseRepository courseRepo;
@@ -56,9 +63,6 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     private ResultRepository resultRepository;
 
     @Autowired
-    private UserRepository userRepo;
-
-    @Autowired
     private FeatureToggleService featureToggleService;
 
     @Autowired
@@ -73,6 +77,9 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Autowired
     protected QuizScheduleService quizScheduleService;
 
+    @Autowired
+    private ProgrammingExerciseTestService programmingExerciseTestService;
+
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
@@ -85,13 +92,13 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
-    void initTestCase() {
-        database.addUsers(2, 2, 0, 2);
+    void initTestCase() throws Exception {
+        database.addUsers(TEST_PREFIX, 2, 2, 0, 2);
 
         // Add users that are not in the course/exercise
-        userRepo.save(ModelFactory.generateActivatedUser("student3"));
-        userRepo.save(ModelFactory.generateActivatedUser("tutor3"));
-        userRepo.save(ModelFactory.generateActivatedUser("instructor3"));
+        database.createAndSaveUser(TEST_PREFIX + "student3");
+        database.createAndSaveUser(TEST_PREFIX + "tutor3");
+        database.createAndSaveUser(TEST_PREFIX + "instructor3");
 
         course = database.addCourseWithModelingAndTextExercise();
         for (Exercise exercise : course.getExercises()) {
@@ -114,44 +121,48 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
+
+        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
     }
 
     @AfterEach
-    void tearDown() {
-        database.resetDatabase();
+    void tearDown() throws Exception {
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
+        programmingExerciseTestService.tearDown();
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void participateInModelingExercise() throws Exception {
         URI location = request.post("/api/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.CREATED);
 
         StudentParticipation participation = request.get(location.getPath(), HttpStatus.OK, StudentParticipation.class);
         assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(modelingExercise);
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
-        assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo("student1");
-        Participation storedParticipation = participationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(modelingExercise.getId(), "student1", false).get();
+        assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo(TEST_PREFIX + "student1");
+        Participation storedParticipation = participationRepo
+                .findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(modelingExercise.getId(), TEST_PREFIX + "student1", false).get();
         assertThat(storedParticipation.getSubmissions()).as("submission was initialized").hasSize(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type modeling submission").isEqualTo(ModelingSubmission.class);
     }
 
     @Test
-    @WithMockUser(username = "student2")
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void participateInTextExercise() throws Exception {
         URI location = request.post("/api/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
 
         StudentParticipation participation = request.get(location.getPath(), HttpStatus.OK, StudentParticipation.class);
         assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(textExercise);
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
-        assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo("student2");
-        Participation storedParticipation = participationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(textExercise.getId(), "student2", false).get();
+        assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo(TEST_PREFIX + "student2");
+        Participation storedParticipation = participationRepo
+                .findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(textExercise.getId(), TEST_PREFIX + "student2", false).get();
         assertThat(storedParticipation.getSubmissions()).as("submission was initialized").hasSize(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type text submission").isEqualTo(TextSubmission.class);
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void participateTwiceInModelingExercise_sameParticipation() throws Exception {
         var participation1 = request.post("/api/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.CREATED);
         var participation2 = request.post("/api/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.CREATED);
@@ -159,7 +170,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void participateTwiceInTextExercise_sameParticipation() throws Exception {
         var participation1 = request.post("/api/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
         var participation2 = request.post("/api/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
@@ -167,7 +178,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student2")
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void participateInTextExercise_releaseDateNotReached() throws Exception {
         textExercise.setReleaseDate(ZonedDateTime.now().plusHours(2));
         exerciseRepo.save(textExercise);
@@ -175,7 +186,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student2")
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void participateInTextExercise_noReleaseDateStartDateNotReached() throws Exception {
         textExercise.setReleaseDate(null);
         textExercise.setStartDate(ZonedDateTime.now().plusHours(2));
@@ -184,7 +195,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student2")
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void participateInTextExercise_releaseDateReachedStartDateNotReached() throws Exception {
         textExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(1));
         textExercise.setStartDate(ZonedDateTime.now().plusHours(2));
@@ -193,7 +204,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1")
+    @WithMockUser(username = TEST_PREFIX + "tutor1")
     void participateInTextExercise_releaseDateReachedStartDateNotReachedAsTutor() throws Exception {
         textExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(1));
         textExercise.setStartDate(ZonedDateTime.now().plusHours(2));
@@ -202,7 +213,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void participateInTextExercise_releaseDateReachedStartDateReached() throws Exception {
         textExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(2));
         textExercise.setStartDate(ZonedDateTime.now().minusMinutes(1));
@@ -211,13 +222,13 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student3")
+    @WithMockUser(username = TEST_PREFIX + "student3")
     void participateInTextExercise_notStudentInCourse() throws Exception {
         request.post("/api/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void participateInProgrammingExercise_featureDisabled() throws Exception {
         featureToggleService.disableFeature(Feature.ProgrammingExercises);
         request.post("/api/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
@@ -227,7 +238,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void practiceProgrammingExercise_featureDisabled() throws Exception {
         featureToggleService.disableFeature(Feature.ProgrammingExercises);
         request.post("/api/exercises/" + programmingExercise.getId() + "/participations/practice", null, HttpStatus.FORBIDDEN);
@@ -237,7 +248,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void participateInProgrammingExercise_dueDatePassed() throws Exception {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         exerciseRepo.save(programmingExercise);
@@ -245,7 +256,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void practiceProgrammingExercise_beforeDatePassed() throws Exception {
         programmingExercise.setDueDate(ZonedDateTime.now().plusHours(2));
         exerciseRepo.save(programmingExercise);
@@ -253,7 +264,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void participateInProgrammingTeamExercise_withoutAssignedTeam() throws Exception {
         programmingExercise.setMode(ExerciseMode.TEAM);
         exerciseRepo.save(programmingExercise);
@@ -261,7 +272,51 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceProgrammingExercise_successful() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepo.save(programmingExercise);
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        User user = database.getUserByLogin(TEST_PREFIX + "student1");
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        bambooRequestMockProvider.enableMockingOfRequests(true);
+
+        programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
+        var repo = new LocalRepository(defaultBranch);
+        repo.configureRepos("studentRepo", "studentOriginRepo");
+        programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, user.getLogin(), repo, true);
+        mockConnectorRequestsForStartPractice(programmingExercise, TEST_PREFIX + "student1", Set.of(user), true);
+
+        StudentParticipation participation = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/participations/practice", null,
+                StudentParticipation.class, HttpStatus.CREATED);
+        assertThat(participation).isNotNull();
+        assertThat(participation.isTestRun()).isTrue();
+        assertThat(participation.getStudent()).contains(user);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInProgrammingExercise_successful() throws Exception {
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        User user = database.getUserByLogin(TEST_PREFIX + "student1");
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        bambooRequestMockProvider.enableMockingOfRequests(true);
+
+        programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
+        var repo = new LocalRepository(defaultBranch);
+        repo.configureRepos("studentRepo", "studentOriginRepo");
+        programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, user.getLogin(), repo);
+        mockConnectorRequestsForStartParticipation(programmingExercise, TEST_PREFIX + "student1", Set.of(user), true);
+
+        StudentParticipation participation = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/participations", null, StudentParticipation.class,
+                HttpStatus.CREATED);
+        assertThat(participation).isNotNull();
+        assertThat(participation.isTestRun()).isFalse();
+        assertThat(participation.getStudent()).contains(user);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void practiceProgrammingTeamExercise_Forbidden() throws Exception {
         programmingExercise.setMode(ExerciseMode.TEAM);
         exerciseRepo.save(programmingExercise);
@@ -269,9 +324,9 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteParticipation() throws Exception {
-        Submission submissionWithResult = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
+        Submission submissionWithResult = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
         database.addSubmission((StudentParticipation) submissionWithResult.getParticipation(), new ModelingSubmission());
         Long participationId = submissionWithResult.getParticipation().getId();
         database.addResultToSubmission(submissionWithResult, null);
@@ -292,9 +347,9 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteSubmissionWithoutResult() throws Exception {
-        Submission submissionWithoutResult = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
+        Submission submissionWithoutResult = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
         database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
         Long participationId = submissionWithoutResult.getParticipation().getId();
 
@@ -314,9 +369,9 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteResultWithoutSubmission() throws Exception {
-        StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
+        StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
         database.addResultToParticipation(null, null, studentParticipation);
         Long participationId = studentParticipation.getId();
 
@@ -336,39 +391,40 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deleteParticipation_student() throws Exception {
         // Allow students to delete their own participation if it belongs to a guided tour
-        StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
+        StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
         request.delete("/api/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
 
         // Returns forbidden if users do not delete their own participation
-        StudentParticipation studentParticipation2 = database.createAndSaveParticipationForExercise(modelingExercise, "student2");
+        StudentParticipation studentParticipation2 = database.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student2");
         request.delete("/api/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void deleteParticipation_tutor() throws Exception {
         // Allow tutors to delete their own participation if it belongs to a guided tour
-        StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "tutor1");
+        StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "tutor1");
         request.delete("/api/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
 
         // Returns forbidden if tutors do not delete their own participation
-        StudentParticipation studentParticipation2 = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
+        StudentParticipation studentParticipation2 = database.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
         request.delete("/api/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteParticipation_notFound() throws Exception {
-        request.delete("/api/participations/" + 100, HttpStatus.NOT_FOUND);
+        request.delete("/api/participations/" + -1, HttpStatus.NOT_FOUND);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestFeedbackScoreNotFull() throws Exception {
-        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise, database.getUserByLogin("student1"));
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
+                database.getUserByLogin(TEST_PREFIX + "student1"));
 
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos("testLocalRepo", "testOriginRepo");
@@ -387,12 +443,13 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestFeedbackExerciseNotPossibleIfOnlyAutomaticFeedbacks() throws Exception {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         exerciseRepo.save(programmingExercise);
 
-        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise,
+                database.getUserByLogin(TEST_PREFIX + "student1"));
         participationRepo.save(participation);
 
         request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
@@ -400,9 +457,10 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestFeedbackAlreadySent() throws Exception {
-        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise,
+                database.getUserByLogin(TEST_PREFIX + "student1"));
         participation.setIndividualDueDate(ZonedDateTime.now().minusMinutes(20));
         participationRepo.save(participation);
 
@@ -411,9 +469,10 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestFeedbackSuccess() throws Exception {
-        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise, database.getUserByLogin("student1"));
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
+                database.getUserByLogin(TEST_PREFIX + "student1"));
 
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos("testLocalRepo", "testOriginRepo");
@@ -439,9 +498,10 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void resumeProgrammingExerciseParticipation() throws Exception {
-        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise, database.getUserByLogin("student1"));
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
+                database.getUserByLogin(TEST_PREFIX + "student1"));
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos("testLocalRepo", "testOriginRepo");
         participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(localRepo).getURI().toString());
@@ -453,31 +513,32 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void resumeProgrammingExerciseParticipation_wrongExerciseId() throws Exception {
-        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise,
+                database.getUserByLogin(TEST_PREFIX + "student1"));
         participationRepo.save(participation);
         request.putWithResponseBody("/api/exercises/10000/resume-programming-participation/" + participation.getId(), null, ProgrammingExerciseStudentParticipation.class,
                 HttpStatus.NOT_FOUND);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void resumeProgrammingExerciseParticipation_forbidden() throws Exception {
         var exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1), course);
         exercise = exerciseRepo.save(exercise);
-        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, exercise, database.getUserByLogin("student1"));
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, exercise, database.getUserByLogin(TEST_PREFIX + "student1"));
         participationRepo.save(participation);
         request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAllParticipationsForExercise() throws Exception {
-        database.createAndSaveParticipationForExercise(textExercise, "student1");
-        database.createAndSaveParticipationForExercise(textExercise, "student2");
-        StudentParticipation testParticipation = database.createAndSaveParticipationForExercise(textExercise, "student3");
+        database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+        database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+        StudentParticipation testParticipation = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
         testParticipation.setTestRun(true);
         participationRepo.save(testParticipation);
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
@@ -487,14 +548,14 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAllParticipationsForExercise_withLatestResult() throws Exception {
-        database.createAndSaveParticipationForExercise(textExercise, "student1");
-        var participation = database.createAndSaveParticipationForExercise(textExercise, "student2");
+        database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+        var participation = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
         database.addResultToParticipation(null, null, participation);
         var result = ModelFactory.generateResult(true, 70D).participation(participation);
         resultRepository.save(result);
-        StudentParticipation testParticipation = database.createAndSaveParticipationForExercise(textExercise, "student3");
+        StudentParticipation testParticipation = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
         testParticipation.setTestRun(true);
         participationRepo.save(testParticipation);
         final var params = new LinkedMultiValueMap<String, String>();
@@ -503,25 +564,25 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(participations).as("Exactly 3 participations are returned").hasSize(3).as("Only participation that has student are returned")
                 .allMatch(p -> p.getStudent().isPresent()).as("No submissions should exist for participations")
                 .allMatch(p -> p.getSubmissionCount() == null || p.getSubmissionCount() == 0);
-        var participationWithResult = participations.stream().filter(p -> p.getParticipant().equals(database.getUserByLogin("student2"))).findFirst().get();
+        var participationWithResult = participations.stream().filter(p -> p.getParticipant().equals(database.getUserByLogin(TEST_PREFIX + "student2"))).findFirst().get();
         assertThat(participationWithResult.getResults()).hasSize(1).contains(result);
     }
 
     @Test
-    @WithMockUser(username = "tutor3", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
     void getAllParticipationsForExercise_NotTutorInCourse() throws Exception {
         request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAllParticipationsForCourse() throws Exception {
-        database.createAndSaveParticipationForExercise(programmingExercise, "student1");
-        database.createAndSaveParticipationForExercise(textExercise, "student2");
-        database.createAndSaveParticipationForExercise(modelingExercise, "student1");
+        database.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
+        database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+        database.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
         var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), QuizMode.SYNCHRONIZED, course);
         exerciseRepo.save(quizEx);
-        database.createAndSaveParticipationForExercise(quizEx, "student2");
+        database.createAndSaveParticipationForExercise(quizEx, TEST_PREFIX + "student2");
 
         var participations = request.getList("/api/courses/" + course.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
         assertThat(participations).hasSize(4);
@@ -537,40 +598,40 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             assertThat(exercise.getPosts()).isEmpty();
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getDifficulty()).isNull();
-            assertThat(exercise.getMode()).isNull();
-            if (exercise instanceof ProgrammingExercise programmingExercise) {
-                assertThat(programmingExercise.getSolutionParticipation()).isNull();
-                assertThat(programmingExercise.getTemplateParticipation()).isNull();
-                assertThat(programmingExercise.getTestRepositoryUrl()).isNull();
-                assertThat(programmingExercise.getShortName()).isNull();
-                assertThat(programmingExercise.isPublishBuildPlanUrl()).isNull();
-                assertThat(programmingExercise.getProgrammingLanguage()).isNull();
-                assertThat(programmingExercise.getPackageName()).isNull();
-                assertThat(programmingExercise.isAllowOnlineEditor()).isNull();
+            assertThat(exercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+            if (exercise instanceof ProgrammingExercise aProgrammingExercise) {
+                assertThat(aProgrammingExercise.getSolutionParticipation()).isNull();
+                assertThat(aProgrammingExercise.getTemplateParticipation()).isNull();
+                assertThat(aProgrammingExercise.getTestRepositoryUrl()).isNull();
+                assertThat(aProgrammingExercise.getShortName()).isNull();
+                assertThat(aProgrammingExercise.isPublishBuildPlanUrl()).isNull();
+                assertThat(aProgrammingExercise.getProgrammingLanguage()).isNull();
+                assertThat(aProgrammingExercise.getPackageName()).isNull();
+                assertThat(aProgrammingExercise.isAllowOnlineEditor()).isNull();
             }
             else if (exercise instanceof QuizExercise quizExercise) {
                 assertThat(quizExercise.getQuizQuestions()).isEmpty();
             }
-            else if (exercise instanceof TextExercise textExercise) {
-                assertThat(textExercise.getExampleSolution()).isNull();
+            else if (exercise instanceof TextExercise aTextExercise) {
+                assertThat(aTextExercise.getExampleSolution()).isNull();
             }
-            else if (exercise instanceof ModelingExercise modelingExercise) {
-                assertThat(modelingExercise.getExampleSolutionModel()).isNull();
-                assertThat(modelingExercise.getExampleSolutionExplanation()).isNull();
+            else if (exercise instanceof ModelingExercise aModelingExercise) {
+                assertThat(aModelingExercise.getExampleSolutionModel()).isNull();
+                assertThat(aModelingExercise.getExampleSolutionExplanation()).isNull();
             }
         });
     }
 
     @Test
-    @WithMockUser(username = "instructor3", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor3", roles = "INSTRUCTOR")
     void getAllParticipationsForCourse_noInstructorInCourse() throws Exception {
         request.getList("/api/courses/" + course.getId() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateParticipation() throws Exception {
-        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
+        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin(TEST_PREFIX + "student1"));
         participation.setPresentationScore(1);
         participation = participationRepo.save(participation);
         participation.setPresentationScore(null);
@@ -581,16 +642,16 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateParticipation_notStored() throws Exception {
-        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
+        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin(TEST_PREFIX + "student1"));
         request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateParticipation_presentationScoreMoreThan0() throws Exception {
-        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
+        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin(TEST_PREFIX + "student1"));
         participation = participationRepo.save(participation);
         participation.setPresentationScore(2);
         var actualParticipation = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class,
@@ -600,18 +661,19 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor3", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
     void updateParticipation_notTutorInCourse() throws Exception {
-        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
+        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin(TEST_PREFIX + "student1"));
         participation = participationRepo.save(participation);
         request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateIndividualDueDateExamExercise() throws Exception {
         final FileUploadExercise exercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
-        StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, database.getUserByLogin("student1"));
+        StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise,
+                database.getUserByLogin(TEST_PREFIX + "student1"));
         participation = participationRepo.save(participation);
         participation.setIndividualDueDate(ZonedDateTime.now().plusDays(3));
 
@@ -621,11 +683,12 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateIndividualDueDateQuizExercise() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
         final QuizExercise exercise = (QuizExercise) course.getExercises().stream().findFirst().get();
-        StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, database.getUserByLogin("student1"));
+        StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise,
+                database.getUserByLogin(TEST_PREFIX + "student1"));
         participation = participationRepo.save(participation);
         participation.setIndividualDueDate(ZonedDateTime.now().plusDays(3));
 
@@ -635,20 +698,19 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateIndividualDueDateOk() throws Exception {
         final var course = database.addCourseWithFileUploadExercise();
-        var exercise = (FileUploadExercise) course.getExercises().stream().findAny().get();
+        var exercise = (FileUploadExercise) course.getExercises().stream().findAny().orElseThrow();
         exercise.setDueDate(ZonedDateTime.now().plusHours(2));
         exercise = exerciseRepo.save(exercise);
 
-        var submission = database.addFileUploadSubmission(exercise, ModelFactory.generateFileUploadSubmission(true), "student1");
+        var submission = database.addFileUploadSubmission(exercise, ModelFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student1");
         submission.getParticipation().setIndividualDueDate(ZonedDateTime.now().plusDays(1));
 
         final var participationsToUpdate = new StudentParticipationList((StudentParticipation) submission.getParticipation());
         final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
                 StudentParticipation.class, HttpStatus.OK);
-        exercise = (FileUploadExercise) exerciseRepo.findByIdElseThrow(exercise.getId());
 
         assertThat(response).hasSize(1);
         assertThat(response.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(submission.getParticipation().getIndividualDueDate());
@@ -657,18 +719,18 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateIndividualDueDateProgrammingExercise() throws Exception {
         final var course = database.addCourseWithOneProgrammingExercise();
         var exercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
         exercise.setDueDate(ZonedDateTime.now().plusHours(2));
         exercise = exerciseRepo.save(exercise);
 
-        final var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        final var participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         participation.setIndividualDueDate(ZonedDateTime.now().plusHours(20));
 
         // due date before exercise due date ⇒ should be ignored
-        final var participation2 = database.addStudentParticipationForProgrammingExercise(exercise, "student2");
+        final var participation2 = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
         participation2.setIndividualDueDate(ZonedDateTime.now().plusHours(1));
 
         doNothing().when(programmingExerciseParticipationService).unlockStudentRepository(exercise, participation);
@@ -686,14 +748,14 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateIndividualDueDateUnchanged() throws Exception {
         final var course = database.addCourseWithOneProgrammingExercise();
         var exercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
         exercise.setDueDate(ZonedDateTime.now().plusHours(2));
         exercise = exerciseRepo.save(exercise);
 
-        final var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        final var participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         final var participationsToUpdate = new StudentParticipationList(participation);
         final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
                 StudentParticipation.class, HttpStatus.OK);
@@ -704,14 +766,14 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateIndividualDueDateNoExerciseDueDate() throws Exception {
         final var course = database.addCourseWithOneProgrammingExercise();
         var exercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
         exercise.setDueDate(null);
         exercise = exerciseRepo.save(exercise);
 
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         participation.setIndividualDueDate(ZonedDateTime.now().plusHours(4));
 
         final var participationsToUpdate = new StudentParticipationList(participation);
@@ -724,14 +786,14 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExerciseIndividualDueDateInFuture() throws Exception {
         final var course = database.addCourseWithOneProgrammingExercise();
         var exercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
         exercise.setDueDate(ZonedDateTime.now().minusHours(4));
         exercise = exerciseRepo.save(exercise);
 
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         participation.setIndividualDueDate(ZonedDateTime.now().plusHours(6));
         participation = participationRepo.save(participation);
 
@@ -750,14 +812,14 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExerciseIndividualDueDateInPast() throws Exception {
         final var course = database.addCourseWithOneProgrammingExercise();
         var exercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
         exercise.setDueDate(ZonedDateTime.now().minusHours(4));
         exercise = exerciseRepo.save(exercise);
 
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         participation.setIndividualDueDate(ZonedDateTime.now().plusHours(4));
         participation = participationRepo.save(participation);
 
@@ -791,9 +853,9 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipationWithLatestResult() throws Exception {
-        var participation = database.createAndSaveParticipationForExercise(textExercise, "student1");
+        var participation = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         database.addResultToParticipation(null, null, participation);
         var result = ModelFactory.generateResult(true, 70D);
         result.participation(participation).setCompletionDate(ZonedDateTime.now().minusHours(2));
@@ -806,56 +868,62 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipationBuildArtifact() throws Exception {
-        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         doReturn(new ResponseEntity<>(null, HttpStatus.OK)).when(continuousIntegrationService).retrieveLatestArtifact(participation);
         request.getNullable("/api/participations/" + participation.getId() + "/buildArtifact", HttpStatus.OK, Object.class);
         verify(continuousIntegrationService).retrieveLatestArtifact(participation);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getSubmissionOfParticipation() throws Exception {
-        var participation = database.createAndSaveParticipationForExercise(textExercise, "student1");
+        var participation = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         var submission1 = database.addSubmission(participation, ModelFactory.generateTextSubmission("text", Language.ENGLISH, true));
         var submission2 = database.addSubmission(participation, ModelFactory.generateTextSubmission("text2", Language.ENGLISH, true));
         var submissions = request.getList("/api/participations/" + participation.getId() + "/submissions", HttpStatus.OK, Submission.class);
         assertThat(submissions).contains(submission1, submission2);
     }
 
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void cleanupBuildPlan() throws Exception {
-        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+    @ParameterizedTest
+    @CsvSource({ "false,false", "false,true", "true,false", "true,true" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void cleanupBuildPlan(boolean practiceMode, boolean afterDueDate) throws Exception {
+        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        participation.setTestRun(practiceMode);
+        participationRepo.save(participation);
+        if (afterDueDate) {
+            programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+            exerciseRepo.save(programmingExercise);
+        }
         bambooRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.mockDeleteBambooBuildPlan(participation.getBuildPlanId(), false);
         var actualParticipation = request.putWithResponseBody("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, Participation.class, HttpStatus.OK);
         assertThat(actualParticipation).isEqualTo(participation);
+        assertThat(actualParticipation.getInitializationState()).isEqualTo(!practiceMode && afterDueDate ? InitializationState.FINISHED : InitializationState.INACTIVE);
+        assertThat(((ProgrammingExerciseStudentParticipation) actualParticipation).getBuildPlanId()).isNull();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipation() throws Exception {
-        var participation = database.createAndSaveParticipationForExercise(textExercise, "student1");
+        var participation = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         var actualParticipation = request.get("/api/exercises/" + textExercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipationForTeamExercise() throws Exception {
         var now = ZonedDateTime.now();
         var exercise = ModelFactory.generateTextExercise(now.minusDays(2), now.plusDays(2), now.plusDays(4), course);
         exercise.setMode(ExerciseMode.TEAM);
         exercise = exerciseRepo.save(exercise);
 
-        var student = database.getUserByLogin("student1");
+        var student = database.getUserByLogin(TEST_PREFIX + "student1");
 
-        var team = new Team();
-        team.addStudents(student);
-        team.setExercise(exercise);
-        team = teamRepository.save(team);
+        var team = createTeamForExercise(student, exercise);
 
         var teams = new HashSet<Team>();
         teams.add(team);
@@ -868,10 +936,10 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipationByExerciseAndStudentIdWithEagerSubmissionsForTeam() throws Exception {
         var exercise = createTextExerciseForTeam();
-        var student = database.getUserByLogin("student1");
+        var student = database.getUserByLogin(TEST_PREFIX + "student1");
         var team = createTeamForExercise(student, exercise);
         exercise = addTeamToExercise(team, exercise);
 
@@ -885,10 +953,10 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipationByExerciseAndStudentIdForTeam() throws Exception {
         var exercise = createTextExerciseForTeam();
-        var student = database.getUserByLogin("student1");
+        var student = database.getUserByLogin(TEST_PREFIX + "student1");
         var team = createTeamForExercise(student, exercise);
         exercise = addTeamToExercise(team, exercise);
 
@@ -902,10 +970,10 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipationByExerciseAndStudentLoginAnyStateWithEagerResultsForTeam() throws Exception {
         var exercise = createTextExerciseForTeam();
-        var student = database.getUserByLogin("student1");
+        var student = database.getUserByLogin(TEST_PREFIX + "student1");
         var team = createTeamForExercise(student, exercise);
         exercise = addTeamToExercise(team, exercise);
 
@@ -919,10 +987,10 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipationByExerciseAndStudentLoginAnyStateForTeam() throws Exception {
         var exercise = createTextExerciseForTeam();
-        var student = database.getUserByLogin("student1");
+        var student = database.getUserByLogin(TEST_PREFIX + "student1");
         var team = createTeamForExercise(student, exercise);
         exercise = addTeamToExercise(team, exercise);
 
@@ -936,10 +1004,10 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deleteAllByTeamId() throws Exception {
         var exercise = createTextExerciseForTeam();
-        var student = database.getUserByLogin("student1");
+        var student = database.getUserByLogin(TEST_PREFIX + "student1");
         var team = createTeamForExercise(student, exercise);
         exercise = addTeamToExercise(team, exercise);
 
@@ -962,6 +1030,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     private Team createTeamForExercise(User student, Exercise exercise) {
         var team = new Team();
+        team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
         team.addStudents(student);
         team.setExercise(exercise);
         return teamRepository.save(team);
@@ -975,7 +1044,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource(QuizMode.class)
     void getParticipation_quizExerciseNotStarted(QuizMode quizMode) throws Exception {
         var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusDays(1), quizMode, course);
@@ -984,7 +1053,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource(QuizMode.class)
     void getParticipation_quizExerciseStartedAndNoParticipation(QuizMode quizMode) throws Exception {
         var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(2), ZonedDateTime.now().minusMinutes(1), quizMode, course);
@@ -993,12 +1062,13 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource(QuizMode.class)
     void getParticipation_quizExerciseStartedAndSubmissionAllowed(QuizMode quizMode) throws Exception {
         var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().plusMinutes(5), quizMode, course).duration(360);
         quizEx = exerciseRepo.save(quizEx);
-        quizUtilService.prepareBatchForSubmitting(quizEx, SecurityUtils.makeAuthorizationObject("instructor1"), SecurityContextHolder.getContext().getAuthentication());
+        quizUtilService.prepareBatchForSubmitting(quizEx, SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor1"),
+                SecurityContextHolder.getContext().getAuthentication());
         var participation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
         assertThat(participation.getResults()).as("New result was added to the participation").hasSize(1);
@@ -1006,7 +1076,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipation_quizBatchNotPresent() throws Exception {
         var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().plusMinutes(5), QuizMode.INDIVIDUAL, course).duration(360);
         quizEx = exerciseRepo.save(quizEx);
@@ -1018,12 +1088,12 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource(QuizMode.class)
     void getParticipation_quizExerciseFinished(QuizMode quizMode) throws Exception {
         var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(20), ZonedDateTime.now().minusMinutes(20), quizMode, course);
         quizEx = exerciseRepo.save(quizEx);
-        var participation = database.createAndSaveParticipationForExercise(quizEx, "student1");
+        var participation = database.createAndSaveParticipationForExercise(quizEx, TEST_PREFIX + "student1");
         var submission = database.addSubmission(participation, new QuizSubmission().scoreInPoints(11D).submitted(true));
         database.addResultToParticipation(participation, submission);
         var actualParticipation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
@@ -1031,27 +1101,29 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipation_noParticipation() throws Exception {
         request.get("/api/exercises/" + textExercise.getId() + "/participation", HttpStatus.FAILED_DEPENDENCY, StudentParticipation.class);
     }
 
     @Test
-    @WithMockUser(username = "student3", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void getParticipation_notStudentInCourse() throws Exception {
         request.get("/api/exercises/" + textExercise.getId() + "/participation", HttpStatus.FORBIDDEN, StudentParticipation.class);
     }
 
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    void getParticipation_submittedNotEndedQuizBatch() throws Exception {
-        QuizExercise quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().plusMinutes(10), QuizMode.BATCHED, course);
+    @ParameterizedTest
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @MethodSource("getGetParticipationsubmittedNotEndedQuizParameters")
+    void getParticipation_submittedNotEndedQuiz(QuizMode quizMode, boolean isSubmissionAllowed) throws Exception {
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().plusMinutes(10), quizMode, course);
         quizExercise.addQuestions(database.createShortAnswerQuestion());
         quizExercise.setDuration(600);
         quizExercise.setQuizPointStatistic(new QuizPointStatistic());
         quizExercise = exerciseRepo.save(quizExercise);
 
-        quizUtilService.prepareBatchForSubmitting(quizExercise, SecurityUtils.makeAuthorizationObject("instructor1"), SecurityContextHolder.getContext().getAuthentication());
+        quizUtilService.prepareBatchForSubmitting(quizExercise, SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor1"),
+                SecurityContextHolder.getContext().getAuthentication());
 
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(0);
         List<ShortAnswerSpot> spots = saQuestion.getSpots();
@@ -1068,6 +1140,12 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, QuizSubmission.class, HttpStatus.OK);
 
         quizScheduleService.processCachedQuizSubmissions();
+
+        if (!isSubmissionAllowed) {
+            // Duration is set to 0 so that QuizBatch.isSubmissionAllowed() will be false
+            quizExercise.setDuration(0);
+            quizExercise = exerciseRepo.save(quizExercise);
+        }
 
         var actualParticipation = request.get("/api/exercises/" + quizExercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation.getInitializationState()).isEqualTo(InitializationState.FINISHED);
@@ -1089,5 +1167,10 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var actualSubmittedAnswerText = (ShortAnswerSubmittedText) actualSubmittedAnswer.getSubmittedTexts().stream().findFirst().get();
         assertThat(actualSubmittedAnswerText.getText()).isEqualTo("test");
         assertThat(actualSubmittedAnswerText.isIsCorrect()).isFalse();
+    }
+
+    private static Stream<Arguments> getGetParticipationsubmittedNotEndedQuizParameters() {
+        return Stream.of(Arguments.of(QuizMode.SYNCHRONIZED, true), Arguments.of(QuizMode.SYNCHRONIZED, false), Arguments.of(QuizMode.BATCHED, true),
+                Arguments.of(QuizMode.BATCHED, false), Arguments.of(QuizMode.INDIVIDUAL, true), Arguments.of(QuizMode.INDIVIDUAL, false));
     }
 }

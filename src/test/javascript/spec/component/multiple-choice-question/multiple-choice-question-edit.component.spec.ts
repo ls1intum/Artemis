@@ -14,9 +14,13 @@ import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommand
 import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/testCase.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { ArtemisTestModule } from '../../test.module';
+import { NgbCollapseMocksModule } from '../../helpers/mocks/directive/ngbCollapseMocks.module';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
+import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 
 describe('MultipleChoiceQuestionEditComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionEditComponent>;
@@ -30,12 +34,15 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         hint: 'some-hint',
         explanation: 'some-explanation',
         invalid: false,
-        answerOptions: [{ id: 1, explanation: 'answer-explanation', hint: 'answer-hint', text: 'answer-text', invalid: false }],
+        answerOptions: [
+            { id: 1, explanation: 'answer-explanation', hint: 'answer-hint', text: 'answer-text', invalid: false },
+            { id: 2, text: 'answer-text-correct', isCorrect: true, invalid: false },
+        ],
     };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, DragDropModule],
+            imports: [ArtemisTestModule, FormsModule, DragDropModule, NgbCollapseMocksModule, MockDirective(NgbTooltip)],
             declarations: [
                 MultipleChoiceQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -44,6 +51,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
                 MockComponent(SecuredImageComponent),
                 MockComponent(DragAndDropQuestionComponent),
                 MockComponent(MultipleChoiceQuestionComponent),
+                MockComponent(MultipleChoiceVisualQuestionComponent),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(MultipleChoiceQuestionEditComponent);
@@ -59,8 +67,27 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
         expect(component.questionEditorText).toEqual(
-            'some-text\n' + '\t[hint] some-hint\n' + '\t[exp] some-explanation\n' + '\n' + '[wrong] answer-text\n' + '\t[hint] answer-hint\n' + '\t[exp] answer-explanation',
+            'some-text\n' +
+                '\t[hint] some-hint\n' +
+                '\t[exp] some-explanation\n' +
+                '\n' +
+                '[wrong] answer-text\n' +
+                '\t[hint] answer-hint\n' +
+                '\t[exp] answer-explanation\n' +
+                '[correct] answer-text-correct',
         );
+    });
+
+    it('should store scoring type when changed', () => {
+        component.question = { ...question };
+        component.question.scoringType = undefined;
+        component.question.singleChoice = true;
+
+        fixture.detectChanges();
+
+        expect(component.question.scoringType).toBeUndefined();
+        component.onSingleChoiceChanged();
+        expect(component.question.scoringType).toBe(ScoringType.ALL_OR_NOTHING);
     });
 
     it('should parse answer options but not question titles', () => {
@@ -131,6 +158,25 @@ describe('MultipleChoiceQuestionEditComponent', () => {
                     text: 'text5',
                 },
             ],
+        };
+
+        expect(component.question).toEqual(expected);
+        expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
+    });
+
+    it('should parse question titles', () => {
+        component.domainCommandsFound([['text1', null]]);
+
+        const expected: MultipleChoiceQuestion = {
+            id: question.id,
+            text: 'text1',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            hint: undefined,
+            explanation: undefined,
+            hasCorrectOption: undefined,
+            answerOptions: [],
         };
 
         expect(component.question).toEqual(expected);

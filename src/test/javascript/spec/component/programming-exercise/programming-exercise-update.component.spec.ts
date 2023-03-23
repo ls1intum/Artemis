@@ -50,8 +50,17 @@ import { LockRepositoryPolicy, SubmissionPenaltyPolicy } from 'app/entities/subm
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
-import { By } from '@angular/platform-browser';
-import { NgbAlert, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { NgbAlertsMocksModule } from '../../helpers/mocks/directive/ngbAlertsMocks.module';
+import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
+import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
+import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-difficulty.component';
+import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
+import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
+import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-problem.component';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -67,7 +76,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, OwlDateTimeModule, MockDirective(NgbTooltip), MockComponent(NgbAlert)],
+            imports: [ArtemisTestModule, NgxDatatableModule, OwlDateTimeModule, NgbTooltipMocksModule, NgbAlertsMocksModule],
             declarations: [
                 ProgrammingExerciseUpdateComponent,
                 // The following directives need to be imported raw because the SCA tests heavily rely on the UI interaction with the native inputs.
@@ -94,6 +103,13 @@ describe('ProgrammingExercise Management Update Component', () => {
                 MockComponent(ProgrammingExerciseEditableInstructionComponent),
                 MockComponent(GradingInstructionsDetailsComponent),
                 MockComponent(ButtonComponent),
+                MockComponent(LearningGoalSelectionComponent),
+                MockComponent(ProgrammingExerciseInformationComponent),
+                MockComponent(ProgrammingExerciseDifficultyComponent),
+                MockComponent(ProgrammingExerciseLanguageComponent),
+                MockComponent(ProgrammingExerciseGradingComponent),
+                MockComponent(ProgrammingExerciseProblemComponent),
+                MockComponent(DocumentationButtonComponent),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(CustomMinDirective),
@@ -281,32 +297,19 @@ describe('ProgrammingExercise Management Update Component', () => {
             tick();
 
             // Activate sca
-            let scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
-            scaCheckbox.click();
-            scaCheckbox.dispatchEvent(new Event('input'));
-            fixture.detectChanges();
+            comp.programmingExercise.staticCodeAnalysisEnabled = true;
             tick();
 
-            // Set a max penalty
-            const maxPenaltyInput = fixture.nativeElement.querySelector('#field_maxPenalty');
-            maxPenaltyInput.value = 50;
-            maxPenaltyInput.dispatchEvent(new Event('input'));
-            fixture.detectChanges();
+            comp.programmingExercise.maxStaticCodeAnalysisPenalty = 50;
             tick();
 
-            expect(scaCheckbox.checked).toBeTrue();
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeTrue();
             expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(50);
 
             // Switch to another programming language not supporting sca
-            const languageInput = fixture.nativeElement.querySelector('#field_programmingLanguage');
-            languageInput.value = ProgrammingLanguage.HASKELL;
-            languageInput.dispatchEvent(new Event('change'));
-            fixture.detectChanges();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.HASKELL);
             tick();
-            scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
 
-            expect(scaCheckbox).toBeNull();
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
             expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
             expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.HASKELL);
@@ -395,55 +398,40 @@ describe('ProgrammingExercise Management Update Component', () => {
                 fixture.detectChanges();
                 tick();
 
-                let scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
-                let maxPenaltyInput = fixture.nativeElement.querySelector('#field_maxPenalty');
-                const recreateBuildPlanCheckbox = fixture.nativeElement.querySelector('#field_recreateBuildPlans');
-                const updateTemplateCheckbox = fixture.nativeElement.querySelector('#field_updateTemplateFiles');
-
                 expect(comp.isImport).toBeTrue();
                 expect(comp.originalStaticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(maxPenalty);
-                expect(scaCheckbox.checked).toBe(scaActivatedOriginal);
-                expect(!!maxPenaltyInput).toBe(scaActivatedOriginal);
-                expect(recreateBuildPlanCheckbox.checked).toBeFalse();
                 expect(comp.programmingExercise).toBe(programmingExercise);
                 expect(courseService.find).toHaveBeenCalledWith(courseId);
 
                 // Only available for Maven
                 if (projectType === ProjectType.PLAIN_MAVEN) {
-                    expect(updateTemplateCheckbox.checked).toBeFalse();
+                    // Needed to trigger setting of update template since we can't use UI components.
+                    comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
+                    comp.onStaticCodeAnalysisChanged();
+
+                    expect(comp.updateTemplate).toBeTrue();
+
+                    comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
+                    comp.onStaticCodeAnalysisChanged();
                 }
 
-                // Activate SCA and set a max penalty
-                scaCheckbox.click();
-                scaCheckbox.dispatchEvent(new Event('input'));
-                fixture.detectChanges();
-                tick();
-                scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
+                comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
+                comp.onStaticCodeAnalysisChanged();
 
-                // SCA penalty field disappears or appears after the sca checkbox click
-                maxPenaltyInput = fixture.nativeElement.querySelector('#field_maxPenalty');
-                if (scaActivatedOriginal) {
-                    expect(maxPenaltyInput).toBeNull();
-                } else {
-                    maxPenaltyInput.value = newMaxPenalty;
-                    maxPenaltyInput.dispatchEvent(new Event('input'));
-                    fixture.detectChanges();
-                    tick();
+                if (!scaActivatedOriginal) {
+                    comp.programmingExercise.maxStaticCodeAnalysisPenalty = newMaxPenalty;
                 }
 
                 // Recreate build plan and template update should be automatically selected
-                expect(scaCheckbox.checked).toBe(!scaActivatedOriginal);
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(!scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(scaActivatedOriginal ? undefined : newMaxPenalty);
                 expect(comp.recreateBuildPlans).toBeTrue();
                 expect(comp.updateTemplate).toBeTrue();
 
-                // Deactivate recreation of build plans
-                recreateBuildPlanCheckbox.click();
-                recreateBuildPlanCheckbox.dispatchEvent(new Event('input'));
-                fixture.detectChanges();
+                comp.recreateBuildPlans = !comp.recreateBuildPlans;
+                comp.onRecreateBuildPlanOrUpdateTemplateChange();
                 tick();
 
                 // SCA should revert to the state of the original exercise, maxPenalty will revert to undefined
@@ -711,15 +699,96 @@ describe('ProgrammingExercise Management Update Component', () => {
         fixture.detectChanges();
         tick();
 
-        const scaCheckbox = debugElement.query(By.css('#field_staticCodeAnalysisEnabled'));
-        expect(scaCheckbox).toBeTruthy();
-        expect(scaCheckbox.nativeElement.disabled).toBeTrue();
+        expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
+        expect(comp.programmingExercise.testwiseCoverageEnabled).toBeFalse();
+    }));
 
-        const coverageCheckbox = debugElement.query(By.css('#field_testwiseCoverageEnabled'));
-        expect(coverageCheckbox).toBeTruthy();
-        expect(coverageCheckbox.nativeElement.disabled).toBeTrue();
+    it('should toggle the wizard mode', fakeAsync(() => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+
+        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+        tick();
+
+        expect(comp.isShowingWizardMode).toBeFalse();
+        comp.toggleWizardMode();
+        expect(comp.isShowingWizardMode).toBeTrue();
+    }));
+
+    it('should increase the wizard step', fakeAsync(() => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+
+        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+        tick();
+
+        expect(comp.currentWizardModeStep).toBe(1);
+        comp.nextWizardStep();
+        expect(comp.currentWizardModeStep).toBe(2);
+    }));
+
+    it('should return the problem step inputs', fakeAsync(() => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+
+        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+        tick();
+
+        const problemStepInputs = comp.getProblemStepInputs();
+        expect(problemStepInputs).not.toBeNull();
+    }));
+
+    it('stores withdependenices when changed', fakeAsync(() => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+
+        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+        tick();
+
+        expect(comp.withDependencies).toBeFalse();
+        comp.onWithDependenciesChanged(true);
+        expect(comp.withDependencies).toBeTrue();
+    }));
+
+    it('stores updated categories', fakeAsync(() => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+
+        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+        tick();
+
+        const categories = [new ExerciseCategory()];
+        expect(comp.exerciseCategories).toBeUndefined();
+        comp.updateCategories(categories);
+        expect(comp.exerciseCategories).toBe(categories);
     }));
 });
+
 const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage) => {
     switch (programmingLanguage) {
         case ProgrammingLanguage.SWIFT:

@@ -1,8 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { from } from 'rxjs';
-import { finalize, map } from 'rxjs/operators';
+import { EMPTY, Subject, from } from 'rxjs';
+import { catchError, finalize, map, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
@@ -18,8 +18,12 @@ import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/
     selector: 'jhi-session-management',
     templateUrl: './tutorial-group-sessions-management.component.html',
     styleUrls: ['./tutorial-group-sessions-management.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    encapsulation: ViewEncapsulation.None,
 })
-export class TutorialGroupSessionsManagementComponent {
+export class TutorialGroupSessionsManagementComponent implements OnDestroy {
+    ngUnsubscribe = new Subject<void>();
+
     isLoading = false;
 
     faPlus = faPlus;
@@ -31,10 +35,17 @@ export class TutorialGroupSessionsManagementComponent {
     tutorialGroup: TutorialGroup;
     sessions: TutorialGroupSession[] = [];
     tutorialGroupSchedule: TutorialGroupSchedule;
+    attendanceUpdated = false;
 
     isInitialized = false;
 
-    constructor(private tutorialGroupService: TutorialGroupsService, private alertService: AlertService, private modalService: NgbModal, private activeModal: NgbActiveModal) {}
+    constructor(
+        private tutorialGroupService: TutorialGroupsService,
+        private alertService: AlertService,
+        private modalService: NgbModal,
+        private activeModal: NgbActiveModal,
+        private cdr: ChangeDetectorRef,
+    ) {}
 
     initialize() {
         if (!this.tutorialGroupId || !this.course) {
@@ -55,6 +66,7 @@ export class TutorialGroupSessionsManagementComponent {
                 map((res: HttpResponse<TutorialGroup>) => {
                     return res.body;
                 }),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (tutorialGroup) => {
@@ -69,21 +81,36 @@ export class TutorialGroupSessionsManagementComponent {
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+            })
+            .add(() => this.cdr.detectChanges());
     }
 
     openCreateSessionDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(CreateTutorialGroupSessionComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(CreateTutorialGroupSessionComponent, { size: 'xl', scrollable: false, backdrop: 'static', animation: false });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroup = this.tutorialGroup;
         modalRef.componentInstance.initialize();
-        from(modalRef.result).subscribe(() => {
-            this.loadAll();
-        });
+        from(modalRef.result)
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe(() => {
+                this.loadAll();
+            });
     }
 
     clear() {
-        this.activeModal.dismiss();
+        if (this.attendanceUpdated) {
+            this.activeModal.close();
+        } else {
+            this.activeModal.dismiss();
+        }
+    }
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 }

@@ -24,10 +24,10 @@ public class AnswerMessageResource {
     /**
      * POST /courses/{courseId}/answer-messages : Create a new answer message
      *
-     * @param courseId   id of the course the post belongs to
+     * @param courseId      id of the course the post belongs to
      * @param answerMessage answer post to create
      * @return ResponseEntity with status 201 (Created) containing the created answer message in the response body,
-     * or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PostMapping("courses/{courseId}/answer-messages")
     @PreAuthorize("hasRole('USER')")
@@ -41,11 +41,11 @@ public class AnswerMessageResource {
     /**
      * PUT /courses/{courseId}/answer-messages/{answerPostId} : Update an existing answer message with given id
      *
-     * @param courseId      id of the course the answer post belongs to
-     * @param answerMessageId  id of the answer post to update
-     * @param answerMessage    answer post to update
+     * @param courseId        id of the course the answer post belongs to
+     * @param answerMessageId id of the answer post to update
+     * @param answerMessage   answer post to update
      * @return ResponseEntity with status 200 (OK) containing the updated answer message in the response body,
-     * or with status 400 (Bad Request) if the checks on user, course or associated post validity fail
+     *         or with status 400 (Bad Request) if the checks on user, course or associated post validity fail
      */
     @PutMapping("courses/{courseId}/answer-messages/{answerMessageId}")
     @PreAuthorize("hasRole('USER')")
@@ -57,10 +57,10 @@ public class AnswerMessageResource {
     /**
      * DELETE /courses/{courseId}/answer-messages/{id} : Delete an answer message by its id
      *
-     * @param courseId          id of the course the message belongs to
-     * @param answerMessageId   id of the answer message to delete
+     * @param courseId        id of the course the message belongs to
+     * @param answerMessageId id of the answer message to delete
      * @return ResponseEntity with status 200 (OK),
-     * or 400 (Bad Request) if the checks on user or course validity fail
+     *         or 400 (Bad Request) if the checks on user or course validity fail
      */
     @DeleteMapping("courses/{courseId}/answer-messages/{answerMessageId}")
     @PreAuthorize("hasRole('USER')")

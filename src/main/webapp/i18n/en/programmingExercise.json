@@ -8,7 +8,10 @@
                 "importLabel": "Import Programming Exercise",
                 "linkLabel": "Link new Programming Exercise",
                 "generateLabel": "Generate new Programming Exercise",
-                "createOrEditLabel": "Create or edit a Programming Exercise"
+                "createOrEditLabel": "Create or edit a Programming Exercise",
+                "switchToGuidedModeLabel": "Switch to guided mode",
+                "switchToTraditionalModeLabel": "Switch to normal mode",
+                "nextStepLabel": "Next"
             },
             "created": "Created new Programming Exercise with title {{ param }}",
             "updated": "Updated Programming Exercise with title {{ param }}",
@@ -31,6 +34,44 @@
                 "showTemplateSubmissions": "Show Template Submissions",
                 "showSolutionSubmissions": "Show Solution Submissions"
             },
+            "wizardMode": {
+                "steps": {
+                    "generalInfoStepTitle": "Information",
+                    "difficultyStepTitle": "Difficulty",
+                    "languageStepTitle": "Language",
+                    "gradingStepTitle": "Grading",
+                    "problemStepTitle": "Problem"
+                },
+                "detailedSteps": {
+                    "generalInfoStepTitle": "General Information",
+                    "generalInfoStepMessage": "Add some general information about the new exercise.",
+                    "difficultyStepTitle": "Difficulty",
+                    "difficultyStepMessage": "Set the difficulty for the new exercise.",
+                    "languageStepTitle": "Programming Language",
+                    "languageStepMessage": "Specify the chosen programming language as well as the project type for the new exercise.",
+                    "gradingStepTitle": "Grading",
+                    "gradingStepMessage": "Specify how students should be graded when completing this exercise.",
+                    "problemStepTitle": "Problem Statement",
+                    "problemStepMessage": "Specify the problem statement for the new exercise."
+                },
+                "gradingLabels": {
+                    "points": "There is a total of {maxPoints} points to achieve in this {exerciseType}.",
+                    "noBonus": "There is no bonus to achieve.",
+                    "bonus": "{bonusPoints} bonus points can be achieved.",
+                    "assessment": "This exercise will be assessed {assessmentType}.",
+                    "lockedSubmission": "The repositories will be locked after {submissionLimit} submissions.",
+                    "penaltySubmission": "There will be a penalty of {exceedingPenalty} points for every submission after {submissionLimit} submissions.",
+                    "unrestrictedSubmission": "There is no limit for the amount of allowed submissions.",
+                    "staticAnalysisEnabled": "Static code analysis is enabled for this exercise and there is a maximum penalty of {maxPenalty} points from static code analysis.",
+                    "staticAnalysisDisabled": "Static code analysis is disabled for this exercise.",
+                    "normalExercise": "exercise",
+                    "bonusExercise": "bonus exercise",
+                    "assessmentAutomatic": "automatically",
+                    "assessmentSemiautomatic": "semi-automatically"
+                }
+            },
+            "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students. But they can only participate after the currently defined start date.",
+            "noReleaseAndStartDateWarning": "You have not defined a release and start date for this exercise, this means that it will be immediately published and students cam participate in the exercise.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
             "unsavedChangesProjectTypeChange": "The problem statement still contains unsaved changes. Do you really want to change the project type?",
             "templateRepositoryUrl": "Template Repository Url",
@@ -125,7 +166,8 @@
             "problemStatement": {
                 "title": "Problem Statement",
                 "taskCommand": "Task",
-                "testCaseCommand": "Insert Test Case"
+                "testCaseCommand": "Insert Test Case",
+                "tasksOfExercise": "Tasks:"
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
@@ -174,7 +216,11 @@
                     "updated": "The categories were updated successfully.",
                     "couldNotBeUpdated": "The following categories could not be updated: {{categories}}.",
                     "resetSuccessful": "The categories were reset successfully.",
-                    "resetFailed": "The categories could not be reset."
+                    "resetFailed": "The categories could not be reset.",
+                    "import": "Import Configuration",
+                    "importLabel": "Import SCA configuration from exercise",
+                    "importSuccessful": "Successfully imported the configuration from exercise {{exercise}}.",
+                    "importFailed": "Failed to import categories from exercise {{exercise}}."
                 },
                 "charts": {
                     "title": "Charts",
@@ -231,7 +277,7 @@
             },
             "export": {
                 "downloadRepo": "Download Repo",
-                "downloadExampleSolution": "Download example solution",
+                "downloadExampleSolution": "Download Example Solution",
                 "downloadTests": "Download tests",
                 "downloadTestsWithExampleSolution": "Download tests with example solution",
                 "downloadExercise": "Download Exercise",
@@ -265,7 +311,6 @@
             "resultETATooltip": "Shows how long an average submission must wait for its result. Depends on the current utilization of the build system.",
             "titleTooltip": "The title of the exercise can always be changed after creating it. It will be part of the project name of the for the exercise created project on the VCS server",
             "shortNameTooltip": "The short name of the exercise can NOT be edited after creating the exercise! Together with the course short name, it is used as a unique identifier for the exercise in all parts of Artemis (incl. repositories and build plans)",
-            "categoriesTooltip": "You can define up to two categories per exercise (Enter category and press ENTER). You are free in defining them, though it might be best to use them consistently. They will be visible to students",
             "projectTypeTooltip": "This value defines the project type of the template and solution repositories.",
             "testRepositoryProjectTypeTooltip": "This value defines the project type of the test repository.",
             "timeline": {

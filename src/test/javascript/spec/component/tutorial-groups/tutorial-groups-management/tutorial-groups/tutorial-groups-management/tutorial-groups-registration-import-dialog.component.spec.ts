@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { TutorialGroupsRegistrationImportDialog } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
+import { TutorialGroupsRegistrationImportDialogComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -24,17 +24,17 @@ jest.mock('papaparse', () => {
 const mockedParse = parse as jest.MockedFunction<typeof parse>;
 
 describe('TutorialGroupsRegistrationImportDialog', () => {
-    let component: TutorialGroupsRegistrationImportDialog;
-    let fixture: ComponentFixture<TutorialGroupsRegistrationImportDialog>;
+    let component: TutorialGroupsRegistrationImportDialogComponent;
+    let fixture: ComponentFixture<TutorialGroupsRegistrationImportDialogComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FormsModule, ReactiveFormsModule],
-            declarations: [TutorialGroupsRegistrationImportDialog, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
+            declarations: [TutorialGroupsRegistrationImportDialogComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
             providers: [MockProvider(TranslateService), MockProvider(AlertService), MockProvider(TutorialGroupsService), MockProvider(NgbActiveModal)],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(TutorialGroupsRegistrationImportDialog);
+        fixture = TestBed.createComponent(TutorialGroupsRegistrationImportDialogComponent);
         component = fixture.componentInstance;
         component.selectedFile = generateDummyFile();
         fixture.detectChanges();

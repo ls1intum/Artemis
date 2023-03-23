@@ -1,5 +1,4 @@
-import { BASE_API, PUT } from '../../constants';
-import { CypressExerciseType } from '../../requests/CourseManagementRequests';
+import { BASE_API, EXERCISE_TYPE, PUT } from '../../constants';
 
 /**
  * Parent class for all exercise assessment pages.
@@ -25,27 +24,27 @@ export abstract class AbstractExerciseAssessmentPage {
         return cy.wait('@submitAssessment');
     }
 
-    rejectComplaint(response: string, exerciseType: CypressExerciseType) {
-        return this.handleComplaint(response, false, exerciseType);
+    rejectComplaint(response: string, examMode: boolean, exerciseType: EXERCISE_TYPE) {
+        return this.handleComplaint(response, false, exerciseType, examMode);
     }
 
-    acceptComplaint(response: string, exerciseType: CypressExerciseType) {
-        return this.handleComplaint(response, true, exerciseType);
+    acceptComplaint(response: string, examMode: boolean, exerciseType: EXERCISE_TYPE) {
+        return this.handleComplaint(response, true, exerciseType, examMode);
     }
 
-    private handleComplaint(response: string, accept: boolean, exerciseType: CypressExerciseType) {
-        if (exerciseType !== CypressExerciseType.MODELING) {
+    private handleComplaint(response: string, accept: boolean, exerciseType: EXERCISE_TYPE, examMode: boolean) {
+        if (exerciseType !== EXERCISE_TYPE.Modeling && !examMode) {
             cy.get('#show-complaint').click();
         }
         cy.get('#responseTextArea').type(response, { parseSpecialCharSequences: false });
         switch (exerciseType) {
-            case CypressExerciseType.PROGRAMMING:
+            case EXERCISE_TYPE.Programming:
                 cy.intercept(PUT, BASE_API + 'programming-submissions/*/assessment-after-complaint').as('complaintAnswer');
                 break;
-            case CypressExerciseType.TEXT:
+            case EXERCISE_TYPE.Text:
                 cy.intercept(PUT, BASE_API + 'participations/*/submissions/*/text-assessment-after-complaint').as('complaintAnswer');
                 break;
-            case CypressExerciseType.MODELING:
+            case EXERCISE_TYPE.Modeling:
                 cy.intercept(PUT, BASE_API + 'complaint-responses/complaint/*/resolve').as('complaintAnswer');
                 break;
             default:

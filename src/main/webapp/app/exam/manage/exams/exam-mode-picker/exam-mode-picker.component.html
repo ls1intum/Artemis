@@ -1,9 +1,16 @@
-<div class="d-flex align-items-start">
+<div id="exam-mode-picker" class="d-flex align-items-start">
     <div class="btn-group" [ngClass]="{ disabled: disableInput }">
-        <div class="btn" [class.btn-success]="!exam.testExam" [class.btn-default]="exam.testExam" [class.disabled]="disableInput" (click)="setExamMode(false)">
+        <div id="standard-mode" class="btn" [class.btn-success]="!exam.testExam" [class.btn-default]="exam.testExam" [class.disabled]="disableInput" (click)="setExamMode(false)">
             {{ 'artemisApp.examManagement.testExam.realExam' | artemisTranslate }}
         </div>
-        <div class="btn btn-default" [class.btn-primary]="exam.testExam" [class.btn-default]="!exam.testExam" [class.disabled]="disableInput" (click)="setExamMode(true)">
+        <div
+            id="test-mode"
+            class="btn btn-default"
+            [class.btn-primary]="exam.testExam"
+            [class.btn-default]="!exam.testExam"
+            [class.disabled]="disableInput"
+            (click)="setExamMode(true)"
+        >
             {{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}
         </div>
     </div>

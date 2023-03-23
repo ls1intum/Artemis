@@ -1,8 +1,15 @@
 <form name="editForm markdown-preview" role="form" novalidate #editForm="ngForm">
-    <div>
-        <h4 *ngIf="!modelingExercise.id" id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.modelingExercise.home.createLabel">Create a new Modeling Exercise</h4>
-        <h4 *ngIf="!isImport && modelingExercise.id" id="jhi-modeling-exercise-heading-edit" jhiTranslate="artemisApp.modelingExercise.home.editLabel">Edit a Modeling Exercise</h4>
-        <h4 *ngIf="isImport" id="jhi-modeling-exercise-heading-import" jhiTranslate="artemisApp.modelingExercise.home.importLabel">Import Modeling Exercise</h4>
+    <div class="d-flex align-items-center">
+        <div>
+            <h4 *ngIf="!modelingExercise.id" id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.modelingExercise.home.createLabel">
+                Create a new Modeling Exercise
+            </h4>
+            <h4 *ngIf="!isImport && modelingExercise.id" id="jhi-modeling-exercise-heading-edit" jhiTranslate="artemisApp.modelingExercise.home.editLabel">
+                Edit a Modeling Exercise
+            </h4>
+            <h4 *ngIf="isImport" id="jhi-modeling-exercise-heading-import" jhiTranslate="artemisApp.modelingExercise.home.importLabel">Import Modeling Exercise</h4>
+        </div>
+        <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
     </div>
     <div>
         <div class="form-group" [hidden]="!modelingExercise.id">
@@ -15,6 +22,7 @@
         </div>
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
+            <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
             <jhi-category-selector
                 [categories]="exerciseCategories"
                 [existingCategories]="existingCategories"
@@ -215,6 +223,15 @@
             <span *ngIf="modelingExercise.exampleSolutionPublicationDateError" class="invalid-feedback">{{
                 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate
             }}</span>
+        </div>
+        <div class="form-group" *ngIf="!isExamMode">
+            <jhi-learning-goal-selection
+                id="learning-goals"
+                [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
+                [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
+                [(ngModel)]="modelingExercise.learningGoals"
+                name="learningGoals"
+            ></jhi-learning-goal-selection>
         </div>
         <div class="form-group" *ngIf="modelingExercise.id && !isImport">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>

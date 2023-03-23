@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.Collections;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -19,11 +22,11 @@ public class TextExerciseService {
 
     private final TextExerciseRepository textExerciseRepository;
 
-    private final AuthorizationCheckService authCheckService;
+    private final ExerciseSpecificationService exerciseSpecificationService;
 
-    public TextExerciseService(TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService) {
+    public TextExerciseService(TextExerciseRepository textExerciseRepository, ExerciseSpecificationService exerciseSpecificationService) {
         this.textExerciseRepository = textExerciseRepository;
-        this.authCheckService = authCheckService;
+        this.exerciseSpecificationService = exerciseSpecificationService;
     }
 
     /**
@@ -37,33 +40,15 @@ public class TextExerciseService {
      * @param user           The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<TextExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
+    public SearchResultPageDTO<TextExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final boolean isCourseFilter, final boolean isExamFilter,
             final User user) {
+        if (!isCourseFilter && !isExamFilter) {
+            return new SearchResultPageDTO<>(Collections.emptyList(), 0);
+        }
         final var pageable = PageUtil.createExercisePageRequest(search);
         final var searchTerm = search.getSearchTerm();
-        Page<TextExercise> exercisePage = Page.empty();
-        if (authCheckService.isAdmin(user)) {
-            if (isCourseFilter && isExamFilter) {
-                exercisePage = textExerciseRepository.queryBySearchTermInAllCoursesAndExams(searchTerm, pageable);
-            }
-            else if (isCourseFilter) {
-                exercisePage = textExerciseRepository.queryBySearchTermInAllCourses(searchTerm, pageable);
-            }
-            else if (isExamFilter) {
-                exercisePage = textExerciseRepository.queryBySearchTermInAllExams(searchTerm, pageable);
-            }
-        }
-        else {
-            if (isCourseFilter && isExamFilter) {
-                exercisePage = textExerciseRepository.queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
-            else if (isCourseFilter) {
-                exercisePage = textExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
-            else if (isExamFilter) {
-                exercisePage = textExerciseRepository.queryBySearchTermInAllExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
-        }
+        Specification<TextExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
+        Page<TextExercise> exercisePage = textExerciseRepository.findAll(specification, pageable);
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 }

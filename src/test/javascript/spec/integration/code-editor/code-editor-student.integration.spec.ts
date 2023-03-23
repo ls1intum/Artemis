@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ExerciseHintButtonOverlayComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-button-overlay.component';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -36,7 +37,7 @@ import { MockResultService } from '../../helpers/mocks/service/mock-result.servi
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
@@ -57,6 +58,7 @@ import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CodeEditorStudentIntegration', () => {
     // needed to make sure ace is defined
@@ -82,7 +84,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
             declarations: [
                 CodeEditorStudentContainerComponent,
                 CodeEditorContainerComponent,
@@ -104,6 +106,7 @@ describe('CodeEditorStudentIntegration', () => {
                 MockComponent(CodeEditorFileBrowserFolderComponent),
                 MockComponent(CodeEditorFileBrowserFileComponent),
                 MockComponent(CodeEditorStatusComponent),
+                MockComponent(ExerciseHintButtonOverlayComponent),
                 TreeviewComponent,
             ],
             providers: [
@@ -178,7 +181,7 @@ describe('CodeEditorStudentIntegration', () => {
         getFeedbackDetailsForResultSubject.next({ body: feedbacks });
 
         expect(getStudentParticipationWithLatestResultStub).toHaveBeenNthCalledWith(1, participation.id);
-        expect(getFeedbackDetailsForResultStub).toHaveBeenNthCalledWith(1, participation.id, result.id);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenNthCalledWith(1, participation.id, result);
         expect(container.loadingParticipation).toBeFalse();
         expect(container.participationCouldNotBeFetched).toBeFalse();
         expect(container.participation).toEqual({ ...participation, results: [{ ...result, feedbacks }] });

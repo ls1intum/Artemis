@@ -1,16 +1,15 @@
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ActivatedRoute, Params, convertToParamMap } from '@angular/router';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { TranslateModule } from '@ngx-translate/core';
@@ -34,6 +33,7 @@ import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directiv
 import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time.component';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('StudentExamDetailComponent', () => {
     let studentExamDetailComponentFixture: ComponentFixture<StudentExamDetailComponent>;
@@ -65,7 +65,7 @@ describe('StudentExamDetailComponent', () => {
         exam = {
             course,
             id: 1,
-            registeredUsers: [student],
+            examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...student, user: student }],
             visibleDate: dayjs().add(120, 'seconds'),
             startDate: dayjs().add(200, 'seconds'),
             endDate: dayjs().add(7400, 'seconds'),
@@ -85,6 +85,7 @@ describe('StudentExamDetailComponent', () => {
             exam,
             user: student,
             exercises: [exercise],
+            numberOfExamSessions: 0,
         };
         studentExam2 = {
             id: 2,
@@ -94,6 +95,7 @@ describe('StudentExamDetailComponent', () => {
             submitted: true,
             submissionDate: dayjs(),
             exercises: [exercise],
+            numberOfExamSessions: 0,
         };
 
         studentExamWithGrade = {
@@ -110,6 +112,7 @@ describe('StudentExamDetailComponent', () => {
                 overallScoreAchieved: 40,
                 overallPointsAchievedInFirstCorrection: 90,
                 submitted: true,
+                hasPassed: true,
             },
         } as StudentExamWithGradeDTO;
 
@@ -129,7 +132,6 @@ describe('StudentExamDetailComponent', () => {
                 MockComponent(StudentExamWorkingTimeComponent),
                 MockDirective(NgForm),
                 MockDirective(NgModel),
-                MockPipe(ArtemisDurationFromSecondsPipe),
                 MockPipe(ArtemisDatePipe),
                 MockTranslateValuesDirective,
                 MockPipe(ArtemisTranslatePipe),
@@ -154,7 +156,6 @@ describe('StudentExamDetailComponent', () => {
                         );
                     },
                 }),
-                MockPipe(ArtemisDurationFromSecondsPipe),
                 MockProvider(AlertService),
                 MockDirective(TranslateDirective),
                 {
@@ -177,6 +178,7 @@ describe('StudentExamDetailComponent', () => {
                         },
                     },
                 },
+                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
             .compileComponents()
@@ -248,17 +250,6 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.isFormDisabled()).toBeTrue();
     });
 
-    it('should disable the working time form after the exam is visible to a student', () => {
-        studentExamDetailComponent.isTestRun = false;
-        studentExamDetailComponent.studentExam = studentExam;
-
-        studentExamDetailComponent.studentExam.exam!.visibleDate = dayjs().add(1, 'hour');
-        expect(studentExamDetailComponent.isFormDisabled()).toBeFalse();
-
-        studentExamDetailComponent.studentExam.exam!.visibleDate = dayjs().subtract(1, 'hour');
-        expect(studentExamDetailComponent.isFormDisabled()).toBeTrue();
-    });
-
     it('should disable the working time form if there is no exam', () => {
         studentExamDetailComponent.isTestRun = false;
         studentExamDetailComponent.studentExam = studentExam;
@@ -293,6 +284,24 @@ describe('StudentExamDetailComponent', () => {
         // therefore no useful assertion about a concrete value is possible here
         expect(studentExamDetailComponent.studentExam.submissionDate).toBeDefined();
     });
+
+    it('should open confirmation modal', fakeAsync(() => {
+        const modalService = TestBed.inject(NgbModal);
+
+        const mockReturnValue = { result: Promise.resolve('confirm') } as NgbModalRef;
+        const modalServiceSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+
+        const toggleSpy = jest.spyOn(studentExamDetailComponent, 'toggle').mockImplementation();
+
+        const content = 'Modal content';
+        studentExamDetailComponent.openConfirmationModal(content);
+
+        tick();
+
+        expect(modalServiceSpy).toHaveBeenCalledOnce();
+        expect(modalServiceSpy).toHaveBeenCalledWith(content);
+        expect(toggleSpy).toHaveBeenCalledOnce();
+    }));
 
     it('should update the percent difference when the absolute working time changes', () => {
         studentExamDetailComponent.ngOnInit();
@@ -336,5 +345,32 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.isBonus = isBonus;
         studentExamDetailComponent.gradeAfterBonus = gradeAfterBonus;
         expect(studentExamDetailComponent.getGradeExplanation()).toBe(gradeExplanation);
+    });
+
+    it('should set exam grade', () => {
+        studentExamDetailComponent.gradingScaleExists = false;
+        studentExamDetailComponent.passed = false;
+        studentExamDetailComponent.isBonus = true;
+
+        const studentExamWithGradeFromServer = {
+            ...studentExamWithGrade,
+            gradeType: GradeType.GRADE,
+            studentResult: {
+                ...studentExamWithGrade.studentResult,
+                overallGrade: '1.3',
+                gradeWithBonus: {
+                    bonusGrade: 0.3,
+                    finalGrade: 1.0,
+                },
+            },
+        };
+
+        studentExamDetailComponent.setExamGrade(studentExamWithGradeFromServer);
+
+        expect(studentExamDetailComponent.gradingScaleExists).toBeTrue();
+        expect(studentExamDetailComponent.passed).toBeTrue();
+        expect(studentExamDetailComponent.isBonus).toBeFalse();
+        expect(studentExamDetailComponent.grade).toBe(studentExamWithGradeFromServer.studentResult.overallGrade);
+        expect(studentExamDetailComponent.gradeAfterBonus).toBe(studentExamWithGradeFromServer.studentResult.gradeWithBonus.finalGrade.toString());
     });
 });

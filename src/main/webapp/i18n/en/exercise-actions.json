@@ -48,8 +48,10 @@
             "cloneExerciseRepository": "Clone a repository for this exercise",
             "repositoryPassword": "Your Password is:",
             "hoverToShow": "(hover to show)",
-            "cloneSourceTree": "Clone in SourceTree",
-            "sourceTreeDescription": "<a href='https://www.sourcetreeapp.com' target='_blank'>Atlassian SourceTree</a> is a free Git client for Windows or Mac.",
+            "cloneSourceTree": {
+                "button": "Clone in Git client",
+                "helpIcon": "This opens the repository in Sourcetree or Tower. If you do not have them, you can still clone the repository using your IDE or terminal."
+            },
             "goToBuildPlan": "Go to build plan",
             "openTextEditor": "Open text editor",
             "copyUrl": "Copy URL",

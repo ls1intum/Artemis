@@ -47,8 +47,8 @@ public class TeamService {
     /**
      * Search for users by login or name in course
      *
-     * @param course Course in which to search students
-     * @param exercise Exercise in which the student might be added to a team
+     * @param course      Course in which to search students
+     * @param exercise    Exercise in which the student might be added to a team
      * @param loginOrName Login or name by which to search students
      * @return users whose login matched
      */
@@ -74,9 +74,9 @@ public class TeamService {
     /**
      * Update the members of a team repository if a participation exists already. Users might need to be removed or added.
      *
-     * @param exerciseId Id of the exercise to which the team belongs
+     * @param exerciseId   Id of the exercise to which the team belongs
      * @param existingTeam Old team before update
-     * @param updatedTeam New team after update
+     * @param updatedTeam  New team after update
      */
     public void updateRepositoryMembersIfNeeded(Long exerciseId, Team existingTeam, Team updatedTeam) {
         var optionalParticipation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndTeamId(exerciseId, existingTeam.getId());
@@ -90,15 +90,16 @@ public class TeamService {
             // Users in the updated team that were not yet part of the existing team need to be added
             Set<User> usersToAdd = new HashSet<>(updatedTeam.getStudents());
             usersToAdd.removeAll(existingTeam.getStudents());
-            usersToAdd.forEach(user -> versionControlService.get().addMemberToRepository(participation.getVcsRepositoryUrl(), user));
+            usersToAdd.forEach(
+                    user -> versionControlService.get().addMemberToRepository(participation.getVcsRepositoryUrl(), user, VersionControlService.RepositoryPermissions.READ_WRITE));
         });
     }
 
     /**
      * Imports the given teams into exercise using the given strategy
      *
-     * @param exercise Exercise in which to import the given teams
-     * @param teams Teams that will be added to exercise
+     * @param exercise           Exercise in which to import the given teams
+     * @param teams              Teams that will be added to exercise
      * @param importStrategyType Type of strategy used to import teams (relevant for conflicts)
      * @return list of all teams that are now in the exercise
      */
@@ -111,9 +112,9 @@ public class TeamService {
     /**
      * Imports the teams from the source exercise into destination exercise using the given strategy
      *
-     * @param sourceExercise Exercise from which to copy the existing teams
+     * @param sourceExercise      Exercise from which to copy the existing teams
      * @param destinationExercise Exercise in which to copy the teams from source exercise
-     * @param importStrategyType Type of strategy used to import teams (relevant for conflicts)
+     * @param importStrategyType  Type of strategy used to import teams (relevant for conflicts)
      * @return list of all teams that are now in the destination exercise
      */
     public List<Team> importTeamsFromSourceExerciseIntoDestinationExerciseUsingStrategy(Exercise sourceExercise, Exercise destinationExercise,
@@ -130,10 +131,10 @@ public class TeamService {
      * Login is used as primary identifier and registration number is used as fallback
      *
      * @param course Course in which the users will be searched
-     * @param teams Teams that students are described only by login or visible registration number
+     * @param teams  Teams that students are described only by login or visible registration number
      * @return list of all teams that now have registered users
-     * @throws BadRequestAlertException if there is any student without login and registration number
-     * @throws StudentsNotFoundException if there is any student does not exist in course's students
+     * @throws BadRequestAlertException             if there is any student without login and registration number
+     * @throws StudentsNotFoundException            if there is any student does not exist in course's students
      * @throws StudentsAppearMultipleTimesException if a student appears in multiple teams
      */
     public List<Team> convertTeamsStudentsToUsersInDatabase(Course course, List<Team> teams) {
@@ -188,7 +189,7 @@ public class TeamService {
      * It also returns the logins with which no user could be found so that the caller of the function can be informed that
      * the given user does not exist or login is wrong
      *
-     * @param logins Logins to find users with
+     * @param logins    Logins to find users with
      * @param groupName Group in which users will be searched
      * @return list of users with given logins
      */
@@ -220,8 +221,8 @@ public class TeamService {
      * the given user does not exist or registration number is wrong
      *
      * @param registrationNumbers Registration numbers to find users with
-     * @param logins Logins to find if there is any users with given login found, throws error if there is any
-     * @param groupName Group in which users will be searched
+     * @param logins              Logins to find if there is any users with given login found, throws error if there is any
+     * @param groupName           Group in which users will be searched
      * @return list of users with given registration numbers
      * @throws StudentsAppearMultipleTimesException if any user has one of the given logins
      */
@@ -252,8 +253,8 @@ public class TeamService {
     /**
      * Converts teams' students with only login or registration number to students on given maps
      *
-     * @param teams Course in which the users will be searched
-     * @param studentsWithLogin A map that contains logins as keys and users as values
+     * @param teams                          Course in which the users will be searched
+     * @param studentsWithLogin              A map that contains logins as keys and users as values
      * @param studentsWithRegistrationNumber A map that contains registration numbers as keys and users as values
      * @return list of teams that now contains students in given maps
      */

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -61,9 +62,11 @@ class ExerciseTest {
     @Mock
     private ExerciseService exerciseService;
 
+    private AutoCloseable closeable;
+
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
 
         exercise = mock(Exercise.class, CALLS_REAL_METHODS);
         exerciseService = mock(ExerciseService.class, CALLS_REAL_METHODS);
@@ -100,6 +103,13 @@ class ExerciseTest {
         when(unratedResult.isRated()).thenReturn(false);
 
         when(studentParticipationInitialized.getSubmissions()).thenReturn(Set.of(submission1, submission2, submission3));
+    }
+
+    @AfterEach
+    void reset() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
     }
 
     @Test

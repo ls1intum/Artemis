@@ -83,6 +83,7 @@
                                 [exercise]="programmingExercise"
                                 [hasUnsavedChanges]="!!changedTestCaseIds.length"
                                 [isSaving]="isSaving"
+                                [activeTab]="activeTab"
                                 (onReset)="resetTestCases()"
                                 (onSave)="saveTestCases()"
                             ></jhi-programming-exercise-grading-table-actions>
@@ -281,18 +282,19 @@
                     </div>
                 </div>
             </div>
-            <div *ngIf="activeTab == 'code-analysis' && programmingExercise.staticCodeAnalysisEnabled">
+            <div *ngIf="activeTab === 'code-analysis' && programmingExercise.staticCodeAnalysisEnabled">
                 <div class="grading-table-layout">
                     <div class="col-7">
                         <div class="d-flex align-items-center justify-content-between mb-4">
                             <h2 class="fw-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.title">Code Analysis Categories</h2>
-                            <!-- TODO currently the reset button is permanently disabled -->
                             <jhi-programming-exercise-grading-table-actions
                                 [exercise]="programmingExercise"
                                 [hasUnsavedChanges]="!!changedCategoryIds.length"
                                 [isSaving]="isSaving"
+                                [activeTab]="activeTab"
                                 (onReset)="resetCategories()"
                                 (onSave)="saveCategories()"
+                                (onCategoryImport)="importCategories($event)"
                             ></jhi-programming-exercise-grading-table-actions>
                         </div>
 

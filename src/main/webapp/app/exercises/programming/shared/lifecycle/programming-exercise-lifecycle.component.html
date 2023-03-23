@@ -119,12 +119,12 @@
             class="form-check-input"
             name="allowComplaintsForAutomaticAssessment"
             [checked]="exercise.allowComplaintsForAutomaticAssessments"
-            [disabled]="exercise.assessmentType !== assessmentType.AUTOMATIC"
+            [disabled]="exercise.assessmentType !== assessmentType.AUTOMATIC || (!isExamMode && !exercise.dueDate) || readOnly"
             id="allowComplaintsForAutomaticAssessment"
             (change)="toggleComplaintsType()"
         />
         <label
-            [ngStyle]="exercise.assessmentType !== assessmentType.AUTOMATIC ? { color: 'grey' } : {}"
+            [ngStyle]="exercise.assessmentType !== assessmentType.AUTOMATIC || (!isExamMode && !exercise.dueDate) ? { color: 'grey' } : {}"
             class="form-control-label"
             for="allowComplaintsForAutomaticAssessment"
             jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"
@@ -137,7 +137,7 @@
             class="form-check-input"
             name="allowManualFeedbackRequests"
             [checked]="exercise.allowManualFeedbackRequests"
-            [disabled]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC"
+            [disabled]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC || readOnly"
             id="allowManualFeedbackRequests"
             (change)="toggleManualFeedbackRequests()"
         />
@@ -157,7 +157,7 @@
             class="form-check-input"
             name="releaseTestsWithExampleSolution"
             [checked]="exercise.releaseTestsWithExampleSolution"
-            [disabled]="!exercise.exampleSolutionPublicationDate"
+            [disabled]="!exercise.exampleSolutionPublicationDate || readOnly"
             id="releaseTestsWithExampleSolution"
             (change)="toggleReleaseTests()"
         />

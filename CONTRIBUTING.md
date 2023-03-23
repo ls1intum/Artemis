@@ -89,7 +89,7 @@ We use the [Spring Boot testing utilities](https://docs.spring.io/spring-boot/do
 
 Location of test files: `src/test/java`
 
-Execution command:      `./gradlew executeTests`
+Execution command:      `./gradlew test`
 
 ### Client Testing
 

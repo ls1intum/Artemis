@@ -218,7 +218,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     @Query("""
             select
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                e.endDate, sum(size(e.registeredUsers))
+                e.endDate, sum(size(e.examUsers))
                 )
             from Exam e
             where e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate} and e.course.testCourse = false
@@ -230,7 +230,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     @Query("""
             select
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                e.endDate, sum(size(e.registeredUsers))
+                e.endDate, sum(size(e.examUsers))
                 )
             from Exam e
             where e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate} and e.course.id = :#{#courseId}
@@ -434,7 +434,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 )
             from ParticipantScore p
             where p.exercise IN :exercises
-            group by p.exercise.id
+            group by p.exercise.id, p.exercise.title, p.exercise.releaseDate
             """)
     List<CourseStatisticsAverageScore> findAvgPointsForExercises(@Param("exercises") Set<Exercise> exercises);
 
@@ -443,11 +443,11 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * After that, we distinguish between the views in which this graph can be shown and call the corresponding method
      *
      * @param graphType the type of graph the data should be fetched for (see GraphType.java)
-     * @param span the spanType for which the call is executed
+     * @param span      the spanType for which the call is executed
      * @param startDate The startDate of which the data should be fetched
-     * @param endDate The endDate of which the data should be fetched
-     * @param view the view in which the data will be displayed (Artemis, Course, Exercise)
-     * @param entityId the entityId which is null for a user statistics call and contains the id for the other statistics pages
+     * @param endDate   The endDate of which the data should be fetched
+     * @param view      the view in which the data will be displayed (Artemis, Course, Exercise)
+     * @param entityId  the entityId which is null for a user statistics call and contains the id for the other statistics pages
      * @return the return value of the processed database call which returns a list of entries
      */
     default List<StatisticsEntry> getNumberOfEntriesPerTimeSlot(GraphType graphType, SpanType span, ZonedDateTime startDate, ZonedDateTime endDate, StatisticsView view,
@@ -555,8 +555,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * It then filters out all duplicated user entries per timeslot (depending on spanType) and return a list of entries
      * containing the amount of distinct users per timeslot
      *
-     * @param span DAY,WEEK,MONTH or YEAR
-     * @param result the result given by the Repository call
+     * @param span      DAY,WEEK,MONTH or YEAR
+     * @param result    the result given by the Repository call
      * @param startDate the startDate of the period
      * @param graphType the graphType for which the List should be converted
      * @return A List<StatisticsData> with only distinct users per timeslot
@@ -585,9 +585,10 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
 
     /**
      * This method is normally invoked in a for each loop and adds a user based on the list element in case it does not yet exist in the users map
-     * @param users the map of existing users
+     *
+     * @param users              the map of existing users
      * @param userStatisticEntry the statistic entry which contains a username and a potentially new user
-     * @param index the index of the map which should be considered, can be a date or an integer
+     * @param index              the index of the map which should be considered, can be a date or an integer
      */
     default void addUserToTimeslot(Map<Integer, List<String>> users, StatisticsEntry userStatisticEntry, Integer index) {
         String username = userStatisticEntry.getUsername();
@@ -607,8 +608,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * Helper class for the filterDuplicatedUsers method, which takes the users in the same timeslot as well as some parameters needed
      * for calculation to convert these into a List<StatisticsData> which is then returned
      *
-     * @param users a Map where a date gets mapped onto a list of users with entries on this date
-     * @param span the spanType for which we created the users List
+     * @param users     a Map where a date gets mapped onto a list of users with entries on this date
+     * @param span      the spanType for which we created the users List
      * @param startDate the startDate which we need for mapping into timeslots
      * @return A List<StatisticsData> with no duplicated user per timeslot
      */
@@ -649,7 +650,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * **Note**: The length of the result list must be correct, all values must be initialized with 0
      *
      * @param outcome A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
-     * @param result the list in which the converted outcome should be inserted
+     * @param result  the list in which the converted outcome should be inserted
      */
     default void sortDataIntoHours(List<StatisticsEntry> outcome, List<Integer> result) {
         for (StatisticsEntry entry : outcome) {
@@ -665,8 +666,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * map it into the results list based on the date of the entry. This method handles the spanType WEEK and MONTH
      * **Note**: The length of the result list must be correct, all values must be initialized with 0
      *
-     * @param outcome A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
-     * @param result the list in which the converted outcome should be inserted
+     * @param outcome   A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
+     * @param result    the list in which the converted outcome should be inserted
      * @param startDate the startDate of the result list
      */
     default void sortDataIntoDays(List<StatisticsEntry> outcome, List<Integer> result, ZonedDateTime startDate) {
@@ -684,8 +685,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * map it into the results list based on the date of the entry. This method sorts the data into weeks.
      * **Note**: The length of the result list must be correct, all values must be initialized with 0
      *
-     * @param outcome A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
-     * @param result the list in which the converted outcome should be inserted, should be initialized with enough values
+     * @param outcome   A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
+     * @param result    the list in which the converted outcome should be inserted, should be initialized with enough values
      * @param startDate the startDate of the result list
      */
     default void sortDataIntoWeeks(List<StatisticsEntry> outcome, List<Integer> result, ZonedDateTime startDate) {
@@ -706,8 +707,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * map it into the results list based on the date of the entry. This method handles the spanType YEAR
      * **Note**: The length of the result list must be correct, all values must be initialized with 0
      *
-     * @param outcome A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
-     * @param result the list in which the converted outcome should be inserted
+     * @param outcome   A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
+     * @param result    the list in which the converted outcome should be inserted
      * @param startDate the startDate of the result list
      */
     default void sortDataIntoMonths(List<StatisticsEntry> outcome, List<Integer> result, ZonedDateTime startDate) {

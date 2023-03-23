@@ -19,8 +19,8 @@ public class DeploymentDiagramParser {
      * Create a UML deployment diagram from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates a
      * deployment diagram containing these UML model elements.
      *
-     * @param modelElements the model elements as JSON array
-     * @param relationships the relationship elements as JSON array
+     * @param modelElements     the model elements as JSON array
+     * @param relationships     the relationship elements as JSON array
      * @param modelSubmissionId the ID of the corresponding modeling submission
      * @return a UML deployment diagram containing the parsed model elements and relationships
      * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects

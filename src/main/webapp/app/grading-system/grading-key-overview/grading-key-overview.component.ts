@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
-import { GradeType } from 'app/entities/grading-scale.model';
+import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
 import { ArtemisNavigationUtilService, findParamInRouteHierarchy } from 'app/utils/navigation.utils';
 import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
@@ -24,6 +24,9 @@ export class GradingKeyOverviewComponent implements OnInit {
     readonly faPrint = faPrint;
 
     readonly GradeEditMode = GradeEditMode;
+
+    plagiarismGrade: string;
+    noParticipationGrade: string;
 
     constructor(
         private route: ActivatedRoute,
@@ -61,6 +64,8 @@ export class GradingKeyOverviewComponent implements OnInit {
                 this.title = gradeSteps.title;
                 this.isBonus = gradeSteps.gradeType === GradeType.BONUS;
                 this.gradeSteps = this.gradingSystemService.sortGradeSteps(gradeSteps.gradeSteps);
+                this.plagiarismGrade = gradeSteps.plagiarismGrade;
+                this.noParticipationGrade = gradeSteps.noParticipationGrade;
                 if (gradeSteps.maxPoints !== undefined) {
                     if (!this.isExam) {
                         // calculate course max points based on exercises
@@ -95,6 +100,8 @@ export class GradingKeyOverviewComponent implements OnInit {
                         gradeType: source.gradeType,
                         gradeSteps: source.gradeSteps,
                         maxPoints: this.gradingSystemService.getGradingScaleMaxPoints(source),
+                        plagiarismGrade: source.plagiarismGrade || GradingScale.DEFAULT_PLAGIARISM_GRADE,
+                        noParticipationGrade: source.noParticipationGrade || GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
                     };
                 }),
             );

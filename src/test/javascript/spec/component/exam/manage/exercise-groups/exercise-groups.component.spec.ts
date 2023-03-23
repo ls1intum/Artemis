@@ -1,38 +1,35 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 import { Course } from 'app/entities/course.model';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercise-groups.component';
-import { ProgrammingExerciseInstructorStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-status.component';
-import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
-import { MockRouter } from '../../../../helpers/mocks/mock-router';
-import { ArtemisTestModule } from '../../../../test.module';
 import { FileUploadExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
 import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
 import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
 import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { ProgrammingExerciseInstructorStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-status.component';
+import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { RouterTestingModule } from '@angular/router/testing';
-import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
-import { AlertService } from 'app/core/util/alert.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+import { MockRouter } from '../../../../helpers/mocks/mock-router';
+import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
+import { ArtemisTestModule } from '../../../../test.module';
 
 describe('Exercise Groups Component', () => {
     const course = new Course();
@@ -192,41 +189,21 @@ describe('Exercise Groups Component', () => {
         expect(comp.exerciseIcon(exercise)).toBe(icon);
     });
 
-    it('opens the import modal for programming exercises', fakeAsync(() => {
-        const mockReturnValue = { result: Promise.resolve({ id: 1 } as ProgrammingExercise) } as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
-        jest.spyOn(router, 'navigate');
+    it.each([[ExerciseType.PROGRAMMING], [ExerciseType.TEXT], [ExerciseType.MODELING], [ExerciseType.QUIZ], [ExerciseType.FILE_UPLOAD]])(
+        'opens the import modal',
+        fakeAsync((exerciseType: ExerciseType) => {
+            const mockReturnValue = { result: Promise.resolve({ id: 1 } as Exercise), componentInstance: {} } as NgbModalRef;
+            jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+            jest.spyOn(router, 'navigate');
 
-        comp.openImportModal(groups[0], ExerciseType.PROGRAMMING);
-        tick();
+            comp.openImportModal(groups[0], exerciseType);
+            tick();
 
-        expect(modalService.open).toHaveBeenCalledOnce();
-        expect(router.navigate).toHaveBeenCalledOnce();
-    }));
-
-    it('opens the import modal for text exercises', fakeAsync(() => {
-        const mockReturnValue = { result: Promise.resolve({ id: 1 } as TextExercise) } as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
-        const routerNavigateStub = jest.spyOn(router, 'navigate');
-
-        comp.openImportModal(groups[0], ExerciseType.TEXT);
-        tick();
-
-        expect(modalService.open).toHaveBeenCalledOnce();
-        expect(routerNavigateStub).toHaveBeenCalledOnce();
-    }));
-
-    it('opens the import modal for modeling exercises', fakeAsync(() => {
-        const mockReturnValue = { result: Promise.resolve({ id: 1 } as ModelingExercise) } as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
-        jest.spyOn(router, 'navigate');
-
-        comp.openImportModal(groups[0], ExerciseType.MODELING);
-        tick();
-
-        expect(modalService.open).toHaveBeenCalledOnce();
-        expect(router.navigate).toHaveBeenCalledOnce();
-    }));
+            expect(modalService.open).toHaveBeenCalledOnce();
+            expect(router.navigate).toHaveBeenCalledOnce();
+            expect(mockReturnValue.componentInstance.exerciseType).toEqual(exerciseType);
+        }),
+    );
 
     it('moves up an exercise group', () => {
         comp.exerciseGroups = groups;

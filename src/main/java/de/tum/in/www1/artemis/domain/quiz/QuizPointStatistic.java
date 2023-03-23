@@ -86,7 +86,7 @@ public class QuizPointStatistic extends QuizStatistic {
      *
      * @param score whose PointCounter increases
      * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of the
-     *              quizExercise)
+     *                  quizExercise)
      */
     public void addResult(Double score, Boolean rated) {
         if (score == null) {
@@ -100,7 +100,7 @@ public class QuizPointStatistic extends QuizStatistic {
      *
      * @param score whose PointCounter decreases
      * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of the
-     *              quizExercise)
+     *                  quizExercise)
      */
     public void removeOldResult(Double score, Boolean rated) {
         if (score == null) {
@@ -112,15 +112,15 @@ public class QuizPointStatistic extends QuizStatistic {
     /**
      * 1. check if the Result is rated or unrated 2. change participants and the PointCounter, which is associated to the score
      *
-     * @param score  whose PointCounter decreases
-     * @param rated  specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of the
-     *               quizExercise)
+     * @param score       whose PointCounter decreases
+     * @param rated       specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of
+     *                        the quizExercise)
      * @param countChange the int-value, which will be added to the Counter and participants
      */
     private void changeStatisticBasedOnResult(double score, Boolean rated, int countChange) {
         /**
-          {@link de.tum.in.www1.artemis.service.util.RoundingUtil#roundScoreSpecifiedByCourseSettings}
-          is not applicable here, as we need to sort the points into existing integer buckets
+         * {@link de.tum.in.www1.artemis.service.util.RoundingUtil#roundScoreSpecifiedByCourseSettings}
+         * is not applicable here, as we need to sort the points into existing integer buckets
          */
         double points = Math.round(quiz.getOverallQuizPoints() * (score / 100));
 

@@ -1,6 +1,8 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
+import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -14,7 +16,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faEye, faFileExport, faPlayCircle, faPlus, faSignal, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { QuizExerciseImportComponent } from 'app/exercises/quiz/manage/quiz-exercise-import.component';
+import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 
 @Component({
     selector: 'jhi-quiz-exercise',
@@ -67,6 +69,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                     exercise.quizBatches = exercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+                    exercise.isEditable = isQuizEditable(exercise);
                 });
                 this.setQuizExercisesStatus();
                 this.emitExerciseCount(this.quizExercises.length);
@@ -96,15 +99,6 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     private onError(error: HttpErrorResponse) {
         this.alertService.error(error.headers.get('X-artemisApp-error')!);
-    }
-
-    /**
-     * Checks if the quiz exercise is over
-     * @param quizExercise The quiz exercise we want to know if it's over
-     * @returns {boolean} true if the quiz exercise is over, false if not.
-     */
-    quizIsOver(quizExercise: QuizExercise) {
-        return quizExercise.quizEnded;
     }
 
     /**
@@ -225,6 +219,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
         newQuizExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(newQuizExercise.course);
         newQuizExercise.status = this.quizExerciseService.getStatus(newQuizExercise);
         newQuizExercise.quizBatches = newQuizExercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+        newQuizExercise.isEditable = isQuizEditable(newQuizExercise);
         if (index === -1) {
             this.quizExercises.push(newQuizExercise);
         } else {
@@ -306,12 +301,10 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * Opens the import modal for a quiz exercise
      */
     openImportModal() {
-        const modalRef = this.modalService.open(QuizExerciseImportComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.result.then(
-            (result: QuizExercise) => {
-                this.router.navigate(['course-management', this.courseId, 'quiz-exercises', result.id, 'import']);
-            },
-            () => {},
-        );
+        const modalRef = this.modalService.open(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.exerciseType = ExerciseType.QUIZ;
+        modalRef.result.then((result: QuizExercise) => {
+            this.router.navigate(['course-management', this.courseId, 'quiz-exercises', result.id, 'import']);
+        });
     }
 }

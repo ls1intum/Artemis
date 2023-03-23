@@ -69,9 +69,9 @@ public class HestiaUtilTestService {
     /**
      * Sets up the template repository of a programming exercise with a single file
      *
-     * @param fileName The name of the file
-     * @param content The content of the file
-     * @param exercise The programming exercise
+     * @param fileName     The name of the file
+     * @param content      The content of the file
+     * @param exercise     The programming exercise
      * @param templateRepo The repository
      * @return The programming exercise
      */
@@ -130,9 +130,9 @@ public class HestiaUtilTestService {
     /**
      * Sets up the solution repository of a programming exercise with a single file
      *
-     * @param fileName The name of the file
-     * @param content The content of the file
-     * @param exercise The programming exercise
+     * @param fileName     The name of the file
+     * @param content      The content of the file
+     * @param exercise     The programming exercise
      * @param solutionRepo The repository
      * @return The programming exercise
      */
@@ -192,7 +192,7 @@ public class HestiaUtilTestService {
      * Sets up the test repository of a programming exercise with a single file
      *
      * @param fileName The name of the file
-     * @param content The content of the file
+     * @param content  The content of the file
      * @param exercise The programming exercise
      * @param testRepo The repository
      * @return The programming exercise

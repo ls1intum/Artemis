@@ -51,6 +51,7 @@ public class CodeHintResource {
 
     /**
      * GET programming-exercises/{exerciseId}/code-hints: Retrieve all code hints for a programming exercise.
+     *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the code hints for the exercise
      */
@@ -67,7 +68,7 @@ public class CodeHintResource {
     /**
      * {@code POST programming-exercises/:exerciseId/code-hints} : Create a new exerciseHint for an exercise.
      *
-     * @param exerciseId the exerciseId of the exercise of which to create the exerciseHint
+     * @param exerciseId         the exerciseId of the exercise of which to create the exerciseHint
      * @param deleteOldCodeHints Whether old code hints should be deleted
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new code hints
      */
@@ -93,8 +94,8 @@ public class CodeHintResource {
      * {@code DELETE programming-exercises/:exerciseId/code-hints/:codeHintId/solution-entries/:solutionEntryId} :
      * Removes a solution entry from a code hint.
      *
-     * @param exerciseId The id of the exercise of the code hint
-     * @param codeHintId The id of the code hint
+     * @param exerciseId      The id of the exercise of the code hint
+     * @param codeHintId      The id of the code hint
      * @param solutionEntryId The id of the solution entry
      * @return 204 No Content
      */

@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -30,7 +31,7 @@ public class BuildLogEntryService {
      * Saves the build log entries in the database. The association to the programming submission is first removed and
      * after the saving restored as the relation submission->result uses an order column.
      *
-     * @param buildLogs build logs to save
+     * @param buildLogs             build logs to save
      * @param programmingSubmission submission of the build logs
      * @return the saved build logs
      */
@@ -55,12 +56,13 @@ public class BuildLogEntryService {
      * @return the build log entries
      */
     public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
-        Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId());
-        if (optionalProgrammingSubmission.isPresent()) {
-            return optionalProgrammingSubmission.get().getBuildLogEntries();
-        }
-        return List.of();
+        return programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries)
+                .orElseGet(Collections::emptyList);
     }
+
+    private static final Set<String> ILLEGAL_REFLECTION_LOGS = Set.of("An illegal reflective access operation has occurred", "Illegal reflective access by",
+            "Please consider reporting this to the maintainers of", "to enable warnings of further illegal reflective access operations",
+            "All illegal access operations will be denied in a future release");
 
     /**
      * Determines if a given build log string can be categorized as an illegal reflection
@@ -69,10 +71,7 @@ public class BuildLogEntryService {
      * @return boolean indicating an illegal reflection log or not
      */
     public boolean isIllegalReflectionLog(String logString) {
-        return logString.startsWith("WARNING") && (logString.contains("An illegal reflective access operation has occurred")
-                || logString.contains("WARNING: Illegal reflective access by") || logString.contains("WARNING: Please consider reporting this to the maintainers of")
-                || logString.contains("to enable warnings of further illegal reflective access operations")
-                || logString.contains("All illegal access operations will be denied in a future release"));
+        return logString.startsWith("WARNING") && ILLEGAL_REFLECTION_LOGS.stream().anyMatch(logString::contains);
     }
 
     /**
@@ -83,31 +82,57 @@ public class BuildLogEntryService {
      * @return boolean indicating an unnecessary build log or not
      */
     public boolean isUnnecessaryBuildLogForProgrammingLanguage(String logString, ProgrammingLanguage programmingLanguage) {
-        boolean isInfoWarningOrErrorLog = isInfoLog(logString) || isWarningLog(logString) || isErrorLog(logString) || isDockerImageLog(logString);
-        if (ProgrammingLanguage.JAVA.equals(programmingLanguage)) {
-            return isInfoWarningOrErrorLog || logString.startsWith("Unable to publish artifact") || logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS")
-                    || logString.startsWith("Picked up JAVA_TOOL_OPTIONS") || logString.startsWith("[withMaven]") || logString.startsWith("$ docker");
+        boolean isUnnecessaryLog = isInfoLog(logString) || isWarningLog(logString) || isDockerImageLog(logString) || isGitLog(logString) || isTaskLog(logString);
+        if (isUnnecessaryLog) {
+            return true;
         }
-        else if (ProgrammingLanguage.SWIFT.equals(programmingLanguage) || ProgrammingLanguage.C.equals(programmingLanguage)) {
-            return isInfoWarningOrErrorLog || logString.contains("Unable to find image") || logString.contains(": Already exists") || logString.contains(": Pull")
-                    || logString.contains(": Waiting") || logString.contains(": Verifying") || logString.contains(": Download") || logString.startsWith("Digest:")
-                    || logString.startsWith("Status:") || logString.contains("github.com");
+        if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            return isUnnecessaryJavaLog(logString);
         }
-        return isInfoWarningOrErrorLog;
+        else if (programmingLanguage == ProgrammingLanguage.SWIFT || programmingLanguage == ProgrammingLanguage.C) {
+            return isUnnecessaryCOrSwiftLog(logString);
+        }
+        return false;
+    }
+
+    private static final Set<String> UNNECESSARY_JAVA_LOGS = Set.of("NOTE: Picked up JDK_JAVA_OPTIONS", "Picked up JAVA_TOOL_OPTIONS", "[withMaven]", "$ docker");
+
+    private boolean isUnnecessaryJavaLog(String log) {
+        return isMavenErrorLog(log) || isGradleErrorLog(log) || isGradleInfoLog(log) || UNNECESSARY_JAVA_LOGS.stream().anyMatch(log::startsWith);
+    }
+
+    private static final Set<String> UNNECESSARY_C_SWIFT_LOGS = Set.of("Unable to find image", ": Already exists", ": Pull", ": Waiting", ": Verifying", ": Download");
+
+    private boolean isUnnecessaryCOrSwiftLog(String log) {
+        return UNNECESSARY_C_SWIFT_LOGS.stream().anyMatch(log::contains) || log.startsWith("Digest:") || log.startsWith("Status:") || log.contains("github.com");
     }
 
     private boolean isInfoLog(String log) {
-        return (log.startsWith("[INFO]") && !log.contains("error")) || log.startsWith("[INFO] Downloading") || log.startsWith("[INFO] Downloaded");
+        return (log.startsWith("[INFO]") && !log.contains("error")) || log.contains("Downloading") || log.contains("Downloaded") || log.contains("Progress (");
+    }
+
+    private static final Set<String> GRADLE_LOGS = Set.of("Downloading https://services.gradle.org", "...........10%", "Here are the highlights of this release:", "- ",
+            "For more details see", "Starting a Gradle Daemon", "Deprecated Gradle features were used", "You can use '--warning-mode all' to show");
+
+    private boolean isGradleInfoLog(String log) {
+        return log.contains("userguide/command_line_interface.html#sec:command_line_warnings") || GRADLE_LOGS.stream().anyMatch(log::startsWith);
     }
 
     private boolean isWarningLog(String log) {
         return log.startsWith("[WARNING]");
     }
 
-    private boolean isErrorLog(String log) {
-        return log.startsWith("[ERROR] [Help 1]") || log.startsWith("[ERROR] For more information about the errors and possible solutions")
-                || log.startsWith("[ERROR] Re-run Maven using") || log.startsWith("[ERROR] To see the full stack trace of the errors") || log.startsWith("[ERROR] -> [Help 1]")
-                || log.startsWith("[ERROR] Failed to execute goal org.apache.maven.plugins") || "[ERROR] ".equals(log);
+    private static final Set<String> MAVEN_ERROR_LOGS = Set.of("[ERROR] [Help 1]", "[ERROR] For more information about the errors and possible solutions",
+            "[ERROR] Re-run Maven using", "[ERROR] To see the full stack trace of the errors", "[ERROR] -> [Help 1]", "[ERROR] Failed to execute goal org.apache.maven.plugins");
+
+    private boolean isMavenErrorLog(String log) {
+        return "[ERROR]".equals(log.strip()) || MAVEN_ERROR_LOGS.stream().anyMatch(log::startsWith);
+    }
+
+    private static final Set<String> GRADLE_ERROR_LOGS = Set.of("> Run with", "FAILURE", "* What went wrong:", "Execution failed", "* Get more help", "* Try:");
+
+    private boolean isGradleErrorLog(String log) {
+        return log.contains("actionable tasks:") || GRADLE_ERROR_LOGS.stream().anyMatch(log::startsWith);
     }
 
     private boolean isDockerImageLog(String log) {
@@ -118,6 +143,23 @@ public class BuildLogEntryService {
                 || (log.endsWith(": Pulling fs layer") && log.length() == 30) || (log.endsWith(": Waiting") && log.length() == 21)
                 || (log.endsWith(": Verifying Checksum") && log.length() == 32) || (log.endsWith(": Download complete") && log.length() == 31)
                 || (log.endsWith(": Pull complete") && log.length() == 27);
+    }
+
+    private static final Set<String> GIT_LOGS = Set.of("Checking out", "Switched to branch", ".git", "Fetching 'refs/heads", "Updating source code to revision",
+            "Updated source code to revision", "Creating local git repository", "hint: ", "Initialized empty Git", "Warning: Permanently added", "From ssh://");
+
+    private boolean isGitLog(String log) {
+        return log.contains("* [new branch]") || GIT_LOGS.stream().anyMatch(log::startsWith);
+    }
+
+    private static final Set<String> BUILD_TASK_LOGS = Set.of("Executing build", "Starting task", "Finished task", "Running pre-build action", "Failing task", "Running post build",
+            "Running on server", "Finalising the build...", "Stopping timer.", "Finished building", "All post build plugins have finished", "Publishing an artifact",
+            "Unable to publish artifact", "The artifact hasn't been successfully published", "Beginning to execute", "Substituting variable", "Pipeline Maven Plugin",
+            "Running in ", "Build ", "Remote agent on ", "Parsing test results", "Successfully removed working directory", "Generating build results summary",
+            "Saving build results to disk", "Store variable context");
+
+    private boolean isTaskLog(String log) {
+        return BUILD_TASK_LOGS.stream().anyMatch(log::startsWith);
     }
 
     /**
@@ -146,7 +188,7 @@ public class BuildLogEntryService {
     /**
      * Filters out unnecessary build logs that a student should not see.
      *
-     * @param buildLogEntries the build logs
+     * @param buildLogEntries     the build logs
      * @param programmingLanguage the programming language
      * @return filtered build logs
      */
@@ -180,11 +222,11 @@ public class BuildLogEntryService {
     }
 
     private boolean isCompilationError(String log) {
-        return log.contains("COMPILATION ERROR");
+        return log.contains("COMPILATION ERROR") || log.startsWith("> Compilation failed");
     }
 
     private boolean isBuildFailure(String log) {
-        return log.contains("BUILD FAILURE");
+        return log.contains("BUILD FAILURE") || log.startsWith("BUILD FAILED");
     }
 
     /**
@@ -198,5 +240,16 @@ public class BuildLogEntryService {
         List<BuildLogEntry> buildLogs = removeUnnecessaryLogs(buildLogEntries, programmingLanguage);
         // Replace some unnecessary information and hide complex details to make it easier to read the important information
         return buildLogs.stream().peek(buildLog -> buildLog.setLog(ContinuousIntegrationService.ASSIGNMENT_PATH.matcher(buildLog.getLog()).replaceAll(""))).toList();
+    }
+
+    /**
+     * Delete the build log entries for the given programming submission
+     *
+     * @param programmingSubmission the programming submission for which the build logs should be deleted
+     */
+    public void deleteBuildLogEntriesForProgrammingSubmission(ProgrammingSubmission programmingSubmission) {
+        programmingSubmission.setBuildLogEntries(Collections.emptyList());
+        programmingSubmissionRepository.save(programmingSubmission);
+        buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
     }
 }

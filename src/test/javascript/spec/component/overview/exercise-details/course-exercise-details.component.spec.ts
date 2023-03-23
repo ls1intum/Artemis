@@ -14,7 +14,7 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExampleSolutionInfo, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
@@ -34,7 +34,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
@@ -49,11 +49,21 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initializer.component';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
+import { LockRepositoryPolicy } from 'app/entities/submission-policy.model';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
+import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/core/util/alert.service';
+import { ExerciseHintButtonOverlayComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-button-overlay.component';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
+import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -63,42 +73,25 @@ describe('CourseExerciseDetailsComponent', () => {
     let teamService: TeamService;
     let participationService: ParticipationService;
     let participationWebsocketService: ParticipationWebsocketService;
+    let complaintService: ComplaintService;
+    let plagiarismCaseService: PlagiarismCasesService;
+
     let getProfileInfoMock: jest.SpyInstance;
     let getExerciseDetailsMock: jest.SpyInstance;
     let mergeStudentParticipationMock: jest.SpyInstance;
     let subscribeForParticipationChangesMock: jest.SpyInstance;
-    let complaintService: ComplaintService;
-    const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [], course: {} } as unknown as Exercise;
+    let plagiarismCaseServiceMock: jest.SpyInstance;
 
-    const modelingExercise = {
-        id: 23,
-        type: ExerciseType.MODELING,
-        studentParticipations: [],
-        exampleSolutionModel: '{ "key": "value" }',
-        exampleSolutionExplanation: 'Solution<br>Explanation',
-    } as unknown as ModelingExercise;
+    const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [], course: {} } as unknown as Exercise;
 
     const textExercise = {
         id: 24,
         type: ExerciseType.TEXT,
         studentParticipations: [],
-        exampleSolution: 'Sample<br>Solution',
+        exampleSolution: 'Example<br>Solution',
     } as unknown as TextExercise;
 
-    const fileUploadExercise = {
-        id: 25,
-        type: ExerciseType.FILE_UPLOAD,
-        studentParticipations: [],
-        exampleSolution: 'Sample<br>Solution',
-    } as unknown as FileUploadExercise;
-
-    const programmingExercise = {
-        id: 26,
-        type: ExerciseType.PROGRAMMING,
-        studentParticipations: [],
-        exam: 'Sample<br>Solution',
-        exampleSolutionPublished: true,
-    } as unknown as ProgrammingExercise;
+    const plagiarismCaseInfo = { id: 20, verdict: PlagiarismVerdict.WARNING };
 
     const route = { params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
 
@@ -118,6 +111,9 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(ResultHistoryComponent),
                 MockComponent(ResultComponent),
                 MockComponent(ComplaintsStudentViewComponent),
+                MockComponent(ExerciseHintButtonOverlayComponent),
+                MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),
+                MockComponent(ResetRepoButtonComponent),
                 MockComponent(RatingComponent),
                 MockRouterLinkDirective,
                 MockComponent(ExerciseDetailsStudentActionsComponent),
@@ -142,6 +138,9 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(QuizExerciseService),
                 MockProvider(ProgrammingSubmissionService),
                 MockProvider(ComplaintService),
+                MockProvider(SubmissionPolicyService),
+                MockProvider(PlagiarismCasesService),
+                MockProvider(AlertService),
             ],
         })
             .compileComponents()
@@ -173,7 +172,13 @@ describe('CourseExerciseDetailsComponent', () => {
                 subscribeForParticipationChangesMock = jest.spyOn(participationWebsocketService, 'subscribeForParticipationChanges');
                 subscribeForParticipationChangesMock.mockReturnValue(new BehaviorSubject<Participation | undefined>(undefined));
 
-                complaintService = TestBed.inject(ComplaintService);
+                complaintService = fixture.debugElement.injector.get(ComplaintService);
+
+                // mock plagiarismCaseService used when loading exercises
+                plagiarismCaseService = fixture.debugElement.injector.get(PlagiarismCasesService);
+                plagiarismCaseServiceMock = jest
+                    .spyOn(plagiarismCaseService, 'getPlagiarismCaseInfoForStudent')
+                    .mockReturnValue(of({ body: plagiarismCaseInfo } as HttpResponse<PlagiarismCaseInfo>));
             });
     });
 
@@ -202,7 +207,7 @@ describe('CourseExerciseDetailsComponent', () => {
         studentParticipation.results = [result];
         studentParticipation.exercise = exercise;
 
-        const exerciseDetail = { ...programmingExercise, studentParticipations: [studentParticipation] };
+        const exerciseDetail = { ...exercise, studentParticipations: [studentParticipation] };
         const exerciseDetailResponse = of({ body: exerciseDetail });
 
         // return initial participation for websocketService
@@ -228,10 +233,13 @@ describe('CourseExerciseDetailsComponent', () => {
         fixture.detectChanges();
         expect(comp.courseId).toBe(1);
         expect(comp.studentParticipations?.[0].exercise?.id).toBe(exerciseDetail.id);
+        expect(comp.exercise!.id).toBe(exercise.id);
         expect(comp.exercise!.studentParticipations![0].results![0]).toStrictEqual(changedResult);
+        expect(comp.plagiarismCaseInfo).toEqual(plagiarismCaseInfo);
         expect(comp.hasMoreResults).toBeFalse();
         expect(comp.exerciseRatedBadge(result)).toBe('bg-info');
-        expect(comp.programmingExercise?.id).toBe(programmingExercise.id);
+        expect(plagiarismCaseServiceMock).toHaveBeenCalledTimes(2);
+        expect(plagiarismCaseServiceMock).toHaveBeenCalledWith(1, exercise.id);
     }));
 
     it('should not be a quiz exercise', () => {
@@ -239,47 +247,107 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.quizExerciseStatus).toBeUndefined();
     });
 
-    it('should fill & empty sample modeling solution', () => {
-        comp.showIfExampleSolutionPresent({ ...modelingExercise });
-        expect(comp.exampleSolution).toBeUndefined();
-        expect(comp.exampleSolutionUML).toEqual(JSON.parse(modelingExercise.exampleSolutionModel!));
+    it('should configure example solution for exercise', () => {
+        const exampleSolutionInfo = {} as ExampleSolutionInfo;
+        const exerciseServiceSpy = jest.spyOn(ExerciseService, 'extractExampleSolutionInfo').mockReturnValue(exampleSolutionInfo);
 
-        comp.showIfExampleSolutionPresent({ ...exercise });
-        expect(comp.exampleSolution).toBeUndefined();
-        expect(comp.exampleSolutionUML).toBeUndefined();
+        const artemisMarkdown = fixture.debugElement.injector.get(ArtemisMarkdownService);
+
+        expect(comp.exampleSolutionInfo).toBeUndefined();
+        const newExercise = { ...textExercise };
+        comp.showIfExampleSolutionPresent(newExercise);
+        expect(comp.exampleSolutionInfo).toBe(exampleSolutionInfo);
+        expect(exerciseServiceSpy).toHaveBeenCalledOnce();
+        expect(exerciseServiceSpy).toHaveBeenCalledWith(newExercise, artemisMarkdown);
     });
 
-    it('should fill & empty sample text solution', () => {
-        comp.showIfExampleSolutionPresent({ ...textExercise });
-        expect(comp.exampleSolution).toBeDefined();
-        expect(comp.exampleSolutionUML).toBeUndefined();
+    it('should collapse example solution for tutors', () => {
+        expect(comp.exampleSolutionCollapsed).toBeUndefined();
+        comp.showIfExampleSolutionPresent({ ...textExercise, isAtLeastTutor: true });
+        expect(comp.exampleSolutionCollapsed).toBeTrue();
 
-        comp.showIfExampleSolutionPresent({ ...exercise });
-        expect(comp.exampleSolution).toBeUndefined();
-        expect(comp.exampleSolutionUML).toBeUndefined();
+        comp.showIfExampleSolutionPresent({ ...textExercise, isAtLeastTutor: false });
+        expect(comp.exampleSolutionCollapsed).toBeFalse();
     });
 
-    it('should fill & empty sample file upload solution', () => {
-        comp.showIfExampleSolutionPresent({ ...fileUploadExercise });
-        expect(comp.exampleSolution).toBeDefined();
-        expect(comp.exampleSolutionUML).toBeUndefined();
+    it('should collapse/expand example solution when clicked', () => {
+        expect(comp.exampleSolutionCollapsed).toBeUndefined();
+        comp.changeExampleSolution();
+        expect(comp.exampleSolutionCollapsed).toBeTrue();
 
-        comp.showIfExampleSolutionPresent({ ...exercise });
-        expect(comp.exampleSolution).toBeUndefined();
-        expect(comp.exampleSolutionUML).toBeUndefined();
+        comp.changeExampleSolution();
+        expect(comp.exampleSolutionCollapsed).toBeFalse();
     });
 
-    it('should fill & empty sample programming exercise solution', () => {
-        comp.showIfExampleSolutionPresent({ ...programmingExercise });
-        expect(comp.exampleSolution).toBeUndefined();
-        expect(comp.exampleSolutionUML).toBeUndefined();
+    it('should store a reference to child component', () => {
+        comp.exercise = exercise;
 
-        comp.showIfExampleSolutionPresent({ ...programmingExercise, exampleSolutionPublished: false });
-        expect(comp.exampleSolution).toBeUndefined();
-        expect(comp.exampleSolutionUML).toBeUndefined();
-
-        comp.showIfExampleSolutionPresent({ ...exercise });
-        expect(comp.exampleSolution).toBeUndefined();
-        expect(comp.exampleSolutionUML).toBeUndefined();
+        const childComponent = {} as DiscussionSectionComponent;
+        comp.onChildActivate(childComponent);
+        expect(childComponent.exercise).toEqual(exercise);
     });
+
+    it('should activate hint', () => {
+        comp.availableExerciseHints = [{ id: 1 }, { id: 2 }];
+        comp.activatedExerciseHints = [];
+
+        const activatedHint = comp.availableExerciseHints[0];
+        comp.onHintActivated(activatedHint);
+        expect(comp.availableExerciseHints).not.toContain(activatedHint);
+        expect(comp.activatedExerciseHints).toContain(activatedHint);
+    });
+
+    it('should handle new programming exercise', () => {
+        const submissionPolicyService = fixture.debugElement.injector.get(SubmissionPolicyService);
+        const submissionPolicy = new LockRepositoryPolicy();
+        const submissionPolicyServiceSpy = jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(submissionPolicy));
+
+        const programmingExercise = {
+            id: exercise.id,
+            type: ExerciseType.PROGRAMMING,
+            studentParticipations: [],
+            course: { id: 2 },
+            allowComplaintsForAutomaticAssessments: true,
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: true,
+            numberOfAssessmentsOfCorrectionRounds: [],
+        } as ProgrammingExercise;
+
+        const childComponent = {} as DiscussionSectionComponent;
+        comp.onChildActivate(childComponent);
+
+        const courseId = programmingExercise.course!.id!;
+
+        comp.hasSubmissionPolicy = false;
+        comp.courseId = courseId;
+
+        comp.handleNewExercise(programmingExercise);
+        expect(comp.baseResource).toBe(`/course-management/${courseId}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
+        expect(comp.allowComplaintsForAutomaticAssessments).toBeTrue();
+        expect(comp.hasSubmissionPolicy).toBeTrue();
+        expect(submissionPolicyServiceSpy).toHaveBeenCalledOnce();
+        expect(comp.submissionPolicy).toEqual(submissionPolicy);
+        expect(childComponent.exercise).toEqual(programmingExercise);
+    });
+
+    it('should handle error when getting latest rated result', fakeAsync(() => {
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        const error = { message: 'Error msg' };
+        const complaintServiceSpy = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(throwError(error));
+
+        const submissionId = 55;
+        comp.gradedStudentParticipation = { submissions: [{ id: submissionId }] };
+        comp.sortedHistoryResults = [{ id: 2 }];
+        comp.exercise = { ...exercise };
+
+        comp.getLatestRatedResult();
+        tick();
+
+        expect(complaintServiceSpy).toHaveBeenCalledOnce();
+        expect(complaintServiceSpy).toHaveBeenCalledWith(submissionId);
+
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
+        expect(alertServiceSpy).toHaveBeenCalledWith(error.message);
+    }));
 });

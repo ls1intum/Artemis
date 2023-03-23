@@ -49,7 +49,8 @@ public class FileUploadSubmission extends Submission {
 
     /**
      * Builds file path for file upload submission.
-     * @param exerciseId the id of the exercise
+     *
+     * @param exerciseId   the id of the exercise
      * @param submissionId the id of the submission
      * @return path where submission for file upload exercise is stored
      */

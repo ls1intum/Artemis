@@ -4,11 +4,9 @@
     <div *ngIf="showSkeleton">
         <router-outlet name="navbar"></router-outlet>
     </div>
-    <div *ngIf="showSkeleton" class="container-fluid main-container">
-        <div class="card">
-            <div class="card-body">
-                <router-outlet></router-outlet>
-            </div>
+    <div *ngIf="showSkeleton" class="card" style="border-style: none">
+        <div class="card-body">
+            <router-outlet></router-outlet>
         </div>
     </div>
 

@@ -1,15 +1,20 @@
 import { TutorialGroupDetailComponent } from 'app/course/tutorial-groups/shared/tutorial-group-detail/tutorial-group-detail.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { Component, Input, ViewChild } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { SortService } from '../../../../../../main/webapp/app/shared/service/sort.service';
+import { SortService } from 'app/shared/service/sort.service';
+import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
+import { RemoveSecondsPipe } from '../../../../../../main/webapp/app/course/tutorial-groups/shared/remove-seconds.pipe';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
-class MockHeader {
+class MockHeaderComponent {
     @Input() tutorialGroup: TutorialGroup;
 }
 
@@ -23,32 +28,41 @@ class MockHeader {
         </jhi-tutorial-group-detail>
     `,
 })
-class MockWrapper {
+class MockWrapperComponent {
     @Input()
     tutorialGroup: TutorialGroup;
 
     @ViewChild(TutorialGroupDetailComponent)
     tutorialGroupDetailInstance: TutorialGroupDetailComponent;
 
-    @ViewChild(MockHeader)
-    mockHeaderInstance: MockHeader;
+    @ViewChild(MockHeaderComponent)
+    mockHeaderInstance: MockHeaderComponent;
 }
 
 describe('TutorialGroupDetailWrapperTest', () => {
-    let fixture: ComponentFixture<MockWrapper>;
-    let component: MockWrapper;
+    let fixture: ComponentFixture<MockWrapperComponent>;
+    let component: MockWrapperComponent;
     let detailInstance: TutorialGroupDetailComponent;
-    let headerInstance: MockHeader;
+    let headerInstance: MockHeaderComponent;
     let exampleTutorialGroup: TutorialGroup;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [TutorialGroupDetailComponent, MockWrapper, MockHeader, MockPipe(ArtemisTranslatePipe)],
+            imports: [NgbTooltipMocksModule],
+            declarations: [
+                TutorialGroupDetailComponent,
+                MockWrapperComponent,
+                MockHeaderComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(RemoveSecondsPipe),
+                MockComponent(FaIconComponent),
+                MockComponent(TutorialGroupUtilizationIndicatorComponent),
+            ],
             providers: [MockProvider(ArtemisMarkdownService), MockProvider(SortService)],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(MockWrapper);
+                fixture = TestBed.createComponent(MockWrapperComponent);
                 component = fixture.componentInstance;
                 exampleTutorialGroup = generateExampleTutorialGroup({});
                 component.tutorialGroup = exampleTutorialGroup;
@@ -76,7 +90,14 @@ describe('TutorialGroupDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [TutorialGroupDetailComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [NgbTooltipMocksModule],
+            declarations: [
+                TutorialGroupDetailComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FaIconComponent),
+                MockComponent(TutorialGroupUtilizationIndicatorComponent),
+                MockPipe(RemoveSecondsPipe),
+            ],
             providers: [MockProvider(ArtemisMarkdownService), MockProvider(SortService)],
         })
             .compileComponents()
@@ -93,14 +114,13 @@ describe('TutorialGroupDetailComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
     it('should call courseClickHandler', () => {
         const courseClickHandler = jest.fn();
         component.courseClickHandler = courseClickHandler;
-        fixture.detectChanges();
+        runOnPushChangeDetection(fixture);
         const courseLink = fixture.debugElement.nativeElement.querySelector('#courseLink');
         courseLink.click();
         expect(courseClickHandler).toHaveBeenCalledOnce();
@@ -109,7 +129,7 @@ describe('TutorialGroupDetailComponent', () => {
     it('should call registrationClickHandler', () => {
         const registrationClickHandler = jest.fn();
         component.registrationClickHandler = registrationClickHandler;
-        fixture.detectChanges();
+        runOnPushChangeDetection(fixture);
         const registrationLink = fixture.debugElement.nativeElement.querySelector('#registrationLink');
         registrationLink.click();
         expect(registrationClickHandler).toHaveBeenCalledOnce();

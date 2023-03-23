@@ -25,7 +25,6 @@ public class SubmissionVersion extends DomainObject {
     @ManyToOne
     private User author;
 
-    @Lob
     @Column(name = "content")
     private String content;
 

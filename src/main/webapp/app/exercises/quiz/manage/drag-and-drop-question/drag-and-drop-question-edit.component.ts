@@ -52,6 +52,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -137,6 +138,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
     faUpload = faUpload;
+
+    readonly maxPoints = MAX_QUIZ_QUESTION_POINTS;
 
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,
@@ -621,17 +624,16 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     getMappingIndex(mapping: DragAndDropMapping): number {
         const visitedDropLocations: DropLocation[] = [];
         // Save reference to this due nested some calls
-        const that = this;
         if (
-            this.question.correctMappings!.some(function (correctMapping) {
+            this.question.correctMappings!.some((correctMapping) => {
                 if (
                     !visitedDropLocations.some((dropLocation: DropLocation) => {
-                        return that.dragAndDropQuestionUtil.isSameEntityWithTempId(dropLocation, correctMapping.dropLocation);
+                        return this.dragAndDropQuestionUtil.isSameEntityWithTempId(dropLocation, correctMapping.dropLocation);
                     })
                 ) {
                     visitedDropLocations.push(correctMapping.dropLocation!);
                 }
-                return that.dragAndDropQuestionUtil.isSameEntityWithTempId(correctMapping.dropLocation, mapping.dropLocation);
+                return this.dragAndDropQuestionUtil.isSameEntityWithTempId(correctMapping.dropLocation, mapping.dropLocation);
             })
         ) {
             return visitedDropLocations.length;
@@ -845,8 +847,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * Detect of text changes in the markdown editor
      * 1. Parse the text in the editor to get the newest values
      * 2. Notify the parent component to check the validity of the text
+     * @param value the new value of the markdown editor
      */
-    changesInMarkdown(): void {
+    changesInMarkdown(value: string): void {
+        this.questionEditorText = value;
         this.prepareForSave();
         this.questionUpdated.emit();
         this.changeDetector.detectChanges();

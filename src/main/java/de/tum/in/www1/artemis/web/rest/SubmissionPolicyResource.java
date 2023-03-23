@@ -69,12 +69,13 @@ public class SubmissionPolicyResource {
 
     /**
      * POST programming-exercises/:exerciseId/submission-policy
-     * <br><br>
+     * <br>
+     * <br>
      * Adds a submission policy to the programming exercise. When a submission policy is added to a programming
      * exercise retroactively, it is disabled by default. More information on adding submission policies
      * can be found at {@link SubmissionPolicyService#addSubmissionPolicyToProgrammingExercise(SubmissionPolicy, ProgrammingExercise)}.
      *
-     * @param exerciseId of the programming exercise for which the submission policy in request body should be added
+     * @param exerciseId       of the programming exercise for which the submission policy in request body should be added
      * @param submissionPolicy that should be added to the programming exercise
      * @return the ResponseEntity with status 200 (OK) and the added submission policy in body. Status 404 when
      *         the programming exercise does not exist, status 403 when the requester is not at least an instructor
@@ -111,7 +112,8 @@ public class SubmissionPolicyResource {
 
     /**
      * DELETE programming-exercises/:exerciseId/submission-policy
-     * <br><br>
+     * <br>
+     * <br>
      * Removes the submission policy of a programming exercise. When a submission policy is removed from a programming
      * exercise, the submission policy effect is removed from every participation. More information on removing submission policies
      * can be found at {@link SubmissionPolicyService#removeSubmissionPolicyFromProgrammingExercise(ProgrammingExercise)}.
@@ -142,14 +144,15 @@ public class SubmissionPolicyResource {
 
     /**
      * PUT programming-exercises/:exerciseId/submission-policy
-     * <br><br>
+     * <br>
+     * <br>
      * Either activates or deactivates the submission policy of a programming exercise, depending on the activate
      * request parameter. Toggling the activation of a submission policy has an immediate effect on student participations.
      * More information can be found at {@link SubmissionPolicyService#enableSubmissionPolicy(SubmissionPolicy)} and
      * {@link SubmissionPolicyService#disableSubmissionPolicy(SubmissionPolicy)}.
      *
      * @param exerciseId of the programming exercise for which the submission policy should be toggled
-     * @param activate specifies whether the submission policy should be enabled or disabled
+     * @param activate   specifies whether the submission policy should be enabled or disabled
      * @return the ResponseEntity with status 200 (OK) when the submission policy was enabled or disabled. Status 404 when
      *         the programming exercise does not exist, status 403 when the requester is not at least an instructor
      *         in the course the programming exercise belongs to and 400 when activate matches the current status of
@@ -189,12 +192,13 @@ public class SubmissionPolicyResource {
 
     /**
      * PATCH programming-exercises/:exerciseId/submission-policy
-     * <br><br>
+     * <br>
+     * <br>
      * Updates the submission policy of a programming exercise. When a submission policy is updated, the system applies
      * the effect of the submission policy immediately. More information on updating submission policies can be found at
      * {@link SubmissionPolicyService#updateSubmissionPolicy(ProgrammingExercise, SubmissionPolicy)}.
      *
-     * @param exerciseId of the programming exercise for which the submission policy in request body should be added
+     * @param exerciseId              of the programming exercise for which the submission policy in request body should be added
      * @param updatedSubmissionPolicy that should replace the old submission policy
      * @return the ResponseEntity with status 200 (OK) and the updated submission policy in body. Status 404 when
      *         the programming exercise does not exist, status 403 when the requester is not at least an instructor

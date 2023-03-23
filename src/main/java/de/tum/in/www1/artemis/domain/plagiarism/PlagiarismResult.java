@@ -60,7 +60,7 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
      */
     @CollectionTable(name = "plagiarism_result_similarity_distribution", joinColumns = @JoinColumn(name = "plagiarism_result_id"))
     @MapKeyColumn(name = "idx")
-    @Column(name = "value")
+    @Column(name = "`value`")
     @ElementCollection(fetch = FetchType.EAGER)
     protected Map<Integer, Integer> similarityDistribution;
 
@@ -111,6 +111,7 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
 
     /**
      * sort after the comparisons with the highest similarity and limit the number of comparisons to size to prevent too many plagiarism results
+     *
      * @param size the size to which the comparisons should be limited, e.g. 500
      */
     public void sortAndLimit(int size) {

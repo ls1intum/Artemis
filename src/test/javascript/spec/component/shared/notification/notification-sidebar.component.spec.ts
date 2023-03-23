@@ -17,16 +17,17 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { User } from 'app/core/user/user.model';
 import { MockUserService } from '../../../helpers/mocks/service/mock-user.service';
 import { UserService } from 'app/core/user/user.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { MockNotificationSettingsService } from '../../../helpers/mocks/service/mock-notification-settings.service';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('Notification Sidebar Component', () => {
     let notificationSidebarComponent: NotificationSidebarComponent;
@@ -66,8 +67,8 @@ describe('Notification Sidebar Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [NotificationSidebarComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockComponent(FaIconComponent)],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+            declarations: [NotificationSidebarComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockComponent(DocumentationButtonComponent)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -79,7 +80,6 @@ describe('Notification Sidebar Component', () => {
                 { provide: UserSettingsService, useClass: MockUserSettingsService },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 notificationSidebarComponentFixture = TestBed.createComponent(NotificationSidebarComponent);

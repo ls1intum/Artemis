@@ -5,6 +5,7 @@ import javax.persistence.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 
 @Entity
 @DiscriminatorValue("SS")
@@ -21,6 +22,11 @@ public class StudentScore extends ParticipantScore {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    @Override
+    public Participant getParticipant() {
+        return getUser();
     }
 
     @Override

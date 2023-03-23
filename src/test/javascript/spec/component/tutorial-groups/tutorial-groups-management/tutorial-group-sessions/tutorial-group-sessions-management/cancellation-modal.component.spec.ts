@@ -11,6 +11,7 @@ import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/t
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
+import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
 
 describe('CancellationModalComponent', () => {
     let fixture: ComponentFixture<CancellationModalComponent>;
@@ -56,7 +57,7 @@ describe('CancellationModalComponent', () => {
         const closeModalSpy = jest.spyOn(modal, 'close');
 
         component!.reasonControl!.setValue('National Holiday');
-        fixture.detectChanges();
+        runOnPushChangeDetection(fixture);
         const button = fixture.debugElement.nativeElement.querySelector('#cancel-activate-button');
         button.click();
 
@@ -73,7 +74,7 @@ describe('CancellationModalComponent', () => {
         const closeModalSpy = jest.spyOn(modal, 'close');
 
         component!.reasonControl!.setValue('National Holiday');
-        fixture.detectChanges();
+        runOnPushChangeDetection(fixture);
         component.tutorialGroupSession.status = TutorialGroupSessionStatus.CANCELLED;
         // click button with id cancel-activate-button
         const button = fixture.debugElement.nativeElement.querySelector('#cancel-activate-button');

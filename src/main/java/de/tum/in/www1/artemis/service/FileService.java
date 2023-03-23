@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
@@ -26,6 +28,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -35,6 +38,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.icu.text.CharsetDetector;
@@ -140,7 +144,7 @@ public class FileService implements DisposableBean {
         }
 
         // sanitize the filename and replace all invalid characters with with an underscore
-        filename = filename.replaceAll("[^a-zA-Z\\d\\.\\-]", "_");
+        filename = filename.replaceAll("[^a-zA-Z\\d.\\-]", "_");
 
         // Check the allowed file extensions
         final String fileExtension = FilenameUtils.getExtension(filename);
@@ -171,11 +175,12 @@ public class FileService implements DisposableBean {
 
     /**
      * Creates a new file from given contents
-     * @param filePath the path to save the file to excluding the filename
-     * @param filename the filename of the file to save
+     *
+     * @param filePath         the path to save the file to excluding the filename
+     * @param filename         the filename of the file to save
      * @param fileNameAddition the addition to the filename to make sure it is unique
-     * @param fileExtension the extension of the file to save
-     * @param keepFileName specifies if original file name should be kept
+     * @param fileExtension    the extension of the file to save
+     * @param keepFileName     specifies if original file name should be kept
      * @return the created file
      */
     private File createNewFile(String filePath, String filename, String fileNameAddition, String fileExtension, boolean keepFileName) throws IOException {
@@ -192,7 +197,7 @@ public class FileService implements DisposableBean {
         do {
             if (!keepFileName) {
                 // append a timestamp and some randomness to the filename to avoid conflicts
-                newFilename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
+                newFilename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
                         + fileExtension;
             }
 
@@ -241,7 +246,7 @@ public class FileService implements DisposableBean {
      * @param newFilePath  the new file path (this file will be moved into its proper location, if it was a temporary file)
      * @param targetFolder the folder that a temporary file should be moved to
      * @param entityId     id of the entity this file belongs to (needed to generate
-     *                     public path). If this is null, a placeholder will be inserted where the id would be
+     *                         public path). If this is null, a placeholder will be inserted where the id would be
      * @return the resulting public path (is identical to newFilePath, if file didn't need to be moved)
      */
     public String manageFilesForUpdatedFilePath(String oldFilePath, String newFilePath, String targetFolder, Long entityId) {
@@ -324,6 +329,12 @@ public class FileService implements DisposableBean {
         if (publicPath.contains("files/course/icons")) {
             return Path.of(FilePathService.getCourseIconFilePath(), filename).toString();
         }
+        if (publicPath.contains("files/exam-user")) {
+            return Path.of(FilePathService.getStudentImageFilePath(), filename).toString();
+        }
+        if (publicPath.contains("files/exam-user/signatures")) {
+            return Path.of(FilePathService.getExamUserSignatureFilePath(), filename).toString();
+        }
         if (publicPath.contains("files/attachments/lecture")) {
             String lectureId = publicPath.replace(filename, "").replace("/api/files/attachments/lecture/", "");
             return Path.of(FilePathService.getLectureAttachmentFilePath(), lectureId, filename).toString();
@@ -351,52 +362,58 @@ public class FileService implements DisposableBean {
     /**
      * Generate the public path for the file at the given path
      *
-     * @param actualPath the path to the file in the local filesystem
-     * @param entityId   the id of the entity associated with the file
+     * @param actualPathString the path to the file in the local filesystem
+     * @param entityId         the id of the entity associated with the file
      * @return the public file url that can be used by users to access the file from outside
      */
-    public String publicPathForActualPath(String actualPath, @Nullable Long entityId) {
+    public String publicPathForActualPath(String actualPathString, @Nullable Long entityId) {
         // first extract filename
-        String filename = Path.of(actualPath).getFileName().toString();
+        Path actualPath = Path.of(actualPathString);
+        String filename = actualPath.getFileName().toString();
 
         // generate part for id
         String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
 
         // check for known path to convert
-        if (actualPath.contains(FilePathService.getTempFilePath())) {
+        if (actualPathString.contains(FilePathService.getTempFilePath())) {
             return DEFAULT_FILE_SUBPATH + filename;
         }
-        if (actualPath.contains(FilePathService.getDragAndDropBackgroundFilePath())) {
+        if (actualPathString.contains(FilePathService.getDragAndDropBackgroundFilePath())) {
             return "/api/files/drag-and-drop/backgrounds/" + id + "/" + filename;
         }
-        if (actualPath.contains(FilePathService.getDragItemFilePath())) {
+        if (actualPathString.contains(FilePathService.getDragItemFilePath())) {
             return "/api/files/drag-and-drop/drag-items/" + id + "/" + filename;
         }
-        if (actualPath.contains(FilePathService.getCourseIconFilePath())) {
+        if (actualPathString.contains(FilePathService.getCourseIconFilePath())) {
             return "/api/files/course/icons/" + id + "/" + filename;
         }
-        if (actualPath.contains(FilePathService.getLectureAttachmentFilePath())) {
+        if (actualPathString.contains(FilePathService.getExamUserSignatureFilePath())) {
+            return "/api/files/exam-user/signatures/" + id + "/" + filename;
+        }
+        if (actualPathString.contains(FilePathService.getStudentImageFilePath())) {
+            return "/api/files/exam-user/" + id + "/" + filename;
+        }
+        if (actualPathString.contains(FilePathService.getLectureAttachmentFilePath())) {
             return "/api/files/attachments/lecture/" + id + "/" + filename;
         }
-        if (actualPath.contains(FilePathService.getAttachmentUnitFilePath())) {
+        if (actualPathString.contains(FilePathService.getAttachmentUnitFilePath())) {
             return "/api/files/attachments/attachment-unit/" + id + "/" + filename;
         }
-        if (actualPath.contains(FilePathService.getFileUploadExercisesFilePath())) {
-            final var path = Path.of(actualPath);
+        if (actualPathString.contains(FilePathService.getFileUploadExercisesFilePath())) {
             final long exerciseId;
             try {
                 // The last name is the file name, the one before that is the submissionId and the one before that is the exerciseId, in which we are interested
-                final var shouldBeExerciseId = path.getName(path.getNameCount() - 3).toString();
+                final var shouldBeExerciseId = actualPath.getName(actualPath.getNameCount() - 3).toString();
                 exerciseId = Long.parseLong(shouldBeExerciseId);
             }
             catch (IllegalArgumentException e) {
-                throw new FilePathParsingException("Unexpected String in upload file path. Exercise ID should be present here: " + actualPath);
+                throw new FilePathParsingException("Unexpected String in upload file path. Exercise ID should be present here: " + actualPathString);
             }
             return "/api/files/file-upload-exercises/" + exerciseId + "/submissions/" + id + "/" + filename;
         }
 
         // path is unknown => cannot convert
-        throw new FilePathParsingException("Unknown Filepath: " + actualPath);
+        throw new FilePathParsingException("Unknown Filepath: " + actualPathString);
     }
 
     /**
@@ -418,6 +435,12 @@ public class FileService implements DisposableBean {
         }
         if (targetFolder.equals(FilePathService.getCourseIconFilePath())) {
             filenameBase = "CourseIcon_";
+        }
+        if (targetFolder.equals(FilePathService.getExamUserSignatureFilePath())) {
+            filenameBase = "ExamUserSignature_";
+        }
+        if (targetFolder.equals(FilePathService.getStudentImageFilePath())) {
+            filenameBase = "ExamUserImage_";
         }
         if (targetFolder.contains(FilePathService.getLectureAttachmentFilePath())) {
             filenameBase = "LectureAttachment_";
@@ -567,7 +590,7 @@ public class FileService implements DisposableBean {
             throw new FilePathParsingException("File " + filePath + " should be updated but does not exist.");
         }
 
-        try (var reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8)); var writer = new BufferedWriter(new FileWriter(tempFile, StandardCharsets.UTF_8));) {
+        try (var reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8)); var writer = new BufferedWriter(new FileWriter(tempFile, StandardCharsets.UTF_8))) {
             Map.Entry<Pattern, Boolean> matchingStartPattern = null;
             String line = reader.readLine();
             while (line != null) {
@@ -937,14 +960,14 @@ public class FileService implements DisposableBean {
 
     /**
      * Removes illegal characters for filenames from the string.
-     *
-     * See: https://stackoverflow.com/questions/15075890/replacing-illegal-character-in-filename/15075907#15075907
+     * <p>
+     * S<a href="ee:">https://stackoverflow.com/questions/15075890/replacing-illegal-character-in-filename/15075907#1507</a>5907
      *
      * @param string the string with the characters
      * @return stripped string
      */
     public String removeIllegalCharacters(String string) {
-        return string.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+        return string.replaceAll("[^a-zA-Z0-9.\\-]", "_");
     }
 
     /**
@@ -1048,6 +1071,32 @@ public class FileService implements DisposableBean {
             catch (Exception ex) {
                 log.warn("Could not delete file {}. Error message: {}", filePath, ex.getMessage());
             }
+        }
+    }
+
+    /**
+     * Convert byte[] to MultipartFile by using CommonsMultipartFile
+     *
+     * @param fileName        file name to set file name
+     * @param extension       extension of the file
+     * @param streamByteArray byte array to save to the temp file
+     * @return multipartFile wrapper for the file stored on disk
+     */
+    public MultipartFile convertByteArrayToMultipart(String fileName, String extension, byte[] streamByteArray) {
+        try {
+            Path tempPath = Path.of(FilePathService.getTempFilePath(), fileName + extension);
+            Files.write(tempPath, streamByteArray);
+            File outputFile = tempPath.toFile();
+            FileItem fileItem = new DiskFileItem("mainFile", Files.probeContentType(tempPath), false, outputFile.getName(), (int) outputFile.length(), outputFile.getParentFile());
+
+            try (InputStream input = new FileInputStream(outputFile); OutputStream fileItemOutputStream = fileItem.getOutputStream()) {
+                IOUtils.copy(input, fileItemOutputStream);
+            }
+            return new CommonsMultipartFile(fileItem);
+        }
+        catch (IOException e) {
+            log.error("Could not convert file {}.", fileName, e);
+            throw new InternalServerErrorException("Error while converting byte[] to MultipartFile by using CommonsMultipartFile");
         }
     }
 }

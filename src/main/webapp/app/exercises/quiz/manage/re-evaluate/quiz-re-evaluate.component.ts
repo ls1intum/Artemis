@@ -58,6 +58,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
                 this.quizExercise = response.body!;
                 this.prepareEntity(this.quizExercise);
                 this.savedEntity = cloneDeep(this.quizExercise);
+                this.updateDuration();
             });
         });
         this.quizIsValid = true;
@@ -131,21 +132,6 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
     }
 
     /**
-     * @function durationString
-     * @desc Gives the duration time in a string with this format: <minutes>:<seconds>
-     * @returns {string} the duration as string
-     */
-    durationString(): string {
-        if (this.duration.seconds! <= 0) {
-            return this.duration.minutes + ':00';
-        }
-        if (this.duration.seconds! < 10) {
-            return this.duration.minutes + ':0' + this.duration.seconds;
-        }
-        return this.duration.minutes + ':' + this.duration.seconds;
-    }
-
-    /**
      * @function resetAll
      * @desc Resets the whole Quiz
      */
@@ -213,5 +199,15 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
     includedInOverallScoreChange(includedInOverallScore: IncludedInOverallScore) {
         this.quizExercise.includedInOverallScore = includedInOverallScore;
         this.cacheValidation(this.changeDetector);
+    }
+
+    /**
+     @function updateDuration
+     @desc Set duration according quiz exercise duration
+    */
+    updateDuration(): void {
+        const duration = dayjs.duration(this.quizExercise.duration ?? 0, 'seconds');
+        this.duration.minutes = 60 * duration.hours() + duration.minutes();
+        this.duration.seconds = duration.seconds();
     }
 }

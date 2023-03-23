@@ -5,6 +5,7 @@ import javax.persistence.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 
 @Entity
 @DiscriminatorValue("TS")
@@ -21,6 +22,11 @@ public class TeamScore extends ParticipantScore {
 
     public void setTeam(Team team) {
         this.team = team;
+    }
+
+    @Override
+    public Participant getParticipant() {
+        return getTeam();
     }
 
     @Override

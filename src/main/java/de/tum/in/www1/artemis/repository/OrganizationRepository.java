@@ -34,6 +34,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
 
     /**
      * Get all organizations where the given user is currently in
+     *
      * @param userId the id of the user used to retrieve the organizations
      * @return a Set of all organizations the given user is currently in
      */
@@ -42,6 +43,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
 
     /**
      * Get all organizations where the given course is currently in
+     *
      * @param courseId the id of the course used to retrieve the organizations
      * @return a Set of all organizations the given course is currently in
      */
@@ -50,6 +52,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
 
     /**
      * Get the number of users currently mapped to the given organization
+     *
      * @param organizationId the id of the organization where the users are in
      * @return the number of users contained in the organization
      */
@@ -58,6 +61,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
 
     /**
      * Get the number of courses currently mapped to the given organization
+     *
      * @param organizationId the id of the organization where the courses are in
      * @return the number of courses contained in the organization
      */
@@ -81,13 +85,15 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     /**
      * Retrieve a set containing all organizations with an emailPattern matching the
      * provided user's email.
+     *
      * @param userEmail the email of the user to match
      * @return a set of all matching organizations
      */
     @NotNull
     default Set<Organization> getAllMatchingOrganizationsByUserEmail(String userEmail) {
         Set<Organization> matchingOrganizations = new HashSet<>();
-        this.findAll().forEach(organization -> {
+        // TODO: we should avoid findAll() and instead try to filter this directly in the database
+        findAll().forEach(organization -> {
             Pattern pattern = Pattern.compile(organization.getEmailPattern());
             Matcher matcher = pattern.matcher(userEmail);
             if (matcher.matches()) {
@@ -99,6 +105,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
 
     /**
      * Get an organization by its id, or else throw exception
+     *
      * @param organizationId the id of the organization to find
      * @return the organization entity, if it exists
      */
@@ -109,6 +116,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
 
     /**
      * Get an organization containing the eagerly loaded list of users and courses
+     *
      * @param organizationId the id of the organization to retrieve
      * @return the organization with the given id containing eagerly loaded list of users and courses
      */

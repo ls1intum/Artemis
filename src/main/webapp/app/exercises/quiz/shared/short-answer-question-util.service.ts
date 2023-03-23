@@ -120,7 +120,6 @@ export class ShortAnswerQuestionUtil {
      * @return {boolean} true if the sets contain the same items, otherwise false
      */
     isSameSetOfSpots(set1?: ShortAnswerSpot[], set2?: ShortAnswerSpot[]) {
-        const service = this;
         if (set1?.length !== set2?.length) {
             // different number of elements => impossible to contain the same elements
             return false;
@@ -129,12 +128,12 @@ export class ShortAnswerQuestionUtil {
             // for every element in set1 there has to be an identical element in set2 and vice versa
             set1?.every((spot1) => {
                 return set2?.some((spot2) => {
-                    return service.isSameSpot(spot1, spot2);
+                    return this.isSameSpot(spot1, spot2);
                 });
             }) &&
             set2?.every((spot2) => {
                 return set1?.some((spot1) => {
-                    return service.isSameSpot(spot1, spot2);
+                    return this.isSameSpot(spot1, spot2);
                 });
             })
         );
@@ -149,9 +148,8 @@ export class ShortAnswerQuestionUtil {
      * @return the found mapping, or undefined if it doesn't exist
      */
     getShortAnswerMapping(mappings?: ShortAnswerMapping[], solution?: ShortAnswerSolution, spot?: ShortAnswerSpot) {
-        const that = this;
         return mappings?.find((mapping: ShortAnswerMapping) => {
-            return that.isSameSpot(spot, mapping.spot) && that.isSameSolution(solution, mapping.solution);
+            return this.isSameSpot(spot, mapping.spot) && this.isSameSolution(solution, mapping.solution);
         }, this);
     }
 

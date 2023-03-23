@@ -96,6 +96,8 @@ describe('Registered Students Component', () => {
                 getTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
 
                 comp.initialize();
+
+                fixture.detectChanges();
             });
     });
 
@@ -104,13 +106,11 @@ describe('Registered Students Component', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(CourseGroupMembershipComponent).not.toBeNull();
     });
 
     describe('OnInit', () => {
         it('should load tutorial group', () => {
-            fixture.detectChanges();
             expect(comp.course).toEqual(course);
             expect(comp.tutorialGroup).toEqual(tutorialGroup);
             expect(comp.courseGroup).toEqual(CourseGroup.STUDENTS);
@@ -130,7 +130,6 @@ describe('Registered Students Component', () => {
 
     describe('exportFileName', () => {
         it('should return course title concatenated with tutorial group title', () => {
-            fixture.detectChanges();
             expect(comp.exportFilename).toBe('Example Group');
         });
     });

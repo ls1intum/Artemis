@@ -43,7 +43,8 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
         return fileUploadExerciseRepository.save(newExercise);
     }
 
-    /** This helper method copies all attributes of the {@code importedExercise} into the new exercise.
+    /**
+     * This helper method copies all attributes of the {@code importedExercise} into the new exercise.
      * Here we ignore all external entities as well as the start-, end-, and assessment due date.
      *
      * @param importedExercise The exercise from which to copy the basis

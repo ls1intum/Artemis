@@ -3,6 +3,7 @@ services:
     gitlab:
         build: gitlab
         container_name: gitlab
+        platform: linux/amd64
         volumes:
             - artemis-gitlab-data:/var/opt/gitlab
             - artemis-gitlab-logs:/var/log/gitlab

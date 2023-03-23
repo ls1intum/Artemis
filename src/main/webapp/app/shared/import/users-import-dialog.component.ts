@@ -3,6 +3,7 @@ import { NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
+import { ExamUserDTO } from 'app/entities/exam-user-dto.model';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -10,14 +11,17 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { parse } from 'papaparse';
-import { faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
 const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
+const POSSIBLE_EMAIL_HEADERS = ['email', 'e-mail', 'mail'];
 const POSSIBLE_FIRST_NAME_HEADERS = ['firstname', 'firstnameofstudent', 'givenname', 'forename', 'vorname'];
 const POSSIBLE_LAST_NAME_HEADERS = ['familyname', 'lastname', 'familynameofstudent', 'surname', 'nachname', 'familienname', 'name'];
+const POSSIBLE_ROOM_HEADERS = ['actualroom', 'actualRoom', 'raum', 'room', 'Room'];
+const POSSIBLE_SEAT_HEADERS = ['actualseat', 'actualSeat', 'sitzplatz', 'sitz', 'seat', 'Seat'];
 
 type CsvUser = object;
 
@@ -36,12 +40,15 @@ export class UsersImportDialogComponent implements OnDestroy {
     @Input() courseGroup: string;
     @Input() exam: Exam | undefined;
     @Input() tutorialGroup: TutorialGroup | undefined;
+    @Input() examUserMode: boolean;
 
     usersToImport: StudentDTO[] = [];
+    examUsersToImport: ExamUserDTO[] = [];
     notFoundUsers: StudentDTO[] = [];
 
     isParsing = false;
     validationError?: string;
+    noUsersFoundError?: boolean;
     isImporting = false;
     hasImported = false;
 
@@ -54,6 +61,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     faCheck = faCheck;
     faCircleNotch = faCircleNotch;
     faUpload = faUpload;
+    faArrowRight = faArrowRight;
 
     constructor(
         private activeModal: NgbActiveModal,
@@ -69,6 +77,7 @@ export class UsersImportDialogComponent implements OnDestroy {
 
     private resetDialog() {
         this.usersToImport = [];
+        this.examUsersToImport = [];
         this.notFoundUsers = [];
         this.hasImported = false;
     }
@@ -76,17 +85,21 @@ export class UsersImportDialogComponent implements OnDestroy {
     async onCSVFileSelect(event: any) {
         if (event.target.files.length > 0) {
             this.resetDialog();
-            this.usersToImport = await this.readUsersFromCSVFile(event, event.target.files[0]);
+            if (this.examUserMode) {
+                this.examUsersToImport = await this.readUsersFromCSVFile(event, event.target.files[0]);
+            } else {
+                this.usersToImport = await this.readUsersFromCSVFile(event, event.target.files[0]);
+            }
         }
     }
 
     /**
-     * Reads users from a csv file into a list of StudentDTOs
+     * Reads users from a csv file into a list of StudentDTOs or ExamUserDTO if examUserMode is true
      * The column "registrationNumber" is mandatory since the import requires it as an identifier
      * @param event File change event from the HTML input of type file
      * @param csvFile File that contains one user per row and has at least the columns specified in csvColumns
      */
-    private async readUsersFromCSVFile(event: any, csvFile: File): Promise<StudentDTO[]> {
+    private async readUsersFromCSVFile(event: any, csvFile: File): Promise<StudentDTO[] | ExamUserDTO[]> {
         let csvUsers: CsvUser[] = [];
         try {
             this.isParsing = true;
@@ -99,8 +112,10 @@ export class UsersImportDialogComponent implements OnDestroy {
         }
         if (csvUsers.length > 0) {
             this.performExtraValidations(csvFile, csvUsers);
+        } else if (csvUsers.length === 0) {
+            this.noUsersFoundError = true;
         }
-        if (this.validationError) {
+        if (this.validationError || csvUsers.length === 0) {
             event.target.value = ''; // remove selected file so user can fix the file and select it again
             return [];
         }
@@ -109,18 +124,38 @@ export class UsersImportDialogComponent implements OnDestroy {
 
         const registrationNumberHeader = usedHeaders.find((value) => POSSIBLE_REGISTRATION_NUMBER_HEADERS.includes(value)) || '';
         const loginHeader = usedHeaders.find((value) => POSSIBLE_LOGIN_HEADERS.includes(value)) || '';
+        const emailHeader = usedHeaders.find((value) => POSSIBLE_EMAIL_HEADERS.includes(value)) || '';
         const firstNameHeader = usedHeaders.find((value) => POSSIBLE_FIRST_NAME_HEADERS.includes(value)) || '';
         const lastNameHeader = usedHeaders.find((value) => POSSIBLE_LAST_NAME_HEADERS.includes(value)) || '';
 
-        return csvUsers.map(
-            (users) =>
-                ({
-                    registrationNumber: users[registrationNumberHeader]?.trim() || '',
-                    login: users[loginHeader]?.trim() || '',
-                    firstName: users[firstNameHeader]?.trim() || '',
-                    lastName: users[lastNameHeader]?.trim() || '',
-                } as StudentDTO),
-        );
+        const roomHeader = usedHeaders.find((value) => POSSIBLE_ROOM_HEADERS.includes(value)) || '';
+        const seatHeader = usedHeaders.find((value) => POSSIBLE_SEAT_HEADERS.includes(value)) || '';
+
+        if (this.examUserMode) {
+            return csvUsers.map(
+                (users) =>
+                    ({
+                        registrationNumber: users[registrationNumberHeader]?.trim() || '',
+                        login: users[loginHeader]?.trim() || '',
+                        email: users[emailHeader]?.trim() || '',
+                        firstName: users[firstNameHeader]?.trim() || '',
+                        lastName: users[lastNameHeader]?.trim() || '',
+                        room: users[roomHeader]?.trim() || '',
+                        seat: users[seatHeader]?.trim() || '',
+                    } as ExamUserDTO),
+            );
+        } else {
+            return csvUsers.map(
+                (users) =>
+                    ({
+                        registrationNumber: users[registrationNumberHeader]?.trim() || '',
+                        login: users[loginHeader]?.trim() || '',
+                        email: users[emailHeader]?.trim() || '',
+                        firstName: users[firstNameHeader]?.trim() || '',
+                        lastName: users[lastNameHeader]?.trim() || '',
+                    } as StudentDTO),
+            );
+        }
     }
 
     /**
@@ -156,7 +191,9 @@ export class UsersImportDialogComponent implements OnDestroy {
         for (const [i, user] of csvUsers.entries()) {
             const hasLogin = this.checkIfEntryContainsKey(user, POSSIBLE_LOGIN_HEADERS);
             const hasRegistrationNumber = this.checkIfEntryContainsKey(user, POSSIBLE_REGISTRATION_NUMBER_HEADERS);
-            if (!hasLogin && !hasRegistrationNumber) {
+            const hasEmail = this.checkIfEntryContainsKey(user, POSSIBLE_EMAIL_HEADERS);
+
+            if (!hasLogin && !hasRegistrationNumber && !hasEmail) {
                 // '+ 2' instead of '+ 1' due to the header column in the csv file
                 invalidList.push(i + 2);
             }
@@ -196,7 +233,7 @@ export class UsersImportDialogComponent implements OnDestroy {
                 error: () => this.onSaveError(),
             });
         } else if (!this.courseGroup && this.exam) {
-            this.examManagementService.addStudentsToExam(this.courseId, this.exam.id!, this.usersToImport).subscribe({
+            this.examManagementService.addStudentsToExam(this.courseId, this.exam.id!, this.examUsersToImport).subscribe({
                 next: (res) => this.onSaveSuccess(res),
                 error: () => this.onSaveError(),
             });
@@ -225,7 +262,8 @@ export class UsersImportDialogComponent implements OnDestroy {
         for (const notFound of this.notFoundUsers) {
             if (
                 (notFound.registrationNumber?.length > 0 && notFound.registrationNumber === user.registrationNumber) ||
-                (notFound.login?.length > 0 && notFound.login === user.login)
+                (notFound.login?.length > 0 && notFound.login === user.login) ||
+                (notFound.email?.length > 0 && notFound.email === user.email)
             ) {
                 return true;
             }
@@ -238,7 +276,11 @@ export class UsersImportDialogComponent implements OnDestroy {
      * Number of Users that were successfully imported
      */
     get numberOfUsersImported(): number {
-        return !this.hasImported ? 0 : this.usersToImport.length - this.numberOfUsersNotImported;
+        return !this.hasImported
+            ? 0
+            : this.examUserMode
+            ? this.examUsersToImport.length - this.numberOfUsersNotImported
+            : this.usersToImport.length - this.numberOfUsersNotImported;
     }
 
     /**
@@ -249,7 +291,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     }
 
     get isSubmitDisabled(): boolean {
-        return this.isImporting || !this.usersToImport?.length;
+        return this.examUserMode ? this.isImporting || !this.examUsersToImport?.length : this.isImporting || !this.usersToImport?.length;
     }
 
     /**

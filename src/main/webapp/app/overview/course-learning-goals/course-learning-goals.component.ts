@@ -5,18 +5,16 @@ import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LearningGoal } from 'app/entities/learningGoal.model';
-import { forkJoin } from 'rxjs';
-import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
-import { AccountService } from 'app/core/auth/account.service';
-import { captureException } from '@sentry/browser';
-import { isEqual } from 'lodash-es';
+import { Subscription, forkJoin } from 'rxjs';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-learning-goals',
     templateUrl: './course-learning-goals.component.html',
-    styles: [],
+    styleUrls: ['../course-overview.scss'],
 })
 export class CourseLearningGoalsComponent implements OnInit {
     @Input()
@@ -26,18 +24,19 @@ export class CourseLearningGoalsComponent implements OnInit {
     course?: Course;
     learningGoals: LearningGoal[] = [];
     prerequisites: LearningGoal[] = [];
-    learningGoalIdToLearningGoalProgress = new Map<number, IndividualLearningGoalProgress>();
 
-    // this is calculated using the participant scores table on the server instead of going participation -> submission -> result
-    // we calculate it here to find out if the participant scores table is robust enough to replace the classic way of finding the last result
-    learningGoalIdToLearningGoalProgressUsingParticipantScoresTables = new Map<number, IndividualLearningGoalProgress>();
+    isCollapsed = true;
+    faAngleDown = faAngleDown;
+    faAngleUp = faAngleUp;
+
+    private courseUpdateSubscription?: Subscription;
 
     constructor(
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
         private courseCalculationService: CourseScoreCalculationService,
+        private courseManagementService: CourseManagementService,
         private learningGoalService: LearningGoalService,
-        private accountService: AccountService,
     ) {}
 
     ngOnInit(): void {
@@ -45,18 +44,35 @@ export class CourseLearningGoalsComponent implements OnInit {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
-        this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.setCourse(this.courseCalculationService.getCourse(this.courseId));
+        this.courseUpdateSubscription = this.courseManagementService.getCourseUpdates(this.courseId).subscribe((course) => this.setCourse(course));
+    }
+
+    private setCourse(course?: Course) {
+        this.course = course;
         if (this.course && this.course.learningGoals && this.course.prerequisites) {
             this.learningGoals = this.course.learningGoals;
             this.prerequisites = this.course.prerequisites;
-            this.loadProgress();
         } else {
             this.loadData();
         }
     }
 
-    getLearningGoalProgress(learningGoal: LearningGoal) {
-        return this.learningGoalIdToLearningGoalProgress.get(learningGoal.id!);
+    get countLearningGoals() {
+        return this.learningGoals.length;
+    }
+
+    get countMasteredLearningGoals() {
+        return this.learningGoals.filter((lg) => {
+            if (lg.userProgress?.length && lg.masteryThreshold) {
+                return lg.userProgress.first()!.progress == 100 && lg.userProgress.first()!.confidence! >= lg.masteryThreshold!;
+            }
+            return false;
+        }).length;
+    }
+
+    get countPrerequisites() {
+        return this.prerequisites.length;
     }
 
     /**
@@ -68,41 +84,7 @@ export class CourseLearningGoalsComponent implements OnInit {
             next: ([learningGoals, prerequisites]) => {
                 this.learningGoals = learningGoals.body!;
                 this.prerequisites = prerequisites.body!;
-                this.loadProgress();
                 this.isLoading = false;
-            },
-            error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-        });
-    }
-
-    /**
-     * Loads the respective progress for each learning goal
-     */
-    loadProgress() {
-        if (!this.learningGoals) {
-            return;
-        }
-
-        const progressObservable = this.learningGoals.map((lg) => {
-            return this.learningGoalService.getProgress(lg.id!, this.courseId, false);
-        });
-        const progressObservableUsingParticipantScore = this.learningGoals.map((lg) => {
-            return this.learningGoalService.getProgress(lg.id!, this.courseId, true);
-        });
-
-        this.isLoading = true;
-        forkJoin([forkJoin(progressObservable), forkJoin(progressObservableUsingParticipantScore)]).subscribe({
-            next: ([learningGoalProgressResponses, learningGoalProgressResponsesUsingParticipantScores]) => {
-                for (const learningGoalProgressResponse of learningGoalProgressResponses) {
-                    const learningGoalProgress = learningGoalProgressResponse.body!;
-                    this.learningGoalIdToLearningGoalProgress.set(learningGoalProgress.learningGoalId, learningGoalProgress);
-                }
-                for (const learningGoalProgressResponse of learningGoalProgressResponsesUsingParticipantScores) {
-                    const learningGoalProgress = learningGoalProgressResponse.body!;
-                    this.learningGoalIdToLearningGoalProgressUsingParticipantScoresTables.set(learningGoalProgress.learningGoalId, learningGoalProgress);
-                }
-                this.isLoading = false;
-                this.testIfScoreUsingParticipantScoresTableDiffers();
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });
@@ -115,24 +97,5 @@ export class CourseLearningGoalsComponent implements OnInit {
      */
     identify(index: number, learningGoal: LearningGoal) {
         return `${index}-${learningGoal.id}`;
-    }
-
-    /**
-     * Using this test we want to find out if the progress calculation using the participant scores table leads to the same
-     * result as going through participation -> submission -> result
-     */
-    private testIfScoreUsingParticipantScoresTableDiffers() {
-        this.learningGoalIdToLearningGoalProgress.forEach((learningGoalProgress, learningGoalId) => {
-            const learningGoalProgressParticipantScoresTable = this.learningGoalIdToLearningGoalProgressUsingParticipantScoresTables.get(learningGoalId);
-            if (!isEqual(learningGoalProgress.pointsAchievedByStudentInLearningGoal, learningGoalProgressParticipantScoresTable!.pointsAchievedByStudentInLearningGoal)) {
-                const userName = this.accountService.userIdentity?.login;
-                const message = `Warning: Learning Goal(id=${
-                    learningGoalProgress.learningGoalId
-                }) Progress different using participant scores for user ${userName}! Original: ${JSON.stringify(learningGoalProgress)} | Using ParticipantScores: ${JSON.stringify(
-                    learningGoalProgressParticipantScoresTable,
-                )}!`;
-                captureException(new Error(message));
-            }
-        });
     }
 }

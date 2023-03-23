@@ -74,12 +74,12 @@ public class UserDTO extends AuditingEntityDTO {
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
                 user.getImageUrl(), user.getLangKey(), user.isInternal(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations(), user.getVcsAccessToken());
+                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
             String langKey, boolean isInternal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead,
-            Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations, String accessToken) {
+            Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations) {
 
         this.id = id;
         this.login = login;
@@ -103,7 +103,6 @@ public class UserDTO extends AuditingEntityDTO {
         this.groups = groups;
         this.guidedTourSettings = guidedTourSettings;
         this.organizations = organizations;
-        this.vcsAccessToken = accessToken;
     }
 
     public Long getId() {
@@ -230,6 +229,11 @@ public class UserDTO extends AuditingEntityDTO {
         return vcsAccessToken;
     }
 
+    /**
+     * Only set this token if it is absolutely necessary in the client, otherwise this might reveal secret information
+     *
+     * @param vcsAccessToken the access token for the VCS repository
+     */
     public void setVcsAccessToken(String vcsAccessToken) {
         this.vcsAccessToken = vcsAccessToken;
     }

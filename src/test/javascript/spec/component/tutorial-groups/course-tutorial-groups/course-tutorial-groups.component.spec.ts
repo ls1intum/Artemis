@@ -14,6 +14,8 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { BehaviorSubject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
+import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
+import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 
 @Component({
     selector: 'jhi-course-tutorial-groups-overview',
@@ -21,9 +23,11 @@ import { Course } from 'app/entities/course.model';
 })
 class MockCourseTutorialGroupsOverviewComponent {
     @Input()
-    courseId: number;
+    course: Course;
     @Input()
     tutorialGroups: TutorialGroup[] = [];
+    @Input()
+    configuration?: TutorialGroupsConfiguration;
 }
 
 @Component({
@@ -34,7 +38,10 @@ class MockCourseTutorialGroupsRegisteredComponent {
     @Input()
     registeredTutorialGroups: TutorialGroup[] = [];
     @Input()
-    courseId: number;
+    course: Course;
+
+    @Input()
+    configuration?: TutorialGroupsConfiguration;
 }
 
 describe('CourseTutorialGroupsComponent', () => {
@@ -49,6 +56,8 @@ describe('CourseTutorialGroupsComponent', () => {
     let queryParamsSubject: BehaviorSubject<Params>;
 
     beforeEach(() => {
+        router.navigate.mockImplementation(() => Promise.resolve(true));
+
         queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
         TestBed.configureTestingModule({
             declarations: [CourseTutorialGroupsComponent, MockCourseTutorialGroupsOverviewComponent, MockCourseTutorialGroupsRegisteredComponent, MockPipe(ArtemisTranslatePipe)],
@@ -139,7 +148,7 @@ describe('CourseTutorialGroupsComponent', () => {
         queryParamsSubject.next({ filter: 'all' });
         expect(component.selectedFilter).toBe('all');
         queryParamsSubject.next({ filter: 'registered' });
-        fixture.detectChanges();
+        runOnPushChangeDetection(fixture);
         expect(component.selectedFilter).toBe('registered');
     });
 
