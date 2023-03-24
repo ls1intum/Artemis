@@ -106,8 +106,6 @@ export class ProgrammingExerciseTaskService {
         const testCaseUpdates = testCasesToUpdate.map((testCase) => ProgrammingExerciseTestCaseUpdate.from(testCase));
         const testCaseUpdatesWeightSum = sum(testCasesToUpdate.map((test) => test.weight));
 
-        console.log(testCaseUpdates);
-
         if (testCaseUpdatesWeightSum < 0) {
             this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.weightSumError`);
             return of(undefined);
@@ -195,18 +193,20 @@ export class ProgrammingExerciseTaskService {
     private addGradingStats = (task: ProgrammingExerciseTask): ProgrammingExerciseTask => {
         task.stats = new TestCaseStats();
         const testCaseStatsMap = this.gradingStatistics?.testCaseStatsMap;
-
         if (!testCaseStatsMap) {
             return task;
         }
 
-        task.testCases.forEach((testCase: ProgrammingExerciseTestCase) => {
+        for (const testCase of task.testCases) {
             const testStats = testCaseStatsMap[testCase.testName!];
-            testCase.testCaseStats = testStats;
+            if (!testStats) {
+                continue;
+            }
 
+            testCase.testCaseStats = testStats;
             task.stats!.numPassed += testStats.numPassed;
             task.stats!.numFailed += testStats.numFailed;
-        });
+        }
 
         return task;
     };
