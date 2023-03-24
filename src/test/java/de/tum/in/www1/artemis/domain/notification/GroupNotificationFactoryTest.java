@@ -416,7 +416,7 @@ class GroupNotificationFactoryTest {
     void createNotificationBasedOnAnswerPost_withNotificationType_NewReplyForExercisePost() {
         notificationType = NEW_REPLY_FOR_EXERCISE_POST;
         expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
-        expectedText = NEW_REPLY_FOR_EXERCISE_POST_TEXT;
+        expectedText = NEW_REPLY_FOR_EXERCISE_POST_GROUP_TEXT;
         expectedPlaceholderValues = "[\"" + exercise.getTitle() + "\"]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createExercisePostTarget(post, course);
@@ -431,7 +431,7 @@ class GroupNotificationFactoryTest {
     void createNotificationBasedOnAnswerPost_withNotificationType_NewResponseForLecturePost() {
         notificationType = NEW_REPLY_FOR_LECTURE_POST;
         expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
-        expectedText = NEW_REPLY_FOR_LECTURE_POST_TEXT;
+        expectedText = NEW_REPLY_FOR_LECTURE_POST_GROUP_TEXT;
         expectedPlaceholderValues = "[" + lecture.getTitle() + "]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createLecturePostTarget(post, course);
@@ -446,7 +446,7 @@ class GroupNotificationFactoryTest {
     void createNotificationBasedOnAnswerPost_withNotificationType_NewResponseForCoursePost() {
         notificationType = NEW_REPLY_FOR_COURSE_POST;
         expectedTitle = NEW_REPLY_FOR_COURSE_POST_TITLE;
-        expectedText = NEW_REPLY_FOR_COURSE_POST_TEXT;
+        expectedText = NEW_REPLY_FOR_COURSE_POST_GROUP_TEXT;
         expectedPlaceholderValues = "[" + course.getTitle() + "]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createCoursePostTarget(post, course);

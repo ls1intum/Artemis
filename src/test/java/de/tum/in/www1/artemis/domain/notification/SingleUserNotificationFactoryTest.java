@@ -212,7 +212,7 @@ class SingleUserNotificationFactoryTest {
     void createNotification_withNotificationType_NewReplyForExercisePost() {
         notificationType = NEW_REPLY_FOR_EXERCISE_POST;
         expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
-        expectedText = NEW_REPLY;
+        expectedText = NEW_REPLY_FOR_EXERCISE_POST_SINGLE_TEXT;
         expectedPriority = MEDIUM;
         expectedTransientTarget = createExercisePostTarget(post, course);
         createAndCheckPostNotification();
@@ -226,7 +226,7 @@ class SingleUserNotificationFactoryTest {
     void createNotification_withNotificationType_NewReplyForLecturePost() {
         notificationType = NEW_REPLY_FOR_LECTURE_POST;
         expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
-        expectedText = NEW_REPLY;
+        expectedText = NEW_REPLY_FOR_LECTURE_POST_SINGLE_TEXT;
         expectedPriority = MEDIUM;
         expectedTransientTarget = createLecturePostTarget(post, course);
         createAndCheckPostNotification();
@@ -240,7 +240,7 @@ class SingleUserNotificationFactoryTest {
     void createNotification_withNotificationType_NewReplyForCoursePost() {
         notificationType = NEW_REPLY_FOR_COURSE_POST;
         expectedTitle = NEW_REPLY_FOR_COURSE_POST_TITLE;
-        expectedText = NEW_REPLY;
+        expectedText = NEW_REPLY_FOR_LECTURE_POST_SINGLE_TEXT;
         expectedPriority = MEDIUM;
         expectedTransientTarget = createCoursePostTarget(post, course);
         createAndCheckPostNotification();

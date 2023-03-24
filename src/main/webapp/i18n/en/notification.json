@@ -109,7 +109,9 @@
                 "tutorialGroupUnassigned": "You have been unassigned from leading a tutorial group"
             },
             "text": {
-                "newReply": "Your post got replied.",
+                "newReplyForExercisePost": "Your post regarding exercise \"{{ placeholderValues.8 }}\" in the course {{ placeholderValues.0 }} got a new reply: {{ placeholderValues.5 }}",
+                "newReplyForLecturePost": "Your post regarding lecture \"{{ placeholderValues.8 }}\" in the course {{ placeholderValues.0 }} got a new reply: {{ placeholderValues.5 }}",
+                "newReplyForCoursePost": "Your post in the course \"{{ placeholderValues.0 }}\" got a new reply; {{ placeholderValues.5 }}",
                 "exerciseSubmissionAssessed": "Your submission for the {{ placeholderValues.1 }} exercise \"{{ placeholderValues.2 }}\" in the course {{ placeholderValues.0 }} has been assessed.",
                 "fileSubmissionSuccessful": "Your file for the exercise \"{{ placeholderValues.1 }}\" was successfully submitted.",
                 "newPlagiarismCaseStudent": "New plagiarism case concerning the {{ placeholderValues.1 }} exercise \"{{ placeholderValues.2 }}\".",

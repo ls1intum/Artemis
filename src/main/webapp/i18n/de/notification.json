@@ -109,7 +109,9 @@
                 "tutorialGroupUnassigned": "Dir wurde die Leitung einer Übungsgruppe entzogen"
             },
             "text": {
-                "newReply": "Auf deinen Beitrag wurde geantwortet",
+                "newReplyForExercisePost": "Auf deinen Beitrag zur Aufgabe \"{{ placeholderValues.8 }}\" im Kurs {{ placeholderValues.0 }} wurde geantwortet: {{ placeholderValues.5 }} .",
+                "newReplyForLecturePost": "Auf deinen Beitrag zur Vorlesung \"{{ placeholderValues.8 }}\" im Kurs {{ placeholderValues.0 }} wurde geantwortet: {{ placeholderValues.5 }}",
+                "newReplyForCoursePost": "Auf deinen kursweiten Beitrag im Kurs \"{{ placeholderValues.0 }}\" wurde geantwortet: {{ placeholderValues.5 }}",
                 "exerciseSubmissionAssessed": "Deine Abgabe für die \"{{ placeholderValues.1 }}\" Aufgabe \"{{ placeholderValues.2 }}\" im Kurs {{ placeholderValues.0 }} wurde bewertet.",
                 "fileSubmissionSuccessful": "Deine Datei für die Aufgabe \"{{ placeholderValues.1 }}\" wurde erfolgreich eingereicht.",
                 "newPlagiarismCaseStudent": "Neuer Plagiatsfall für die {{ placeholderValues.1 }} Aufgabe \"{{ placeholderValues.2 }}\".",
