@@ -320,9 +320,7 @@ public class ExamService {
     private Map<Long, BonusSourceResultDTO> calculateBonusSourceStudentPoints(GradingScale sourceGradingScale, Collection<Long> studentIds) {
         try {
             if (sourceGradingScale.getCourse() != null) {
-                CourseScoresForExamBonusSourceDTO courseScoresForExamBonusSource = courseScoreCalculationService
-                        .calculateCourseScoresForExamBonusSource(sourceGradingScale.getCourse().getId(), studentIds);
-                return courseScoresForExamBonusSource != null ? courseScoresForExamBonusSource.toBonusSourceResultMap() : null;
+                return courseScoreCalculationService.calculateCourseScoresForExamBonusSource(sourceGradingScale.getCourse().getId(), studentIds);
             }
             else {
                 return calculateExamScoresAsBonusSource(sourceGradingScale.getExam().getId(), studentIds);

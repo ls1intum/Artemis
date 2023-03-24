@@ -9,7 +9,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
-import { Exercise, ExerciseType, ExerciseTypeTOTAL, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -26,7 +26,7 @@ import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
-import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
+import { CourseScores } from 'app/course/course-scores/course-scores';
 import { Result } from 'app/entities/result.model';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
@@ -417,14 +417,14 @@ describe('CourseStatisticsComponent', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [...modelingExercises];
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
-        const mockScores: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO> = new Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO>();
-        const mockCourseScoresDTO: CourseScoresDTO = {
+        const mockScoresPerExerciseType: Map<ExerciseType, CourseScores> = new Map<ExerciseType, CourseScores>();
+        const mockCourseScores: CourseScores = {
             maxPoints: 36,
             reachablePoints: 36,
             studentScores: { absoluteScore: 20, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 },
         };
-        mockScores.set(ExerciseType.MODELING, mockCourseScoresDTO);
-        jest.spyOn(scoresStorageService, 'getStoredScoresPerExerciseType').mockReturnValue(mockScores);
+        mockScoresPerExerciseType.set(ExerciseType.MODELING, mockCourseScores);
+        jest.spyOn(scoresStorageService, 'getStoredScoresPerExerciseType').mockReturnValue(mockScoresPerExerciseType);
         fixture.detectChanges();
         comp.ngOnInit();
         fixture.detectChanges();

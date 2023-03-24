@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Represents the scores of a student in a course as returned from the server.
- * Note: Contains some duplicated parameters from {@link StudentScoresForExamBonusSourceDTO}. This way it can be a record which does not support subclassing.
  *
  * @param absoluteScore        the points achieved by the student in the course.
  * @param relativeScore        the points achieved by the student in the course divided by the max number of points achievable in the course (an exercise is added to these max

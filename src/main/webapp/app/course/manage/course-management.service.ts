@@ -21,7 +21,7 @@ import { objectToJsonBlob } from 'app/utils/blob-util';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
-import { ExerciseType, ExerciseTypeTOTAL, ScoresPerExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
@@ -185,14 +185,16 @@ export class CourseManagementService {
     }
 
     saveScoresInStorage(courseForDashboardDTO: CourseForDashboardDTO) {
+        // Save the total scores in the scores-storage.service.
+        this.scoresStorageService.setStoredTotalScores(courseForDashboardDTO.course.id!, courseForDashboardDTO.totalScores);
+
+        // Retrieve the scores per exercise type.
         // Convert the received object to a Map.
         const scoresPerExerciseType: ScoresPerExerciseType = new Map();
         Object.entries(courseForDashboardDTO.scoresPerExerciseType).forEach(([exerciseType, courseScores]) => {
-            let exerciseTypeTyped: ExerciseType | ExerciseTypeTOTAL | undefined = undefined;
-            if (exerciseType === ExerciseTypeTOTAL.TOTAL) {
-                exerciseTypeTyped = ExerciseTypeTOTAL.TOTAL;
-            } else if (Object.values(ExerciseType).some((value) => value === exerciseType)) {
-                exerciseTypeTyped = exerciseType as ExerciseType;
+            let exerciseTypeTyped: ExerciseType | undefined = undefined;
+            if (Object.values(ExerciseType).some((value) => value === exerciseType.toLowerCase())) {
+                exerciseTypeTyped = exerciseType.toLowerCase() as ExerciseType;
             }
 
             if (exerciseTypeTyped) {

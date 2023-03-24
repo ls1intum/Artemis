@@ -17,8 +17,4 @@ describe('ScoresStorageService', () => {
         ]);
         expect(scoresStorageService.getStoredParticipationResult(1)).toEqual({ successful: true, participation: participation1 });
     });
-
-    it('should return an undefined result for an undefined participation id', () => {
-        expect(scoresStorageService.getStoredParticipationResult(undefined)).toBeUndefined();
-    });
 });

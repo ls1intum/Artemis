@@ -33,13 +33,6 @@ public class CourseScoreCalculationService {
 
     private static final double SCORE_NORMALIZATION_VALUE = 0.01;
 
-    /**
-     * Scores are calculated for all exercises ("total") as well as for the subset of exercises of each exercise type.
-     * The client then receives a scoresPerExerciseType map with one entry for each exercise type ({@link ExerciseType} enum) and one for the key "total".
-     * This constant defines the name of the key for the total score.
-     */
-    public static final String TOTAL = "total";
-
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final ExerciseRepository exerciseRepository;
@@ -101,7 +94,7 @@ public class CourseScoreCalculationService {
      * @return the max and reachable max points for the given course and the student scores with related plagiarism verdicts for the given student ids.
      */
     @Nullable
-    public CourseScoresForExamBonusSourceDTO calculateCourseScoresForExamBonusSource(long courseId, Collection<Long> studentIds) {
+    public Map<Long, BonusSourceResultDTO> calculateCourseScoresForExamBonusSource(long courseId, Collection<Long> studentIds) {
         Set<Exercise> courseExercises = exerciseRepository.findAllExercisesByCourseId(courseId);
         if (courseExercises.isEmpty()) {
             return null;
@@ -140,14 +133,11 @@ public class CourseScoreCalculationService {
             plagiarismCases = plagiarismCaseRepository.findByCourseId(courseId);
         }
 
-        List<StudentScoresForExamBonusSourceDTO> studentScoresForExamBonusSource = studentIdToParticipations.entrySet().parallelStream()
-                .map(entry -> constructStudentScoresForExamBonusSourceDTO(course, entry.getKey(), entry.getValue(), maxAndReachablePoints, plagiarismCases)).toList();
-
-        return new CourseScoresForExamBonusSourceDTO(maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints, course.getPresentationScore(),
-                studentScoresForExamBonusSource);
+        return studentIdToParticipations.entrySet().parallelStream().collect(
+                Collectors.toMap(Map.Entry::getKey, entry -> constructBonusSourceResultDTO(course, entry.getKey(), entry.getValue(), maxAndReachablePoints, plagiarismCases)));
     }
 
-    private StudentScoresForExamBonusSourceDTO constructStudentScoresForExamBonusSourceDTO(Course course, Long studentId, List<StudentParticipation> participations,
+    private BonusSourceResultDTO constructBonusSourceResultDTO(Course course, Long studentId, List<StudentParticipation> participations,
             MaxAndReachablePoints maxAndReachablePoints, List<PlagiarismCase> plagiarismCases) {
         StudentScoresDTO studentScores = calculateCourseScoreForStudent(course, studentId, participations, maxAndReachablePoints, plagiarismCases);
 
@@ -170,8 +160,9 @@ public class CourseScoreCalculationService {
             mostSeverePlagiarismVerdict = findMostServerePlagiarismVerdict(plagiarismCasesForStudent.values());
             hasParticipated = true;
         }
-        return new StudentScoresForExamBonusSourceDTO(studentScores.absoluteScore(), studentScores.relativeScore(), studentScores.currentRelativeScore(),
-                studentScores.presentationScore(), studentId, presentationScorePassed, mostSeverePlagiarismVerdict, hasParticipated);
+
+        return new BonusSourceResultDTO(presentationScorePassed ? studentScores.absoluteScore() : 0.0, mostSeverePlagiarismVerdict, studentScores.presentationScore(),
+                course.getPresentationScore(), hasParticipated);
     }
 
     /**
@@ -201,8 +192,25 @@ public class CourseScoreCalculationService {
             }
         }
 
+        Set<Exercise> courseExercises = course.getExercises();
+
+        MaxAndReachablePoints maxAndReachablePoints = calculateMaxAndReachablePoints(courseExercises);
+
+        List<PlagiarismCase> plagiarismCases = new ArrayList<>();
+        for (Exercise exercise : courseExercises) {
+            // TODO: Look into refactoring the fetchPlagiarismCasesForCourseExercises method in the CourseService to always initialize the participations (to an
+            // empty list if there aren't any). This way you don't need this very unintuitive check for the initialization state.
+            if (Hibernate.isInitialized(exercise.getPlagiarismCases())) {
+                plagiarismCases.addAll(exercise.getPlagiarismCases());
+            }
+        }
+
+        // Get the total scores for the course.
+        StudentScoresDTO totalStudentScores = calculateCourseScoreForStudent(course, userId, studentParticipations, maxAndReachablePoints, plagiarismCases);
+        CourseScoresDTO totalScores = new CourseScoresDTO(maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints, totalStudentScores);
+
         // Get scores per exercise type for the course (used in course-statistics.component i.a.).
-        Map<String, CourseScoresDTO> scoresPerExerciseType = calculateCourseScoresPerExerciseType(course, studentParticipations, userId);
+        Map<ExerciseType, CourseScoresDTO> scoresPerExerciseType = calculateCourseScoresPerExerciseType(course, studentParticipations, userId, plagiarismCases);
 
         // Get participation results (used in course-statistics.component).
         List<Result> participationResults = new ArrayList<>();
@@ -214,7 +222,7 @@ public class CourseScoreCalculationService {
             }
         }
 
-        return new CourseForDashboardDTO(course, scoresPerExerciseType, participationResults);
+        return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType, participationResults);
     }
 
     /**
@@ -227,32 +235,15 @@ public class CourseScoreCalculationService {
      * @return a map of the scores for the different exercise types (total, for programming exercises etc.). For each type, the map contains the max and reachable max points and
      *         the scores of the current user.
      */
-    private Map<String, CourseScoresDTO> calculateCourseScoresPerExerciseType(Course course, List<StudentParticipation> studentParticipations, long userId) {
+    private Map<ExerciseType, CourseScoresDTO> calculateCourseScoresPerExerciseType(Course course, List<StudentParticipation> studentParticipations, long userId,
+            List<PlagiarismCase> plagiarismCases) {
 
-        Map<String, CourseScoresDTO> scoresPerExerciseType = new HashMap<>();
-
-        // Retrieve required entities
-
-        Set<Exercise> courseExercises = course.getExercises();
-
-        MaxAndReachablePoints maxAndReachablePoints = calculateMaxAndReachablePoints(courseExercises);
-
-        List<PlagiarismCase> plagiarismCases = new ArrayList<>();
-        for (Exercise exercise : courseExercises) {
-            if (Hibernate.isInitialized(exercise.getPlagiarismCases())) {
-                plagiarismCases.addAll(exercise.getPlagiarismCases());
-            }
-        }
-
-        // Get scores for all exercises in course.
-        StudentScoresDTO totalStudentScores = calculateCourseScoreForStudent(course, userId, studentParticipations, maxAndReachablePoints, plagiarismCases);
-        CourseScoresDTO totalScores = new CourseScoresDTO(maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints, totalStudentScores);
-        scoresPerExerciseType.put(TOTAL, totalScores);
+        Map<ExerciseType, CourseScoresDTO> scoresPerExerciseType = new HashMap<>();
 
         // Get scores per exercise type.
         for (ExerciseType exerciseType : ExerciseType.values()) {
             // Filter out the entities per exercise type.
-            Set<Exercise> exercisesOfExerciseType = courseExercises.stream().filter(exercise -> exercise.getExerciseType() == exerciseType).collect(Collectors.toSet());
+            Set<Exercise> exercisesOfExerciseType = course.getExercises().stream().filter(exercise -> exercise.getExerciseType() == exerciseType).collect(Collectors.toSet());
 
             MaxAndReachablePoints maxAndReachablePointsOfExerciseType = calculateMaxAndReachablePoints(exercisesOfExerciseType);
 
@@ -265,7 +256,7 @@ public class CourseScoreCalculationService {
                     plagiarismCases);
             CourseScoresDTO scoresOfExerciseType = new CourseScoresDTO(maxAndReachablePointsOfExerciseType.maxPoints, maxAndReachablePointsOfExerciseType.reachablePoints,
                     studentScoresOfExerciseType);
-            scoresPerExerciseType.put(exerciseType.getExerciseTypeAsString(), scoresOfExerciseType);
+            scoresPerExerciseType.put(exerciseType, scoresOfExerciseType);
         }
 
         return scoresPerExerciseType;
@@ -356,6 +347,7 @@ public class CourseScoreCalculationService {
         var resultsSet = participation.getResults();
 
         Result emptyResult = new Result();
+        // TODO: Check if you can just instantiate Result.score with 0.0.
         emptyResult.setScore(0.0);
 
         if (resultsSet == null || resultsSet.isEmpty()) {

@@ -12,7 +12,6 @@ import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
-import { ExerciseTypeTOTAL } from 'app/entities/exercise.model';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
 
 @Component({
@@ -70,9 +69,9 @@ export class GradingKeyOverviewComponent implements OnInit {
                 if (gradeSteps.maxPoints !== undefined) {
                     if (!this.isExam) {
                         let maxPoints = 0;
-                        const scoresPerExerciseTypeForCourse = this.scoresStorageService.getStoredScoresPerExerciseType(this.courseId!);
-                        if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse.get(ExerciseTypeTOTAL.TOTAL)) {
-                            maxPoints = scoresPerExerciseTypeForCourse.get(ExerciseTypeTOTAL.TOTAL)![ScoreType.REACHABLE_POINTS];
+                        const totalScoresForCourse = this.scoresStorageService.getStoredTotalScores(this.courseId!);
+                        if (totalScoresForCourse) {
+                            maxPoints = totalScoresForCourse[ScoreType.REACHABLE_POINTS];
                         }
                         this.gradingSystemService.setGradePoints(this.gradeSteps, maxPoints);
                     } else {

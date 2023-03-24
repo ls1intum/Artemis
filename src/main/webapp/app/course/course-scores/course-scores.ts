@@ -5,7 +5,7 @@ export class StudentScores {
     presentationScore: number;
 }
 
-export class CourseScoresDTO {
+export class CourseScores {
     maxPoints: number;
     reachablePoints: number;
     studentScores: StudentScores;

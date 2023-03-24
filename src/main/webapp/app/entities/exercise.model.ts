@@ -17,7 +17,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
-import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
+import { CourseScores } from 'app/course/course-scores/course-scores';
 
 export enum DifficultyLevel {
     EASY = 'EASY',
@@ -30,7 +30,7 @@ export enum ExerciseMode {
     TEAM = 'TEAM',
 }
 
-// IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java and in ExerciseType.java -> getExerciseTypeAsString().
+// IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java.
 export enum ExerciseType {
     PROGRAMMING = 'programming',
     MODELING = 'modeling',
@@ -39,13 +39,7 @@ export enum ExerciseType {
     FILE_UPLOAD = 'file-upload',
 }
 
-// Used when calculating the scores per exercise type.
-// Scores can be calculated over the exercises of each of the ExerciseTypes, e.g. "programming", "modeling" etc. and also over all exercises of a course ("total").
-export enum ExerciseTypeTOTAL {
-    TOTAL = 'total',
-}
-
-export type ScoresPerExerciseType = Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO>;
+export type ScoresPerExerciseType = Map<ExerciseType, CourseScores>;
 
 export interface ValidationReason {
     translateKey: string;

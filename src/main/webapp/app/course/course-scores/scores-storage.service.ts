@@ -1,12 +1,23 @@
 import { Injectable } from '@angular/core';
 import { ScoresPerExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
+import { CourseScores } from 'app/course/course-scores/course-scores';
 
 @Injectable({ providedIn: 'root' })
 export class ScoresStorageService {
+    private storedTotalScores: Map<number, CourseScores> = new Map();
+
     private storedScoresPerExerciseType: Map<number, ScoresPerExerciseType> = new Map();
 
     private participationResults: Result[] = [];
+
+    getStoredTotalScores(courseId: number): CourseScores | undefined {
+        return this.storedTotalScores.get(courseId);
+    }
+
+    setStoredTotalScores(courseId: number, totalScores: CourseScores): void {
+        this.storedTotalScores.set(courseId, totalScores);
+    }
 
     getStoredScoresPerExerciseType(courseId: number): ScoresPerExerciseType | undefined {
         return this.storedScoresPerExerciseType.get(courseId);
@@ -16,10 +27,7 @@ export class ScoresStorageService {
         this.storedScoresPerExerciseType.set(courseId, scoresPerExerciseType);
     }
 
-    getStoredParticipationResult(participationId: number | undefined): Result | undefined {
-        if (participationId === undefined) {
-            return undefined;
-        }
+    getStoredParticipationResult(participationId: number): Result | undefined {
         return this.participationResults.filter((result) => result.participation?.id === participationId)[0];
     }
 

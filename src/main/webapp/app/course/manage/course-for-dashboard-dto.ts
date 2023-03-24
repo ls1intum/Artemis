@@ -1,11 +1,13 @@
 import { Course } from 'app/entities/course.model';
-import { CourseScoresDTO } from 'app/course/course-scores/course-scores-dto';
+import { CourseScores } from 'app/course/course-scores/course-scores';
 import { Result } from 'app/entities/result.model';
-import { ExerciseType, ExerciseTypeTOTAL } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 export class CourseForDashboardDTO {
     course: Course;
-    scoresPerExerciseType: { [key in ExerciseType | ExerciseTypeTOTAL]: CourseScoresDTO };
+
+    totalScores: CourseScores;
+    scoresPerExerciseType: { [key in ExerciseType]: CourseScores };
     participationResults: Result[];
 
     constructor() {}

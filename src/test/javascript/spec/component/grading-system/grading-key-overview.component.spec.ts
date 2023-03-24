@@ -22,8 +22,7 @@ import { Bonus } from 'app/entities/bonus.model';
 import { HttpResponse } from '@angular/common/http';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
-import { ExerciseTypeTOTAL } from 'app/entities/exercise.model';
-import { CourseScoresDTO, StudentScores } from 'app/course/course-scores/course-scores-dto';
+import { CourseScores, StudentScores } from 'app/course/course-scores/course-scores';
 
 describe('GradeKeyOverviewComponent', () => {
     let fixture: ComponentFixture<GradingKeyOverviewComponent>;
@@ -184,9 +183,7 @@ describe('GradeKeyOverviewComponent', () => {
         const reachablePoints = 200;
 
         const scoresStorageService = fixture.debugElement.injector.get(ScoresStorageService);
-        const getStoredScoresSpy = jest
-            .spyOn(scoresStorageService, 'getStoredScoresPerExerciseType')
-            .mockReturnValue(new Map([[ExerciseTypeTOTAL.TOTAL, new CourseScoresDTO(250, 200, new StudentScores())]]));
+        const getStoredScoresSpy = jest.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(new CourseScores(250, 200, new StudentScores()));
         const gradingSystemServiceSpy = jest.spyOn(gradingSystemService, 'setGradePoints');
 
         jest.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(gradeStepsDto));
