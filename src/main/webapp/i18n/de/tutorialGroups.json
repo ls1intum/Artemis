@@ -124,7 +124,8 @@
                     "loadingText": "Sprachen laden ...",
                     "notFoundText": "Keine Sprachen gefunden.",
                     "languageHelp": "In das Feld tippen um nach einer Sprache zu suchen.",
-                    "maxLengthValidationError": "Die Sprache ist auf {{ max }} Zeichen beschränkt!"
+                    "maxLengthValidationError": "Die Sprache ist auf {{ max }} Zeichen beschränkt!",
+                    "requiredValidationError": "Eine Sprache ist erforderlich!"
                 },
                 "isOnlineInput": {
                     "label": "Trifft sich sich diese Übungsgruppe online oder offline?"

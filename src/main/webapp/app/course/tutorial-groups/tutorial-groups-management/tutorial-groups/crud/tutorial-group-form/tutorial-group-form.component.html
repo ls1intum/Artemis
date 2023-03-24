@@ -119,17 +119,20 @@
                     (click)="languageClick$.next($any($event).target.value)"
                 />
                 <small id="languageHelp" class="form-text text-muted">{{ 'artemisApp.forms.tutorialGroupForm.languageInput.languageHelp' | artemisTranslate }}</small>
-                <div *ngIf="languageControl?.invalid && (languageControl?.dirty || languageControl?.touched)" class="alert alert-danger">
-                    <div *ngIf="languageControl?.errors?.max">
-                        {{ 'artemisApp.forms.tutorialGroupForm.languageInput.maxLengthValidationError' | artemisTranslate : { max: '255' } }}
-                    </div>
-                </div>
             </div>
             <!-- Validation Errors for the smaller input from above-->
             <div class="form-group">
                 <div *ngIf="capacityControl?.invalid && (capacityControl?.dirty || capacityControl?.touched)" class="alert alert-danger">
                     <div *ngIf="capacityControl?.errors?.min">
                         {{ 'artemisApp.forms.tutorialGroupForm.capacityInput.minValidationError' | artemisTranslate }}
+                    </div>
+                    <div *ngIf="languageControl?.invalid && (languageControl?.dirty || languageControl?.touched)" class="alert alert-danger">
+                        <div *ngIf="languageControl?.errors?.max">
+                            {{ 'artemisApp.forms.tutorialGroupForm.languageInput.maxLengthValidationError' | artemisTranslate : { max: '255' } }}
+                        </div>
+                        <div *ngIf="languageControl?.errors?.required">
+                            {{ 'artemisApp.forms.tutorialGroupForm.languageInput.requiredValidationError' | artemisTranslate }}
+                        </div>
                     </div>
                 </div>
             </div>
