@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
-import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.RepositoryCheckoutPath;
+import static de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 import static de.tum.in.www1.artemis.service.util.XmlFileUtils.getDocumentBuilderFactory;
 
 import java.io.File;
@@ -563,6 +563,11 @@ public class ProgrammingExerciseExportService {
             final RepositoryExportOptionsDTO repositoryExportOptions, Path outputDir) throws IOException, UncheckedIOException {
         if (participation.getVcsRepositoryUrl() == null) {
             log.warn("Ignore participation {} for export, because its repository URL is null", participation.getId());
+            return null;
+        }
+
+        if (repositoryExportOptions.isExcludePracticeSubmissions() && participation.isTestRun()) {
+            log.debug("Ignoring practice participation {}", participation);
             return null;
         }
 
