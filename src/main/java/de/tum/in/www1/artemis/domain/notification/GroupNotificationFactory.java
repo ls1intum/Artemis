@@ -200,40 +200,34 @@ public class GroupNotificationFactory {
         String title;
         String text;
         String[] placeholderValues;
+        String uniquePlaceholderValue = null;
         GroupNotification notification;
         switch (notificationType) {
             case NEW_EXERCISE_POST -> {
                 Exercise exercise = post.getExercise();
                 title = NEW_EXERCISE_POST_TITLE;
                 text = NEW_EXERCISE_POST_TEXT;
-                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), exercise.getTitle());
-                notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
-                notification.setTransientAndStringTarget(createExercisePostTarget(post, course));
+                uniquePlaceholderValue = exercise.getTitle();
             }
             case NEW_LECTURE_POST -> {
                 Lecture lecture = post.getLecture();
                 title = NEW_LECTURE_POST_TITLE;
                 text = NEW_LECTURE_POST_TEXT;
-                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), lecture.getTitle());
-                notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
-                notification.setTransientAndStringTarget(createLecturePostTarget(post, course));
+                uniquePlaceholderValue = lecture.getTitle();
             }
             case NEW_COURSE_POST -> {
                 title = NEW_COURSE_POST_TITLE;
                 text = NEW_COURSE_POST_TEXT;
-                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post));
-                notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
-                notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
             }
             case NEW_ANNOUNCEMENT_POST -> {
                 title = NEW_ANNOUNCEMENT_POST_TITLE;
                 text = NEW_ANNOUNCEMENT_POST_TEXT;
-                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post));
-                notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
-                notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
+        placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), uniquePlaceholderValue);
+        notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
+        notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
         return notification;
     }
 
@@ -282,15 +276,6 @@ public class GroupNotificationFactory {
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
         return notification;
-    }
-
-    private static String[] generatePlaceholderValuesForMessageNotifications(Course course, Post post) {
-        return new String[] { course.getTitle(), post.getTitle(), post.getContent(), post.getCreationDate().toString(), post.getAuthor().getName() };
-    }
-
-    private static String[] generatePlaceholderValuesForMessageNotificationsWithAnswers(Course course, Post post, AnswerPost answerPost) {
-        return ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), answerPost.getContent(), answerPost.getCreationDate().toString(),
-                answerPost.getAuthor().getName());
     }
 
     /**

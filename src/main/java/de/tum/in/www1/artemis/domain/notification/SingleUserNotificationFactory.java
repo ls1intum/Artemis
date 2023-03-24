@@ -60,15 +60,6 @@ public class SingleUserNotificationFactory {
         return notification;
     }
 
-    private static String[] generatePlaceholderValuesForMessageNotifications(Course course, Post post) {
-        return new String[] { course.getTitle(), post.getTitle(), post.getContent(), post.getCreationDate().toString(), post.getAuthor().getName() };
-    }
-
-    private static String[] generatePlaceholderValuesForMessageNotificationsWithAnswers(Course course, Post post, AnswerPost answerPost) {
-        return ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), answerPost.getContent(), answerPost.getCreationDate().toString(),
-                answerPost.getAuthor().getName());
-    }
-
     /**
      * Creates an instance of SingleUserNotification.
      *
