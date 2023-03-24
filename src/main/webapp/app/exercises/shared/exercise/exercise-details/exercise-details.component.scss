@@ -1,7 +1,8 @@
-.custom-tag {
-    margin-right: 5px;
-    padding: 0 0.45rem;
-    background: #cccccc;
-    border-radius: 0.25rem;
-    color: white;
+:host ::ng-deep .categories-row {
+    display: flex;
+    flex-wrap: wrap;
+
+    h4 {
+        font-size: 1rem;
+    }
 }
