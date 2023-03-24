@@ -355,20 +355,6 @@ public class BambooRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(noArtifactsResponse));
     }
 
-    /**
-     * This method mocks that the build log of a given plan has failed
-     *
-     * @param planKey the build plan id
-     */
-    public void mockGetBuildLogs(String planKey, List<BambooBuildResultDTO.BambooBuildLogEntryDTO> buildLogs) throws URISyntaxException, JsonProcessingException {
-        var response = new BambooBuildResultDTO(new BambooBuildResultDTO.BambooBuildLogEntriesDTO(buildLogs));
-        final var uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/result").pathSegment(planKey.toUpperCase() + "-JOB1")
-                .pathSegment("latest.json").queryParam("expand", "logEntries&max-results=2000").build().toUri();
-
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
-    }
-
     private QueriedBambooBuildResultDTO createBuildResult(final String planKey) throws MalformedURLException {
         final var buildResult = new QueriedBambooBuildResultDTO();
         final var testResults = new QueriedBambooBuildResultDTO.BambooTestResultsDTO();
