@@ -320,7 +320,7 @@ public class ProgrammingTriggerService {
             triggerBuildAndNotifyUser(templateSubmission.get());
         }
         else {
-            continuousIntegrationService.get().triggerBuild(participation);
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation);
         }
     }
 }
