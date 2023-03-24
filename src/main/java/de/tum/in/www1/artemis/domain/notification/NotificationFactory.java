@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 /**
  * Class that shares common logic between {@link GroupNotificationFactory} and {@link SingleUserNotificationFactory}
  */
-class NotificationFactory {
+public class NotificationFactory {
 
     public static String[] generatePlaceholderValuesForMessageNotifications(Course course, Post post) {
         return new String[] { course.getTitle(), post.getTitle(), post.getContent(), post.getCreationDate().toString(), post.getAuthor().getName() };
