@@ -43,7 +43,7 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.websocketStatusSubscription.unsubscribe();
-        this.routerSubscription.unsubscribe();
+        this.websocketStatusSubscription?.unsubscribe();
+        this.routerSubscription?.unsubscribe();
     }
 }

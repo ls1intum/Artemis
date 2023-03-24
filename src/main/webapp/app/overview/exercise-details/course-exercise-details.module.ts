@@ -27,11 +27,13 @@ import { LtiInitializerModalComponent } from 'app/overview/exercise-details/lti-
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-participation.module';
 import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
+import { StandaloneFeedbackComponent } from 'app/exercises/shared/feedback/standalone-feedback/standalone-feedback.component';
+import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
 
 const routes: Routes = [
     {
         path: '',
-        component: !isOrion ? CourseExerciseDetailsComponent : OrionCourseExerciseDetailsComponent,
+        pathMatch: 'prefix',
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.exercise',
@@ -41,7 +43,29 @@ const routes: Routes = [
             {
                 path: '',
                 pathMatch: 'full',
-                loadChildren: () => import('../discussion-section/discussion-section.module').then((m) => m.DiscussionSectionModule),
+                component: !isOrion ? CourseExerciseDetailsComponent : OrionCourseExerciseDetailsComponent,
+                children: [
+                    {
+                        path: '',
+                        pathMatch: 'full',
+                        loadChildren: () => import('../discussion-section/discussion-section.module').then((m) => m.DiscussionSectionModule),
+                    },
+                ],
+            },
+            {
+                pathMatch: 'full',
+                path: 'problem-statement',
+                component: ProblemStatementComponent,
+            },
+            {
+                pathMatch: 'full',
+                path: 'problem-statement/:participationId',
+                component: ProblemStatementComponent,
+            },
+            {
+                path: 'feedback/:participationId/:resultId/:isTemplateStatusMissing',
+                pathMatch: 'full',
+                component: StandaloneFeedbackComponent,
             },
         ],
     },
@@ -69,6 +93,7 @@ const routes: Routes = [
         SubmissionResultStatusModule,
         ArtemisProgrammingExerciseManagementModule,
         ArtemisExerciseHintParticipationModule,
+        ArtemisFeedbackModule,
     ],
     declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, LtiInitializerComponent, LtiInitializerModalComponent, ProblemStatementComponent],
     exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],

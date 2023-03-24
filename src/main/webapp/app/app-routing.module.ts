@@ -3,8 +3,6 @@ import { RouterModule, Routes } from '@angular/router';
 import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { errorRoute } from 'app/shared/layouts/error/error.route';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
-import { StandaloneFeedbackComponent } from 'app/exercises/shared/feedback/standalone-feedback/standalone-feedback.component';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -37,18 +35,6 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'courses/:courseId/learning-goals/:learningGoalId',
                     loadChildren: () => import('./overview/course-learning-goals/course-learning-goals-details.module').then((m) => m.ArtemisCourseLearningGoalsDetailsModule),
-                },
-                {
-                    path: 'courses/:courseId/exercises/:exerciseId/feedback/:participationId/:resultId/:isTemplateStatusMissing',
-                    component: StandaloneFeedbackComponent,
-                },
-                {
-                    path: 'courses/:courseId/exercises/:exerciseId/problem-statement',
-                    component: ProblemStatementComponent,
-                },
-                {
-                    path: 'courses/:courseId/exercises/:exerciseId/problem-statement/:participationId',
-                    component: ProblemStatementComponent,
                 },
                 {
                     path: 'courses/:courseId/tutorial-groups/:tutorialGroupId',
