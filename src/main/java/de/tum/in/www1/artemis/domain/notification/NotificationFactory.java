@@ -17,10 +17,25 @@ import de.tum.in.www1.artemis.domain.metis.Post;
  */
 public class NotificationFactory {
 
+    /**
+     * Gets the placeholderValues used for messageNotifications
+     *
+     * @param course where the post is published in
+     * @param post   the user gets notified about
+     * @return a String array containing all the placeholder values
+     */
     public static String[] generatePlaceholderValuesForMessageNotifications(Course course, Post post) {
         return new String[] { course.getTitle(), post.getTitle(), post.getContent(), post.getCreationDate().toString(), post.getAuthor().getName() };
     }
 
+    /**
+     * Gets the placeholderValues used for messageNotifications triggered by a reply to a post
+     *
+     * @param course     where the post is published in
+     * @param post       the user gets notified about
+     * @param answerPost to the post that the user gets notified about
+     * @return a String array containing all the placeholder values
+     */
     public static String[] generatePlaceholderValuesForMessageNotificationsWithAnswers(Course course, Post post, AnswerPost answerPost) {
         return ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), answerPost.getContent(), answerPost.getCreationDate().toString(),
                 answerPost.getAuthor().getName());
@@ -34,6 +49,7 @@ public class NotificationFactory {
      * @param notificationType of the notification
      * @param course           the post belongs to
      * @param newReplyBuilder  to create the notification with
+     * @param <N>              either a GroupNotification or SingleUserNotification
      * @return an instance of N
      */
     public static <N extends Notification> N createNotificationImplementation(Post post, AnswerPost answerPost, NotificationType notificationType, Course course,
