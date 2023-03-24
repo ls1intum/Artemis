@@ -11,6 +11,8 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.transform.TransformerException;
+
 import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +47,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResults
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
+import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Profile("jenkins")
 @Service
@@ -143,24 +146,16 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Override
     public void fixBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
-        String jobName = buildPlanKey.replace(projectKey + "-", "");
         Document config;
         try {
-            config = jenkinsJobService.getJobConfig(projectKey, jobName);
+            config = jenkinsJobService.getJobConfig(projectKey, buildPlanKey);
+            String stringConfig = XmlFileUtils.writeToString(config);
+            Pattern pattern = Pattern.compile("(.*?notificationUrl: ')(.+?)('.*?)");
+            Matcher matcher = pattern.matcher(stringConfig);
+            String newStringConfig = matcher.replaceAll("$1" + artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH + "$3");
+            jenkinsJobService.updateJob(projectKey, buildPlanKey, XmlFileUtils.readFromString(newStringConfig));
         }
-        catch (IOException e) {
-            log.error("Could not fix build plan notification for build plan " + buildPlanKey + " in project " + projectKey, e);
-            return;
-        }
-        String stringConfig = config.getTextContent();
-        Pattern pattern = Pattern.compile("(.*?notificationUrl: ')(.+?)('.*?)");
-        Matcher matcher = pattern.matcher(stringConfig);
-        String newStringConfig = matcher.replaceAll("$1" + artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH + "$3");
-        config.setTextContent(newStringConfig);
-        try {
-            jenkinsJobService.updateJob(projectKey, jobName, config);
-        }
-        catch (IOException e) {
+        catch (IOException | TransformerException e) {
             log.error("Could not fix build plan notification for build plan " + buildPlanKey + " in project " + projectKey, e);
         }
     }
