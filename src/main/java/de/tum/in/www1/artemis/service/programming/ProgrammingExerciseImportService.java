@@ -177,7 +177,11 @@ public class ProgrammingExerciseImportService {
         }
     }
 
-    private void copyExerciseContentToRepositoryForExerciseWithPlainDirectoryStructure(Repository repository, RepositoryType repositoryType, Path exerciseDir) {
+    private void copyExerciseContentToRepositoryForExerciseWithPlainDirectoryStructure(Repository repository, RepositoryType repositoryType, Path exerciseDir) throws IOException {
+        for (Path file : retrieveRepositoryContentPaths(exerciseDir, repositoryType)) {
+            repositoryService.createFile(repository, String.valueOf(file.getFileName()), Files.newInputStream(file));
+
+        }
 
     }
 
