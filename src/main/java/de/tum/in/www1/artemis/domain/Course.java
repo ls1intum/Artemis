@@ -113,7 +113,7 @@ public class Course extends DomainObject {
     @Enumerated(EnumType.ORDINAL)
     @Column(name = "info_sharing_config", nullable = false)
     @JsonView(QuizView.Before.class)
-    private CourseInformationSharingConfiguration courseInformationSharingConfiguration;
+    private CourseInformationSharingConfiguration courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
 
     @Column(name = "max_complaints", nullable = false)
     @JsonView(QuizView.Before.class)
