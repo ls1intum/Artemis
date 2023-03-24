@@ -1,10 +1,18 @@
 package de.tum.in.www1.artemis.service;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.imageio.ImageIO;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
@@ -14,9 +22,11 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.Slide;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.SlideRepository;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -39,7 +49,9 @@ public class AttachmentUnitService {
 
     private final LectureUnitProcessingService lectureUnitProcessingService;
 
-    public AttachmentUnitService(LectureUnitProcessingService lectureUnitProcessingService, AttachmentUnitRepository attachmentUnitRepository,
+    private final SlideRepository slideRepository;
+
+    public AttachmentUnitService(SlideRepository slideRepository, LectureUnitProcessingService lectureUnitProcessingService, AttachmentUnitRepository attachmentUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, CacheManager cacheManager, LectureRepository lectureRepository) {
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.attachmentUnitRepository = attachmentUnitRepository;
@@ -47,6 +59,7 @@ public class AttachmentUnitService {
         this.fileService = fileService;
         this.cacheManager = cacheManager;
         this.lectureRepository = lectureRepository;
+        this.slideRepository = slideRepository;
     }
 
     /**
@@ -68,7 +81,7 @@ public class AttachmentUnitService {
         lectureRepository.save(lecture);
 
         handleFile(file, attachment, keepFilename);
-
+        splitPDFIntoSingleSlides(file, savedAttachmentUnit);
         // Default attachment
         attachment.setVersion(1);
         attachment.setAttachmentUnit(savedAttachmentUnit);
@@ -181,6 +194,45 @@ public class AttachmentUnitService {
             String filePath = fileService.handleSaveFile(file, keepFilename, false);
             attachment.setLink(filePath);
             attachment.setUploadDate(ZonedDateTime.now());
+        }
+    }
+
+    private void splitPDFIntoSingleSlides(MultipartFile file, AttachmentUnit attachmentUnit) {
+        log.debug("Splitting PDF file {} into single slides", file);
+        try (PDDocument document = PDDocument.load(file.getInputStream());) {
+            String pdfFilename = file.getOriginalFilename();
+            String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
+
+            PDFRenderer pdfRenderer = new PDFRenderer(document);
+            for (int page = 0; page < document.getNumberOfPages(); ++page) {
+                System.out.println("Rendering page " + (page + 1));
+                BufferedImage bim = pdfRenderer.renderImageWithDPI(page, 300, ImageType.RGB);
+                // suffix in filename will be used as the file format
+                // ImageIOUtil.writeImage(bim, fileNameWithOutExt + "-SLIDE-" + (page + 1) + ".png", 300);
+                MultipartFile slide = fileService.convertByteArrayToMultipart(fileNameWithOutExt + "-SLIDE-" + (page + 1), ".png", toByteArray(bim, "png"));
+                String filePath = fileService.handleSaveFile(slide, true, false);
+                Slide slideEntity = new Slide();
+                slideEntity.setSlideImagePath(filePath);
+                slideEntity.setAttachmentUnit(attachmentUnit);
+                slideRepository.save(slideEntity);
+            }
+        }
+        catch (IOException e) {
+            log.error("Error while splitting PDF into single slides", e);
+            throw new InternalServerErrorException("Could not split PDF into single slides");
+        }
+    }
+
+    /**
+     * Converts BufferedImage to byte[]
+     *
+     * @param bufferedImage the image to convert
+     * @param format        the format of the image (e.g. png)
+     */
+    private byte[] toByteArray(BufferedImage bufferedImage, String format) throws IOException {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            ImageIO.write(bufferedImage, format, outputStream);
+            return outputStream.toByteArray();
         }
     }
 

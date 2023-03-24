@@ -399,6 +399,28 @@ public class FileResource {
     }
 
     /**
+     * GET files/attachments/slides/attachment-unit/:attachmentUnitId/:filename : Get the lecture unit attachment slide
+     *
+     * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
+     * @param filename         the filename of the file
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/attachments/slides/attachment-unit/{attachmentUnitId}/{filename:.+}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<byte[]> getAttachmentUnitAttachmentSlide(@PathVariable Long attachmentUnitId, @PathVariable String filename) {
+        log.debug("REST request to get the slide : {}", filename);
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+
+        Attachment attachment = attachmentUnit.getAttachment();
+        Course course = attachmentUnit.getLecture().getCourse();
+
+        if (!checkAttachmentAuthorization(course, attachment)) {
+            throw new AccessForbiddenException();
+        }
+        return buildFileResponse(FilePathService.getSlideImageFilePath(), filename);
+    }
+
+    /**
      * Builds the response with headers, body and content type for specified path and file name
      *
      * @param path     to the file
