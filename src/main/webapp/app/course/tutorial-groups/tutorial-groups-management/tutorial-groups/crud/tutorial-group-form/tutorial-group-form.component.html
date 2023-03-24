@@ -126,13 +126,13 @@
                     <div *ngIf="capacityControl?.errors?.min">
                         {{ 'artemisApp.forms.tutorialGroupForm.capacityInput.minValidationError' | artemisTranslate }}
                     </div>
-                    <div *ngIf="languageControl?.invalid && (languageControl?.dirty || languageControl?.touched)" class="alert alert-danger">
-                        <div *ngIf="languageControl?.errors?.max">
-                            {{ 'artemisApp.forms.tutorialGroupForm.languageInput.maxLengthValidationError' | artemisTranslate : { max: '255' } }}
-                        </div>
-                        <div *ngIf="languageControl?.errors?.required">
-                            {{ 'artemisApp.forms.tutorialGroupForm.languageInput.requiredValidationError' | artemisTranslate }}
-                        </div>
+                </div>
+                <div *ngIf="languageControl?.invalid && (languageControl?.dirty || languageControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="languageControl?.errors?.max">
+                        {{ 'artemisApp.forms.tutorialGroupForm.languageInput.maxLengthValidationError' | artemisTranslate : { max: '255' } }}
+                    </div>
+                    <div *ngIf="languageControl?.errors?.required">
+                        {{ 'artemisApp.forms.tutorialGroupForm.languageInput.requiredValidationError' | artemisTranslate }}
                     </div>
                 </div>
             </div>
