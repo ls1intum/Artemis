@@ -44,20 +44,7 @@ export class ProgrammingExerciseTaskService {
             return false;
         }
 
-        return !this.testCases
-            .map((task) => ({
-                old: this.tasks.flatMap((task) => task.testCases).find(({ id }) => task.id === id),
-                updated: task,
-            }))
-            .every(({ old, updated }) => {
-                return (
-                    old &&
-                    updated.weight === old.weight &&
-                    updated.bonusMultiplier === old.bonusMultiplier &&
-                    updated.bonusPoints === old.bonusPoints &&
-                    updated.visibility === old.visibility
-                );
-            });
+        return this.testCases.some(({ changed }) => changed);
     }
 
     /**
