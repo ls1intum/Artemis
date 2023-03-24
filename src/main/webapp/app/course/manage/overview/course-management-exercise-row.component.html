@@ -16,12 +16,7 @@
                     <div class="item-title-container">
                         <span class="item-title">{{ details.title }}</span>
                     </div>
-                    <div class="item-category d-flex hide-categories" *ngIf="(details.categories?.length || 0) > 0">
-                        <!-- We only support two categories -->
-                        <h4 class="fw-medium" *ngFor="let category of details.categories">
-                            <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
-                        </h4>
-                    </div>
+                    <jhi-exercise-categories [exercise]="details" [ngClass]="'item-category d-flex hide-categories'"></jhi-exercise-categories>
                 </div>
 
                 <div class="row-flex exercise-date-container">
