@@ -232,7 +232,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     @Test
     void getResultsForParticipationEdgeCases() {
 
-        ZonedDateTime dueDate = ZonedDateTime.now();
+        ZonedDateTime dueDate = ZonedDateTime.now().plusSeconds(10);
         course.getExercises().forEach(ex -> ex.setDueDate(dueDate));
 
         exerciseRepository.saveAll(course.getExercises());
@@ -257,7 +257,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         assertThat(courseScoreCalculationService.getResultForParticipation(studentParticipations.get(0), dueDate).getScore()).isEqualTo(latestResult.getScore());
 
         // Test with latest rated result after the due date and grace period.
-        latestResult.setCompletionDate(dueDate.plusSeconds(30L)); // Grade Period is 10 seconds, add more than that.
+        latestResult.setCompletionDate(dueDate.plusSeconds(30L)); // Due date was set 10 seconds in the future, add more than that.
         resultRepository.save(latestResult);
 
         studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
