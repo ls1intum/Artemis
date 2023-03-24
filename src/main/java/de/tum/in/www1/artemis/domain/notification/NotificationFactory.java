@@ -26,6 +26,16 @@ public class NotificationFactory {
                 answerPost.getAuthor().getName());
     }
 
+    /**
+     * Creates an instance of GroupNotification based on the passed parameters.
+     *
+     * @param post             for which a notification should be created
+     * @param answerPost       to the post for which the notification should be created
+     * @param notificationType of the notification
+     * @param course           the post belongs to
+     * @param newReplyBuilder  to create the notification with
+     * @return an instance of N
+     */
     public static <N extends Notification> N createNotificationImplementation(Post post, AnswerPost answerPost, NotificationType notificationType, Course course,
             NewReplyBuilder<N> newReplyBuilder) {
         String title;
