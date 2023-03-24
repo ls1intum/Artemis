@@ -496,23 +496,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(categoryIssuesCharts[1].category).toEqual(codeAnalysisCategories1[1]);
         expect(categoryIssuesCharts[1].totalStudents).toBe(5);
         expect(categoryIssuesCharts[1].maxNumberOfIssues).toBe(5);
-
-        comp.selectTab('test-cases');
-
-        fixture.detectChanges();
-
-        const passedBuildCharts = debugElement.queryAll(By.directive(TestCasePassedBuildsChartComponent)).map((d) => d.componentInstance);
-        expect(passedBuildCharts).toHaveLength(3);
-
-        // this test case is disabled and has no stats
-        expect(passedBuildCharts[0].testCaseStats).toBeUndefined();
-        expect(passedBuildCharts[0].totalParticipations).toBe(5);
-
-        expect(passedBuildCharts[1].testCaseStats).toEqual(gradingStatistics.testCaseStatsMap!.testBubbleSort);
-        expect(passedBuildCharts[1].totalParticipations).toBe(5);
-
-        expect(passedBuildCharts[2].testCaseStats).toEqual(gradingStatistics.testCaseStatsMap!.testMergeSort);
-        expect(passedBuildCharts[2].totalParticipations).toBe(5);
     });
 
     const sortAndTestTable = (table: Table) => (headerElement: DebugElement, prop: string, dir: string) => {

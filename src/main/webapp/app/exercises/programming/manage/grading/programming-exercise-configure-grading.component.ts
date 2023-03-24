@@ -692,21 +692,21 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @private
      */
     private loadStatistics(exerciseId: number) {
-        this.gradingStatisticsObservable = this.gradingService.getGradingStatistics(exerciseId).pipe(
-            tap((statistics) => (this.gradingStatistics = statistics)),
-            tap(() => {
-                this.maxIssuesPerCategory = 0;
-                if (this.gradingStatistics?.categoryIssuesMap) {
-                    // calculate the maximum number of issues in one category
-                    Object.values(this.gradingStatistics?.categoryIssuesMap).forEach((issuesMap) => {
-                        const maxIssues = Object.keys(issuesMap).reduce((max, issues) => Math.max(max, parseInt(issues, 10)), 0);
-                        if (maxIssues > this.maxIssuesPerCategory) {
-                            this.maxIssuesPerCategory = maxIssues;
-                        }
-                    });
+        this.gradingStatisticsObservable = this.gradingService.getGradingStatistics(exerciseId);
+
+        this.gradingStatisticsObservable.subscribe((statistics) => {
+            this.gradingStatistics = statistics;
+            this.maxIssuesPerCategory = 0;
+            if (statistics?.categoryIssuesMap) {
+                // calculate the maximum number of issues in one category
+                for (const issuesMap of Object.values(statistics?.categoryIssuesMap)) {
+                    const maxIssues = Object.keys(issuesMap).reduce((max, issues) => Math.max(max, parseInt(issues, 10)), 0);
+                    if (maxIssues > this.maxIssuesPerCategory) {
+                        this.maxIssuesPerCategory = maxIssues;
+                    }
                 }
-            }),
-        );
+            }
+        });
     }
 
     getEventValue(event: Event) {
