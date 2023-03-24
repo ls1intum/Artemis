@@ -8,7 +8,7 @@
         (ngModelChange)="select.value = languageStepInputs.onProgrammingLanguageChange($event)"
         name="programmingLanguage"
         id="field_programmingLanguage"
-        [disabled]="isImport || !!programmingExercise.id"
+        [disabled]="isImport || !!programmingExercise.id || isImportFromFile"
     >
         <option *ngFor="let supportedLanguage of languageStepInputs.supportedLanguages" [value]="supportedLanguage">
             {{ supportedLanguage.charAt(0).toUpperCase() + supportedLanguage.slice(1).toLowerCase() }}

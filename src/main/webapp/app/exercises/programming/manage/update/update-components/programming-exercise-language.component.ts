@@ -12,6 +12,7 @@ export class ProgrammingExerciseLanguageComponent {
     readonly ProjectType = ProjectType;
 
     @Input() isImport: boolean;
+    @Input() isImportFromFile: boolean;
     @Input() programmingExercise: ProgrammingExercise;
 
     @Input() languageStepInputs: LanguageStepInputs;

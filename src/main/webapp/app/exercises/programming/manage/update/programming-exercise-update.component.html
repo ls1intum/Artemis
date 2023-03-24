@@ -55,7 +55,12 @@
             >
             </jhi-programming-exercise-info>
             <jhi-programming-exercise-difficulty [isImport]="isImport" [programmingExercise]="programmingExercise"></jhi-programming-exercise-difficulty>
-            <jhi-programming-exercise-language [isImport]="isImport" [programmingExercise]="programmingExercise" [languageStepInputs]="getLanguageStepInputs()">
+            <jhi-programming-exercise-language
+                [isImport]="isImport"
+                [isImportFromFile]="isImportFromFile"
+                [programmingExercise]="programmingExercise"
+                [languageStepInputs]="getLanguageStepInputs()"
+            >
             </jhi-programming-exercise-language>
             <jhi-programming-exercise-grading
                 class="form-step"
