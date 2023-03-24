@@ -85,6 +85,7 @@ export class ProfileToggleService {
      */
     getProfileTogglesActive(profiles: ProfileToggle[]): Observable<boolean> {
         return this.subject.asObservable().pipe(
+            tap((activeProfiles) => console.log('active', activeProfiles)),
             map((activeProfiles) => profiles.every((profile) => activeProfiles.includes(profile))),
             distinctUntilChanged(),
         );
