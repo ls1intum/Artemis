@@ -31,17 +31,17 @@ export class StandaloneFeedbackComponent implements OnInit {
             const participationId = parseInt(params['participationId'], 10);
             const resultId = parseInt(params['resultId'], 10);
 
-            this.isTemplateStatusMissing = params['isTemplateStatusMissing'] == 'true';
+            this.isTemplateStatusMissing = params['isTemplateStatusMissing'] === 'true';
 
             this.exerciseService.getExerciseDetails(exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.exercise = exerciseResponse.body!;
-                const participation = this.exercise?.studentParticipations?.find((participation) => participation.id == participationId);
-                if (participation != null) {
+                const participation = this.exercise?.studentParticipations?.find((participation) => participation.id === participationId);
+                if (participation) {
                     participation.exercise = this.exercise;
                 }
 
                 const relevantResult = participation?.results?.find((result) => result.id == resultId);
-                if (relevantResult != null) {
+                if (relevantResult) {
                     relevantResult.participation = participation;
                 }
 
@@ -58,7 +58,7 @@ export class StandaloneFeedbackComponent implements OnInit {
     }
 
     private setup() {
-        if (this.exercise != null && this.result != null) {
+        if (this.exercise && this.result) {
             this.exerciseType = this.exercise.type!;
 
             if (this.latestDueDate) {

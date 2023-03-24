@@ -1,5 +1,5 @@
 <jhi-result-detail
-    *ngIf="exercise != null && result != null && exerciseType != null"
+    *ngIf="exercise && result && exerciseType"
     [exercise]="exercise"
     [result]="result"
     [showScoreChart]="true"
