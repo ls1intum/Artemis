@@ -214,21 +214,19 @@ public class CourseService {
     }
 
     /**
-     * Add plagiarism cases to each exercise of the given courses.
+     * Add plagiarism cases to each exercise.
      *
-     * @param courses the courses for which the plagiarism cases should be fetched.
-     * @param userId  the user for which the plagiarism cases should be fetched.
+     * @param exercises the course exercises for which the plagiarism cases should be fetched.
+     * @param userId    the user for which the plagiarism cases should be fetched.
      */
-    public void fetchPlagiarismCasesForCourses(List<Course> courses, Long userId) {
-        Set<Long> exerciseIds = courses.stream().flatMap(course -> course.getExercises().stream()).map(Exercise::getId).collect(Collectors.toSet());
+    public void fetchPlagiarismCasesForCourseExercises(Set<Exercise> exercises, Long userId) {
+        Set<Long> exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
         List<PlagiarismCase> plagiarismCasesOfUserInCourseExercises = plagiarismCaseRepository.findByStudentIdAndExerciseIds(userId, exerciseIds);
-        for (Course course : courses) {
-            for (Exercise exercise : course.getExercises()) {
-                // Add plagiarism cases to each exercise.
-                Set<PlagiarismCase> plagiarismCasesForExercise = plagiarismCasesOfUserInCourseExercises.stream()
-                        .filter(plagiarismCase -> plagiarismCase.getExercise().getId().equals(exercise.getId())).collect(Collectors.toSet());
-                exercise.setPlagiarismCases(plagiarismCasesForExercise);
-            }
+        for (Exercise exercise : exercises) {
+            // Add plagiarism cases to each exercise.
+            Set<PlagiarismCase> plagiarismCasesForExercise = plagiarismCasesOfUserInCourseExercises.stream()
+                    .filter(plagiarismCase -> plagiarismCase.getExercise().getId().equals(exercise.getId())).collect(Collectors.toSet());
+            exercise.setPlagiarismCases(plagiarismCasesForExercise);
         }
     }
 

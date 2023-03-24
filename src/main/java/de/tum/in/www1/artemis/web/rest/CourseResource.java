@@ -423,11 +423,10 @@ public class CourseResource {
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, refresh);
-        List<Course> courses = List.of(course);
-        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user);
-        courseService.fetchPlagiarismCasesForCourses(courses, user.getId());
+        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user);
+        courseService.fetchPlagiarismCasesForCourseExercises(course.getExercises(), user.getId());
         CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
-        logDuration(courses, user, timeNanoStart);
+        logDuration(List.of(course), user, timeNanoStart);
         return courseForDashboardDTO;
     }
 
@@ -447,7 +446,7 @@ public class CourseResource {
                 user.getLogin());
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user);
-        courseService.fetchPlagiarismCasesForCourses(courses, user.getId());
+        courseService.fetchPlagiarismCasesForCourseExercises(courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet()), user.getId());
         List<CourseForDashboardDTO> coursesForDashboard = new ArrayList<>();
         for (Course course : courses) {
             CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());

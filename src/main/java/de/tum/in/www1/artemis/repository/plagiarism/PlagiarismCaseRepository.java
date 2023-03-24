@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, Long> {
 
     @Query("""
-            SELECT DISTINCT plagiarismCase
+            SELECT plagiarismCase
             FROM PlagiarismCase plagiarismCase
                 LEFT JOIN FETCH plagiarismCase.post
                 LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmission
@@ -49,7 +49,7 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
     List<PlagiarismCase> findByExamIdWithPlagiarismSubmissionsAndComparison(@Param("examId") Long examId);
 
     @Query("""
-            SELECT DISTINCT plagiarismCase
+            SELECT plagiarismCase
             FROM PlagiarismCase plagiarismCase
                 LEFT JOIN FETCH plagiarismCase.post p
             WHERE plagiarismCase.exercise.id = :exerciseId
@@ -108,7 +108,7 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
     List<PlagiarismCase> findByStudentIdAndExerciseIdsWithPost(@Param("userId") Long userId, @Param("exerciseIds") Set<Long> exerciseIds);
 
     @Query("""
-            SELECT DISTINCT plagiarismCase
+            SELECT plagiarismCase
             FROM PlagiarismCase plagiarismCase
                 LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
             WHERE plagiarismCase.id = :plagiarismCaseId

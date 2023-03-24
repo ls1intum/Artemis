@@ -73,8 +73,8 @@ public class CourseScoreCalculationService {
             return new MaxAndReachablePoints(0, 0);
         }
 
-        double maxPointsInCourse = 0.0;
-        double reachableMaxPointsInCourse = 0.0;
+        double maxPoints = 0.0;
+        double reachableMaxPoints = 0.0;
 
         for (var exercise : exercises) {
             if (!includeIntoScoreCalculation(exercise)) {
@@ -82,14 +82,14 @@ public class CourseScoreCalculationService {
             }
             var maxPointsReachableInExercise = exercise.getMaxPoints();
             if (exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                maxPointsInCourse += maxPointsReachableInExercise;
+                maxPoints += maxPointsReachableInExercise;
                 if (isAssessmentDone(exercise)) {
-                    reachableMaxPointsInCourse += maxPointsReachableInExercise;
+                    reachableMaxPoints += maxPointsReachableInExercise;
                 }
             }
         }
 
-        return new MaxAndReachablePoints(maxPointsInCourse, reachableMaxPointsInCourse);
+        return new MaxAndReachablePoints(maxPoints, reachableMaxPoints);
     }
 
     /**
@@ -107,6 +107,9 @@ public class CourseScoreCalculationService {
             return null;
         }
 
+        // Retrieve the course from the first exercise. All exercises belong to the same course.
+        Course course = courseExercises.iterator().next().getCourseViaExerciseGroupOrCourseMember();
+
         MaxAndReachablePoints maxAndReachablePoints = calculateMaxAndReachablePoints(courseExercises);
 
         List<PlagiarismCase> plagiarismCases;
@@ -121,8 +124,10 @@ public class CourseScoreCalculationService {
             plagiarismCases = plagiarismCaseRepository.findByCourseIdAndStudentId(courseId, studentId);
         }
         else {
+            // Get all participations for the course.
             var participations = studentParticipationRepository.findByCourseIdWithRelevantResult(courseId);
-            // Only use those participations where one of the students handed to this method actually takes part.
+            // These participations also contain participations for students that are not handed to this method in the 'studentIds' Collection.
+            // Filter out those participations that belong to the students in 'studentIds'.
             // For the single student case, this is done in the db query.
             var studentIdSet = new HashSet<>(studentIds);
             for (StudentParticipation participation : participations) {
@@ -134,8 +139,6 @@ public class CourseScoreCalculationService {
             }
             plagiarismCases = plagiarismCaseRepository.findByCourseId(courseId);
         }
-
-        Course course = courseExercises.iterator().next().getCourseViaExerciseGroupOrCourseMember();
 
         List<StudentScoresForExamBonusSourceDTO> studentScoresForExamBonusSource = studentIdToParticipations.entrySet().parallelStream()
                 .map(entry -> constructStudentScoresForExamBonusSourceDTO(course, entry.getKey(), entry.getValue(), maxAndReachablePoints, plagiarismCases)).toList();
@@ -162,13 +165,13 @@ public class CourseScoreCalculationService {
             hasParticipated = true;
         }
         else {
-            presentationScorePassed = isPresentationScoreSufficientForBonus(studentScores.getPresentationScore(), course.getPresentationScore());
+            presentationScorePassed = isPresentationScoreSufficientForBonus(studentScores.presentationScore(), course.getPresentationScore());
             Map<Long, PlagiarismCase> plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(studentId);
             mostSeverePlagiarismVerdict = findMostServerePlagiarismVerdict(plagiarismCasesForStudent.values());
             hasParticipated = true;
         }
-        return new StudentScoresForExamBonusSourceDTO(studentScores.getAbsoluteScore(), studentScores.getRelativeScore(), studentScores.getCurrentRelativeScore(),
-                studentScores.getPresentationScore(), studentId, presentationScorePassed, mostSeverePlagiarismVerdict, hasParticipated);
+        return new StudentScoresForExamBonusSourceDTO(studentScores.absoluteScore(), studentScores.relativeScore(), studentScores.currentRelativeScore(),
+                studentScores.presentationScore(), studentId, presentationScorePassed, mostSeverePlagiarismVerdict, hasParticipated);
     }
 
     /**

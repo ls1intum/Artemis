@@ -74,10 +74,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         assertThat(courseResult.maxPoints()).isEqualTo(0.0);
         assertThat(courseResult.reachablePoints()).isEqualTo(0.0);
         assertThat(courseResult.studentScores()).hasSize(1);
-        assertThat(courseResult.studentScores().get(0).getAbsoluteScore()).isEqualTo(0.0);
-        assertThat(courseResult.studentScores().get(0).getRelativeScore()).isEqualTo(0.0);
-        assertThat(courseResult.studentScores().get(0).getCurrentRelativeScore()).isEqualTo(0.0);
-        assertThat(courseResult.studentScores().get(0).getAbsolutePointsEligibleForBonus()).isEqualTo(0.0);
+        assertThat(courseResult.studentScores().get(0).absoluteScore()).isEqualTo(0.0);
+        assertThat(courseResult.studentScores().get(0).relativeScore()).isEqualTo(0.0);
+        assertThat(courseResult.studentScores().get(0).currentRelativeScore()).isEqualTo(0.0);
     }
 
     @Test
@@ -135,14 +134,13 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         CourseScoresForExamBonusSourceDTO courseResult = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course.getId(), List.of(student.getId()));
         assertThat(courseResult.studentScores()).hasSize(1);
-        assertThat(courseResult.studentScores().get(0).getStudentId()).isEqualTo(student.getId());
-        assertThat(courseResult.studentScores().get(0).getRelativeScore()).isEqualTo(16.0);
-        assertThat(courseResult.studentScores().get(0).getAbsoluteScore()).isEqualTo(4.0);
-        assertThat(courseResult.studentScores().get(0).getCurrentRelativeScore()).isEqualTo(80.0);
-        assertThat(courseResult.studentScores().get(0).getPresentationScore()).isEqualTo(0);
-        assertThat(courseResult.studentScores().get(0).isPresentationScorePassed()).isFalse();
-        assertThat(courseResult.studentScores().get(0).getMostSeverePlagiarismVerdict()).isNull();
-        assertThat(courseResult.studentScores().get(0).getAbsolutePointsEligibleForBonus()).isEqualTo(0.0);
+        assertThat(courseResult.studentScores().get(0).studentId()).isEqualTo(student.getId());
+        assertThat(courseResult.studentScores().get(0).relativeScore()).isEqualTo(16.0);
+        assertThat(courseResult.studentScores().get(0).absoluteScore()).isEqualTo(4.0);
+        assertThat(courseResult.studentScores().get(0).currentRelativeScore()).isEqualTo(80.0);
+        assertThat(courseResult.studentScores().get(0).presentationScore()).isEqualTo(0);
+        assertThat(courseResult.studentScores().get(0).presentationScorePassed()).isFalse();
+        assertThat(courseResult.studentScores().get(0).mostSeverePlagiarismVerdict()).isNull();
     }
 
     @Test
@@ -164,9 +162,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         CourseScoresDTO totalCourseScores = courseForDashboard.scoresPerExerciseType().get("total");
         assertThat(totalCourseScores.maxPoints()).isEqualTo(0.0);
         assertThat(totalCourseScores.reachablePoints()).isEqualTo(0.0);
-        assertThat(totalCourseScores.studentScores().getAbsoluteScore()).isEqualTo(0.0);
-        assertThat(totalCourseScores.studentScores().getRelativeScore()).isEqualTo(0.0);
-        assertThat(totalCourseScores.studentScores().getCurrentRelativeScore()).isEqualTo(0.0);
+        assertThat(totalCourseScores.studentScores().absoluteScore()).isEqualTo(0.0);
+        assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(0.0);
+        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(0.0);
 
         assertThat(courseForDashboard.participationResults().size()).isEqualTo(5);
     }
@@ -184,23 +182,23 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         CourseScoresDTO totalCourseScores = courseForDashboard.scoresPerExerciseType().get("total");
         assertThat(totalCourseScores.maxPoints()).isEqualTo(5.0);
         assertThat(totalCourseScores.reachablePoints()).isEqualTo(5.0);
-        assertThat(totalCourseScores.studentScores().getAbsoluteScore()).isEqualTo(0.0);
-        assertThat(totalCourseScores.studentScores().getRelativeScore()).isEqualTo(0.0);
-        assertThat(totalCourseScores.studentScores().getCurrentRelativeScore()).isEqualTo(0.0);
+        assertThat(totalCourseScores.studentScores().absoluteScore()).isEqualTo(0.0);
+        assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(0.0);
+        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(0.0);
 
         CourseScoresDTO programmingExerciseScores = courseForDashboard.scoresPerExerciseType().get(ExerciseType.PROGRAMMING.getExerciseTypeAsString());
         assertThat(programmingExerciseScores.maxPoints()).isEqualTo(0.0);
         assertThat(programmingExerciseScores.reachablePoints()).isEqualTo(0.0);
-        assertThat(programmingExerciseScores.studentScores().getAbsoluteScore()).isEqualTo(0.0);
-        assertThat(programmingExerciseScores.studentScores().getRelativeScore()).isEqualTo(0.0);
-        assertThat(programmingExerciseScores.studentScores().getCurrentRelativeScore()).isEqualTo(0.0);
+        assertThat(programmingExerciseScores.studentScores().absoluteScore()).isEqualTo(0.0);
+        assertThat(programmingExerciseScores.studentScores().relativeScore()).isEqualTo(0.0);
+        assertThat(programmingExerciseScores.studentScores().currentRelativeScore()).isEqualTo(0.0);
 
         CourseScoresDTO quizExerciseScores = courseForDashboard.scoresPerExerciseType().get(ExerciseType.QUIZ.getExerciseTypeAsString());
         assertThat(quizExerciseScores.maxPoints()).isEqualTo(5.0);
         assertThat(quizExerciseScores.reachablePoints()).isEqualTo(5.0);
-        assertThat(quizExerciseScores.studentScores().getAbsoluteScore()).isEqualTo(0.0);
-        assertThat(quizExerciseScores.studentScores().getRelativeScore()).isEqualTo(0.0);
-        assertThat(quizExerciseScores.studentScores().getCurrentRelativeScore()).isEqualTo(0.0);
+        assertThat(quizExerciseScores.studentScores().absoluteScore()).isEqualTo(0.0);
+        assertThat(quizExerciseScores.studentScores().relativeScore()).isEqualTo(0.0);
+        assertThat(quizExerciseScores.studentScores().currentRelativeScore()).isEqualTo(0.0);
     }
 
     @Test
@@ -210,14 +208,14 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         StudentScoresDTO studentScore = courseScoreCalculationService.calculateCourseScoreForStudent(course, student.getId(), Collections.emptyList(),
                 new CourseScoreCalculationService.MaxAndReachablePoints(100.00, 100.00), Collections.emptyList());
-        assertThat(studentScore.getAbsoluteScore()).isEqualTo(0.0);
-        assertThat(studentScore.getRelativeScore()).isEqualTo(0.0);
-        assertThat(studentScore.getCurrentRelativeScore()).isEqualTo(0.0);
-        assertThat(studentScore.getPresentationScore()).isEqualTo(0);
+        assertThat(studentScore.absoluteScore()).isEqualTo(0.0);
+        assertThat(studentScore.relativeScore()).isEqualTo(0.0);
+        assertThat(studentScore.currentRelativeScore()).isEqualTo(0.0);
+        assertThat(studentScore.presentationScore()).isEqualTo(0);
 
         PlagiarismVerdict mostSeverePlagiarismVerdict = courseScoreCalculationService.findMostServerePlagiarismVerdict(Collections.emptyList());
         assertThat(mostSeverePlagiarismVerdict).isNull();
-        boolean presentationScorePassed = courseScoreCalculationService.isPresentationScoreSufficientForBonus(studentScore.getPresentationScore(), course.getPresentationScore());
+        boolean presentationScorePassed = courseScoreCalculationService.isPresentationScoreSufficientForBonus(studentScore.presentationScore(), course.getPresentationScore());
         assertThat(presentationScorePassed).isFalse();
 
     }
