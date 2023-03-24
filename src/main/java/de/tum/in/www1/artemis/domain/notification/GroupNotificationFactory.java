@@ -227,13 +227,12 @@ public class GroupNotificationFactory {
         }
         placeholderValues = ArrayUtils.addAll(NotificationFactory.generatePlaceholderValuesForMessageNotifications(course, post), uniquePlaceholderValue);
         notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
-        notification.setTransientAndStringTarget(
-            switch(notificationType) {
-                case NEW_EXERCISE_POST -> createExercisePostTarget(post, course);
-                case NEW_LECTURE_POST -> createLecturePostTarget(post, course);
-                case NEW_COURSE_POST, NEW_ANNOUNCEMENT_POST -> createCoursePostTarget(post, course);
-                default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
-            });
+        notification.setTransientAndStringTarget(switch (notificationType) {
+            case NEW_EXERCISE_POST -> createExercisePostTarget(post, course);
+            case NEW_LECTURE_POST -> createLecturePostTarget(post, course);
+            case NEW_COURSE_POST, NEW_ANNOUNCEMENT_POST -> createCoursePostTarget(post, course);
+            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+        });
         return notification;
     }
 

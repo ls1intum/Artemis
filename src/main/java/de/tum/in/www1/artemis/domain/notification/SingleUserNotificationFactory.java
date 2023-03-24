@@ -28,16 +28,15 @@ public class SingleUserNotificationFactory {
      */
     public static SingleUserNotification createNotification(Post post, AnswerPost answerPost, NotificationType notificationType, Course course) {
         User recipient = post.getAuthor();
-        return NotificationFactory.createNotificationImplementation(post, answerPost, notificationType, course,
-                (title, placeholderValues) -> {
-                    String text = "";
-                    switch (notificationType) {
-                        case NEW_REPLY_FOR_EXERCISE_POST -> text = NEW_REPLY_FOR_EXERCISE_POST_SINGLE_TEXT;
-                        case NEW_REPLY_FOR_LECTURE_POST -> text = NEW_REPLY_FOR_LECTURE_POST_SINGLE_TEXT;
-                        case NEW_REPLY_FOR_COURSE_POST -> text = NEW_REPLY_FOR_COURSE_POST_SINGLE_TEXT;
-                    }
-                    return new SingleUserNotification(recipient, title, text, true, placeholderValues);
-                });
+        return NotificationFactory.createNotificationImplementation(post, answerPost, notificationType, course, (title, placeholderValues) -> {
+            String text = "";
+            switch (notificationType) {
+                case NEW_REPLY_FOR_EXERCISE_POST -> text = NEW_REPLY_FOR_EXERCISE_POST_SINGLE_TEXT;
+                case NEW_REPLY_FOR_LECTURE_POST -> text = NEW_REPLY_FOR_LECTURE_POST_SINGLE_TEXT;
+                case NEW_REPLY_FOR_COURSE_POST -> text = NEW_REPLY_FOR_COURSE_POST_SINGLE_TEXT;
+            }
+            return new SingleUserNotification(recipient, title, text, true, placeholderValues);
+        });
     }
 
     /**
