@@ -5,11 +5,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.domain.metis.Post;
-import org.apache.commons.lang3.ArrayUtils;
 
 public class NotificationConstants {
 
@@ -216,14 +212,5 @@ public class NotificationConstants {
             throw new UnsupportedOperationException("No matching title found for: " + type);
         }
         return result;
-    }
-
-    public static String[] generatePlaceholderValuesForMessageNotifications(Course course, Post post) {
-        return new String[] { course.getTitle(), post.getTitle(), post.getContent(), post.getCreationDate().toString(), post.getAuthor().getName() };
-    }
-
-    public static String[] generatePlaceholderValuesForMessageNotificationsWithAnswers(Course course, Post post, AnswerPost answerPost) {
-        return ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), answerPost.getContent(), answerPost.getCreationDate().toString(),
-            answerPost.getAuthor().getName());
     }
 }

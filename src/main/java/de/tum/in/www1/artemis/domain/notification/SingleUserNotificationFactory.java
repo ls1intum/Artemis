@@ -6,11 +6,8 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFacto
 
 import java.util.Set;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
@@ -31,33 +28,8 @@ public class SingleUserNotificationFactory {
      */
     public static SingleUserNotification createNotification(Post post, AnswerPost answerPost, NotificationType notificationType, Course course) {
         User recipient = post.getAuthor();
-        String title;
-        String[] placeholderValues;
-        SingleUserNotification notification;
-        switch (notificationType) {
-            case NEW_REPLY_FOR_EXERCISE_POST -> {
-                Exercise exercise = post.getExercise();
-                title = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
-                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotificationsWithAnswers(course, post, answerPost), exercise.getTitle());
-                notification = new SingleUserNotification(recipient, title, NEW_REPLY, true, placeholderValues);
-                notification.setTransientAndStringTarget(createExercisePostTarget(post, course));
-            }
-            case NEW_REPLY_FOR_LECTURE_POST -> {
-                Lecture lecture = post.getLecture();
-                title = NEW_REPLY_FOR_LECTURE_POST_TITLE;
-                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotificationsWithAnswers(course, post, answerPost), lecture.getTitle());
-                notification = new SingleUserNotification(recipient, title, NEW_REPLY, true, placeholderValues);
-                notification.setTransientAndStringTarget(createLecturePostTarget(post, course));
-            }
-            case NEW_REPLY_FOR_COURSE_POST -> {
-                title = NEW_REPLY_FOR_COURSE_POST_TITLE;
-                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotificationsWithAnswers(course, post, answerPost));
-                notification = new SingleUserNotification(recipient, title, NEW_REPLY, true, placeholderValues);
-                notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
-            }
-            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
-        }
-        return notification;
+        return NotificationFactory.createNotificationImplementation(post, answerPost, notificationType, course,
+                (title, placeholderValues) -> new SingleUserNotification(recipient, title, NEW_REPLY, true, placeholderValues));
     }
 
     /**

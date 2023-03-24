@@ -225,7 +225,7 @@ public class GroupNotificationFactory {
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
-        placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), uniquePlaceholderValue);
+        placeholderValues = ArrayUtils.addAll(NotificationFactory.generatePlaceholderValuesForMessageNotifications(course, post), uniquePlaceholderValue);
         notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
         notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
         return notification;
@@ -244,38 +244,16 @@ public class GroupNotificationFactory {
      */
     public static GroupNotification createNotification(Post post, AnswerPost answerPost, User author, GroupNotificationType groupNotificationType,
             NotificationType notificationType, Course course) {
-        String title;
-        String text;
-        String[] placeholderValues;
-        GroupNotification notification;
+        return NotificationFactory.createNotificationImplementation(post, answerPost, notificationType, course, (title, placeholderValues) -> {
+            String text = "";
+            switch (notificationType) {
+                case NEW_REPLY_FOR_EXERCISE_POST -> text = NEW_REPLY_FOR_EXERCISE_POST_TEXT;
+                case NEW_REPLY_FOR_LECTURE_POST -> text = NEW_REPLY_FOR_LECTURE_POST_TEXT;
+                case NEW_REPLY_FOR_COURSE_POST -> text = NEW_REPLY_FOR_COURSE_POST_TEXT;
+            }
 
-        switch (notificationType) {
-            case NEW_REPLY_FOR_EXERCISE_POST -> {
-                Exercise exercise = post.getExercise();
-                title = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
-                text = NEW_REPLY_FOR_EXERCISE_POST_TEXT;
-                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotificationsWithAnswers(course, post, answerPost), exercise.getTitle());
-                notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
-                notification.setTransientAndStringTarget(createExercisePostTarget(post, course));
-            }
-            case NEW_REPLY_FOR_LECTURE_POST -> {
-                Lecture lecture = post.getLecture();
-                title = NEW_REPLY_FOR_LECTURE_POST_TITLE;
-                text = NEW_REPLY_FOR_LECTURE_POST_TEXT;
-                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotificationsWithAnswers(course, post, answerPost), lecture.getTitle());
-                notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
-                notification.setTransientAndStringTarget(createLecturePostTarget(post, course));
-            }
-            case NEW_REPLY_FOR_COURSE_POST -> {
-                title = NEW_REPLY_FOR_COURSE_POST_TITLE;
-                text = NEW_REPLY_FOR_COURSE_POST_TEXT;
-                placeholderValues = ArrayUtils.addAll(generatePlaceholderValuesForMessageNotificationsWithAnswers(course, post, answerPost));
-                notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
-                notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
-            }
-            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
-        }
-        return notification;
+            return new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
+        });
     }
 
     /**
