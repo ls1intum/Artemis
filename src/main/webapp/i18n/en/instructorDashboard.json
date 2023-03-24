@@ -56,7 +56,10 @@
                 "downloadAllStudents": "Or download the submissions of all students",
                 "question": "Enter all logins separated by ',' (e.g ga87fix,ga63dut) of students you want to download the submission from",
                 "filterLateSubmissions": "Filter late submissions",
-                "filterLateSubmissionsDate": "Date for filter late submissions (defaults to exercise due date if not set)",
+                "filterLateSubmissionsDate": {
+                    "title": "Date for filter late submissions",
+                    "tooltip": "Defaults to the due date of the exercise if not set"
+                },
                 "successMessage": "Export of submissions was successful. The exported zip file is currently being downloaded."
             },
             "loadingStudents": "Loading the results of all students..."
