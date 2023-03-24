@@ -44,8 +44,8 @@ Migrating MySQL Data to PostgreSQL
             mysql:
                 image: docker.io/library/mysql:8
                 environment:
-                    - MYSQL_ROOT_PASSWORD=cRS2N4X2
                     - MYSQL_DATABASE=Artemis
+                    - MYSQL_ALLOW_EMPTY_PASSWORD=yes
                 ports:
                     - 3306:3306
                 command: >
@@ -62,8 +62,8 @@ Migrating MySQL Data to PostgreSQL
                 image: docker.io/library/postgres:15
                 environment:
                     - POSTGRES_USER=root
-                    - POSTGRES_PASSWORD=cRS2N4X2
                     - POSTGRES_DB=Artemis
+                    - POSTGRES_HOST_AUTH_METHOD=trust
                 ports:
                     - 5432:5432
                 networks:
@@ -84,10 +84,10 @@ Migrating MySQL Data to PostgreSQL
         docker compose up -d
 
         # import database dump into MySQL
-        docker compose exec -T mysql mysql --password=cRS2N4X2 < Artemis.sql
+        docker compose exec -T mysql mysql < Artemis.sql
 
         # use pgloader to transfer data from MySQL to Postgres
-        docker run --rm --network=artemis-db-migration docker.io/dimitri/pgloader pgloader mysql://root:cRS2N4X2@mysql/Artemis postgresql://root:cRS2N4X2@postgres/Artemis
+        docker run --rm --network=artemis-db-migration docker.io/dimitri/pgloader pgloader mysql://root@mysql/Artemis postgresql://root@postgres/Artemis
 
         # dump the Postgres data in a format that can be imported in the actual database
         docker compose exec -T postgres pg_dump -Ox Artemis > Artemis.pg.sql
