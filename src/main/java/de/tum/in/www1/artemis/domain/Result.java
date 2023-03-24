@@ -481,8 +481,12 @@ public class Result extends DomainObject implements Comparable<Result> {
             feedbacks.removeIf(Feedback::isAfterDueDate);
         }
 
-        // TODO: this is not good code!
         var testCaseFeedback = feedbacks.stream().filter(Feedback::isTestFeedback).toList();
+        for (Feedback feedback : testCaseFeedback) {
+            // TODO remove test names here!
+        }
+
+        // TODO: this is not good code!
         setTestCaseCount(testCaseFeedback.size());
         setPassedTestCaseCount((int) testCaseFeedback.stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).count());
     }

@@ -53,6 +53,14 @@ public class Feedback extends DomainObject {
     private String reference;
 
     /**
+     * Reference to the test case which created this feedback.
+     * null if the feedback was not created by an automatic test case.
+     */
+    @ManyToOne
+    @JsonIgnoreProperties(value = { "testName", "tasks", "solutionEntries", "exercise" })
+    private ProgrammingExerciseTestCase testCase;
+
+    /**
      * Absolute score for the assessed element (e.g. +0.5, -1.0, +2.0, etc.)
      */
     @Column(name = "credits")
@@ -163,6 +171,19 @@ public class Feedback extends DomainObject {
 
     public void setReference(String reference) {
         this.reference = reference;
+    }
+
+    public ProgrammingExerciseTestCase getTestCase() {
+        return testCase;
+    }
+
+    public void setTestCase(ProgrammingExerciseTestCase testCase) {
+        this.testCase = testCase;
+    }
+
+    public Feedback testCase(ProgrammingExerciseTestCase testCase) {
+        setTestCase(testCase);
+        return this;
     }
 
     public Double getCredits() {
@@ -376,13 +397,15 @@ public class Feedback extends DomainObject {
         feedback.setReference(getReference());
         feedback.setVisibility(getVisibility());
         feedback.setGradingInstruction(getGradingInstruction());
+        feedback.setTestCase(getTestCase());
         return feedback;
     }
 
     @Override
     public String toString() {
         return "Feedback{" + "id=" + getId() + ", text='" + getText() + "'" + ", detailText='" + getDetailText() + "'" + ", reference='" + getReference() + "'" + ", positive='"
-                + isPositive() + "'" + ", type='" + getType() + ", visibility=" + getVisibility() + ", gradingInstruction='" + getGradingInstruction() + "'" + "}";
+                + isPositive() + "'" + ", type='" + getType() + ", visibility=" + getVisibility() + ", gradingInstruction='" + getGradingInstruction() + "', testCase='"
+                + getTestCase() + "'}";
     }
 
     /**
