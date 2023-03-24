@@ -84,7 +84,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     const saveTableButton = '#save-table-button';
     const resetTableButton = '#reset-table-button';
     const testCasesNoUnsavedChanges = '#test-case-status-no-unsaved-changes';
-    const testCasesUnsavedChanges = '#test-case-status-unsaved-changes';
     const testCasesUpdated = '#test-case-status-updated';
     const testCasesNoUpdated = '#test-case-status-no-updated';
     const codeAnalysisTableId = '#codeAnalysisTable';
@@ -180,10 +179,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         return getElement(debugElement, resetTableButton);
     };
 
-    const getUnsavedChangesBadge = () => {
-        return getElement(debugElement, testCasesUnsavedChanges);
-    };
-
     const getNoUnsavedChangesBadge = () => {
         return getElement(debugElement, testCasesNoUnsavedChanges);
     };
@@ -201,11 +196,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             imports: [ArtemisTestModule, NgxDatatableModule, MockModule(TranslateTestingModule), MockModule(NgbTooltipModule)],
             declarations: [
                 ProgrammingExerciseConfigureGradingComponent,
-                ProgrammingExerciseGradingTaskComponent,
                 ProgrammingExerciseConfigureGradingStatusComponent,
                 ProgrammingExerciseGradingTableActionsComponent,
                 TableEditableFieldComponent,
                 MockComponent(ProgrammingExerciseConfigureGradingActionsComponent),
+                MockComponent(ProgrammingExerciseGradingTaskComponent),
                 MockComponent(ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent),
                 MockComponent(SubmissionPolicyUpdateComponent),
                 MockComponent(ProgrammingExerciseReEvaluateButtonComponent),
