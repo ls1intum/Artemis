@@ -254,25 +254,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") long exerciseId);
 
     /**
-     * @param exerciseIds the exercise ids we are interested in
-     * @return the numbers of submissions belonging to each exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
-     *         exercise due date at all
-     */
-    @Query("""
-            SELECT
-                new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
-                    e.id,
-                    count(DISTINCT p)
-                )
-            FROM StudentParticipation p JOIN p.submissions s JOIN p.exercise e
-            WHERE e.id IN :exerciseIds
-                AND s.submitted = TRUE
-                AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
-            GROUP BY e.id
-             """)
-    List<ExerciseMapEntry> countByExerciseIdsSubmittedBeforeDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
-
-    /**
      * Should be used for exam dashboard to ignore test run submissions
      *
      * @param exerciseId the exercise id we are interested in

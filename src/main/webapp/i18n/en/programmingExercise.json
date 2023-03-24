@@ -284,6 +284,7 @@
                 "downloadAllTeams": "Or download the repositories of all teams",
                 "filterLateSubmissions": "Filter late submissions",
                 "filterLateSubmissionsDate": "Date to filter late submissions (defaults to exercise due date if not set)",
+                "excludePracticeSubmissions": "Exclude practice submissions",
                 "addStudentName": "Add student name to project (allows importing multiple projects into Eclipse at the same time)",
                 "addTeamName": "Add team name to project (allows importing multiple projects into Eclipse at the same time)",
                 "addTeamOrStudentName": "Add team/student name to project (allows importing multiple projects into Eclipse at the same time)",

@@ -51,7 +51,6 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() result?: Result;
     @Input() showUngradedResults = false;
     @Input() showBadge = false;
-    @Input() showTestDetails = false;
     @Input() showIcon = true;
     @Input() missingResultInfo = MissingResultInformation.NONE;
     @Input() exercise?: Exercise;
@@ -220,8 +219,6 @@ export class ResultComponent implements OnInit, OnChanges {
         const componentInstance: FeedbackComponent = modalRef.componentInstance;
         componentInstance.exercise = this.exercise;
         componentInstance.result = result;
-        componentInstance.showTestDetails =
-            (this.exercise?.type === ExerciseType.PROGRAMMING && (this.exercise as ProgrammingExercise).showTestNamesToStudents) || this.showTestDetails;
         if (this.exercise) {
             componentInstance.exerciseType = this.exercise.type!;
             componentInstance.showScoreChart = true;
