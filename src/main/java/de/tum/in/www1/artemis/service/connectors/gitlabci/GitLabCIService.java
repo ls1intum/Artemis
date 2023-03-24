@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.service.connectors.gitlabci;
 
 import java.net.URL;
-import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
@@ -14,25 +16,23 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.BuildPlan;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
-import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Profile("gitlabci")
@@ -96,11 +96,10 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     private String gitlabToken;
 
     public GitLabCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService, BuildPlanRepository buildPlanRepository,
-            GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate,
-                testwiseCoverageService);
+            GitLabApi gitlab, UrlService urlService, BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService,
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
+            TestwiseCoverageService testwiseCoverageService) {
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
         this.gitlab = gitlab;
         this.urlService = urlService;
         this.buildPlanRepository = buildPlanRepository;
@@ -117,7 +116,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     private void setupGitLabCIConfiguration(VcsRepositoryUrl repositoryURL, ProgrammingExercise exercise, String buildPlanId) {
-        final String repositoryPath = getRepositoryPath(repositoryURL);
+        final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryURL);
         ProjectApi projectApi = gitlab.getProjectApi();
         try {
             Project project = projectApi.getProject(repositoryPath);
@@ -179,10 +178,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         }
     }
 
-    private String getRepositoryPath(VcsRepositoryUrl repositoryUrl) {
-        return urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
-    }
-
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
         addBuildPlanToProgrammingExerciseIfUnset(exercise);
@@ -218,23 +213,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException {
-        triggerBuild(participation.getVcsRepositoryUrl(), participation.getProgrammingExercise().getBranch());
-    }
-
-    private void triggerBuild(VcsRepositoryUrl vcsRepositoryUrl, String branch) {
-        final String repositoryPath = getRepositoryPath(vcsRepositoryUrl);
-        try {
-            Trigger trigger = gitlab.getPipelineApi().createPipelineTrigger(repositoryPath, "Trigger build");
-            gitlab.getPipelineApi().triggerPipeline(repositoryPath, trigger, branch, null);
-            gitlab.getPipelineApi().deletePipelineTrigger(repositoryPath, trigger.getId());
-        }
-        catch (GitLabApiException e) {
-            throw new GitLabCIException("Error triggering the build for " + repositoryPath, e);
-        }
-    }
-
-    @Override
     public void deleteProject(String projectKey) {
         log.error("Unsupported action: GitLabCIService.deleteBuildPlan()");
         log.error("Please refer to the repository for deleting the project. The build plan can not be deleted separately.");
@@ -250,11 +228,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     public String getPlanKey(Object requestBody) throws ContinuousIntegrationException {
         TestResultsDTO dto = TestResultsDTO.convert(requestBody);
         return dto.getFullName();
-    }
-
-    @Override
-    public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
-        return TestResultsDTO.convert(requestBody);
     }
 
     @Override
@@ -280,7 +253,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     private Optional<Pipeline> getLatestPipeline(final ProgrammingExerciseParticipation participation) throws GitLabApiException {
-        final String repositoryPath = getRepositoryPath(participation.getVcsRepositoryUrl());
+        final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
         final Optional<String> commitHash = participation.findLatestSubmission().map(ProgrammingSubmission.class::cast).map(ProgrammingSubmission::getCommitHash);
         if (commitHash.isEmpty()) {
             return Optional.empty();
@@ -293,12 +266,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     public boolean checkIfBuildPlanExists(String projectKey, String buildPlanId) {
         log.error("Unsupported action: GitLabCIService.checkIfBuildPlanExists()");
         return true;
-    }
-
-    @Override
-    public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
-        log.error("Unsupported action: GitLabCIService.getLatestBuildLogs()");
-        return null;
     }
 
     @Override
@@ -320,7 +287,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
-            String newDefaultBranch, Optional<List<String>> optionalTriggeredByRepositories) {
+            String newDefaultBranch, List<String> triggeredByRepositories) {
         log.error("Unsupported action: GitLabCIService.updatePlanRepository()");
     }
 
@@ -353,40 +320,5 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
         log.error("Unsupported action: GitLabCIService.getWebHookUrl()");
         return Optional.empty();
-    }
-
-    @Override
-    public void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
-            List<BuildLogEntry> buildLogEntries) {
-        // In GitLab CI we get the logs from the maven command. Therefore, we cannot extract any information about the setup of the runner.
-        // In addition, static code analysis is not yet available.
-
-        if (buildLogEntries.isEmpty() || programmingLanguage != ProgrammingLanguage.JAVA) {
-            log.debug("No build logs statistics extracted for submission {}", programmingSubmission.getId());
-            // No logs received -> Do nothing
-            return;
-        }
-
-        if (!ProjectType.isMavenProject(projectType)) {
-            // A new, unsupported project type was used -> Log it but don't store it since it would only contain null-values
-            log.warn("Received unsupported project type {} for GitLabCIService.extractAndPersistBuildLogStatistics, will not store any build log statistics.", projectType);
-            return;
-        }
-        ZonedDateTime jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry;
-        ZonedDateTime jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
-        ZonedDateTime testsStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
-        ZonedDateTime testsFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
-        Integer dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
-
-        var testDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(testsStarted, testsFinished);
-        var totalJobDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(jobStarted, jobFinished);
-
-        // Set the duration to 0 for the durations, we cannot extract.
-        var time = ZonedDateTime.now(); // TODO: this needs to be properly implemented
-        var agentSetupDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time);
-        var scaDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time);
-
-        buildLogStatisticsEntryRepository.saveBuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
-                dependenciesDownloadedCount);
     }
 }
