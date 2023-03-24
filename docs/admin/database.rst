@@ -30,7 +30,7 @@ Migrating MySQL Data to PostgreSQL
 
 #. Stop Artemis.
 
-#. Create a database backup using ``mysqldump``.
+#. Create a database backup using ``mysqldump --all-databases Artemis > Artemis.sql``.
    This dump is called ``Artemis.sql`` in the following steps.
 
 #. Copy the ``docker-compose.yml`` file into the same directory as the ``Artemis.sql`` database dump
@@ -72,6 +72,7 @@ Migrating MySQL Data to PostgreSQL
         networks:
             db-migration:
                 driver: "bridge"
+                name: artemis-db-migration
         ...
 
    .. code-block:: bash
@@ -86,8 +87,7 @@ Migrating MySQL Data to PostgreSQL
         docker compose exec -T mysql mysql --password=cRS2N4X2 < Artemis.sql
 
         # use pgloader to transfer data from MySQL to Postgres
-        NETWORK_NAME=$(docker network ls | grep "db-migration" | awk '{ print $2 }')
-        docker run --rm --network="${NETWORK_NAME}" docker.io/dimitri/pgloader pgloader mysql://root:cRS2N4X2@mysql/Artemis postgresql://root:cRS2N4X2@postgres/Artemis
+        docker run --rm --network=artemis-db-migration docker.io/dimitri/pgloader pgloader mysql://root:cRS2N4X2@mysql/Artemis postgresql://root:cRS2N4X2@postgres/Artemis
 
         # dump the Postgres data in a format that can be imported in the actual database
         docker compose exec -T postgres pg_dump -Ox Artemis > Artemis.pg.sql
