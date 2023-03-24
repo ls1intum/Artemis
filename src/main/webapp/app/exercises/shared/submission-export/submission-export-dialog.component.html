@@ -34,9 +34,10 @@
                 </label>
             </div>
             <div class="form-group">
-                <strong jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissionsDate"
+                <strong jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissionsDate.title"
                     >Date for filter late submissions (defaults to exercise due date if not set)</strong
                 >
+                <jhi-help-icon text="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissionsDate.tooltip"></jhi-help-icon>
                 <jhi-date-time-picker
                     [(ngModel)]="this.submissionExportOptions.filterLateSubmissionsDate"
                     [disabled]="!this.submissionExportOptions.filterLateSubmissions"

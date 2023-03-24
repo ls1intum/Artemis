@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import javax.annotation.Nullable;
 
@@ -22,10 +20,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
@@ -35,11 +30,13 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.LtiNewResultService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -89,6 +86,10 @@ public class ResultResource {
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
+    private final TestwiseCoverageService testwiseCoverageService;
+
+    private final ProgrammingTriggerService programmingTriggerService;
+
     private final ParticipationRepository participationRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -103,8 +104,9 @@ public class ResultResource {
             ExampleSubmissionRepository exampleSubmissionRepository, ResultService resultService, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, LtiNewResultService ltiNewResultService, ResultRepository resultRepository,
             WebsocketMessagingService messagingService, UserRepository userRepository, ExamDateService examDateService,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, ParticipationRepository participationRepository,
-            StudentParticipationRepository studentParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            ProgrammingExerciseGradingService programmingExerciseGradingService, TestwiseCoverageService testwiseCoverageService,
+            ProgrammingTriggerService programmingTriggerService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.exerciseRepository = exerciseRepository;
@@ -120,6 +122,8 @@ public class ResultResource {
         this.userRepository = userRepository;
         this.examDateService = examDateService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
+        this.testwiseCoverageService = testwiseCoverageService;
+        this.programmingTriggerService = programmingTriggerService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -178,6 +182,20 @@ public class ResultResource {
         // Only notify the user about the new result if the result was created successfully.
         if (optResult.isPresent()) {
             Result result = optResult.get();
+
+            if (participation instanceof SolutionProgrammingExerciseParticipation) {
+                // If the solution participation was updated, also trigger the template participation build.
+                // This method will return without triggering the build if the submission is not of type TEST.
+                var programmingSubmission = (ProgrammingSubmission) result.getSubmission();
+                triggerTemplateBuildIfTestCasesChanged(participation.getProgrammingExercise().getId(), programmingSubmission);
+
+                // the test cases and the submission have been saved to the database previously, therefore we can add the reference to the coverage reports
+                if (Boolean.TRUE.equals(participation.getProgrammingExercise().isTestwiseCoverageEnabled()) && Boolean.TRUE.equals(result.isSuccessful())) {
+                    testwiseCoverageService.createTestwiseCoverageReport(result.getCoverageFileReportsByTestCaseName(), participation.getProgrammingExercise(),
+                            programmingSubmission);
+                }
+            }
+
             log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
             // notify user via websocket
             messagingService.broadcastNewResult((Participation) participation, result);
@@ -188,6 +206,32 @@ public class ResultResource {
             log.info("The new result for {} was saved successfully", planKey);
         }
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Trigger the build of the template repository, if the submission of the provided result is of type TEST.
+     * Will use the commitHash of the submission for triggering the template build.
+     * <p>
+     * If the submission of the provided result is not of type TEST, the method will return without triggering the build.
+     *
+     * @param programmingExerciseId ProgrammingExercise id that belongs to the result.
+     * @param submission            ProgrammingSubmission
+     */
+    private void triggerTemplateBuildIfTestCasesChanged(long programmingExerciseId, ProgrammingSubmission submission) {
+        // We only trigger the template build when the test repository was changed.
+        // If the submission is from type TEST but already has a result, this build was not triggered by a test repository change
+        if (!submission.belongsToTestRepository() || (submission.belongsToTestRepository() && submission.getResults() != null && !submission.getResults().isEmpty())) {
+            return;
+        }
+        try {
+            programmingTriggerService.triggerTemplateBuildAndNotifyUser(programmingExerciseId, submission.getCommitHash(), SubmissionType.TEST);
+        }
+        catch (EntityNotFoundException ex) {
+            // If for some reason the programming exercise does not have a template participation, we can only log and abort.
+            log.error(
+                    "Could not trigger the build of the template repository for the programming exercise id {} because no template participation could be found for the given exercise",
+                    programmingExerciseId);
+        }
     }
 
     @Nullable
@@ -213,30 +257,6 @@ public class ResultResource {
             }
         }
         return participation;
-    }
-
-    /**
-     * GET /exercises/:exerciseId/results : get the successful results for an exercise, ordered ascending by build completion date.
-     *
-     * @param exerciseId      the id of the exercise for which to retrieve the results
-     * @param withSubmissions defines if submissions are loaded from the database for the results
-     * @return the ResponseEntity with status 200 (OK) and the list of results in body
-     */
-    @GetMapping("exercises/{exerciseId}/results")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "true") boolean withSubmissions) {
-        long start = System.currentTimeMillis();
-        log.debug("REST request to get Results for Exercise : {}", exerciseId);
-
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-
-        final List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(exerciseId, false);
-
-        List<Result> results = resultsForExercise(exercise, participations, withSubmissions);
-        log.info("getResultsForExercise took {}ms for {} results.", System.currentTimeMillis() - start, results.size());
-
-        return ResponseEntity.ok().body(results);
     }
 
     /**
@@ -350,18 +370,18 @@ public class ResultResource {
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         Participation participation = result.getParticipation();
         if (!participation.getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + " !",
+            throw new BadRequestAlertException("participationId of the path does not match the participationId of the participation corresponding to the result " + resultId + " !",
                     "participationId", "400");
         }
 
         // The permission check depends on the participation type (normal participations vs. programming exercise participations).
-        if (participation instanceof StudentParticipation) {
-            if (!authCheckService.canAccessParticipation((StudentParticipation) participation)) {
+        if (participation instanceof StudentParticipation studentParticipation) {
+            if (!authCheckService.canAccessParticipation(studentParticipation)) {
                 throw new AccessForbiddenException("participation", participationId);
             }
         }
-        else if (participation instanceof ProgrammingExerciseParticipation) {
-            if (!programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
+        else if (participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation) {
+            if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
                 throw new AccessForbiddenException("participation", participationId);
             }
         }

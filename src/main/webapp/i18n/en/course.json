@@ -138,6 +138,7 @@
             "instructors": "Instructors",
             "student": "Student",
             "tutor": "Tutor",
+            "reviewer": "Reviewer",
             "editor": "Editor",
             "instructor": "Instructor",
             "form": {
