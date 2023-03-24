@@ -287,6 +287,7 @@
                 "downloadAllTeams": "Oder lade die Repositories aller Teams herunter",
                 "filterLateSubmissions": "Verspätete Abgaben herausfiltern",
                 "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Einreichungsfrist der Aufgabe)",
+                "excludePracticeSubmissions": "Abgaben aus dem Übungsmodus ausschließen",
                 "addStudentName": "Namen der Studierenden zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
                 "addTeamName": "Namen der Teams zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
                 "addTeamOrStudentName": "Namen der Teams/Studierenden zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",

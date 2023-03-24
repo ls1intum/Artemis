@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.jenkins.build_plan;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -20,7 +21,7 @@ import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
-import de.tum.in.www1.artemis.service.connectors.AbstractBuildPlanCreator;
+import de.tum.in.www1.artemis.service.connectors.ci.AbstractBuildPlanCreator;
 
 @Component
 public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
@@ -70,7 +71,7 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
         final boolean isSequentialTestRuns = exercise.hasSequentialTestRuns();
 
-        final String[] pipelinePath = getResourcePath(programmingLanguage, projectType, isSequentialTestRuns);
+        final Path pipelinePath = buildResourcePath(programmingLanguage, projectType, isSequentialTestRuns);
         final Resource resource = resourceLoaderService.getResource(pipelinePath);
 
         try (InputStream inputStream = resource.getInputStream()) {
@@ -93,7 +94,7 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
         return replacements;
     }
 
-    private String[] getResourcePath(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, boolean isSequentialRuns) {
+    private Path buildResourcePath(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, boolean isSequentialRuns) {
         if (programmingLanguage == null) {
             throw new IllegalArgumentException("ProgrammingLanguage should not be null");
         }
@@ -103,8 +104,12 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
         final var programmingLanguageName = programmingLanguage.name().toLowerCase();
         final Optional<String> projectTypeName = getProjectTypeName(programmingLanguage, projectType);
 
-        return projectTypeName.map(name -> new String[] { "templates", "jenkins", programmingLanguageName, name, regularOrSequentialDir, pipelineScriptFilename })
-                .orElseGet(() -> new String[] { "templates", "jenkins", programmingLanguageName, regularOrSequentialDir, pipelineScriptFilename });
+        Path resourcePath = Path.of("templates", "jenkins", programmingLanguageName);
+        if (projectTypeName.isPresent()) {
+            resourcePath = resourcePath.resolve(projectTypeName.get());
+        }
+
+        return resourcePath.resolve(regularOrSequentialDir).resolve(pipelineScriptFilename);
     }
 
     private Optional<String> getProjectTypeName(final ProgrammingLanguage programmingLanguage, final Optional<ProjectType> projectType) {

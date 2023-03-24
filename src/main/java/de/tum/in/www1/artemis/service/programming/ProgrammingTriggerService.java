@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
@@ -48,7 +48,7 @@ public class ProgrammingTriggerService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
     private final AuditEventRepository auditEventRepository;
 
@@ -61,7 +61,7 @@ public class ProgrammingTriggerService {
     private final ProgrammingMessagingService programmingMessagingService;
 
     public ProgrammingTriggerService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService,
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository, ResultRepository resultRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingMessagingService programmingMessagingService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -71,7 +71,7 @@ public class ProgrammingTriggerService {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.continuousIntegrationService = continuousIntegrationService;
+        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.auditEventRepository = auditEventRepository;
         this.resultRepository = resultRepository;
@@ -91,8 +91,8 @@ public class ProgrammingTriggerService {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExerciseId).get();
 
         try {
-            continuousIntegrationService.get().triggerBuild(programmingExercise.getSolutionParticipation());
-            continuousIntegrationService.get().triggerBuild(programmingExercise.getTemplateParticipation());
+            continuousIntegrationTriggerService.get().triggerBuild(programmingExercise.getSolutionParticipation());
+            continuousIntegrationTriggerService.get().triggerBuild(programmingExercise.getTemplateParticipation());
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Could not trigger build for solution repository after test case update for programming exercise with id {}", programmingExerciseId);
@@ -221,7 +221,7 @@ public class ProgrammingTriggerService {
                     participationService.resumeProgrammingExercise(participation);
                     // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
                 }
-                continuousIntegrationService.get().triggerBuild(participation);
+                continuousIntegrationTriggerService.get().triggerBuild(participation);
                 // TODO: this is a workaround, in the future we should use the participation to notify the client and avoid using the submission
                 programmingMessagingService.notifyUserAboutSubmission(submission.get());
             }
@@ -251,7 +251,7 @@ public class ProgrammingTriggerService {
                 participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
                 // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             }
-            continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
+            continuousIntegrationTriggerService.get().triggerBuild(programmingExerciseParticipation);
             programmingMessagingService.notifyUserAboutSubmission(submission);
         }
         catch (Exception e) {
@@ -287,7 +287,7 @@ public class ProgrammingTriggerService {
     private void createSubmissionTriggerBuildAndNotifyUser(ProgrammingExerciseParticipation participation, String commitHash, SubmissionType submissionType) {
         ProgrammingSubmission submission = createSubmissionWithCommitHashAndSubmissionType(participation, commitHash, submissionType);
         try {
-            continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
+            continuousIntegrationTriggerService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
             programmingMessagingService.notifyUserAboutSubmission(submission);
         }
         catch (Exception e) {

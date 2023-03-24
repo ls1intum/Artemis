@@ -1,12 +1,8 @@
-package de.tum.in.www1.artemis.service.connectors;
+package de.tum.in.www1.artemis.service.connectors.ci;
 
-import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.function.Predicate;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -22,10 +18,7 @@ import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
-public abstract class AbstractContinuousIntegrationService implements ContinuousIntegrationService {
-
-    @Value("${artemis.continuous-integration.url}")
-    protected URL serverUrl;
+public abstract class AbstractContinuousIntegrationResultService implements ContinuousIntegrationResultService {
 
     protected final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
@@ -35,19 +28,12 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
 
     protected final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
-    protected final RestTemplate restTemplate;
-
-    protected final RestTemplate shortTimeoutRestTemplate;
-
     protected final TestwiseCoverageService testwiseCoverageService;
 
-    protected AbstractContinuousIntegrationService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
-            BuildLogEntryService buildLogService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, RestTemplate restTemplate,
-            RestTemplate shortTimeoutRestTemplate, TestwiseCoverageService testwiseCoverageService) {
+    protected AbstractContinuousIntegrationResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
+            BuildLogEntryService buildLogService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.feedbackRepository = feedbackRepository;
-        this.restTemplate = restTemplate;
-        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.buildLogService = buildLogService;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.testwiseCoverageService = testwiseCoverageService;

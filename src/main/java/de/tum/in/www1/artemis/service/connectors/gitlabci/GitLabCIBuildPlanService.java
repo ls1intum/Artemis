@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
-import de.tum.in.www1.artemis.service.connectors.AbstractBuildPlanCreator;
+import de.tum.in.www1.artemis.service.connectors.ci.AbstractBuildPlanCreator;
 
 @Service
 @Profile("gitlabci")
