@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, HostBinding, Input, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { getDayTranslationKey } from '../../weekdays';
 import { Course } from 'app/entities/course.model';
 
 @Component({
@@ -18,6 +17,23 @@ export class TutorialGroupRowComponent {
     @Input()
     showIdColumn = false;
 
+    /**
+     * If true we show the campus column
+     */
+    @Input()
+    tutorialGroupsSplitAcrossMultipleCampuses = false;
+    /**
+     * If true we show the online / offline column
+     */
+    @Input()
+    mixOfOfflineAndOfflineTutorialGroups = false;
+
+    /**
+     * If true we show the language column
+     */
+    @Input()
+    mifOfDifferentLanguages = false;
+
     @Input()
     showChannelColumn = false;
 
@@ -31,6 +47,4 @@ export class TutorialGroupRowComponent {
 
     @Input()
     tutorialGroupClickHandler: (tutorialGroup: TutorialGroup) => void;
-
-    getDayTranslationKey = getDayTranslationKey;
 }

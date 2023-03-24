@@ -6,7 +6,7 @@ import { Exercise as CypressExercise } from 'src/test/cypress/support/pageobject
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { BASE_API, DELETE, EXERCISE_TYPE, GET, POST, PUT } from '../constants';
+import { BASE_API, CourseWideContext, DELETE, EXERCISE_TYPE, GET, POST, PUT } from '../constants';
 import programmingExerciseTemplate from '../../fixtures/exercise/programming/template.json';
 import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
@@ -215,6 +215,22 @@ export class CourseManagementRequests {
 
     private addUserToCourse(courseId: number, username: string, roleIdentifier: string) {
         return cy.request({ method: POST, url: `${COURSE_BASE}${courseId}/${roleIdentifier}/${username}` });
+    }
+
+    createCoursePost(course: Course, title: string, content: string, context: CourseWideContext) {
+        const body = {
+            content,
+            course: {
+                id: course.id,
+                title: course.title,
+            },
+            courseWideContext: context,
+            displayPriority: 'NONE',
+            title,
+            tags: [],
+            visibleForStudents: true,
+        };
+        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/posts`, body });
     }
 
     /**
