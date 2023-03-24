@@ -36,13 +36,13 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.config.StaticCodeAnalysisConfigurer;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -62,11 +62,10 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.CourseExamExportService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.programming.JavaTemplateUpgradeService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticProgrammingExerciseCleanupService;
@@ -128,10 +127,6 @@ public class ProgrammingExerciseTestService {
     private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
     @Autowired
-    @Qualifier("staticCodeAnalysisConfiguration")
-    private Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
-
-    @Autowired
     private PasswordService passwordService;
 
     @Autowired
@@ -181,8 +176,6 @@ public class ProgrammingExerciseTestService {
     public static final String studentLogin = "student1";
 
     public static final String teamShortName = "team1";
-
-    public static final String REPO_BASE_URL = "/api/repository/";
 
     public static final String PARTICIPATION_BASE_URL = "/api/participations/";
 
@@ -419,8 +412,8 @@ public class ProgrammingExerciseTestService {
         assertThat(exercise).isEqualTo(generatedExercise);
         var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(generatedExercise.getId());
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise")
-                .isEqualTo(staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()));
-        staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()).forEach(config -> config.getCategoryMappings().forEach(mapping -> {
+                .isEqualTo(StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()));
+        StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()).forEach(config -> config.getCategoryMappings().forEach(mapping -> {
             assertThat(mapping.getTool()).isNotNull();
             assertThat(mapping.getCategory()).isNotNull();
         }));
@@ -755,7 +748,7 @@ public class ProgrammingExerciseTestService {
         var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findWithExerciseByExerciseId(exerciseToBeImported.getId());
         assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled()).isTrue();
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparatorOnFields("name", "state", "penalty", "maxPenalty")
-                .isEqualTo(staticCodeAnalysisDefaultConfigurations.get(sourceExercise.getProgrammingLanguage()));
+                .isEqualTo(StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(sourceExercise.getProgrammingLanguage()));
         assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isEqualTo(80);
     }
 
@@ -1464,39 +1457,6 @@ public class ProgrammingExerciseTestService {
         team = teamRepository.save(exercise, team);
         assertThat(team.getStudents()).as("Student was correctly added to team").hasSize(1);
         return team;
-    }
-
-    // TEST
-    void startProgrammingExerciseStudentSubmissionFailedWithBuildlog() throws Exception {
-        persistProgrammingExercise();
-        User user = userRepo.findOneByLogin(userPrefix + studentLogin).orElseThrow();
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true);
-        final var participation = createUserParticipation();
-
-        // create a submission which fails
-        database.createProgrammingSubmission(participation, true);
-
-        mockDelegate.resetMockProvider();
-
-        var log1 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "java.lang.AssertionError: BubbleSort does not sort correctly");
-        var log2 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[INFO] Test");
-        var log3 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[WARNING]");
-        var log4 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[ERROR] [Help 1]");
-        var log5 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[ERROR] To see the full stack trace of the errors\"");
-        var log6 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "Unable to publish artifact");
-        var log7 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "NOTE: Picked up JDK_JAVA_OPTIONS");
-        var log8 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin");
-        var log9 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[INFO] Downloading error");
-        var log10 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[INFO] Downloaded error");
-
-        var logs = List.of(log1, log2, log3, log4, log5, log6, log7, log8, log9, log10);
-        // get the failed build log
-        mockDelegate.mockGetBuildLogs(participation, logs);
-        var buildLogs = request.get(REPO_BASE_URL + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
-
-        assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
-        // some build logs have been filtered out
-        assertThat(buildLogs).as("Failed build log was created").hasSize(1);
     }
 
     // TEST

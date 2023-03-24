@@ -13,9 +13,9 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.service.connectors.Lti10Service;
-import de.tum.in.www1.artemis.service.connectors.Lti13Service;
-import de.tum.in.www1.artemis.service.connectors.LtiNewResultService;
+import de.tum.in.www1.artemis.service.connectors.lti.Lti10Service;
+import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 
 class LtiNewResultServiceTest {
 

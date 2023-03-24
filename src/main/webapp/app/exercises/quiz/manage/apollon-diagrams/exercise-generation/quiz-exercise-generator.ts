@@ -36,7 +36,7 @@ export async function generateDragAndDropQuizExercise(
     const elements = [...model.elements, ...model.relationships];
 
     // Render the diagram's background image and store it
-    const renderedDiagram = ApollonEditor.exportModelAsSvg(model, {
+    const renderedDiagram = await ApollonEditor.exportModelAsSvg(model, {
         keepOriginalSize: true,
         exclude: interactiveElements,
     });
@@ -165,7 +165,7 @@ async function generateDragAndDropItemForElement(
     svgSize: { width: number; height: number },
     fileUploaderService: FileUploaderService,
 ): Promise<DragAndDropMapping> {
-    const renderedElement: SVG = ApollonEditor.exportModelAsSvg(model, { include: [element.id] });
+    const renderedElement: SVG = await ApollonEditor.exportModelAsSvg(model, { include: [element.id] });
     const image = await convertRenderedSVGToPNG(renderedElement);
     const imageUploadResponse = await fileUploaderService.uploadFile(image, `element-${element.id}.png`);
 
@@ -221,7 +221,7 @@ async function generateDragAndDropItemForRelationship(
         margin = { ...margin, top: delta / 2, bottom: delta / 2 };
     }
 
-    const renderedElement: SVG = ApollonEditor.exportModelAsSvg(model, { margin, include: [element.id] });
+    const renderedElement: SVG = await ApollonEditor.exportModelAsSvg(model, { margin, include: [element.id] });
     const image = await convertRenderedSVGToPNG(renderedElement);
     const imageUploadResponse = await fileUploaderService.uploadFile(image, `relationship-${element.id}.png`);
 
