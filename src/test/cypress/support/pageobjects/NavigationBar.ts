@@ -14,4 +14,12 @@ export class NavigationBar {
         cy.wait('@courseManagementQuery', { timeout: 30000 });
         cy.url().should('include', '/course-management');
     }
+
+    openNotificationPanel() {
+        cy.get('.navbar .notification-button').click();
+    }
+
+    getNotifications() {
+        return cy.get('.notification-sidebar .notification-item');
+    }
 }

@@ -22,3 +22,12 @@ export enum EXERCISE_TYPE {
     Quiz = 'quiz',
     Programming = 'programming',
 }
+
+// CourseWideContext
+// Copied from src\main\webapp\app\shared\metis\metis.util.ts
+export enum CourseWideContext {
+    TECH_SUPPORT = 'TECH_SUPPORT',
+    ORGANIZATION = 'ORGANIZATION',
+    RANDOM = 'RANDOM',
+    ANNOUNCEMENT = 'ANNOUNCEMENT',
+}
