@@ -18,6 +18,8 @@ public class RepositoryExportOptionsDTO {
 
     private ZonedDateTime filterLateSubmissionsDate;
 
+    private boolean excludePracticeSubmissions;
+
     private boolean addParticipantName;
 
     private boolean combineStudentCommits;
@@ -58,6 +60,14 @@ public class RepositoryExportOptionsDTO {
 
     public void setFilterLateSubmissionsDate(ZonedDateTime filterLateSubmissionsDate) {
         this.filterLateSubmissionsDate = filterLateSubmissionsDate;
+    }
+
+    public boolean isExcludePracticeSubmissions() {
+        return excludePracticeSubmissions;
+    }
+
+    public void setExcludePracticeSubmissions(boolean excludePracticeSubmissions) {
+        this.excludePracticeSubmissions = excludePracticeSubmissions;
     }
 
     public boolean isAddParticipantName() {
