@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors;
+package de.tum.in.www1.artemis.service.connectors.ci;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
@@ -11,10 +11,9 @@ import org.springframework.http.ResponseEntity;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
-import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 
 /**
  * Abstract service for managing entities related to continuous integration.
@@ -83,14 +82,6 @@ public interface ContinuousIntegrationService {
     void performEmptySetupCommit(ProgrammingExerciseParticipation participation);
 
     /**
-     * triggers a build for the build plan in the given participation
-     *
-     * @param participation the participation with the id of the build plan that should be triggered
-     * @throws ContinuousIntegrationException if the request to the CI failed.
-     */
-    void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException;
-
-    /**
      * Delete project with given identifier from CI system.
      *
      * @param projectKey unique identifier for the project on CI system
@@ -117,23 +108,6 @@ public interface ContinuousIntegrationService {
     String getPlanKey(Object requestBody) throws ContinuousIntegrationException;
 
     /**
-     * converts the object from the CI system (Bamboo, Jenkins, or GitLabCI) into a proper Java DTO
-     *
-     * @param requestBody the object sent from the CI system to Artemis
-     * @return the DTO with all information in Java Object form
-     */
-    AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody);
-
-    /**
-     * Generate an Artemis result object from the CI build result. Will use the test case results and issues in static code analysis as result feedback.
-     *
-     * @param buildResult   Build result data provided by build notification (already converted into a DTO)
-     * @param participation to attach result to.
-     * @return the created Artemis result with a score, completion date, etc.
-     */
-    Result createResultFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingExerciseParticipation participation);
-
-    /**
      * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
      *
      * @param participation participation for which to get status
@@ -149,14 +123,6 @@ public interface ContinuousIntegrationService {
      * @return true if build plan is valid otherwise false
      */
     boolean checkIfBuildPlanExists(String projectKey, String buildPlanId);
-
-    /**
-     * Get the build logs of the latest CI build.
-     *
-     * @param programmingSubmission The programming for which the latest build logs should be retrieved
-     * @return list of build log entries
-     */
-    List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission);
 
     /**
      * Get the build artifact (JAR/WAR), if any, of the latest build
@@ -186,17 +152,17 @@ public interface ContinuousIntegrationService {
     /**
      * Updates the configured exercise repository for a given build plan to the given repository, this is a key method in the Artemis system structure.
      *
-     * @param buildProjectKey                 The key of the build project, e.g. 'EIST16W1', which is normally the programming exercise project key.
-     * @param buildPlanKey                    The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
-     * @param ciRepoName                      The name of the configured repository in the CI plan, normally 'assignment' (or 'test').
-     * @param repoProjectKey                  The key of the project that contains the repository, e.g. 'EIST16W1', which is normally the programming exercise project key.
-     * @param newRepoUrl                      The url of the newly to be referenced repository.
-     * @param existingRepoUrl                 The url of the existing repository (which should be replaced).
-     * @param newBranch                       The default branch for the new repository
-     * @param optionalTriggeredByRepositories Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten.
+     * @param buildProjectKey         The key of the build project, e.g. 'EIST16W1', which is normally the programming exercise project key.
+     * @param buildPlanKey            The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
+     * @param ciRepoName              The name of the configured repository in the CI plan, normally 'assignment' (or 'test').
+     * @param repoProjectKey          The key of the project that contains the repository, e.g. 'EIST16W1', which is normally the programming exercise project key.
+     * @param newRepoUrl              The url of the newly to be referenced repository.
+     * @param existingRepoUrl         The url of the existing repository (which should be replaced).
+     * @param newBranch               The default branch for the new repository
+     * @param triggeredByRepositories List of repositories that should trigger the new build plan. If empty, no triggers get overwritten.
      */
     void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl, String newBranch,
-            Optional<List<String>> optionalTriggeredByRepositories);
+            List<String> triggeredByRepositories);
 
     /**
      * Gives overall roles permissions for the defined project. A role can e.g. be all logged-in users
@@ -247,18 +213,6 @@ public interface ContinuousIntegrationService {
      * @return The URL as a String pointing to the to be triggered build plan in the CI system. If this is not needed/supported, an empty optional is returned.
      */
     Optional<String> getWebHookUrl(String projectKey, String buildPlanId);
-
-    /**
-     * Extract the build log statistics from the BuildLogEntries and persist a BuildLogStatisticsEntry.
-     * Not all programming languages and project types might be supported on all implementations of the ContinuousIntegrationService.
-     *
-     * @param programmingSubmission the submission to which the generated BuildLogStatisticsEntry should be attached
-     * @param programmingLanguage   the programming language of the programming exercise
-     * @param projectType           the project type of the programming exercise
-     * @param buildLogEntries       the list of BuildLogEntries received from the CI-Server
-     */
-    void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
-            List<BuildLogEntry> buildLogEntries);
 
     /**
      * Path a repository should get checked out in a build plan. E.g. the assignment repository should get checked out

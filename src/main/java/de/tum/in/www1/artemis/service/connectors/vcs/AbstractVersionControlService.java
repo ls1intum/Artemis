@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors;
+package de.tum.in.www1.artemis.service.connectors.vcs;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
@@ -22,6 +22,8 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 
 public abstract class AbstractVersionControlService implements VersionControlService {
 
