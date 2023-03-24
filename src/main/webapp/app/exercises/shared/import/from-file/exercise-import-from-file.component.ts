@@ -65,16 +65,12 @@ export class ExerciseImportFromFileComponent implements OnInit {
     }
 
     private handleProgrammingExercise(exercise: ProgrammingExercise) {
-        if (
-            exercise.programmingLanguage === ProgrammingLanguage.HASKELL ||
-            exercise.programmingLanguage === ProgrammingLanguage.OCAML ||
-            exercise.programmingLanguage === ProgrammingLanguage.SWIFT
-        ) {
+        if (exercise.programmingLanguage === ProgrammingLanguage.SWIFT || exercise.programmingLanguage === ProgrammingLanguage.EMPTY) {
             this.alertService.error('artemisApp.programmingExercise.importFromFile.notSupportedProgrammingLanguage', { programmingLanguage: exercise.programmingLanguage });
         }
     }
 
-    /** sets the zip file that is selected in the file input dialgo **/
+    /** sets the zip file that is selected in the file input dialog **/
     setFileForExerciseImport(event: any): void {
         if (event.target.files.length) {
             const fileList: FileList = event.target.files;
