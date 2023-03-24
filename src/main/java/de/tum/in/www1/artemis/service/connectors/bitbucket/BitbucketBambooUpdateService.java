@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors;
+package de.tum.in.www1.artemis.service.connectors.bitbucket;
 
 import java.net.URL;
 import java.util.*;
@@ -26,12 +26,12 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.ApplicationLinksDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTriggerDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationUpdateService;
 
 @Service
 // Only activate this service bean, if both Bamboo and Bitbucket are activated (@Profile({"bitbucket","bamboo"}) would activate
@@ -66,7 +66,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
 
     @Override
     public void updatePlanRepository(String bambooProjectKey, String buildPlanKey, String bambooRepositoryName, String bitbucketProjectKey, String bitbucketRepositoryName,
-            String branchName, Optional<List<String>> optionalTriggeredByRepositories) {
+            String branchName, List<String> triggeredByRepositories) {
         try {
             log.debug("Update plan repository for build plan {}", buildPlanKey);
             BambooRepositoryDTO bambooRepository = findBambooRepository(bambooRepositoryName, OLD_ASSIGNMENT_REPO_NAME, buildPlanKey);
@@ -77,13 +77,9 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
 
             updateBambooPlanRepository(bambooRepository, bitbucketRepositoryName, bitbucketProjectKey, buildPlanKey, branchName);
 
-            // Overwrite triggers if needed, incl workaround for different repo names, triggered by is present means that the exercise (the BASE build plan) is imported from a
-            // previous exercise
-            if (optionalTriggeredByRepositories.isPresent() && bambooRepository.getName().equals(OLD_ASSIGNMENT_REPO_NAME)) {
-                optionalTriggeredByRepositories = Optional
-                        .of(optionalTriggeredByRepositories.get().stream().map(trigger -> trigger.replace(Constants.ASSIGNMENT_REPO_NAME, OLD_ASSIGNMENT_REPO_NAME)).toList());
+            if (triggeredByRepositories != null && !triggeredByRepositories.isEmpty()) {
+                overwriteTriggers(buildPlanKey, triggeredByRepositories);
             }
-            optionalTriggeredByRepositories.ifPresent(triggeredByRepositories -> overwriteTriggers(buildPlanKey, triggeredByRepositories));
 
             log.info("Update plan repository for build plan {} was successful", buildPlanKey);
         }

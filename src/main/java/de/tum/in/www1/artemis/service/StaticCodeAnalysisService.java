@@ -3,20 +3,13 @@ package de.tum.in.www1.artemis.service;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import de.tum.in.www1.artemis.config.StaticCodeAnalysisConfigurer;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
-import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 
 @Service
@@ -24,28 +17,13 @@ public class StaticCodeAnalysisService {
 
     private final Logger log = LoggerFactory.getLogger(StaticCodeAnalysisService.class);
 
-    @Qualifier("staticCodeAnalysisConfiguration")
-    private final Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
-
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    public StaticCodeAnalysisService(StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
-            Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations, ProgrammingTriggerService programmingTriggerService) {
+    public StaticCodeAnalysisService(StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingTriggerService programmingTriggerService) {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
-        this.staticCodeAnalysisDefaultConfigurations = staticCodeAnalysisDefaultConfigurations;
         this.programmingTriggerService = programmingTriggerService;
-    }
-
-    /**
-     * Returns all static code analysis categories of the given programming exercise.
-     *
-     * @param exerciseId of a programming exercise.
-     * @return static code analysis categories of a programming exercise.
-     */
-    public Set<StaticCodeAnalysisCategory> findByExerciseId(Long exerciseId) {
-        return staticCodeAnalysisCategoryRepository.findByExerciseId(exerciseId);
     }
 
     /**
@@ -56,7 +34,8 @@ public class StaticCodeAnalysisService {
      */
     public void createDefaultCategories(ProgrammingExercise programmingExercise) {
         // Retrieve the default configuration for a specific programming language
-        List<StaticCodeAnalysisDefaultCategory> defaultConfiguration = staticCodeAnalysisDefaultConfigurations.get(programmingExercise.getProgrammingLanguage());
+        List<StaticCodeAnalysisDefaultCategory> defaultConfiguration = StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration()
+                .get(programmingExercise.getProgrammingLanguage());
         if (defaultConfiguration == null) {
             log.debug("Could not create default static code analysis categories for exercise {}. Default configuration not available.", programmingExercise.getId());
             return;
@@ -84,7 +63,7 @@ public class StaticCodeAnalysisService {
      * @return updated categories
      */
     public Set<StaticCodeAnalysisCategory> updateCategories(Long exerciseId, Collection<StaticCodeAnalysisCategory> updatedCategories) {
-        Set<StaticCodeAnalysisCategory> originalCategories = findByExerciseId(exerciseId);
+        Set<StaticCodeAnalysisCategory> originalCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(exerciseId);
         for (StaticCodeAnalysisCategory originalCategory : originalCategories) {
             // Find an updated category with the same id
             Optional<StaticCodeAnalysisCategory> matchingCategoryOptional = updatedCategories.stream()
@@ -118,8 +97,8 @@ public class StaticCodeAnalysisService {
      * @return static code analysis categories with default configuration
      */
     public Set<StaticCodeAnalysisCategory> resetCategories(ProgrammingExercise exercise) {
-        Set<StaticCodeAnalysisCategory> categories = findByExerciseId(exercise.getId());
-        List<StaticCodeAnalysisDefaultCategory> defaultCategories = staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage());
+        Set<StaticCodeAnalysisCategory> categories = staticCodeAnalysisCategoryRepository.findByExerciseId(exercise.getId());
+        List<StaticCodeAnalysisDefaultCategory> defaultCategories = StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage());
         if (defaultCategories == null) {
             log.debug("Could not reset static code analysis categories for exercise {}. Default configuration not available.", exercise.getId());
             return categories;
@@ -151,8 +130,8 @@ public class StaticCodeAnalysisService {
      * @return the new SCA configuration of the targetExercise
      */
     public Set<StaticCodeAnalysisCategory> importCategoriesFromExercise(ProgrammingExercise sourceExercise, ProgrammingExercise targetExercise) {
-        var sourceCategories = findByExerciseId(sourceExercise.getId());
-        var oldCategories = findByExerciseId(targetExercise.getId());
+        var sourceCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(sourceExercise.getId());
+        var oldCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(targetExercise.getId());
 
         var newCategories = sourceCategories.stream().map(category -> {
             var copy = category.copy();
@@ -167,91 +146,5 @@ public class StaticCodeAnalysisService {
         programmingTriggerService.setTestCasesChangedAndTriggerTestCaseUpdate(targetExercise.getId());
 
         return newCategories;
-    }
-
-    /**
-     * Links the categories of an exercise with the default category mappings.
-     *
-     * @param programmingExercise The programming exercise
-     * @return A list of pairs of categories and their mappings.
-     */
-    public List<ImmutablePair<StaticCodeAnalysisCategory, List<StaticCodeAnalysisDefaultCategory.CategoryMapping>>> getCategoriesWithMappingForExercise(
-            ProgrammingExercise programmingExercise) {
-        var categories = findByExerciseId(programmingExercise.getId());
-        var defaultCategories = staticCodeAnalysisDefaultConfigurations.get(programmingExercise.getProgrammingLanguage());
-
-        List<ImmutablePair<StaticCodeAnalysisCategory, List<StaticCodeAnalysisDefaultCategory.CategoryMapping>>> categoryPairsWithMapping = new ArrayList<>();
-
-        for (var category : categories) {
-            var defaultCategoryMatch = defaultCategories.stream().filter(defaultCategory -> defaultCategory.getName().equals(category.getName())).findFirst();
-            if (defaultCategoryMatch.isPresent()) {
-                var categoryMappings = defaultCategoryMatch.get().getCategoryMappings();
-                categoryPairsWithMapping.add(new ImmutablePair<>(category, categoryMappings));
-            }
-        }
-
-        return categoryPairsWithMapping;
-    }
-
-    /**
-     * Sets the category for each feedback and removes feedback with no category or an inactive one.
-     * The feedback is removed permanently, which has the advantage that the server or client doesn't have to filter out
-     * invisible feedback every time it is requested. The drawback is that the re-evaluate functionality can't take
-     * the removed feedback into account.
-     *
-     * @param result                     of the build run
-     * @param staticCodeAnalysisFeedback List of static code analysis feedback objects
-     * @param programmingExercise        The current exercise
-     * @return The filtered list of feedback objects
-     */
-    public List<Feedback> categorizeScaFeedback(Result result, List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
-        var categoryPairs = getCategoriesWithMappingForExercise(programmingExercise);
-
-        return staticCodeAnalysisFeedback.stream().filter(feedback -> {
-            // ObjectMapper to extract the static code analysis issue from the feedback
-            ObjectMapper mapper = new ObjectMapper();
-            // the category for this feedback
-            Optional<StaticCodeAnalysisCategory> category = Optional.empty();
-            try {
-                // extract the sca issue
-                var issue = mapper.readValue(feedback.getDetailText(), StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue.class);
-
-                // find the category for this issue
-                for (var categoryPair : categoryPairs) {
-                    var categoryMappings = categoryPair.right;
-                    if (categoryMappings.stream()
-                            .anyMatch(mapping -> mapping.getTool().name().equals(feedback.getReference()) && mapping.getCategory().equals(issue.getCategory()))) {
-                        category = Optional.of(categoryPair.left);
-                        break;
-                    }
-                }
-
-                if (category.isPresent()) {
-                    if (category.get().getState() == CategoryState.GRADED) {
-                        // update the penalty of the issue
-                        issue.setPenalty(category.get().getPenalty());
-                    }
-                    else if (issue.getPenalty() != null) {
-                        // remove the penalty of the issue
-                        issue.setPenalty(null);
-                    }
-                    feedback.setDetailText(mapper.writeValueAsString(issue));
-                }
-            }
-            catch (JsonProcessingException exception) {
-                log.debug("Error occurred parsing feedback {} to static code analysis issue: {}", feedback, exception.getMessage());
-            }
-
-            if (category.isEmpty() || category.get().getState().equals(CategoryState.INACTIVE)) {
-                // remove feedback in no category or an inactive one
-                result.removeFeedback(feedback);
-                return false; // filter this feedback
-            }
-            else {
-                // add the category name to the feedback text
-                feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + category.get().getName());
-                return true; // keep this feedback
-            }
-        }).collect(Collectors.toCollection(ArrayList::new));
     }
 }
