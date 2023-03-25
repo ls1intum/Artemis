@@ -16,7 +16,6 @@ import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
@@ -416,10 +415,6 @@ export class AssessmentDashboardComponent implements OnInit {
             this.isTestRun ? 'test-assessment-dashboard' : 'assessment-dashboard',
             exercise.id!.toString(),
         ];
-    }
-
-    getSubmissionsLinkForExercise(exercise: Exercise): string[] {
-        return getExerciseSubmissionsLink(exercise.type!, this.courseId, exercise.id!, this.examId, this.exerciseGroupId);
     }
 
     asQuizExercise(exercise: Exercise): QuizExercise {

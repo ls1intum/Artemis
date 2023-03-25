@@ -1,4 +1,4 @@
-import { Course } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { CourseWideContext, DisplayPriority, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { Reaction } from 'app/entities/metis/reaction.model';
@@ -34,7 +34,7 @@ export const metisCourse = {
     title: 'Metis Course',
     exercises: [metisExercise, metisExercise2],
     lectures: [metisLecture, metisLecture2],
-    postsEnabled: true,
+    courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
     groups: ['metisTutors', 'metisStudents', 'metisInstructors'],
 } as Course;
 

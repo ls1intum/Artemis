@@ -40,19 +40,6 @@
                                 >
                                     <span jhiTranslate="artemisApp.plagiarism.plagiarismDetection">Plagiarism Detection</span>
                                 </a>
-
-                                <a
-                                    ngbDropdownItem
-                                    [routerLink]="[
-                                        '/course-management',
-                                        courseId,
-                                        getExerciseUrlSegment(plagiarismCase.exercise!.type),
-                                        plagiarismCase.exercise!.id,
-                                        'submissions'
-                                    ]"
-                                >
-                                    <span jhiTranslate="artemisApp.plagiarism.submissions">Student Submissions</span>
-                                </a>
                             </div>
                         </div>
                     </div>
