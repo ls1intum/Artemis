@@ -394,8 +394,8 @@ describe('ParticipationComponent', () => {
                 course: course,
             } as Exercise;
 
-            const expectedRoute = '/course-management/1/text-exercises/10/scores';
-            const result = component.getScoresRoute(exercise);
+            const expectedRoute = ['/course-management', '1', 'text-exercises', '10', 'scores'];
+            const result = component.getScoresRoute(exercise).map((part) => part.toString());
             expect(result).toEqual(expectedRoute);
         });
 
@@ -416,8 +416,8 @@ describe('ParticipationComponent', () => {
                 course: undefined,
             } as Exercise;
 
-            const expectedRoute = '/course-management/1/exams/100/exercise-groups/50/programming-exercises/20/scores';
-            const result = component.getScoresRoute(exercise);
+            const expectedRoute = ['/course-management', '1', 'exams', '100', 'exercise-groups', '50', 'programming-exercises', '20', 'scores'];
+            const result = component.getScoresRoute(exercise).map((part) => part.toString());
             expect(result).toEqual(expectedRoute);
         });
     });
