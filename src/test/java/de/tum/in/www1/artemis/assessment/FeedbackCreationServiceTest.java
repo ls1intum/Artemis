@@ -171,6 +171,6 @@ class FeedbackCreationServiceTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     void createFeedbackFromTestCaseSuccessfulNoMessage() {
-        assertThat(feedbackCreationService.createFeedbackFromTestCase("test1", List.of(), true, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText()).isEqualTo(null);
+        assertThat(feedbackCreationService.createFeedbackFromTestCase("test1", List.of(), true, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText()).isNull();
     }
 }

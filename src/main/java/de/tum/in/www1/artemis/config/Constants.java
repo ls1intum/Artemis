@@ -125,6 +125,8 @@ public final class Constants {
 
     public static final int FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS = 5000;
 
+    public static final int LONG_FEEDBACK_MAX_LENGTH = 10_000_000;
+
     // This value limits the amount of characters allowed for a complaint response text.
     // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
     // Also, the value on the client side must match this value.

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS;
+import static de.tum.in.www1.artemis.config.Constants.LONG_FEEDBACK_MAX_LENGTH;
 
 import java.util.*;
 
@@ -8,6 +9,7 @@ import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -33,6 +35,8 @@ public class Feedback extends DomainObject {
     public static final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "SCAFeedbackIdentifier:";
 
     public static final String SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = "SubPolFeedbackIdentifier:";
+
+    private static final String DETAIL_TEXT_TRIMMED_MARKER = " [...]";
 
     @Size(max = 500)
     @Column(name = "text", length = 500)
@@ -132,34 +136,63 @@ public class Feedback extends DomainObject {
     }
 
     /**
-     * sets the detail text of the feedback. In case the detail text is longer than 5000 characters, the additional characters are cut off to avoid database issues
+     * Sets the detail text of the feedback.
      *
      * @param detailText the new detail text for the feedback, can be null
      */
-    public void setDetailText(@Nullable String detailText) {
+    public void setDetailText(@Nullable final String detailText) {
         if (detailText == null || detailText.length() <= FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS) {
             this.detailText = detailText;
+            setLongFeedbackText(null);
+            setHasLongFeedbackText(false);
         }
         else {
-            this.detailText = detailText.substring(0, FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS);
+            final LongFeedbackText longFeedback = buildLongFeedback(detailText);
+
+            this.detailText = trimDetailText(detailText);
+            setLongFeedbackText(longFeedback);
+            setHasLongFeedbackText(true);
         }
+    }
+
+    private String trimDetailText(final String detailText) {
+        final int maxLength = FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS - DETAIL_TEXT_TRIMMED_MARKER.length();
+        return StringUtils.truncate(detailText, maxLength) + DETAIL_TEXT_TRIMMED_MARKER;
+    }
+
+    private LongFeedbackText buildLongFeedback(final String detailText) {
+        final LongFeedbackText longFeedback = new LongFeedbackText();
+        longFeedback.setText(StringUtils.truncate(detailText, LONG_FEEDBACK_MAX_LENGTH));
+        longFeedback.setFeedback(this);
+
+        return longFeedback;
     }
 
     public boolean hasLongFeedbackText() {
         return hasLongFeedbackText;
     }
 
+    /**
+     * Only for JPA, do not use directly. Use {@link #setDetailText(String)} instead.
+     *
+     * @param hasLongFeedbackText True, if the feedback has a long feedback text.
+     */
     public void setHasLongFeedbackText(boolean hasLongFeedbackText) {
         this.hasLongFeedbackText = hasLongFeedbackText;
     }
 
+    @JsonIgnore
     public LongFeedbackText getLongFeedbackText() {
         return longFeedbackText;
     }
 
+    /**
+     * Only for JPA, do not use directly. Use {@link #setDetailText(String)} instead.
+     *
+     * @param longFeedbackText The long feedback text this feedback is linked to.
+     */
     public void setLongFeedbackText(LongFeedbackText longFeedbackText) {
         this.longFeedbackText = longFeedbackText;
-        setHasLongFeedbackText(longFeedbackText != null);
     }
 
     public String getReference() {
@@ -401,12 +434,6 @@ public class Feedback extends DomainObject {
         return feedback;
     }
 
-    @Override
-    public String toString() {
-        return "Feedback{" + "id=" + getId() + ", text='" + getText() + "'" + ", detailText='" + getDetailText() + "'" + ", reference='" + getReference() + "'" + ", positive='"
-                + isPositive() + "'" + ", type='" + getType() + ", visibility=" + getVisibility() + ", gradingInstruction='" + getGradingInstruction() + "'" + "}";
-    }
-
     /**
      * Calculates the score over all feedback elements that were set using structured grading instructions (SGI)
      *
@@ -444,4 +471,10 @@ public class Feedback extends DomainObject {
         return totalScore;
     }
 
+    @Override
+    public String toString() {
+        return "Feedback{" + "text='" + text + '\'' + ", detailText='" + detailText + '\'' + ", hasLongFeedbackText=" + hasLongFeedbackText + ", longFeedbackText="
+                + longFeedbackText + ", reference='" + reference + '\'' + ", credits=" + credits + ", positive=" + positive + ", type=" + type + ", visibility=" + visibility
+                + ", result=" + result + ", gradingInstruction=" + gradingInstruction + '}';
+    }
 }

@@ -5,12 +5,15 @@ import java.io.Serializable;
 import java.util.Objects;
 
 import javax.persistence.*;
+import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.config.Constants;
 
 @Entity
 @Table(name = "long_feedback_text")
@@ -29,6 +32,7 @@ public class LongFeedbackText implements Serializable {
     private Long id;
 
     @Column(name = "feedback_text", nullable = false)
+    @Size(max = Constants.LONG_FEEDBACK_MAX_LENGTH)
     private String text;
 
     @MapsId
