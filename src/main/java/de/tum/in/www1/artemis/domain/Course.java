@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -109,6 +110,11 @@ public class Course extends DomainObject {
     @JoinColumn(name = "online_course_configuration_id")
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name = "info_sharing_config", nullable = false)
+    @JsonView(QuizView.Before.class)
+    private CourseInformationSharingConfiguration courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
+
     @Column(name = "max_complaints", nullable = false)
     @JsonView(QuizView.Before.class)
     private Integer maxComplaints = 3;  // default value
@@ -132,10 +138,6 @@ public class Course extends DomainObject {
     @Column(name = "max_complaint_response_text_limit")
     @JsonView(QuizView.Before.class)
     private int maxComplaintResponseTextLimit = 2000;
-
-    @Column(name = "posts_enabled")
-    @JsonView(QuizView.Before.class)
-    private boolean postsEnabled;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -423,14 +425,6 @@ public class Course extends DomainObject {
         // and then either maxComplaints, maxTeamComplaints is larger than zero
         // See CourseResource for more details on the validation
         return this.maxComplaintTimeDays > 0;
-    }
-
-    public boolean getPostsEnabled() {
-        return postsEnabled;
-    }
-
-    public void setPostsEnabled(boolean postsEnabled) {
-        this.postsEnabled = postsEnabled;
     }
 
     public Set<Post> getPosts() {
@@ -824,4 +818,13 @@ public class Course extends DomainObject {
     public void setTutorialGroupsConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
         this.tutorialGroupsConfiguration = tutorialGroupsConfiguration;
     }
+
+    public CourseInformationSharingConfiguration getCourseInformationSharingConfiguration() {
+        return courseInformationSharingConfiguration;
+    }
+
+    public void setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
+        this.courseInformationSharingConfiguration = courseInformationSharingConfiguration;
+    }
+
 }

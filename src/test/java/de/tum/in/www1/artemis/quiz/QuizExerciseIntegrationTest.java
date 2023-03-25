@@ -15,6 +15,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -61,12 +62,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private SubmittedAnswerRepository submittedAnswerRepository;
-
-    @Autowired
-    private UserRepository userRepo;
-
-    @Autowired
-    private CourseRepository courseRepo;
 
     @Autowired
     private QuizUtilService quizUtilService;
@@ -1322,139 +1317,94 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     /**
-     * test non-instructors cant create quiz exercises
+     * test non-editors can't create quiz exercises
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateQuizExerciseAsTutorForbidden() throws Exception {
-        final Course course = database.createCourse();
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), ZonedDateTime.now().plusHours(5), QuizMode.SYNCHRONIZED);
-        // remove instructor rights
-        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Collections.emptySet());
-        userRepo.save(user);
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testCreateQuizExerciseAsNonEditorForbidden() throws Exception {
+        Course course = database.createAndSaveCourse(null, ZonedDateTime.now().minusDays(1), null, Set.of());
+        quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().plusDays(5), null, QuizMode.SYNCHRONIZED, course);
+
         request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.FORBIDDEN);
         assertThat(course.getExercises()).isEmpty();
     }
 
     /**
-     * test non-instructors cant get all quiz exercises
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetAllQuizExercisesAsStudentForbidden() throws Exception {
-        final Course course = database.addCourseWithOneQuizExercise("Titel");
-        assertThat(course.getExercises()).isNotEmpty();
-        List<QuizExercise> quizExercises;
-        // remove instructor rights
-        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Collections.emptySet());
-        userRepo.save(user);
-        quizExercises = request.getList("/api/courses/" + course.getId() + "/quiz-exercises", HttpStatus.FORBIDDEN, QuizExercise.class);
-        assertThat(quizExercises).isNull();
-    }
-
-    /**
-     * test non-instructors can't perform start-now, set-visible or open-for-practice on quiz exercises
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testPerformPutActionAsTutorForbidden() throws Exception {
-        final Course course = database.addCourseWithOneQuizExercise();
-        assertThat(course.getExercises()).isNotEmpty();
-        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        assertThat(quizExercise.isIsOpenForPractice()).isFalse();
-        // remove instructor rights
-        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Collections.emptySet());
-        userRepo.save(user);
-
-        request.put("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, HttpStatus.FORBIDDEN);
-        assertThat(quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0).isIsOpenForPractice()).isFalse();
-    }
-
-    /**
-     * test non-instructors can't see the exercise if it is not set to visible
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testViewQuizExerciseAsStudentNotVisible() throws Exception {
-        final Course course = database.addCourseWithOneQuizExercise();
-        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        assertThat(quizExercise.isVisibleToStudents()).isFalse();
-        // remove instructor rights in course
-        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Collections.emptySet());
-        userRepo.save(user);
-        request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.FORBIDDEN, QuizExercise.class);
-    }
-
-    /**
-     * test non-instructors cant delete an exercise
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testDeleteQuizExerciseAsNonInstructor() throws Exception {
-        final Course course = database.addCourseWithOneQuizExercise();
-        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        // remove instructor rights in course
-        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Collections.emptySet());
-        userRepo.save(user);
-        request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.FORBIDDEN);
-    }
-
-    /**
-     * test non tutors cant recalculate quiz exercise statistics
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testRecalculateStatisticsAsNonInstructor() throws Exception {
-        final Course course = database.addCourseWithOneQuizExercise();
-        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        // remove instructor rights in course
-        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Collections.emptySet());
-        userRepo.save(user);
-        request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.FORBIDDEN, QuizExercise.class);
-    }
-
-    /**
-     * test students not in course can't get quiz exercises
+     * test non-tutors can't get all quiz exercises
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetQuizExerciseForStudentNotInCourseForbiden() throws Exception {
-        final Course course = database.addCourseWithOneQuizExercise();
-        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        // remove instructor rights in course
-        User user = database.getUserByLogin(TEST_PREFIX + "student1");
-        user.setGroups(Collections.emptySet());
-        userRepo.save(user);
+    void testGetAllQuizExercisesAsNonTutorForbidden() throws Exception {
+        quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusDays(1), null, QuizMode.SYNCHRONIZED);
+
+        request.getList("/api/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quiz-exercises", HttpStatus.FORBIDDEN, QuizExercise.class);
+    }
+
+    /**
+     * test non-editors can't perform start-now, set-visible or open-for-practice on quiz exercises
+     */
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @ValueSource(strings = { "start-now", "set-visible", "open-for-practice" })
+    void testPerformPutActionAsNonEditorForbidden(String action) throws Exception {
+        quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
+
+        request.put("/api/quiz-exercises/" + quizExercise.getId() + "/" + action, quizExercise, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * test non-tutors can't see the exercise if it is not set to visible
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testViewQuizExerciseAsNonTutorNotVisibleForbidden() throws Exception {
+        quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
+
         request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.FORBIDDEN, QuizExercise.class);
     }
 
     /**
-     * test non-instructors in this course cant re-evaluate quiz exercises
+     * test non-instructors can't delete an exercise
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testReEvaluateQuizAsNonInstructorForbidden() throws Exception {
-        final Course course = database.createCourse();
-        quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
-        quizExercise.setTitle("Titel");
-        quizExercise.setDuration(200);
-        assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
-        assertThat(quizExercise.isExamExercise()).as("Is an exam exercise!").isFalse();
-        assertThat(quizExercise.isQuizEnded()).as("Is not ended!").isTrue();
-        course.addExercises(quizExercise);
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testDeleteQuizExerciseAsNonInstructorForbidden() throws Exception {
+        quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusDays(1), null, QuizMode.SYNCHRONIZED);
 
-        courseRepo.save(course);
-        quizExerciseRepository.save(quizExercise);
-        // remove instructor rights in course
-        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Collections.emptySet());
-        userRepo.save(user);
+        request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * test non-tutors can't recalculate quiz exercise statistics
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRecalculateStatisticsAsNonTutorForbidden() throws Exception {
+        quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
+
+        request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.FORBIDDEN, QuizExercise.class);
+    }
+
+    /**
+     * test non-tutors not in course can't access a quiz exercise
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetQuizExerciseForNonTutorNotInCourseForbidden() throws Exception {
+        QuizExercise quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusHours(4), null, QuizMode.SYNCHRONIZED);
+        database.removeUserFromAllCourses(TEST_PREFIX + "student1");
+
+        request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.FORBIDDEN, QuizExercise.class);
+    }
+
+    /**
+     * test non-instructors in this course can't re-evaluate quiz exercises
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testReEvaluateQuizAsNonInstructorForbidden() throws Exception {
+        quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(2), QuizMode.SYNCHRONIZED);
+
         request.put("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, HttpStatus.FORBIDDEN);
     }
 
@@ -1464,57 +1414,33 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUnfinishedExamReEvaluateBadRequest() throws Exception {
-        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
-        quizExercise = database.createQuizForExam(exerciseGroup);
-        quizExercise.setTitle("Titel");
-        quizExercise.setDuration(200);
-        assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
-        quizExerciseRepository.save(quizExercise);
+        quizExercise = database.createAndSaveExamQuiz(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(2));
+
         request.put("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, HttpStatus.BAD_REQUEST);
     }
 
     /**
-     * test non editor cant update quiz exercise
+     * test non-editor can't update quiz exercise
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testUpdateQuizExerciseAsNonEditorForbidden() throws Exception {
-        final Course course = database.createCourse();
-        quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
-        quizExercise.setTitle("Titel");
-        quizExercise.setDuration(200);
-        assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
-        assertThat(quizExercise.isExamExercise()).as("Is an exam exercise!").isFalse();
-        assertThat(quizExercise.isQuizEnded()).as("Is not ended!").isTrue();
-        course.addExercises(quizExercise);
-        courseRepo.save(course);
-        quizExerciseRepository.save(quizExercise);
-        // change some stuff
-        quizExercise.setTitle("new Titel");
-        // remove instructor rights in course
-        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Collections.emptySet());
-        userRepo.save(user);
+        quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
+        quizExercise.setTitle("New Title");
+
         request.put("/api/quiz-exercises", quizExercise, HttpStatus.FORBIDDEN);
     }
 
     /**
-     * test quiz exercise cant be edited to be invalid
+     * test quiz exercise can't be edited to be invalid
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testUpdateQuizExerciseInvalidBadRequest() throws Exception {
-        final Course course = database.createCourse();
-        quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
-        quizExercise.setTitle("Titel");
-        quizExercise.setDuration(200);
-        assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
-        assertThat(quizExercise.isExamExercise()).as("Is an exam exercise!").isFalse();
-        assertThat(quizExercise.isQuizEnded()).as("Is not ended!").isTrue();
-        course.addExercises(quizExercise);
-        courseRepo.save(course);
-        quizExerciseRepository.save(quizExercise);
-        // change some stuff
+        quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
+        assertThat(quizExercise.isValid()).isTrue();
+
+        // make the exercise invalid
         quizExercise.setTitle(null);
         assertThat(quizExercise.isValid()).isFalse();
         request.put("/api/quiz-exercises", quizExercise, HttpStatus.BAD_REQUEST);

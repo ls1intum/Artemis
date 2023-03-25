@@ -19,6 +19,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -50,6 +51,14 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     @Query("select distinct course from Course course where course.studentGroupName like :name")
     Course findCourseByStudentGroupName(@Param("name") String name);
+
+    @Query("""
+            SELECT CASE WHEN (count(c) > 0) THEN true ELSE false END
+            FROM Course c
+            WHERE c.id = :#{#courseId}
+                AND c.courseInformationSharingConfiguration IN :#{#values}
+            """)
+    boolean informationSharingConfigurationIsOneOf(@Param("courseId") long courseId, @Param("values") Set<CourseInformationSharingConfiguration> values);
 
     @Query("""
             SELECT DISTINCT c FROM Course c
@@ -377,6 +386,28 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @NotNull
     default Course findWithEagerLearningGoalsByIdElseThrow(long courseId) {
         return findWithEagerLearningGoalsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    /**
+     * Checks if the messaging feature is enabled for a course.
+     *
+     * @param courseId the id of the course
+     * @return true if the messaging feature is enabled for the course, false otherwise
+     */
+    default boolean isMessagingEnabled(long courseId) {
+        return informationSharingConfigurationIsOneOf(courseId,
+                Set.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
+    }
+
+    /**
+     * Checks if the communication feature is enabled for a course.
+     *
+     * @param courseId the id of the course
+     * @return true if the communication feature is enabled for the course, false otherwise
+     */
+    default boolean isCommunicationEnabled(long courseId) {
+        return informationSharingConfigurationIsOneOf(courseId,
+                Set.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
     }
 
     /**

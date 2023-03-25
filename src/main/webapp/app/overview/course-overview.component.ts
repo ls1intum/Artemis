@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy, OnInit, QueryList, TemplateRef, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
-import { Course } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -40,6 +40,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     public hasUnreadMessages: boolean;
     public messagesRouteLoaded: boolean;
 
+    private conversationServiceInstantiated = false;
+
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
     // Subscription to listen to changes on the control configuration
@@ -50,6 +52,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private controls?: TemplateRef<any>;
     // The current controls configuration from the sub-route component
     public controlConfiguration?: BarControlConfiguration;
+
     // ng-container mount point extracted from our own template so we can render sth in it
     @ViewChild('controlsViewContainer', { read: ViewContainerRef }) controlsViewContainer: ViewContainerRef;
     // Using a list query to be able to listen for changes (late mount); need both as this only returns native nodes
@@ -59,6 +62,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faSync = faSync;
     faCircleNotch = faCircleNotch;
     FeatureToggle = FeatureToggle;
+
+    readonly isMessagingEnabled = isMessagingEnabled;
+    readonly isCommunicationEnabled = isCommunicationEnabled;
 
     constructor(
         private courseService: CourseManagementService,
@@ -100,15 +106,22 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     async initAfterCourseLoad() {
         await this.subscribeToTeamAssignmentUpdates();
         this.subscribeForQuizChanges();
-        this.metisConversationService
-            .setUpConversationService(this.courseId)
-            .pipe(takeUntil(this.ngUnsubscribe))
-            .subscribe({
-                complete: () => {
-                    // service is fully set up, now we can subscribe to the respective observables
-                    this.subscribeToHasUnreadMessages();
-                },
-            });
+        this.setUpConversationService();
+    }
+
+    private setUpConversationService() {
+        if (isMessagingEnabled(this.course) && !this.conversationServiceInstantiated) {
+            this.metisConversationService
+                .setUpConversationService(this.courseId)
+                .pipe(takeUntil(this.ngUnsubscribe))
+                .subscribe({
+                    complete: () => {
+                        this.conversationServiceInstantiated = true;
+                        // service is fully set up, now we can subscribe to the respective observables
+                        this.subscribeToHasUnreadMessages();
+                    },
+                });
+        }
     }
 
     ngAfterViewInit() {
@@ -218,6 +231,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             map((res: HttpResponse<Course>) => {
                 this.courseCalculationService.updateCourse(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
+
+                this.setUpConversationService();
+
                 setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
             }),
             // catch 403 errors where registration is possible
