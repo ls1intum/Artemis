@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.jsoup.Jsoup;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -25,7 +26,7 @@ public class NotificationFactory {
      * @return a String array containing all the placeholder values
      */
     public static String[] generatePlaceholderValuesForMessageNotifications(Course course, Post post) {
-        return new String[] { course.getTitle(), post.getTitle(), post.getContent(), post.getCreationDate().toString(), post.getAuthor().getName() };
+        return new String[] { course.getTitle(), post.getTitle(), Jsoup.parse(post.getContent()).text(), post.getCreationDate().toString(), post.getAuthor().getName() };
     }
 
     /**
@@ -37,7 +38,7 @@ public class NotificationFactory {
      * @return a String array containing all the placeholder values
      */
     public static String[] generatePlaceholderValuesForMessageNotificationsWithAnswers(Course course, Post post, AnswerPost answerPost) {
-        return ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), answerPost.getContent(), answerPost.getCreationDate().toString(),
+        return ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), Jsoup.parse(answerPost.getContent()).text(), answerPost.getCreationDate().toString(),
                 answerPost.getAuthor().getName());
     }
 
