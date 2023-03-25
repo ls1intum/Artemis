@@ -98,6 +98,6 @@ public class LongFeedbackText implements Serializable {
 
     @Override
     public String toString() {
-        return "LongFeedbackText{" + "id=" + id + ", text='" + text + '\'' + ", feedback=" + feedback + '}';
+        return "LongFeedbackText{id=" + id + ", text='" + text + '\'' + '}';
     }
 }

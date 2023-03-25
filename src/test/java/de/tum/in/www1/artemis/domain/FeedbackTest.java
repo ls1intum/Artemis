@@ -41,6 +41,25 @@ class FeedbackTest {
         assertThat(longFeedbackText.getText()).hasSize(Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS + 10);
     }
 
+    @Test
+    void detailTextTrimMarker() {
+        final Feedback feedback = new Feedback();
+        feedback.setDetailText(getText(Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS + 10));
+
+        assertThat(feedback.getDetailText()).hasSize(Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS).endsWith(" [...]");
+        assertThat(feedback.hasLongFeedbackText()).isTrue();
+    }
+
+    @Test
+    void trimVeryLongLongFeedback() {
+        final String veryLongFeedback = getText(Constants.LONG_FEEDBACK_MAX_LENGTH + 1_000);
+
+        final Feedback feedback = new Feedback();
+        feedback.setDetailText(veryLongFeedback);
+
+        assertThat(feedback.getLongFeedbackText().getText()).hasSize(Constants.LONG_FEEDBACK_MAX_LENGTH);
+    }
+
     private String getText(final int length) {
         return "0".repeat(length);
     }

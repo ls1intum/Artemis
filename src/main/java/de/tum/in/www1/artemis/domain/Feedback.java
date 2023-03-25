@@ -50,7 +50,7 @@ public class Feedback extends DomainObject {
     private boolean hasLongFeedbackText = false;
 
     // the fetch actually is lazy, since the primary key is mapped, so both sides of the relation have the join column
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "feedback", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @PrimaryKeyJoinColumn
     private LongFeedbackText longFeedbackText;
 
@@ -475,6 +475,6 @@ public class Feedback extends DomainObject {
     public String toString() {
         return "Feedback{" + "text='" + text + '\'' + ", detailText='" + detailText + '\'' + ", hasLongFeedbackText=" + hasLongFeedbackText + ", longFeedbackText="
                 + longFeedbackText + ", reference='" + reference + '\'' + ", credits=" + credits + ", positive=" + positive + ", type=" + type + ", visibility=" + visibility
-                + ", result=" + result + ", gradingInstruction=" + gradingInstruction + '}';
+                + ", result=" + result + '}';
     }
 }
