@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import de.tum.in.www1.artemis.domain.LongFeedbackText;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-public interface LongFeedbackRepository extends JpaRepository<LongFeedbackText, Long> {
+public interface LongFeedbackTextRepository extends JpaRepository<LongFeedbackText, Long> {
 
     @Query("""
             SELECT longFeedback

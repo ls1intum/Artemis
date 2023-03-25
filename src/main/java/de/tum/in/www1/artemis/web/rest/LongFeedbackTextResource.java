@@ -9,22 +9,22 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.LongFeedbackText;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.repository.LongFeedbackRepository;
+import de.tum.in.www1.artemis.repository.LongFeedbackTextRepository;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @RestController
 @RequestMapping("/api")
-public class LongFeedbackResource {
+public class LongFeedbackTextResource {
 
-    private static final Logger log = LoggerFactory.getLogger(LongFeedbackResource.class);
+    private static final Logger log = LoggerFactory.getLogger(LongFeedbackTextResource.class);
 
-    private final LongFeedbackRepository longFeedbackRepository;
+    private final LongFeedbackTextRepository longFeedbackTextRepository;
 
     private final ParticipationAuthorizationCheckService participationAuthorizationCheckService;
 
-    public LongFeedbackResource(LongFeedbackRepository longFeedbackRepository, ParticipationAuthorizationCheckService participationAuthorizationCheckService) {
-        this.longFeedbackRepository = longFeedbackRepository;
+    public LongFeedbackTextResource(LongFeedbackTextRepository longFeedbackTextRepository, ParticipationAuthorizationCheckService participationAuthorizationCheckService) {
+        this.longFeedbackTextRepository = longFeedbackTextRepository;
 
         this.participationAuthorizationCheckService = participationAuthorizationCheckService;
     }
@@ -34,7 +34,7 @@ public class LongFeedbackResource {
     public ResponseEntity<LongFeedbackText> getLongFeedback(@PathVariable Long resultId, @PathVariable Long feedbackId) {
         log.debug("REST request to get long feedback: {} (result: {})", feedbackId, resultId);
 
-        final LongFeedbackText longFeedbackText = longFeedbackRepository.findByIdWithFeedbackAndResultAndParticipationElseThrow(feedbackId);
+        final LongFeedbackText longFeedbackText = longFeedbackTextRepository.findByIdWithFeedbackAndResultAndParticipationElseThrow(feedbackId);
         checkCanAccessResultElseThrow(resultId, longFeedbackText);
 
         return ResponseEntity.ok(longFeedbackText);
