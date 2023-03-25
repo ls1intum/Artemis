@@ -49,6 +49,9 @@
                     name="{{ task.taskName }}-visibility"
                     (change)="taskUpdateHandler()"
                 >
+                    <option value="">
+                        {{ 'artemisApp.programmingExerciseTestCase.visibility.Mixed' | artemisTranslate }}
+                    </option>
                     <option *ngFor="let s of testCaseVisibilityList" [value]="s.value">
                         {{ 'artemisApp.programmingExerciseTestCase.visibility.' + s.name | artemisTranslate }}
                     </option>
