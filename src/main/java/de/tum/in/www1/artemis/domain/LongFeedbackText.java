@@ -79,7 +79,8 @@ public class LongFeedbackText implements Serializable {
             return true;
         }
         else if (obj instanceof LongFeedbackText longFeedbackText) {
-            return Objects.equals(getId(), longFeedbackText.getId());
+            final boolean bothIdsNull = getId() == null && longFeedbackText.getId() == null;
+            return !bothIdsNull && Objects.equals(getId(), longFeedbackText.getId());
         }
         else {
             return false;
