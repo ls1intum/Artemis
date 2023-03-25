@@ -1,17 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, Renderer2 } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ThemeService } from 'app/core/theme/theme.service';
+import { DOCUMENT } from '@angular/common';
 
 @Component({
     selector: 'jhi-main',
     templateUrl: './main.component.html',
 })
 export class JhiMainComponent implements OnInit {
-    public showSkeleton = false;
+    public showSkeleton = true;
 
     constructor(
         private jhiLanguageHelper: JhiLanguageHelper,
@@ -19,6 +20,9 @@ export class JhiMainComponent implements OnInit {
         private profileService: ProfileService,
         private sentryErrorHandler: SentryErrorHandler,
         private themeService: ThemeService,
+        @Inject(DOCUMENT)
+        private document: Document,
+        private renderer: Renderer2,
     ) {
         this.setupErrorHandling().then(null);
     }
@@ -41,6 +45,12 @@ export class JhiMainComponent implements OnInit {
     ngOnInit() {
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationStart) {
+                const newShowSkeleton = this.shouldShowSkeleton(event.url);
+                if (!newShowSkeleton && this.showSkeleton) {
+                    this.renderer.addClass(this.document.body, 'transparent-background');
+                } else if (newShowSkeleton && !this.showSkeleton) {
+                    this.renderer.removeClass(this.document.body, 'transparent-background');
+                }
                 // Do now show skeleton when the url links to a problem statement which is displayed on the native clients
                 this.showSkeleton = this.shouldShowSkeleton(event.url);
             }
