@@ -35,7 +35,7 @@ import { Complaint } from 'app/entities/complaint.model';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faBook, faEye, faListAlt, faSignal, faTable, faUserCheck, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
@@ -114,7 +114,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     faTable = faTable;
     faListAlt = faListAlt;
     faSignal = faSignal;
-    faFileSignature = faFileSignature;
+    faUserCheck = faUserCheck;
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
 
