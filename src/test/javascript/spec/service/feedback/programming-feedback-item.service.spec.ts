@@ -1,11 +1,17 @@
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming-feedback-item.service';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
-import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackItem, FeedbackReference } from 'app/exercises/shared/feedback/item/feedback-item';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 describe('ProgrammingFeedbackItemService', () => {
     let service: ProgrammingFeedbackItemService;
+
+    const feedbackReference: FeedbackReference = {
+        feedbackId: 1,
+        resultId: 0,
+        hasLongFeedback: false,
+    };
 
     beforeEach(() => {
         const fake = { instant: (key: string) => key };
@@ -16,6 +22,7 @@ describe('ProgrammingFeedbackItemService', () => {
         const feedback = {
             type: FeedbackType.AUTOMATIC,
             text: SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
+            id: 1,
         };
 
         const expected = {
@@ -24,6 +31,7 @@ describe('ProgrammingFeedbackItemService', () => {
             name: 'artemisApp.programmingExercise.submissionPolicy.title',
             positive: false,
             title: '',
+            feedbackReference,
         };
 
         expect(service.create([feedback], false)).toEqual([expected]);
@@ -39,6 +47,7 @@ describe('ProgrammingFeedbackItemService', () => {
             text: 'message',
             title: 'artemisApp.result.detail.codeIssue.title',
             type: 'Static Code Analysis',
+            feedbackReference,
         };
 
         expect(service.create([feedback], false)).toEqual([expected]);
@@ -54,6 +63,7 @@ describe('ProgrammingFeedbackItemService', () => {
             positive: false,
             title: 'artemisApp.result.detail.codeIssue.title',
             type: 'Static Code Analysis',
+            feedbackReference,
         };
 
         expect(service.create([feedback], true)).toEqual([expected]);
@@ -61,12 +71,14 @@ describe('ProgrammingFeedbackItemService', () => {
 
     it('should create automatic feedback item', () => {
         const feedback = {
+            id: 1,
             type: FeedbackType.AUTOMATIC,
         };
 
         const expected = {
             name: 'artemisApp.result.detail.test.name',
             type: 'Test',
+            feedbackReference,
         };
 
         expect(service.create([feedback], false)).toEqual([expected]);
@@ -79,6 +91,7 @@ describe('ProgrammingFeedbackItemService', () => {
         } as Partial<GradingInstruction>;
 
         const feedback = {
+            id: 1,
             type: FeedbackType.MANUAL,
             gradingInstruction,
         } as Feedback;
@@ -87,6 +100,7 @@ describe('ProgrammingFeedbackItemService', () => {
             type: 'Reviewer',
             name: 'artemisApp.course.reviewer',
             text: 'gradingInstruction.feedback',
+            feedbackReference,
         } as FeedbackItem;
 
         expect(service.create([feedback], true)).toEqual([expected]);
@@ -94,6 +108,7 @@ describe('ProgrammingFeedbackItemService', () => {
 
     it('should set automatic feedback item title according to positive', () => {
         const feedback = {
+            id: 1,
             type: FeedbackType.AUTOMATIC,
             positive: undefined,
         } as Feedback;
@@ -102,6 +117,7 @@ describe('ProgrammingFeedbackItemService', () => {
             title: 'artemisApp.result.detail.test.noInfo',
             name: 'artemisApp.result.detail.test.name',
             type: 'Test',
+            feedbackReference,
         } as FeedbackItem;
 
         expect(service.create([feedback], true)).toEqual([expected]);
@@ -126,6 +142,7 @@ describe('ProgrammingFeedbackItemService', () => {
 
     it('should show a replacement title if automatic feedback is neither positive nor negative', () => {
         const feedback = {
+            id: 1,
             type: FeedbackType.AUTOMATIC,
             text: 'automaticTestCase1',
             positive: undefined,
@@ -138,6 +155,7 @@ describe('ProgrammingFeedbackItemService', () => {
             title: 'artemisApp.result.detail.test.noInfo',
             type: 'Test',
             text: undefined,
+            feedbackReference,
         };
 
         expect(service.create([feedback], true)).toEqual([expected]);
@@ -145,6 +163,7 @@ describe('ProgrammingFeedbackItemService', () => {
 
     it('should create automatic feedback item with details', () => {
         const feedback = {
+            id: 1,
             type: FeedbackType.AUTOMATIC,
         };
 
@@ -152,6 +171,7 @@ describe('ProgrammingFeedbackItemService', () => {
             type: 'Test',
             name: 'artemisApp.result.detail.test.name',
             title: 'artemisApp.result.detail.test.noInfo',
+            feedbackReference,
         };
 
         expect(service.create([feedback], true)).toEqual([expected]);
@@ -165,6 +185,7 @@ describe('ProgrammingFeedbackItemService', () => {
         };
 
         return {
+            id: 1,
             type: FeedbackType.AUTOMATIC,
             text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
             detailText: JSON.stringify(scaIssue),
