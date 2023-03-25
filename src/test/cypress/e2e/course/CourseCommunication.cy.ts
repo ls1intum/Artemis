@@ -56,7 +56,11 @@ describe('Course communication', () => {
                 cy.login(studentTwo, `/courses/${course.id}/discussion`);
                 navigationBar.openNotificationPanel();
                 navigationBar.getNotifications().first().find('.notification-title').contains('New announcement');
-                navigationBar.getNotifications().first().find('.notification-text').contains(`Course "${course.title}" got a new announcement.`);
+                navigationBar
+                    .getNotifications()
+                    .first()
+                    .find('.notification-text')
+                    .contains(`The course \"` + courseName + `\" got a new course-wide post: \"` + text + `\"`);
             });
         });
 
