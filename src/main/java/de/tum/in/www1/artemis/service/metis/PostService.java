@@ -88,7 +88,7 @@ public class PostService extends PostingService {
         if (post.getId() != null) {
             throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idExists");
         }
-        final Course course = preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourseForCommunication(user, courseId);
         mayInteractWithPostElseThrow(post, user, course);
         preCheckPostValidity(post);
 
@@ -136,7 +136,7 @@ public class PostService extends PostingService {
         if (post.getId() == null || !Objects.equals(post.getId(), postId)) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idNull");
         }
-        final Course course = preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourseForCommunication(user, courseId);
         mayInteractWithPostElseThrow(post, user, course);
 
         Post existingPost = postRepository.findPostByIdElseThrow(postId);
@@ -209,7 +209,7 @@ public class PostService extends PostingService {
      * @param courseId id of course the post belongs to
      */
     public void addReaction(Post post, Reaction reaction, Long courseId) {
-        final Course course = preCheckUserAndCourse(reaction.getUser(), courseId);
+        final Course course = preCheckUserAndCourseForCommunication(reaction.getUser(), courseId);
         post.addReaction(reaction);
         Post updatedPost = postRepository.save(post);
         updatedPost.setConversation(post.getConversation());
@@ -224,7 +224,7 @@ public class PostService extends PostingService {
      * @param courseId id of course the post belongs to
      */
     public void removeReaction(Post post, Reaction reaction, Long courseId) {
-        preCheckUserAndCourse(reaction.getUser(), courseId);
+        preCheckUserAndCourseForCommunication(reaction.getUser(), courseId);
         post.removeReaction(reaction);
         postRepository.save(post);
     }
@@ -285,7 +285,7 @@ public class PostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        preCheckUserAndCourse(user, postContextFilter.getCourseId());
+        preCheckUserAndCourseForCommunication(user, postContextFilter.getCourseId());
 
         // retrieve posts
         Page<Post> coursePosts = postRepository.findPosts(postContextFilter, user.getId(), pagingEnabled, pageable);
@@ -310,7 +310,7 @@ public class PostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        preCheckUserAndCourse(user, postContextFilter.getCourseId());
+        preCheckUserAndCourseForCommunication(user, postContextFilter.getCourseId());
         preCheckExercise(user, postContextFilter.getCourseId(), postContextFilter.getExerciseId());
 
         // retrieve posts
@@ -336,7 +336,7 @@ public class PostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        preCheckUserAndCourse(user, postContextFilter.getCourseId());
+        preCheckUserAndCourseForCommunication(user, postContextFilter.getCourseId());
         preCheckLecture(user, postContextFilter.getCourseId(), postContextFilter.getLectureId());
 
         // retrieve posts
@@ -358,7 +358,7 @@ public class PostService extends PostingService {
      */
     public List<Post> getAllPlagiarismCasePosts(PostContextFilter postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        final Course course = preCheckUserAndCourse(user, postContextFilter.getCourseId());
+        final Course course = preCheckUserAndCourseForCommunication(user, postContextFilter.getCourseId());
         final PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(postContextFilter.getPlagiarismCaseId());
 
         // checks
@@ -390,7 +390,7 @@ public class PostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        final Course course = preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourseForCommunication(user, courseId);
         Post post = postRepository.findPostByIdElseThrow(postId);
         mayInteractWithPostElseThrow(post, user, course);
         preCheckPostValidity(post);
@@ -412,7 +412,7 @@ public class PostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        preCheckUserAndCourse(user, courseId);
+        preCheckUserAndCourseForCommunication(user, courseId);
         return postRepository.findPostTagsForCourse(courseId);
     }
 
