@@ -31,6 +31,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
@@ -375,6 +377,50 @@ describe('ParticipationComponent', () => {
 
             component.exercise = exercise2;
             expect(component.checkPresentationScoreConfig()).toBeFalse();
+        });
+    });
+
+    describe('getScoresRoute', () => {
+        const course1 = {
+            id: 1,
+            title: 'Course 1',
+        } as Course;
+
+        const exam1 = {
+            id: 100,
+            course: course1,
+        } as Exam;
+
+        const exerciseGroup1 = {
+            id: 50,
+            exam: exam1,
+        } as ExerciseGroup;
+
+        const exercise1 = {
+            id: 10,
+            title: 'Exercise 1',
+            type: 'text',
+            course: course1,
+        } as Exercise;
+
+        const exercise2 = {
+            id: 20,
+            title: 'Exercise 2',
+            type: 'programming',
+            exerciseGroup: exerciseGroup1,
+            course: undefined,
+        } as Exercise;
+
+        it('should return the correct route for an exercise without an exam', () => {
+            const expectedRoute = '/course-management/1/text-exercises/10/scores';
+            const result = component.getScoresRoute(exercise1);
+            expect(result).toEqual(expectedRoute);
+        });
+
+        it('should return the correct route for an exercise within an exam', () => {
+            const expectedRoute = '/course-management/1/exams/100/exercise-groups/50/programming-exercises/20/scores';
+            const result = component.getScoresRoute(exercise2);
+            expect(result).toEqual(expectedRoute);
         });
     });
 });
