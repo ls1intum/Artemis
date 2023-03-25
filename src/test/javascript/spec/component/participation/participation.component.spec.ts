@@ -381,45 +381,43 @@ describe('ParticipationComponent', () => {
     });
 
     describe('getScoresRoute', () => {
-        const course1 = {
+        const course = {
             id: 1,
             title: 'Course 1',
         } as Course;
 
-        const exam1 = {
-            id: 100,
-            course: course1,
-        } as Exam;
-
-        const exerciseGroup1 = {
-            id: 50,
-            exam: exam1,
-        } as ExerciseGroup;
-
-        const exercise1 = {
-            id: 10,
-            title: 'Exercise 1',
-            type: 'text',
-            course: course1,
-        } as Exercise;
-
-        const exercise2 = {
-            id: 20,
-            title: 'Exercise 2',
-            type: 'programming',
-            exerciseGroup: exerciseGroup1,
-            course: undefined,
-        } as Exercise;
-
         it('should return the correct route for an exercise without an exam', () => {
+            const exercise = {
+                id: 10,
+                title: 'Exercise 1',
+                type: 'text',
+                course: course,
+            } as Exercise;
+
             const expectedRoute = '/course-management/1/text-exercises/10/scores';
-            const result = component.getScoresRoute(exercise1);
+            const result = component.getScoresRoute(exercise);
             expect(result).toEqual(expectedRoute);
         });
 
         it('should return the correct route for an exercise within an exam', () => {
+            const exam = {
+                id: 100,
+                course: course,
+            } as Exam;
+            const exerciseGroup = {
+                id: 50,
+                exam: exam,
+            } as ExerciseGroup;
+            const exercise = {
+                id: 20,
+                title: 'Exercise 2',
+                type: 'programming',
+                exerciseGroup: exerciseGroup,
+                course: undefined,
+            } as Exercise;
+
             const expectedRoute = '/course-management/1/exams/100/exercise-groups/50/programming-exercises/20/scores';
-            const result = component.getScoresRoute(exercise2);
+            const result = component.getScoresRoute(exercise);
             expect(result).toEqual(expectedRoute);
         });
     });

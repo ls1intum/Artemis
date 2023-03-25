@@ -39,7 +39,7 @@
             [exercise]="exercise"
         ></jhi-programming-exercise-instructor-submission-state>
         <div class="p-2">
-            <a class="btn btn-info" *ngIf="exercise?.isAtLeastTutor" [routerLink]="getScoresRoute(exercise)" style="display: flex; justify-content: center; align-items: center">
+            <a class="btn btn-info" *ngIf="exercise?.isAtLeastTutor" [routerLink]="getScoresRoute(exercise)">
                 <div>
                     <fa-icon [icon]="faTable"></fa-icon>
                     <span class="d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
