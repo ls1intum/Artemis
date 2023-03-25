@@ -30,7 +30,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationPushService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
@@ -64,16 +66,23 @@ public abstract class RepositoryResource {
 
     protected final Optional<VersionControlService> versionControlService;
 
+    protected final RepositoryAccessService repositoryAccessService;
+
+    private final Optional<ContinuousIntegrationPushService> continuousIntegrationPushService;
+
     public RepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
+            Optional<ContinuousIntegrationPushService> continuousIntegrationPushService) {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.repositoryService = repositoryService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.versionControlService = versionControlService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.repositoryAccessService = repositoryAccessService;
+        this.continuousIntegrationPushService = continuousIntegrationPushService;
     }
 
     /**
@@ -252,7 +261,7 @@ public abstract class RepositoryResource {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
             repositoryService.commitChanges(repository, user);
             // Trigger a build, and process the result. Only implemented for local CI.
-            continuousIntegrationPushService.ifPresent(service -> service.processNewPush(null, repository));
+            continuousIntegrationPushService.orElseThrow().processNewPush(null, repository);
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }

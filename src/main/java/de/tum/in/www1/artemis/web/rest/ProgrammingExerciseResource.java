@@ -14,6 +14,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,6 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -32,6 +34,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -58,6 +61,8 @@ public class ProgrammingExerciseResource {
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
+
+    private final Environment environment;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -103,6 +108,8 @@ public class ProgrammingExerciseResource {
 
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
+    private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
+
     /**
      * Java package name Regex according to Java 14 JLS
      * (<a href="https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1">https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1</a>),
@@ -121,17 +128,18 @@ public class ProgrammingExerciseResource {
 
     private final Pattern packageNamePatternForSwift = Pattern.compile(packageNameRegexForSwift);
 
-    public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
+    public ProgrammingExerciseResource(Environment environment, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
+            CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+            ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, StudentParticipationRepository studentParticipationRepository,
             StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository,
             Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, CourseRepository courseRepository, GitService gitService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
+        this.environment = environment;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.userRepository = userRepository;
@@ -154,6 +162,7 @@ public class ProgrammingExerciseResource {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
+        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
     }
 
     /**
@@ -290,8 +299,8 @@ public class ProgrammingExerciseResource {
                 // which leads to errors when it happens inside the same @Transactional block that the participations are created in.
                 // This is why we need to trigger the builds here, after the participations where correctly created inside the programmingExerciseService.createProgrammingExercise
                 // method above.
-                continuousIntegrationTriggerService.get().triggerBuild(newProgrammingExercise.getTemplateParticipation());
-                continuousIntegrationTriggerService.get().triggerBuild(newProgrammingExercise.getSolutionParticipation());
+                continuousIntegrationTriggerService.orElseThrow().triggerBuild(newProgrammingExercise.getTemplateParticipation());
+                continuousIntegrationTriggerService.orElseThrow().triggerBuild(newProgrammingExercise.getSolutionParticipation());
             }
 
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId())).body(newProgrammingExercise);

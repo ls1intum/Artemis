@@ -1,11 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -17,35 +12,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.FileType;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.SubmissionPolicyService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationPushService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
@@ -80,18 +57,19 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
     public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
-            ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyService submissionPolicyService, PlagiarismService plagiarismService) {
-        super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository);
+            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
+            Optional<ContinuousIntegrationPushService> continuousIntegrationPushService, ProgrammingExerciseParticipationService participationService,
+            ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ParticipationRepository participationRepository, SubmissionPolicyRepository submissionPolicyRepository) {
+        super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
+                repositoryAccessService, continuousIntegrationPushService);
         this.participationService = participationService;
         this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.submissionPolicyService = submissionPolicyService;
         this.participationRepository = participationRepository;
-        this.plagiarismService = plagiarismService;
+        this.submissionPolicyRepository = submissionPolicyRepository;
     }
 
     @Override

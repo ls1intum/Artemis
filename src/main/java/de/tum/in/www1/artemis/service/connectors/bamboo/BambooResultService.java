@@ -16,23 +16,22 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationResultService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
-/**
- * Service implementation for Bamboo.
- */
 @Service
 @Profile("bamboo")
 public class BambooResultService extends AbstractContinuousIntegrationResultService {
 
     private final ObjectMapper mapper;
 
-    public BambooResultService(FeedbackRepository feedbackRepository, TestwiseCoverageService testwiseCoverageService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ObjectMapper mapper) {
-        super(feedbackRepository, buildLogStatisticsEntryRepository, testwiseCoverageService);
+    public BambooResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
+            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ObjectMapper mapper) {
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
         this.mapper = mapper;
     }
 
