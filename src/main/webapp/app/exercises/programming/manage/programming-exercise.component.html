@@ -45,20 +45,15 @@
                     <th class="d-md-table-cell" jhiSortBy="shortName">
                         <span jhiTranslate="artemisApp.exercise.shortName">Short Name</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.release">Release</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.due">Due</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th class="d-md-table-cell" jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="includedInOverallScore">
-                        <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
-                    </th>
+                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonus">Bonus</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely">Included</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.repositories">Repositories</span></th>
                     <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.buildplans">Build Plans</span>&nbsp;</th>
-                    <th class="d-md-table-cell" jhiSortBy="publishBuildPlanUrl">
-                        <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
-                    </th>
                     <th class="d-md-table-cell">
-                        <span jhiTranslate="artemisApp.programmingExercise.participationMode">Participation Mode</span>
+                        <span jhiTranslate="artemisApp.exercise.mode">Mode</span>
                     </th>
                     <th class="d-md-table-cell" jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
@@ -145,8 +140,6 @@
                             <a target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}">Solution</a>
                         </span>
                     </td>
-
-                    <td class="d-md-table-cell">{{ programmingExercise.publishBuildPlanUrl }}</td>
                     <td class="d-md-table-cell">
                         <div class="d-flex justify-content-between">
                             {{ 'artemisApp.programmingExercise.offlineIde' | artemisTranslate }}: {{ programmingExercise.allowOfflineIde }}
