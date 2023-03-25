@@ -226,14 +226,15 @@ public class ProgrammingExerciseResource {
                 .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
         // Check if auxiliary repositories are supported
-        if (programmingExercise.getAuxiliaryRepositories().size() > 0 && !programmingLanguageFeature.auxiliaryRepositoriesSupported()) {
+        List<AuxiliaryRepository> auxiliaryRepositories = programmingExercise.getAuxiliaryRepositories();
+        if (auxiliaryRepositories.size() > 0 && !programmingLanguageFeature.auxiliaryRepositoriesSupported()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "Auxiliary repositories are not supported for this programming language", "auxiliaryRepositoryInvalid"))
                     .body(null);
         }
 
         // Check if auxiliary repositories are valid
-        auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
+        auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, auxiliaryRepositories);
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
         // Check if package name is set
