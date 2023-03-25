@@ -151,29 +151,18 @@
                     <td class="d-md-table-cell" *ngIf="course.presentationScore !== 0">{{ programmingExercise.presentationScoreEnabled }}</td>
                     <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="programmingExercise"></jhi-exercise-categories></td>
                     <td *jhiExtensionPoint="overrideButtons; context: { exercise: programmingExercise }" class="text-end">
-                        <div class="btn-group flex-btn-group-container">
-                            <div class="btn-group-vertical me-1 mb-1">
-                                <a
-                                    *ngIf="programmingExercise.isAtLeastTutor"
-                                    [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'scores']"
-                                    class="btn btn-info btn-sm me-1 mb-1"
-                                    style="display: flex; justify-content: center; align-items: center"
-                                >
-                                    <div>
-                                        <fa-icon [icon]="faTable"></fa-icon>
-                                        <span class="d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-                                    </div>
-                                </a>
+                        <div class="btn-group flex-btn-group-container mb-1">
+                            <div class="btn-group-vertical me-1 mb-auto">
                                 <a
                                     *ngIf="programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'teams']"
-                                    class="btn btn-primary btn-sm me-1 mb-1"
+                                    class="btn btn-primary btn-sm me-1"
                                 >
                                     <fa-icon [icon]="faUsers"></fa-icon>
                                     <span class="d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
                                 </a>
                             </div>
-                            <div class="btn-group-vertical me-1 mb-1">
+                            <div class="btn-group-vertical me-1 mb-auto">
                                 <a
                                     *ngIf="programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'participations']"
@@ -186,10 +175,21 @@
                                     </div>
                                 </a>
                                 <a
+                                    *ngIf="programmingExercise.isAtLeastTutor"
+                                    [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'scores']"
+                                    class="btn btn-info btn-sm me-1 mb-1"
+                                    style="display: flex; justify-content: center; align-items: center"
+                                >
+                                    <div>
+                                        <fa-icon [icon]="faTable"></fa-icon>
+                                        <span class="d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+                                    </div>
+                                </a>
+                                <a
                                     [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                                     *ngIf="programmingExercise.isAtLeastEditor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'grading', 'test-cases']"
-                                    class="btn btn-info btn-sm me-1 mb-1"
+                                    class="btn btn-info btn-sm me-1"
                                     style="display: flex; justify-content: center; align-items: center"
                                 >
                                     <div>
@@ -198,7 +198,7 @@
                                     </div>
                                 </a>
                             </div>
-                            <div class="btn-group-vertical me-1 mb-1">
+                            <div class="btn-group-vertical me-1 mb-auto">
                                 <a
                                     [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                                     [attr.disabled]="false"
@@ -222,7 +222,7 @@
                                 <a
                                     *ngIf="programmingExercise.isAtLeastEditor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'edit']"
-                                    class="btn btn-warning btn-sm me-1 mb-1"
+                                    class="btn btn-warning btn-sm me-1"
                                     style="display: flex; justify-content: center; align-items: center"
                                 >
                                     <div>
@@ -231,7 +231,7 @@
                                     </div>
                                 </a>
                             </div>
-                            <div class="btn-group-vertical me-1 mb-1">
+                            <div class="btn-group-vertical me-1 mb-auto">
                                 <button
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
@@ -259,7 +259,6 @@
                                         deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
                                         deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
                                     }"
-                                    class="mb-1"
                                     id="delete-exercise"
                                 >
                                     <fa-icon [icon]="faTimes"></fa-icon>
