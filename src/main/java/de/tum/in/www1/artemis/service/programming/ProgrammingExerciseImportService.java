@@ -620,6 +620,7 @@ public class ProgrammingExerciseImportService {
                 files = walk.filter(f -> !Files.isDirectory(f) && !f.toAbsolutePath().toString().contains(".git")).toList();
             }
             catch (IOException e) {
+                e.printStackTrace();
                 throw new InternalServerErrorException("Could not copy exercise content to new repository");
             }
             allFiles.addAll(files);
@@ -648,7 +649,7 @@ public class ProgrammingExerciseImportService {
         zipFile.transferTo(exerciseFilePath);
         zipFileService.extractZipFileRecursively(exerciseFilePath);
         var exerciseDetailsFileName = findJsonFileAndReturnFileName(path);
-        // checkRepositoriesExist(path);
+        checkRepositoriesExist(path);
         String oldPackageName = retrieveOldPackageName(Path.of(exerciseFilePath.toString().substring(0, exerciseFilePath.toString().length() - 4)), exerciseDetailsFileName);
         ProgrammingExercise importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport);
         importRepositoriesFromFile(importedProgrammingExercise, path, oldPackageName);
@@ -659,7 +660,7 @@ public class ProgrammingExerciseImportService {
         List<String> result;
         try (Stream<Path> stream = Files.walk(path)) {
             result = stream.filter(Files::isDirectory).map(f -> f.getFileName().toString())
-                    .filter(name -> name.contains("exercise") || name.contains("tests") || name.contains("solution")).toList();
+                    .filter(name -> name.endsWith("exercise") || name.endsWith("tests") || name.endsWith("solution")).toList();
         }
 
         if (result.size() != 3) {
