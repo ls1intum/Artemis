@@ -6,8 +6,6 @@ import { AssessmentComplaintAlertComponent } from './assessment-complaint-alert/
 import { ScoreDisplayComponent } from '../shared/score-display/score-display.component';
 import { AssessmentDetailComponent } from './assessment-detail/assessment-detail.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external-submission/external-submission-dialog.component';
-import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external-submission/external-submission-button.component';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { AssessmentLocksComponent } from 'app/assessment/assessment-locks/assessment-locks.component';
 import { RouterModule } from '@angular/router';
@@ -34,8 +32,6 @@ const ENTITY_STATES = [...assessmentLocksRoute];
         AssessmentComplaintAlertComponent,
         ScoreDisplayComponent,
         AssessmentDetailComponent,
-        ExternalSubmissionButtonComponent,
-        ExternalSubmissionDialogComponent,
         AssessmentLocksComponent,
         UnreferencedFeedbackComponent,
         AssessmentCorrectionRoundBadgeComponent,
@@ -44,7 +40,6 @@ const ENTITY_STATES = [...assessmentLocksRoute];
         AssessmentLayoutComponent,
         ScoreDisplayComponent,
         AssessmentDetailComponent,
-        ExternalSubmissionButtonComponent,
         AssessmentLocksComponent,
         UnreferencedFeedbackComponent,
         AssessmentCorrectionRoundBadgeComponent,

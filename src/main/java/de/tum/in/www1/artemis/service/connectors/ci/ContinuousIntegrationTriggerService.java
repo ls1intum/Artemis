@@ -4,12 +4,12 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 
 /**
- * Service for triggering builds in the CI system.
+ * Abstract service for managing entities related to continuous integration.
  */
 public interface ContinuousIntegrationTriggerService {
 
     /**
-     * Triggers a build for the build plan in the given participation
+     * triggers a build for the build plan in the given participation
      *
      * @param participation the participation with the id of the build plan that should be triggered
      * @throws ContinuousIntegrationException if the request to the CI failed.

@@ -21,6 +21,8 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
  */
 public abstract class AbstractContinuousIntegrationResultService implements ContinuousIntegrationResultService {
 
+    protected final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
     protected final FeedbackRepository feedbackRepository;
 
     protected final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
@@ -29,7 +31,9 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
     public AbstractContinuousIntegrationResultService(FeedbackRepository feedbackRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             TestwiseCoverageService testwiseCoverageService) {
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.feedbackRepository = feedbackRepository;
+        this.buildLogService = buildLogService;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.testwiseCoverageService = testwiseCoverageService;
     }

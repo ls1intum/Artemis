@@ -45,7 +45,6 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.BambooResultService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooTriggerService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTriggerDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketBambooUpdateService;
@@ -367,12 +366,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockGetBuildLogs(ProgrammingExerciseStudentParticipation participation, List<BambooBuildResultDTO.BambooBuildLogEntryDTO> logs)
-            throws URISyntaxException, JsonProcessingException {
-        bambooRequestMockProvider.mockGetBuildLogs(participation.getBuildPlanId(), logs);
-    }
-
-    @Override
     public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) throws URISyntaxException, JsonProcessingException {
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, repositorySlug, hash);
     }
@@ -473,7 +466,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) {
+    public void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) {
         // Not needed here
     }
 
@@ -508,8 +501,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey, String repostoryName, boolean shouldFail) throws Exception {
-        bitbucketRequestMockProvider.mockDeleteRepository(projectKey, repostoryName, shouldFail);
+    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) throws Exception {
+        bitbucketRequestMockProvider.mockDeleteRepository(projectKey, repositoryName, shouldFail);
     }
 
     @Override

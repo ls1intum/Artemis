@@ -33,11 +33,12 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationResultService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ProgrammingExerciseGradingService {
@@ -80,21 +81,21 @@ public class ProgrammingExerciseGradingService {
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
-    public ProgrammingExerciseGradingService(ProgrammingExerciseFeedbackService programmingExerciseFeedbackService, ProgrammingExerciseTestCaseRepository testCaseRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
+    public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, Optional<VersionControlService> versionControlService,
-            SimpMessageSendingOperations messagingTemplate, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            ProgrammingExerciseFeedbackService programmingExerciseFeedbackService, SimpMessageSendingOperations messagingTemplate,
+            ProgrammingExerciseTestCaseRepository testCaseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository) {
-        this.programmingExerciseFeedbackService = programmingExerciseFeedbackService;
-        this.testCaseRepository = testCaseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
         this.versionControlService = versionControlService;
+        this.programmingExerciseFeedbackService = programmingExerciseFeedbackService;
         this.messagingTemplate = messagingTemplate;
+        this.testCaseRepository = testCaseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -122,7 +123,7 @@ public class ProgrammingExerciseGradingService {
 
         Result newResult = null;
         try {
-            var buildResult = continuousIntegrationResultService.get().convertBuildResult(requestBody);
+            var buildResult = continuousIntegrationResultService.orElseThrow().convertBuildResult(requestBody);
             checkCorrectBranchElseThrow(participation, buildResult);
 
             newResult = continuousIntegrationResultService.get().createResultFromBuildResult(buildResult, participation);
@@ -179,7 +180,7 @@ public class ProgrammingExerciseGradingService {
                 participationDefaultBranch = studentParticipation.getBranch();
             }
             if (Strings.isNullOrEmpty(participationDefaultBranch)) {
-                participationDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
+                participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
             }
 
             if (!Objects.equals(branchName, participationDefaultBranch)) {
@@ -223,10 +224,10 @@ public class ProgrammingExerciseGradingService {
                 // Note: the whole method is a fallback in case creating the submission initially (when the user pushed the code) was not successful for whatever reason
                 // This is also the case when a new programming exercise is created and the local CI system builds and tests the template and solution repositories for the first
                 // time.
-                submissionDate = versionControlService.get().getPushDate(participation, commitHash.get(), null);
+                submissionDate = versionControlService.orElseThrow().getPushDate(participation, commitHash.get(), null);
             }
             catch (VersionControlException e) {
-                log.warn("Could not retrieve push date for participation {} and build plan {}", participation.getId(), participation.getBuildPlanId(), e);
+                log.error("Could not retrieve push date for participation {} and build plan {}", participation.getId(), participation.getBuildPlanId(), e);
             }
         }
         var submission = createFallbackSubmission(participation, submissionDate, commitHash.orElse(null));
@@ -264,7 +265,7 @@ public class ProgrammingExerciseGradingService {
             // When a student receives a new result, we want to check whether we need to lock the participation
             // repository when a lock repository policy is present. At this point, we know that the programming
             // exercise exists.
-            SubmissionPolicy submissionPolicy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
+            SubmissionPolicy submissionPolicy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).orElseThrow().getSubmissionPolicy();
             if (submissionPolicy instanceof LockRepositoryPolicy policy) {
                 submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
             }
@@ -305,7 +306,8 @@ public class ProgrammingExerciseGradingService {
      */
     private Result updateLatestSemiAutomaticResultWithNewAutomaticFeedback(long lastSemiAutomaticResultId, Result newAutomaticResult) {
         // Note: fetch the semi-automatic result with feedback and assessor again from the database
-        var latestSemiAutomaticResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(lastSemiAutomaticResultId).get();
+        var latestSemiAutomaticResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(lastSemiAutomaticResultId)
+                .orElseThrow(() -> new EntityNotFoundException("Result", lastSemiAutomaticResultId));
         // this makes it the most recent result, but optionally keeps the draft state of an unfinished manual result
         latestSemiAutomaticResult.setCompletionDate(latestSemiAutomaticResult.getCompletionDate() != null ? newAutomaticResult.getCompletionDate() : null);
 

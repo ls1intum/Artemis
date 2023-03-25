@@ -14,7 +14,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,7 +22,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -33,9 +31,8 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.*;
@@ -73,8 +70,6 @@ public class ProgrammingExerciseResource {
     private final AuthorizationCheckService authCheckService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
-
-    private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
     private final Optional<VersionControlService> versionControlService;
 
@@ -126,26 +121,23 @@ public class ProgrammingExerciseResource {
 
     private final Pattern packageNamePatternForSwift = Pattern.compile(packageNameRegexForSwift);
 
-    private final Environment environment;
-
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
-            Optional<VersionControlService> versionControlService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
-            ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
-            StudentParticipationRepository studentParticipationRepository, StaticCodeAnalysisService staticCodeAnalysisService,
-            GradingCriterionRepository gradingCriterionRepository, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, CourseRepository courseRepository,
-            GitService gitService, AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
+            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
+            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, StudentParticipationRepository studentParticipationRepository,
+            StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository,
+            Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, CourseRepository courseRepository, GitService gitService,
+            AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, Environment environment) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
-        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -162,7 +154,6 @@ public class ProgrammingExerciseResource {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
-        this.environment = environment;
     }
 
     /**
@@ -230,21 +221,11 @@ public class ProgrammingExerciseResource {
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
         programmingExercise.validateManualFeedbackSettings();
+        auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
+        submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
                 .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-
-        // Check if auxiliary repositories are supported
-        if (programmingExercise.getAuxiliaryRepositories().size() > 0 && !programmingLanguageFeature.isAuxiliaryRepositoriesSupported()) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "Auxiliary repositories are not supported for this programming language", "auxiliaryRepositoryInvalid"))
-                    .body(null);
-        }
-
-        // Check if auxiliary repositories are valid
-        auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
-
-        submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
         // Check if package name is set
         if (programmingLanguageFeature.isPackageNameRequired()) {
@@ -285,20 +266,6 @@ public class ProgrammingExerciseResource {
         if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.isCheckoutSolutionRepositoryAllowed()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "Checking out the solution repository is not supported for this language", "checkoutSolutionNotSupported"))
-                    .body(null);
-        }
-
-        // Check if publish build plan URL is enabled
-        if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl()) && !programmingLanguageFeature.isPublishBuildPlanUrlAllowed()) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "Publishing the build plan URL is not supported for this language", "publishBuildPlanUrlNotSupported"))
-                    .body(null);
-        }
-
-        // Check if testwise coverage report is enabled
-        if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && !programmingLanguageFeature.isTestwiseCoverageReportSupported()) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "Testwise coverage report is not supported for this language", "testwiseCoverageReportNotSupported"))
                     .body(null);
         }
 
@@ -659,9 +626,8 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
         boolean hasAtLeastOneStudentResult = programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise);
         boolean isReleased = programmingExercise.isReleased();
-        ProgrammingExerciseTestCaseStateDTO testCaseDTO = new ProgrammingExerciseTestCaseStateDTO().released(isReleased).studentResult(hasAtLeastOneStudentResult)
-                .testCasesChanged(programmingExercise.getTestCasesChanged())
-                .buildAndTestStudentSubmissionsAfterDueDate(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+        ProgrammingExerciseTestCaseStateDTO testCaseDTO = new ProgrammingExerciseTestCaseStateDTO(isReleased, hasAtLeastOneStudentResult, programmingExercise.getTestCasesChanged(),
+                programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         return ResponseEntity.ok(testCaseDTO);
     }
 

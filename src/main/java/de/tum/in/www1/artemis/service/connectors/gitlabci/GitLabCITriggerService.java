@@ -13,9 +13,6 @@ import de.tum.in.www1.artemis.exception.GitLabCIException;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 
-/**
- * Service implementation for GitLab CI.
- */
 @Profile("gitlabci")
 @Service
 public class GitLabCITriggerService implements ContinuousIntegrationTriggerService {

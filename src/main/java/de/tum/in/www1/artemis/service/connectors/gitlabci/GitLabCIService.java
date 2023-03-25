@@ -27,15 +27,17 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Profile("gitlabci")
 @Service
-public class GitLabCIService implements ContinuousIntegrationService {
+public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(GitLabCIService.class);
 
@@ -95,8 +97,11 @@ public class GitLabCIService implements ContinuousIntegrationService {
     @Value("${artemis.version-control.token}")
     private String gitlabToken;
 
-    public GitLabCIService(GitLabApi gitlab, UrlService urlService, ProgrammingExerciseRepository programmingExerciseRepository, BuildPlanRepository buildPlanRepository,
-            GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+    public GitLabCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
+            GitLabApi gitlab, UrlService urlService, ProgrammingExerciseRepository programmingExerciseRepository, BuildPlanRepository buildPlanRepository,
+            GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
         this.gitlab = gitlab;
         this.urlService = urlService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -284,7 +289,7 @@ public class GitLabCIService implements ContinuousIntegrationService {
 
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
-            String newDefaultBranch, Optional<List<String>> optionalTriggeredByRepositories) {
+            String newDefaultBranch, List<String> triggeredByRepositories) {
         log.error("Unsupported action: GitLabCIService.updatePlanRepository()");
     }
 

@@ -41,16 +41,14 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.SubmissionPolicyRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
-import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationPushService;
+import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -85,16 +83,15 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, RepositoryAccessService repositoryAccessService, SubmissionPolicyRepository submissionPolicyRepository,
-            Optional<ContinuousIntegrationPushService> continuousIntegrationPushService) {
-        super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
-                repositoryAccessService, continuousIntegrationPushService);
+            ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyService submissionPolicyService, PlagiarismService plagiarismService) {
+        super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository);
         this.participationService = participationService;
         this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.submissionPolicyService = submissionPolicyService;
         this.participationRepository = participationRepository;
-        this.submissionPolicyRepository = submissionPolicyRepository;
+        this.plagiarismService = plagiarismService;
     }
 
     @Override
@@ -377,6 +374,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      *                            used.
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
+    // TODO: rename to participation/{participationId}/buildlogs
     @GetMapping(value = "/repository/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<BuildLogEntry>> getBuildLogs(@PathVariable Long participationId, @RequestParam(name = "resultId") Optional<Long> resultId) {
         log.debug("REST request to get build log : {}", participationId);
@@ -410,7 +408,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         }
 
         // Load the logs from the database
-        List<BuildLogEntry> buildLogsFromDatabase = buildLogService.getLatestBuildLogs(programmingSubmission);
-        return new ResponseEntity<>(buildLogsFromDatabase, HttpStatus.OK);
+        List<BuildLogEntry> buildLogs = buildLogService.getLatestBuildLogs(programmingSubmission);
+        return new ResponseEntity<>(buildLogs, HttpStatus.OK);
     }
 }

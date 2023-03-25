@@ -45,12 +45,14 @@ import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
-import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationUpdateService;
+import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Service
 @Profile("bamboo")
-public class BambooService implements ContinuousIntegrationService {
+public class BambooService extends AbstractContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
@@ -74,9 +76,12 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    public BambooService(GitService gitService, Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService,
+    public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
-            UrlService urlService) {
+            UrlService urlService, BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
         this.gitService = gitService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
@@ -111,7 +116,7 @@ public class BambooService implements ContinuousIntegrationService {
         VcsRepositoryUrl repositoryUrl = participation.getVcsRepositoryUrl();
         String projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
         String repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-        updatePlanRepository(projectKey, buildPlanId, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, branch, Optional.empty());
+        updatePlanRepository(projectKey, buildPlanId, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, branch, List.of());
         enablePlan(projectKey, buildPlanId);
 
         // allow student or team access to the build plan in case this option was specified (only available for course exercises)
@@ -470,10 +475,9 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
-            String newBranch, Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
+            String newBranch, List<String> triggeredByRepositories) throws BambooException {
         final var vcsRepoName = urlService.getRepositorySlugFromRepositoryUrlString(newRepoUrl);
-        continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, newBranch,
-                optionalTriggeredByRepositories);
+        continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, newBranch, triggeredByRepositories);
     }
 
     /**

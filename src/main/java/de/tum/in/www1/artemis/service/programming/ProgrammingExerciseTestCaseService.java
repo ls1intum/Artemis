@@ -43,26 +43,6 @@ public class ProgrammingExerciseTestCaseService {
     }
 
     /**
-     * Returns all test cases for a programming exercise.
-     *
-     * @param exerciseId of a programming exercise.
-     * @return test cases of a programming exercise.
-     */
-    public Set<ProgrammingExerciseTestCase> findByExerciseId(Long exerciseId) {
-        return this.testCaseRepository.findByExerciseId(exerciseId);
-    }
-
-    /**
-     * Returns all active test cases for a programming exercise. Only active test cases are evaluated on build runs.
-     *
-     * @param exerciseId of a programming exercise.
-     * @return active test cases of a programming exercise.
-     */
-    public Set<ProgrammingExerciseTestCase> findActiveByExerciseId(Long exerciseId) {
-        return this.testCaseRepository.findByExerciseIdAndActive(exerciseId, true);
-    }
-
-    /**
      * Update the updatable attributes of the provided test case dtos. Returns an entry in the set for each test case that could be updated.
      *
      * @param exerciseId                              of exercise the test cases belong to.

@@ -10,7 +10,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import org.apache.commons.io.FileUtils;
@@ -53,6 +55,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -93,6 +96,9 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Autowired
     private PostRepository postRepository;
+
+    @Autowired
+    private BuildLogEntryService buildLogEntryService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -698,6 +704,41 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void testBuildLogsWithSubmissionBuildSuccessful() throws Exception {
         database.createProgrammingSubmission(participation, false);
         request.get(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testBuildLogsWithManualResult() throws Exception {
+        var submission = database.createProgrammingSubmission(participation, true);
+        var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
+        submission.setBuildLogEntries(buildLogEntries);
+        database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC);
+        var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
+        assertThat(receivedLogs).hasSize(2);
+        assertLogsContent(receivedLogs);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testBuildLogs() throws Exception {
+        var submission = database.createProgrammingSubmission(participation, true);
+        var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
+        submission.setBuildLogEntries(buildLogEntries);
+        database.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
+        var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
+        assertThat(receivedLogs).hasSize(2);
+        assertLogsContent(receivedLogs);
+    }
+
+    private void assertLogsContent(List<BuildLogEntry> receivedLogs) {
+        for (int i = 0; i < receivedLogs.size(); i++) {
+            assertThat(receivedLogs.get(i).getLog()).isEqualTo(logs.get(i).getLog());
+            // When serializing and deserializing the logs, the time of each BuildLogEntry is converted to UTC.
+            // Convert the time in the logs set up above to UTC and round it to milliseconds for comparison.
+            ZonedDateTime expectedTime = ZonedDateTime.ofInstant(logs.get(i).getTime().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC"));
+            ZonedDateTime actualTime = receivedLogs.get(i).getTime().truncatedTo(ChronoUnit.MILLIS);
+            assertThat(actualTime).isEqualTo(expectedTime);
+        }
     }
 
     @Test

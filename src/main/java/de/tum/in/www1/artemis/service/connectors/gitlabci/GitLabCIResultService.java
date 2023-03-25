@@ -15,23 +15,22 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationResultService;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
-/**
- * Service implementation for GitLab CI.
- */
 @Profile("gitlabci")
 @Service
 public class GitLabCIResultService extends AbstractContinuousIntegrationResultService {
 
-    private final Logger log = LoggerFactory.getLogger(GitLabCIResultService.class);
+    private static final Logger log = LoggerFactory.getLogger(GitLabCIResultService.class);
 
-    public GitLabCIResultService(FeedbackRepository feedbackRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
-            TestwiseCoverageService testwiseCoverageService) {
-        super(feedbackRepository, buildLogStatisticsEntryRepository, testwiseCoverageService);
+    public GitLabCIResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
     }
 
     @Override

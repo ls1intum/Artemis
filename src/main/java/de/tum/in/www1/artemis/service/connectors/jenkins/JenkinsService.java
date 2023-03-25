@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -24,15 +25,20 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
-import de.tum.in.www1.artemis.service.connectors.CIPermission;
+import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
+import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Profile("jenkins")
 @Service
-public class JenkinsService implements ContinuousIntegrationService {
+public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsService.class);
 
@@ -52,8 +58,11 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    public JenkinsService(JenkinsServer jenkinsServer, RestTemplate shortTimeoutRestTemplate, JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService,
-            JenkinsInternalUrlService jenkinsInternalUrlService) {
+    public JenkinsService(JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
+            @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService,
+            JenkinsInternalUrlService jenkinsInternalUrlService, TestwiseCoverageService testwiseCoverageService) {
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
@@ -105,7 +114,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
-            String newDefaultBranch, Optional<List<String>> optionalTriggeredByRepositories) {
+            String newDefaultBranch, List<String> triggeredByRepositories) {
         jenkinsBuildPlanService.updateBuildPlanRepositories(buildProjectKey, buildPlanKey, newRepoUrl, existingRepoUrl);
     }
 

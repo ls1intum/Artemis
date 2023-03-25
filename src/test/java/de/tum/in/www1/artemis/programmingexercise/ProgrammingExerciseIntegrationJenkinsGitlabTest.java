@@ -73,6 +73,18 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportSubmissionsByParticipationIds_excludePracticeSubmissions() throws Exception {
+        programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_excludePracticeSubmissions();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportSubmissionsByParticipationIds_includePracticeSubmissions() throws Exception {
+        programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_includePracticeSubmissions();
+    }
+
+    @Test
     @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportSubmissionsByParticipationIds() throws Exception {

@@ -15,11 +15,13 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 
@@ -32,6 +34,9 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Autowired
     private PostRepository postRepository;
+
+    @Autowired
+    private CourseRepository courseRepository;
 
     private List<Post> existingPostsWithAnswers;
 
@@ -111,6 +116,38 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(countBefore + 1).isEqualTo(answerPostRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPostingAllowedIfMessagingOnlySetting() throws Exception {
+        messagingFeatureDisabledTest(CourseInformationSharingConfiguration.MESSAGING_ONLY);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPostingNotAllowedIfDisabledSetting() throws Exception {
+        messagingFeatureDisabledTest(CourseInformationSharingConfiguration.DISABLED);
+    }
+
+    private void messagingFeatureDisabledTest(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        var persistedCourse = courseRepository.findByIdElseThrow(courseId);
+        persistedCourse.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        persistedCourse = courseRepository.saveAndFlush(persistedCourse);
+        assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
+
+        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
+
+        var answerPostCount = answerPostRepository.count();
+
+        request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
+
+        var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
+        assertThat(newAnswerPostCount).isEqualTo(0);
+
+        // active messaging again
+        persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        courseRepository.saveAndFlush(persistedCourse);
     }
 
     @Test

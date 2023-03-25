@@ -240,7 +240,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
                 new ProgrammingExerciseTestCase().testName("testMethods[Context]").exercise(programmingExercise),
                 new ProgrammingExerciseTestCase().testName("testAttributes[Starter]").exercise(programmingExercise));
 
-        programmingExerciseFeedbackService.setTestCaseType(structuralTestCases, ProgrammingLanguage.JAVA);
+        testCaseRepository.setTestCaseType(structuralTestCases, ProgrammingLanguage.JAVA);
         assertThat(structuralTestCases).allMatch(testCase -> testCase.getType() == ProgrammingExerciseTestCaseType.STRUCTURAL);
     }
 
@@ -251,7 +251,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
                 new ProgrammingExerciseTestCase().testName("test13412").exercise(programmingExercise),
                 new ProgrammingExerciseTestCase().testName("HiddenRandomTest").exercise(programmingExercise));
 
-        programmingExerciseFeedbackService.setTestCaseType(behavioralTestCases, ProgrammingLanguage.JAVA);
+        testCaseRepository.setTestCaseType(behavioralTestCases, ProgrammingLanguage.JAVA);
         assertThat(behavioralTestCases).allMatch(testCase -> testCase.getType() == ProgrammingExerciseTestCaseType.BEHAVIORAL);
     }
 
@@ -267,7 +267,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
                     new ProgrammingExerciseTestCase().testName("testMergeSort").exercise(programmingExercise),
                     new ProgrammingExerciseTestCase().testName("test13412").exercise(programmingExercise),
                     new ProgrammingExerciseTestCase().testName("HiddenRandomTest").exercise(programmingExercise));
-            programmingExerciseFeedbackService.setTestCaseType(testCases, language);
+            testCaseRepository.setTestCaseType(testCases, language);
             assertThat(testCases).allMatch(testCase -> testCase.getType() == ProgrammingExerciseTestCaseType.DEFAULT);
         }
     }

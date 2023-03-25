@@ -7,6 +7,7 @@ export type RepositoryExportOptions = {
     exportAllParticipants: boolean;
     filterLateSubmissions: boolean;
     filterLateSubmissionsDate?: dayjs.Dayjs;
+    excludePracticeSubmissions: boolean;
     addParticipantName: boolean;
     combineStudentCommits: boolean;
     anonymizeStudentCommits: boolean;

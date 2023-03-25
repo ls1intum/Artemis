@@ -92,7 +92,7 @@
                     <fa-icon [icon]="faListAlt"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                 </a>
-
+                <jhi-external-submission *ngIf="exercise.isAtLeastInstructor" class="d-inline-block me-1 mb-1" [exercise]="exercise"></jhi-external-submission>
                 <button
                     jhi-exercise-action-button
                     [buttonIcon]="faDownload"

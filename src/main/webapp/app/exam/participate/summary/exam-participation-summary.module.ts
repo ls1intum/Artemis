@@ -44,6 +44,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         ArtemisMarkdownModule,
         SubmissionResultStatusModule,
         ArtemisExamSharedModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [
         ExamParticipationSummaryComponent,

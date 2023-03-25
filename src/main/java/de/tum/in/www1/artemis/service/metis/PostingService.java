@@ -85,19 +85,19 @@ public abstract class PostingService {
         String specificTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX;
         String genericTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + course.getId();
 
-        if (postDTO.getPost().getExercise() != null) {
-            specificTopicName += "exercises/" + postDTO.getPost().getExercise().getId();
+        if (postDTO.post().getExercise() != null) {
+            specificTopicName += "exercises/" + postDTO.post().getExercise().getId();
             messagingTemplate.convertAndSend(specificTopicName, postDTO);
         }
-        else if (postDTO.getPost().getLecture() != null) {
-            specificTopicName += "lectures/" + postDTO.getPost().getLecture().getId();
+        else if (postDTO.post().getLecture() != null) {
+            specificTopicName += "lectures/" + postDTO.post().getLecture().getId();
             messagingTemplate.convertAndSend(specificTopicName, postDTO);
         }
-        else if (postDTO.getPost().getConversation() != null) {
-            var participants = this.conversationParticipantRepository.findConversationParticipantByConversationId(postDTO.getPost().getConversation().getId());
+        else if (postDTO.post().getConversation() != null) {
+            var participants = this.conversationParticipantRepository.findConversationParticipantByConversationId(postDTO.post().getConversation().getId());
             participants.forEach(conversationParticipant -> {
                 messagingTemplate.convertAndSendToUser(conversationParticipant.getUser().getLogin(),
-                        genericTopicName + "/conversations/" + postDTO.getPost().getConversation().getId(), postDTO);
+                        genericTopicName + "/conversations/" + postDTO.post().getConversation().getId(), postDTO);
             });
 
             return;
@@ -135,14 +135,24 @@ public abstract class PostingService {
         }
     }
 
-    Course preCheckUserAndCourse(User user, Long courseId) {
+    Course preCheckUserAndCourseForCommunication(User user, Long courseId) {
         final Course course = courseRepository.findByIdElseThrow(courseId);
         // user has to be at least student in the course
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         // check if the course has posts enabled
-        if (!course.getPostsEnabled()) {
-            throw new BadRequestAlertException("Postings are not enabled for this course", getEntityName(), "400", true);
+        if (!courseRepository.isCommunicationEnabled(courseId)) {
+            throw new BadRequestAlertException("Communication feature is not enabled for this course", getEntityName(), "400", true);
+        }
+        return course;
+    }
+
+    Course preCheckUserAndCourseForMessaging(User user, Long courseId) {
+        final Course course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        if (!courseRepository.isMessagingEnabled(course.getId())) {
+            throw new BadRequestAlertException("Messaging is not enabled for this course", getEntityName(), "400", true);
         }
         return course;
     }

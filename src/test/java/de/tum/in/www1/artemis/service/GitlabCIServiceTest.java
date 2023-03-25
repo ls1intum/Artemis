@@ -8,7 +8,6 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.PipelineStatus;
@@ -36,7 +35,6 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCIResultService;
-import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCIService;
 
 class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
@@ -53,9 +51,6 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
 
     @Autowired
     private BuildPlanRepository buildPlanRepository;
-
-    @Autowired
-    private GitLabCIService gitlabCIService;
 
     @Autowired
     private GitLabCIResultService gitLabCIResultService;
@@ -248,7 +243,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         continuousIntegrationService.removeAllDefaultProjectPermissions(null);
         continuousIntegrationService.givePlanPermissions(null, null);
         continuousIntegrationService.giveProjectPermissions(null, null, null);
-        continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null, Optional.empty());
+        continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null, List.of());
         continuousIntegrationService.enablePlan(null, null);
         continuousIntegrationService.deleteBuildPlan(null, null);
         continuousIntegrationService.deleteProject(null);

@@ -13,56 +13,29 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ExampleSubmission;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -107,9 +80,11 @@ public class ResultResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
+    private final WebsocketMessagingService messagingService;
 
-    private final ProgrammingMessagingService programmingMessagingService;
+    private final LtiNewResultService ltiNewResultService;
+
+    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
     private final TestwiseCoverageService testwiseCoverageService;
 
@@ -127,10 +102,11 @@ public class ResultResource {
 
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ResultService resultService, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ResultRepository resultRepository, UserRepository userRepository, ExamDateService examDateService,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
-            TestwiseCoverageService testwiseCoverageService, ProgrammingTriggerService programmingTriggerService, ParticipationRepository participationRepository,
-            StudentParticipationRepository studentParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiNewResultService ltiNewResultService, ResultRepository resultRepository,
+            WebsocketMessagingService messagingService, UserRepository userRepository, ExamDateService examDateService,
+            ProgrammingExerciseGradingService programmingExerciseGradingService, TestwiseCoverageService testwiseCoverageService,
+            ProgrammingTriggerService programmingTriggerService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.exerciseRepository = exerciseRepository;
@@ -141,10 +117,11 @@ public class ResultResource {
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.messagingService = messagingService;
+        this.ltiNewResultService = ltiNewResultService;
         this.userRepository = userRepository;
         this.examDateService = examDateService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
-        this.programmingMessagingService = programmingMessagingService;
         this.testwiseCoverageService = testwiseCoverageService;
         this.programmingTriggerService = programmingTriggerService;
         this.participationRepository = participationRepository;
@@ -217,6 +194,14 @@ public class ResultResource {
                     testwiseCoverageService.createTestwiseCoverageReport(result.getCoverageFileReportsByTestCaseName(), participation.getProgrammingExercise(),
                             programmingSubmission);
                 }
+            }
+
+            log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
+            // notify user via websocket
+            messagingService.broadcastNewResult((Participation) participation, result);
+            if (participation instanceof StudentParticipation) {
+                // do not try to report results for template or solution participations
+                ltiNewResultService.onNewResult((ProgrammingExerciseStudentParticipation) participation);
             }
 
             programmingMessagingService.notifyUserAboutNewResult(result, participation);

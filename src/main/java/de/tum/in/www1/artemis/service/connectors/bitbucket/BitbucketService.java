@@ -43,9 +43,9 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 
 @Service
 @Profile("bitbucket")
@@ -191,7 +191,7 @@ public class BitbucketService extends AbstractVersionControlService {
             restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
         }
         catch (Exception e) {
-            throw new BitbucketException("Could not delete repository " + projectKey, e);
+            log.error("Could not delete repository", e);
         }
     }
 
@@ -891,7 +891,7 @@ public class BitbucketService extends AbstractVersionControlService {
                 this.uri = new URI(urlString);
             }
             catch (URISyntaxException e) {
-                throw new BitbucketException("Could not create Bitbucket Repository URL", e);
+                throw new BitbucketException("Could not Bitbucket Repository URL", e);
             }
         }
 
