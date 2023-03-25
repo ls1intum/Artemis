@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.ZonedDateTime;
 
@@ -11,9 +11,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ParticipationInterface;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -145,18 +146,23 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
         checkCanAccessParticipation(programmingExercise, participation, true, true);
     }
 
-    void checkCanAccessParticipation(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation, boolean shouldBeAllowed,
-            boolean shouldBeAllowedTemplateSolution) {
+    void checkCanAccessParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation, final boolean shouldBeAllowed,
+            final boolean shouldBeAllowedTemplateSolution) {
+        checkParticipationAccess(participation, shouldBeAllowed);
+        checkParticipationAccess(programmingExercise.getSolutionParticipation(), shouldBeAllowedTemplateSolution);
+        checkParticipationAccess(programmingExercise.getTemplateParticipation(), shouldBeAllowedTemplateSolution);
+        checkParticipationAccess(null, false);
+    }
+
+    private <T extends ParticipationInterface> void checkParticipationAccess(final T participation, final boolean shouldBeAllowed) {
         var isAllowed = participationAuthCheckService.canAccessParticipation(participation);
         assertThat(isAllowed).isEqualTo(shouldBeAllowed);
 
-        var isAllowedSolution = participationAuthCheckService.canAccessParticipation(programmingExercise.getSolutionParticipation());
-        assertThat(isAllowedSolution).isEqualTo(shouldBeAllowedTemplateSolution);
-
-        var isAllowedTemplate = participationAuthCheckService.canAccessParticipation(programmingExercise.getTemplateParticipation());
-        assertThat(isAllowedTemplate).isEqualTo(shouldBeAllowedTemplateSolution);
-
-        var responseOther = participationAuthCheckService.canAccessParticipation((ProgrammingExerciseParticipation) null);
-        assertThat(responseOther).isFalse();
+        if (shouldBeAllowed) {
+            assertThatCode(() -> participationAuthCheckService.checkCanAccessParticipationElseThrow(participation)).doesNotThrowAnyException();
+        }
+        else {
+            assertThatThrownBy(() -> participationAuthCheckService.checkCanAccessParticipationElseThrow(participation)).isInstanceOf(AccessForbiddenException.class);
+        }
     }
 }

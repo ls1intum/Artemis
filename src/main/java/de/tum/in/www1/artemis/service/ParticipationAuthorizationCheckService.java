@@ -40,8 +40,11 @@ public class ParticipationAuthorizationCheckService {
      *
      * @param participation Some participation.
      */
-    public void checkCanAccessParticipationElseThrow(@NotNull final ParticipationInterface participation) {
-        if (!canAccessParticipation(participation)) {
+    public void checkCanAccessParticipationElseThrow(final ParticipationInterface participation) {
+        if (participation == null) {
+            throw new AccessForbiddenException("participation");
+        }
+        else if (!canAccessParticipation(participation)) {
             throw new AccessForbiddenException("participation", participation.getId());
         }
     }
