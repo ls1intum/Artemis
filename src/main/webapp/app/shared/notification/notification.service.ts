@@ -17,6 +17,8 @@ import {
     CONVERSATION_ADD_USER_GROUP_CHAT_TITLE,
     CONVERSATION_CREATE_GROUP_CHAT_TITLE,
     CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE,
+    CONVERSATION_REMOVE_USER_CHANNEL_TITLE,
+    CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE,
     NEW_ANNOUNCEMENT_POST_TITLE,
     NEW_COURSE_POST_TITLE,
     NEW_EXERCISE_POST_TITLE,
@@ -100,7 +102,9 @@ export class NotificationService {
             } else if (
                 notification.title === CONVERSATION_CREATE_GROUP_CHAT_TITLE ||
                 notification.title === CONVERSATION_ADD_USER_CHANNEL_TITLE ||
-                notification.title === CONVERSATION_ADD_USER_GROUP_CHAT_TITLE
+                notification.title === CONVERSATION_ADD_USER_GROUP_CHAT_TITLE ||
+                notification.title === CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE ||
+                notification.title === CONVERSATION_REMOVE_USER_CHANNEL_TITLE
             ) {
                 const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
                 const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
