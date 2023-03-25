@@ -15,7 +15,7 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { FeedbackCollapseComponent } from 'app/exercises/shared/feedback/collapse/feedback-collapse.component';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
-import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackItem, FeedbackReference } from 'app/exercises/shared/feedback/item/feedback-item';
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming-feedback-item.service';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -43,6 +43,12 @@ describe('FeedbackComponent', () => {
 
     // Template for Bitbucket commit hash url
     const commitHashURLTemplate = 'https://bitbucket.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
+
+    const feedbackReference: FeedbackReference = {
+        feedbackId: 1,
+        resultId: 2,
+        hasLongFeedback: false,
+    };
 
     const makeFeedback = (fb: Feedback) => {
         return Object.assign({ type: FeedbackType.AUTOMATIC, text: '', detailText: '', credits: 0 } as Feedback, fb);
@@ -80,6 +86,7 @@ describe('FeedbackComponent', () => {
                 text: showDetails ? 'Rule: This is a code issue' : 'This is a code issue',
                 credits,
                 positive: false,
+                feedbackReference,
             }),
         };
     };
@@ -99,6 +106,7 @@ describe('FeedbackComponent', () => {
                 credits,
                 positive: credits > 0,
                 title: showDetails ? (credits > 0 ? 'artemisApp.result.detail.test.passed' : 'artemisApp.result.detail.test.failed') : undefined,
+                feedbackReference,
             }),
         };
     };
@@ -119,6 +127,7 @@ describe('FeedbackComponent', () => {
                 text,
                 credits,
                 positive: credits > 0,
+                feedbackReference,
             }),
         };
     };
@@ -149,6 +158,7 @@ describe('FeedbackComponent', () => {
                     title: 'artemisApp.result.detail.test.passedTest',
                     positive: true,
                     credits: 3,
+                    feedbackReference,
                 }),
             );
         }
