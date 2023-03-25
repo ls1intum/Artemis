@@ -358,9 +358,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * @param exercise the exercise for which the scores route should be extracted
      */
     getScoresRoute(exercise: Exercise): string {
-        console.log(exercise);
-        console.log(exercise.course);
-
         let route = '/course-management/';
         const exam = exercise.exerciseGroup?.exam;
         if (exam) {
