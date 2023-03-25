@@ -36,9 +36,13 @@ class SingleUserNotificationFactoryTest {
 
     private static final Long LECTURE_ID = 0L;
 
+    private static final String LECTURE_TITLE = "lecture title";
+
     private static Course course;
 
     private static final Long COURSE_ID = 12L;
+
+    private static final String COURSE_TITLE = "course title";
 
     private static Exercise exercise;
 
@@ -50,9 +54,13 @@ class SingleUserNotificationFactoryTest {
 
     private static Post post;
 
+    private static final String POST_TITLE = "post title";
+
+    private static final String POST_CONTENT = "post content";
+
     private static AnswerPost answerPost;
 
-    private static final String POST_NOTIFICATION_TEXT = "Your post got replied.";
+    private static final String ANSWER_POST_CONTENT = "answer post content";
 
     private static TutorialGroup tutorialGroup;
 
@@ -101,10 +109,12 @@ class SingleUserNotificationFactoryTest {
     static void setUp() {
         course = new Course();
         course.setId(COURSE_ID);
+        course.setTitle(COURSE_TITLE);
 
         lecture = new Lecture();
         lecture.setId(LECTURE_ID);
         lecture.setCourse(course);
+        lecture.setTitle(LECTURE_TITLE);
 
         exercise = new TextExercise();
         exercise.setId(EXERCISE_ID);
@@ -155,10 +165,13 @@ class SingleUserNotificationFactoryTest {
         post.setExercise(exercise);
         post.setLecture(lecture);
         post.setAuthor(instructor);
+        post.setTitle(POST_TITLE);
+        post.setContent(POST_CONTENT);
 
         answerPost = new AnswerPost();
         answerPost.setPost(post);
         answerPost.setAuthor(instructor);
+        answerPost.setContent(ANSWER_POST_CONTENT);
     }
 
     /// Test for Notifications based on Posts

@@ -63,11 +63,21 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     private Lecture lecture;
 
+    private static final String LECTURE_TITLE = "lecture title";
+
     private Post post;
+
+    private static final String POST_TITLE = "post title";
+
+    private static final String POST_CONTENT = "post content";
 
     private AnswerPost answerPost;
 
+    private static final String ANSWER_POST_CONTENT = "answer post content";
+
     private Course course;
+
+    private static final String COURSE_TITLE = "course title";
 
     private Exam exam;
 
@@ -111,6 +121,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         course.setTeachingAssistantGroupName(TEST_PREFIX + "tutors");
         course.setEditorGroupName(TEST_PREFIX + "editors");
         course.setStudentGroupName(TEST_PREFIX + "students");
+        course.setTitle(COURSE_TITLE);
 
         database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
 
@@ -129,6 +140,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
         lecture = new Lecture();
         lecture.setCourse(course);
+        lecture.setTitle(LECTURE_TITLE);
 
         exercise = ModelFactory.generateTextExercise(null, null, null, course);
         exerciseRepository.save(exercise);
@@ -156,10 +168,13 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         post.setLecture(lecture);
         post.setCourse(course);
         post.setAuthor(instructor);
+        post.setTitle(POST_TITLE);
+        post.setContent(POST_CONTENT);
 
         answerPost = new AnswerPost();
         answerPost.setPost(post);
         answerPost.setAuthor(instructor);
+        answerPost.setContent(ANSWER_POST_CONTENT);
 
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         database.changeUser(TEST_PREFIX + "instructor1");

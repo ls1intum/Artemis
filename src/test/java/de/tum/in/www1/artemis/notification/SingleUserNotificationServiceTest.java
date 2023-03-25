@@ -68,9 +68,19 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     private Post post;
 
+    private static final String POST_TITLE = "post title";
+
+    private static final String POST_CONTENT = "post content";
+
     private AnswerPost answerPost;
 
+    private static final String ANSWER_POST_CONTENT = "answer post content";
+
     private Course course;
+
+    private static final String COURSE_TITLE = "course title";
+
+    private static final String LECTURE_TITLE = "lecture title";
 
     private Exercise exercise;
 
@@ -88,6 +98,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         SecurityUtils.setAuthorizationObject();
 
         course = database.createCourse();
+        course.setTitle(COURSE_TITLE);
 
         database.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         user = database.getUserByLogin(TEST_PREFIX + "student1");
@@ -105,12 +116,15 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
         Lecture lecture = new Lecture();
         lecture.setCourse(course);
+        lecture.setTitle(LECTURE_TITLE);
 
         post = new Post();
         post.setExercise(exercise);
         post.setLecture(lecture);
         post.setAuthor(user);
         post.setCourse(course);
+        post.setTitle(POST_TITLE);
+        post.setContent(POST_CONTENT);
 
         Post answerPostPost = new Post();
         answerPostPost.setExercise(exercise);
@@ -120,6 +134,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         answerPost = new AnswerPost();
         answerPost.setPost(new Post());
         answerPost.setAuthor(user);
+        answerPost.setContent(ANSWER_POST_CONTENT);
 
         PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission = new PlagiarismSubmission<>();
         plagiarismSubmission.setStudentLogin(user.getLogin());
