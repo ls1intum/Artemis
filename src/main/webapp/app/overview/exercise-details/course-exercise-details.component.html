@@ -70,15 +70,6 @@
                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
                     </a>
                     <ng-container *ngIf="exercise.isAtLeastEditor">
-                        <!-- Actions for Editors and Instructors -->
-                        <a
-                            *ngIf="exercise.type !== QUIZ && (exercise.isAtLeastInstructor || exercise.type === PROGRAMMING)"
-                            [routerLink]="baseResource + 'submissions'"
-                            class="btn btn-success btn-sm"
-                        >
-                            <fa-icon [icon]="faBook"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
-                        </a>
                         <a *ngIf="exercise.type === QUIZ" [routerLink]="baseResource + 'quiz-point-statistic'" class="btn btn-info btn-sm">
                             <fa-icon [icon]="faSignal"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics">Statistics</span>
@@ -157,14 +148,7 @@
                                 >
                                     {{ result.submission.submissionDate | artemisDate : 'long-date' }}
                                 </h4>
-                                <jhi-result
-                                    [result]="result"
-                                    [showUngradedResults]="true"
-                                    [showBadge]="true"
-                                    [showTestDetails]="exampleSolutionInfo?.programmingExercise?.showTestNamesToStudents ?? false"
-                                    [exercise]="exercise"
-                                >
-                                </jhi-result>
+                                <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise"> </jhi-result>
                             </div>
                             <div class="no-results" *ngIf="!sortedHistoryResults">
                                 {{ 'artemisApp.courseOverview.exerciseDetails.noResults' | artemisTranslate }}
@@ -279,7 +263,7 @@
             </a>
         </div>
         <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
-            <router-outlet *ngIf="exercise.course && exercise.course.postsEnabled" (activate)="onChildActivate($event)"></router-outlet>
+            <router-outlet *ngIf="exercise.course && isCommunicationEnabled(exercise.course)" (activate)="onChildActivate($event)"></router-outlet>
         </div>
     </div>
     <jhi-lti-initializer></jhi-lti-initializer>

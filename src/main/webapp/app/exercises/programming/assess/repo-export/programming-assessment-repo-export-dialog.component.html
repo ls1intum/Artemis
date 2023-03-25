@@ -49,13 +49,15 @@
             <div class="checkbox">
                 <label class="control-label">
                     <input class="form-check-input" type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.repositoryExportOptions.filterLateSubmissions" />
-                    <strong jhiTranslate="artemisApp.programmingExercise.export.filterLateSubmissions">Filter late submissions</strong>
+                    <strong jhiTranslate="artemisApp.programmingExercise.export.filterLateSubmissions.title">Filter late submissions</strong>
+                    <jhi-help-icon text="artemisApp.programmingExercise.export.filterLateSubmissions.tooltip"></jhi-help-icon>
                 </label>
             </div>
             <div class="form-group">
-                <strong jhiTranslate="artemisApp.programmingExercise.export.filterLateSubmissionsDate"
+                <strong jhiTranslate="artemisApp.programmingExercise.export.filterLateSubmissionsDate.title"
                     >Date for filter late submissions (defaults to exercise due date if not set)</strong
                 >
+                <jhi-help-icon text="artemisApp.programmingExercise.export.filterLateSubmissionsDate.tooltip"></jhi-help-icon>
                 <jhi-date-time-picker
                     [(ngModel)]="this.repositoryExportOptions.filterLateSubmissionsDate"
                     [disabled]="!this.repositoryExportOptions.filterLateSubmissions"
@@ -66,43 +68,56 @@
         </ng-container>
         <div *ngIf="!singleParticipantMode" class="checkbox">
             <label class="control-label">
+                <input class="form-check-input" type="checkbox" name="excludePracticeSubmissions" [(ngModel)]="this.repositoryExportOptions.excludePracticeSubmissions" />
+                <strong jhiTranslate="artemisApp.programmingExercise.export.excludePracticeSubmissions.title">Exclude practice submissions</strong>
+                <jhi-help-icon text="artemisApp.programmingExercise.export.excludePracticeSubmissions.tooltip"></jhi-help-icon>
+            </label>
+        </div>
+        <div *ngIf="!singleParticipantMode" class="checkbox">
+            <label class="control-label">
                 <input class="form-check-input" type="checkbox" name="addParticipantName" [(ngModel)]="this.repositoryExportOptions.addParticipantName" />
                 <strong
                     *ngIf="!isRepoExportForMultipleExercises"
                     [jhiTranslate]="
-                        'artemisApp.programmingExercise.export.' + (!isRepoExportForMultipleExercises && programmingExercises[0].teamMode ? 'addTeamName' : 'addStudentName')
+                        'artemisApp.programmingExercise.export.addToProject.title.' + (!isRepoExportForMultipleExercises && programmingExercises[0].teamMode ? 'team' : 'student')
                     "
                 >
                     Add {{ programmingExercises[0].teamMode ? 'team' : 'student' }} name to project
                 </strong>
-                <strong *ngIf="isRepoExportForMultipleExercises" [jhiTranslate]="'artemisApp.programmingExercise.export.addTeamOrStudentName'">
+                <strong *ngIf="isRepoExportForMultipleExercises" [jhiTranslate]="'artemisApp.programmingExercise.export.addToProject.title.teamOrStudent'">
                     Add team/student name to project
                 </strong>
+                <jhi-help-icon text="artemisApp.programmingExercise.export.addToProject.tooltip"></jhi-help-icon>
             </label>
         </div>
         <div class="checkbox">
             <label class="control-label">
                 <input class="form-check-input" type="checkbox" name="combineStudentCommits" [(ngModel)]="this.repositoryExportOptions.combineStudentCommits" />
-                <strong jhiTranslate="artemisApp.programmingExercise.export.combineStudentCommits">Combine all changes after instructor into one commit</strong>
+                <strong jhiTranslate="artemisApp.programmingExercise.export.combineStudentCommits.title">Combine all changes after instructor into one commit</strong>
+                <jhi-help-icon text="artemisApp.programmingExercise.export.combineStudentCommits.tooltip"></jhi-help-icon>
             </label>
         </div>
         <ng-container *ngIf="isAtLeastInstructor">
             <div class="checkbox">
                 <label class="control-label">
                     <input class="form-check-input" type="checkbox" name="anonymizeStudentCommits" [(ngModel)]="this.repositoryExportOptions.anonymizeStudentCommits" checked />
-                    <strong jhiTranslate="artemisApp.programmingExercise.export.anonymizeStudentCommits">Anonymize all of the student's commits</strong>
+                    <strong jhiTranslate="artemisApp.programmingExercise.export.anonymizeStudentCommits.title">Anonymize all of the student's commits</strong>
+                    <jhi-help-icon text="artemisApp.programmingExercise.export.anonymizeStudentCommits.tooltip"></jhi-help-icon>
                 </label>
             </div>
         </ng-container>
         <div class="checkbox">
             <label class="control-label">
                 <input class="form-check-input" type="checkbox" name="normalizeCodeStyle" [(ngModel)]="this.repositoryExportOptions.normalizeCodeStyle" />
-                <strong jhiTranslate="artemisApp.programmingExercise.export.normalizeCodeStyle">Normalize code style (line endings, encoding)</strong>
+                <strong jhiTranslate="artemisApp.programmingExercise.export.normalizeCodeStyle.title">Normalize code style (line endings, encoding)</strong>
+                <jhi-help-icon text="artemisApp.programmingExercise.export.normalizeCodeStyle.tooltip"></jhi-help-icon>
             </label>
         </div>
-        <p *ngIf="!singleParticipantMode" jhiTranslate="artemisApp.instructorDashboard.exportRepos.timeWarning">
-            <b>Note:</b> This action can take several minutes depending on number and size of repositories.
-        </p>
+        <div *ngIf="!singleParticipantMode" class="alert alert-warning mt-3">
+            <span jhiTranslate="artemisApp.instructorDashboard.exportRepos.timeWarning">
+                <b>Note:</b> This action can take several minutes depending on number and size of repositories.
+            </span>
+        </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">

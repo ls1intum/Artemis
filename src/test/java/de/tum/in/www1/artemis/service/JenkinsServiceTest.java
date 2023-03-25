@@ -10,7 +10,7 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.util.Optional;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,7 +43,7 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ProgrammingExerciseImportService programmingExerciseImportService;
+    private ProgrammingExerciseImportService programmingExerciseImportService;
 
     /**
      * This method initializes the test case by setting up a local repo
@@ -118,7 +118,7 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
-    void testCreateBuildPlanForExerciseThrowsExceptionOnTemplateError() throws Exception {
+    void testCreateBuildPlanForExerciseThrowsExceptionOnTemplateError() {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -131,9 +131,8 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         MockedStatic<StreamUtils> mockedStreamUtils = mockStatic(StreamUtils.class);
         mockedStreamUtils.when(() -> StreamUtils.copyToString(any(InputStream.class), any())).thenThrow(IOException.class);
 
-        Exception exception = assertThrows(IllegalStateException.class, () -> {
-            continuousIntegrationService.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
-        });
+        Exception exception = assertThrows(IllegalStateException.class,
+                () -> continuousIntegrationService.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl));
 
         mockedStreamUtils.close();
         assertThat(exception.getMessage()).startsWith("Error loading template Jenkins build XML: ");
@@ -142,7 +141,7 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "VHDL", "ASSEMBLER", "OCAML" }, mode = EnumSource.Mode.INCLUDE)
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
-    void testCreateBuildPlanForExerciseThrowsExceptionOnTemplateError(ProgrammingLanguage programmingLanguage) throws Exception {
+    void testCreateBuildPlanForExerciseThrowsExceptionOnTemplateError(ProgrammingLanguage programmingLanguage) {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -156,9 +155,8 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         var solutionRepoUrl = programmingExercise.getVcsSolutionRepositoryUrl();
 
         var finalProgrammingExercise = programmingExercise;
-        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
-            continuousIntegrationService.createBuildPlanForExercise(finalProgrammingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
-        });
+        Exception exception = assertThrows(UnsupportedOperationException.class,
+                () -> continuousIntegrationService.createBuildPlanForExercise(finalProgrammingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl));
 
         assertThat(exception.getMessage()).endsWith("templates are not available for Jenkins.");
     }
@@ -176,9 +174,7 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
         jenkinsRequestMockProvider.mockGivePlanPermissionsThrowException(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
 
-        Exception exception = assertThrows(JenkinsException.class, () -> {
-            programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise);
-        });
+        Exception exception = assertThrows(JenkinsException.class, () -> programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise));
         assertThat(exception.getMessage()).startsWith("Cannot give assign permissions to plan");
     }
 
@@ -195,9 +191,7 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
         jenkinsRequestMockProvider.mockGivePlanPermissionsThrowException(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
 
-        Exception exception = assertThrows(JenkinsException.class, () -> {
-            programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise);
-        });
+        Exception exception = assertThrows(JenkinsException.class, () -> programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise));
         assertThat(exception.getMessage()).startsWith("Cannot give assign permissions to plan");
     }
 
@@ -252,7 +246,7 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         Exception exception = assertThrows(JenkinsException.class, () -> {
             String templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
             continuousIntegrationService.updatePlanRepository(projectKey, planName, ASSIGNMENT_REPO_NAME, null, participation.getRepositoryUrl(), templateRepoUrl, "main",
-                    Optional.empty());
+                    List.of());
         });
         assertThat(exception.getMessage()).startsWith("Error trying to configure build plan in Jenkins");
     }

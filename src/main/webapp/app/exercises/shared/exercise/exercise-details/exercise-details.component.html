@@ -27,9 +27,7 @@
 </ng-container>
 <dt><span jhiTranslate="artemisApp.exercise.categories">Categories</span></dt>
 <dd *ngIf="exercise.categories">
-    <span class="custom-tag" *ngFor="let item of exercise.categories" [ngStyle]="{ backgroundColor: item.color }">
-        <span>{{ item.category }}</span>
-    </span>
+    <jhi-exercise-categories [exercise]="exercise" [ngClass]="'categories-row'"></jhi-exercise-categories>
 </dd>
 <dd *ngIf="!exercise.categories">
     <span jhiTranslate="artemisApp.exercise.noCategory">No categories</span>

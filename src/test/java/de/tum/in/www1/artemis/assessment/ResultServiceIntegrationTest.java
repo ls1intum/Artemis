@@ -35,10 +35,8 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -274,99 +272,13 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 Arguments.of(false, dateInFuture, SubmissionType.MANUAL, dateInPast));
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    @EnumSource(QuizMode.class)
-    void testGetResultsForQuizExercise(QuizMode quizMode) throws Exception {
-        var now = ZonedDateTime.now();
-
-        QuizExercise quizExercise = database.createQuiz(course, now.minusHours(5), now.minusMinutes(2), quizMode);
-        quizExerciseRepository.save(quizExercise);
-
-        for (int i = 1; i <= numberOfStudents; i++) {
-            QuizSubmission quizSubmission = new QuizSubmission();
-            quizSubmission.setScoreInPoints(2.0);
-            quizSubmission.submitted(true);
-            quizSubmission.submissionDate(now.minusHours(3));
-            database.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
-            if (i % 3 == 0) {
-                database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 10D, true);
-            }
-            else if (i % 4 == 0) {
-                database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 20D, true);
-            }
-        }
-
-        List<Result> results = request.getList("/api/exercises/" + quizExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        assertThat(results).hasSize(numberOfStudents / 2);
-        // TODO: check additional values
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetResultsForModelingExercise() throws Exception {
-        var now = ZonedDateTime.now();
-        for (int i = 1; i <= numberOfStudents; i++) {
-            ModelingSubmission modelingSubmission = new ModelingSubmission();
-            modelingSubmission.model("Text");
-            modelingSubmission.submitted(true);
-            modelingSubmission.submissionDate(now.minusHours(3));
-            database.addSubmission(modelingExercise, modelingSubmission, TEST_PREFIX + "student" + i);
-            if (i % 3 == 0) {
-                database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 10D, true);
-            }
-            else if (i % 4 == 0) {
-                database.addResultToSubmission(modelingSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin(TEST_PREFIX + "instructor1"), 20D, true);
-            }
-        }
-
-        List<Result> results = request.getList("/api/exercises/" + modelingExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        assertThat(results).hasSize(numberOfStudents / 2);
-        // TODO: check additional values
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetResultsForTextExercise() throws Exception {
-        var now = ZonedDateTime.now();
-        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course);
-        course.addExercises(textExercise);
-        textExerciseRepository.save(textExercise);
-
-        for (int i = 1; i <= numberOfStudents; i++) {
-            TextSubmission textSubmission = new TextSubmission();
-            textSubmission.text("Text");
-            textSubmission.submitted(true);
-            textSubmission.submissionDate(now.minusHours(3));
-            database.addSubmission(textExercise, textSubmission, TEST_PREFIX + "student" + i);
-            if (i % 3 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 10D, true);
-            }
-            else if (i % 4 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin(TEST_PREFIX + "instructor1"), 20D, true);
-            }
-        }
-
-        List<Result> results = request.getList("/api/exercises/" + textExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        assertThat(results).hasSize(numberOfStudents / 2);
-        // TODO: check additional values
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetResultsForFileUploadExercise() throws Exception {
-        FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
-        List<Result> results = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        assertThat(results).hasSize(numberOfStudents / 2);
-        // TODO: check additional values
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetResultsWithPointsForFileUploadExerciseNoGradingCriteria() throws Exception {
         FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
 
-        List<Result> results = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results", HttpStatus.OK, Result.class);
+        List<Result> results = fileUploadExercise.getStudentParticipations().stream().flatMap(participation -> participation.getSubmissions().stream())
+                .flatMap(submission -> submission.getResults().stream()).toList();
         List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results-with-points-per-criterion",
                 HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
@@ -388,7 +300,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
         addFeedbacksWithGradingCriteriaToExercise(fileUploadExercise);
 
-        List<Result> results = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results", HttpStatus.OK, Result.class);
+        List<Result> results = fileUploadExercise.getStudentParticipations().stream().flatMap(participation -> participation.getSubmissions().stream())
+                .flatMap(submission -> submission.getResults().stream()).toList();
         List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results-with-points-per-criterion",
                 HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
@@ -518,24 +431,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetResultsForExamExercise() throws Exception {
-        setupExamModelingExerciseWithResults();
-        List<Result> results = request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        assertThat(results).hasSize(numberOfStudents);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetResultsForExamExercise_asStudent() throws Exception {
-        setupExamModelingExerciseWithResults();
-        request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.FORBIDDEN, Result.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetResultsWithPointsForExamExercise() throws Exception {
-        setupExamModelingExerciseWithResults();
-        List<Result> results = request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.OK, Result.class);
+        List<Result> results = setupExamModelingExerciseWithResults();
         List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request
                 .getList("/api/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
@@ -558,7 +455,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.FORBIDDEN, Result.class);
     }
 
-    private void setupExamModelingExerciseWithResults() {
+    private List<Result> setupExamModelingExerciseWithResults() {
+        List<Result> results = new ArrayList<>();
         var now = ZonedDateTime.now();
         for (int i = 1; i <= numberOfStudents; i++) {
             ModelingSubmission modelingSubmission = new ModelingSubmission();
@@ -566,7 +464,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             modelingSubmission.submitted(true);
             modelingSubmission.submissionDate(now.minusHours(2));
             database.addSubmission(this.examModelingExercise, modelingSubmission, TEST_PREFIX + "student" + i);
-            database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 12D, true);
+            Submission submission = database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 12D, true);
+            results.addAll(submission.getResults());
         }
 
         // empty participation with submission
@@ -583,6 +482,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         modelingSubmission.setParticipation(participation);
         submissionRepository.save(modelingSubmission);
         studentParticipationRepository.save(participation);
+
+        return results;
     }
 
     @Test
