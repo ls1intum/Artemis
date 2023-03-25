@@ -36,14 +36,23 @@ On the course management site, clicking on |lectures-management-btn| opens the f
 Managing Lectures
 -----------------
 
-Instructors have two options for creating a lecture.
+Instructors have three options for creating a lecture.
 
     1. Create a new lecture from scratch by clicking on |create-lecture-btn|.
     Lectures consist of a title, a description, and optionally a start and end date.
 
         |create-lecture|
 
-    2. Alternatively, instructors can also import a lecture from any other course where they at least have *editor* access.
+    2. In addition to creating a new lecture from the default mode, instructors can switch to the guided lecture creation by clicking on |switch-to-guided-mode-btn|.
+    This guided mode helps creating a new lecture and adding its contents through a multi-step process. The following video shows an exemplary use of the guided mode.
+
+    .. raw:: html
+
+        <iframe src="https://live.rbg.tum.de/w/artemisintro/26853?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+            Watch this video on TUM-Live.
+        </iframe>
+
+    3. Alternatively, instructors can also import a lecture from any other course where they at least have *editor* access.
     Clicking on |import-lecture-btn| opens the import modal, where instructors can search for an existing lecture and import it.
 
         |import-lecture|
@@ -137,6 +146,8 @@ See :ref:`Learning Analytics <learning-analytics>` for more information.
     :width: 800
 .. |create-lecture-btn| image:: lectures/create-lecture-button.png
     :width: 120
+.. |switch-to-guided-mode-btn| image:: lectures/switch-to-guided-mode-button.png
+    :width: 160
 .. |create-attachment| image:: lectures/create-attachment.png
     :width: 800
 .. |import-lecture| image:: lectures/import-lecture.png
