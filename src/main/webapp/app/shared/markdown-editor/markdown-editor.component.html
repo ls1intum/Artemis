@@ -86,7 +86,7 @@
                                 <button *ngIf="!command.getValues() || command.getValues().length === 0" [disabled]="true" ngbDropdownItem jhiTranslate="global.generic.emptyList">
                                     No items available
                                 </button>
-                                <li *ngFor="let item of command.getValues()">
+                                <li *ngFor="let item of command.getValues()" class="d-inline-block">
                                     <button class="btn-sm d-inline" type="button" (click)="command.execute(item.id, item.type)" ngbDropdownItem>
                                         {{ item.value }}
                                     </button>

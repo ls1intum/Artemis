@@ -14,6 +14,6 @@
         </createTable>
 
         <addForeignKeyConstraint baseColumnNames="attachment_unit_id" baseTableName="slide" constraintName="FK_slide_id" deferrable="false" initiallyDeferred="false"
-                                 onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="lecture_unit" validate="true"/>
+                                 onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="lecture_unit" validate="true"/>
     </changeSet>
 </databaseChangeLog>

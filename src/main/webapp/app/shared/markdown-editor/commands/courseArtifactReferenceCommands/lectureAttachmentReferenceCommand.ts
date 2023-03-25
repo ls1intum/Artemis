@@ -39,11 +39,15 @@ export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
                                         value: attachment.name!,
                                         courseArtifactType: ReferenceType.ATTACHMENT,
                                     })),
-                                    attachmentUnits: lecture.lectureUnits?.map((unit: any) => ({
-                                        id: unit.id!.toString(),
-                                        value: unit.name!,
-                                        courseArtifactType: ReferenceType.ATTACHMENT_UNITS,
-                                    })),
+                                    attachmentUnits: lecture.lectureUnits?.map((unit: any) => {
+                                        if (unit instanceof AttachmentUnit) {
+                                            return {
+                                                id: unit.id!.toString(),
+                                                value: unit.name!,
+                                                courseArtifactType: ReferenceType.ATTACHMENT_UNITS,
+                                            };
+                                        }
+                                    }),
                                 },
                             ],
                         );

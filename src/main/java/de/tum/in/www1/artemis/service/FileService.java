@@ -344,7 +344,8 @@ public class FileService implements DisposableBean {
             return Path.of(FilePathService.getAttachmentUnitFilePath(), attachmentUnitId, filename).toString();
         }
         if (publicPath.contains("files/attachments/slides/attachment-unit")) {
-            return Path.of(FilePathService.getSlideImageFilePath(), filename).toString();
+            String attachmentUnitId = publicPath.replace(filename, "").replace("/api/files/attachments/slides/attachment-unit/", "");
+            return Path.of(FilePathService.getSlideImageFilePath(), attachmentUnitId, filename).toString();
         }
         if (publicPath.contains("files/file-upload-exercises")) {
             final var uploadSubPath = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "").split("/");
@@ -376,7 +377,6 @@ public class FileService implements DisposableBean {
 
         // generate part for id
         String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
-        System.out.println(actualPath + "  actualPath::::");
         // check for known path to convert
         if (actualPathString.contains(FilePathService.getTempFilePath())) {
             return DEFAULT_FILE_SUBPATH + filename;
@@ -403,7 +403,6 @@ public class FileService implements DisposableBean {
             return "/api/files/attachments/attachment-unit/" + id + "/" + filename;
         }
         if (actualPathString.contains(FilePathService.getSlideImageFilePath())) {
-            System.out.println("1111111  actualPath::::");
             return "/api/files/attachments/slides/attachment-unit/" + id + "/" + filename;
         }
         if (actualPathString.contains(FilePathService.getFileUploadExercisesFilePath())) {
@@ -449,7 +448,7 @@ public class FileService implements DisposableBean {
         if (targetFolder.equals(FilePathService.getStudentImageFilePath())) {
             filenameBase = "ExamUserImage_";
         }
-        if (targetFolder.equals(FilePathService.getSlideImageFilePath())) {
+        if (targetFolder.contains(FilePathService.getSlideImageFilePath())) {
             filenameBase = "AttachmentUnitSlide_";
         }
         if (targetFolder.contains(FilePathService.getLectureAttachmentFilePath())) {

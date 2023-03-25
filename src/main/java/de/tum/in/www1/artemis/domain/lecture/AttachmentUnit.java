@@ -6,8 +6,6 @@ import java.util.Set;
 
 import javax.persistence.*;
 
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -32,7 +30,6 @@ public class AttachmentUnit extends LectureUnit {
     private Set<LectureUnitCompletion> completedUsers = new HashSet<>();
 
     @OneToMany(mappedBy = "attachmentUnit", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("attachmentUnit")
     private Set<Slide> slides = new HashSet<>();
 

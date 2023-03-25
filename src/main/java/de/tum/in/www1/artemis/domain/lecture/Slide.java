@@ -64,7 +64,7 @@ public class Slide extends DomainObject {
     public void beforeCreate() {
         // move file if necessary (id at this point will be null, so placeholder will be inserted)
         var targetFolder = Path.of(FilePathService.getSlideImageFilePath(), getAttachmentUnit().getId().toString()).toString();
-        slideImagePath = fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, slideImagePath, targetFolder, getAttachmentUnit().getId(), true);
+        slideImagePath = fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, slideImagePath, targetFolder, getAttachmentUnit().getId());
     }
 
     /**
@@ -83,13 +83,13 @@ public class Slide extends DomainObject {
     public void onUpdate() {
         // move file and delete old file if necessary
         var targetFolder = Path.of(FilePathService.getSlideImageFilePath(), getAttachmentUnit().getId().toString()).toString();
-        slideImagePath = fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, slideImagePath, targetFolder, getAttachmentUnit().getId(), true);
+        slideImagePath = fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, slideImagePath, targetFolder, getAttachmentUnit().getId());
     }
 
     @PostRemove
     public void onDelete() {
         // delete old file if necessary
         var targetFolder = Path.of(FilePathService.getSlideImageFilePath(), getAttachmentUnit().getId().toString()).toString();
-        fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, null, targetFolder, getAttachmentUnit().getId(), true);
+        fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, null, targetFolder, getAttachmentUnit().getId());
     }
 }
