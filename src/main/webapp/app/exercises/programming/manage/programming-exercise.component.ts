@@ -32,6 +32,7 @@ import {
     faPencilAlt,
     faPlus,
     faSort,
+    faTable,
     faTimes,
     faUsers,
     faWrench,
@@ -67,6 +68,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     faWrench = faWrench;
     faCheckDouble = faCheckDouble;
     faUsers = faUsers;
+    faTable = faTable;
     faListAlt = faListAlt;
     faLightbulb = faLightbulb;
     faPencilAlt = faPencilAlt;
