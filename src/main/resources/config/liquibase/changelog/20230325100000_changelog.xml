@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="b-fein" id="20230325100000">
+        <!-- removes the auto-increment from the ID column -->
+        <modifyDataType tableName="long_feedback_text" columnName="id" newDataType="bigint"/>
+
+        <!-- no explicit mapping column, we use a shared primary key instead to allow bidirectional lazy loading -->
+        <dropForeignKeyConstraint baseTableName="long_feedback_text" constraintName="fk_feedback_id"/>
+        <dropColumn tableName="long_feedback_text" columnName="feedback_id"/>
+    </changeSet>
+</databaseChangeLog>

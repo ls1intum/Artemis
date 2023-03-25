@@ -45,6 +45,11 @@ public class Feedback extends DomainObject {
     @Column(name = "has_long_feedback_text")
     private boolean hasLongFeedbackText = false;
 
+    // the fetch actually is lazy, since the primary key is mapped, so both sides of the relation have the join column
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @PrimaryKeyJoinColumn
+    private LongFeedbackText longFeedbackText;
+
     /**
      * Reference to the assessed element (e.g. model element id or text element string)
      */
@@ -146,6 +151,15 @@ public class Feedback extends DomainObject {
 
     public void setHasLongFeedbackText(boolean hasLongFeedbackText) {
         this.hasLongFeedbackText = hasLongFeedbackText;
+    }
+
+    public LongFeedbackText getLongFeedbackText() {
+        return longFeedbackText;
+    }
+
+    public void setLongFeedbackText(LongFeedbackText longFeedbackText) {
+        this.longFeedbackText = longFeedbackText;
+        setHasLongFeedbackText(longFeedbackText != null);
     }
 
     public String getReference() {
@@ -360,22 +374,30 @@ public class Feedback extends DomainObject {
      * @return Copy of the automatic feedback without its original ID
      */
     public Feedback copyFeedback() {
-        var feedback = new Feedback();
+        final Feedback feedback = new Feedback();
+
         feedback.setDetailText(getDetailText());
-        feedback.setHasLongFeedbackText(hasLongFeedbackText());
         feedback.setType(getType());
         // For manual result each feedback needs to have a credit. If no credit is set, we set it to 0.0
         feedback.setCredits(Objects.requireNonNullElse(getCredits(), 0.0));
         feedback.setText(getText());
+
         if (isPositive() == null) {
             feedback.setPositiveViaCredits();
         }
         else {
             feedback.setPositive(isPositive());
         }
+
         feedback.setReference(getReference());
         feedback.setVisibility(getVisibility());
         feedback.setGradingInstruction(getGradingInstruction());
+
+        feedback.setHasLongFeedbackText(hasLongFeedbackText());
+        if (feedback.hasLongFeedbackText()) {
+            feedback.setLongFeedbackText(getLongFeedbackText().copy());
+        }
+
         return feedback;
     }
 
