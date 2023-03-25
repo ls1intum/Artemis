@@ -12,7 +12,7 @@ export class FeedbackItem implements FeedbackNode {
     text?: string; // this is typically feedback.detailText
     positive?: boolean;
     color?: FeedbackColor;
-    feedback: FeedbackReference;
+    feedbackReference: FeedbackReference;
 }
 
 export class FeedbackReference {

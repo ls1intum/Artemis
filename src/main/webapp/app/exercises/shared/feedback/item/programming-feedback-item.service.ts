@@ -64,7 +64,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             text: feedback.detailText,
             positive: false,
             credits: feedback.credits,
-            feedback: new FeedbackReference(feedback),
+            feedbackReference: new FeedbackReference(feedback),
         };
     }
 
@@ -86,7 +86,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             text,
             positive: false,
             credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
-            feedback: new FeedbackReference(feedback),
+            feedbackReference: new FeedbackReference(feedback),
         };
     }
 
@@ -115,7 +115,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             text: feedback.detailText,
             positive: feedback.positive,
             credits: feedback.credits,
-            feedback: new FeedbackReference(feedback),
+            feedbackReference: new FeedbackReference(feedback),
         };
     }
 
@@ -135,7 +135,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             text: gradingInstruction.feedback + (feedback.detailText ? `\n${feedback.detailText}` : ''),
             positive: feedback.positive,
             credits: feedback.credits,
-            feedback: new FeedbackReference(feedback),
+            feedbackReference: new FeedbackReference(feedback),
         };
     }
 
@@ -153,7 +153,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             text: feedback.detailText,
             positive: feedback.positive,
             credits: feedback.credits,
-            feedback: new FeedbackReference(feedback),
+            feedbackReference: new FeedbackReference(feedback),
         };
     }
 
