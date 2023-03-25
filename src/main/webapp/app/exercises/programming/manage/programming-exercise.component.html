@@ -189,13 +189,15 @@
                                     [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                                     *ngIf="programmingExercise.isAtLeastEditor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'grading', 'test-cases']"
-                                    class="btn btn-info btn-sm me-1"
+                                    class="btn btn-warning btn-sm me-1 position-relative"
                                     style="display: flex; justify-content: center; align-items: center"
                                 >
                                     <div>
-                                        <fa-icon [icon]="faFileSignature"></fa-icon>
+                                        <fa-icon [icon]="faUserCheck"></fa-icon>
                                         <span class="d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
                                     </div>
+                                    <!-- New Badge -->
+                                    <span class="position-absolute top-100 end-0 badge rounded-pill translate-middle-y bg-info">New</span>
                                 </a>
                             </div>
                             <div class="btn-group-vertical me-1 mb-auto">
