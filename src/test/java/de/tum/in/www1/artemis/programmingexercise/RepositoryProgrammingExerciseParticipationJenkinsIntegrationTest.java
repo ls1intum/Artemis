@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -22,7 +23,6 @@ import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.TestConstants;
 
@@ -32,9 +32,6 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    private BuildLogEntryRepository buildLogEntryRepository;
 
     @BeforeEach
     void setup() throws Exception {
@@ -67,7 +64,6 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
         submission.setBuildLogEntries(buildLogEntries);
 
         database.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
-        buildLogEntryRepository.deleteAll();
 
         var jobWithDetails = mock(JobWithDetails.class);
         jenkinsRequestMockProvider.mockGetJob(programmingExercise.getProjectKey(), programmingExerciseParticipation.getBuildPlanId(), jobWithDetails, false);
@@ -76,6 +72,7 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
         doThrow(IOException.class).when(lastBuild).details();
 
         var url = "/api/repository/" + programmingExerciseParticipation.getId() + "/buildlogs";
-        request.getList(url, HttpStatus.INTERNAL_SERVER_ERROR, BuildLogEntry.class);
+        var buildLogs = request.getList(url, HttpStatus.OK, BuildLogEntry.class);
+        assertThat(buildLogs).hasSize(3);
     }
 }

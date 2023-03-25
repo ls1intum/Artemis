@@ -14,6 +14,7 @@ import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { isCommunicationEnabled } from 'app/entities/course.model';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -35,6 +36,7 @@ export class CourseLectureDetailsComponent implements OnInit {
     hasPdfLectureUnit: boolean;
 
     readonly LectureUnitType = LectureUnitType;
+    readonly isCommunicationEnabled = isCommunicationEnabled;
 
     // Icons
     faSpinner = faSpinner;

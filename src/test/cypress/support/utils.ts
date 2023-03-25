@@ -47,6 +47,15 @@ export function trimDate(date: string) {
     return date.slice(0, 19);
 }
 
+export function titleCaseWord(str: string) {
+    str = str.replace('_', ' ');
+    const sentence = str.toLowerCase().split(' ');
+    for (let i = 0; i < sentence.length; i++) {
+        sentence[i] = sentence[i][0].toUpperCase() + sentence[i].slice(1);
+    }
+    return sentence.join(' ');
+}
+
 export function getExercise(exerciseId: number) {
     return cy.get(`#exercise-${exerciseId}`);
 }

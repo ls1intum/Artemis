@@ -1,0 +1,19 @@
+<h4 class="fw-medium" *ngIf="exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs()) && showTags.notReleased">
+    <a [routerLink]="['/courses', exercise.course?.id, 'exercises', exercise.id!]">
+        <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
+    </a>
+</h4>
+<h4 class="fw-medium" *ngIf="asQuizExercise(exercise).isActiveQuiz && showTags.quizLive">
+    <span class="badge bg-success">{{ 'artemisApp.courseOverview.exerciseList.live' | artemisTranslate }}</span>
+</h4>
+<h4 class="fw-medium" *ngFor="let category of exercise.categories">
+    <span class="badge" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
+</h4>
+<h4 class="fw-medium" *ngIf="exercise.difficulty && showTags.difficulty">
+    <jhi-difficulty-badge [exercise]="exercise" [showNoLevel]="showTags.difficultyIfNoLevel ?? false"></jhi-difficulty-badge>
+</h4>
+<h4 class="fw-medium" *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY && showTags.includedInScore">
+    <a [routerLink]="['/courses', exercise.course?.id, 'exercises', exercise.id!]">
+        <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+    </a>
+</h4>
