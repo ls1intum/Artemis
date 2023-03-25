@@ -19,10 +19,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.BuildLogEntryService;
-import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.SubmissionPolicyService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
@@ -44,6 +41,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @PreAuthorize("hasRole('USER')")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 
+    private final ParticipationAuthorizationCheckService participationAuthCheckService;
+
     private final ProgrammingExerciseParticipationService participationService;
 
     private final ExamSubmissionService examSubmissionService;
@@ -58,12 +57,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final PlagiarismService plagiarismService;
 
-    public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
-            ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyService submissionPolicyService, PlagiarismService plagiarismService) {
+    public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService,
+            ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<VersionControlService> versionControlService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
+            ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService,
+            BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyService submissionPolicyService,
+            PlagiarismService plagiarismService) {
         super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository);
+        this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
         this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
@@ -91,8 +92,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             lockRepositoryPolicyEnforced = submissionPolicyService.isParticipationLocked(policy, participation);
         }
         // Error case 3: The user does not have permissions to push into the repository and the user is not notified for a related plagiarism case.
-        boolean hasPermissions = participationService.canAccessParticipation(programmingParticipation);
-        if (!hasPermissions && !plagiarismService.wasUserNotifiedByInstructor(participationId, userRepository.getUser().getLogin())) {
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        if (!plagiarismService.wasUserNotifiedByInstructor(participationId, userRepository.getUser().getLogin())) {
             // TODO: change to AccessForbiddenException
             throw new IllegalAccessException();
         }
@@ -165,10 +166,12 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     boolean canAccessRepository(Long participationId) throws IllegalArgumentException {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
-        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+        if (participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation) {
+            return participationAuthCheckService.canAccessParticipation(programmingExerciseParticipation);
+        }
+        else {
             throw new IllegalArgumentException();
         }
-        return participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
     }
 
     @Override
@@ -315,8 +318,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
         // User must have the necessary permissions to update a file.
         // When the buildAndTestAfterDueDate is set, the student can't change the repository content anymore after the due date.
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         boolean repositoryIsLocked = programmingExerciseParticipation.isLocked();
-        if (repositoryIsLocked || !participationService.canAccessParticipation(programmingExerciseParticipation)) {
+        if (repositoryIsLocked) {
             FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
@@ -400,10 +404,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         log.debug("REST request to get build log : {}", participationId);
 
         ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
-
-        if (!participationService.canAccessParticipation(participation)) {
-            throw new AccessForbiddenException("Participation", participationId);
-        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.getSubmissions().stream().findFirst().orElse(null);
         // If a resultId is specified and the ID does not belong to the latest result, find the corresponding submission. Otherwise use the latest submission.
