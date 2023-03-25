@@ -16,9 +16,9 @@ export type ProgrammingLanguageFeature = {
     packageNameRequired: boolean;
     checkoutSolutionRepositoryAllowed: boolean;
     projectTypes: ProjectType[];
+    testwiseCoverageAnalysisSupported: boolean;
     auxiliaryRepositoriesSupported: boolean;
     publishBuildPlanUrlAllowed: boolean;
-    testwiseCoverageReportSupported: boolean;
 };
 
 @Injectable({ providedIn: 'root' })

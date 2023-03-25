@@ -26,7 +26,7 @@ export class ProgrammingExerciseProblemComponent {
     @Input() sequentialTestRunsAllowed: boolean;
     @Input() checkoutSolutionRepositoryAllowed: boolean;
     @Input() publishBuildPlanUrlAllowed: boolean;
-    @Input() testwiseCoverageReportSupported: boolean;
+    @Input() testwiseCoverageAnalysisSupported: boolean;
     @Input() validIdeSelection: () => boolean | undefined;
     @Input() selectedProjectType: ProjectType;
     @Input() inProductionEnvironment: boolean;

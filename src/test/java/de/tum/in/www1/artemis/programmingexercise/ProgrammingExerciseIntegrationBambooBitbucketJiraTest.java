@@ -547,6 +547,14 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
         programmingExerciseIntegrationTestService.createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest();
     }
 
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    // It should fail for all ProgrammingExercises except Java and Kotlin
+    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "KOTLIN" }, mode = EnumSource.Mode.EXCLUDE)
+    void createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
+        programmingExerciseIntegrationTestService.createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(programmingLanguage);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructoralt1", roles = "INSTRUCTOR")
     void importProgrammingExercise_sourceExerciseIdNegative_badRequest() throws Exception {
