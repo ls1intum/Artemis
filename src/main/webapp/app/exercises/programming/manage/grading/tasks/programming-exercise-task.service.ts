@@ -174,7 +174,7 @@ export class ProgrammingExerciseTaskService {
     };
 
     private getTasksByExercise = (exercise: Exercise): Observable<ProgrammingExerciseServerSideTask[]> => {
-        return this.http.get<ProgrammingExerciseServerSideTask[]>(`${this.resourceUrl}/${exercise.id}/tasks`);
+        return this.http.get<ProgrammingExerciseServerSideTask[]>(`${this.resourceUrl}/${exercise.id}/tasks-with-unassigned-test-cases`);
     };
 
     private addGradingStats = (task: ProgrammingExerciseTask): ProgrammingExerciseTask => {

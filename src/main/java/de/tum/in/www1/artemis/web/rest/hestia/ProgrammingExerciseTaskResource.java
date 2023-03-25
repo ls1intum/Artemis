@@ -55,6 +55,27 @@ public class ProgrammingExerciseTaskResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
+        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasks(exerciseId);
+
+        return ResponseEntity.ok(tasks);
+    }
+
+    /**
+     * GET programming-exercises/:exerciseId/tasks-with-unassigned
+     * Get all tasks with test cases and solution entries for a programming exercise
+     * including test cases not manually assigned to any tasks in an 'Not assigned to task' task
+     *
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200}.
+     */
+    @GetMapping("programming-exercises/{exerciseId}/tasks-with-unassigned-test-cases")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<Set<ProgrammingExerciseTask>> getTasksWithUnassignedTask(@PathVariable Long exerciseId) {
+        log.debug("REST request to retrieve ProgrammingExerciseTasks for ProgrammingExercise with id : {}", exerciseId);
+        // Reload the exercise from the database as we can't trust data from the client
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+
         Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
         return ResponseEntity.ok(tasks);
     }

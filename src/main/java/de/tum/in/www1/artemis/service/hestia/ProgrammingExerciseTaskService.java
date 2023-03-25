@@ -121,6 +121,16 @@ public class ProgrammingExerciseTaskService {
     }
 
     /**
+     * Gets all tasks of an exercise
+     *
+     * @param exerciseId of the programming exercise
+     * @return Set of all tasks and its test cases
+     */
+    public Set<ProgrammingExerciseTask> getTasks(long exerciseId) {
+        return programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
+    }
+
+    /**
      * Gets all tasks of an exercise including the test cases assigned to those tasks.
      * Additionally, adds a new task for all test cases with no manually assigned task and adds all tests to that task
      *
