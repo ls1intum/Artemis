@@ -691,6 +691,36 @@ public class ModelFactory {
     }
 
     /**
+     * Generates an exam
+     *
+     * @param course      the associated course
+     * @param visibleDate the visible date of the exam
+     * @param startDate   the start date of the exam
+     * @param endDate     the end date of the exam
+     * @param testExam    if the exam is a test exam
+     * @return the created exam
+     */
+    public static Exam generateExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam) {
+        Exam exam = new Exam();
+        exam.setTitle((testExam ? "Test" : "Real") + " exam 1");
+        exam.setTestExam(testExam);
+        exam.setVisibleDate(visibleDate);
+        exam.setStartDate(startDate);
+        exam.setEndDate(endDate);
+        exam.setWorkingTime(3000);
+        exam.setStartText("Start Text");
+        exam.setEndText("End Text");
+        exam.setConfirmationStartText("Confirmation Start Text");
+        exam.setConfirmationEndText("Confirmation End Text");
+        exam.setExamMaxPoints(90);
+        exam.setNumberOfExercisesInExam(1);
+        exam.setRandomizeExerciseOrder(false);
+        exam.setNumberOfCorrectionRoundsInExam(testExam ? 0 : 1);
+        exam.setCourse(course);
+        return exam;
+    }
+
+    /**
      * Generates a test eam (test exams have no student review dates)
      *
      * @param course the associated course
@@ -709,23 +739,7 @@ public class ModelFactory {
      */
     private static Exam generateExamHelper(Course course, boolean testExam) {
         ZonedDateTime currentTime = now();
-        Exam exam = new Exam();
-        exam.setTitle((testExam ? "Test " : "Real ") + "exam 1");
-        exam.setTestExam(testExam);
-        exam.setVisibleDate(currentTime);
-        exam.setStartDate(currentTime.plusMinutes(10));
-        exam.setEndDate(currentTime.plusMinutes(testExam ? 80 : 60));
-        exam.setWorkingTime(3000);
-        exam.setStartText("Start Text");
-        exam.setEndText("End Text");
-        exam.setConfirmationStartText("Confirmation Start Text");
-        exam.setConfirmationEndText("Confirmation End Text");
-        exam.setExamMaxPoints(90);
-        exam.setNumberOfExercisesInExam(1);
-        exam.setRandomizeExerciseOrder(false);
-        exam.setNumberOfCorrectionRoundsInExam(testExam ? 0 : 1);
-        exam.setCourse(course);
-        return exam;
+        return generateExam(course, currentTime, currentTime.plusMinutes(10), currentTime.plusMinutes(testExam ? 80 : 60), testExam);
     }
 
     public static ExerciseGroup generateExerciseGroup(boolean mandatory, Exam exam) {
