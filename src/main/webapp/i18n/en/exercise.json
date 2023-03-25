@@ -84,6 +84,7 @@
             "dueDate": "Due Date",
             "dueDateError": "Due Date must be after Release Date and Start Date if present. Please check your selection again.",
             "startDateError": "Start Date must be after Release Date. Please check your selection again.",
+            "assessmentDue": "Assessment Due",
             "assessmentDueDate": "Assessment Due Date",
             "assessmentDueDateError": "Assessment Due Date must be after Release, Start and Due Date. Please check your selection again.",
             "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students. But they can only participate after the currently defined start date.",

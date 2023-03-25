@@ -82,6 +82,7 @@
             "dueDate": "Einreichungsfrist",
             "dueDateError": "Einreichungsfrist muss nach dem Veröffentlichungsdatum und, falls vorhanden, dem Startdatum sein. Bitte überprüfe deine Auswahl nochmal.",
             "startDateError": "Startdatum muss nach dem Veröffentlichungsdatum sein. Bitte überprüfe deine Auswahl nochmal.",
+            "assessmentDue": "Bewertungsfrist",
             "assessmentDueDate": "Einreichungsfrist der Bewertung",
             "assessmentDueDateError": "Einreichungsfrist der Bewertung muss nach dem Veröffentlichungsdatum, Startdatum und nach der Einreichungsfrist für Aufgaben sein. Bitte überprüfe deine Auswahl nochmal.",
             "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein. Sie können aber erst nach dem Startdatum an der Aufgabe teilnehmen.",
