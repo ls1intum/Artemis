@@ -731,7 +731,7 @@ public class DatabaseUtilService {
 
     public Course createCourseWithPostsDisabled() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        course.setPostsEnabled(false);
+        course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
         return courseRepo.save(course);
     }
 
