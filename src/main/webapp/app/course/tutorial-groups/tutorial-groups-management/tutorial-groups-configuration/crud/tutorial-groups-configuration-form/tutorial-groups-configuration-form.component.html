@@ -37,7 +37,7 @@
                     </div>
                 </div>
                 <!-- Do not show options if the course has communication disabled -->
-                <div [hidden]="!course.postsEnabled">
+                <div [hidden]="!isMessagingEnabled(course)">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" formControlName="useTutorialGroupChannels" id="useTutorialGroupChannels" />
                         <label class="form-check-label" for="useTutorialGroupChannels">

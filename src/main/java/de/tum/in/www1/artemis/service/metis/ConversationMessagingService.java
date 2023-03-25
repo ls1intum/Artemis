@@ -13,7 +13,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
@@ -72,11 +71,12 @@ public class ConversationMessagingService extends PostingService {
         }
 
         var author = this.userRepository.getUserWithGroupsAndAuthorities();
-        var course = preCheckUserAndCourse(author, courseId);
         newMessage.setAuthor(author);
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
         var conversation = conversationService.mayInteractWithConversationElseThrow(newMessage.getConversation().getId(), author);
+        var course = preCheckUserAndCourseForMessaging(author, courseId);
+
         // extra checks for channels
         if (conversation instanceof Channel channel) {
             channelAuthorizationService.isAllowedToCreateNewPostInChannel(channel, author);
@@ -154,10 +154,10 @@ public class ConversationMessagingService extends PostingService {
         if (messagePost.getId() == null || !Objects.equals(messagePost.getId(), postId)) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
         }
-        final Course course = preCheckUserAndCourse(user, courseId);
 
         Post existingMessage = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
+        var course = preCheckUserAndCourseForMessaging(user, courseId);
 
         // ToDo: find a cleaner way to do this instead of making the string here in the server
 
@@ -192,9 +192,9 @@ public class ConversationMessagingService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        final Course course = preCheckUserAndCourse(user, courseId);
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         var conversation = mayUpdateOrDeleteMessageElseThrow(post, user);
+        var course = preCheckUserAndCourseForMessaging(user, courseId);
         post.setConversation(conversation);
 
         // delete
