@@ -19,6 +19,7 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
@@ -120,7 +121,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     callback() {}
 
     openImportModal() {
-        const modalRef = this.modalService.open(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        const modalRef = this.modalService.open(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseType = ExerciseType.FILE_UPLOAD;
         modalRef.result.then(
             (result: FileUploadExercise) => {

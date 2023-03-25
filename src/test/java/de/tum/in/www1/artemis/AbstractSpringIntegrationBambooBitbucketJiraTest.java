@@ -245,6 +245,12 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
+    public void mockConnectorRequestForImportFromFile(ProgrammingExercise exerciseForImport) throws Exception {
+        mockConnectorRequestsForSetup(exerciseForImport, false);
+
+    }
+
+    @Override
     public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos)
             throws Exception {
 

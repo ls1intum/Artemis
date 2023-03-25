@@ -4,7 +4,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AlertService } from 'app/core/util/alert.service';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import JSZip from 'jszip';
 
 @Component({
@@ -19,16 +19,13 @@ export class ExerciseImportFromFileComponent implements OnInit {
     faUpload = faUpload;
     @Input()
     exercise: Exercise;
+    private unsupportedType = false;
 
     constructor(private activeModal: NgbActiveModal, private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.titleKey =
             this.exerciseType === ExerciseType.FILE_UPLOAD ? `artemisApp.fileUploadExercise.importFromFile.title` : `artemisApp.${this.exerciseType}Exercise.importFromFile.title`;
-    }
-
-    clear() {
-        this.activeModal.dismiss('cancel');
     }
 
     /** uploads the zip file and extracts the minimal information required to fill the exercise-update component, it's async, so one can conveniently use await **/
@@ -58,6 +55,10 @@ export class ExerciseImportFromFileComponent implements OnInit {
                 });
                 return;
         }
+        // do not continue with the import if the type or language  is not supported
+        if (this.unsupportedType) {
+            return;
+        }
         this.exercise.id = undefined;
         this.exercise.zipFileForImport = this.fileForImport as File;
 
@@ -67,6 +68,10 @@ export class ExerciseImportFromFileComponent implements OnInit {
     private handleProgrammingExercise(exercise: ProgrammingExercise) {
         if (exercise.programmingLanguage === ProgrammingLanguage.SWIFT || exercise.programmingLanguage === ProgrammingLanguage.EMPTY) {
             this.alertService.error('artemisApp.programmingExercise.importFromFile.notSupportedProgrammingLanguage', { programmingLanguage: exercise.programmingLanguage });
+            this.unsupportedType = true;
+        } else if (exercise.programmingLanguage === ProgrammingLanguage.C && exercise.projectType === ProjectType.GCC) {
+            this.alertService.error('artemisApp.programmingExercise.importFromFile.GccNotSupportedForC');
+            this.unsupportedType = true;
         }
     }
 

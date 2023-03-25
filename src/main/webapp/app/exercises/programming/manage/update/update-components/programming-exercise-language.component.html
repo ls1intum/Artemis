@@ -21,9 +21,9 @@
     <jhi-mode-picker
         required
         [options]="languageStepInputs.modePickerOptions"
-        [value]="languageStepInputs.selectedProjectType"
+        [value]="isImportFromFile ? programmingExercise.projectType : languageStepInputs.selectedProjectType"
         (valueChange)="languageStepInputs.onProjectTypeChange($event!)"
-        [disabled]="isImport || !!programmingExercise.id"
+        [disabled]="isImport || (isImportFromFile && programmingExercise.programmingLanguage === ProgrammingLanguage.C) || !!programmingExercise.id"
         name="projectType"
         id="field_projectType"
     ></jhi-mode-picker>

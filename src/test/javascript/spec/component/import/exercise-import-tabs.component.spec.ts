@@ -11,13 +11,21 @@ import { ExerciseImportFromFileComponent } from 'app/exercises/shared/import/fro
 import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { NgbPaginationNextMockDirective } from '../../helpers/mocks/directive/ngbPaginationMocks.module';
 import { By } from '@angular/platform-browser';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 let fixture: ComponentFixture<ExerciseImportTabsComponent>;
 let comp: ExerciseImportTabsComponent;
 
 beforeEach(() => {
     TestBed.configureTestingModule({
-        imports: [ArtemisTestModule, NgbNavModule, MockComponent(ExerciseImportFromFileComponent), MockComponent(ExerciseImportComponent), FormsModule],
+        imports: [
+            ArtemisTestModule,
+            NgbNavModule,
+            MockComponent(ExerciseImportFromFileComponent),
+            MockComponent(HelpIconComponent),
+            MockComponent(ExerciseImportComponent),
+            FormsModule,
+        ],
         declarations: [ExerciseImportTabsComponent, MockDirective(TranslateDirective)],
     })
         .compileComponents()

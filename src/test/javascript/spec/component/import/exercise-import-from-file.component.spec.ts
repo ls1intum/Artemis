@@ -47,11 +47,7 @@ describe('ExerciseImportFromFileComponent', () => {
         expect(activeModalSpy).toHaveBeenCalledOnce();
         expect(activeModalSpy).toHaveBeenCalledWith(exercise);
     });
-    it('should close the active modal when clicking cancel button', () => {
-        const activeModalSpy = jest.spyOn(activeModal, 'dismiss');
-        fixture.debugElement.nativeElement.querySelector('#cancel-btn').click();
-        expect(activeModalSpy).toHaveBeenCalledOnce();
-    });
+
     // using fakeasync and tick didn't work here, that's why I used whenStable and async
     it('should raise error alert if not supported exercise type', async () => {
         // GIVEN

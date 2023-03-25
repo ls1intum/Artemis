@@ -352,12 +352,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.isSaving = false;
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
-            // if (history.state.programmingExerciseForImportFromFile !== undefined) {
-            //     this.programmingExercise = history.state.programmingExerciseForImportFromFile;
-            //     this.isImportFromFile = true;
-            // } else {
             this.programmingExercise = programmingExercise;
-            //  }
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             if (this.programmingExercise.projectType === ProjectType.MAVEN_MAVEN) {

@@ -273,7 +273,7 @@ public class ProgrammingExerciseImportService {
             repositoryService.createFolderRecursively(repository, "src");
         }
 
-        for (Path file : retrieveRepositoryContentPathsOcaml(exerciseDir, repositoryType)) {
+        for (Path file : retrieveRepositoryContentPathsHaskell(exerciseDir, repositoryType)) {
             if (testRepo) {
                 repositoryService.createFile(repository, "test/" + file.getFileName(), Files.newInputStream(file));
             }
@@ -311,14 +311,13 @@ public class ProgrammingExerciseImportService {
                 fileService.replaceVariablesInFileRecursive(absolutePath.toString(), replacePackageName);
             }
             catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InternalServerErrorException("Could not copy exercise content to repository");
             }
 
         });
     }
 
     private void deleteSourceAndTestFilesInRepository(Repository repository) {
-        gitService.listFilesAndFolders(repository).entrySet().stream().filter(e -> e.getValue() == FileType.FOLDER).forEach(e -> log.error(e.getKey().getName()));
         // only the root level dir exists, delete all existing files
         if (gitService.listFilesAndFolders(repository).entrySet().stream().filter(e -> e.getValue() == FileType.FOLDER).count() == 1) {
             gitService.listFilesAndFolders(repository).entrySet().stream().filter(e -> FileType.FILE == e.getValue()).forEach(e -> FileSystemUtils.deleteRecursively(e.getKey()));
@@ -341,7 +340,8 @@ public class ProgrammingExerciseImportService {
         solutionDir.ifPresent(FileSystemUtils::deleteRecursively);
         var testsDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> "tests".equals(dir.getName())).findFirst();
         var testUtilsDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> "testUtils".equals(dir.getName())).findFirst();
-
+        testsDir.ifPresent(FileSystemUtils::deleteRecursively);
+        testUtilsDir.ifPresent(FileSystemUtils::deleteRecursively);
     }
 
     /**
@@ -635,8 +635,7 @@ public class ProgrammingExerciseImportService {
         }
 
         if (result.size() != 1) {
-            log.error(String.valueOf(result.size()));
-            throw new IllegalArgumentException("There are either no or more than one json file in the directory!");
+            throw new BadRequestAlertException("There are either no or more than one json file in the directory!", "programmingExercise", "exerciseJsonNotValidOrFound");
         }
 
         return result.get(0);
@@ -649,9 +648,24 @@ public class ProgrammingExerciseImportService {
         zipFile.transferTo(exerciseFilePath);
         zipFileService.extractZipFileRecursively(exerciseFilePath);
         var exerciseDetailsFileName = findJsonFileAndReturnFileName(path);
+        // checkRepositoriesExist(path);
         String oldPackageName = retrieveOldPackageName(Path.of(exerciseFilePath.toString().substring(0, exerciseFilePath.toString().length() - 4)), exerciseDetailsFileName);
         ProgrammingExercise importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport);
         importRepositoriesFromFile(importedProgrammingExercise, path, oldPackageName);
         return importedProgrammingExercise;
+    }
+
+    private void checkRepositoriesExist(Path path) throws IOException {
+        List<String> result;
+        try (Stream<Path> stream = Files.walk(path)) {
+            result = stream.filter(Files::isDirectory).map(f -> f.getFileName().toString())
+                    .filter(name -> name.contains("exercise") || name.contains("tests") || name.contains("solution")).toList();
+        }
+
+        if (result.size() != 3) {
+            throw new BadRequestAlertException("The zip file doesn't contain the template, solution or tests repository or they do not follow the naming scheme.",
+                    "programmingExercise", "repositoriesInZipNotValid");
+        }
+
     }
 }

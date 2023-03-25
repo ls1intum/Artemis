@@ -38,8 +38,11 @@ import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -62,6 +65,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.CourseExamExportService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -132,6 +136,9 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private PasswordService passwordService;
+
+    @Autowired
+    private ZipFileService zipFileService;
 
     @Autowired
     private ZipFileTestUtilService zipFileTestUtilService;
@@ -395,6 +402,37 @@ public class ProgrammingExerciseTestService {
         var savedExercise = programmingExerciseRepository.findById(generatedExercise.getId()).get();
         assertThat(generatedExercise.getBonusPoints()).isEqualTo(0D);
         assertThat(savedExercise.getBonusPoints()).isEqualTo(0D);
+    }
+
+    void importFromFile_validExercise_isSuccessfullyImported() throws Exception {
+        mockDelegate.mockConnectorRequestForImportFromFile(exercise);
+        Resource resource = new ClassPathResource("test-data/import-from-file/valid-export.zip");
+
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        var importedExercise = request.postWithMultipartFile(ROOT + IMPORT_FROM_FILE, exercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK);
+        assertThat(importedExercise).isNotNull();
+        assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(JAVA);
+        assertThat(importedExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(importedExercise.getProjectType()).isEqualTo(ProjectType.PLAIN_MAVEN);
+    }
+
+    void importFromFile_missingExerciseDetailsJson_BadRequest() throws Exception {
+        Resource resource = new ClassPathResource("test-data/import-from-file/missing-json.zip");
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        request.postWithMultipartFile(ROOT + IMPORT_FROM_FILE, exercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    void importFromFile_tutor_forbidden() throws Exception {
+        course.setInstructorGroupName("test");
+        courseRepository.save(course);
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", new byte[0]);
+        request.postWithMultipartFile(ROOT + IMPORT_FROM_FILE, exercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.FORBIDDEN);
+    }
+
+    void importFromFile_missingRepository_BadRequest() throws Exception {
+        Resource resource = new ClassPathResource("test-data/import-from-file/missing-repository.zip");
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        request.postWithMultipartFile(ROOT + IMPORT_FROM_FILE, exercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     // TEST

@@ -228,6 +228,7 @@ public class ProgrammingExerciseExportImportResource {
             return ResponseEntity.ok(programmingExerciseImportService.importProgrammingExerciseFromFile(programmingExercise, zipFile));
         }
         catch (IOException | URISyntaxException | GitAPIException e) {
+            log.error(e.getMessage(), e);
             throw new InternalServerErrorException("Error while importing programming exercise from file: " + e.getMessage());
         }
 

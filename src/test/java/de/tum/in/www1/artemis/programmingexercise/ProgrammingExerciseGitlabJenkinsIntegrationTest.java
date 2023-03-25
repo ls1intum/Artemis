@@ -162,6 +162,30 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseTestService.createProgrammingExercise_noTutors_created();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseFromFileAsTutor_forbidden() throws Exception {
+        programmingExerciseTestService.importFromFile_tutor_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseFromFileMissingExerciseDetailsJson_badRequest() throws Exception {
+        programmingExerciseTestService.importFromFile_missingExerciseDetailsJson_BadRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseFromFileMissingRepository_badRequest() throws Exception {
+        programmingExerciseTestService.importFromFile_missingRepository_BadRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseFromFile_validExercise_importSuccessful() throws Exception {
+        programmingExerciseTestService.importFromFile_validExercise_isSuccessfullyImported();
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")

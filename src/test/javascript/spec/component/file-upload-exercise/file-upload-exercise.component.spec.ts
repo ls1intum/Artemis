@@ -18,6 +18,7 @@ import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-im
 import { ExerciseType } from 'app/entities/exercise.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
 describe('FileUploadExercise Management Component', () => {
     let comp: FileUploadExerciseComponent;
@@ -106,7 +107,7 @@ describe('FileUploadExercise Management Component', () => {
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
         comp.openImportModal();
-        expect(modalService.open).toHaveBeenCalledWith(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledWith(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
         expect(modalService.open).toHaveBeenCalledOnce();
         expect(mockReturnValue.componentInstance.exerciseType).toEqual(ExerciseType.FILE_UPLOAD);
     });

@@ -22,6 +22,7 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { ExerciseImportTabsComponent } from 'app/exercises/shared/import/exercise-import-tabs.component';
 import { MockDirective } from 'ng-mocks';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
 describe('ProgrammingExercise Management Component', () => {
     const course = { id: 123 } as Course;
@@ -178,7 +179,7 @@ describe('ProgrammingExercise Management Component', () => {
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
         comp.openImportModal();
-        expect(modalService.open).toHaveBeenCalledWith(ExerciseImportTabsComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledWith(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
         expect(modalService.open).toHaveBeenCalledOnce();
         expect(mockReturnValue.componentInstance.exerciseType).toEqual(ExerciseType.PROGRAMMING);
     });

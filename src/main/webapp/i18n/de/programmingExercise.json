@@ -132,7 +132,8 @@
                 "fileTooBigError": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20 MB.",
                 "fileTypeNotSupportedError": "Der Dateityp wird nicht unterstützt. Bitte wähle eine Datei mit der Endung .zip.",
                 "noExerciseDetailsJsonAtRootLevel": "Es konnte keine .json Datei im Wurzelverzeichnis des Zip Archivs gefunden werden, die die Aufgabendetails enthält.",
-                "notSupportedProgrammingLanguage": "Die Programmiersprache {{ programmingLanguage }} wird noch nicht für den Import aus einer Datei unterstützt."
+                "notSupportedProgrammingLanguage": "Die Programmiersprache {{ programmingLanguage }} wird noch nicht für den Import aus einer Datei unterstützt.",
+                "GccNotSupportedForC": "Der Projekttyp GCC wird noch nicht für den Import aus einer Datei unterstützt."
             },
             "programmingLanguage": "Programmiersprache",
             "projectType": "Projekttyp",
