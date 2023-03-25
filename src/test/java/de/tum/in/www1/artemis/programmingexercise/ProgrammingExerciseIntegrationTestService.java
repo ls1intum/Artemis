@@ -59,7 +59,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
@@ -236,9 +236,9 @@ class ProgrammingExerciseIntegrationTestService {
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
                 ProgrammingExerciseTestCaseStateDTO.class);
-        assertThat(releaseStateDTO.isReleased()).isTrue();
-        assertThat(releaseStateDTO.isHasStudentResult()).isTrue();
-        assertThat(releaseStateDTO.isTestCasesChanged()).isFalse();
+        assertThat(releaseStateDTO.released()).isTrue();
+        assertThat(releaseStateDTO.hasStudentResult()).isTrue();
+        assertThat(releaseStateDTO.testCasesChanged()).isFalse();
     }
 
     void testProgrammingExerciseIsReleased_IsNotReleasedAndHasResults() throws Exception {
@@ -249,9 +249,9 @@ class ProgrammingExerciseIntegrationTestService {
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
                 ProgrammingExerciseTestCaseStateDTO.class);
-        assertThat(releaseStateDTO.isReleased()).isFalse();
-        assertThat(releaseStateDTO.isHasStudentResult()).isTrue();
-        assertThat(releaseStateDTO.isTestCasesChanged()).isFalse();
+        assertThat(releaseStateDTO.released()).isFalse();
+        assertThat(releaseStateDTO.hasStudentResult()).isTrue();
+        assertThat(releaseStateDTO.testCasesChanged()).isFalse();
     }
 
     void checkIfProgrammingExerciseIsReleased_IsReleasedAndHasNoResults() throws Exception {
@@ -261,9 +261,9 @@ class ProgrammingExerciseIntegrationTestService {
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
                 ProgrammingExerciseTestCaseStateDTO.class);
-        assertThat(releaseStateDTO.isReleased()).isTrue();
-        assertThat(releaseStateDTO.isHasStudentResult()).isFalse();
-        assertThat(releaseStateDTO.isTestCasesChanged()).isTrue();
+        assertThat(releaseStateDTO.released()).isTrue();
+        assertThat(releaseStateDTO.hasStudentResult()).isFalse();
+        assertThat(releaseStateDTO.testCasesChanged()).isTrue();
     }
 
     void testProgrammingExerciseIsReleased_forbidden() throws Exception {

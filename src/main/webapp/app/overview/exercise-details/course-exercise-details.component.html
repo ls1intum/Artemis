@@ -248,7 +248,7 @@
             </a>
         </div>
         <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
-            <router-outlet *ngIf="exercise.course && exercise.course.postsEnabled" (activate)="onChildActivate($event)"></router-outlet>
+            <router-outlet *ngIf="exercise.course && isCommunicationEnabled(exercise.course)" (activate)="onChildActivate($event)"></router-outlet>
         </div>
     </div>
     <jhi-lti-initializer></jhi-lti-initializer>

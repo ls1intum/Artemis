@@ -1,23 +1,15 @@
 package de.tum.in.www1.artemis.service.connectors.ci.notification;
 
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
-import org.jsoup.nodes.TextNode;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 
 public class BuildLogParseUtils {
-
-    // Pattern of the DateTime that is included in the logs received from Jenkins
-    private static final DateTimeFormatter LOG_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
     /**
      * Parses build logs from Jenkins or GitLab CI into BuildLogEntry objects. The function reads the list
@@ -65,46 +57,7 @@ public class BuildLogParseUtils {
         return buildLogs;
     }
 
-    /**
-     * Parses build logs from the legacy version of Jenkins. An example
-     * snippet of the file is located at: src/test-data/jenkins-response/legacy-failed-build-log.html
-     *
-     * @param logHtml Build logs in the HTML format
-     * @return a list of BuildLogEntries
-     */
-    public static List<BuildLogEntry> parseLogsLegacy(Element logHtml) {
-        final var buildLog = new LinkedList<BuildLogEntry>();
-        final var iterator = logHtml.childNodes().iterator();
-        while (iterator.hasNext()) {
-            final var node = iterator.next();
-            final String log;
-            // For timestamps, parse the <b> tag containing the time as hh:mm:ss
-            if (node.attributes().get("class").contains("timestamp")) {
-                final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
-                final var time = ZonedDateTime.parse(timeAsString, LOG_DATE_TIME_FORMATTER);
-                log = reduceToText(iterator.next());
-                buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log)));
-            }
-            else {
-                // Log is from the same line as the last
-                // Look for next text node in children
-                log = reduceToText(node);
-                final var lastLog = buildLog.getLast();
-                lastLog.setLog(lastLog.getLog() + stripLogEndOfLine(log));
-            }
-        }
-        return buildLog;
-    }
-
     private static String stripLogEndOfLine(String log) {
         return log.replaceAll("[\\r\\n]", "");
-    }
-
-    private static String reduceToText(Node node) {
-        if (node instanceof TextNode) {
-            return ((TextNode) node).getWholeText();
-        }
-
-        return reduceToText(node.childNode(node.childNodeSize() - 1));
     }
 }

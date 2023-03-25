@@ -154,6 +154,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
 
     onConversationsUpdate(conversations: ConversationDto[]) {
         this.allConversations = conversations ?? [];
+
         this.starredConversations = this.allConversations
             .filter((conversation) => conversation.isFavorite)
             .sort((a, b) => {
