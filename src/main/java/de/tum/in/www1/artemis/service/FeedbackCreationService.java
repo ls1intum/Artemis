@@ -32,12 +32,31 @@ public class FeedbackCreationService {
 
     private static final String PYTHON_EXCEPTION_LINE_PREFIX = "E       ";
 
+    private static final String TIMEOUT_DETAIL_TEXT = "The test case execution timed out. "
+            + "This indicates issues in your code such as endless loops, issues with recursion or really slow performance. "
+            + "Please carefully review your code to avoid such issues. In case you are absolutely sure that there are no issues like this, "
+            + "please contact your instructor to check the setup of the test.";
+
+    private static final String EXCEPTION_PREFIX = "Exception message: ";
+
     private static final Pattern JVM_RESULT_MESSAGE_MATCHER = prepareJVMResultMessageMatcher(
             List.of("java.lang.AssertionError", "org.opentest4j.AssertionFailedError", "de.tum.in.test.api.util.UnexpectedExceptionError"));
 
-    private static final Predicate<String> IS_NOT_STACK_TRACE_LINE = line -> !line.startsWith("\tat ");
+    /**
+     * Overwrite timeout exception messages for Junit4, Junit5 and other
+     */
+    private static final List<String> exceptions = Arrays.asList("org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",
+            "org.awaitility.core.ConditionTimeoutException", "Timed?OutException");
 
-    private static final Predicate<String> IS_PYTHON_EXCEPTION_LINE = line -> line.startsWith(PYTHON_EXCEPTION_LINE_PREFIX);
+    /**
+     * Defining two pattern groups, (1) the exception name and (2) the exception text
+     */
+    private static final Pattern FIND_TIMEOUT_PATTERN = Pattern.compile("^.*(" + String.join("|", exceptions) + "):?(.*)");
+
+    /**
+     * Defining one pattern group, (1) the exception text
+     */
+    private static final Pattern FIND_GENERAL_TIMEOUT_PATTERN = Pattern.compile("^.*:(.*timed out after.*)", Pattern.CASE_INSENSITIVE);
 
     /*
      * Create an automatic feedback object from a test job.
@@ -66,7 +85,6 @@ public class FeedbackCreationService {
         final String detailText;
         if (!successful) {
             detailText = testMessages.stream().map(errorString -> processResultErrorMessage(programmingLanguage, projectType, errorString)).collect(Collectors.joining("\n\n"));
-
         }
         else if (!testMessages.isEmpty()) {
             detailText = String.join("\n\n", testMessages);
@@ -88,47 +106,69 @@ public class FeedbackCreationService {
      * @return A filtered and better formatted error message
      */
     private String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final ProjectType projectType, final String message) {
-        final String timeoutDetailText = "The test case execution timed out. This indicates issues in your code such as endless loops, issues with recursion or really slow performance. Please carefully review your code to avoid such issues. In case you are absolutely sure that there are no issues like this, please contact your instructor to check the setup of the test.";
-        final String exceptionPrefix = "Exception message: ";
-        // Overwrite timeout exception messages for Junit4, Junit5 and other
-        List<String> exceptions = Arrays.asList("org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",
-                "org.awaitility.core.ConditionTimeoutException", "Timed?OutException");
-        // Defining two pattern groups, (1) the exception name and (2) the exception text
-        Pattern findTimeoutPattern = Pattern.compile("^.*(" + String.join("|", exceptions) + "):?(.*)");
-        Matcher matcher = findTimeoutPattern.matcher(message);
-        if (matcher.find()) {
-            String exceptionText = matcher.group(2);
-            return timeoutDetailText + "\n" + exceptionPrefix + exceptionText.trim();
-        }
-        // Defining one pattern group, (1) the exception text
-        Pattern findGeneralTimeoutPattern = Pattern.compile("^.*:(.*timed out after.*)", Pattern.CASE_INSENSITIVE);
-        matcher = findGeneralTimeoutPattern.matcher(message);
-        if (matcher.find()) {
-            // overwrite Ares: TimeoutException
-            String generalTimeOutExceptionText = matcher.group(1);
-            return timeoutDetailText + "\n" + exceptionPrefix + generalTimeOutExceptionText.trim();
+        final Optional<String> timeoutMessage = getTimeoutErrorMessage(message).or(() -> this.getGeneralTimeoutErrorMessage(message));
+        if (timeoutMessage.isPresent()) {
+            return timeoutMessage.get();
         }
 
-        // Filter out unneeded Exception classnames
         if (programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.KOTLIN) {
-            var messageWithoutStackTrace = message.lines().takeWhile(IS_NOT_STACK_TRACE_LINE).collect(Collectors.joining("\n")).trim();
-
-            // the feedback from gradle test result is duplicated therefore it's cut in half
-            if (projectType != null && projectType.isGradle()) {
-                long numberOfLines = messageWithoutStackTrace.lines().count();
-                messageWithoutStackTrace = messageWithoutStackTrace.lines().skip(numberOfLines / 2).collect(Collectors.joining("\n")).trim();
-            }
-            return JVM_RESULT_MESSAGE_MATCHER.matcher(messageWithoutStackTrace).replaceAll("");
+            return getJvmErrorMessage(projectType, message);
         }
-
-        if (programmingLanguage == ProgrammingLanguage.PYTHON) {
-            Optional<String> firstExceptionMessage = message.lines().filter(IS_PYTHON_EXCEPTION_LINE).findFirst();
-            if (firstExceptionMessage.isPresent()) {
-                return firstExceptionMessage.get().replace(PYTHON_EXCEPTION_LINE_PREFIX, "") + "\n\n" + message;
+        else if (programmingLanguage == ProgrammingLanguage.PYTHON) {
+            final Optional<String> pythonErrorMessage = getPythonErrorMessage(message);
+            if (pythonErrorMessage.isPresent()) {
+                return pythonErrorMessage.get();
             }
         }
 
         return message;
+    }
+
+    private Optional<String> getTimeoutErrorMessage(final String message) {
+        final Matcher matcher = FIND_TIMEOUT_PATTERN.matcher(message);
+        if (matcher.find()) {
+            final String exceptionText = matcher.group(2);
+            return Optional.of(TIMEOUT_DETAIL_TEXT + "\n" + EXCEPTION_PREFIX + exceptionText.trim());
+        }
+        else {
+            return Optional.empty();
+        }
+    }
+
+    private Optional<String> getGeneralTimeoutErrorMessage(final String message) {
+        final Matcher matcher = FIND_GENERAL_TIMEOUT_PATTERN.matcher(message);
+        if (matcher.find()) {
+            // overwrite Ares: TimeoutException
+            final String generalTimeOutExceptionText = matcher.group(1);
+            return Optional.of(TIMEOUT_DETAIL_TEXT + "\n" + EXCEPTION_PREFIX + generalTimeOutExceptionText.trim());
+        }
+        else {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Filters out unneeded exception classnames.
+     *
+     * @param projectType The project type of the exercise.
+     * @param message     The raw error message.
+     * @return The processed error message.
+     */
+    private String getJvmErrorMessage(final ProjectType projectType, final String message) {
+        var messageWithoutStackTrace = message.lines().takeWhile(Predicate.not(this::isStacktraceLine)).collect(Collectors.joining("\n")).trim();
+
+        // the feedback from gradle test result is duplicated therefore it's cut in half
+        if (projectType != null && projectType.isGradle()) {
+            final long numberOfLines = messageWithoutStackTrace.lines().count();
+            messageWithoutStackTrace = messageWithoutStackTrace.lines().skip(numberOfLines / 2).collect(Collectors.joining("\n")).trim();
+        }
+
+        return JVM_RESULT_MESSAGE_MATCHER.matcher(messageWithoutStackTrace).replaceAll("");
+    }
+
+    private Optional<String> getPythonErrorMessage(final String message) {
+        return message.lines().filter(this::isPythonExceptionLine).findFirst()
+                .map(firstExceptionMessage -> firstExceptionMessage.replace(PYTHON_EXCEPTION_LINE_PREFIX, "") + "\n\n" + message);
     }
 
     /**
@@ -221,5 +261,13 @@ public class FeedbackCreationService {
         }
 
         return sourcePath.substring(workingDirectoryStart + Constants.ASSIGNMENT_DIRECTORY.length());
+    }
+
+    private boolean isStacktraceLine(final String line) {
+        return line.startsWith("\tat ");
+    }
+
+    private boolean isPythonExceptionLine(final String line) {
+        return line.startsWith(PYTHON_EXCEPTION_LINE_PREFIX);
     }
 }
