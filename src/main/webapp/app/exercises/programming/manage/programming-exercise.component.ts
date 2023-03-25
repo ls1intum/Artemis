@@ -22,7 +22,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
-import { faBook, faCheckDouble, faDownload, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTimes, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faCheckDouble, faDownload, faListAlt, faPencilAlt, faPlus, faSort, faTimes, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 @Component({
@@ -54,7 +54,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     faWrench = faWrench;
     faCheckDouble = faCheckDouble;
     faUsers = faUsers;
-    faTable = faTable;
     faListAlt = faListAlt;
     faPencilAlt = faPencilAlt;
     faUserCheck = faUserCheck;

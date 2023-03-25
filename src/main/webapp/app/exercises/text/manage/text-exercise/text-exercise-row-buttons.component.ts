@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faBook, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
@@ -22,7 +22,6 @@ export class TextExerciseRowButtonsComponent {
     faBook = faBook;
     faWrench = faWrench;
     faUsers = faUsers;
-    faTable = faTable;
     farListAlt = faListAlt;
 
     constructor(private textExerciseService: TextExerciseService, private eventManager: EventManager) {}
