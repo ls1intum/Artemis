@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors;
+package de.tum.in.www1.artemis.service.connectors.ci;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
@@ -13,13 +13,15 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
+import de.tum.in.www1.artemis.service.connectors.CIPermission;
+import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 
 /**
  * Abstract service for managing entities related to continuous integration.
  * Note: Some of the functionality that this service encompassed hat to be extracted to separate services to resolve circular dependencies introduced by the local CI system.
  * The following services are also relevant for communication with the CI system:
- * - {@link de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationTriggerService}
- * - {@link de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationResultService}
+ * - {@link ContinuousIntegrationTriggerService}
+ * - {@link ContinuousIntegrationResultService}
  */
 public interface ContinuousIntegrationService {
 

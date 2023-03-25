@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationTriggerService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 
 /**
  * Service for triggering builds on Jenkins.

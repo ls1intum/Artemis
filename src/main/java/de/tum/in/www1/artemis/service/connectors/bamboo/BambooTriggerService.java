@@ -14,7 +14,7 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationTriggerService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 
 /**
  * Service implementation for Bamboo.
