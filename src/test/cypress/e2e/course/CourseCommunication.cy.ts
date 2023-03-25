@@ -60,7 +60,7 @@ describe('Course communication', () => {
                     .getNotifications()
                     .first()
                     .find('.notification-text')
-                    .contains(`The course \"` + courseName + `\" got a new course-wide post: \"` + text + `\"`);
+                    .contains(`The course "` + courseName + `" got a new course-wide post: "` + text + `"`);
             });
         });
 
