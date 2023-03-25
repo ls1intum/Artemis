@@ -12,7 +12,7 @@ import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faBook, faExclamationTriangle, faEye, faFileExport, faFileSignature, faPencilAlt, faSignal, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faExclamationTriangle, faEye, faFileExport, faPencilAlt, faSignal, faTable, faTimes, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
@@ -41,7 +41,7 @@ export class ExamExerciseRowButtonsComponent {
     faSignal = faSignal;
     faPencilAlt = faPencilAlt;
     faFileExport = faFileExport;
-    faFileSignature = faFileSignature;
+    faUserCheck = faUserCheck;
     farListAlt = faListAlt;
 
     constructor(

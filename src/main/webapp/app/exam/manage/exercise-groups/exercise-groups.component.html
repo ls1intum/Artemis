@@ -199,11 +199,11 @@
                                 <span>{{ 'artemisApp.programmingExercise.buildplans' | artemisTranslate }}</span>
                             </th>
                             <th>
-                                <span>{{ 'artemisApp.exercise.mode' | artemisTranslate }}</span>
+                                <span>{{ 'artemisApp.programmingExercise.participationMode' | artemisTranslate }}</span>
                             </th>
                         </ng-container>
                         <th *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.QUIZ)">
-                            <span>{{ 'artemisApp.quizExercise.numberOfQuestions' | artemisTranslate }}</span>
+                            <span>{{ 'artemisApp.quizExercise.questions' | artemisTranslate }}</span>
                         </th>
                         <th *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING)">
                             <span>{{ 'artemisApp.modelingExercise.diagramType' | artemisTranslate }}</span>
