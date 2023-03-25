@@ -225,7 +225,8 @@ public class GroupNotificationFactory {
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
-        placeholderValues = ArrayUtils.addAll(NotificationFactory.generatePlaceholderValuesForMessageNotifications(course, post), (uniquePlaceholderValue != null ? new String[] {uniquePlaceholderValue} : new String[0]));
+        placeholderValues = ArrayUtils.addAll(NotificationFactory.generatePlaceholderValuesForMessageNotifications(course, post),
+                (uniquePlaceholderValue != null ? new String[] { uniquePlaceholderValue } : new String[0]));
         notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
         notification.setTransientAndStringTarget(switch (notificationType) {
             case NEW_EXERCISE_POST -> createExercisePostTarget(post, course);

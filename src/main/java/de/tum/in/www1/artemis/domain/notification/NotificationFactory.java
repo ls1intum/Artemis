@@ -38,8 +38,8 @@ public class NotificationFactory {
      * @return a String array containing all the placeholder values
      */
     public static String[] generatePlaceholderValuesForMessageNotificationsWithAnswers(Course course, Post post, AnswerPost answerPost) {
-        return ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), Jsoup.parse(answerPost.getContent()).text(), answerPost.getCreationDate().toString(),
-                answerPost.getAuthor().getName());
+        return ArrayUtils.addAll(generatePlaceholderValuesForMessageNotifications(course, post), Jsoup.parse(answerPost.getContent()).text(),
+                answerPost.getCreationDate().toString(), answerPost.getAuthor().getName());
     }
 
     /**
