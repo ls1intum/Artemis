@@ -182,10 +182,11 @@
                             <span>{{ 'artemisApp.examManagement.exerciseGroup.points' | artemisTranslate }}</span>
                         </th>
                         <th>
-                            <span>{{ 'artemisApp.exercise.bonusPoints' | artemisTranslate }}</span>
+                            <span>{{ 'artemisApp.exercise.bonus' | artemisTranslate }}</span>
                         </th>
                         <th>
-                            <span>{{ 'artemisApp.exercise.includedInOverallScore' | artemisTranslate }}</span>
+                            <!-- includedCompletely means includedInOverallScore here -->
+                            <span>{{ 'artemisApp.exercise.includedCompletely' | artemisTranslate }}</span>
                         </th>
                         <ng-container *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.PROGRAMMING)">
                             <th>
@@ -198,7 +199,7 @@
                                 <span>{{ 'artemisApp.programmingExercise.buildplans' | artemisTranslate }}</span>
                             </th>
                             <th>
-                                <span>{{ 'artemisApp.programmingExercise.participationMode' | artemisTranslate }}</span>
+                                <span>{{ 'artemisApp.exercise.mode' | artemisTranslate }}</span>
                             </th>
                         </ng-container>
                         <th *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.QUIZ)">
