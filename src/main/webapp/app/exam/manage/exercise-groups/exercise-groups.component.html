@@ -185,7 +185,6 @@
                             <span>{{ 'artemisApp.exercise.bonus' | artemisTranslate }}</span>
                         </th>
                         <th>
-                            <!-- includedCompletely means includedInOverallScore here -->
                             <span>{{ 'artemisApp.exercise.includedCompletely' | artemisTranslate }}</span>
                         </th>
                         <ng-container *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.PROGRAMMING)">
