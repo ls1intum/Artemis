@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.*;
 
 /**
@@ -71,7 +70,7 @@ public class ProgrammingExerciseResultTestService {
     private StaticCodeAnalysisService staticCodeAnalysisService;
 
     @Autowired
-    private ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
+    private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     @Autowired
     private FeedbackRepository feedbackRepository;
@@ -199,7 +198,7 @@ public class ProgrammingExerciseResultTestService {
 
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
 
-        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "id", "tasks", "solutionEntries", "coverageEntries")
                 .containsExactlyInAnyOrderElementsOf(expectedTestCases);
         assertThat(optionalResult).isPresent();
@@ -252,6 +251,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
+    // TODO: why is this test not invoked at all?
     public void shouldStoreBuildLogsForSubmission(Object resultNotification) {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
 
@@ -267,6 +267,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
+    // TODO: why is this test not invoked at all?
     public void shouldNotStoreBuildLogsForSubmission(Object resultNotification) {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
 

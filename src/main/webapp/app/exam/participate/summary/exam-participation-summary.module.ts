@@ -24,6 +24,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { ExampleSolutionComponent } from 'app/exercises/shared/example-solution/example-solution.component';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
     imports: [
@@ -42,6 +43,7 @@ import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/progra
         ArtemisMarkdownModule,
         SubmissionResultStatusModule,
         ArtemisExamSharedModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [
         ExamParticipationSummaryComponent,
