@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -11,7 +11,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
     templateUrl: './main.component.html',
 })
 export class JhiMainComponent implements OnInit {
-    public showSkeleton = true;
+    public showSkeleton = false;
 
     constructor(
         private jhiLanguageHelper: JhiLanguageHelper,
@@ -40,6 +40,10 @@ export class JhiMainComponent implements OnInit {
 
     ngOnInit() {
         this.router.events.subscribe((event) => {
+            if (event instanceof NavigationStart) {
+                // Do now show skeleton when the url links to a problem statement which is displayed on the native clients
+                this.showSkeleton = this.shouldShowSkeleton(event.url);
+            }
             if (event instanceof NavigationEnd) {
                 this.jhiLanguageHelper.updateTitle(this.getPageTitle(this.router.routerState.snapshot.root));
             }
@@ -47,9 +51,6 @@ export class JhiMainComponent implements OnInit {
                 // noinspection JSIgnoredPromiseFromCall
                 this.router.navigate(['/404']);
             }
-
-            // Do now show skeleton when the url links to a problem statement which is displayed on the native clients
-            this.showSkeleton = this.shouldShowSkeleton(this.router.url);
         });
 
         this.themeService.initialize();
