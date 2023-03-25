@@ -79,6 +79,7 @@
             "shortName": "Short Name",
             "release": "Release",
             "releaseDate": "Release Date",
+            "start": "Start",
             "startDate": "Start Date",
             "due": "Due",
             "dueDate": "Due Date",
