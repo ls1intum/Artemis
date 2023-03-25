@@ -351,4 +351,24 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         }
         return repoUrl;
     };
+
+    /**
+     * Get the route for the exercise's scores page.
+     *
+     * @param exercise the exercise for which the scores route should be extracted
+     */
+    getScoresRoute(exercise: Exercise): string {
+        console.log(exercise);
+        console.log(exercise.course);
+
+        let route = '/course-management/';
+        const exam = exercise.exerciseGroup?.exam;
+        if (exam) {
+            route += exam.course!.id + '/exams/' + exam.id + '/exercise-groups/' + exercise.exerciseGroup!.id;
+        } else {
+            route += exercise.course!.id;
+        }
+        route += '/' + exercise.type + '-exercises/' + exercise.id + '/scores';
+        return route;
+    }
 }
