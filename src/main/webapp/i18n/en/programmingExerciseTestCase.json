@@ -22,8 +22,7 @@
             "visibility": {
                 "Always": "Always",
                 "AfterDueDate": "After Due Date",
-                "Never": "Never",
-                "Mixed": "Mixed"
+                "Never": "Never"
             }
         }
     }
