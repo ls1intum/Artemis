@@ -1,0 +1,10 @@
+<div *ngIf="!feedback.feedback.hasLongFeedback; else longFeedback" class="feedback-text">
+    <p>{{ text }}</p>
+</div>
+
+<ng-template #longFeedback>
+    <div class="feedback-text">
+        Long Feedback...
+        <p>{{ text }}</p>
+    </div>
+</ng-template>

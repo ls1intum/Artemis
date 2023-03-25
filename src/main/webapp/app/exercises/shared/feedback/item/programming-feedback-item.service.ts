@@ -4,7 +4,7 @@ import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMI
 import { TranslateService } from '@ngx-translate/core';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { getAllFeedbackGroups } from 'app/exercises/shared/feedback/group/programming-feedback-groups';
-import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackItem, FeedbackReference } from 'app/exercises/shared/feedback/item/feedback-item';
 import { Exercise } from 'app/entities/exercise.model';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { FeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
@@ -64,6 +64,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             text: feedback.detailText,
             positive: false,
             credits: feedback.credits,
+            feedback: new FeedbackReference(feedback),
         };
     }
 
@@ -85,6 +86,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             text,
             positive: false,
             credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
+            feedback: new FeedbackReference(feedback),
         };
     }
 
@@ -113,6 +115,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             text: feedback.detailText,
             positive: feedback.positive,
             credits: feedback.credits,
+            feedback: new FeedbackReference(feedback),
         };
     }
 
@@ -132,6 +135,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             text: gradingInstruction.feedback + (feedback.detailText ? `\n${feedback.detailText}` : ''),
             positive: feedback.positive,
             credits: feedback.credits,
+            feedback: new FeedbackReference(feedback),
         };
     }
 
@@ -149,6 +153,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             text: feedback.detailText,
             positive: feedback.positive,
             credits: feedback.credits,
+            feedback: new FeedbackReference(feedback),
         };
     }
 

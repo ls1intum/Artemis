@@ -29,28 +29,24 @@ public class LongFeedbackResource {
         this.participationAuthorizationCheckService = participationAuthorizationCheckService;
     }
 
-    @GetMapping("participations/{participationId}/results/{resultId}/feedbacks/{feedbackId}/longFeedback")
+    @GetMapping("results/{resultId}/feedbacks/{feedbackId}/long-feedback")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<LongFeedbackText> getLongFeedback(@PathVariable Long participationId, @PathVariable Long resultId, @PathVariable Long feedbackId) {
-        log.debug("REST request to get long feedback: {} (participation: {}, result: {})", feedbackId, participationId, resultId);
+    public ResponseEntity<LongFeedbackText> getLongFeedback(@PathVariable Long resultId, @PathVariable Long feedbackId) {
+        log.debug("REST request to get long feedback: {} (result: {})", feedbackId, resultId);
 
         final LongFeedbackText longFeedbackText = longFeedbackRepository.findByIdWithFeedbackAndResultAndParticipationElseThrow(feedbackId);
-        checkCanAccessResultElseThrow(participationId, resultId, longFeedbackText);
+        checkCanAccessResultElseThrow(resultId, longFeedbackText);
 
         return ResponseEntity.ok(longFeedbackText);
     }
 
-    private void checkCanAccessResultElseThrow(final Long participationId, final Long resultId, final LongFeedbackText longFeedbackText) {
+    private void checkCanAccessResultElseThrow(final Long resultId, final LongFeedbackText longFeedbackText) {
         final Result result = longFeedbackText.getFeedback().getResult();
         if (!result.getId().equals(resultId)) {
             throw new BadRequestAlertException("resultId of the path does not correspond to feedbackId", "result", "invalidResultId");
         }
 
         final Participation participation = result.getParticipation();
-        if (!participation.getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId of the path does not correspond to resultId", "participation", "invalidParticipationId");
-        }
-
         participationAuthorizationCheckService.checkCanAccessParticipationElseThrow(participation);
     }
 }

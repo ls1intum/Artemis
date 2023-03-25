@@ -15,7 +15,7 @@ class FeedbackTest {
 
         assertThat(feedback.getDetailText()).isEqualTo("abc");
         assertThat(feedback.getLongFeedbackText()).isNull();
-        assertThat(feedback.hasLongFeedbackText()).isFalse();
+        assertThat(feedback.getHasLongFeedbackText()).isFalse();
     }
 
     @Test
@@ -25,7 +25,7 @@ class FeedbackTest {
 
         assertThat(feedback.getDetailText()).isNull();
         assertThat(feedback.getLongFeedbackText()).isNull();
-        assertThat(feedback.hasLongFeedbackText()).isFalse();
+        assertThat(feedback.getHasLongFeedbackText()).isFalse();
     }
 
     @Test
@@ -34,7 +34,7 @@ class FeedbackTest {
         feedback.setDetailText(getText(Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS + 10));
 
         assertThat(feedback.getDetailText()).hasSize(Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS);
-        assertThat(feedback.hasLongFeedbackText()).isTrue();
+        assertThat(feedback.getHasLongFeedbackText()).isTrue();
 
         final LongFeedbackText longFeedbackText = feedback.getLongFeedbackText();
         assertThat(longFeedbackText.getFeedback()).isSameAs(feedback);
@@ -47,7 +47,7 @@ class FeedbackTest {
         feedback.setDetailText(getText(Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS + 10));
 
         assertThat(feedback.getDetailText()).hasSize(Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS).endsWith(" [...]");
-        assertThat(feedback.hasLongFeedbackText()).isTrue();
+        assertThat(feedback.getHasLongFeedbackText()).isTrue();
     }
 
     @Test

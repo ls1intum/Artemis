@@ -3,7 +3,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class FeedbackService {
@@ -28,6 +28,11 @@ export class FeedbackService {
      * @param result
      */
     public getFeedbacksForResult(participationId: number, result: Result): Observable<Feedback[]> {
-        return this.resultService.getFeedbackDetailsForResult(participationId, result).pipe(map(({ body: feedbackList }) => feedbackList!));
+        return this.resultService.getFeedbackDetailsForResult(participationId, result).pipe(
+            map(({ body: feedbackList }) => feedbackList!),
+            tap((feedbacks) => {
+                feedbacks.forEach((feedback) => (feedback.result = result));
+            }),
+        );
     }
 }

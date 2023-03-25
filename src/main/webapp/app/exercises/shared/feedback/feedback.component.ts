@@ -180,6 +180,8 @@ export class FeedbackComponent implements OnInit {
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
                     if (feedbacks && feedbacks.length) {
                         this.result.feedbacks = feedbacks!;
+                        feedbacks.forEach((feedback) => (feedback.result = this.result));
+
                         const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter);
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
 

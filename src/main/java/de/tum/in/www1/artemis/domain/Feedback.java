@@ -168,7 +168,7 @@ public class Feedback extends DomainObject {
         return longFeedback;
     }
 
-    public boolean hasLongFeedbackText() {
+    public boolean getHasLongFeedbackText() {
         return hasLongFeedbackText;
     }
 
@@ -426,8 +426,8 @@ public class Feedback extends DomainObject {
         feedback.setVisibility(getVisibility());
         feedback.setGradingInstruction(getGradingInstruction());
 
-        feedback.setHasLongFeedbackText(hasLongFeedbackText());
-        if (feedback.hasLongFeedbackText()) {
+        feedback.setHasLongFeedbackText(getHasLongFeedbackText());
+        if (feedback.getHasLongFeedbackText()) {
             feedback.setLongFeedbackText(getLongFeedbackText().copy());
         }
 

@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
+import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 
 @Component({
     selector: 'jhi-feedback-collapse',
@@ -17,7 +18,7 @@ export class FeedbackCollapseComponent implements OnInit {
      */
     readonly FEEDBACK_PREVIEW_CHARACTER_LIMIT = 300;
 
-    @Input() text: string; // this is typically feedback.detailText
+    @Input() feedback: FeedbackItem;
     previewText?: string;
     isCollapsed = true;
 
@@ -26,7 +27,7 @@ export class FeedbackCollapseComponent implements OnInit {
     faAngleRight = faAngleRight;
 
     ngOnInit(): void {
-        this.previewText = this.computeFeedbackPreviewText(this.text);
+        this.previewText = this.computeFeedbackPreviewText(this.feedback.text);
     }
 
     /**

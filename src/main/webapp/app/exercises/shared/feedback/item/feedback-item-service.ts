@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
-import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackItem, FeedbackReference } from 'app/exercises/shared/feedback/item/feedback-item';
 import { Exercise } from 'app/entities/exercise.model';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { getAllFeedbackGroups } from 'app/exercises/shared/feedback/group/feedback-groups';
@@ -55,6 +55,7 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
             text: feedback.detailText,
             positive: feedback.positive,
             credits: feedback.credits,
+            feedback: new FeedbackReference(feedback),
         };
     }
 
@@ -73,6 +74,7 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
             text: gradingInstruction.feedback + (feedback.detailText ? `\n${feedback.detailText}` : ''),
             positive: feedback.positive,
             credits: feedback.credits,
+            feedback: new FeedbackReference(feedback),
         };
     }
 }
