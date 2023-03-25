@@ -92,8 +92,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             lockRepositoryPolicyEnforced = submissionPolicyService.isParticipationLocked(policy, participation);
         }
         // Error case 3: The user does not have permissions to push into the repository and the user is not notified for a related plagiarism case.
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        if (!plagiarismService.wasUserNotifiedByInstructor(participationId, userRepository.getUser().getLogin())) {
+        boolean hasPermissions = participationAuthCheckService.canAccessParticipation(programmingParticipation);
+        if (!hasPermissions && !plagiarismService.wasUserNotifiedByInstructor(participationId, userRepository.getUser().getLogin())) {
             // TODO: change to AccessForbiddenException
             throw new IllegalAccessException();
         }
