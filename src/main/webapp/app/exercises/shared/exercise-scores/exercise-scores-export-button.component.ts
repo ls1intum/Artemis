@@ -56,7 +56,7 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
         this.resultService.getResultsWithPointsPerGradingCriterion(exercise).subscribe((data) => {
             const results: ResultWithPointsPerGradingCriterion[] = data.body || [];
             if (results.length === 0) {
-                this.alertService.warning(`artemisApp.exercise.exportResults.emptyError`, { exercise: exercise.title });
+                this.alertService.warning(`artemisApp.exercise.export.results.emptyError`, { exercise: exercise.title });
                 window.scroll(0, 0);
                 return;
             }

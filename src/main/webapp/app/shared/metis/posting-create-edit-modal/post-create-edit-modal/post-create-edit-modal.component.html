@@ -36,7 +36,7 @@
                     <div *ngIf="pageType === PageType.OVERVIEW && editType === EditType.CREATE" class="position-relative mb-3">
                         <label class="mb-1" jhiTranslate="artemisApp.metis.post.context"></label>
                         <jhi-help-icon text="artemisApp.metis.post.courseWideTopicTooltip"></jhi-help-icon>
-                        <select formControlName="context" class="form-select" [compareWith]="compareContextSelectorOptionFn" name="context">
+                        <select id="context" formControlName="context" class="form-select" [compareWith]="compareContextSelectorOptionFn" name="context">
                             <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
                                 <ng-container *ngFor="let context of CourseWideContext | keyvalue">
                                     <!-- only tutors can select the announcement mode on post creation or update -->
@@ -117,6 +117,7 @@
                 [buttonLoading]="isLoading"
                 [disabled]="!formGroup.valid"
                 [buttonLabel]="'artemisApp.metis.savePosting' | artemisTranslate"
+                id="save"
                 class="btn btn-sm btn-outline-secondary"
                 type="submit"
             ></button>

@@ -27,11 +27,7 @@ import { ParticipationSubmissionComponent } from 'app/exercises/shared/participa
 import { FileUploadAssessmentComponent } from 'app/exercises/file-upload/assess/file-upload-assessment.component';
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
 import { ExerciseScoresComponent } from 'app/exercises/shared/exercise-scores/exercise-scores.component';
-import { FileUploadAssessmentDashboardComponent } from 'app/exercises/file-upload/assess/file-upload-assessment-dashboard.component';
-import { TextAssessmentDashboardComponent } from 'app/exercises/text/assess/text-assessment-dashboard/text-assessment-dashboard.component';
-import { ModelingAssessmentDashboardComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-dashboard.component';
 import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
-import { ProgrammingExerciseSubmissionsComponent } from 'app/exercises/programming/assess/programming-assessment-dashboard/programming-exercise-submissions.component';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 import { exerciseTypes } from 'app/entities/exercise.model';
 import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-detail.component';
@@ -756,24 +752,6 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/submissions',
-        component: FileUploadAssessmentDashboardComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.assessmentDashboard.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/submissions',
-        component: TextAssessmentDashboardComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.assessmentDashboard.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/example-submissions',
         component: ExampleSubmissionsComponent,
         resolve: {
@@ -802,15 +780,6 @@ export const examManagementRoute: Routes = [
         loadChildren: () => import('../../exercises/text/manage/cluster-statistics/cluster-statistics.module').then((m) => m.ArtemisTextClusterStatisticsModule),
     },
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/submissions',
-        component: ModelingAssessmentDashboardComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.assessmentDashboard.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/example-submissions',
         component: ExampleSubmissionsComponent,
         resolve: {
@@ -837,15 +806,6 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.apollonDiagram.detail.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions',
-        component: ProgrammingExerciseSubmissionsComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
