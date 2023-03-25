@@ -3,9 +3,8 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 describe('ScoresStorageService', () => {
-    const scoresStorageService = new ScoresStorageService();
-
     it('should filter the correct result from the stored participation results', () => {
+        const scoresStorageService = new ScoresStorageService();
         const participation1: Participation = new ProgrammingExerciseStudentParticipation();
         participation1.id = 1;
         const participation2: Participation = new ProgrammingExerciseStudentParticipation();
@@ -21,6 +20,7 @@ describe('ScoresStorageService', () => {
     });
 
     it('should return an undefined participation result if each result has no participation set', () => {
+        const scoresStorageService = new ScoresStorageService();
         scoresStorageService.setStoredParticipationResults([{ successful: true }]);
         expect(scoresStorageService.getStoredParticipationResult(1)).toBeUndefined();
     });
