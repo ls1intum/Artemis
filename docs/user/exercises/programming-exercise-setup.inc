@@ -111,6 +111,17 @@ Exercise Creation
     .. figure:: programming/course-management-exercise-dashboard.png
               :align: center
 
+    - **Guided Mode**: The form for generating new programming exercises offers the option to switch to the guided mode by clicking the |switch-to-guided-mode-btn|.
+      This mode splits up the generation of a programming exercise into multiple steps. The following video shows an exemplary use of the guided mode.
+
+    |
+    
+    .. raw:: html
+
+        <iframe src="https://live.rbg.tum.de/w/artemisintro/26850?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+            Watch this video on TUM-Live.
+        </iframe>
+
 - Artemis provides various options to customize programming exercises:
 
     .. figure:: programming/programming-options-naming.png
@@ -729,3 +740,5 @@ On exercise import, Artemis copies the repositories, build plans, interactive pr
 .. |grading-reevaluate-all| image:: programming/configure-grading-reevaluate-all.png
 .. |grading-trigger-all| image:: programming/configure-grading-trigger-all.png
 .. |import| image:: programming/programming-exercise-import-button.png
+.. |switch-to-guided-mode-btn| image:: programming/switch-to-guided-mode-button.png
+    :width: 160
