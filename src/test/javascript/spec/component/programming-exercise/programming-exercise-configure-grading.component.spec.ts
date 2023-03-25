@@ -410,6 +410,19 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(importCategoriesFromExerciseStub).toHaveBeenCalledWith(exercise.id, 456);
     });
 
+    it('should import categories and update the component', () => {
+        initGradingComponent();
+
+        const newConfiguration = new StaticCodeAnalysisCategory();
+        importCategoriesFromExerciseStub.mockReturnValue(of(newConfiguration));
+
+        comp.importCategories(5);
+
+        expect(comp.staticCodeAnalysisCategoriesForTable).toBe(newConfiguration);
+        expect(comp.staticCodeAnalysisCategoriesForCharts).toBe(newConfiguration);
+        expect(comp.backupStaticCodeAnalysisCategories).toBe(newConfiguration);
+    });
+
     it('should update sca category when an input field is updated', () => {
         initGradingComponent({ tab: 'code-analysis' });
 
@@ -519,6 +532,21 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const detectedIssuesHeader = headerColumns[4];
         sortAndTest(detectedIssuesHeader, 'detectedIssues', 'asc');
         sortAndTest(detectedIssuesHeader, 'detectedIssues', 'desc');
+    });
+
+    it('should not require confirmation if there are no unsaved changes', () => {
+        initGradingComponent();
+
+        expect(comp.canDeactivate()).toBeTrue();
+    });
+
+    it('should require confirmation if there are unsaved changes', () => {
+        initGradingComponent();
+        comp.changedTestCaseIds = [1, 2, 3];
+
+        window.confirm = (message) => false;
+
+        expect(comp.canDeactivate()).toBeFalse();
     });
 
     describe('test chart interaction', () => {
