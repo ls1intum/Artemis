@@ -21,7 +21,7 @@ Initial Configuration
 
 |instructors-button|
 
-Before the tutorial group feature can be used, three course wide configurations need to be set up:
+Before the tutorial group feature can be used, three configurations need to be set up:
 
 * **Time zone information:** This ensures that the tutorial group meeting times are displayed correctly for each student and instructor.
 
@@ -37,16 +37,19 @@ Before the tutorial group feature can be used, three course wide configurations 
 
 The three settings can be changed later in the ``Global Configuration`` section of the tutorial group page.
 
-
 |instructors-checklist|
-|instructors-global|
 
 
+Creating Tutorial Groups
+^^^^^^^^^^^^^^^^^^^^^^^^
 
+Tutorial groups can be created manually or by importing a CSV file. Importing a CSV file is a convenient option if the tutorial groups and student assignments already exist in a campus management system (e.g. TUM-Online). This way, both the groups and the assignments can be created at once.
 
+|instructors-create-groups|
 
+The assigned tutor and the session schedule are the most important settings of a tutorial group. The tutor holds the sessions, tracks the number of attending students, and gives feedback to the students. The tutor can also register or unregister students and edit the sessions by cancelling or rescheduling them. The meeting schedule shows the regular times of the sessions during the semester. It is used to create the individual sessions automatically.
 
-
+|instructors-tutorial-group-form.png|
 
 
 Managing assigned Tutorial Groups as a Tutor
@@ -61,5 +64,7 @@ Viewing Tutorial Groups as a Student
     :width: 1000
 .. |instructors-checklist| image:: tutorialgroups/instructors-checklist.png
     :width: 1000
-.. |instructors-global| image:: tutorialgroups/instructors-global-configuration.png
+.. |instructors-create-groups| image:: tutorialgroups/instructors-create-groups.png
     :width: 1000
+.. |instructors-tutorial-group-form.png| image:: tutorialgroups/instructors-tutorial-group-form.png
+    :width: 500
