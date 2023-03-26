@@ -1,15 +1,18 @@
 package de.tum.in.www1.artemis.service.connectors.ci;
 
 import java.time.ZonedDateTime;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -17,6 +20,7 @@ import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackCreationService;
 
 public abstract class AbstractContinuousIntegrationResultService implements ContinuousIntegrationResultService {
 
@@ -30,23 +34,33 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
     protected final TestwiseCoverageService testwiseCoverageService;
 
+    private final ProgrammingExerciseFeedbackCreationService feedbackCreationService;
+
     public AbstractContinuousIntegrationResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
-            BuildLogEntryService buildLogService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
+            BuildLogEntryService buildLogService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,
+            ProgrammingExerciseFeedbackCreationService feedbackCreationService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.feedbackRepository = feedbackRepository;
         this.buildLogService = buildLogService;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.testwiseCoverageService = testwiseCoverageService;
+        this.feedbackCreationService = feedbackCreationService;
     }
 
     @Override
     public Result createResultFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingExerciseParticipation participation) {
         final var result = new Result();
+        ProgrammingExercise exercise = participation.getProgrammingExercise();
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful(buildResult.isBuildSuccessful());
         result.setCompletionDate(buildResult.getBuildRunDate());
-        result.setScore(buildResult.getBuildScore(), participation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember());
+        result.setScore(buildResult.getBuildScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
         result.setParticipation((Participation) participation);
+
+        if (participation instanceof SolutionProgrammingExerciseParticipation) {
+            feedbackCreationService.extractTestCasesFromResult(buildResult, exercise);
+        }
+
         addFeedbackToResult(result, buildResult);
         return result;
     }
@@ -72,17 +86,14 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
     }
 
     private void addTestCaseFeedbacksToResult(Result result, List<? extends BuildJobDTOInterface> jobs, ProgrammingExercise programmingExercise) {
-        final var programmingLanguage = programmingExercise.getProgrammingLanguage();
-        final var projectType = programmingExercise.getProjectType();
-
         for (final var job : jobs) {
             for (final var failedTest : job.getFailedTests()) {
-                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(failedTest.getName(), failedTest.getMessage(), false, programmingLanguage, projectType));
+                result.addFeedback(feedbackCreationService.createFeedbackFromTestCase(failedTest.getName(), failedTest.getMessage(), false, programmingExercise));
             }
             result.setTestCaseCount(result.getTestCaseCount() + job.getFailedTests().size());
 
             for (final var successfulTest : job.getSuccessfulTests()) {
-                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getMessage(), true, programmingLanguage, projectType));
+                result.addFeedback(feedbackCreationService.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getMessage(), true, programmingExercise));
             }
 
             result.setTestCaseCount(result.getTestCaseCount() + job.getSuccessfulTests().size());
@@ -93,7 +104,7 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
     private void addStaticCodeAnalysisFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise programmingExercise) {
         final var staticCodeAnalysisReports = buildResult.getStaticCodeAnalysisReports();
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
-            var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
+            List<Feedback> scaFeedbackList = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
             result.addFeedbacks(scaFeedbackList);
             result.setCodeIssueCount(scaFeedbackList.size());
         }
