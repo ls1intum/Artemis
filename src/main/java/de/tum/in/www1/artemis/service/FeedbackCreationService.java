@@ -45,13 +45,13 @@ public class FeedbackCreationService {
     /**
      * Overwrite timeout exception messages for Junit4, Junit5 and other
      */
-    private static final List<String> exceptions = Arrays.asList("org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",
+    private static final List<String> TIMEOUT_EXCEPTIONS = Arrays.asList("org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",
             "org.awaitility.core.ConditionTimeoutException", "Timed?OutException");
 
     /**
      * Defining two pattern groups, (1) the exception name and (2) the exception text
      */
-    private static final Pattern FIND_TIMEOUT_PATTERN = Pattern.compile("^.*(" + String.join("|", exceptions) + "):?(.*)");
+    private static final Pattern FIND_TIMEOUT_PATTERN = Pattern.compile("^.*(" + String.join("|", TIMEOUT_EXCEPTIONS) + "):?(.*)");
 
     /**
      * Defining one pattern group, (1) the exception text
@@ -157,11 +157,12 @@ public class FeedbackCreationService {
     private String getJvmErrorMessage(final ProjectType projectType, final String message) {
         var messageWithoutStackTrace = message.lines().takeWhile(Predicate.not(this::isStacktraceLine)).collect(Collectors.joining("\n")).trim();
 
+        // ToDo: does not seem to be the case any more, at least not for Jenkins
         // the feedback from gradle test result is duplicated therefore it's cut in half
-        if (projectType != null && projectType.isGradle()) {
-            final long numberOfLines = messageWithoutStackTrace.lines().count();
-            messageWithoutStackTrace = messageWithoutStackTrace.lines().skip(numberOfLines / 2).collect(Collectors.joining("\n")).trim();
-        }
+        // if (projectType != null && projectType.isGradle()) {
+        // final long numberOfLines = messageWithoutStackTrace.lines().count();
+        // messageWithoutStackTrace = messageWithoutStackTrace.lines().skip(numberOfLines / 2).collect(Collectors.joining("\n")).trim();
+        // }
 
         return JVM_RESULT_MESSAGE_MATCHER.matcher(messageWithoutStackTrace).replaceAll("");
     }
@@ -179,9 +180,9 @@ public class FeedbackCreationService {
      */
     private static Pattern prepareJVMResultMessageMatcher(final List<String> jvmExceptionsToFilter) {
         // Replace all "." with "\\." and join with regex alternative symbol "|"
-        final String assertionRegex = jvmExceptionsToFilter.stream().map(s -> s.replace("\\.", "\\\\.")).reduce("", (a, b) -> String.join("|", a, b));
+        final String assertionRegex = jvmExceptionsToFilter.stream().map(s -> s.replace("\\.", "\\\\.")).collect(Collectors.joining("|"));
         // Match any of the exceptions at the start of the line and with ": " after it
-        final String pattern = String.format("^(?:%s): \n*", assertionRegex);
+        final String pattern = String.format("^(?:%s): ?\n*", assertionRegex);
 
         return Pattern.compile(pattern, Pattern.MULTILINE);
     }
