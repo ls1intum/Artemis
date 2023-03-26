@@ -130,7 +130,7 @@ public class ProgrammingExerciseGradingService {
 
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
-            boolean buildFailed = newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback) || buildResult.getDescription().equals("build-failed");
+            boolean buildFailed = newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
             latestSubmission.setBuildFailed(buildFailed);
             // Add artifacts to submission
             latestSubmission.setBuildArtifact(buildResult.hasArtifact());

@@ -39,17 +39,14 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     private final List<LocalCIJobDTO> jobs;
 
-    private final String description;
-
     public LocalCIBuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
-            List<LocalCIJobDTO> jobs, String description) {
+            List<LocalCIJobDTO> jobs) {
         this.assignmentRepoBranchName = assignmentRepoBranchName;
         this.assignmentRepoCommitHash = assignmentRepoCommitHash;
         this.testsRepoCommitHash = testsRepoCommitHash;
         this.isBuildSuccessful = isBuildSuccessful;
         this.buildRunDate = buildRunDate;
         this.jobs = jobs;
-        this.description = description;
     }
 
     @Override
@@ -129,12 +126,6 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
     @Override
     public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports() {
         return jobs.stream().flatMap(job -> job.testwiseCoverageReport().stream()).toList();
-    }
-
-    @JsonIgnore
-    @Override
-    public String getDescription() {
-        return description;
     }
 
     /**

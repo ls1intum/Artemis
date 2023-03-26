@@ -77,12 +77,4 @@ public abstract class AbstractBuildResultNotificationDTO {
      */
     @JsonIgnore
     public abstract List<TestwiseCoverageReportDTO> getTestwiseCoverageReports();
-
-    /**
-     * Gets the description of the build result. Used to indicate a failed build for local CI.
-     *
-     * @return description of the build result ("build-failed" in case of a failed local CI build).
-     */
-    @JsonIgnore
-    public abstract String getDescription();
 }

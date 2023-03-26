@@ -106,9 +106,10 @@ public class LocalCIBuildJobService {
             testsRepoCommitHash = getCommitHashOfBranch(container.getId(), "test-repository", branch);
         }
         catch (IOException e) {
-            // Could not read commit hash from .git folder. Stop the container and return a build results that indicates that the build failed.
+            // Could not read commit hash from .git folder. Stop the container and return a build results that indicates that the build failed (empty list for failed tests and
+            // empty list for successful tests).
             stopContainer(container.getId(), scriptPath);
-            return constructBuildResult(List.of(), List.of(), branch, assignmentRepoCommitHash, testsRepoCommitHash, false, buildCompletedDate, "build-failed");
+            return constructBuildResult(List.of(), List.of(), branch, assignmentRepoCommitHash, testsRepoCommitHash, false, buildCompletedDate);
         }
 
         // When Gradle is used as the build tool, the test results are located in /repositories/test-repository/build/test-resuls/test/TEST-*.xml.
@@ -125,7 +126,7 @@ public class LocalCIBuildJobService {
             // Stop the container and return a build results that indicates that the build failed.
             stopContainer(container.getId(), scriptPath);
 
-            return constructBuildResult(List.of(), List.of(), branch, assignmentRepoCommitHash, testsRepoCommitHash, false, buildCompletedDate, "build-failed");
+            return constructBuildResult(List.of(), List.of(), branch, assignmentRepoCommitHash, testsRepoCommitHash, false, buildCompletedDate);
         }
 
         stopContainer(container.getId(), scriptPath);
@@ -322,15 +323,13 @@ public class LocalCIBuildJobService {
             xmlStreamReader.close();
         }
 
-        return constructBuildResult(failedTests, successfulTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildCompletedDate,
-                "some description");
+        return constructBuildResult(failedTests, successfulTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildCompletedDate);
     }
 
     private LocalCIBuildResult constructBuildResult(List<LocalCIBuildResult.LocalCITestJobDTO> failedTests, List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests,
-            String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
-            String description) {
+            String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate) {
         LocalCIBuildResult.LocalCIJobDTO job = new LocalCIBuildResult.LocalCIJobDTO(failedTests, successfulTests, List.of(), List.of(), List.of());
 
-        return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job), description);
+        return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job));
     }
 }

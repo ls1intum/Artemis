@@ -174,16 +174,6 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
         return this.logs != null && !this.logs.isEmpty();
     }
 
-    /**
-     * Empty implementation. Only works for Bamboo and local CI.
-     *
-     * @return empty string.
-     */
-    @Override
-    public String getDescription() {
-        return "";
-    }
-
     @Override
     public List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage) {
         var buildLogs = BuildLogParseUtils.parseBuildLogsFromLogs(getLogs());
