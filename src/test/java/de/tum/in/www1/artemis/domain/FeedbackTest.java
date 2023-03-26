@@ -60,6 +60,22 @@ class FeedbackTest {
         assertThat(feedback.getLongFeedbackText().getText()).hasSize(Constants.LONG_FEEDBACK_MAX_LENGTH);
     }
 
+    @Test
+    void copyWithLongFeedback() {
+        final String feedbackText = getText(Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS * 3);
+
+        final Feedback feedback = new Feedback();
+        feedback.setDetailText(feedbackText);
+
+        final Feedback copiedFeedback = feedback.copyFeedback();
+        assertThat(copiedFeedback.getHasLongFeedbackText()).isTrue();
+        assertThat(copiedFeedback.getDetailText()).hasSize(Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS);
+
+        final LongFeedbackText copiedLongFeedback = copiedFeedback.getLongFeedbackText();
+        assertThat(copiedLongFeedback).isNotNull();
+        assertThat(copiedLongFeedback.getText()).isEqualTo(feedbackText);
+    }
+
     private String getText(final int length) {
         return "0".repeat(length);
     }
