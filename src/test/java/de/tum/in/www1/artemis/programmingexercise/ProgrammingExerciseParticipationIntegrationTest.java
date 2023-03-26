@@ -406,8 +406,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_noAccessToGradedParticipation_forbidden() throws Exception {
-        var gradedParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        var practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+        var gradedParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+        var practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         practiceParticipation.setTestRun(true);
         participationRepository.save(practiceParticipation);
 
