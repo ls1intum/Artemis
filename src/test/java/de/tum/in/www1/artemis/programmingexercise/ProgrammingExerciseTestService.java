@@ -404,7 +404,7 @@ public class ProgrammingExerciseTestService {
         assertThat(savedExercise.getBonusPoints()).isEqualTo(0D);
     }
 
-    void importFromFile_validExercise_isSuccessfullyImported() throws Exception {
+    void importFromFile_validJavaExercise_isSuccessfullyImported() throws Exception {
         mockDelegate.mockConnectorRequestForImportFromFile(exercise);
         Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
 
@@ -414,6 +414,22 @@ public class ProgrammingExerciseTestService {
         assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(JAVA);
         assertThat(importedExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
         assertThat(importedExercise.getProjectType()).isEqualTo(ProjectType.PLAIN_MAVEN);
+    }
+
+    void importFromFile_validExercise_isSuccessfullyImported(ProgrammingLanguage language) throws Exception {
+        mockDelegate.mockConnectorRequestForImportFromFile(exercise);
+        Resource resource = null;
+        exercise.programmingLanguage(language);
+        switch (language) {
+            case PYTHON -> resource = new ClassPathResource("test-data/import-from-file/valid-import-python.zip");
+            case C -> resource = new ClassPathResource("test-data/import-from-file/valid-import-c.zip");
+            case HASKELL -> resource = new ClassPathResource("test-data/import-from-file/valid-import-haskell.zip");
+            case OCAML -> resource = new ClassPathResource("test-data/import-from-file/valid-import-ocaml.zip");
+            case ASSEMBLER -> resource = new ClassPathResource("test-data/import-from-file/valid-import-assembler.zip");
+        }
+
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        request.postWithMultipartFile(ROOT + IMPORT_FROM_FILE, exercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK);
     }
 
     void importFromFile_missingExerciseDetailsJson_BadRequest() throws Exception {

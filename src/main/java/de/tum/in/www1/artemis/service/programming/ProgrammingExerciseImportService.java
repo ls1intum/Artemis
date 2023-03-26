@@ -153,7 +153,7 @@ public class ProgrammingExerciseImportService {
     }
 
     private void copyImportedExerciseContentToRepositories(Repository templateRepo, Repository solutionRepo, Repository testRepo, Path basePath, ProgrammingExercise newExercise,
-            String oldPackageName) throws IOException {
+            String oldPackageName) throws IOException, GitAPIException {
         deleteSourceAndTestFilesInRepository(templateRepo);
         deleteSourceAndTestFilesInRepository(solutionRepo);
         deleteSourceAndTestFilesInRepository(testRepo);
@@ -189,6 +189,7 @@ public class ProgrammingExerciseImportService {
 
     private void copyExerciseContentToRepositoryForExerciseWithPlainDirectoryStructure(Repository repository, RepositoryType repositoryType, Path exerciseDir) throws IOException {
         for (Path file : retrieveRepositoryContentPaths(retrieveRepositoryDirectoryPath(exerciseDir, repositoryType.getName()))) {
+            log.error(file.getFileName().toString());
             repositoryService.createFile(repository, String.valueOf(file.getFileName()), Files.newInputStream(file));
 
         }
@@ -216,6 +217,7 @@ public class ProgrammingExerciseImportService {
                 }
             }
             else {
+                log.error(repositoryType + ":" + "create file: " + file.getFileName().toString());
                 repositoryService.createFile(repository, String.valueOf(file.getFileName()), Files.newInputStream(file));
             }
 
@@ -248,11 +250,11 @@ public class ProgrammingExerciseImportService {
                 else if (file.toAbsolutePath().toString().contains("solution")) {
                     repositoryService.createFile(repository, "solution/" + file.getFileName(), Files.newInputStream(file));
                 }
-                else if (file.toAbsolutePath().toString().contains("test")) {
-                    repositoryService.createFile(repository, "test/" + file.getFileName(), Files.newInputStream(file));
-                }
                 else if (file.toAbsolutePath().toString().contains("assignment")) {
                     repositoryService.createFile(repository, "assignment/" + file.getFileName(), Files.newInputStream(file));
+                }
+                else if (file.toAbsolutePath().toString().contains("test")) {
+                    repositoryService.createFile(repository, "test/" + file.getFileName(), Files.newInputStream(file));
                 }
             }
             else {
@@ -320,28 +322,24 @@ public class ProgrammingExerciseImportService {
     private void deleteSourceAndTestFilesInRepository(Repository repository) {
         // only the root level dir exists, delete all existing files
         if (gitService.listFilesAndFolders(repository).entrySet().stream().filter(e -> e.getValue() == FileType.FOLDER).count() == 1) {
-            gitService.listFilesAndFolders(repository).entrySet().stream().filter(e -> FileType.FILE == e.getValue()).forEach(e -> FileSystemUtils.deleteRecursively(e.getKey()));
+            gitService.listFilesAndFolders(repository).entrySet().stream().filter(e -> FileType.FILE == e.getValue()).forEach(e -> {
+                if (!FileSystemUtils.deleteRecursively(e.getKey())) {
+                    log.error("failed to delete: " + e.getKey().getName());
+                }
+                else {
+                    log.debug("successfully deleted: " + e.getKey().getName());
+                }
+            });
+            repository.setContent(null);
             return;
         }
-        var srcOrTestDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory)
-                .filter(dir -> "src".equals(dir.getName()) || "test".equals(dir.getName())).findFirst();
-        srcOrTestDir.ifPresent(FileSystemUtils::deleteRecursively);
-        var behavioralDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> "behavioral".equals(dir.getName())).findFirst();
-        behavioralDir.ifPresent(FileSystemUtils::deleteRecursively);
-        var structuralDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> "structural".equals(dir.getName())).findFirst();
-        structuralDir.ifPresent(FileSystemUtils::deleteRecursively);
-        var assignmentDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> "assignment".equals(dir.getName())).findFirst();
-        assignmentDir.ifPresent(FileSystemUtils::deleteRecursively);
-        var checkerDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> "checker".equals(dir.getName())).findFirst();
-        checkerDir.ifPresent(FileSystemUtils::deleteRecursively);
-        var overridesDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> "overrides".equals(dir.getName())).findFirst();
-        overridesDir.ifPresent(FileSystemUtils::deleteRecursively);
-        var solutionDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> "solution".equals(dir.getName())).findFirst();
-        solutionDir.ifPresent(FileSystemUtils::deleteRecursively);
-        var testsDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> "tests".equals(dir.getName())).findFirst();
-        var testUtilsDir = gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> "testUtils".equals(dir.getName())).findFirst();
-        testsDir.ifPresent(FileSystemUtils::deleteRecursively);
-        testUtilsDir.ifPresent(FileSystemUtils::deleteRecursively);
+        Stream.of("src", "test", "behavior", "structural", "assignment", "checker", "overrides", "solution", "tests", "testUtils")
+                .map(name -> gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> name.equals(dir.getName())).findFirst())
+                .filter(Optional::isPresent).map(Optional::get).forEach(f -> {
+                    FileSystemUtils.deleteRecursively(f);
+                    log.error("deleted directory: " + f);
+                });
+        repository.setContent(null);
     }
 
     /**
@@ -542,7 +540,6 @@ public class ProgrammingExerciseImportService {
         catch (IOException e) {
             throw new BadRequestAlertException("Could not read the directory", "programmingExercise", "couldnotreaddirectory");
         }
-        log.error("result: " + result);
         if (result.size() != 1) {
             throw new IllegalArgumentException(
                     "There are either no or more than one sub-directories containing " + repoType + " in their name. Please make sure that there is exactly one.");
@@ -568,12 +565,12 @@ public class ProgrammingExerciseImportService {
         Path assignmentPath;
         Path behavioralPath;
         if (type == RepositoryType.TESTS) {
-            behavioralPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("behavioral");
-            assignmentPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("assignment");
+            behavioralPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("behavior");
+            assignmentPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("structural");
             return retrieveRepositoryContentPaths(behavioralPath, assignmentPath);
         }
 
-        return retrieveRepositoryContentPaths(dirPath);
+        return retrieveRepositoryContentPaths(retrieveRepositoryDirectoryPath(dirPath, type.getName()));
 
     }
 
@@ -660,7 +657,7 @@ public class ProgrammingExerciseImportService {
         List<String> result;
         try (Stream<Path> stream = Files.walk(path)) {
             result = stream.filter(Files::isDirectory).map(f -> f.getFileName().toString())
-                    .filter(name -> name.endsWith("exercise") || name.endsWith("tests") || name.endsWith("solution")).toList();
+                    .filter(name -> name.endsWith("-exercise") || name.endsWith("-tests") || name.endsWith("-solution")).toList();
         }
 
         if (result.size() != 3) {

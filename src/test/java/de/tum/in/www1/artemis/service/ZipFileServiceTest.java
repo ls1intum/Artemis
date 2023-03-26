@@ -18,7 +18,6 @@ class ZipFileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @Test
     void testExtractZipFileRecursively_unzipsNestedZipCorrectly() throws IOException {
-
         Path testDir = Files.createTempDirectory("test-dir");
         Path zipDir = Files.createTempDirectory("zip-dir");
 

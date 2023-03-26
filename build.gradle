@@ -345,6 +345,8 @@ dependencies {
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20230227"
+    implementation 'net.lingala.zip4j:zip4j:2.11.5'
+
 }
 
 dependencyManagement {

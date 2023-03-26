@@ -176,6 +176,13 @@ public class RepositoryService {
         inputStream.close();
     }
 
+    public void copyFile(Repository repository, String filename, InputStream inputStream) throws IOException {
+        File file = new File(Path.of(repository.getLocalPath().toString(), filename).toFile(), repository);
+        Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        repository.setContent(null); // invalidate cache
+        inputStream.close();
+    }
+
     private File checkIfFileExistsInRepository(Repository repository, String filename) throws FileAlreadyExistsException {
         if (gitService.getFileByName(repository, filename).isPresent()) {
             throw new FileAlreadyExistsException("file already exists");

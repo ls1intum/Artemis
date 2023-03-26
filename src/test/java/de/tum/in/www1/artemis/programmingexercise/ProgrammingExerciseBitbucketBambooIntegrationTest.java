@@ -354,8 +354,15 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importExerciseFromFile_validExercise_importSuccessful() throws Exception {
-        programmingExerciseTestService.importFromFile_validExercise_isSuccessfullyImported();
+    void importExerciseFromFile_valid_Java_Exercise_importSuccessful() throws Exception {
+        programmingExerciseTestService.importFromFile_validJavaExercise_isSuccessfullyImported();
+    }
+
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(value = ProgrammingLanguage.class, names = { "PYTHON", "C", "ASSEMBLER", "HASKELL", "OCAML" }, mode = EnumSource.Mode.INCLUDE)
+    void importExerciseFromFile_valid_Exercise_importSuccessful(ProgrammingLanguage language) throws Exception {
+        programmingExerciseTestService.importFromFile_validExercise_isSuccessfullyImported(language);
     }
 
     @Test

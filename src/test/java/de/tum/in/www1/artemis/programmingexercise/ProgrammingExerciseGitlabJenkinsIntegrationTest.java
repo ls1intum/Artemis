@@ -183,7 +183,14 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseFromFile_validExercise_importSuccessful() throws Exception {
-        programmingExerciseTestService.importFromFile_validExercise_isSuccessfullyImported();
+        programmingExerciseTestService.importFromFile_validJavaExercise_isSuccessfullyImported();
+    }
+
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(value = ProgrammingLanguage.class, names = { "C", "OCAML", "HASKELL", "PYTHON", "ASSEMBLER" }, mode = EnumSource.Mode.INCLUDE)
+    void importExerciseFromFile_valid_Exercise_importSuccessful(ProgrammingLanguage language) throws Exception {
+        programmingExerciseTestService.importFromFile_validExercise_isSuccessfullyImported(language);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
