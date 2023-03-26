@@ -50,6 +50,7 @@
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th><span jhiTranslate="artemisApp.fileUploadExercise.filePattern">File Pattern</span></th>
+                    <th class="d-md-table-cell"><span jhiTranslate="artemisApp.exercise.categories">Categories</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -78,6 +79,7 @@
                     <td>{{ exerciseService.isIncludedInScore(fileUploadExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ fileUploadExercise.presentationScoreEnabled }}</td>
                     <td>{{ fileUploadExercise.filePattern }}</td>
+                    <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="fileUploadExercise"></jhi-exercise-categories></td>
                     <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <a

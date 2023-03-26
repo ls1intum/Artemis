@@ -197,18 +197,6 @@ export class CourseCreationPage {
     }
 
     /**
-     * Sets if posts are enabled
-     * @param posts if posts should be enabled
-     */
-    setPosts(posts: boolean) {
-        if (posts) {
-            cy.get('#field_postsEnabled').check();
-        } else {
-            cy.get('#field_postsEnabled').uncheck();
-        }
-    }
-
-    /**
      * Sets if course is an online course
      * @param onlineCourse if should be online course
      */

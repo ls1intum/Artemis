@@ -112,6 +112,15 @@ Create new Quiz Exercise
 
             - Preview View: Enables the student view.
 
+            - Visual View: This view shows the question from the Edit view as a rendered question. The different parts of the question are editable and answer options can be added and removed.
+              It is possible to toggle between the Visual and the Edit view at all times and changes to the question will be respected. The following video shows an exemplary use of the Visual view.
+
+            .. raw:: html
+
+                <iframe src="https://live.rbg.tum.de/w/artemisintro/26851?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+                    Watch this video on TUM-Live.
+                </iframe>
+
         - **Add Drag-And-Drop Question**
 
             This kind of question is composed of a problem statement, a background image, and drag and drop options.

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-import { Course } from 'app/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/entities/course.model';
 
 export interface TutorialGroupsConfigurationFormData {
     period?: Date[];
@@ -28,6 +28,8 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
     course: Course;
 
     faCalendarAlt = faCalendarAlt;
+
+    readonly isMessagingEnabled = isMessagingEnabled;
 
     existingChannelSetting?: boolean;
 

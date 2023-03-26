@@ -75,25 +75,11 @@
             [entityTitle]="exercise.title || ''"
             deleteQuestion="artemisApp.exercise.delete.question"
             deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-            class="me-1"
-            style="margin-bottom: 10px"
+            class="me-1 mb-2"
             (delete)="deleteExercise()"
             [dialogError]="dialogError$"
         >
             <fa-icon [icon]="faTimes"></fa-icon>
         </button>
-    </div>
-
-    <div class="mb-1">
-        <!-- import external submissions -->
-        <jhi-external-submission *ngIf="exercise.isAtLeastInstructor" class="d-inline-block me-1 mb-1" [exercise]="exercise"></jhi-external-submission>
-
-        <!-- Export submissions -->
-        <jhi-exercise-submission-export
-            *ngIf="exercise.isAtLeastInstructor"
-            class="d-inline-block mb-1"
-            [exerciseId]="exercise.id!"
-            [exerciseType]="exercise.type!"
-        ></jhi-exercise-submission-export>
     </div>
 </ng-container>
