@@ -589,6 +589,13 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testUpdateParticipationFiles_cannotAccessParticipation() throws Exception {
+        // student2 should not have access to student1's participation.
+        request.put(studentRepoBaseUrl + participation.getId() + "/files", List.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPullChanges() throws Exception {
@@ -728,6 +735,13 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
         assertLogsContent(receivedLogs);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetBuildLogs_cannotAccessParticipation() throws Exception {
+        // student2 should not have access to student1's participation.
+        request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, BuildLogEntry.class);
     }
 
     private void assertLogsContent(List<BuildLogEntry> receivedLogs) {
