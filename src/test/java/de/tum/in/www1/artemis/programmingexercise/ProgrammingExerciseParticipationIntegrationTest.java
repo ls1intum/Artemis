@@ -333,13 +333,12 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student4", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     void testGetLatestPendingSubmission_cannotAccessParticipation() throws Exception {
         // student4 should have no connection to student1's participation and should thus receive a Forbidden HTTP status.
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now());
         submission = database.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
-        Long participationId = submission.getParticipation().getId();
-        Submission returnedSubmission = request.getNullable(participationsBaseUrl + participationId + "/latest-pending-submission", HttpStatus.FORBIDDEN,
+        Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.FORBIDDEN,
                 ProgrammingSubmission.class);
         assertThat(returnedSubmission).isNull();
     }

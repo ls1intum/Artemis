@@ -136,9 +136,9 @@ public class ProgrammingMessagingService {
         // notify user via websocket
         websocketMessagingService.broadcastNewResult((Participation) participation, result);
 
-        if (participation instanceof StudentParticipation) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             // do not try to report results for template or solution participations
-            ltiNewResultService.onNewResult((ProgrammingExerciseStudentParticipation) participation);
+            ltiNewResultService.onNewResult(studentParticipation);
         }
     }
 }
