@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { LongFeedbackTextService } from 'app/exercises/shared/feedback/long-feedback-text.service';
+import { LongFeedbackText } from 'app/entities/long-feedback-text.model';
 
 @Component({
     selector: 'jhi-feedback-text',
@@ -8,9 +9,14 @@ import { LongFeedbackTextService } from 'app/exercises/shared/feedback/long-feed
     templateUrl: './feedback-text.component.html',
 })
 export class FeedbackTextComponent implements OnInit {
+    private readonly MAX_DISPLAYABLE_LENGTH = 20_000;
+
     @Input() feedback: FeedbackItem;
 
     text?: string;
+
+    downloadText?: string;
+    downloadFilename?: string;
 
     constructor(private longFeedbackService: LongFeedbackTextService) {}
 
@@ -28,7 +34,18 @@ export class FeedbackTextComponent implements OnInit {
 
         this.longFeedbackService.find(resultId, feedbackId).subscribe((longFeedbackResponse) => {
             const longFeedback = longFeedbackResponse.body!;
-            this.text = longFeedback.text!;
+            const textLength = longFeedback.text?.length ?? 0;
+
+            if (textLength > this.MAX_DISPLAYABLE_LENGTH) {
+                this.setDownloadInfo(longFeedback);
+            } else {
+                this.text = longFeedback.text!;
+            }
         });
+    }
+
+    private setDownloadInfo(longFeedback: LongFeedbackText) {
+        this.downloadText = 'data:text/plain;charset=utf-8,' + encodeURIComponent(longFeedback.text!);
+        this.downloadFilename = `feedback_${this.feedback.feedbackReference.feedbackId}.txt`;
     }
 }

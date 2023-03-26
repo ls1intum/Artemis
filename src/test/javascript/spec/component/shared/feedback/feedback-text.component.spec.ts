@@ -74,6 +74,25 @@ describe('FeedbackTextComponent', () => {
 
         expect(getLongFeedbackStub).toHaveBeenCalledOnceWith(1, 2);
         expect(comp.text).toBe(longFeedbackText.text);
+        expect(comp.downloadText).toBeUndefined();
+        expect(comp.downloadFilename).toBeUndefined();
+    }));
+
+    it('should create a download link for very long feedback', fakeAsync(() => {
+        const longFeedbackText = {
+            text: '0'.repeat(100_000),
+        };
+        getLongFeedbackStub.mockReturnValue(of(new HttpResponse<LongFeedbackText>({ body: longFeedbackText })));
+
+        comp.feedback = getFeedbackItem('short version', getFeedbackReference(1, 2, true));
+
+        comp.ngOnInit();
+        tick();
+
+        expect(comp.text).toBe('short version');
+        expect(comp.downloadFilename).toBe('feedback_2.txt');
+        expect(comp.downloadText).toContain('data:text/plain;charset=utf-8,');
+        expect(comp.downloadText).toContain(longFeedbackText.text);
     }));
 
     const getFeedbackReference = (resultId: number, feedbackId: number, hasLongFeedback: boolean): FeedbackReference => {
