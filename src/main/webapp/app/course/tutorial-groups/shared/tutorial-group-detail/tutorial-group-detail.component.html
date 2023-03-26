@@ -121,12 +121,9 @@
             <span>{{ 'artemisApp.entities.tutorialGroup.language' | artemisTranslate }}</span>
         </dt>
         <dd>
-            <ng-container *ngIf="tutorialGroup.language; else noLanguage">
-                <span>{{ tutorialGroup.language }}</span>
-            </ng-container>
-            <ng-template #noLanguage>
-                <span>{{ '' }}</span>
-            </ng-template>
+            <span>
+                {{ tutorialGroup.language ? tutorialGroup.language : '' }}
+            </span>
         </dd>
         <!-- Campus -->
         <dt>
