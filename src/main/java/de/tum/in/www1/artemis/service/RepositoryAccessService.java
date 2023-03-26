@@ -72,27 +72,7 @@ public class RepositoryAccessService {
 
         // Error case 3: The student can reset the repository only before and a tutor/instructor only after the due date has passed
         if (repositoryActionType == RepositoryActionType.RESET) {
-            boolean isOwner = true; // true for Solution- and TemplateProgrammingExerciseParticipation
-            if (programmingParticipation instanceof StudentParticipation) {
-                isOwner = authorizationCheckService.isOwnerOfParticipation((StudentParticipation) programmingParticipation);
-            }
-            if (isStudent && programmingParticipation.isLocked()) {
-                throw new AccessForbiddenException();
-            }
-            // A tutor/instructor who is owner of the exercise should always be able to reset the repository
-            else if (!isStudent && !isOwner) {
-                // Check if a tutor is allowed to reset during the assessment
-                // Check for a regular course exercise
-                if (programmingExercise.isCourseExercise() && !programmingParticipation.isLocked()) {
-                    throw new AccessForbiddenException();
-                }
-                // Check for an exam exercise, as it might not be locked but a student might still be allowed to submit
-                var optStudent = ((StudentParticipation) programmingParticipation).getStudent();
-                if (optStudent.isPresent() && programmingExercise.isExamExercise()
-                        && examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optStudent.get(), false)) {
-                    throw new AccessForbiddenException();
-                }
-            }
+            checkAccessRepositoryForReset(programmingParticipation, isStudent, programmingExercise);
         }
 
         // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
@@ -101,6 +81,38 @@ public class RepositoryAccessService {
         boolean isStudentParticipation = programmingParticipation instanceof ProgrammingExerciseStudentParticipation;
         if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false) && !userWasNotifiedAboutPlagiarismCase) {
             throw new AccessForbiddenException();
+        }
+    }
+
+    /*
+     * The student can reset the repository only before and a tutor/instructor only after the due date has passed
+     */
+    private void checkAccessRepositoryForReset(ProgrammingExerciseParticipation programmingExerciseParticipation, boolean isStudent, ProgrammingExercise programmingExercise) {
+        boolean isOwner = true; // true for Solution- and TemplateProgrammingExerciseParticipation
+        if (programmingExerciseParticipation instanceof StudentParticipation studentParticipation) {
+            isOwner = authorizationCheckService.isOwnerOfParticipation(studentParticipation);
+        }
+        if (isStudent && programmingExerciseParticipation.isLocked()) {
+            throw new AccessForbiddenException();
+        }
+        // A tutor/instructor who is owner of the exercise should always be able to reset the repository
+        else if (!isStudent && !isOwner) {
+            // The user trying to reset the repository is at least a tutor in the course and the repository does not belong to them.
+            // This might be a tutor that resets the repository during assessment.
+            // If the student is still able to submit, don't allow for the tutor to reset the repository.
+
+            // For a regular course exercise, the participation must be locked.
+            if (programmingExercise.isCourseExercise() && !programmingExerciseParticipation.isLocked()) {
+                throw new AccessForbiddenException();
+            }
+
+            // For an exam exercise, the student must not be allowed to submit anymore.
+            // Retrieving the student via this type cast is safe because isOwner is false here which means that "programmingExerciseParticipation instanceof StudentParticipation"
+            // must have been true in the check above.
+            var optStudent = ((StudentParticipation) programmingExerciseParticipation).getStudent();
+            if (optStudent.isPresent() && programmingExercise.isExamExercise() && examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optStudent.get(), false)) {
+                throw new AccessForbiddenException();
+            }
         }
     }
 
