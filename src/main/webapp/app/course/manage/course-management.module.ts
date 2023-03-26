@@ -60,6 +60,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 
 @NgModule({
     imports: [
@@ -107,6 +108,7 @@ import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
         ArtemisCoursesModule,
         ArtemisCourseGroupModule,
         FeatureToggleModule,
+        ExerciseCategoriesModule,
         NgbNavModule,
     ],
     declarations: [

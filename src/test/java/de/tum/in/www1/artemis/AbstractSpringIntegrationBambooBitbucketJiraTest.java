@@ -41,12 +41,13 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.TimeService;
-import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
+import de.tum.in.www1.artemis.service.connectors.bamboo.BambooResultService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
+import de.tum.in.www1.artemis.service.connectors.bamboo.BambooTriggerService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTriggerDTO;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
@@ -76,6 +77,14 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Bamboo using the corresponding RestTemplate.
     @SpyBean
     protected BambooService continuousIntegrationService;
+
+    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Bamboo using the corresponding RestTemplate.
+    @SpyBean
+    protected BambooResultService continuousIntegrationResultService;
+
+    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Bamboo using the corresponding RestTemplate.
+    @SpyBean
+    protected BambooTriggerService continuousIntegrationTriggerService;
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Bitbucket using the corresponding RestTemplate.
     @SpyBean
@@ -363,12 +372,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockGetBuildLogs(ProgrammingExerciseStudentParticipation participation, List<BambooBuildResultDTO.BambooBuildLogEntryDTO> logs)
-            throws URISyntaxException, JsonProcessingException {
-        bambooRequestMockProvider.mockGetBuildLogs(participation.getBuildPlanId(), logs);
-    }
-
-    @Override
     public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) throws URISyntaxException, JsonProcessingException {
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, repositorySlug, hash);
     }
@@ -469,7 +472,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) {
+    public void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) {
         // Not needed here
     }
 
@@ -504,8 +507,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey, String repostoryName, boolean shouldFail) throws Exception {
-        bitbucketRequestMockProvider.mockDeleteRepository(projectKey, repostoryName, shouldFail);
+    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) throws Exception {
+        bitbucketRequestMockProvider.mockDeleteRepository(projectKey, repositoryName, shouldFail);
     }
 
     @Override

@@ -100,6 +100,7 @@ public class WebsocketMessagingService {
                         .forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
 
                 result.filterSensitiveFeedbacks(!isWorkingPeriodOver);
+
                 studentParticipation.getStudents().stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                         .forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
             }

@@ -35,9 +35,9 @@ import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerci
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
 import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCIService;
+import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCITriggerService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
@@ -55,6 +55,11 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     // GitlabApi.
     @SpyBean
     protected GitLabCIService continuousIntegrationService;
+
+    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Gitlab using the corresponding RestTemplate and
+    // GitlabApi.
+    @SpyBean
+    protected GitLabCITriggerService continuousIntegrationTriggerService;
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Gitlab using the corresponding RestTemplate and
     // GitlabApi.
@@ -199,11 +204,6 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    public void mockGetBuildLogs(ProgrammingExerciseStudentParticipation participation, List<BambooBuildResultDTO.BambooBuildLogEntryDTO> logs) {
-        // TODO: implement
-    }
-
-    @Override
     public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) {
         // Unsupported action in GitLab CI setup
     }
@@ -249,7 +249,7 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    public void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws GitLabApiException {
+    public void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws GitLabApiException {
         gitlabRequestMockProvider.mockCreateVcsUser(user, failInVcs);
     }
 
@@ -280,8 +280,8 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey, String repostoryName, boolean shouldFail) throws GitLabApiException {
-        gitlabRequestMockProvider.mockDeleteRepository(projectKey + "/" + repostoryName, shouldFail);
+    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) throws GitLabApiException {
+        gitlabRequestMockProvider.mockDeleteRepository(projectKey + "/" + repositoryName, shouldFail);
     }
 
     @Override

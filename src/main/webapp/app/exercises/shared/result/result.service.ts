@@ -32,7 +32,6 @@ export interface Badge {
 
 export interface IResultService {
     find: (resultId: number) => Observable<EntityResponseType>;
-    getResultsForExercise: (courseId: number, exerciseId: number, req?: any) => Observable<EntityArrayResponseType>;
     getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number, req?: any) => Observable<ResultsWithPointsArrayResponseType>;
     getFeedbackDetailsForResult: (participationId: number, result: Result) => Observable<HttpResponse<Feedback[]>>;
     delete: (participationId: number, resultId: number) => Observable<HttpResponse<void>>;
@@ -183,16 +182,6 @@ export class ResultService implements IResultService {
         }
     }
 
-    getResultsForExercise(exerciseId: number, req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<Result[]>(`${this.exerciseResourceUrl}/${exerciseId}/results`, {
-                params: options,
-                observe: 'response',
-            })
-            .pipe(map((res: EntityArrayResponseType) => this.convertArrayResponse(res)));
-    }
-
     getResultsForExerciseWithPointsPerGradingCriterion(exerciseId: number, req?: any): Observable<ResultsWithPointsArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
@@ -259,20 +248,6 @@ export class ResultService implements IResultService {
     }
 
     /**
-     * Fetches all results for an exercise and returns them
-     * @param exercise of which the results with points should be fetched.
-     */
-    getResults(exercise: Exercise): Observable<HttpResponse<Result[]>> {
-        return this.getResultsForExercise(exercise.id!, {
-            withSubmissions: exercise.type === ExerciseType.MODELING,
-        }).pipe(
-            tap((res: HttpResponse<Result[]>) => {
-                return res.body!.map((result) => ResultService.processReceivedResult(exercise, result));
-            }),
-        );
-    }
-
-    /**
      * Fetches all results together with the total points and points per grading criterion for each of the given exercise.
      * @param exercise of which the results with points should be fetched.
      */
@@ -290,14 +265,16 @@ export class ResultService implements IResultService {
         );
     }
 
-    private static processReceivedResult(exercise: Exercise, result: Result): Result {
-        result.participation!.results = [result];
-        (result.participation! as StudentParticipation).exercise = exercise;
-        result.durationInMinutes = ResultService.durationInMinutes(result.completionDate!, result.participation!.initializationDate ?? exercise.releaseDate!);
-        // Nest submission into participation so that it is available for the result component
-        if (result.submission) {
-            result.participation!.submissions = [result.submission];
+    public static processReceivedResult(exercise: Exercise, result: Result): Result {
+        if (result.participation) {
+            result.participation.results = [result];
+            (result.participation as StudentParticipation).exercise = exercise;
+            // Nest submission into participation so that it is available for the result component
+            if (result.submission) {
+                result.participation.submissions = [result.submission];
+            }
         }
+        result.durationInMinutes = ResultService.durationInMinutes(result.completionDate!, result.participation?.initializationDate ?? exercise.releaseDate!);
         return result;
     }
 

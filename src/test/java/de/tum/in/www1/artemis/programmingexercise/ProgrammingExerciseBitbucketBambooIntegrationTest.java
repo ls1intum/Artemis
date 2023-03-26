@@ -245,13 +245,6 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
 
     @Test
     @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
-    void startProgrammingExerciseStudentSubmissionFailedWithBuildlog() throws Exception {
-        mockUsers(numberOfStudents, "student");
-        programmingExerciseTestService.startProgrammingExerciseStudentSubmissionFailedWithBuildlog();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
     void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
         mockUsers(numberOfStudents, "student");
         programmingExerciseTestService.startProgrammingExerciseStudentRetrieveEmptyArtifactPage();

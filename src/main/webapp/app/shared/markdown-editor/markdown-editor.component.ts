@@ -132,6 +132,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * 2. false -> the preview of the parent component is used, parent has to set this value to false with an input */
     @Input() showPreviewButton = true;
 
+    /**
+     * true -> the markdown content will be rendered and shown, used when there are no special additions (e.g. text exercises)
+     * false -> the parent component adds its own preview content with id=preview. Used e.g. for programming exercises
+     */
+    @Input() showDefaultPreview = true;
+
     @Input() showEditButton = true;
 
     @Input() showVisualModeButton = false;
@@ -145,9 +151,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
     /** {visualMode} when editor is created the visual mode is set to false, since the edit mode is set active */
     visualMode = false;
 
-    /** {previewChild} Is not null when the parent component is responsible for the preview content
-     * -> parent component has to implement ng-content and set the showPreviewButton on true through an input */
-    @ContentChild('preview', { static: false }) previewChild: ElementRef;
     @ContentChild(MultipleChoiceVisualQuestionComponent, { static: false }) visualChild: MultipleChoiceVisualQuestionComponent;
 
     /** Resizable constants **/
@@ -175,11 +178,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private alertService: AlertService) {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
-    }
-
-    /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
-    get showDefaultPreview(): boolean {
-        return this.previewChild == undefined;
     }
 
     /** opens the button for selecting the color */

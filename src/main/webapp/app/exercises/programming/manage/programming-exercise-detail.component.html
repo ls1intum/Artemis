@@ -47,13 +47,8 @@
                         <fa-icon [icon]="faUserCheck"></fa-icon>
                         <span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
                     </a>
-                    <jhi-external-submission *ngIf="programmingExercise.isAtLeastInstructor" [exercise]="programmingExercise" class="me-1"> </jhi-external-submission>
                 </div>
                 <div>
-                    <a *ngIf="programmingExercise.isAtLeastEditor" [routerLink]="baseResource + 'submissions'" class="btn btn-success btn-sm me-1" style="margin-bottom: 10px">
-                        <fa-icon [icon]="faBook"></fa-icon>
-                        <span jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
-                    </a>
                     <a *ngIf="programmingExercise.isAtLeastTutor" [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
                         <fa-icon [icon]="faListAlt"></fa-icon>
                         <span jhiTranslate="artemisApp.exercise.participations">Participations</span>
@@ -106,11 +101,6 @@
                         [exerciseId]="programmingExercise.id!"
                         class="me-1"
                     ></jhi-programming-exercise-instructor-exercise-download>
-                    <jhi-programming-assessment-repo-export
-                        *ngIf="programmingExercise.isAtLeastInstructor"
-                        [programmingExercises]="[programmingExercise]"
-                        class="me-1"
-                    ></jhi-programming-assessment-repo-export>
                     <a
                         *ngIf="programmingExercise.isAtLeastTutor && programmingExercise.course && !isExamExercise"
                         [routerLink]="['/course-management', programmingExercise.course!.id!, 'programming-exercises', programmingExercise.id!, 'exercise-statistics']"
@@ -455,7 +445,6 @@
                             [exercise]="programmingExercise"
                             [participation]="programmingExercise.templateParticipation!"
                             [showUngradedResults]="true"
-                            [showTestNames]="true"
                             [personalParticipation]="false"
                             (onParticipationChange)="onParticipationChange()"
                             class="me-2"
@@ -487,7 +476,6 @@
                             [exercise]="programmingExercise"
                             [participation]="programmingExercise.solutionParticipation!"
                             [showUngradedResults]="true"
-                            [showTestNames]="true"
                             [personalParticipation]="false"
                             class="me-2"
                         ></jhi-updating-result>
