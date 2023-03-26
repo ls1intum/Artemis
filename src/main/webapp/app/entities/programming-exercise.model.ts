@@ -42,7 +42,6 @@ export class ProgrammingExercise extends Exercise {
     public publishBuildPlanUrl?: boolean;
     public allowOnlineEditor?: boolean;
     public staticCodeAnalysisEnabled?: boolean;
-
     /**
      * Max penalty from SCA in percentage
      */

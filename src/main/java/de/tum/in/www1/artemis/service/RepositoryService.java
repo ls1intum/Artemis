@@ -216,9 +216,8 @@ public class RepositoryService {
     /**
      * Create a folder and all parent folders in a repository.
      *
-     * @param repository  in which the folder should be created.
-     * @param folderName  of the folder to be created.
-     * @param inputStream byte representation of the folder to be created.
+     * @param repository in which the folder should be created.
+     * @param folderName of the folder to be created.
      * @throws IOException if the inputStream is corrupt, the folder can't be stored, the repository is unavailable, etc.
      */
     public void createFolderRecursively(Repository repository, String folderName) throws IOException {

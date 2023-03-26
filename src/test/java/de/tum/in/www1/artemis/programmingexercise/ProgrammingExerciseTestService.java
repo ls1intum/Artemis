@@ -592,50 +592,6 @@ public class ProgrammingExerciseTestService {
         assertThat(programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId())).hasSameSizeAs(sourceExercise.getTasks());
     }
 
-    void createAndImportJavaProgrammingExerciseFromFile(boolean staticCodeAnalysisEnabled) throws Exception {
-        // setupRepositoryMocks(exercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        // mockDelegate.mockConnectorRequestsForSetup(exercise, false);
-        // exercise.setProjectType(ProjectType.MAVEN_MAVEN);
-        // exercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
-        // var sourceExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-        // sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-        // javaTemplateUpgradeService.upgradeTemplate(sourceExercise);
-        // database.addTestCasesToProgrammingExercise(sourceExercise);
-        // database.addTasksToProgrammingExercise(sourceExercise);
-        // // Manually add task
-        // var task = new ProgrammingExerciseTask();
-        // task.setTaskName("Task 1");
-        // task.setExercise(sourceExercise);
-        // task.setTestCases(programmingExerciseTestCaseRepository.findByExerciseId(sourceExercise.getId()));
-        // sourceExercise.setTasks(Collections.singletonList(task));
-        // programmingExerciseTaskRepository.save(task);
-        // programmingExerciseRepository.save(sourceExercise);
-        // database.addHintsToExercise(sourceExercise);
-        // exportInstructorRepository()
-        // // Reset because we will add mocks for new requests
-        // mockDelegate.resetMockProvider();
-        //
-        // ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", exercise, database.addEmptyCourse());
-        // exerciseToBeImported.setStaticCodeAnalysisEnabled(false);
-        //
-        // final var exerciseRepoName = urlService.getRepositorySlugFromRepositoryUrlString(sourceExercise.getTemplateParticipation().getRepositoryUrl()).toLowerCase();
-        // final var solutionRepoName = urlService.getRepositorySlugFromRepositoryUrlString(sourceExercise.getSolutionParticipation().getRepositoryUrl()).toLowerCase();
-        // final var testRepoName = urlService.getRepositorySlugFromRepositoryUrlString(sourceExercise.getTestRepositoryUrl()).toLowerCase();
-        // setupRepositoryMocks(sourceExercise.getProjectKey(), sourceExerciseRepo, exerciseRepoName, sourceSolutionRepo, solutionRepoName, sourceTestRepo, testRepoName);
-        // setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
-        //
-        //
-        // mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
-        //
-        // // Import the exercise and load all referenced entities
-        // var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
-        // ProgrammingExercise.class, params, HttpStatus.OK);
-        // importedExercise = database.loadProgrammingExerciseWithEagerReferences(importedExercise);
-        //
-        // // Check that the tasks were imported correctly (see #5474)
-        // assertThat(programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId())).hasSameSizeAs(sourceExercise.getTasks());
-    }
-
     // TEST
     void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans, boolean addAuxRepos) throws Exception {
         boolean staticCodeAnalysisEnabled = programmingLanguage == JAVA || programmingLanguage == SWIFT;
