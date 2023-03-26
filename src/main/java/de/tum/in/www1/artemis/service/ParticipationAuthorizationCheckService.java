@@ -50,7 +50,7 @@ public class ParticipationAuthorizationCheckService {
     }
 
     /**
-     * Checks if the current usr is allowed to access the given participation.
+     * Checks if the current user is allowed to access the given participation.
      *
      * @param participation Some participation.
      * @return True, if the user is allowed to access the participation; false otherwise.

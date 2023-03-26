@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -30,7 +29,7 @@ public class AuthorizationCheckService {
 
     private final UserRepository userRepository;
 
-    public AuthorizationCheckService(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+    public AuthorizationCheckService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
