@@ -165,17 +165,6 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * Validates static code analysis settings
-     *
-     * @param programmingExercise exercise to validate
-     */
-    private void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
-                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-        programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
-    }
-
-    /**
      * POST /programming-exercises/setup : Set up a new programmingExercise (with all needed repositories etc.)
      *
      * @param programmingExercise the programmingExercise to set up
@@ -188,7 +177,7 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExercise);
+        programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExercise, course);
 
         try {
             // Setup all repositories etc
@@ -228,7 +217,7 @@ public class ProgrammingExerciseResource {
 
         // Valid exercises have set either a course or an exerciseGroup
         updatedProgrammingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-        validateStaticCodeAnalysisSettings(updatedProgrammingExercise);
+        programmingExerciseService.validateStaticCodeAnalysisSettings(updatedProgrammingExercise);
 
         // fetch course from database to make sure client didn't change groups
         var user = userRepository.getUserWithGroupsAndAuthorities();

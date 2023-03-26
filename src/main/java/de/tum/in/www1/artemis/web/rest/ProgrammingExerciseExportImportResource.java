@@ -225,7 +225,7 @@ public class ProgrammingExerciseExportImportResource {
         final var course = courseService.findByIdElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
         try {
-            return ResponseEntity.ok(programmingExerciseImportService.importProgrammingExerciseFromFile(programmingExercise, zipFile));
+            return ResponseEntity.ok(programmingExerciseImportService.importProgrammingExerciseFromFile(programmingExercise, zipFile, course));
         }
         catch (IOException | URISyntaxException | GitAPIException e) {
             log.error(e.getMessage(), e);

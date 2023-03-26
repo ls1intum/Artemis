@@ -639,7 +639,7 @@ public class ProgrammingExerciseImportService {
         return result.get(0);
     }
 
-    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, MultipartFile zipFile)
+    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, MultipartFile zipFile, Course course)
             throws IOException, GitAPIException, URISyntaxException {
         Path path = Files.createTempDirectory("imported-exercise-dir");
         Path exerciseFilePath = Files.createTempFile(path, "exercise-for-import", ".zip");
@@ -651,7 +651,7 @@ public class ProgrammingExerciseImportService {
         var exerciseDetailsFileName = findJsonFileAndReturnFileName(path);
         checkRepositoriesExist(path);
         String oldPackageName = retrieveOldPackageName(Path.of(exerciseFilePath.toString().substring(0, exerciseFilePath.toString().length() - 4)), exerciseDetailsFileName);
-        programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExerciseForImport);
+        programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExerciseForImport, course);
         ProgrammingExercise importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport);
         if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
             staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);

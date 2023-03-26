@@ -229,7 +229,7 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programming exercise that should be validated
      */
-    public void validateNewProgrammingExerciseSettings(ProgrammingExercise programmingExercise) {
+    public void validateNewProgrammingExerciseSettings(ProgrammingExercise programmingExercise, Course course) {
         if (programmingExercise.getId() != null) {
             throw new BadRequestAlertException("A new programmingExercise cannot already have an ID", "Exercise", "idexists");
         }
@@ -264,9 +264,43 @@ public class ProgrammingExerciseService {
                 throw new BadRequestAlertException("The package name is invalid", "Exercise", "packagenameInvalid");
             }
         }
+        // Check if project type is selected
+        if (!programmingLanguageFeature.getProjectTypes().isEmpty()) {
+            if (programmingExercise.getProjectType() == null) {
+                throw new BadRequestAlertException("The project type is not set", "Exercise", "projectTypeNotSet");
+            }
+            if (!programmingLanguageFeature.getProjectTypes().contains(programmingExercise.getProjectType())) {
+                throw new BadRequestAlertException("The project type is not supported for this programming language", "Exercise", "projectTypeNotSupported");
+            }
+        }
+        else {
+            if (programmingExercise.getProjectType() != null) {
+                throw new BadRequestAlertException("The project type is set but not supported", "Exercise", "projectTypeSet");
+            }
+        }
+
+        // Check if checkout solution repository is enabled
+        if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.isCheckoutSolutionRepositoryAllowed()) {
+            throw new BadRequestAlertException("Checkout solution repository is not supported for this programming language", "Exercise", "checkoutSolutionRepositoryNotSupported");
+        }
+
+        programmingExerciseRepository.validateCourseSettings(programmingExercise, course);
+        validateStaticCodeAnalysisSettings(programmingExercise);
+
         programmingExercise.generateAndSetProjectKey();
         checkIfProjectExists(programmingExercise);
 
+    }
+
+    /**
+     * Validates static code analysis settings
+     *
+     * @param programmingExercise exercise to validate
+     */
+    public void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
+                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+        programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
     }
 
     /**
