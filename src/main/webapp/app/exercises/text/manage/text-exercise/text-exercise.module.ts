@@ -23,6 +23,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.module';
 import { ArtemisExerciseUpdateWarningModule } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.module';
 import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
+import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -46,6 +47,7 @@ const ENTITY_STATES = [...textExerciseRoute];
         NonProgrammingExerciseDetailCommonActionsModule,
         ArtemisExerciseUpdateWarningModule,
         ExampleSubmissionsModule,
+        ExerciseCategoriesModule,
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent, TextExerciseRowButtonsComponent],
     exports: [TextExerciseComponent],
