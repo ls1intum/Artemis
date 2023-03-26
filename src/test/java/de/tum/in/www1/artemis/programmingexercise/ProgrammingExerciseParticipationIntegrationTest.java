@@ -144,7 +144,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student4", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     void testGetParticipationWithLatestResult_cannotAccessParticipation() throws Exception {
         // student4 should have no connection to student1's participation and should thus receive a Forbidden HTTP status.
         ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
