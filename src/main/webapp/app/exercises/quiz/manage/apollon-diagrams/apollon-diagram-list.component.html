@@ -36,7 +36,7 @@
                     <a class="btn btn-primary me-1" [routerLink]="['/course-management', courseId, 'apollon-diagrams', apollonDiagram.id]" jhiTranslate="entity.action.open">
                         Open
                     </a>
-                    <ng-container *ngIf="course.isAtLeastInstructor">
+                    <ng-container *ngIf="course && course.isAtLeastInstructor">
                         <button class="btn btn-danger me-1" (click)="delete(apollonDiagram)" jhiTranslate="entity.action.delete">Delete</button>
                     </ng-container>
                 </td>

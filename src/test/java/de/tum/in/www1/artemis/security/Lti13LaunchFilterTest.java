@@ -30,7 +30,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.security.lti.Lti13LaunchFilter;
-import de.tum.in.www1.artemis.service.connectors.Lti13Service;
+import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import net.minidev.json.JSONObject;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
