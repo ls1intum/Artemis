@@ -196,7 +196,6 @@ public class ProgrammingExerciseImportService {
 
     private void copyExerciseContentToRepositoryForExerciseWithPlainDirectoryStructure(Repository repository, RepositoryType repositoryType, Path exerciseDir) throws IOException {
         for (Path file : retrieveRepositoryContentPaths(retrieveRepositoryDirectoryPath(exerciseDir, repositoryType.getName()))) {
-            log.error(file.getFileName().toString());
             repositoryService.createFile(repository, String.valueOf(file.getFileName()), Files.newInputStream(file));
 
         }
@@ -224,7 +223,7 @@ public class ProgrammingExerciseImportService {
                 }
             }
             else {
-                log.error(repositoryType + ":" + "create file: " + file.getFileName().toString());
+
                 repositoryService.createFile(repository, String.valueOf(file.getFileName()), Files.newInputStream(file));
             }
 
@@ -333,19 +332,13 @@ public class ProgrammingExerciseImportService {
                 if (!FileSystemUtils.deleteRecursively(e.getKey())) {
                     log.error("failed to delete: " + e.getKey().getName());
                 }
-                else {
-                    log.debug("successfully deleted: " + e.getKey().getName());
-                }
             });
             repository.setContent(null);
             return;
         }
         Stream.of("src", "test", "behavior", "structural", "assignment", "checker", "overrides", "solution", "tests", "testUtils")
                 .map(name -> gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> name.equals(dir.getName())).findFirst())
-                .filter(Optional::isPresent).map(Optional::get).forEach(f -> {
-                    FileSystemUtils.deleteRecursively(f);
-                    log.error("deleted directory: " + f);
-                });
+                .filter(Optional::isPresent).map(Optional::get).forEach(FileSystemUtils::deleteRecursively);
         repository.setContent(null);
     }
 

@@ -90,10 +90,6 @@ public class ZipFileService {
 
     }
 
-    public void extractZipFileRecursivelyInSameDirectory(Path zipPath) throws IOException {
-
-    }
-
     private void createZipFileFromPathStream(Path zipFilePath, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
             var filteredPaths = paths.filter(path -> Files.isReadable(path) && !Files.isDirectory(path));

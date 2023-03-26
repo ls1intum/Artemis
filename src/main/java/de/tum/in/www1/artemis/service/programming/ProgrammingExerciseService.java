@@ -38,11 +38,9 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.connectors.CIPermission;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
@@ -122,8 +120,8 @@ public class ProgrammingExerciseService {
 
     private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
 
-    public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
-            Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+    public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
             ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, GroupNotificationService groupNotificationService,
@@ -131,7 +129,8 @@ public class ProgrammingExerciseService {
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository, ExerciseSpecificationService exerciseSpecificationService,
-            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService) {
+            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, AuxiliaryRepositoryService auxiliaryRepositoryService,
+            SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -166,7 +165,7 @@ public class ProgrammingExerciseService {
      * <li>VCS webhooks</li>
      * <li>Bamboo build plans</li>
      * </ul>
-     *
+     * <p>
      * The exercise gets set up in the following order:
      * <ol>
      * <li>Create all repositories for the new exercise</li>
@@ -225,6 +224,11 @@ public class ProgrammingExerciseService {
         instanceMessageSendService.sendProgrammingExerciseScheduleCancel(programmingExerciseId);
     }
 
+    /**
+     * validates the settings of a new programming exercise
+     *
+     * @param programmingExercise The programming exercise that should be validated
+     */
     public void validateNewProgrammingExerciseSettings(ProgrammingExercise programmingExercise) {
         if (programmingExercise.getId() != null) {
             throw new BadRequestAlertException("A new programmingExercise cannot already have an ID", "Exercise", "idexists");
