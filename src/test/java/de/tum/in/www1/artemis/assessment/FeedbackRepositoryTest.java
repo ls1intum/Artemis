@@ -8,15 +8,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.service.FeedbackCreationService;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
 
-class FeedbackCreationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    private FeedbackCreationService feedbackCreationService;
+    private FeedbackRepository feedbackRepository;
 
     @Test
     void createFeedbackFromTestCaseCombineMultiple() {
@@ -36,7 +35,7 @@ class FeedbackCreationServiceTest extends AbstractSpringIntegrationBambooBitbuck
                   to contain:
                     ["Java"]""";
 
-        String actualFeedback = feedbackCreationService.createFeedbackFromTestCase("test1", List.of(msg1, msg2, msg3), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test1", List.of(msg1, msg2, msg3), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
                 .getDetailText();
 
         assertThat(actualFeedback).isEqualTo("""
@@ -65,7 +64,7 @@ class FeedbackCreationServiceTest extends AbstractSpringIntegrationBambooBitbuck
                     5
                 org.opentest4j.AssertionFailedError: expected:
                     something else""";
-        String actualFeedback = feedbackCreationService.createFeedbackFromTestCase("test2", List.of(msgMatchMultiple), false, ProgrammingLanguage.KOTLIN, null).getDetailText();
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test2", List.of(msgMatchMultiple), false, ProgrammingLanguage.KOTLIN, null).getDetailText();
         assertThat(actualFeedback).isEqualTo("""
                 expected:
                     4
@@ -78,7 +77,7 @@ class FeedbackCreationServiceTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     void createFeedbackFromTestCaseUnchanged() {
         String msgUnchanged = "Should not be changed";
-        String actualFeedback = feedbackCreationService.createFeedbackFromTestCase("test3", List.of(msgUnchanged), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test3", List.of(msgUnchanged), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
                 .getDetailText();
         assertThat(actualFeedback).isEqualTo(msgUnchanged);
 
@@ -90,8 +89,8 @@ class FeedbackCreationServiceTest extends AbstractSpringIntegrationBambooBitbuck
                 org.opentest4j.AssertionFailedError: the expected method 'getDates' of the class 'Context' with no parameters was not found or is named wrongly.
                 \tat test.MethodTest.checkMethods(MethodTest.java:129)
                 \tat test.MethodTest.testMethods(MethodTest.java:72)
-                \tat test.MethodTest.lambda$0(MethodTest.java:52)""".stripIndent();
-        String actualFeedback = feedbackCreationService.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
+                \tat test.MethodTest.lambda$0(MethodTest.java:52)""";
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
                 .getDetailText();
         assertThat(actualFeedback).isEqualTo("the expected method 'getDates' of the class 'Context' with no parameters was not found or is named wrongly.");
     }
@@ -111,9 +110,8 @@ class FeedbackCreationServiceTest extends AbstractSpringIntegrationBambooBitbuck
                 \tat org.hibernate.loader.plan.exec.process.internal.CollectionReferenceInitializerImpl.finishUpRow(CollectionReferenceInitializerImpl.java:76)
                 \tat org.hibernate.loader.plan.exec.process.internal.AbstractRowReader.readRow(AbstractRowReader.java:125)
                 \tat org.hibernate.loader.plan.exec.process.internal.ResultSetProcessorImpl.extractRows(ResultSetProcessorImpl.java:157)
-                \tat org.hibernate.loader.plan.exec.process.internal.ResultSetProcessorImpl.extractResults(ResultSetProcessorImpl.java:94)"""
-                .stripIndent();
-        String actualFeedback = feedbackCreationService.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
+                \tat org.hibernate.loader.plan.exec.process.internal.ResultSetProcessorImpl.extractResults(ResultSetProcessorImpl.java:94)""";
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
                 .getDetailText();
         assertThat(actualFeedback).isEqualTo(
                 "org.springframework.orm.jpa.JpaSystemException: org.springframework.orm.jpa.JpaSystemException: null index column for collection: de.tum.in.www1.artemis.domain.exam.Exam.exerciseGroups");
@@ -143,8 +141,8 @@ class FeedbackCreationServiceTest extends AbstractSpringIntegrationBambooBitbuck
                 \tat java.base/jdk.internal.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
                 \tat java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:500)
                 \tat de.tum.in.www1.artemis.FeedbackServiceTest.createFeedbackFromTestCaseMatchMultiple(FeedbackServiceTest.java:66)
-                """.stripIndent();
-        String actualFeedback = feedbackCreationService.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
+                """;
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
                 .getDetailText();
         assertThat(actualFeedback).isEqualTo("""
                 Expecting:
@@ -161,106 +159,18 @@ class FeedbackCreationServiceTest extends AbstractSpringIntegrationBambooBitbuck
                     5
                 expected:
                     something else">
-                but was not.""".stripIndent());
+                but was not.""");
     }
 
     @Test
     void createFeedbackFromTestCaseSuccessfulWithMessage() {
         String msg = "success\nmessage";
-        assertThat(feedbackCreationService.createFeedbackFromTestCase("test1", List.of(msg), true, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText())
+        assertThat(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msg), true, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText())
                 .isEqualTo("success\nmessage");
     }
 
     @Test
     void createFeedbackFromTestCaseSuccessfulNoMessage() {
-        assertThat(feedbackCreationService.createFeedbackFromTestCase("test1", List.of(), true, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText()).isNull();
-    }
-
-    @Test
-    void createFeedbackFromTimeoutMessage() {
-        final String message = """
-                ERROR: org.junit.runners.model.TestTimedOutException: detail message
-                \tat dummy stack trace
-                """;
-
-        final Feedback feedback = feedbackCreationService.createFeedbackFromTestCase("test1", List.of(message), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_GRADLE);
-        assertThat(feedback.getDetailText()).contains("The test case execution timed out.").contains("Exception message: detail message");
-    }
-
-    @Test
-    void createFeedbackFromGeneralTimeoutMessage() {
-        final String message = """
-                exit: Jenkins build run timed out after 120s.
-                """;
-
-        final Feedback feedback = feedbackCreationService.createFeedbackFromTestCase("test1", List.of(message), false, ProgrammingLanguage.C, null);
-        assertThat(feedback.getDetailText()).contains("The test case execution timed out.").contains("Exception message: Jenkins build run timed out after 120s.");
-    }
-
-    @Test
-    void trimPythonAssertionFailure() {
-        final String message = """
-                def test__failed():
-                >       assert 1 == 2
-                E       assert 1 == 2
-
-                tests/test_cli.py:89: AssertionError
-                """.stripIndent();
-
-        final Feedback feedback = feedbackCreationService.createFeedbackFromTestCase("test1", List.of(message), false, ProgrammingLanguage.PYTHON, null);
-        assertThat(feedback.getDetailText()).startsWith("assert 1 == 2").contains(message);
-    }
-
-    @Test
-    void trimPythonAssertionFailureWithMessage() {
-        final String message = """
-                def test__failed():
-                >       assert 1 == 2, "some message"
-                E       AssertionError: some message
-                E       assert 1 == 2
-
-                tests/test_cli.py:89: AssertionError
-                """.stripIndent();
-
-        final Feedback feedback = feedbackCreationService.createFeedbackFromTestCase("test1", List.of(message), false, ProgrammingLanguage.PYTHON, null);
-        assertThat(feedback.getDetailText()).startsWith("AssertionError: some message").contains(message);
-    }
-
-    @Test
-    void pythonMessageNotMatchingUnchanged() {
-        final String message = """
-                AssertionError: some message
-
-                Not trimmed
-                """;
-
-        final Feedback feedback = feedbackCreationService.createFeedbackFromTestCase("test1", List.of(message), false, ProgrammingLanguage.PYTHON, null);
-        assertThat(feedback.getDetailText()).isEqualTo(message);
-    }
-
-    @Test
-    void gradleFailureMessage() {
-        final String message = """
-                org.opentest4j.AssertionFailedError: expected: <1> but was: <2>
-                \tat app//org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
-                """.stripIndent();
-
-        final Feedback feedback = feedbackCreationService.createFeedbackFromTestCase("test1", List.of(message), false, ProgrammingLanguage.JAVA, ProjectType.GRADLE_GRADLE);
-        assertThat(feedback.getDetailText()).doesNotContain("AssertionFailedError").isEqualTo("expected: <1> but was: <2>");
-    }
-
-    @Test
-    void gradleAssertJFailureMessage() {
-        final String message = """
-                org.opentest4j.AssertionFailedError:
-                  expected: "a
-                  bc"
-                  but was: "d
-                  ef"
-                \tat java.base@17.0.6/jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
-                """.stripIndent();
-
-        final Feedback feedback = feedbackCreationService.createFeedbackFromTestCase("test1", List.of(message), false, ProgrammingLanguage.JAVA, ProjectType.GRADLE_GRADLE);
-        assertThat(feedback.getDetailText()).doesNotContain("AssertionFailedError").contains("expected: \"a").contains("but was: \"d").contains("ef\"");
+        assertThat(feedbackRepository.createFeedbackFromTestCase("test1", List.of(), true, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText()).isEqualTo(null);
     }
 }

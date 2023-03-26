@@ -14,7 +14,6 @@ import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
-import de.tum.in.www1.artemis.service.FeedbackCreationService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
@@ -31,17 +30,13 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
     protected final TestwiseCoverageService testwiseCoverageService;
 
-    protected final FeedbackCreationService feedbackCreationService;
-
-    protected AbstractContinuousIntegrationResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
-            BuildLogEntryService buildLogService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,
-            FeedbackCreationService feedbackCreationService) {
+    public AbstractContinuousIntegrationResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
+            BuildLogEntryService buildLogService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.feedbackRepository = feedbackRepository;
         this.buildLogService = buildLogService;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.testwiseCoverageService = testwiseCoverageService;
-        this.feedbackCreationService = feedbackCreationService;
     }
 
     @Override
@@ -82,13 +77,12 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
         for (final var job : jobs) {
             for (final var failedTest : job.getFailedTests()) {
-                result.addFeedback(feedbackCreationService.createFeedbackFromTestCase(failedTest.getName(), failedTest.getMessage(), false, programmingLanguage, projectType));
+                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(failedTest.getName(), failedTest.getMessage(), false, programmingLanguage, projectType));
             }
             result.setTestCaseCount(result.getTestCaseCount() + job.getFailedTests().size());
 
             for (final var successfulTest : job.getSuccessfulTests()) {
-                result.addFeedback(
-                        feedbackCreationService.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getMessage(), true, programmingLanguage, projectType));
+                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getMessage(), true, programmingLanguage, projectType));
             }
 
             result.setTestCaseCount(result.getTestCaseCount() + job.getSuccessfulTests().size());
@@ -99,7 +93,7 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
     private void addStaticCodeAnalysisFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise programmingExercise) {
         final var staticCodeAnalysisReports = buildResult.getStaticCodeAnalysisReports();
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
-            var scaFeedbackList = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
+            var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
             result.addFeedbacks(scaFeedbackList);
             result.setCodeIssueCount(scaFeedbackList.size());
         }

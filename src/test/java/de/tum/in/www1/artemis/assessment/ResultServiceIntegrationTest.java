@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.FeedbackCreationService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
@@ -87,9 +86,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
-
-    @Autowired
-    private FeedbackCreationService feedbackCreationService;
 
     private Course course;
 
@@ -153,8 +149,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 issue.setFilePath(pathWithoutWorkingDir);
             }
         }
-        var staticCodeAnalysisFeedback1 = feedbackCreationService
-                .createFeedbackFromStaticCodeAnalysisReports(resultNotification1.getBuild().jobs().get(0).staticCodeAnalysisReports());
+        var staticCodeAnalysisFeedback1 = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(resultNotification1.getBuild().jobs().get(0).staticCodeAnalysisReports());
 
         for (var feedback : staticCodeAnalysisFeedback1) {
             JSONObject issueJSON = new JSONObject(feedback.getDetailText());
@@ -179,7 +174,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 }
             }
         }
-        final var staticCodeAnalysisFeedback2 = feedbackCreationService
+        final var staticCodeAnalysisFeedback2 = feedbackRepository
                 .createFeedbackFromStaticCodeAnalysisReports(resultNotification2.getBuild().jobs().get(0).staticCodeAnalysisReports());
 
         for (var feedback : staticCodeAnalysisFeedback2) {
