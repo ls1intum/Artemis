@@ -29,6 +29,13 @@ public class LongFeedbackTextResource {
         this.participationAuthorizationCheckService = participationAuthorizationCheckService;
     }
 
+    /**
+     * Gets the long feedback associated with the specified feedback.
+     *
+     * @param resultId   The result the feedback belongs to.
+     * @param feedbackId The feedback for which the long feedback should be fetched.
+     * @return The long feedback belonging to the feedback with id {@code feedbackId}.
+     */
     @GetMapping("results/{resultId}/feedbacks/{feedbackId}/long-feedback")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<LongFeedbackText> getLongFeedback(@PathVariable Long resultId, @PathVariable Long feedbackId) {
