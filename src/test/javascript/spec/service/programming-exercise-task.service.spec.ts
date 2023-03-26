@@ -150,7 +150,7 @@ describe('ProgrammingExerciseTask Service', () => {
                     testCases = tasks.flatMap(({ testCases }) => testCases);
                 });
 
-                httpMock.expectOne(`${resourceUrl}/${exercise.id}/tasks`).flush(serverSideTasks);
+                httpMock.expectOne(`${resourceUrl}/${exercise.id}/tasks-with-unassigned-test-cases`).flush(serverSideTasks);
             });
     });
 
@@ -289,7 +289,7 @@ describe('ProgrammingExerciseTask Service', () => {
             expect(alertSuccessStub).toHaveBeenCalled();
         });
 
-        httpMock.expectOne(`${resourceUrl}/${exercise.id}/tasks`).flush([]);
+        httpMock.expectOne(`${resourceUrl}/${exercise.id}/tasks-with-unassigned-test-cases`).flush([]);
 
         return done;
     });
