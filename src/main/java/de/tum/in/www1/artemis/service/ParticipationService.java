@@ -665,16 +665,11 @@ public class ParticipationService {
     public void cleanupRepository(ProgrammingExerciseStudentParticipation participation) {
         // ignore participations without repository URL
         if (participation.getRepositoryUrl() != null) {
-            try {
-                versionControlService.get().deleteRepository(participation.getVcsRepositoryUrl());
-                gitService.deleteLocalRepository(participation.getVcsRepositoryUrl());
-                participation.setRepositoryUrl(null);
-                participation.setInitializationState(InitializationState.FINISHED);
-                programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
-            }
-            catch (VersionControlException ex) {
-                log.error("Error while deleting repository " + participation.getVcsRepositoryUrl(), ex);
-            }
+            versionControlService.get().deleteRepository(participation.getVcsRepositoryUrl());
+            gitService.deleteLocalRepository(participation.getVcsRepositoryUrl());
+            participation.setRepositoryUrl(null);
+            participation.setInitializationState(InitializationState.FINISHED);
+            programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
         }
     }
 

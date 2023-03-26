@@ -18,9 +18,6 @@ import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
-/**
- * Abstract class for managing entities related to continuous integration.
- */
 public abstract class AbstractContinuousIntegrationResultService implements ContinuousIntegrationResultService {
 
     protected final ProgrammingSubmissionRepository programmingSubmissionRepository;
