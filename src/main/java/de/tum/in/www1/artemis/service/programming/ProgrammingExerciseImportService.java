@@ -29,10 +29,7 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.ZipFileService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -68,10 +65,12 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
 
+    private final StaticCodeAnalysisService staticCodeAnalysisService;
+
     public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService, ZipFileService zipFileService, UserRepository userRepository,
             RepositoryService repositoryService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UrlService urlService, TemplateUpgradePolicy templateUpgradePolicy,
-            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService) {
+            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, StaticCodeAnalysisService staticCodeAnalysisService) {
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -84,6 +83,7 @@ public class ProgrammingExerciseImportService {
         this.urlService = urlService;
         this.templateUpgradePolicy = templateUpgradePolicy;
         this.programmingExerciseImportBasicService = programmingExerciseImportBasicService;
+        this.staticCodeAnalysisService = staticCodeAnalysisService;
     }
 
     /**
@@ -643,12 +643,19 @@ public class ProgrammingExerciseImportService {
             throws IOException, GitAPIException, URISyntaxException {
         Path path = Files.createTempDirectory("imported-exercise-dir");
         Path exerciseFilePath = Files.createTempFile(path, "exercise-for-import", ".zip");
+        if (zipFile.getName().endsWith(".zip")) {
+            throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
+        }
         zipFile.transferTo(exerciseFilePath);
         zipFileService.extractZipFileRecursively(exerciseFilePath);
         var exerciseDetailsFileName = findJsonFileAndReturnFileName(path);
         checkRepositoriesExist(path);
         String oldPackageName = retrieveOldPackageName(Path.of(exerciseFilePath.toString().substring(0, exerciseFilePath.toString().length() - 4)), exerciseDetailsFileName);
+        programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExerciseForImport);
         ProgrammingExercise importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport);
+        if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
+            staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
+        }
         importRepositoriesFromFile(importedProgrammingExercise, path, oldPackageName);
         return importedProgrammingExercise;
     }

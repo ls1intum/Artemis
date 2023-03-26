@@ -65,7 +65,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.CourseExamExportService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -136,9 +135,6 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private PasswordService passwordService;
-
-    @Autowired
-    private ZipFileService zipFileService;
 
     @Autowired
     private ZipFileTestUtilService zipFileTestUtilService;
@@ -404,9 +400,12 @@ public class ProgrammingExerciseTestService {
         assertThat(savedExercise.getBonusPoints()).isEqualTo(0D);
     }
 
-    void importFromFile_validJavaExercise_isSuccessfullyImported() throws Exception {
+    void importFromFile_validJavaExercise_isSuccessfullyImported(boolean scaEnabled) throws Exception {
         mockDelegate.mockConnectorRequestForImportFromFile(exercise);
         Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
+        if (scaEnabled) {
+            exercise.setStaticCodeAnalysisEnabled(true);
+        }
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
         var importedExercise = request.postWithMultipartFile(ROOT + IMPORT_FROM_FILE, exercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK);
@@ -414,6 +413,23 @@ public class ProgrammingExerciseTestService {
         assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(JAVA);
         assertThat(importedExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
         assertThat(importedExercise.getProjectType()).isEqualTo(ProjectType.PLAIN_MAVEN);
+        if (scaEnabled) {
+            assertThat(importedExercise.isStaticCodeAnalysisEnabled()).isTrue();
+        }
+        else {
+            assertThat(importedExercise.isStaticCodeAnalysisEnabled()).isFalse();
+        }
+        var savedExercise = programmingExerciseRepository.findById(importedExercise.getId()).get();
+        assertThat(savedExercise).isNotNull();
+        assertThat(savedExercise.getProgrammingLanguage()).isEqualTo(JAVA);
+        assertThat(savedExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(savedExercise.getProjectType()).isEqualTo(ProjectType.PLAIN_MAVEN);
+        if (scaEnabled) {
+            assertThat(savedExercise.isStaticCodeAnalysisEnabled()).isTrue();
+        }
+        else {
+            assertThat(savedExercise.isStaticCodeAnalysisEnabled()).isFalse();
+        }
     }
 
     void importFromFile_validExercise_isSuccessfullyImported(ProgrammingLanguage language) throws Exception {

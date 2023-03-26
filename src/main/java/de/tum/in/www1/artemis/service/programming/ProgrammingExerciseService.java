@@ -10,6 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -40,10 +42,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -61,6 +60,19 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 @Service
 public class ProgrammingExerciseService {
+
+    private static final String packageNameRegex = "^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z]\\w*(?:\\.[A-Z_a-z]\\w*)*$";
+
+    /**
+     * Swift package name Regex derived from
+     * (<a href="https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412">https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412</a>),
+     * with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
+     */
+    private static final String packageNameRegexForSwift = "^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][\\dA-Za-z]*$";
+
+    private final Pattern packageNamePattern = Pattern.compile(packageNameRegex);
+
+    private final Pattern packageNamePatternForSwift = Pattern.compile(packageNameRegexForSwift);
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
 
@@ -106,6 +118,12 @@ public class ProgrammingExerciseService {
 
     private final ExerciseSpecificationService exerciseSpecificationService;
 
+    private final AuxiliaryRepositoryService auxiliaryRepositoryService;
+
+    private final SubmissionPolicyService submissionPolicyService;
+
+    private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -115,7 +133,8 @@ public class ProgrammingExerciseService {
             InstanceMessageSendService instanceMessageSendService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
-            ExerciseSpecificationService exerciseSpecificationService) {
+            ExerciseSpecificationService exerciseSpecificationService, AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
+            Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -137,6 +156,9 @@ public class ProgrammingExerciseService {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
         this.exerciseSpecificationService = exerciseSpecificationService;
+        this.auxiliaryRepositoryService = auxiliaryRepositoryService;
+        this.submissionPolicyService = submissionPolicyService;
+        this.programmingLanguageFeatureService = programmingLanguageFeatureService;
     }
 
     /**
@@ -148,7 +170,7 @@ public class ProgrammingExerciseService {
      * <li>VCS webhooks</li>
      * <li>Bamboo build plans</li>
      * </ul>
-     *
+     * <p>
      * The exercise gets set up in the following order:
      * <ol>
      * <li>Create all repositories for the new exercise</li>
@@ -205,6 +227,46 @@ public class ProgrammingExerciseService {
 
     public void cancelScheduledOperations(Long programmingExerciseId) {
         instanceMessageSendService.sendProgrammingExerciseScheduleCancel(programmingExerciseId);
+    }
+
+    public void validateNewProgrammingExerciseSettings(ProgrammingExercise programmingExercise) {
+        if (programmingExercise.getId() != null) {
+            throw new BadRequestAlertException("A new programmingExercise cannot already have an ID", "Exercise", "idexists");
+        }
+
+        // Valid exercises have set either a course or an exerciseGroup
+        programmingExercise.checkCourseAndExerciseGroupExclusivity("Exercise");
+
+        programmingExercise.validateGeneralSettings();
+        programmingExercise.validateProgrammingSettings();
+        programmingExercise.validateManualFeedbackSettings();
+        auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
+        submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
+
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
+                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+
+        // Check if package name is set
+        if (programmingLanguageFeature.isPackageNameRequired()) {
+            if (programmingExercise.getPackageName() == null) {
+                throw new BadRequestAlertException("The package name is invalid", "Exercise", "packagenameInvalid");
+            }
+
+            // Check if package name matches regex
+            Matcher packageNameMatcher;
+            if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
+                packageNameMatcher = packageNamePatternForSwift.matcher(programmingExercise.getPackageName());
+            }
+            else {
+                packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
+            }
+            if (!packageNameMatcher.matches()) {
+                throw new BadRequestAlertException("The package name is invalid", "Exercise", "packagenameInvalid");
+            }
+        }
+        programmingExercise.generateAndSetProjectKey();
+        checkIfProjectExists(programmingExercise);
+
     }
 
     /**

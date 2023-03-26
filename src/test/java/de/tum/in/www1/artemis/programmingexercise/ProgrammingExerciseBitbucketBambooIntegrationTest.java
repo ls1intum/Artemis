@@ -352,10 +352,11 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
         programmingExerciseTestService.importFromFile_missingRepository_BadRequest();
     }
 
-    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importExerciseFromFile_valid_Java_Exercise_importSuccessful() throws Exception {
-        programmingExerciseTestService.importFromFile_validJavaExercise_isSuccessfullyImported();
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    void importExerciseFromFile_valid_Java_Exercise_importSuccessful(boolean scaEnabled) throws Exception {
+        programmingExerciseTestService.importFromFile_validJavaExercise_isSuccessfullyImported(scaEnabled);
     }
 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
