@@ -406,7 +406,7 @@ public class ProgrammingExerciseTestService {
 
     void importFromFile_validExercise_isSuccessfullyImported() throws Exception {
         mockDelegate.mockConnectorRequestForImportFromFile(exercise);
-        Resource resource = new ClassPathResource("test-data/import-from-file/valid-export.zip");
+        Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
         var importedExercise = request.postWithMultipartFile(ROOT + IMPORT_FROM_FILE, exercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK);
