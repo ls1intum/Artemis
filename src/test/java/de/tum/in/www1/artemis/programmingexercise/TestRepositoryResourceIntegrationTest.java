@@ -356,6 +356,14 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    void testSaveFiles_accessForbidden() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        // student1 should not have access to instructor1's tests repository even if they assume an INSTRUCTOR role.
+        request.put(testRepoBaseUrl + programmingExercise.getId() + "/files?commit=true", List.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testPullChanges() throws Exception {
@@ -459,6 +467,14 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         // Check if the status of git is "clean" after the commit
         var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    void testGetStatus_cannotAccessRepository() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        // student1 should not have access to instructor1's tests repository even if they assume the role of an INSTRUCTOR.
+        request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.FORBIDDEN, RepositoryStatusDTO.class);
     }
 
     @Test
