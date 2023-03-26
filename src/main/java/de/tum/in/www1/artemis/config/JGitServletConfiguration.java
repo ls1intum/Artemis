@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.security.localvc.LocalVCFilterService;
 import de.tum.in.www1.artemis.security.localvc.LocalVCPostPushHook;
 import de.tum.in.www1.artemis.security.localvc.LocalVCPrePushHook;
 import de.tum.in.www1.artemis.security.localvc.LocalVCPushFilter;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationPushService;
+import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPushService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 
 /**
@@ -32,13 +32,12 @@ public class JGitServletConfiguration {
 
     private final LocalVCFilterService localVCFilterService;
 
-    private final Optional<ContinuousIntegrationPushService> continuousIntegrationPushService;
+    private final Optional<LocalCIPushService> localCIPushService;
 
-    public JGitServletConfiguration(LocalVCServletService localVCServletService, LocalVCFilterService localVCFilterService,
-            Optional<ContinuousIntegrationPushService> continuousIntegrationPushService) {
+    public JGitServletConfiguration(LocalVCServletService localVCServletService, LocalVCFilterService localVCFilterService, Optional<LocalCIPushService> localCIPushService) {
         this.localVCServletService = localVCServletService;
         this.localVCFilterService = localVCFilterService;
-        this.continuousIntegrationPushService = continuousIntegrationPushService;
+        this.localCIPushService = localCIPushService;
     }
 
     /**
@@ -66,7 +65,7 @@ public class JGitServletConfiguration {
                 // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
                 receivePack.setPreReceiveHook(new LocalVCPrePushHook());
                 // Add a hook that triggers the creation of a new submission after the push went through successfully.
-                receivePack.setPostReceiveHook(new LocalVCPostPushHook(continuousIntegrationPushService));
+                receivePack.setPostReceiveHook(new LocalVCPostPushHook(localCIPushService));
                 return receivePack;
             });
 

@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationPushService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
@@ -51,7 +50,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Service
 @Profile("localci")
-public class LocalCIPushService implements ContinuousIntegrationPushService {
+public class LocalCIPushService {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIPushService.class);
 
@@ -105,7 +104,6 @@ public class LocalCIPushService implements ContinuousIntegrationPushService {
      * @param commitHash the hash of the last commit.
      * @param repository the remote repository which was pushed to.
      */
-    @Override
     public void processNewPush(String commitHash, Repository repository) {
         long timeNanoStart = System.nanoTime();
 
