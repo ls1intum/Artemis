@@ -53,6 +53,8 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             """)
     Optional<ConversationParticipant> findModeratorConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
 
+    Set<ConversationParticipant> findConversationParticipantsByUser(User user);
+
     Integer countByConversationId(Long conversationId);
 
     @Transactional // ok because of delete

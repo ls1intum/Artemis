@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
@@ -117,6 +118,8 @@ public class UserService {
 
     private final ConversationParticipantRepository conversationParticipantRepository;
 
+    private final OneToOneChatRepository oneToOneChatRepository;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
@@ -124,7 +127,8 @@ public class UserService {
             LearningGoalProgressRepository learningGoalProgressRepository, InstanceMessageSendService instanceMessageSendService,
             ExerciseHintActivationRepository exerciseHintActivationRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
             TutorialGroupRepository tutorialGroupRepository, SingleUserNotificationRepository singleUserNotificationRepository, NotificationRepository notificationRepository,
-            PostRepository postRepository, ConversationRepository conversationRepository, ConversationParticipantRepository conversationParticipantRepository) {
+            PostRepository postRepository, ConversationRepository conversationRepository, ConversationParticipantRepository conversationParticipantRepository,
+            OneToOneChatRepository oneToOneChatRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -147,6 +151,7 @@ public class UserService {
         this.postRepository = postRepository;
         this.conversationRepository = conversationRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
+        this.oneToOneChatRepository = oneToOneChatRepository;
     }
 
     /**
@@ -486,9 +491,17 @@ public class UserService {
         studentScoreRepository.deleteAllByUserId(user.getId());
         learningGoalProgressRepository.deleteAllByUserId(user.getId());
         exerciseHintActivationRepository.deleteAllByUser(user);
+
+        var conversationsByUser = conversationRepository.findAllByCreator(user);
+        conversationsByUser.forEach(conversation -> postRepository.deleteAllByConversationId(conversation.getId()));
         postRepository.deleteAllByAuthor(user);
+
         conversationRepository.deleteAllByCreator(user);
+
+        var conversationParticipantEntities = conversationParticipantRepository.findConversationParticipantsByUser(user);
         conversationParticipantRepository.deleteAllByUser(user);
+
+        conversationParticipantEntities.forEach(participant -> oneToOneChatRepository.deleteAllByConversationParticipantsContaining(participant));
 
         tutorialGroupRegistrationRepository.deleteAllByStudent(user);
         var taughtTutorialGroups = tutorialGroupRepository.findAllByTeachingAssistant(user);

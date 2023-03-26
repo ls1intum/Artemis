@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository.metis.conversation;
 
+import java.util.Set;
+
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 
@@ -26,4 +28,5 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
         return this.findById(conversationId).orElseThrow(() -> new EntityNotFoundException("Conversation", conversationId));
     }
 
+    Set<Conversation> findAllByCreator(User creator);
 }
