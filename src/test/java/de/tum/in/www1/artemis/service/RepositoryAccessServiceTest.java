@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
@@ -18,7 +19,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
-public class RepositoryAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class RepositoryAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "rastest";
 
@@ -28,7 +29,7 @@ public class RepositoryAccessServiceTest extends AbstractSpringIntegrationBamboo
     @Autowired
     private RepositoryAccessService repositoryAccessService;
 
-    User user;
+    User student;
 
     Course course;
 
@@ -37,14 +38,15 @@ public class RepositoryAccessServiceTest extends AbstractSpringIntegrationBamboo
     @BeforeEach
     void setup() {
         database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        user = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        student = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = (ProgrammingExercise) course.getExercises().stream().iterator().next();
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testShouldEnforceLockRepositoryPolicy() {
-        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
+        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, student.getLogin());
         database.createSubmissionAndResult(participation, 50, true);
 
         // Add LockRepositoryPolicy to the programmingExercise.
@@ -55,12 +57,13 @@ public class RepositoryAccessServiceTest extends AbstractSpringIntegrationBamboo
 
         // Should throw an AccessForbiddenException because the submission limit is already reached.
         assertThrows(AccessForbiddenException.class,
-                () -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, programmingExercise, RepositoryActionType.WRITE));
+                () -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, student, programmingExercise, RepositoryActionType.WRITE));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
+    // Student should not have access to the tests repository.
     void testShouldDenyAccessToTestRepository(boolean atLeastEditor) {
-        assertThrows(AccessForbiddenException.class, () -> repositoryAccessService.checkAccessTestRepositoryElseThrow(atLeastEditor, programmingExercise, user));
+        assertThrows(AccessForbiddenException.class, () -> repositoryAccessService.checkAccessTestRepositoryElseThrow(atLeastEditor, programmingExercise, student));
     }
 }
