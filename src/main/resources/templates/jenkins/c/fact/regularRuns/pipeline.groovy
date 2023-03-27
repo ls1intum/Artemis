@@ -82,7 +82,7 @@ void postBuildTasks() {
     sh '''
     if [ -e test-reports/tests-results.xml ]
     then
-        sed -i 's/[^[:print:]]/�/g' test-reports/tests-results.xml
+        sed -i 's/[^[:print:]\t]/�/g' test-reports/tests-results.xml
         sed -i 's/<skipped/<error/g' test-reports/tests-results.xml
         sed -i 's/<\\/skipped>/<\\/error>/g' test-reports/tests-results.xml
     fi

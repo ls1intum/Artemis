@@ -55,7 +55,7 @@ void postBuildTasks() {
         sed -i 's/<testsuites>//g ; s/<\\/testsuites>//g' test-reports/results.xml
     fi
     cp test-reports/*.xml $WORKSPACE/results/ || true
-    sed -i 's/[^[:print:]]/�/g' $WORKSPACE/results/*.xml || true
+    sed -i 's/[^[:print:]\t]/�/g' $WORKSPACE/results/*.xml || true
     '''
 }
 
