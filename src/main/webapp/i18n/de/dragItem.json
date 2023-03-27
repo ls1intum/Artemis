@@ -3,8 +3,7 @@
         "dragItem": {
             "home": {
                 "title": "Drag Items",
-                "createLabel": "Drag Item erstellen",
-                "createOrEditLabel": "Drag Item erstellen oder bearbeiten"
+                "createLabel": "Drag Item erstellen"
             },
             "created": "Drag Item erstellt mit ID {{ param }}",
             "updated": "Drag Item aktualisiert mit ID {{ param }}",
