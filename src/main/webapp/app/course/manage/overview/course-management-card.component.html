@@ -220,7 +220,7 @@
             <span class="d-none d-xl-inline">{{ 'entity.action.lecture' | artemisTranslate }}</span>
         </a>
         <a
-            *ngIf="course.isAtLeastTutor && course.postsEnabled"
+            *ngIf="course.isAtLeastTutor && isCommunicationEnabled(course)"
             [routerLink]="['/courses', course.id, 'discussion']"
             class="btn btn-primary me-1 mb-1"
             [ngbTooltip]="'artemisApp.metis.communication.label' | artemisTranslate"
