@@ -5,7 +5,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { Exercise as CypressExercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { Course } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { BASE_API, CourseWideContext, DELETE, EXERCISE_TYPE, GET, POST, PUT } from '../constants';
 import programmingExerciseTemplate from '../../fixtures/exercise/programming/template.json';
 import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject } from '../utils';
@@ -64,6 +64,8 @@ export class CourseManagementRequests {
         end = day().add(2, 'hours'),
         fileName?: string,
         file?: Blob,
+        allowCommunication = true,
+        allowMessaging = true,
     ): Cypress.Chainable<Cypress.Response<Course>> {
         const course = new Course();
         course.title = courseName;
@@ -71,6 +73,16 @@ export class CourseManagementRequests {
         course.testCourse = true;
         course.startDate = start;
         course.endDate = end;
+
+        if (allowCommunication && allowMessaging) {
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+        } else if (allowCommunication) {
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+        } else if (allowMessaging) {
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.MESSAGING_ONLY;
+        } else {
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
+        }
 
         const allowGroupCustomization: boolean = Cypress.env('allowGroupCustomization');
         if (customizeGroups && allowGroupCustomization) {

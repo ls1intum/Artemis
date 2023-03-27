@@ -6,7 +6,6 @@ import java.util.Set;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -73,9 +72,9 @@ public class AnswerMessageService extends PostingService {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
 
-        final Course course = preCheckUserAndCourse(user, courseId);
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
         Conversation conversation = conversationService.mayInteractWithConversationElseThrow(answerMessage.getPost().getConversation().getId(), user);
+        var course = preCheckUserAndCourseForMessaging(user, courseId);
 
         if (conversation instanceof Channel channel) {
             channelAuthorizationService.isAllowedToCreateNewAnswerPostInChannel(channel, user);
@@ -117,12 +116,12 @@ public class AnswerMessageService extends PostingService {
             throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idnull");
         }
         AnswerPost existingAnswerMessage = this.findById(answerMessageId);
-        final Course course = preCheckUserAndCourse(user, courseId);
 
         AnswerPost updatedAnswerMessage;
 
         // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
         Conversation conversation = mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
+        var course = preCheckUserAndCourseForMessaging(user, courseId);
         // only the content of the message can be updated
         existingAnswerMessage.setContent(answerMessage.getContent());
 
@@ -153,9 +152,9 @@ public class AnswerMessageService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        final Course course = preCheckUserAndCourse(user, courseId);
         AnswerPost answerMessage = this.findById(answerMessageId);
         Conversation conversation = mayUpdateOrDeleteAnswerMessageElseThrow(answerMessage, user);
+        var course = preCheckUserAndCourseForMessaging(user, courseId);
 
         // delete
         answerPostRepository.deleteById(answerMessageId);

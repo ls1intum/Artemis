@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 
 @RestController
 @RequestMapping("/api/courses")
-public class OneToOneChatResource {
+public class OneToOneChatResource extends ConversationManagementResource {
 
     private final Logger log = LoggerFactory.getLogger(OneToOneChatResource.class);
 
@@ -34,8 +34,6 @@ public class OneToOneChatResource {
     private final ConversationDTOService conversationDTOService;
 
     private final UserRepository userRepository;
-
-    private final CourseRepository courseRepository;
 
     private final OneToOneChatService oneToOneChatService;
 
@@ -46,10 +44,10 @@ public class OneToOneChatResource {
     public OneToOneChatResource(SingleUserNotificationService singleUserNotificationService, OneToOneChatAuthorizationService oneToOneChatAuthorizationService,
             ConversationDTOService conversationDTOService, UserRepository userRepository, CourseRepository courseRepository, OneToOneChatService oneToOneChatService,
             ConversationService conversationService) {
+        super(courseRepository);
         this.oneToOneChatAuthorizationService = oneToOneChatAuthorizationService;
         this.conversationDTOService = conversationDTOService;
         this.userRepository = userRepository;
-        this.courseRepository = courseRepository;
         this.oneToOneChatService = oneToOneChatService;
         this.conversationService = conversationService;
         this.singleUserNotificationService = singleUserNotificationService;
@@ -68,6 +66,7 @@ public class OneToOneChatResource {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to create one to one chat in course {} between : {} and : {}", courseId, requestingUser.getLogin(), otherChatParticipantLogins);
         var course = courseRepository.findByIdElseThrow(courseId);
+        checkMessagingEnabledElseThrow(course);
         oneToOneChatAuthorizationService.isAllowedToCreateOneToOneChat(course, requestingUser);
 
         var loginsToSearchFor = new HashSet<>(otherChatParticipantLogins);

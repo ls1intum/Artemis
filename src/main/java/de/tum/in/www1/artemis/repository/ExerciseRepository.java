@@ -16,8 +16,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -484,122 +482,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @NotNull
     default Exercise findByIdWithStudentParticipationsElseThrow(Long exerciseId) {
         return findByIdWithEagerParticipations(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
-    }
-
-    /**
-     * Gets the {@link CourseExerciseStatisticsDTO} for each exercise proved in <code>exerciseIds</code>.
-     * <p>
-     * calculates the average score and the participation rate of students for each given course exercise (team or individual)
-     * by using the last result (rated or not)
-     *
-     * @param exerciseIds              - list of exercise ids (must belong to the same course)
-     * @param useParticipantScoreTable use the participant score table instead of going through participation -> submission -> result
-     * @return the list of {@link CourseExerciseStatisticsDTO}
-     * @throws IllegalArgumentException if exercise is not found in database, exercise is not a course exercise or not all exercises are from the same course
-     */
-    default List<CourseExerciseStatisticsDTO> calculateExerciseStatistics(List<Long> exerciseIds, boolean useParticipantScoreTable) throws IllegalArgumentException {
-        List<Exercise> exercisesFromDb = new ArrayList<>();
-        for (Long exerciseId : exerciseIds) {
-            Optional<Exercise> exerciseFromDbOptional = this.findById(exerciseId);
-            if (exerciseFromDbOptional.isEmpty()) {
-                throw new IllegalArgumentException("Exercise not found in database");
-            }
-            Exercise exerciseFromDb = exerciseFromDbOptional.get();
-
-            if (!exerciseFromDb.isCourseExercise()) {
-                throw new IllegalArgumentException("Exercise is not a course exercise");
-            }
-
-            exercisesFromDb.add(exerciseFromDb);
-        }
-
-        List<Long> uniqueCourseIds = exercisesFromDb.stream().map(exercise -> exercise.getCourseViaExerciseGroupOrCourseMember().getId()).distinct().toList();
-        if (uniqueCourseIds.size() > 1) {
-            throw new IllegalArgumentException("Not all exercises are from the same course");
-        }
-
-        List<CourseExerciseStatisticsDTO> courseExerciseStatisticsDTOs = new ArrayList<>();
-
-        Map<Long, Object[]> exerciseIdToRawStatisticQueryData = this.getRawStatisticQueryData(exercisesFromDb, useParticipantScoreTable);
-        exercisesFromDb.forEach((exercise) -> {
-            CourseExerciseStatisticsDTO courseExerciseStatisticsDTO = convertRawStatisticQueryDataToDTO(exerciseIdToRawStatisticQueryData, exercise);
-            courseExerciseStatisticsDTOs.add(courseExerciseStatisticsDTO);
-        });
-
-        return courseExerciseStatisticsDTOs;
-    }
-
-    /**
-     * Converts the row data from the exercise statistic query into the corresponding DTO
-     *
-     * @param exerciseIdToRawStatisticQueryData map from exerciseId to query data
-     * @param exercise                          exercise
-     * @return converted DTO
-     */
-    private CourseExerciseStatisticsDTO convertRawStatisticQueryDataToDTO(Map<Long, Object[]> exerciseIdToRawStatisticQueryData, Exercise exercise) {
-        CourseExerciseStatisticsDTO courseExerciseStatisticsDTO = new CourseExerciseStatisticsDTO();
-        courseExerciseStatisticsDTO.setExerciseId(exercise.getId());
-        courseExerciseStatisticsDTO.setExerciseTitle(exercise.getTitle());
-        courseExerciseStatisticsDTO.setExerciseMaxPoints(exercise.getMaxPoints());
-        courseExerciseStatisticsDTO.setExerciseMode(exercise.getMode().toString());
-
-        if (exerciseIdToRawStatisticQueryData.containsKey(exercise.getId())) {
-            Object[] exerciseStatistics = exerciseIdToRawStatisticQueryData.get(exercise.getId());
-            courseExerciseStatisticsDTO.setAverageScoreInPercent(exerciseStatistics[1] != null ? ((Number) exerciseStatistics[1]).doubleValue() : 0.0);
-            courseExerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(exerciseStatistics[2] != null ? ((Number) exerciseStatistics[2]).intValue() : 0);
-            int numberOfPossibleParticipants = exerciseStatistics[3] != null ? ((Number) exerciseStatistics[3]).intValue() : 0;
-
-            if (numberOfPossibleParticipants != 0) {
-                double participationRate = ((courseExerciseStatisticsDTO.getNoOfParticipatingStudentsOrTeams() * 1.0) / (numberOfPossibleParticipants * 1.0)) * 100.0;
-                courseExerciseStatisticsDTO.setParticipationRateInPercent(Math.round(participationRate * 100.0) / 100.0);
-            }
-            else {
-                courseExerciseStatisticsDTO.setParticipationRateInPercent(0.0);
-            }
-
-        }
-        else {
-            courseExerciseStatisticsDTO.setAverageScoreInPercent(0.0);
-            courseExerciseStatisticsDTO.setParticipationRateInPercent(0.0);
-            courseExerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(0);
-        }
-        return courseExerciseStatisticsDTO;
-    }
-
-    /**
-     * calculates the average score and the participation rate of students for each given course exercise (team or individual)
-     * by using the last result (rated or not)
-     *
-     * @param exercisesFromDb          exercises to calculate the statistics for
-     * @param useParticipantScoreTable use the participant score table instead of going through participation -> submission -> result*
-     * @return Map which maps from exercise id to statistic query row data
-     */
-    private Map<Long, Object[]> getRawStatisticQueryData(List<Exercise> exercisesFromDb, boolean useParticipantScoreTable) {
-        List<Exercise> individualExercises = exercisesFromDb.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.INDIVIDUAL)).toList();
-        List<Exercise> teamExercises = exercisesFromDb.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.TEAM)).toList();
-
-        List<Object[]> statisticForIndividualExercises;
-        List<Object[]> statisticTeamExercises;
-
-        if (useParticipantScoreTable) {
-            statisticForIndividualExercises = this
-                    .calculateExerciseStatisticsForIndividualCourseUsingParticipationTable(individualExercises.stream().map(Exercise::getId).toList());
-            statisticTeamExercises = this.calculateExerciseStatisticsForTeamCourseExercisesUsingParticipationTable(teamExercises.stream().map(Exercise::getId).toList());
-        }
-        else {
-            statisticForIndividualExercises = this.calculateStatisticsForIndividualCourseExercises(individualExercises.stream().map(Exercise::getId).toList());
-            statisticTeamExercises = this.calculateStatisticsForTeamCourseExercises(teamExercises.stream().map(Exercise::getId).toList());
-        }
-
-        List<Object[]> combinedStatistics = new ArrayList<>();
-        combinedStatistics.addAll(statisticForIndividualExercises);
-        combinedStatistics.addAll(statisticTeamExercises);
-
-        Map<Long, Object[]> exerciseIdToStatistic = new HashMap<>();
-        for (Object[] exerciseStatistic : combinedStatistics) {
-            exerciseIdToStatistic.put(((Number) exerciseStatistic[0]).longValue(), exerciseStatistic);
-        }
-        return exerciseIdToStatistic;
     }
 
     /**
