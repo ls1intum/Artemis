@@ -97,4 +97,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     get currentTimeZone(): string {
         return Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
+
+    resetDate() {
+        this.writeValue(null);
+        this.valueChange.emit();
+    }
 }
