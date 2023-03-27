@@ -22,8 +22,7 @@
         [owlDateTime]="dt"
         name="datePicker"
         readonly
-        (click)="readOnly = !readOnly"
-        *ngIf="!readOnly"
+        (click)="resetDate()"
         [owlDateTimeTrigger]="dt"
     />
     <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button" (click)="resetDate()">
