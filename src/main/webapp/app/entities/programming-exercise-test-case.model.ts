@@ -26,6 +26,8 @@ export class ProgrammingExerciseTestCase implements BaseEntity {
     exercise?: ProgrammingExercise;
     type?: ProgrammingExerciseTestCaseType;
     solutionEntries?: ProgrammingExerciseSolutionEntry[];
+
+    // Utility information that is not actually part of the object stored on the server
     resultingPoints?: number;
     resultingPointsPercent?: number;
     testCaseStats?: TestCaseStats;
