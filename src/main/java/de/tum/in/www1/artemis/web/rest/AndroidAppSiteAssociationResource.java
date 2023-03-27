@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,11 +17,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/.well-known")
 public class AndroidAppSiteAssociationResource {
 
-    @Value("${artemis.androidAppPackage}")
+    @Value("${artemis.androidAppPackage: #{null}}")
     private String androidAppPackage;
 
-    @Value("${artemis.androidSha256CertFingerprints}")
+    @Value("${artemis.androidSha256CertFingerprints: #{null}}")
     private String sha256CertFingerprints;
+
+    private final Logger log = LoggerFactory.getLogger(AndroidAppSiteAssociationResource.class);
 
     /**
      * Provides the assetlinks json content for the Android client deeplink link feature.
@@ -29,6 +33,11 @@ public class AndroidAppSiteAssociationResource {
      */
     @GetMapping("/assetlinks.json")
     public ResponseEntity<List<AndroidAssetLinksEntry>> getAndroidAssetLinks() {
+        if (androidAppPackage == null || androidAppPackage.length() < 4 || sha256CertFingerprints == null || sha256CertFingerprints.length() < 20) {
+            log.debug("Android Assetlinks information is not configured!");
+            return ResponseEntity.notFound().build();
+        }
+
         final AndroidAssetLinksEntry.AndroidTarget appTarget = new AndroidAssetLinksEntry.AndroidTarget("android_app", androidAppPackage, List.of(sha256CertFingerprints));
 
         final AndroidAssetLinksEntry handleAllUrls = new AndroidAssetLinksEntry(List.of("delegate_permission/common.handle_all_urls"), appTarget);

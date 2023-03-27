@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,8 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/.well-known")
 public class AppleAppSiteAssociationResource {
 
-    @Value("${artemis.iosAppId}")
+    @Value("${artemis.iosAppId: #{null}}")
     private String appId;
+
+    private final Logger log = LoggerFactory.getLogger(AppleAppSiteAssociationResource.class);
 
     /**
      * Provides the apple-app-site-association json content for the iOS client universal link feature.
@@ -24,6 +28,11 @@ public class AppleAppSiteAssociationResource {
      */
     @GetMapping("/apple-app-site-association")
     public ResponseEntity<AppleAppSiteAssociation> getAppleAppSiteAssociation() {
+        if (appId == null || appId.length() < 10) {
+            log.debug("Apple AppID is not configured!");
+            return ResponseEntity.notFound().build();
+        }
+
         String[] paths = { "/courses/*" };
         AppleAppSiteAssociation.Applinks.Detail detail = new AppleAppSiteAssociation.Applinks.Detail(appId, paths);
         AppleAppSiteAssociation.Applinks.Detail[] details = { detail };
