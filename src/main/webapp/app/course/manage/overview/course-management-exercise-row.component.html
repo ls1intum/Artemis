@@ -143,7 +143,7 @@
                 <a
                     *ngIf="course.isAtLeastEditor && details.type === exerciseType.PROGRAMMING"
                     [routerLink]="['/course-management', course.id, 'programming-exercises', details.id, 'grading', 'test-cases']"
-                    class="btn btn-info me-1 mb-1"
+                    class="btn btn-warning me-1 mb-1"
                     [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.shortTitle' | artemisTranslate"
                     ><fa-icon class="grading-icon" [icon]="faFileSignature"></fa-icon
                 ></a>
