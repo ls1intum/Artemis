@@ -56,9 +56,38 @@ The assigned tutor and the session schedule are the most important settings of a
 |instructors-csv-import|
 
 
-Managing assigned Tutorial Groups as a Tutor
---------------------------------------------
-..ToDo
+Managing Tutorial Groups as a Tutor
+-----------------------------------
+
+Assigned tutors can manage their tutorial groups by navigating to the course's ``Tutorial Groups`` page. The tutor can view the group's details, register or unregister students, and edit the sessions by cancelling or rescheduling them. The tutor also has moderation rights in the tutorial group's channel in the ``Messages`` section of the course if the ``Artemis managed tutorial group channels`` feature is enabled in the tutorial group settings.
+
+The groups for which the tutor is responsible have a blue background. 
+
+.. note::
+    The instructor can perform the same actions as the tutor for all tutorial groups in the course. The tutor can only manage the tutorial groups that they are assigned to.
+
+|tutor-overview|
+
+Managing the Registration of a Tutorial Group
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By clicking on the ``Registered Students`` button, the tutor can view the list of students that are registered for the tutorial group. From this list, the tutor can register or unregister students for the tutorial group. Only users that are enrolled in the course can be registered for a tutorial group.
+
+.. note::
+    An instructor can also import student registrations from a CSV file and export the list of registered students as a CSV file. Extra buttons for these actions are available in the ``Registered Students`` page of the tutorial group page for instructors.
+
+|tutor-registrations|
+
+Managing the Sessions of a Tutorial Group
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By clicking on the ``Sessions`` button, the tutor can view the list of sessions that are scheduled for the tutorial group. From this list, the tutor can cancel or reschedule sessions. The tutor can also create new sessions by clicking on the ``Create New Tutorial Group Session`` button. Furthermore, the tutor can enter the number of attending students for each session. This information is used to calculate the utilization of the tutorial group.
+
+.. note::
+    The utilization of a tutorial group is the average attendance divided by capacity (if defined). The average attendance considers the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session.
+
+|tutor-sessions|
+
 
 Viewing Tutorial Groups as a Student
 ------------------------------------
@@ -74,3 +103,10 @@ Viewing Tutorial Groups as a Student
     :width: 500
 .. |instructors-csv-import| image:: tutorialgroups/instructors-csv-import.png
     :width: 500
+
+.. |tutor-overview| image:: tutorialgroups/tutor-overview.png
+    :width: 1000    
+.. |tutor-registrations| image:: tutorialgroups/tutor-registrations.png
+    :width: 1000    
+.. |tutor-sessions| image:: tutorialgroups/tutor-sessions.png
+    :width: 1000        
